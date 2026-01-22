@@ -9,6 +9,9 @@
 
     <livewire:app-bar />
 
+
+    {{ $slot }}
+
 </body>
 
 </html>
