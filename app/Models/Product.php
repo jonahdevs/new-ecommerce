@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Attribute as ProductAttribute;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -152,4 +154,24 @@ class Product extends Model
         return $this->belongsToMany(Product::class, 'product_accessories', 'product_id', 'accessory_id')
             ->withTimestamps();
     }
+
+    // ===============================================
+    // SCOPES
+    // ===============================================
+
+    /**
+     * Scope a query to only include active products.
+     */  
+    #[Scope]
+    protected function active(Builder $query)
+    {
+         $query->where('is_active', true);
+    }
+
+    #[Scope()]
+    protected function newArrivals(Builder $query): void
+    {
+        $query->where('created_at', '>=', now()->subDays(30));
+    }
+
 }

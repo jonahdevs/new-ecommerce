@@ -225,7 +225,7 @@ new #[Layout('layouts.guest')] class extends Component {
     </section>
 
     <section class="container mx-auto px-4">
-        <livewire:top-categories />
+        <livewire:home-top-categories-section />
     </section>
 
     <section class="container mx-auto px-4 my-6">
@@ -233,6 +233,224 @@ new #[Layout('layouts.guest')] class extends Component {
     </section>
 
     <section class="container mx-auto px-4">
-        <livewire:new-arrivals />
+        <livewire:home-new-arrivals-section />
+    </section>
+
+    <section class="container mx-auto px-4 mt-6">
+        <a href="#" class="border block overflow-hidden rounded-sm">
+            <img src="{{ asset('images/home/CLEARANCE-SALE.jpg') }}" alt="banner"
+                class="w-full h-auto object-cover object-center rounded-sm">
+        </a>
+    </section>
+
+    <section class="container mx-auto px-4 mt-6">
+        <livewire:home-products-section />
+    </section>
+
+    <!-- Locations Section -->
+    <section class="container @container/locations mx-auto px-4 my-12">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Our Locations</h2>
+            <p class="text-lg text-sheffield-red">From local hubs to a continental presence.</p>
+        </div>
+
+        <!-- Locations Grid -->
+        <div
+            class="grid grid-cols-1 @sm/locations:grid-cols-2 @3xl/locations:grid-cols-3 @5xl/locations:grid-cols-4 gap-4">
+
+            <!-- Nairobi -->
+            <div class="bg-white rounded overflow-hidden hover:shadow-xs transition-shadow duration-300">
+                <img src="{{ asset('images/showrooms/SHEFFIELD SHOWROOM.png') }}" alt="Location 1"
+                    class="w-full h-56 object-cover" />
+                <div class="p-5">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        Nairobi
+                        <img src="{{ asset('images/kenya-flag.png') }}" alt="kenya flag" class="size-5 rounded-full">
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-gray-600 mt-0.5 shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <div class="text-sm text-gray-700">
+                                <p>Off Old Mombasa Road before the Nairobi SGR Terminus</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                            <a href="tel:+11234567890"
+                                class="text-sm text-gray-700 hover:text-red-600 transition-colors">
+                                +254 713 444 000
+                            </a>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            </svg>
+                            <a href="mailto:contact@location1.com"
+                                class="text-sm text-gray-700 hover:text-sheffield-red transition-colors break-all">
+                                info@sheffieldafrica.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mombasa -->
+            <div class="bg-white rounded overflow-hidden hover:shadow-sm transition-shadow duration-300">
+                <img src="{{ asset('images/showrooms/MOMBASA SHOWROOM-01.jpg') }}" alt="Location 2"
+                    class="w-full h-56 object-cover" />
+                <div class="p-5">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        Mombasa
+                        <img src="{{ asset('images/kenya-flag.png') }}" alt="kenya flag" class="size-5 rounded-full">
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-gray-600 mt-0.5 shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <div class="text-sm text-gray-700">
+                                <p>Petrocity Complex 1st Floor-Off Links Road, Nyali, Mombasa</p>
+
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                            <a href="tel:+11234567890"
+                                class="text-sm text-gray-700 hover:text-red-600 transition-colors">
+                                +254 713 317 214
+                            </a>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            </svg>
+                            <a href="mailto:contact@location2.com"
+                                class="text-sm text-gray-700 hover:text-sheffield-red transition-colors  break-all">
+                                mombasa@sheffieldafrica.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kampala -->
+            <div class="bg-white rounded overflow-hidden hover:shadow-sm transition-shadow duration-300">
+                <img src="{{ asset('images/showrooms/IMAGES SHOWROOMS-01.jpg') }}" alt="Location 2"
+                    class="w-full h-56 object-cover" />
+                <div class="p-5">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        Kampala
+                        <img src="{{ asset('images/uganda.png') }}" alt="uganda flag" class="size-5 rounded-full">
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-gray-600 mt-0.5 shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <div class="text-sm text-gray-700">
+                                <p>Bugolobi Hardware City Opposite Uganda Baati, Block 3 Room 102, Mulwana Road.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                            <a href="tel:+11234567890"
+                                class="text-sm text-gray-700 hover:text-red-600 transition-colors">
+                                +256 741 177 712
+                            </a>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            </svg>
+                            <a href="mailto:contact@location2.com"
+                                class="text-sm text-gray-700 hover:text-sheffield-red transition-colors  break-all">
+                                uganda@sheffieldafrica.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kigali -->
+            <div class="bg-white rounded overflow-hidden hover:shadow-sm transition-shadow duration-300">
+                <img src="{{ asset('images/showrooms/IMAGES SHOWROOMS-02.jpg') }}" alt="Location 3"
+                    class="w-full h-56 object-cover" />
+                <div class="p-5">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        Kigali
+                        <img src="{{ asset('images/rwanda.png') }}" alt="rwanda flag" class="size-5 rounded-full">
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-gray-600 mt-0.5 shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <div class="text-sm text-gray-700">
+                                <p>Kicukiro Street, KK 500 ST Kigali, Rwanda</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                            <a href="tel:+11234567890"
+                                class="text-sm text-gray-700 hover:text-red-600 transition-colors">
+                                +250 794 007 302
+                            </a>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            </svg>
+                            <a href="mailto:contact@location3.com"
+                                class="text-sm text-gray-700 hover:text-sheffield-red transition-colors break-all">
+                                rwanda@sheffieldafrica.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 </div>
