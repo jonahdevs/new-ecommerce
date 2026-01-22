@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -55,5 +57,22 @@ class Category extends Model
     public function children()
     {
         return $this->hasMany(Category::class, 'parent_id');
+    }
+
+
+    // ==================================================
+    // SCOPES
+    // ==================================================
+
+    #[Scope]
+    protected function active(Builder $query)
+    {
+        $query->where('is_active', true);
+    }
+
+    #[Scope]
+    protected function navbar(Builder $query)
+    {
+        $query->where('show_in_navbar', true);
     }
 }
