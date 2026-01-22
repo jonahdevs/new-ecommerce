@@ -9,8 +9,9 @@
 
     <livewire:app-bar />
 
-
-    {{ $slot }}
+    <main>
+        {{ $slot }}
+    </main>
 
     @fluxScripts
     <x-footer />

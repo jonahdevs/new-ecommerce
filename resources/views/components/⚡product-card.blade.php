@@ -53,17 +53,17 @@ new class extends Component {
 
 
 <div
-    {{ $attributes->class(['bg-white overflow-hidden hover:shadow-lg h-full border hover:shadow-md transition-all duration-300 ease-in-out group relative']) }}>
+    {{ $attributes->class(['bg-white overflow-hidden h-full border hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group relative rounded-sm']) }}>
     <div class="h-full flex flex-col">
         <a href="#" wire:navigate class="block">
             <figure
-                class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-100 flex items-center justify-center">
+                class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-50 flex items-center justify-center">
                 @if ($product->image_url)
                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                         class="w-full h-full object-cover hover:scale-105 transition-transform duration-300 "
                         loading="lazy">
                 @else
-                    <flux:icon.photo class="w-16 h-16 text-zinc-400" />
+                    <flux:icon.photo class="w-16 h-16 text-zinc-400 stroke-1" />
                 @endif
             </figure>
 

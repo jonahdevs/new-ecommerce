@@ -155,6 +155,14 @@ class Product extends Model
             ->withTimestamps();
     }
 
+        /**
+     * Get all reviews for the product
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     // ===============================================
     // SCOPES
     // ===============================================

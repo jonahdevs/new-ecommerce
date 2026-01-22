@@ -51,7 +51,7 @@ new #[Defer] class extends Component {
         <section class="flex items-center justify-between py-4 px-3 md:px-5">
             <h2 class="font-semibold text-xl text-zinc-800">You May Also Like</h2>
 
-            <a href="#" wire:navigate class="text-sheffield-red hover:underline text-sm">View
+            <a href="{{ route('products') }}" wire:navigate class="text-sheffield-red hover:underline text-sm">View
                 All</a>
         </section>
 

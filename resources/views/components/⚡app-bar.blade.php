@@ -102,7 +102,7 @@ new class extends Component {
     </div>
 
     {{-- Main Header --}}
-    <nav class="w-full stick top-0 z-50 bg-cover bg-no-repeat"
+    <nav class="w-full sticky! top-0! left-0! z-50! bg-cover bg-center bg-no-repeat"
         style="background-image: url('{{ asset('images/stainless_steel.jpg') }}')">
         <section class="container mx-auto px-4 py-3 lg:py-4">
             <div class="flex justify-between items-center gap-2 sm:gap-4 lg:gap-6">
@@ -251,7 +251,7 @@ new class extends Component {
     </nav>
 
     {{-- Category navigation --}}
-    <nav class="bg-sheffield-red text-white sticky top-14 md:top-19.5 z-40 shadow-md">
+    <nav class="bg-sheffield-red text-white sticky! left-0! top-20! z-40 shadow-md">
         <section class="container mx-auto px-4 hidden lg:block">
             <ul class="m-0 flex flex-wrap border-r border-white/20  p-0" data-language="en" role="menubar"
                 aria-label="Main navigation menu">
@@ -282,4 +282,5 @@ new class extends Component {
             @endforeach
         </section>
     </nav>
+
 </div>
