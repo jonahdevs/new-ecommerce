@@ -497,7 +497,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 {{-- Search Brands --}}
                                 <div class="mb-3">
                                     <flux:input icon="magnifying-glass" placeholder="Search brands..." size="sm"
-                                        wire:model.live.debounce.300ms="brandSearch" searchable />
+                                        wire:model.live.debounce.300ms="brandSearch" clearable />
                                 </div>
 
                                 <div class="max-h-64 overflow-y-auto">

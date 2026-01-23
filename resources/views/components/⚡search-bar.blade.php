@@ -2,12 +2,11 @@
 
 use Livewire\Component;
 
-new class extends Component
-{
+new class extends Component {
     //
 };
 ?>
 
-<div>
-    {{-- Simplicity is the ultimate sophistication. - Leonardo da Vinci --}}
+<div class="w-full max-w-xl">
+    <flux:input icon="magnifying-glass" class="w-full" clearable />
 </div>

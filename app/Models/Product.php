@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Attribute as ProductAttribute;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -180,6 +181,20 @@ class Product extends Model
     protected function newArrivals(Builder $query): void
     {
         $query->where('created_at', '>=', now()->subDays(30));
+    }
+
+    // ===============================================
+    // ACCESSORS
+    // ===============================================
+
+    /**
+     * Get the product's image URL
+     */
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->image_path ? asset('storage/' . $this->image_path) : null,
+        );
     }
 
 }
