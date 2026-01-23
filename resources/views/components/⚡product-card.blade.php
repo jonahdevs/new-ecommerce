@@ -107,18 +107,18 @@ new class extends Component {
                     @for ($i = 1; $i <= 5; $i++)
                         @if ($product->average_rating && $i <= floor($product->average_rating))
                             {{-- Full star --}}
-                            <flux:icon.star class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
                         @elseif ($product->average_rating && $i - 0.5 <= $product->average_rating)
                             {{-- Half star --}}
                             <div class="relative w-4 h-4">
-                                <flux:icon.star class="w-4 h-4 text-zinc-300" />
+                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
                                 <div class="absolute inset-0 overflow-hidden" style="width: 50%;">
-                                    <flux:icon.star class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                    <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                 </div>
                             </div>
                         @else
                             {{-- Empty star --}}
-                            <flux:icon.star class="w-4 h-4 text-zinc-300" />
+                            <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
                         @endif
                     @endfor
                 </div>

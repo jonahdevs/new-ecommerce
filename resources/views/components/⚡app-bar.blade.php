@@ -17,92 +17,9 @@ new class extends Component {
 };
 ?>
 
-<div>
-    <div class="bg-sheffield-red text-white">
-        <section class="container mx-auto px-4">
-            <div class="flex items-center justify-between py-2 text-sm gap-4">
-                {{-- contact info - Hidden on mobile, visible on md+ --}}
-                <div class="hidden md:flex items-center gap-3 lg:gap-4">
-                    <div class="flex items-center gap-2">
-                        <flux:icon.phone class="w-4.5 h-4.5 shrink-0" />
-                        <span class="text-xs lg:text-sm">(254) 713 777 111</span>
-                    </div>
-                </div>
-
-                {{-- Vertical Promotion Carousel --}}
-                <div class="flex-1 md:flex-none md:max-w-md lg:max-w-lg mx-auto overflow-hidden h-6"
-                    x-data="{
-                        swiper: null,
-                        init() {
-                            this.$nextTick(() => {
-                                this.initializeSwiper();
-                            });
-                        },
-                    
-                        initializeSwiper() {
-                            this.swiper = new Swiper('.promoSwiper', {
-                                direction: 'vertical',
-                                loop: true,
-                                speed: 800,
-                                autoplay: {
-                                    delay: 3000,
-                                    disableOnInteraction: false,
-                                },
-                                effect: 'slide',
-                                // Optional: Add fade effect for smoother transitions
-                                // effect: 'fade',
-                                // fadeEffect: {
-                                //     crossFade: true
-                                // },
-                            });
-                        },
-                    
-                        destroy() {
-                            if (this.swiper) {
-                                this.swiper.destroy(true, true);
-                            }
-                        }
-                    }">
-                    <div class="swiper promoSwiper h-full">
-                        <div class="swiper-wrapper">
-                            <div class="swiper-slide flex items-center justify-center">
-                                <a href="#"
-                                    class="text-center text-xs sm:text-sm hover:opacity-90 transition-opacity">
-                                    Get 50% off on Member Exclusive Month <span class="underline font-medium">Shop
-                                        Now</span>
-                                </a>
-                            </div>
-                            <div class="swiper-slide flex items-center justify-center">
-                                <a href="#"
-                                    class="text-center text-xs sm:text-sm hover:opacity-90 transition-opacity">
-                                    Free Shipping on Orders Over KES 10,000 <span class="underline font-medium">Learn
-                                        More</span>
-                                </a>
-                            </div>
-                            <div class="swiper-slide flex items-center justify-center">
-                                <a href="#"
-                                    class="text-center text-xs sm:text-sm hover:opacity-90 transition-opacity">
-                                    New Arrivals: Latest Kitchen Equipment <span
-                                        class="underline font-medium">Explore</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Support Link - Hidden on mobile, visible on md+ -->
-                <div class="hidden md:flex items-center gap-4">
-                    <a href="" class="flex items-center gap-2 group hover:opacity-90 transition-opacity">
-                        <flux:icon.question-mark-circle class="size-5 shrink-0" />
-                        <span class="group-hover:underline text-xs lg:text-sm">Support</span>
-                    </a>
-                </div>
-            </div>
-        </section>
-    </div>
-
+<div class="sticky! top-0! left-0! z-50!">
     {{-- Main Header --}}
-    <nav class="w-full sticky! top-0! left-0! z-50! bg-cover bg-center bg-no-repeat"
+    <nav class="w-full  bg-cover bg-center bg-no-repeat"
         style="background-image: url('{{ asset('images/stainless_steel.jpg') }}')">
         <section class="container mx-auto px-4 py-3 lg:py-4">
             <div class="flex justify-between items-center gap-2 sm:gap-4 lg:gap-6">
@@ -251,7 +168,7 @@ new class extends Component {
     </nav>
 
     {{-- Category navigation --}}
-    <nav class="bg-sheffield-red text-white sticky! left-0! top-20! z-40 shadow-md">
+    <nav class="bg-sheffield-red text-white">
         <section class="container mx-auto px-4 hidden lg:block">
             <ul class="m-0 flex flex-wrap border-r border-white/20  p-0" data-language="en" role="menubar"
                 aria-label="Main navigation menu">

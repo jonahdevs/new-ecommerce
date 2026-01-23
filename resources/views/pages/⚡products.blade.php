@@ -56,6 +56,7 @@ new #[Layout('layouts.guest')] class extends Component {
         if ($this->minPrice === null) {
             $this->minPrice = $this->priceRange->min_price ?? 0;
         }
+
         if ($this->maxPrice === null) {
             $this->maxPrice = $this->priceRange->max_price ?? 1000000;
         }
@@ -237,9 +238,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function clearAllFilters()
     {
-        $this->reset(['categorySlug', 'selectedBrands', 'minRating', 'sortBy', 'inStock', 'featured', 'onSale']);
-        $this->minPrice = $this->priceRange->min_price ?? 0;
-        $this->maxPrice = $this->priceRange->max_price ?? 1000000;
+        $this->reset(['categorySlug', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'featured', 'onSale', 'minPrice', 'maxPrice']);
+        $this->clearPriceFilter();
         $this->resetPage();
     }
 
@@ -352,58 +352,112 @@ new #[Layout('layouts.guest')] class extends Component {
 
                             {{-- Price filter --}}
                             <div class="p-4" x-data="{
-                                minPrice: @entangle('minPrice').live,
-                                maxPrice: @entangle('maxPrice').live,
+                                localMin: {{ $minPrice ?? ($this->priceRange->min_price ?? 0) }},
+                                localMax: {{ $maxPrice ?? ($this->priceRange->max_price ?? 1000000) }},
                                 absoluteMin: {{ $this->priceRange->min_price ?? 0 }},
                                 absoluteMax: {{ $this->priceRange->max_price ?? 1000000 }},
-                                init() {
-                                    this.$watch('minPrice', value => {
-                                        let numValue = parseFloat(value);
-                                        if (numValue > parseFloat(this.maxPrice)) {
-                                            this.minPrice = this.maxPrice;
-                                        }
-                                    });
-                                    this.$watch('maxPrice', value => {
-                                        let numValue = parseFloat(value);
-                                        if (numValue < parseFloat(this.minPrice)) {
-                                            this.maxPrice = this.minPrice;
-                                        }
-                                    });
+                            
+                                // Ensure min doesn't exceed max
+                                updateMin() {
+                                    this.localMin = parseFloat(this.localMin);
+                                    if (this.localMin > this.localMax) {
+                                        this.localMin = this.localMax;
+                                    }
+                                    if (this.localMin < this.absoluteMin) {
+                                        this.localMin = this.absoluteMin;
+                                    }
+                                },
+                            
+                                // Ensure max doesn't go below min
+                                updateMax() {
+                                    this.localMax = parseFloat(this.localMax);
+                                    if (this.localMax < this.localMin) {
+                                        this.localMax = this.localMin;
+                                    }
+                                    if (this.localMax > this.absoluteMax) {
+                                        this.localMax = this.absoluteMax;
+                                    }
+                                },
+                            
+                                // Apply filter
+                                apply() {
+                                    $wire.minPrice = this.localMin;
+                                    $wire.maxPrice = this.localMax;
+                                    $wire.applyPriceFilter();
+                                },
+                            
+                                // Reset to defaults
+                                reset() {
+                                    this.localMin = this.absoluteMin;
+                                    this.localMax = this.absoluteMax;
+                                    $wire.clearPriceFilter();
                                 }
                             }">
+
                                 <div class="flex items-center justify-between mb-3">
                                     <h3 class="font-medium">Price (KES)</h3>
 
-                                    <button wire:click="applyPriceFilter"
-                                        class="text-sheffield-blue text-sm hover:underline cursor-pointer font-medium">Apply</button>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="reset"
+                                            x-show="localMin != absoluteMin || localMax != absoluteMax" x-transition
+                                            class="text-zinc-500 text-xs hover:text-zinc-700 cursor-pointer font-medium"
+                                            type="button">
+                                            Reset
+                                        </button>
+
+                                        <button @click="apply"
+                                            class="text-sheffield-blue text-sm hover:underline cursor-pointer font-medium"
+                                            type="button">
+                                            Apply
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="space-y-4">
                                     {{-- Price Display --}}
                                     <div class="flex items-center justify-between text-sm">
-                                        <span class="text-zinc-600">KES <span
-                                                x-text="parseFloat(minPrice).toLocaleString()"></span></span>
-                                        <span class="text-zinc-600">KES <span
-                                                x-text="parseFloat(maxPrice).toLocaleString()"></span></span>
+                                        <span class="text-zinc-600">
+                                            KES <span x-text="Math.round(localMin).toLocaleString()"></span>
+                                        </span>
+                                        <span class="text-zinc-600">
+                                            KES <span x-text="Math.round(localMax).toLocaleString()"></span>
+                                        </span>
                                     </div>
 
                                     {{-- Dual Range Slider --}}
-                                    <div class="relative pt-1 pb-2">
-                                        <input type="range" x-model.number="minPrice" :min="absoluteMin"
-                                            :max="absoluteMax" step="1000"
-                                            class="absolute w-full h-2 bg-transparent appearance-none pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sheffield-blue [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-sheffield-blue [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                                            style="z-index: 3;">
-
-                                        <input type="range" x-model.number="maxPrice" :min="absoluteMin"
-                                            :max="absoluteMax" step="1000"
-                                            class="absolute w-full h-2 bg-transparent appearance-none pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sheffield-blue [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-sheffield-blue [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                                            style="z-index: 4;">
-
-                                        <div class="relative w-full h-2 bg-zinc-200 rounded">
+                                    <div class="relative">
+                                        {{-- Track Background --}}
+                                        <div class="relative w-full h-2 bg-zinc-200 rounded pointer-events-none">
                                             <div class="absolute h-2 bg-sheffield-blue rounded"
-                                                :style="`left: ${((minPrice - absoluteMin) / (absoluteMax - absoluteMin)) * 100}%; right: ${100 - ((maxPrice - absoluteMin) / (absoluteMax - absoluteMin)) * 100}%`">
+                                                :style="`left: ${((localMin - absoluteMin) / (absoluteMax - absoluteMin)) * 100}%; right: ${100 - ((localMax - absoluteMin) / (absoluteMax - absoluteMin)) * 100}%`">
                                             </div>
                                         </div>
+
+                                        {{-- Max Price Slider (render first, lower z-index) --}}
+                                        <input type="range" x-model.number="localMax" @input="updateMax"
+                                            :min="absoluteMin" :max="absoluteMax" step="1000"
+                                            class="absolute inset-0 top-1/2 -translate-y-1/2 w-full h-2 bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sheffield-blue [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-sheffield-red [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
+                                            style="z-index: 1;">
+
+                                        {{-- Min Price Slider (render second, higher z-index) --}}
+                                        <input type="range" x-model.number="localMin" @input="updateMin"
+                                            :min="absoluteMin" :max="absoluteMax" step="1000"
+                                            class="absolute inset-0 top-1/2 -translate-y-1/2 w-full h-2 bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sheffield-blue [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-sheffield-blue [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
+                                            style="z-index: 2; pointer-events: none;">
+
+                                    </div>
+
+                                    {{-- Manual Input Fields (Optional) --}}
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <input type="number" x-model.number="localMin" @blur="updateMin"
+                                            :min="absoluteMin" :max="absoluteMax" step="1000"
+                                            class="w-full px-2 py-1.5 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-sheffield-blue focus:border-transparent"
+                                            placeholder="Min">
+                                        <span class="text-zinc-400">—</span>
+                                        <input type="number" x-model.number="localMax" @blur="updateMax"
+                                            :min="absoluteMin" :max="absoluteMax" step="1000"
+                                            class="w-full px-2 py-1.5 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-sheffield-red focus:border-transparent"
+                                            placeholder="Max">
                                     </div>
                                 </div>
                             </div>
@@ -490,19 +544,142 @@ new #[Layout('layouts.guest')] class extends Component {
 
             {{-- Product section --}}
             <section class="flex-1 @container/main">
-                {{-- Page Header --}}
-                <div class="flex items-center justify-between mb-5">
-                    <flux:select wire:model.live="sortBy" class="ms-auto w-fit">
-                        <option value="">Sort By: Default</option>
-                        <option value="name_asc">Name (A-Z)</option>
-                        <option value="name_desc">Name (Z-A)</option>
-                        <option value="price_asc">Price (Low to High)</option>
-                        <option value="price_desc">Price (High to Low)</option>
-                        <option value="rating">Rating</option>
-                        <option value="newest">Newest</option>
-                        <option value="popular">Most Popular</option>
-                    </flux:select>
+
+                {{-- Page Header with Dynamic Title --}}
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-bold text-zinc-900">
+                                @if ($this->selectedCategory)
+                                    {{ $this->selectedCategory->name }}
+                                @else
+                                    Products
+                                @endif
+                            </h1>
+
+                            {{-- Subtitle with result count and filters --}}
+                            <p class="text-sm text-zinc-600 mt-1">
+                                @if ($this->products->total() > 0)
+                                    <span class="font-medium">{{ number_format($this->products->total()) }}</span>
+                                    {{ Str::plural('product', $this->products->total()) }} found
+
+                                    @if ($this->hasActiveFilters)
+                                        <span class="text-zinc-400">•</span>
+                                        <button wire:click="clearAllFilters"
+                                            class="text-sheffield-blue hover:underline">
+                                            Clear all filters
+                                        </button>
+                                    @endif
+                                @else
+                                    No products found
+                                @endif
+                            </p>
+                        </div>
+
+                        {{-- Sort dropdown --}}
+                        <flux:select wire:model.live="sortBy" class="w-fit">
+                            <option value="">Sort By: Default</option>
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="price_asc">Price (Low to High)</option>
+                            <option value="price_desc">Price (High to Low)</option>
+                            <option value="rating">Rating</option>
+                            <option value="newest">Newest</option>
+                            <option value="popular">Most Popular</option>
+                        </flux:select>
+                    </div>
+
+                    {{-- Active Filters Pills --}}
+                    @if ($this->hasActiveFilters)
+                        <div class="flex flex-wrap gap-2">
+                            {{-- Category Filter --}}
+                            @if ($this->selectedCategory)
+                                <flux:badge color="zinc" size="sm">
+                                    {{ $this->selectedCategory->name }}
+                                    <button wire:click="clearCategory" class="ml-1.5 hover:text-red-600"
+                                        type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+
+                            {{-- Brand Filters --}}
+                            @foreach ($selectedBrands as $brandSlug)
+                                @php
+                                    $brand = $this->brands->firstWhere('slug', $brandSlug);
+                                @endphp
+                                @if ($brand)
+                                    <flux:badge color="zinc" size="sm">
+                                        {{ $brand->name }}
+                                        <button wire:click="clearBrand('{{ $brandSlug }}')"
+                                            class="ml-1.5 hover:text-red-600" type="button">
+                                            <flux:icon.x-mark class="w-3 h-3" />
+                                        </button>
+                                    </flux:badge>
+                                @endif
+                            @endforeach
+
+                            {{-- Price Filter --}}
+                            @if ($minPrice != ($this->priceRange->min_price ?? 0) || $maxPrice != ($this->priceRange->max_price ?? 1000000))
+                                <flux:badge color="zinc" size="sm">
+                                    KES {{ number_format($minPrice) }} - {{ number_format($maxPrice) }}
+                                    <button wire:click="clearPriceFilter" class="ml-1.5 hover:text-red-600"
+                                        type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+
+                            {{-- Rating Filter --}}
+                            @if ($minRating)
+                                <flux:badge color="zinc" size="sm">
+                                    {{ $minRating }}+ Stars
+                                    <button wire:click="clearRating" class="ml-1.5 hover:text-red-600"
+                                        type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+
+                            {{-- Stock Filter --}}
+                            @if ($inStock)
+                                <flux:badge color="zinc" size="sm">
+                                    In Stock
+                                    <button wire:click="$set('inStock', false)" class="ml-1.5 hover:text-red-600"
+                                        type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+
+                            {{-- Featured Filter --}}
+                            @if ($featured)
+                                <flux:badge color="zinc" size="sm">
+                                    Featured
+                                    <button wire:click="$set('featured', false)" class="ml-1.5 hover:text-red-600"
+                                        type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+
+                            {{-- On Sale Filter --}}
+                            @if ($onSale)
+                                <flux:badge color="zinc" size="sm">
+                                    On Sale
+                                    <button wire:click="$set('onSale', false)" class="ml-1.5 hover:text-red-600"
+                                        type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+                        </div>
+                    @endif
                 </div>
+
+
+
+
 
                 {{-- Products Grid --}}
                 <div @class([
@@ -512,8 +689,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         <livewire:product-card :product="$product" :key="'product-' . $product->id" />
                     @empty
                         {{-- Empty State --}}
-                        <section
-                            class="bg-white rounded-lg border p-12 flex flex-col items-center justify-center min-h-100 text-center col-span-full">
+                        <section class="flex flex-col items-center justify-center min-h-100 text-center col-span-full">
                             <div class="text-zinc-300">
                                 <svg class="w-32 h-32 mx-auto" fill="currentColor" stroke-width="1" version="1.1"
                                     viewBox="-5.0 -10.0 110.0 135.0">
@@ -550,3 +726,16 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </div>
 </div>
+
+
+
+{{-- Make only the thumb of min slider clickable --}}
+<style>
+    input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+    }
+</style>
