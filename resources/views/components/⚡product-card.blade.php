@@ -2,7 +2,7 @@
 
 use App\Services\WishlistService;
 use App\Services\CompareService;
-
+use App\Services\CartService;
 use App\Models\Product;
 use Livewire\Component;
 
@@ -11,6 +11,7 @@ new class extends Component {
 
     public bool $wishlisted = false;
     public bool $inCompare = false;
+    public int $cartQuantity = 1;
 
     public function mount(WishlistService $wishlist, CompareService $compareService)
     {
@@ -48,6 +49,26 @@ new class extends Component {
             $this->loading = false;
         }
     }
+
+        public function addToCart(CartService $cartService)
+    {
+        try {
+            $cartService->addItem($this->product->id, $this->cartQuantity);
+
+            $this->inCart = true;
+            $cartItem = $cartService->getCartItem($this->product->id);
+            if ($cartItem) {
+                $this->cartItemId = $cartItem->id;
+                $this->cartQuantity = $cartItem->quantity;
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
+        }
+    }
+
 };
 ?>
 <div
@@ -88,7 +109,7 @@ new class extends Component {
 
                 </flux:button>
 
-                <flux:button icon="shopping-cart" size="sm" icon-variant="outline" title="Add to Cart"
+                <flux:button wire:click="addToCart" icon="shopping-cart" size="sm" icon-variant="outline" title="Add to Cart"
                     class="cursor-pointer">
 
                 </flux:button>
