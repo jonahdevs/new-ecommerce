@@ -66,7 +66,7 @@ new class extends Component {
                 <div class="flex items-center gap-3 sm:gap-4 lg:gap-6">
 
                     {{-- Wishlist --}}
-                    <a href="" class="flex items-center gap-2">
+                    <a href="{{ route('wishlist') }}" wire:navigate class="flex items-center gap-2">
                         <div class="relative">
                             <flux:icon.heart class="size-6 text-zinc-900 " />
                             @if ($wishlistCount > 0)

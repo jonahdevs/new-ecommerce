@@ -33,23 +33,7 @@ new #[Defer] class extends Component {
         <section class="px-3 md:px-5 lg:col-span-5 relative pb-4">
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pb-4">
                 @for ($i = 0; $i < 5; $i++)
-                    <div class="bg-white rounded-xs border animate-pulse">
-                        <!-- Image skeleton -->
-                        <div class="w-full aspect-square bg-zinc-200 mb-2"></div>
-
-                        <div class="p-4">
-                            <div class="h-4 bg-zinc-200 rounded w-1/4 mb-2"></div>
-
-                            <!-- Product name skeleton (2 lines) -->
-                            <div class="space-y-2 mb-2">
-                                <div class="h-3.5 bg-zinc-200 rounded w-full"></div>
-                                <div class="h-3.5 bg-zinc-200 rounded w-3/4"></div>
-                            </div>
-
-                            <!-- Price skeleton -->
-                            <div class="h-4 bg-zinc-200 rounded w-1/2"></div>
-                        </div>
-                    </div>
+                    <x-product-card-placeholder />
                 @endfor
             </div>
         </section>
