@@ -5,13 +5,14 @@ use App\Models\Category;
 use App\Models\Product;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Defer;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component {
     use WithPagination;
 
     #[Url(as: 'category')]
@@ -269,6 +270,60 @@ new #[Layout('layouts.guest')] class extends Component {
     }
 };
 ?>
+
+@placeholder
+    <div>
+        <div class="container mx-auto px-4 py-4">
+            {{-- Breadcrumb --}}
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
+                    <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
+                    Home
+                </flux:breadcrumbs.item>
+
+                <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>Products</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+
+            <div class="flex gap-4 mt-4">
+                {{-- left sidebar --}}
+
+                <flux:skeleton animate="shimmer" class="hidden lg:block w-64 shrink-0 min-h-[80svh]" />
+
+                {{-- Product section --}}
+                <div class="flex-1 @container/main">
+                    {{-- Page header  --}}
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="space-y-2">
+                                <flux:skeleton animate="shimmer" class="w-48 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-40 h-5" />
+                            </div>
+
+                            <flux:skeleton animate="shimmer" class="w-32 h-8" />
+                        </div>
+                    </div>
+
+                    {{-- products --}}
+                    <div
+                        class="grid grid-cols-1 @sm/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3">
+                        @for ($i = 1; $i < 20; $i++)
+                            <x-product-card-placeholder />
+                        @endfor
+                    </div>
+
+                    {{-- Pagination --}}
+                    <div class="mt-8">
+                        <div class="flex items-center justify-between">
+                            <flux:skeleton animate="shimmer" class="w-24 h-8" />
+
+                            <flux:skeleton animate="shimmer" class="w-44 h-10" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endplaceholder
 
 <div>
     <div class="container mx-auto px-4 py-4">
@@ -683,7 +738,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 {{-- Products Grid --}}
                 <div @class([
-                    'grid grid-cols-1 @sm/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3' => !$this->products->isEmpty(),
+                    'grid grid-cols-1 @sm/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3' => $this->products->isNotEmpty(),
                 ])>
                     @forelse ($this->products as $product)
                         <livewire:product-card :product="$product" :key="'product-' . $product->id" />

@@ -5,8 +5,9 @@ use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Defer;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     #[On('wishlist-updated')]
     public function products()
@@ -24,7 +25,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <section class="container mx-auto px-4 py-4">
+        <section class="container mx-auto px-4 py-4 min-h-[80svh]">
             {{-- Breadcrumb --}}
             <flux:breadcrumbs class="mb-4">
                 <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
@@ -53,7 +54,7 @@ new #[Layout('layouts.guest')] class extends Component {
 @endplaceholder
 
 <div>
-    <section class="container mx-auto px-4 py-4">
+    <section class="container mx-auto px-4 py-4 min-h-[80svh]">
         {{-- Breadcrumb --}}
         <flux:breadcrumbs class="mb-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>

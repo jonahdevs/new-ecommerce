@@ -157,7 +157,7 @@ class Product extends Model
             ->withTimestamps();
     }
 
-        /**
+    /**
      * Get all reviews for the product
      */
     public function reviews(): HasMany
@@ -171,11 +171,11 @@ class Product extends Model
 
     /**
      * Scope a query to only include active products.
-     */  
+     */
     #[Scope]
     protected function active(Builder $query)
     {
-         $query->where('is_active', true);
+        $query->where('is_active', true);
     }
 
     #[Scope()]
@@ -216,6 +216,13 @@ class Product extends Model
     {
         return Attribute::make(
             get: fn() => $this->sale_price ? format_currency($this->sale_price ?? 0) : null
+        );
+    }
+
+    protected function formattedPrice(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => format_currency($this->price)
         );
     }
 

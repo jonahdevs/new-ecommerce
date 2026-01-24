@@ -76,7 +76,6 @@ class CartService
      * Get cart item for a product
      */
     public function getCartItem(int $productId, ?string $variantId = null)
-
     {
         try {
             $cart = $this->getCart();
@@ -97,7 +96,7 @@ class CartService
     public function addItem(int $productId, int $quantity = 1, ?string $variantId = null)
     {
         try {
-            // Validate quantity 
+            // Validate quantity
             if ($quantity < 1) {
                 throw new InvalidArgumentException('Quantity must be at least 1!');
             }
@@ -263,6 +262,32 @@ class CartService
 
             // Return 0 as a safe fallback
             return 0;
+        }
+    }
+
+    /**
+     * Cart Summary
+     */
+    public function summary(Cart $cart)
+    {
+        if (!$cart) {
+            return [
+                'subtotal' => 0,
+                'discount' => 0,
+            ];
+        } else {
+            $subtotal = $cart->items->reduce(function ($carry, $item) {
+                return $carry + ($item->product->final_price * $item->quantity);
+            }, 0);
+
+            $discount = $cart->items->reduce(function ($carry, $item) {
+                return $carry + (($item->product->price - $item->product->sale_price) * $item->quantity);
+            }, 0);
+
+            return [
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+            ];
         }
     }
 }
