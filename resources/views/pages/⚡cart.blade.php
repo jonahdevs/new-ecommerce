@@ -141,7 +141,6 @@ new #[Layout('layouts.guest')] class extends Component {
                                                     <p class="font-semibold text-sheffield-blue">
                                                         {{ $item->product->formatted_final_price }}</p>
                                                 @endif
-
                                             </div>
                                         </div>
 
