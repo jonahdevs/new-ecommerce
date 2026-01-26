@@ -3,9 +3,20 @@
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Defer;
 use App\Services\CartService;
+use App\Services\WishlistService;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component {
+    public array $cartSummary = [];
+
+    public function mount()
+    {
+        $cartService = app(CartService::class);
+        $cart = $cartService->getCart();
+        $this->cartSummary = $cartService->summary($cart);
+    }
+
     #[Computed]
     public function cartItems()
     {
@@ -18,38 +29,155 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         $cartService->clear();
     }
+
+    public function removeItem($itemId)
+    {
+        try {
+            $cartService = app(CartService::class);
+            $cartService->removeItem($itemId);
+
+            $this->dispatch('notify', variant: 'success', message: 'Item removed from cart');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove item');
+        }
+    }
+
+    public function toggleWishlist($productId)
+    {
+        try {
+            $wishlistService = app(WishlistService::class);
+            $wishlistService->toggle($productId);
+
+            $this->dispatch('wishlist-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Wishlist updated');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
+        }
+    }
+
+    public function inWishlist($productId)
+    {
+        $wishlistService = app(WishlistService::class);
+        return $wishlistService->has($productId);
+    }
+
+    public function updateQuantity($productId, $quantity)
+    {
+        try {
+            $cartService = app(CartService::class);
+            $cartService->updateItemQuantity($productId, $quantity);
+            $this->dispatch('notify', variant: 'success', message: 'Cart updated');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart');
+        }
+    }
 };
 ?>
 
 @placeholder
     <div>
-        <div class="mx-auto container px-4 py-4">
+        <div class="mx-auto container px-4 py-4 min-h-[80svh]">
             {{-- Breadcrumb --}}
-            <flux:breadcrumbs>
+            <flux:breadcrumbs class="mb-4">
                 <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                     <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                     Home
                 </flux:breadcrumbs.item>
 
+                <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>Products</flux:breadcrumbs.item>
                 <flux:breadcrumbs.item>Cart</flux:breadcrumbs.item>
             </flux:breadcrumbs>
+
+            <!-- Cart Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-zinc-900">Cart</h1>
+                </div>
+            </div>
+
+            <div class="mt-4 md:gap-6 lg:flex lg:items-start">
+                <div class="lg:flex-1">
+                    <div class="space-y-4">
+
+                        @for ($i = 0; $i < 2; $i++)
+                            <div class="bg-white rounded-sm overflow-hidden border">
+                                <div class="flex items-start gap-3 p-3 py-4">
+                                    <div class="shrink-0 px-4">
+                                        <flux:skeleton animate="shimmer" class="w-20 h-20 rounded-sm" />
+                                    </div>
+
+                                    <div class="flex-1 space-y-2">
+                                        <flux:skeleton animate="shimmer" class="h-5 w-3/4 rounded-sm " />
+                                        <flux:skeleton animate="shimmer" class="h-4 w-1/4 rounded-sm " />
+                                    </div>
+                                    <div>
+                                        <flux:skeleton animate="shimmer" class="h-5 w-24 rounded-sm" />
+                                    </div>
+
+                                </div>
+                                <div class="bg-zinc-50 px-3 py-2 flex items-center">
+                                    <div class="flex items-center gap-4">
+                                        <flux:skeleton animate="shimmer" class="h-4 w-20 rounded-sm" />
+                                        <flux:skeleton animate="shimmer" class="h-4 w-24 rounded-sm" />
+
+                                    </div>
+
+                                    <div class="ms-auto flex items-center gap-1">
+                                        <flux:skeleton animate="shimmer" class="h-4 w-16 rounded-sm" />
+                                    </div>
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+                </div>
+
+                <div class="w-full max-w-sm">
+                    <div class="bg-white rounded-sm border">
+                        <div class="px-3 py-2 border-b">
+                            <flux:skeleton animate="shimmer" class="h-6 w-24 px-3 py-2 rounded-sm" />
+                        </div>
+                        <div class="space-y-2 p-3">
+                            <div class="flex items-center justify-between">
+                                <flux:skeleton animate="shimmer" class="h-4 w-24 rounded-sm" />
+                                <flux:skeleton animate="shimmer" class="h-4 w-16 rounded-sm" />
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <flux:skeleton animate="shimmer" class="h-4 w-24 rounded-sm" />
+                                <flux:skeleton animate="shimmer" class="h-4 w-16 rounded-sm" />
+                            </div>
+                        </div>
+                        <div class="border-t p-3">
+                            <flux:skeleton animate="shimmer" class="h-10 w-full rounded-sm" />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endplaceholder
 
 <div>
-    <div class="mx-auto container px-4 py-4">
+    <div class="mx-auto container px-4 py-4 min-h-[80svh]">
         {{-- Breadcrumb --}}
-        <flux:breadcrumbs>
+        <flux:breadcrumbs class="mb-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
 
+            <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>Products</flux:breadcrumbs.item>
+
             <flux:breadcrumbs.item>Cart</flux:breadcrumbs.item>
         </flux:breadcrumbs>
 
-        <div class="mt-4 md:gap-6 lg:flex lg:items-start xl:gap-8">
+        <!-- Cart Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-zinc-900">Cart</h1>
+            </div>
+        </div>
+
+        <div class="mt-4 md:gap-6 lg:flex lg:items-start">
             <div class="lg:flex-1">
                 @if ($this->cartItems->isEmpty())
                     <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -72,7 +200,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         <!-- Primary CTA -->
                         <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                            <flux:button href="{{ route('products') }}" variant="primary" class="w-full sm:w-auto">
+                            <flux:button href="{{ route('products') }}" wire:navigate variant="primary"
+                                class="w-full sm:w-auto">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
@@ -88,19 +217,6 @@ new #[Layout('layouts.guest')] class extends Component {
                 @else
                     <div class="space-y-4">
                         <div>
-                            <div class="px-3 py-2 flex items-center justify-between">
-                                <h1 class="font-medium text-lg">Cart <span
-                                        class="text-sm text-zinc-600 tracking-wider">({{ $this->cartItems->count() }})</span>
-                                </h1>
-
-                                {{-- Clear All button --}}
-                                <button wire:click="clearCart"
-                                    class="flex items-center text-sm font-medium hover:text-red-500 hover:underline">
-                                    <flux:icon.trash class="text-red-500 size-4 me-2" />
-                                    Clear All
-                                </button>
-                            </div>
-
                             <section class="space-y-2">
                                 @foreach ($this->cartItems as $item)
                                     <div class="rounded-sm bg-white overflow-hidden border">
@@ -112,18 +228,24 @@ new #[Layout('layouts.guest')] class extends Component {
                                             </div>
 
                                             <div class="flex-1">
-                                                <a href="{{ route('products.show', $item->product) }}"
+                                                <a href="{{ route('products.show', $item->product) }}" wire:navigate
                                                     class="text-base font-medium hover:underline">
                                                     {{ $item->product->name }}
                                                 </a>
 
                                                 <flux:input.group class="mt-2">
-                                                    <flux:button icon="minus" size="sm"></flux:button>
-                                                    <flux:input value="{{ $item->quantity }}"
+                                                    <flux:button icon="minus" size="sm"
+                                                        class="cursor-pointer text-zinc-500!"
+                                                        wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">
+                                                    </flux:button>
+                                                    <flux:input value="{{ $item->quantity }}" disabled
                                                         class="max-w-8! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
                                                         style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;"
                                                         size="sm" />
-                                                    <flux:button icon="plus" size="sm"></flux:button>
+                                                    <flux:button icon="plus" size="sm"
+                                                        class="cursor-pointer text-zinc-500!"
+                                                        wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">
+                                                    </flux:button>
                                                 </flux:input.group>
                                             </div>
                                             <div>
@@ -132,7 +254,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                                         {{ $item->product->formatted_final_price }}</p>
                                                     <div class="flex items-center flex-wrap gap-x-2  text-right">
                                                         <p class="text-sm text-zinc-500 line-through">
-                                                            {{ $item->product->formatted_sale_price }}</p>
+                                                            {{ $item->product->formatted_price }}</p>
                                                         <flux:badge color="amber" size="sm">
                                                             -{{ $item->product->discountPercentage() }}
                                                         </flux:badge>
@@ -146,27 +268,26 @@ new #[Layout('layouts.guest')] class extends Component {
 
                                         <div class="bg-zinc-50 px-3 py-2 flex items-center">
                                             <div class="flex items-center gap-4">
-                                                <button type="button"
-                                                    class="flex items-center gap-2 text-xs font-medium text-zinc-600">
-                                                    <flux:icon.trash class="size-4" />
-                                                    Remove
-                                                </button>
-
-                                                <button type="button"
-                                                    class="flex items-center gap-2 text-xs text-zinc-600 font-medium">
-                                                    <flux:icon.heart class="size-4" />
-                                                    Add Wishlist
-                                                </button>
+                                                <flux:button wire:click="removeItem({{ $item->id }})"
+                                                    variant="ghost" size="xs" icon="trash"
+                                                    icon-variant="outline" class="cursor-pointer">Remove</flux:button>
+                                                <flux:button wire:click="toggleWishlist({{ $item->product->id }})"
+                                                    variant="ghost" size="xs" class="cursor-pointer">
+                                                    <flux:icon.heart
+                                                        variant="{{ $this->inWishlist($item->product->id) ? 'solid' : 'outline' }}"
+                                                        @class([
+                                                            'size-4 inline-block me-1',
+                                                            'text-red-500' => $this->inWishlist($item->product->id),
+                                                        ]) />
+                                                    {{ $this->inWishlist($item->product->id) ? 'Remove Wishlist' : 'Add Wishlist' }}
+                                                </flux:button>
                                             </div>
-
-
 
                                             <div class="ms-auto flex items-center gap-1">
                                                 <p class="text-zinc-600 text-xs font-medium">Total:</p>
                                                 <span
                                                     class="font-medium text-sm">{{ format_currency($item->product->finalPrice * $item->quantity) }}</span>
                                             </div>
-
                                         </div>
                                     </div>
                                 @endforeach
@@ -176,7 +297,41 @@ new #[Layout('layouts.guest')] class extends Component {
                 @endif
             </div>
 
-            <div class="w-full max-w-sm"></div>
+            @if ($this->cartItems->isNotEmpty())
+                <div class="w-full max-w-sm sticky top-44">
+                    <div class="bg-white rounded-sm border">
+                        <div>
+                            <h3 class="font-medium text-sm uppercase px-3 py-2 border-b">
+                                Cart Summary
+                            </h3>
+                            <div class="p-3 space-y-2">
+
+                                <div class="flex items-center justify-between">
+                                    <p class="text-zinc-600 text-sm">Discount:</p>
+                                    <span
+                                        class="font-medium text-sm text-right">{{ format_currency($cartSummary['discount']) }}</span>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <p class="text-zinc-600 text-sm">Subtotal:</p>
+                                    <span
+                                        class="font-medium text-sm text-right">{{ format_currency($cartSummary['subtotal']) }}</span>
+                                </div>
+                            </div>
+
+                            <div class="border-t p-3">
+                                <flux:button class="w-full group cursor-pointer" variant="primary">Proceed
+                                    to Checkout
+                                    <flux:icon.chevron-right
+                                        class="w-4 h-4 ms-2 inline-block group-hover:translate-x-1 transition-transform" />
+                                </flux:button>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

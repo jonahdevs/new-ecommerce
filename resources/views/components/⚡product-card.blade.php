@@ -2,7 +2,7 @@
 
 use App\Services\WishlistService;
 use App\Services\CompareService;
-
+use App\Services\CartService;
 use App\Models\Product;
 use Livewire\Component;
 
@@ -11,6 +11,7 @@ new class extends Component {
 
     public bool $wishlisted = false;
     public bool $inCompare = false;
+    public int $cartQuantity = 1;
 
     public function mount(WishlistService $wishlist, CompareService $compareService)
     {
@@ -48,6 +49,25 @@ new class extends Component {
             $this->loading = false;
         }
     }
+
+    public function addToCart(CartService $cartService)
+    {
+        try {
+            $cartService->addItem($this->product->id, $this->cartQuantity);
+
+            $this->inCart = true;
+            $cartItem = $cartService->getCartItem($this->product->id);
+            if ($cartItem) {
+                $this->cartItemId = $cartItem->id;
+                $this->cartQuantity = $cartItem->quantity;
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
+        }
+    }
 };
 ?>
 <div
@@ -68,9 +88,8 @@ new class extends Component {
 
             </a>
             {{-- Quick action buttons --}}
-            <div class="absolute top-2 right-2 flex flex-col gap-2 ">
-
-
+            <div
+                class="absolute top-2 right-2 flex flex-col gap-2 translate-x-20 group-hover:translate-x-0 transition-transform duration-300">
                 <flux:button wire:click.stop="toggleWishlist" icon="heart" title="Wishlist"
                     icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" @class([
                         'cursor-pointer',
@@ -88,8 +107,8 @@ new class extends Component {
 
                 </flux:button>
 
-                <flux:button icon="shopping-cart" size="sm" icon-variant="outline" title="Add to Cart"
-                    class="cursor-pointer">
+                <flux:button wire:click="addToCart" icon="shopping-cart" size="sm" icon-variant="outline"
+                    title="Add to Cart" class="cursor-pointer">
 
                 </flux:button>
             </div>
@@ -137,7 +156,7 @@ new class extends Component {
                 @if ($product->hasDiscount())
                     <div class="flex items-center flex-wrap gap-x-2">
                         <p class="font-semibold text-sheffield-blue">{{ $product->formatted_final_price }}</p>
-                        <p class="text-sm text-zinc-500 line-through">{{ $product->formatted_sale_price }}</p>
+                        <p class="text-sm text-zinc-500 line-through">{{ $product->formatted_price }}</p>
                     </div>
                 @else
                     <p class="font-semibold text-sheffield-blue">{{ $product->formatted_final_price }}</p>
