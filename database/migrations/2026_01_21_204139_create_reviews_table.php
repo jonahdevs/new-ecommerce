@@ -16,7 +16,7 @@ return new class extends Migration {
             // Foreign Keys
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained()->cascadeOnDelete();
 
             // Review Content
             $table->unsignedTinyInteger('rating'); // 1-5 stars
@@ -38,7 +38,7 @@ return new class extends Migration {
             $table->timestamps();
 
             // Unique Constraint - One review per user per product
-            $table->unique(['user_id', 'product_id'], 'unique_user_product');
+            // $table->unique(['user_id', 'product_id'], 'unique_user_product');
 
             // Indexes for Performance
             $table->index(['product_id', 'status'], 'idx_product_status');

@@ -18,6 +18,7 @@ return new class extends Migration {
                 $table->boolean('is_active')->default(true);
                 $table->boolean('newsletter_subscribed')->default(value: false);
                 $table->string('default_payment_method')->nullable();
+                $table->softDeletes();
             });
         });
     }
@@ -35,6 +36,7 @@ return new class extends Migration {
                 'is_active',
                 'newsletter_subscribed',
                 'default_payment_method',
+                'deleted_at'
             ]);
         });
     }

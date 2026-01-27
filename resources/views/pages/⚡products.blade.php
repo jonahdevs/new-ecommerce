@@ -287,7 +287,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <div class="flex gap-4 mt-4">
                 {{-- left sidebar --}}
 
-                <flux:skeleton animate="shimmer" class="hidden lg:block w-64 shrink-0 min-h-[80svh]" />
+                <flux:skeleton animate="shimmer" class="hidden lg:block w-64 shrink-0 min-h-[80svh] sticky top-44" />
 
                 {{-- Product section --}}
                 <div class="flex-1 @container/main">
