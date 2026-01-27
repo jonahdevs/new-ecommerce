@@ -13,6 +13,8 @@ new #[Layout('layouts.guest')] class extends Component {
     public bool $inCompare = false;
     public bool $inCart = false;
 
+    public string $selectedTab = 'description';
+
     // cart management
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
@@ -174,199 +176,205 @@ new #[Layout('layouts.guest')] class extends Component {
             <flux:breadcrumbs.item href="{{ route('products') }}">Products</flux:breadcrumbs.item>
         </flux:breadcrumbs>
 
-        <div class="grid lg:grid-cols-6 gap-5">
-            <div class="lg:col-span-2">
-                {{-- Product Image Slider --}}
-                <div class="w-full" x-data="{
-                    mainSwiper: null,
-                    thumbSwiper: null,
-                    activeIndex: 0,
-                    isBeginning: true,
-                    isEnd: false,
-                
-                    init() {
-                        // Wait for next tick to ensure DOM is ready
-                        this.$nextTick(() => {
-                            // Initialize thumbnail slider first
-                            this.thumbSwiper = new Swiper('.thumbSwiper', {
-                                spaceBetween: 10,
-                                slidesPerView: 4,
-                                freeMode: true,
-                                watchSlidesProgress: true,
-                                loop: true,
-                                breakpoints: {
-                                    640: {
-                                        slidesPerView: 5,
-                                    },
-                                    768: {
-                                        slidesPerView: 6,
-                                    },
-                                },
-                                on: {
-                                    slideChange: (swiper) => {
-                                        this.isBeginning = swiper.isBeginning;
-                                        this.isEnd = swiper.isEnd;
-                                    },
-                                },
-                            });
-                
-                            // Initialize main slider
-                            this.mainSwiper = new Swiper('.mainSwiper', {
-                                spaceBetween: 10,
-                                loop: true,
-                                navigation: {
-                                    nextEl: '.swiper-button-next',
-                                    prevEl: '.swiper-button-prev',
-                                },
-                                thumbs: {
-                                    swiper: this.thumbSwiper,
-                                },
-                                on: {
-                                    slideChange: (swiper) => {
-                                        this.activeIndex = swiper.realIndex;
-                
-                                        // Ensure the active thumbnail is visible
-                                        this.thumbSwiper.slideTo(swiper.realIndex);
-                                    },
-                                },
-                            });
-                
-                            // Set initial state
-                            this.isBeginning = this.thumbSwiper.isBeginning;
-                            this.isEnd = this.thumbSwiper.isEnd;
-                        });
-                    },
-                }">
-                    {{-- Main Slider --}}
-                    <div class="mb-4">
-                        <div class="swiper mainSwiper rounded-sm overflow-hidden bg-gray-50">
-                            <div class="swiper-wrapper">
-                                @foreach ($product->images as $image)
-                                    <div class="swiper-slide">
-                                        <div class="aspect-square flex items-center justify-center">
-                                            <img src="{{ $image->url }}"
-                                                alt="{{ $image->alt_text ?? $product->name }}"
-                                                class="w-full h-full object-contain" />
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
+        <div class="grid lg:grid-cols-4 gap-5">
 
-                    {{-- Thumbnail Slider --}}
-                    <div class="relative">
-                        {{-- Previous Button --}}
-                        <button @click="thumbSwiper.slidePrev()"
-                            class="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 cursor-pointer ">
-                            <flux:icon.chevron-left class="size-6 stroke-2" variant="solid" />
-                        </button>
+            <div class="bg-white lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 border">
 
-                        <div class="swiper thumbSwiper px-12">
-                            <div class="swiper-wrapper">
-                                @foreach ($product->images as $image)
-                                    <div class="swiper-slide cursor-pointer">
-                                        <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                            :class="activeIndex === $loop->index ?
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'border-sheffield-blue' :
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'border-gray-200 hover:border-gray-300'">
-                                            <img src="{{ $image->url }}"
-                                                alt="{{ $image->alt_text ?? $product->name }}"
-                                                class="w-full h-full object-cover" />
+                <div class="lg:col-span-2">
+                    {{-- Product Image Slider --}}
+                    <div class="w-full" x-data="{
+                        mainSwiper: null,
+                        thumbSwiper: null,
+                        activeIndex: 0,
+                        isBeginning: true,
+                        isEnd: false,
+
+                        init() {
+                            // Wait for next tick to ensure DOM is ready
+                            this.$nextTick(() => {
+                                // Initialize thumbnail slider first
+                                this.thumbSwiper = new Swiper('.thumbSwiper', {
+                                    spaceBetween: 10,
+                                    slidesPerView: 4,
+                                    freeMode: true,
+                                    watchSlidesProgress: true,
+                                    loop: true,
+                                    breakpoints: {
+                                        640: {
+                                            slidesPerView: 5,
+                                        },
+                                        768: {
+                                            slidesPerView: 6,
+                                        },
+                                    },
+                                    on: {
+                                        slideChange: (swiper) => {
+                                            this.isBeginning = swiper.isBeginning;
+                                            this.isEnd = swiper.isEnd;
+                                        },
+                                    },
+                                });
+
+                                // Initialize main slider
+                                this.mainSwiper = new Swiper('.mainSwiper', {
+                                    spaceBetween: 10,
+                                    loop: true,
+                                    navigation: {
+                                        nextEl: '.swiper-button-next',
+                                        prevEl: '.swiper-button-prev',
+                                    },
+                                    thumbs: {
+                                        swiper: this.thumbSwiper,
+                                    },
+                                    on: {
+                                        slideChange: (swiper) => {
+                                            this.activeIndex = swiper.realIndex;
+
+                                            // Ensure the active thumbnail is visible
+                                            this.thumbSwiper.slideTo(swiper.realIndex);
+                                        },
+                                    },
+                                });
+
+                                // Set initial state
+                                this.isBeginning = this.thumbSwiper.isBeginning;
+                                this.isEnd = this.thumbSwiper.isEnd;
+                            });
+                        },
+                    }">
+                        {{-- Main Slider --}}
+                        <div class="mb-4" x-cloak x-show="mainSwiper">
+                            <div class="swiper mainSwiper rounded-sm overflow-hidden bg-gray-50">
+                                <div class="swiper-wrapper">
+                                    @foreach ($product->images as $image)
+                                        <div class="swiper-slide">
+                                            <div class="aspect-square flex items-center justify-center">
+                                                <img src="{{ $image->url }}"
+                                                    alt="{{ $image->alt_text ?? $product->name }}"
+                                                    class="w-full h-full object-contain" />
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Next Button --}}
-                        <button @click="thumbSwiper.slideNext()"
-                            class="absolute right-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-2">
-                            <flux:icon.chevron-right class="size-6 stroke-2" variant="solid" />
-                        </button>
-                    </div>
-                </div>
-            </div>
+                        {{-- Thumbnail Slider --}}
+                        <div class="relative" x-show="thumbSwiper" x-cloak>
+                            {{-- Previous Button --}}
+                            <button @click="thumbSwiper.slidePrev()"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 cursor-pointer ">
+                                <flux:icon.chevron-left class="size-6 stroke-2" variant="solid" />
+                            </button>
 
-            {{-- Product Details Section --}}
-            <div class="lg:col-span-3">
-                <h1 class="text-3xl font-bold">{{ $product->name }}</h1>
+                            <div class="swiper thumbSwiper px-12">
+                                <div class="swiper-wrapper">
+                                    @foreach ($product->images as $image)
+                                        <div class="swiper-slide cursor-pointer">
+                                            <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
+                                                :class="activeIndex === $loop->index ?
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'border-sheffield-blue' :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'border-gray-200 hover:border-gray-300'">
+                                                <img src="{{ $image->url }}"
+                                                    alt="{{ $image->alt_text ?? $product->name }}"
+                                                    class="w-full h-full object-cover" />
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
 
-                <div class="flex items-center justify-between flex-wrap gap-3 mt-2">
-                    <div class="flex items-center gap-3">
-                        <span class="text-zinc-500 text-sm">Brand:</span>
-                        <span class="text-sheffield-blue font-semibold text-sm">{{ $product->brand?->name }}</span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <div class="flex items-center gap-1">
-                            @for ($i = 0; $i < 5; $i++)
-                                <flux:icon.star class="size-5 text-yellow-500" variant="solid" />
-                            @endfor
+                            {{-- Next Button --}}
+                            <button @click="thumbSwiper.slideNext()"
+                                class="absolute right-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-2">
+                                <flux:icon.chevron-right class="size-6 stroke-2" variant="solid" />
+                            </button>
                         </div>
-                        <span class="text-sm font-medium text-zinc-600">(5.0)</span>
-                        <a href="#" class="text-sm font-medium text-sheffield-blue hover:underline">
-                            345 Reviews
-                        </a>
                     </div>
                 </div>
 
-                <div class="mt-3 text-zinc-600">{!! $product->short_description !!}</div>
+                {{-- Product Details Section --}}
+                <div class="lg:col-span-3">
+                    <h1 class="text-3xl font-bold">{{ $product->name }}</h1>
 
-                <div class="mt-3">
-                    @if ($product->hasDiscount())
-                        <div class="flex items-center flex-wrap gap-x-2">
-                            <p class="text-lg font-semibold text-sheffield-blue">{{ $product->formatted_final_price }}
+                    <div class="flex items-center justify-between flex-wrap gap-3 mt-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-zinc-500 text-sm">Brand:</span>
+                            <span class="text-sheffield-blue font-semibold text-sm">{{ $product->brand?->name }}</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                @for ($i = 0; $i < 5; $i++)
+                                    <flux:icon.star class="size-5 text-yellow-500" variant="solid" />
+                                @endfor
+                            </div>
+                            <span class="text-sm font-medium text-zinc-600">(5.0)</span>
+                            <a href="#" class="text-sm font-medium text-sheffield-blue hover:underline">
+                                345 Reviews
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="my-4 text-zinc-500 text-sm">{!! $product->short_description !!}</div>
+
+                    <div>
+                        @if ($product->hasDiscount())
+                            <div class="flex items-center flex-wrap gap-x-2">
+                                <p class="text-lg font-semibold text-sheffield-blue">
+                                    {{ $product->formatted_final_price }}
+                                </p>
+                                <p class=" text-zinc-500 line-through">{{ $product->formatted_sale_price }}</p>
+
+                                <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}
+                                </flux:badge>
+                            </div>
+                        @else
+                            <p class="font-semibold text-lg text-sheffield-blue">{{ $product->formatted_final_price }}
                             </p>
-                            <p class=" text-zinc-500 line-through">{{ $product->formatted_sale_price }}</p>
+                        @endif
+                    </div>
 
-                            <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}
-                            </flux:badge>
-                        </div>
-                    @else
-                        <p class="font-semibold text-lg text-sheffield-blue">{{ $product->formatted_final_price }}</p>
-                    @endif
-                </div>
+                    <flux:separator class="mt-3" />
 
-                <flux:separator class="mt-3" />
+                    @island
+                        <div class="flex items-center gap-2 my-3">
+                            <flux:button.group>
+                                <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
+                                    wire:click="decreaseCartQuantity"></flux:button>
 
-                @island
-                    <div class="flex items-center gap-2 my-3">
-                        <flux:button.group>
-                            <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
-                                wire:click="decreaseCartQuantity"></flux:button>
+                                <flux:input readonly value="{{ $cartQuantity }}"
+                                    class="max-w-9! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
+                                    style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;" />
 
-                            <flux:input readonly value="{{ $cartQuantity }}"
-                                class="max-w-9! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
-                                style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;" />
+                                <flux:button icon="plus" class="cursor-pointer text-zinc-500!" title="Increase Quantity"
+                                    wire:click="increaseCartQuantity"></flux:button>
 
-                            <flux:button icon="plus" class="cursor-pointer text-zinc-500!" title="Increase Quantity"
-                                wire:click="increaseCartQuantity"></flux:button>
+                                @if ($inCart)
+                                    <flux:button icon="trash" class="cursor-pointer text-red-500!"
+                                        wire:click="removeFromCart" title="Remove Item from Cart">
+                                    </flux:button>
+                                @endif
+                            </flux:button.group>
 
-                            @if ($inCart)
-                                <flux:button icon="trash" class="cursor-pointer text-red-500!" wire:click="removeFromCart"
-                                    title="Remove Item from Cart">
+                            @if (!$inCart)
+                                <flux:button wire:click="addToCart" class="uppercase" variant="primary">
+                                    Add to Cart
                                 </flux:button>
                             @endif
-                        </flux:button.group>
 
-                        @if (!$inCart)
-                            <flux:button wire:click="addToCart" class="uppercase" variant="primary">
-                                Add to Cart
+                            <flux:button wire:click.stop="toggleWishlist" icon="heart"
+                                icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" title="Wishlist"
+                                @class(['cursor-pointer', 'text-red-500!' => $wishlisted])>
                             </flux:button>
-                        @endif
 
-                        <flux:button wire:click.stop="toggleWishlist" icon="heart"
-                            icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" title="Wishlist"
-                            @class(['cursor-pointer', 'text-red-500!' => $wishlisted])>
-                        </flux:button>
-
-                        <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
-                            icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-sheffield-!' => $inCompare])></flux:button>
-                        <flux:button icon="share" icon-variant="outline" title="Share"></flux:button>
-                    </div>
-                @endisland
-                <flux:separator class="my-2" />
+                            <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
+                                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-sheffield-!' => $inCompare])></flux:button>
+                            <flux:button icon="share" icon-variant="outline" title="Share"></flux:button>
+                        </div>
+                    @endisland
+                    <flux:separator class="my-2" />
+                </div>
             </div>
 
             <div class="lg:col-span-1">
@@ -376,7 +384,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <div class="p-3">
                         <h4 class="text-sm  font-medium text-slate-600">Choose your location</h4>
-                        <flux:select class="w-full" wire:model="selectedLocation">
+                        <flux:select class="w-full mt-2" wire:model="selectedLocation">
+
                             {{-- @foreach ($locations as $location)
                                 <flux:select.option value="{{ $location->code }}">
                                     {{ $location->name }}
@@ -386,6 +395,60 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        {{--  --}}
+        <div class="mt-10">
+            <div class="border pb-6 relative pt-10 px-6 bg-white">
+                <div class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
+
+                    <flux:button x-show="$wire.selectedTab == 'description'" @click="$wire.selectedTab = 'description'"
+                        variant="primary" class="rounded-none cursor-pointer">
+                        Description
+                    </flux:button>
+
+                    <flux:button x-show="$wire.selectedTab !== 'description'"
+                        @click="$wire.selectedTab = 'description'" class="rounded-none cursor-pointer">
+                        Description
+                    </flux:button>
+
+                    <flux:button x-show="$wire.selectedTab == 'specification'"
+                        @click="$wire.selectedTab = 'specification'" variant="primary"
+                        class="rounded-none cursor-pointer">
+                        Specification
+                    </flux:button>
+
+                    <flux:button x-show="$wire.selectedTab !== 'specification'"
+                        @click="$wire.selectedTab = 'specification'" class="rounded-none cursor-pointer">
+                        Specification
+                    </flux:button>
+
+                    <flux:button x-show="$wire.selectedTab == 'reviews'" @click="$wire.selectedTab = 'reviews'"
+                        variant="primary" class="rounded-none cursor-pointer">
+                        Reviews</flux:button>
+
+                    <flux:button x-show="$wire.selectedTab !== 'reviews'" @click="$wire.selectedTab = 'reviews'"
+                        class="rounded-none cursor-pointer ">
+                        Reviews
+                    </flux:button>
+
+                </div>
+
+                <div wire:show="selectedTab == 'description'">
+                    <div class="text-sm text-zinc-500 tracking-wider leading-6">{!! $product->description !!}</div>
+                </div>
+
+                <div wire:show="selectedTab == 'specification'">
+                    <div class="text-sm text-zinc-500 tracking-wider leading-6">{!! $product->specification !!}</div>
+                </div>
+
+                <div wire:show="selectedTab == 'reviews'">
+
+                    <h4 class="">Customer Ratings</h4>
+
+                    <div class="flex items"></div>
+                </div>
             </div>
         </div>
     </div>
