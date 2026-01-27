@@ -1,0 +1,401 @@
+<?php
+
+use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
+use App\Models\Product;
+use App\Models\ReviewHelpfulness;
+use App\Models\Review;
+use App\Services\ReviewService;
+use Livewire\WithPagination;
+
+new #[Layout('layouts.guest')] class extends Component {
+    use WithPagination;
+
+    public Product $product;
+
+    #[Url(as: 'rating')]
+    public ?int $filterRating = null;
+
+    #[Url(as: 'sort')]
+    public string $sortBy = 'recent';
+
+    public int $perPage = 10;
+
+    /**
+     * Get paginated reviews
+     */
+    #[Computed]
+    public function reviews()
+    {
+        $reviewService = app(ReviewService::class);
+        return $reviewService->getReviews($this->product, $this->sortBy, $this->filterRating, $this->perPage);
+    }
+
+    /**
+     * Get rating distribution with percentages
+     */
+    #[Computed]
+    public function ratingDistribution()
+    {
+        $reviewService = app(ReviewService::class);
+        return $reviewService->getDistributionWithPercentages($this->product);
+    }
+
+    /**
+     * Get total reviews count
+     */
+    #[Computed]
+    public function totalReviews()
+    {
+        $reviewService = app(ReviewService::class);
+        return $reviewService->totalReview($this->product);
+    }
+
+    /**
+     * Get average rating
+     */
+    #[Computed]
+    public function averageRating()
+    {
+        $reviewService = app(ReviewService::class);
+        return $reviewService->averageRating($this->product);
+    }
+
+    /**
+     * Update sorting
+     */
+    public function updatedSortBy()
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * Update rating filter
+     */
+    public function updatedFilterRating()
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * Filter by rating
+     */
+    public function filterByRating(?int $rating)
+    {
+        $this->filterRating = $this->filterRating === $rating ? null : $rating;
+        $this->resetPage();
+    }
+
+    /**
+     * Clear filters
+     */
+    public function clearFilters()
+    {
+        $this->filterRating = null;
+        $this->sortBy = 'recent';
+        $this->resetPage();
+    }
+
+    /**
+     * Vote on Review
+     */
+    public function vote($reviewId, $isHelpful)
+    {
+        try {
+            $review = Review::findOrFail($reviewId);
+            $reviewService = app(ReviewService::class);
+            $reviewService->vote($review, $isHelpful);
+
+            // Clear computed properties to refresh data
+            unset($this->reviews);
+            unset($this->userVotes);
+
+            $this->dispatch('notify', variant: 'success', message: 'Thank you for your feedback!');
+        } catch (\DomainException $e) {
+            if ($e->getMessage() === 'self_vote') {
+                $this->dispatch('notify', variant: 'warning', message: 'You cannot vote on your own review.');
+            } else {
+                $this->dispatch('notify', variant: 'warning', message: 'An error occurred. Please try again.');
+            }
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'warning', message: $th->getMessage() ?? 'Something went wrong!');
+        }
+    }
+
+    /**
+     * Get user votes for all reviews on current page (prevents N+1 queries)
+     */
+    #[Computed]
+    public function userVotes()
+    {
+        if (!Auth::check()) {
+            return collect();
+        }
+
+        $reviewIds = $this->reviews->getCollection()->pluck('id')->toArray();
+
+        if (empty($reviewIds)) {
+            return collect();
+        }
+
+        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
+    }
+};
+?>
+
+<div>
+    <section class="container mx-auto px-4 py-4 min-h-[80svh]">
+        {{-- Breadcrumb --}}
+        <flux:breadcrumbs class="mb-4">
+            <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
+                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
+                Home
+            </flux:breadcrumbs.item>
+
+            <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>
+                Products
+            </flux:breadcrumbs.item>
+
+            <flux:breadcrumbs.item href="{{ route('products.show', $product) }}" wire:navigate>
+                {{ $product->name }}
+            </flux:breadcrumbs.item>
+
+            <flux:breadcrumbs.item>Reviews</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+
+        <div class="bg-white rounded-sm border p-5">
+            {{-- Header --}}
+            <h2 class="font-medium text-lg mb-5">Customer Reviews</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+
+                {{-- Sidebar with Rating Statistics --}}
+                <div class="lg:col-span-1">
+                    <div class="lg:sticky lg:top-44 space-y-6">
+
+                        <div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-sheffield-blue">{{ $this->averageRating }}
+                                </div>
+                                <div class="flex justify-center gap-1 mt-1">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        @if ($i <= floor($this->averageRating))
+                                            <flux:icon.star class="size-5 text-orange-400 fill-current" />
+                                        @elseif ($i - 0.5 <= $this->averageRating)
+                                            <svg class="w-5 h-5 text-orange-400" viewBox="0 0 20 20">
+                                                <defs>
+                                                    <linearGradient id="half-star">
+                                                        <stop offset="50%" stop-color="currentColor" />
+                                                        <stop offset="50%" stop-color="#D1D5DB" />
+                                                    </linearGradient>
+                                                </defs>
+                                                <path fill="url(#half-star)"
+                                                    d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                            </svg>
+                                        @else
+                                            <flux:icon.star class="size-5 text-zinc-300 fill-current" />
+                                        @endif
+                                    @endfor
+                                </div>
+                                <div class="text-sm text-zinc-600 mt-1">{{ $this->totalReviews }}
+                                    {{ Str::plural('review', $this->totalReviews) }}</div>
+                            </div>
+                        </div>
+
+                        <flux:separator class="my-4" />
+
+                        {{-- Rating Distribution --}}
+                        <div>
+                            <div class="space-y-2">
+                                @foreach ($this->ratingDistribution as $rating => $data)
+                                    <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                                        {{-- Star Rating --}}
+                                        <div class="flex gap-0.5">
+                                            @for ($star = 1; $star <= 5; $star++)
+                                                @if ($star <= $rating)
+                                                    <flux:icon.star class="size-5 text-orange-400 fill-current" />
+                                                @else
+                                                    <flux:icon.star class="size-5 text-zinc-300 fill-current" />
+                                                @endif
+                                            @endfor
+                                        </div>
+
+                                        {{-- Progress Bar --}}
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-sheffield-blue h-2.5 rounded-full"
+                                                style="width: {{ $data['percentage'] }}%"></div>
+                                        </div>
+
+                                        {{-- Percentage --}}
+                                        <span class="text-sm font-semibold text-sheffield-blue min-w-[45px]">
+                                            {{ $data['percentage'] }}%
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Reviews List --}}
+                <div class="lg:col-span-3">
+                    {{-- Sort and Filter Controls --}}
+                    <div class="flex items-center justify-between mb-5 pb-4 border-b">
+                        <div class="text-sm text-zinc-600">
+                            @if ($filterRating)
+                                Showing {{ $filterRating }}-star reviews
+                            @else
+                                Showing all reviews
+                            @endif
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            {{-- Clear Filters Button --}}
+                            @if ($filterRating || $sortBy !== 'recent')
+                                <flux:button wire:click="clearFilters" variant="ghost" icon="x-mark" size="sm">
+                                    Clear Filters
+                                </flux:button>
+                            @endif
+
+                            <flux:select wire:model.change="filterRating" class="w-fit">
+                                <flux:select.option value="5">5 Star</flux:select.option>
+                                <flux:select.option value="4">4 Star</flux:select.option>
+                                <flux:select.option value="3">3 Star</flux:select.option>
+                                <flux:select.option value="2">2 Star</flux:select.option>
+                                <flux:select.option value="1">1 Star</flux:select.option>
+                            </flux:select>
+
+                            <flux:select wire:model.change="sortBy" class="w-fit">
+                                <flux:select.option value="recent">Most Recent</flux:select.option>
+                                <flux:select.option value="helpful">Most Helpful</flux:select.option>
+                                <flux:select.option value="highest">Highest Rating</flux:select.option>
+                                <flux:select.option value="lowest">Lowest Rating</flux:select.option>
+                            </flux:select>
+                        </div>
+                    </div>
+
+                    {{-- Reviews Content --}}
+                    @if ($this->reviews->isEmpty())
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-zinc-300 mb-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                            </svg>
+                            <p class="text-zinc-500 text-lg mb-2">No reviews yet</p>
+                            <p class="text-zinc-400 text-sm">
+                                @if ($filterRating)
+                                    No {{ $filterRating }}-star reviews found. Try adjusting your filters.
+                                @else
+                                    Be the first to review this product!
+                                @endif
+                            </p>
+                        </div>
+                    @else
+                        <div class="space-y-6">
+                            @foreach ($this->reviews as $review)
+                                <div class="border-b pb-6 last:border-b-0" wire:key="review-{{ $review->id }}">
+                                    {{-- Review Header --}}
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-1">
+                                                <span
+                                                    class="font-semibold text-gray-900">{{ $review->user->name }}</span>
+                                                @if ($review->is_verified_purchase)
+                                                    <flux:badge icon="check-badge" size="sm" color="green">
+                                                        Verified Purchase
+                                                    </flux:badge>
+                                                @endif
+                                            </div>
+
+                                            {{-- Star Rating --}}
+                                            <div class="flex items-center gap-2">
+                                                <div class="flex gap-0.5">
+                                                    @for ($i = 1; $i <= 5; $i++)
+                                                        @if ($i <= $review->rating)
+                                                            <flux:icon.star
+                                                                class="size-4 text-orange-400 fill-current" />
+                                                        @else
+                                                            <flux:icon.star
+                                                                class="w-4 h-4 text-zinc-300 fill-current" />
+                                                        @endif
+                                                    @endfor
+                                                </div>
+
+                                                <span class="text-sm text-zinc-500">
+                                                    {{ $review->created_at->diffForHumans() }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Review Title --}}
+                                    @if ($review->title)
+                                        <h5 class="font-medium mb-2">{{ $review->title }}</h5>
+                                    @endif
+
+                                    {{-- Review Text --}}
+                                    <p class="text-zinc-600 text-sm mb-3 leading-wide">{{ $review->review_text }}
+                                    </p>
+
+                                    {{-- Review Images --}}
+                                    @if ($review->images->isNotEmpty())
+                                        <div class="flex gap-2 mb-4">
+                                            @foreach ($review->images as $image)
+                                                <img src="{{ $image->image_url }}" alt="Review image"
+                                                    class="w-20 h-20 object-cover rounded border cursor-pointer hover:opacity-75 transition"
+                                                    onclick="window.open('{{ $image->image_url }}', '_blank')">
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    {{-- Helpfulness --}}
+                                    <div class="flex items-center gap-4 pt-3 border-t border-zinc-100">
+                                        <p class="text-sm text-zinc-500">Was this helpful?</p>
+
+                                        <div class="flex items-center gap-2">
+                                            @php
+                                                $userVote = $this->userVotes->get($review->id);
+                                            @endphp
+
+                                            <flux:button wire:click="vote({{ $review->id }}, true)" variant="ghost"
+                                                size="sm" @class([
+                                                    'text-sm cursor-pointer',
+                                                    'text-green-600!' => $userVote === true,
+                                                    'text-zinc-600!' => $userVote !== true,
+                                                ])
+                                                icon-variant="{{ $userVote === true ? 'solid' : 'outline' }}"
+                                                icon="hand-thumb-up" icon-size="sm">
+                                                Yes ({{ $review->helpful_count }})
+                                            </flux:button>
+
+                                            <flux:button wire:click="vote({{ $review->id }}, false)" variant="ghost"
+                                                size="sm" @class([
+                                                    'text-sm cursor-pointer',
+                                                    'text-red-500!' => $userVote === false,
+                                                    'text-zinc-600!' => $userVote !== false,
+                                                ])
+                                                icon-variant="{{ $userVote === false ? 'solid' : 'outline' }}"
+                                                icon="hand-thumb-down" icon-size="sm">
+                                                No ({{ $review->not_helpful_count }})
+                                            </flux:button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    {{-- Pagination --}}
+                    @if ($this->reviews->hasPages())
+                        <div class="mt-8">
+                            {{ $this->reviews->links() }}
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

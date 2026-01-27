@@ -19,6 +19,11 @@ new class extends Component {
         $this->inCompare = $compareService->has($this->product->id);
     }
 
+    public function goToProduct()
+    {
+        return $this->redirect(route('products.show', $this->product), navigate: true);
+    }
+
     public function toggleWishlist(WishlistService $wishlistService)
     {
         try {
@@ -74,7 +79,7 @@ new class extends Component {
     {{ $attributes->class(['bg-white overflow-hidden h-full border hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group rounded-sm']) }}>
     <div class="h-full flex flex-col">
         <div class="relative">
-            <a href="{{ route('products.show', $product) }}" class="block">
+            <a href="{{ route('products.show', $product) }}" wire:navigate wire:click.stop class="block">
                 <figure
                     class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-50 flex items-center justify-center">
                     @if ($product->image_url)
@@ -85,7 +90,6 @@ new class extends Component {
                         <flux:icon.photo class="w-16 h-16 text-zinc-400 stroke-1" />
                     @endif
                 </figure>
-
             </a>
             {{-- Quick action buttons --}}
             <div
@@ -102,9 +106,8 @@ new class extends Component {
 
                 </flux:button>
 
-                <flux:button wire:click.stop="toggleCompare" icon="scale" size="sm" icon-variant="outline"
-                    title="Compare" class="cursor-pointer">
-
+                <flux:button wire:click.stop="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}" size="sm"
+                    icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-red-500!' => $inCompare])>
                 </flux:button>
 
                 <flux:button wire:click="addToCart" icon="shopping-cart" size="sm" icon-variant="outline"
@@ -121,7 +124,7 @@ new class extends Component {
             @endif
 
             {{-- Product Name --}}
-            <a href="{{ route('products.show', $product) }}"
+            <a href="{{ route('products.show', $product) }}" wire:click.prevent="goToProduct"
                 class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-sheffield-blue">
                 {{ $product->name }}
             </a>

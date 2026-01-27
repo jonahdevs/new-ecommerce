@@ -3,6 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Product;
+use App\Models\Review;
+use App\Models\ReviewImage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,7 +26,7 @@ class ReviewFactory extends Factory
         return [
             'user_id' => User::inRandomOrder()->first()->id,
             'product_id' => Product::inRandomOrder()->first()->id,
-            'order_id' => null,
+            'order_id' =>  fake()->unique()->numberBetween(1, 100000),
             'rating' => $rating,
             'title' => $this->generateReviewTitle($rating),
             'review_text' => $this->generateReviewText($rating),
@@ -36,6 +38,27 @@ class ReviewFactory extends Factory
             'moderated_at' => null,
             'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
         ];
+    }
+
+    /**
+     * Configure the model factory.
+     */
+    public function configure()
+    {
+        return $this->afterCreating(function (Review $review) {
+            // 30% chance of having images
+            if (fake()->boolean(30)) {
+                $imageCount = fake()->numberBetween(1, 4); // 1-4 images per review
+
+                for ($i = 0; $i < $imageCount; $i++) {
+                    ReviewImage::create([
+                        'review_id' => $review->id,
+                        'image_path' => 'https://picsum.photos/seed/' . fake()->uuid() . '/800/600',
+                        'order' => $i,
+                    ]);
+                }
+            }
+        });
     }
 
     /**

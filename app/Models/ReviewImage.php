@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class ReviewImage extends Model
 {
@@ -30,5 +32,16 @@ class ReviewImage extends Model
     public function review(): BelongsTo
     {
         return $this->belongsTo(Review::class);
+    }
+
+    // ===============================================
+    // ACCESSORS
+    // ===============================================
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->image_path ? (Str::startsWith($this->image_path, 'http') ? $this->image_path : asset('storage/' . $this->image_path)) : null
+        );
     }
 }

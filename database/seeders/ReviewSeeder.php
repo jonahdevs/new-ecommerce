@@ -45,6 +45,7 @@ class ReviewSeeder extends Seeder
                         'product_id' => $product->id,
                         'user_id' => $users->random()->id,
                         'rating' => $rating,
+                        'order_id' => null,
                     ]);
             }
 

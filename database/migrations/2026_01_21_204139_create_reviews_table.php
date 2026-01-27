@@ -62,7 +62,7 @@ return new class extends Migration {
             $table->index(['review_id', 'order'], 'idx_review_order');
         });
 
-        Schema::create('review_helpfulness', function (Blueprint $table) {
+        Schema::create('review_helpfulnesses', function (Blueprint $table) {
             $table->id();
 
             // Foreign Keys
@@ -87,7 +87,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('review_helpfulness');
+        Schema::dropIfExists('review_helpfulnesses');
         Schema::dropIfExists('review_images');
         Schema::dropIfExists('reviews');
     }
