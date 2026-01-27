@@ -5,7 +5,7 @@
     @include('partials.head')
 </head>
 
-<body class="bg-zinc-100 text-zinc-700 font-sans min-h-screen">
+<body class="bg-zinc-50 text-zinc-700 font-sans min-h-screen">
 
     <div class="bg-sheffield-red text-white">
         <section class="container mx-auto px-4">
@@ -27,7 +27,7 @@
                                 this.initializeSwiper();
                             });
                         },
-
+                    
                         initializeSwiper() {
                             this.swiper = new Swiper('.promoSwiper', {
                                 direction: 'vertical',
@@ -45,7 +45,7 @@
                                 // },
                             });
                         },
-
+                    
                         destroy() {
                             if (this.swiper) {
                                 this.swiper.destroy(true, true);

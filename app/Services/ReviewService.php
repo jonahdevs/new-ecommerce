@@ -16,6 +16,46 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ReviewService
 {
+    public function baseQuery(Product $product)
+    {
+        return Review::where('product_id', $product->id)
+            ->approved()
+            ->with(['user', 'images'])->latest();
+    }
+
+    public function forProductPage(Product $product, int $limit = 5)
+    {
+        return $this->baseQuery($product)
+            ->limit($limit)
+            ->get();
+    }
+
+    public function forReviewsPage(Product $product, array $filters = [])
+    {
+        return $this->baseQuery($product)
+            ->when(isset($filters['rating']), function ($query) use ($filters) {
+                $query->where('rating', $filters['rating']);
+            })
+            ->when(isset($filters['sort_by']), function ($query) use ($filters) {
+                switch ($filters['sort_by']) {
+                    case 'helpful':
+                        $query->orderBy('helpful_count', 'desc');
+                        break;
+                    case 'highest':
+                        $query->orderBy('rating', 'desc');
+                        break;
+                    case 'lowest':
+                        $query->orderBy('rating', 'asc');
+                        break;
+                    case 'recent':
+                    default:
+                        $query->latest();
+                        break;
+                }
+            })
+            ->paginate(isset($filters['per_page']) ? $filters['per_page'] : 10);
+    }
+
     /**
      * Get rating distribution for a product
      *
@@ -67,46 +107,6 @@ class ReviewService
             ->avg('rating');
 
         return $average ? round($average, 1) : 0.0;
-    }
-
-    /**
-     * Get paginated reviews with sorting and filtering
-     *
-     * @param Product $product
-     * @param string $sortBy
-     * @param int|null $filterRating
-     * @param int $perPage
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
-     */
-    public function getReviews(Product $product, string $sortBy = 'recent', ?int $filterRating = null, int $perPage = 10)
-    {
-        $query = $product->reviews()
-            ->approved()
-            ->with(['user', 'images']);
-
-        // Apply rating filter if set
-        if ($filterRating !== null) {
-            $query->where('rating', $filterRating);
-        }
-
-        // Apply sorting
-        switch ($sortBy) {
-            case 'helpful':
-                $query->orderBy('helpful_count', 'desc');
-                break;
-            case 'highest':
-                $query->orderBy('rating', 'desc');
-                break;
-            case 'lowest':
-                $query->orderBy('rating', 'asc');
-                break;
-            case 'recent':
-            default:
-                $query->latest();
-                break;
-        }
-
-        return $query->paginate($perPage);
     }
 
     /**

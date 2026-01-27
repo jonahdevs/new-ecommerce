@@ -30,7 +30,11 @@ new #[Layout('layouts.guest')] class extends Component {
     public function reviews()
     {
         $reviewService = app(ReviewService::class);
-        return $reviewService->getReviews($this->product, $this->sortBy, $this->filterRating, $this->perPage);
+        return $reviewService->forReviewsPage($this->product, [
+            'rating' => $this->filterRating,
+            'sort_by' => $this->sortBy,
+            'per_page' => $this->perPage,
+        ]);
     }
 
     /**
@@ -296,94 +300,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     @else
                         <div class="space-y-6">
                             @foreach ($this->reviews as $review)
-                                <div class="border-b pb-6 last:border-b-0" wire:key="review-{{ $review->id }}">
-                                    {{-- Review Header --}}
-                                    <div class="flex items-start justify-between mb-3">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-3 mb-1">
-                                                <span
-                                                    class="font-semibold text-gray-900">{{ $review->user->name }}</span>
-                                                @if ($review->is_verified_purchase)
-                                                    <flux:badge icon="check-badge" size="sm" color="green">
-                                                        Verified Purchase
-                                                    </flux:badge>
-                                                @endif
-                                            </div>
-
-                                            {{-- Star Rating --}}
-                                            <div class="flex items-center gap-2">
-                                                <div class="flex gap-0.5">
-                                                    @for ($i = 1; $i <= 5; $i++)
-                                                        @if ($i <= $review->rating)
-                                                            <flux:icon.star
-                                                                class="size-4 text-orange-400 fill-current" />
-                                                        @else
-                                                            <flux:icon.star
-                                                                class="w-4 h-4 text-zinc-300 fill-current" />
-                                                        @endif
-                                                    @endfor
-                                                </div>
-
-                                                <span class="text-sm text-zinc-500">
-                                                    {{ $review->created_at->diffForHumans() }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- Review Title --}}
-                                    @if ($review->title)
-                                        <h5 class="font-medium mb-2">{{ $review->title }}</h5>
-                                    @endif
-
-                                    {{-- Review Text --}}
-                                    <p class="text-zinc-600 text-sm mb-3 leading-wide">{{ $review->review_text }}
-                                    </p>
-
-                                    {{-- Review Images --}}
-                                    @if ($review->images->isNotEmpty())
-                                        <div class="flex gap-2 mb-4">
-                                            @foreach ($review->images as $image)
-                                                <img src="{{ $image->image_url }}" alt="Review image"
-                                                    class="w-20 h-20 object-cover rounded border cursor-pointer hover:opacity-75 transition"
-                                                    onclick="window.open('{{ $image->image_url }}', '_blank')">
-                                            @endforeach
-                                        </div>
-                                    @endif
-
-                                    {{-- Helpfulness --}}
-                                    <div class="flex items-center gap-4 pt-3 border-t border-zinc-100">
-                                        <p class="text-sm text-zinc-500">Was this helpful?</p>
-
-                                        <div class="flex items-center gap-2">
-                                            @php
-                                                $userVote = $this->userVotes->get($review->id);
-                                            @endphp
-
-                                            <flux:button wire:click="vote({{ $review->id }}, true)" variant="ghost"
-                                                size="sm" @class([
-                                                    'text-sm cursor-pointer',
-                                                    'text-green-600!' => $userVote === true,
-                                                    'text-zinc-600!' => $userVote !== true,
-                                                ])
-                                                icon-variant="{{ $userVote === true ? 'solid' : 'outline' }}"
-                                                icon="hand-thumb-up" icon-size="sm">
-                                                Yes ({{ $review->helpful_count }})
-                                            </flux:button>
-
-                                            <flux:button wire:click="vote({{ $review->id }}, false)" variant="ghost"
-                                                size="sm" @class([
-                                                    'text-sm cursor-pointer',
-                                                    'text-red-500!' => $userVote === false,
-                                                    'text-zinc-600!' => $userVote !== false,
-                                                ])
-                                                icon-variant="{{ $userVote === false ? 'solid' : 'outline' }}"
-                                                icon="hand-thumb-down" icon-size="sm">
-                                                No ({{ $review->not_helpful_count }})
-                                            </flux:button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <livewire:review-item :review="$review" :key="'review-item-' . $review->id" :user-vote="$this->userVotes->get($review->id)" />
                             @endforeach
                         </div>
                     @endif
