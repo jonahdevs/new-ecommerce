@@ -9,7 +9,13 @@ new #[Defer] class extends Component {
     #[Computed]
     public function products()
     {
-        return Product::active()->withAvg('reviews', 'rating')->inRandomOrder()->limit(12)->get();
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            ->withAvg('reviews', 'rating')
+            ->with('brand:id,name')
+            ->active()
+            ->inRandomOrder()
+            ->limit(12)
+            ->get();
     }
 
     public function mount()
@@ -95,7 +101,7 @@ new #[Defer] class extends Component {
                     <div class="swiper-wrapper pb-5">
                         @foreach ($this->products as $product)
                             <div class="swiper-slide h-auto!">
-                                <livewire:product-card :product="$product" />
+                                <livewire:product-card :product="$product" lazy />
                             </div>
                         @endforeach
                     </div>

@@ -13,11 +13,23 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public function products()
     {
         if (auth()->check()) {
-            return auth()->user()->wishlistProducts;
+            return auth()
+                ->user()
+                ->wishlistProducts()
+                ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with('brand:id,name')
+                ->active()
+                ->get();
         } else {
             $wishlistIds = request()->session()->get('wishlist', []);
 
-            return Product::whereIn('id', $wishlistIds)->get();
+            return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with('brand:id,name')
+                ->active()
+                ->whereIn('id', $wishlistIds)
+                ->get();
         }
     }
 };

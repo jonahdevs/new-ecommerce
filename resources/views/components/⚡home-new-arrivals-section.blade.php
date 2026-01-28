@@ -9,9 +9,10 @@ new #[Defer] class extends Component {
     #[Computed]
     public function products()
     {
-        return Product::active()
-            ->with(['brand', 'images'])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            ->with(['brand:id,name', 'images'])
             ->withAvg('reviews', 'rating')
+            ->active()
             ->newArrivals()
             ->inRandomOrder()
             ->limit(10)

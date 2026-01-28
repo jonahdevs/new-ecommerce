@@ -244,4 +244,11 @@ class Product extends Model
         return null;
     }
 
+    public function primaryCategory()
+    {
+        return $this->categories()
+            ->wherePivot('is_primary', true)
+            ->first()
+            ?? $this->categories()->first();
+    }
 }

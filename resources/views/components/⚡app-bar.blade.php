@@ -208,8 +208,9 @@ new class extends Component {
                     <li class="w-[16.66666666666667%] cursor-pointer hover:bg-sheffield-red-dark" tabindex="0"
                         role="menuitem" aria-expanded="false">
                         <div class="relative h-9.25">
-                            <a class="flex min-h-full items-center overflow-hidden text-ellipsis whitespace-nowrap border-l border-white/20 px-1.25 xl:px-2.5 border-b"
-                                wire:navigate href="#">
+                            <a href="{{ route('products', ['category' => $category->slug]) }}"
+                                class="flex min-h-full items-center overflow-hidden text-ellipsis whitespace-nowrap border-l border-white/20 px-1.25 xl:px-2.5 border-b"
+                                wire:navigate>
                                 <img alt="" loading="eager" width="26" height="26" decoding="async"
                                     data-nimg="1" class="duration-300 max-h-6.5 max-w-6.5 max-md:hidden invert"
                                     style="color:transparent" src="{{ $category->icon_url }}">
@@ -224,7 +225,7 @@ new class extends Component {
         <section
             class="container mx-auto px-4 lg:hidden grid grid-flow-col auto-cols-max gap-1 overflow-x-auto scrollbar-hide">
             @foreach ($this->categories as $category)
-                <a href="#" wire:navigate
+                <a href="{{ route('products', ['category' => $category->slug]) }}" wire:navigate
                     class="inline-block px-4 py-3 text-sm hover:opacity-80 transition-opacity duration-500">
                     {{ $category->name }}
                 </a>

@@ -238,8 +238,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 Home
             </flux:breadcrumbs.item>
 
-            <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>
-                Products
+            <flux:breadcrumbs.item href="{{ route('products', ['category' => $product->primaryCategory()->slug]) }}">
+                {{ $product->primaryCategory()->name }}
             </flux:breadcrumbs.item>
 
             <flux:breadcrumbs.item href="{{ route('products.show', $product) }}" wire:navigate>

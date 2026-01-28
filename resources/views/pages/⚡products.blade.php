@@ -66,7 +66,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function products()
     {
-        $query = Product::with(['brand'])->active();
+        $query = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            ->withAvg('reviews', 'rating')
+            ->with(['brand:id,name'])
+            ->active();
 
         // Category Filter
         $query->when($this->categorySlug, function (Builder $q) {
@@ -97,7 +100,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         // Rating Filter - Improved version
         $query->when($this->minRating, function (Builder $q) {
-            $q->whereHas('reviews')->withAvg('reviews', 'rating')->having('reviews_avg_rating', '>=', $this->minRating);
+            $q->whereHas('reviews')->having('reviews_avg_rating', '>=', $this->minRating);
         });
 
         // Stock Filter
