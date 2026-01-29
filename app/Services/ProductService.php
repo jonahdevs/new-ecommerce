@@ -2,24 +2,25 @@
 
 namespace App\Services;
 
-use App\Models\CartItem;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class ProductService.
  */
 class ProductService
 {
-    public function recommendedProducts(string $type, array $context = [], int $limit = 8)
+    public function recommend(string $type, array $context = [], int $limit = 8)
     {
         return match ($type) {
             'similar' => $this->similarProducts($context['product'], $limit),
-            'bought_together' => $this->boughtTogether($context['product'], $limit),
-            // 'recently_reviewed' => $this->recentlyReviewed($limit),
-            // 'cart_related' => $this->fromCart($context['cart'], $limit),
+            // 'bought_together' => $this->boughtTogether($context['product'], $limit),
+            'recently_viewed' => $this->recentlyViewed($limit),
+            'cart_related' => $this->fromCart($limit),
             default => collect(),
         };
     }
+
 
     protected function similarProducts(Product $product, int $limit)
     {
@@ -29,12 +30,15 @@ class ProductService
         if ($product->categories->isNotEmpty()) {
             $categoryIds = $product->categories->pluck('id')->toArray();
 
-            $categoryProducts = Product::whereHas('categories', function ($query) use ($categoryIds) {
-                $query->whereIn('categories.id', $categoryIds);
-            })
+            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with(['brand:id,name'])
+                ->whereHas('categories', function ($query) use ($categoryIds) {
+                    $query->whereIn('categories.id', $categoryIds);
+                })
                 ->where('id', '!=', $product->id)
-                ->where('is_active', true)
-                ->where('status', 'published')
+                ->active()
+                ->published()
                 ->inRandomOrder()
                 ->limit($limit * 2)
                 ->get();
@@ -44,11 +48,14 @@ class ProductService
 
         // 2. Add same brand products if needed
         if ($relatedProducts->count() < $limit && $product->brand_id) {
-            $brandProducts = Product::where('brand_id', $product->brand_id)
+            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with(['brand:id,name'])
+                ->where('brand_id', $product->brand_id)
                 ->where('id', '!=', $product->id)
                 ->whereNotIn('id', $relatedProducts->pluck('id'))
-                ->where('is_active', true)
-                ->where('status', 'published')
+                ->active()
+                ->published()
                 ->inRandomOrder()
                 ->limit($limit)
                 ->get();
@@ -65,14 +72,17 @@ class ProductService
                 $priceMin = $basePrice * 0.7; // -30%
                 $priceMax = $basePrice * 1.3; // +30%
 
-                $similarPriceProducts = Product::where(function ($query) use ($priceMin, $priceMax) {
-                    $query->whereBetween('sale_price', [$priceMin, $priceMax])
-                        ->orWhereBetween('price', [$priceMin, $priceMax]);
-                })
+                $similarPriceProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                    ->withAvg('reviews', 'rating')
+                    ->with(['brand:id,name'])
+                    ->where(function ($query) use ($priceMin, $priceMax) {
+                        $query->whereBetween('sale_price', [$priceMin, $priceMax])
+                            ->orWhereBetween('price', [$priceMin, $priceMax]);
+                    })
                     ->where('id', '!=', $product->id)
                     ->whereNotIn('id', $relatedProducts->pluck('id'))
-                    ->where('is_active', true)
-                    ->where('status', 'published')
+                    ->active()
+                    ->published()
                     ->inRandomOrder()
                     ->limit($limit)
                     ->get();
@@ -83,10 +93,13 @@ class ProductService
 
         // 4. If still not enough, get any active published products
         if ($relatedProducts->count() < $limit) {
-            $anyProducts = Product::where('id', '!=', $product->id)
+            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with(['brand:id,name'])
+                ->where('id', '!=', $product->id)
                 ->whereNotIn('id', $relatedProducts->pluck('id'))
-                ->where('is_active', true)
-                ->where('status', 'published')
+                ->active()
+                ->published()
                 ->inRandomOrder()
                 ->limit($limit)
                 ->get();
@@ -111,8 +124,11 @@ class ProductService
         return $relatedProducts->unique('id')->take($limit);
     }
 
-    protected function boughtTogether(CartItem $cartItems, int $limit)
+    protected function fromCart(int $limit)
     {
+        $cart = app(CartService::class)->getCart();
+        $cartItems = $cart->items()->with('product')->get();
+
         if ($cartItems->isEmpty()) {
             return collect();
         }
@@ -123,7 +139,7 @@ class ProductService
         // Get related products for each cart item
         foreach ($cartItems as $cartItem) {
             if ($cartItem->product) {
-                $productRelated = $cartItem->product->getRelatedProducts($limit);
+                $productRelated = $this->getRelatedProducts($cartItem->product, $limit);
                 $relatedProducts = $relatedProducts->merge($productRelated);
             }
         }
@@ -136,5 +152,173 @@ class ProductService
     }
 
 
+    /**
+     * Get related products using smart priority mix
+     * Priority: Same category > Same brand > Similar price > Tag matching
+     */
+    protected function getRelatedProducts(Product $product, int $limit = 12)
+    {
+        $relatedProducts = collect();
 
+        // 1. Try same category products first
+        if ($product->categories->isNotEmpty()) {
+            $categoryIds = $product->categories->pluck('id')->toArray();
+
+            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with(['brand:id,name'])
+                ->whereHas('categories', function ($query) use ($categoryIds) {
+                    $query->whereIn('categories.id', $categoryIds);
+                })
+                ->where('id', '!=', $product->id)
+                ->active()
+                ->published()
+                ->inRandomOrder()
+                ->limit($limit * 2)
+                ->get();
+
+            $relatedProducts = $relatedProducts->merge($categoryProducts);
+        }
+
+        // 2. Add same brand products if needed
+        if ($relatedProducts->count() < $limit && $product->brand_id) {
+            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with(['brand:id,name'])
+                ->where('brand_id', $product->brand_id)
+                ->where('id', '!=', $product->id)
+                ->whereNotIn('id', $relatedProducts->pluck('id'))
+                ->active()
+                ->published()
+                ->inRandomOrder()
+                ->limit($limit)
+                ->get();
+
+            $relatedProducts = $relatedProducts->merge($brandProducts);
+        }
+
+        // 3. Add products with similar price range if still needed
+        if ($relatedProducts->count() < $limit) {
+            // Use sale_price if available, otherwise use regular price
+            $basePrice = $product->sale_price ?? $product->price;
+
+            if ($basePrice > 0) {
+                $priceMin = $basePrice * 0.7; // -30%
+                $priceMax = $basePrice * 1.3; // +30%
+
+                $similarPriceProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                    ->withAvg('reviews', 'rating')
+                    ->with(['brand:id,name'])
+                    ->where(function ($query) use ($priceMin, $priceMax) {
+                        $query->whereBetween('sale_price', [$priceMin, $priceMax])
+                            ->orWhereBetween('price', [$priceMin, $priceMax]);
+                    })
+                    ->where('id', '!=', $product->id)
+                    ->whereNotIn('id', $relatedProducts->pluck('id'))
+                    ->active()
+                    ->published()
+                    ->inRandomOrder()
+                    ->limit($limit)
+                    ->get();
+
+                $relatedProducts = $relatedProducts->merge($similarPriceProducts);
+            }
+        }
+
+        // 4. If still not enough, get any active published products
+        if ($relatedProducts->count() < $limit) {
+            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->withAvg('reviews', 'rating')
+                ->with(['brand:id,name'])
+                ->where('id', '!=', $product->id)
+                ->whereNotIn('id', $relatedProducts->pluck('id'))
+                ->active()
+                ->published()
+                ->inRandomOrder()
+                ->limit($limit)
+                ->get();
+
+            $relatedProducts = $relatedProducts->merge($anyProducts);
+        }
+
+        // 5. Apply tag-based scoring to prioritize products with matching tags
+        if ($product->tags && is_array($product->tags)) {
+            $relatedProducts = $relatedProducts->map(function ($product) {
+                $matchingTags = 0;
+                if ($product->tags && is_array($product->tags)) {
+                    $matchingTags = count(array_intersect($product->tags, $product->tags));
+                }
+                $product->tag_match_score = $matchingTags;
+
+                return $product;
+            })->sortByDesc('tag_match_score');
+        }
+
+        // Return unique products up to the limit
+        return $relatedProducts->unique('id')->take($limit);
+    }
+
+    public function recordView(Product $product): void
+    {
+        $viewed = session()->get('viewed_product_ids', []);
+
+        if (in_array($product->id, $viewed)) {
+            return;
+        }
+
+        // Record view
+        $product->increment('views_count');
+
+        // Mark as viewed
+        session()->push('viewed_product_ids', $product->id);
+    }
+
+    public function rememberRecentlyViewed(Product $product, int $limit = 12)
+    {
+        if (!Auth::check()) {
+            $viewed = collect(session()->get('recently_viewed_products', []));
+
+            $viewed = $viewed->reject(fn($id) => $id === $product->id);
+            $viewed->prepend($product->id);
+
+            session()->put(
+                'recently_viewed_products',
+                $viewed->take($limit)->values()->toArray()
+            );
+        } else {
+            $user = Auth::user();
+
+            // Update or insert
+            $user->recentlyViewedProducts()
+                ->updateOrCreate(
+                    ['product_id' => $product->id],
+                    ['viewed_at' => now()]
+                );
+
+            // Trim old entries
+            $user->recentlyViewedProducts()
+                ->orderByDesc('viewed_at')
+                ->skip($limit)
+                ->take(PHP_INT_MAX)
+                ->delete();
+        }
+    }
+
+    public function recentlyViewed(int $limit = 8)
+    {
+        $ids = [];
+        if (Auth::check()) {
+            $ids = auth()->user()->recentlyViewedProducts()->latest('viewed_at')->limit($limit)->pluck('product_id')->toArray();
+        } else {
+            $ids = session()->get('recently_viewed_products', []);
+        }
+
+        return empty($ids) ? collect() : Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            ->withAvg('reviews', 'rating')
+            ->with(['brand:id,name'])
+            ->active()
+            ->whereIn('id', $ids)
+            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+            ->get();
+    }
 }

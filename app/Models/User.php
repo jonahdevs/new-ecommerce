@@ -82,4 +82,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Product::class, 'wishlist_items')->withTimestamps();
     }
+
+    public function recentlyViewedProducts()
+    {
+        return $this->hasMany(RecentlyViewedProduct::class);
+    }
 }

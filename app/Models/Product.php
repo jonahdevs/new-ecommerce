@@ -178,6 +178,12 @@ class Product extends Model
         $query->where('is_active', true);
     }
 
+    #[Scope]
+    protected function published(Builder $query)
+    {
+        $query->where('status', 'published');
+    }
+
     #[Scope()]
     protected function newArrivals(Builder $query): void
     {

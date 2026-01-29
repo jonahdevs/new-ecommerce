@@ -6,15 +6,18 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Defer;
 use App\Services\CartService;
 use App\Services\WishlistService;
+use App\Models\Cart;
 
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public array $cartSummary = [];
+    public Cart $cart;
 
     public function mount()
     {
         $cartService = app(CartService::class);
-        $cart = $cartService->getCart();
-        $this->cartSummary = $cartService->summary($cart);
+        $this->cart = $cartService->getCart();
+
+        $this->cartSummary = $cartService->summary($this->cart);
     }
 
     #[Computed]
@@ -87,7 +90,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         </div>
 
         <div class="mx-auto container px-4 py-4 min-h-[80svh]">
-            <!-- Wishlist Header -->
+            <!-- Cart Header -->
             <flux:skeleton class="w-48 h-4 mb-6" animate="shimmer" />
 
             <div class="mt-4 md:gap-6 lg:flex lg:items-start">
@@ -147,6 +150,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
             </div>
+
+            <div class="mt-10">
+                <flux:skeleton animate="shimmer" class="w-44 h-5 mb-4" />
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    @for ($i = 1; $i <= 6; $i++)
+                        <x-product-card-placeholder />
+                    @endfor
+                </div>
+            </div>
         </div>
     </div>
 @endplaceholder
@@ -160,8 +172,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
-
-            <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>Products</flux:breadcrumbs.item>
 
             <flux:breadcrumbs.item>Cart</flux:breadcrumbs.item>
         </flux:breadcrumbs>
@@ -332,5 +342,16 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </div>
             @endif
         </div>
+
+        @if ($this->cartItems->isNotEmpty())
+            <div class="mt-10">
+                <livewire:product-recommendations type="cart_related" />
+            </div>
+        @endif
+
+        <div class="mt-10">
+            <livewire:product-recommendations type="recently_viewed" />
+        </div>
+
     </div>
 </div>

@@ -238,7 +238,7 @@ new #[Layout('layouts.guest')] class extends Component {
     </section>
 
     <section class="container mx-auto px-4 mt-6">
-        <a href="#" class="border block overflow-hidden rounded-sm">
+        <a href="#" class=" block overflow-hidden rounded-sm">
             <img src="{{ asset('images/home/CLEARANCE-SALE.jpg') }}" alt="banner"
                 class="w-full h-auto object-cover object-center rounded-sm">
         </a>

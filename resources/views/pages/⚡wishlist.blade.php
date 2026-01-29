@@ -69,8 +69,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 Home
             </flux:breadcrumbs.item>
 
-            <flux:breadcrumbs.item href="{{ route('products') }}" wire:navigate>Products</flux:breadcrumbs.item>
-
             <flux:breadcrumbs.item>Wishlist</flux:breadcrumbs.item>
         </flux:breadcrumbs>
     </div>
@@ -181,6 +179,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
             @endforelse
+        </div>
+
+        <div class="mt-10">
+            <livewire:product-recommendations type="recently_viewed" />
         </div>
     </section>
 </div>

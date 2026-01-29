@@ -168,7 +168,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         <div class="container mx-auto px-4 py-4 min-h-[80svh]">
             <flux:skeleton class="w-48 h-4 mb-6" animate="shimmer" />
 
-            <div class="bg-white rounded-sm border p-5 grid grid-cols-1 lg:grid-cols-4 gap-5">
+            <div class="p-5 grid grid-cols-1 lg:grid-cols-4 gap-5">
                 <div class="lg:col-span-1">
                     <div class="lg:sticky lg:top-44 space-y-6">
                         <flux:skeleton animate="shimmer" class="w-14 h-5 mx-auto mb-2" />
@@ -258,7 +258,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             </div>
         </div>
 
-        <div class="bg-white rounded-sm border p-5">
+        <div class=" p-5">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
 
                 {{-- Sidebar with Rating Statistics --}}

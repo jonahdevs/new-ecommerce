@@ -14,7 +14,7 @@ new #[Defer] class extends Component {
             ->with('brand:id,name')
             ->active()
             ->inRandomOrder()
-            ->limit(12)
+            ->limit(20)
             ->get();
     }
 
@@ -26,13 +26,13 @@ new #[Defer] class extends Component {
 ?>
 
 @placeholder
-    <div class="bg-white border rounded-sm">
+    <div class="">
 
-        <section class="flex items-center justify-between py-4 px-3 md:px-5">
+        <section class="flex items-center justify-between py-4 ">
             <h2 class="font-semibold text-xl text-zinc-800">You May Also Like</h2>
         </section>
 
-        <div class="px-3 md:px-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-5">
+        <div class=" grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-5">
             @for ($i = 0; $i < 12; $i++)
                 <x-product-card-placeholder />
             @endfor
@@ -41,67 +41,74 @@ new #[Defer] class extends Component {
 @endplaceholder
 
 <div>
-    <div class="bg-white border rounded-sm">
+    <div class="">
 
-        <section class="flex items-center justify-between py-4 px-3 md:px-5">
+        <section class="flex items-center justify-between py-4 ">
             <h2 class="font-semibold text-xl text-zinc-800">You May Also Like</h2>
 
             <a href="{{ route('products') }}" wire:navigate class="text-sheffield-red hover:underline text-sm">View
                 All</a>
         </section>
 
-        <section class="px-3 md:px-5">
+        <section class="">
             <!-- Products slider -->
             <div class="relative" x-data="{
                 swiper: null,
-                initSwiper() {
+                init() {
                     if (this.swiper) {
                         this.swiper.destroy(true, true);
                     }
-                    this.$nextTick(() => {
-                        this.swiper = new Swiper('#youMayAlsoLike', {
-                            slidesPerView: 2,
-                            slidesPerGroup: 1,
-                            spaceBetween: 12,
-                            loop: false,
-                            speed: 400,
-                            observer: true,
-                            observeParents: true,
-                            watchOverflow: true,
-                            grid: {
-                                rows: 2,
-                                fill: 'row'
+            
+                    this.swiper = new Swiper('#youMayAlsoLike', {
+                        slidesPerView: 2,
+                        slidesPerGroup: 1,
+                        spaceBetween: 12,
+                        loop: true,
+                        speed: 600,
+                        breakpoints: {
+                            375: {
+                                slidesPerView: 2,
                             },
-                            breakpoints: {
-                                375: {
-                                    slidesPerView: 2,
-                                },
-                                480: {
-                                    slidesPerView: 2,
-                                },
-                                640: {
-                                    slidesPerView: 3,
-                                },
-                                768: {
-                                    slidesPerView: 4,
-                                },
-                                1024: {
-                                    slidesPerView: 5,
-                                },
-                                1280: {
-                                    slidesPerView: 6,
-                                },
+                            480: {
+                                slidesPerView: 2,
                             },
-                        });
+                            640: {
+                                slidesPerView: 3,
+                                grid: {
+                                    rows: 2,
+                                    fill: 'row'
+                                }
+                            },
+                            768: {
+                                slidesPerView: 4,
+                                grid: {
+                                    rows: 2,
+                                    fill: 'row'
+                                }
+                            },
+                            1024: {
+                                slidesPerView: 5,
+                                grid: {
+                                    rows: 2,
+                                    fill: 'row'
+                                }
+                            },
+                            1280: {
+                                slidesPerView: 6,
+                                grid: {
+                                    rows: 2,
+                                    fill: 'row'
+                                }
+                            },
+                        },
                     });
                 }
-            }" x-init="initSwiper()"
-                @products-loaded.window="initSwiper()">
+            }">
                 <div class="swiper" id="youMayAlsoLike">
                     <div class="swiper-wrapper pb-5">
                         @foreach ($this->products as $product)
                             <div class="swiper-slide h-auto!">
-                                <livewire:product-card :product="$product" lazy />
+                                <livewire:product-card :product="$product" :key="'product-' . $product->id" />
                             </div>
                         @endforeach
                     </div>
@@ -109,29 +116,24 @@ new #[Defer] class extends Component {
 
                 <!-- Navigation buttons -->
                 <button type="button" @click="swiper?.slidePrev()"
-                    class="absolute top-0 left-0 -translate-x-1/2 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
-                    <span
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sheffield-blue/30 hover:bg-sheffield-blue/50 focus:ring-4 focus:ring-sheffield-blue/70 focus:outline-none">
-                        <svg class="w-3.5 h-3.5 text-white rtl:rotate-180" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 1 1 5l4 4" />
-                        </svg>
-                        <span class="sr-only">Previous</span>
-                    </span>
+                    class="absolute top-1/2 left-0  -translate-y-1/2 -translate-x-1/2 z-30 flex items-center justify-center cursor-pointer group focus:outline-none w-8 h-8 rounded-full bg-sheffield-blue/30 group-hover:bg-sheffield-blue/50 group-focus:ring-4 group-focus:ring-sheffield-blue/70 group-focus:outline-none">
+                    <svg class="w-3.5 h-3.5 text-white rtl:rotate-180" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 1 1 5l4 4" />
+                    </svg>
+                    <span class="sr-only">Previous</span>
                 </button>
 
                 <button type="button" @click="swiper?.slideNext()"
-                    class="absolute top-0 right-0 translate-x-1/2 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
-                    <span
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sheffield-blue/30 hover:bg-sheffield-blue/50 focus:ring-4 focus:ring-sheffield-blue/70 focus:outline-none">
-                        <svg class="w-3.5 h-3.5 text-white rtl:rotate-180" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m1 9 4-4-4-4" />
-                        </svg>
-                        <span class="sr-only">Next</span>
-                    </span>
+                    class="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-30 flex items-center justify-center cursor-pointer group focus:outline-none w-8 h-8 rounded-full bg-sheffield-blue/30 group-hover:bg-sheffield-blue/50 group-focus:ring-4 group-focus:ring-sheffield-blue/70 group-focus:outline-none">
+                    <svg class="w-3.5 h-3.5 text-white rtl:rotate-180" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 9 4-4-4-4" />
+                    </svg>
+
+                    <span class="sr-only">Next</span>
                 </button>
             </div>
         </section>

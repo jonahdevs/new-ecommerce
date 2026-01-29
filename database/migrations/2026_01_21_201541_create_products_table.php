@@ -430,6 +430,21 @@ return new class extends Migration {
             $table->index('product_id');
             $table->index('related_id');
         });
+
+        // ===============================================
+        // RECENTLY VIEWED PRODUCT
+        // ===============================================
+        Schema::create('recently_viewed_products', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->timestamp('viewed_at');
+            $table->timestamps();
+
+            // Indexes for performance
+            $table->index(['user_id', 'viewed_at']);
+            $table->index('product_id');
+        });
     }
 
     /**
@@ -437,6 +452,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::dropIfExists('product_views');
         Schema::dropIfExists('product_related');
         Schema::dropIfExists('product_cross_sells');
         Schema::dropIfExists('product_upsells');

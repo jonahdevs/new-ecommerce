@@ -118,7 +118,7 @@ new class extends Component {
                 <h6 class="px-4 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Products</h6>
 
                 @foreach ($suggestions['products'] as $product)
-                    <a href="{{ route('products.show', $product['slug']) }}"
+                    <a href="{{ route('products.show', $product['slug']) }}" wire:navigate
                         class=" flex items-start gap-3 text-left px-4 py-2 hover:bg-zinc-50 transition-colors ">
                         <!-- Product Image -->
                         @if ($product['image'])
@@ -156,7 +156,7 @@ new class extends Component {
 
                 @foreach ($suggestions['categories'] as $category)
                     @if ($category['products_count'] >= 1)
-                        <a href=""
+                        <a href="{{ route('products', ['category' => $category['slug']]) }}" wire:navigate
                             class="w-full px-4 py-2 hover:bg-zinc-50 transition-colors flex items-center gap-3 text-left group">
                             <div
                                 class="w-10 h-10 bg-sheffield-blue/10 rounded-lg flex items-center justify-center shrink-0">
@@ -187,7 +187,7 @@ new class extends Component {
                 <h6 class="px-4 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Brands</h6>
 
                 @foreach ($suggestions['brands'] as $brand)
-                    <a href=""
+                    <a href="{{ route('products', ['brand' => $brand['slug']]) }}" wire:navigate
                         class="w-full px-4 py-3 hover:bg-zinc-50 transition-colors flex items-center gap-3 text-left group">
                         <div class="w-10 h-10 bg-zinc-100 rounded-lg flex items-center justify-center shrink-0">
                             <flux:icon.award class="w-5 h-5 text-zinc-600" />
