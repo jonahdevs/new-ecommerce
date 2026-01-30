@@ -66,7 +66,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function products()
     {
-        $query = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+        $query = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
             ->withAvg('reviews', 'rating')
             ->with(['brand:id,name'])
             ->active();
@@ -417,7 +417,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 localMax: {{ $maxPrice ?? ($this->priceRange->max_price ?? 1000000) }},
                                 absoluteMin: {{ $this->priceRange->min_price ?? 0 }},
                                 absoluteMax: {{ $this->priceRange->max_price ?? 1000000 }},
-                            
+
                                 // Ensure min doesn't exceed max
                                 updateMin() {
                                     this.localMin = parseFloat(this.localMin);
@@ -428,7 +428,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         this.localMin = this.absoluteMin;
                                     }
                                 },
-                            
+
                                 // Ensure max doesn't go below min
                                 updateMax() {
                                     this.localMax = parseFloat(this.localMax);
@@ -439,14 +439,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         this.localMax = this.absoluteMax;
                                     }
                                 },
-                            
+
                                 // Apply filter
                                 apply() {
                                     $wire.minPrice = this.localMin;
                                     $wire.maxPrice = this.localMax;
                                     $wire.applyPriceFilter();
                                 },
-                            
+
                                 // Reset to defaults
                                 reset() {
                                     this.localMin = this.absoluteMin;

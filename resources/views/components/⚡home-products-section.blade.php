@@ -9,7 +9,7 @@ new #[Defer] class extends Component {
     #[Computed]
     public function products()
     {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
             ->withAvg('reviews', 'rating')
             ->with('brand:id,name')
             ->active()
@@ -58,7 +58,7 @@ new #[Defer] class extends Component {
                     if (this.swiper) {
                         this.swiper.destroy(true, true);
                     }
-            
+
                     this.swiper = new Swiper('#youMayAlsoLike', {
                         slidesPerView: 2,
                         slidesPerGroup: 1,

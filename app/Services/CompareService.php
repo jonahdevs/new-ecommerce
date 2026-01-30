@@ -16,6 +16,22 @@ class CompareService
     private const MAX_COMPARE_ITEMS = 3;
 
     /**
+     * Get comparison items
+     */
+    public function items()
+    {
+        $compareIds = session('compare', []);
+        if (empty($compareIds)) {
+            return Product::query()->whereIn('id', [])->get();
+        }
+
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'stock_status'])
+            ->withAvg('reviews', 'rating')
+            ->with(['brand:id,name', 'categories:id,name'])->whereIn('id', $compareIds)
+            ->get();
+    }
+
+    /**
      * Check if product is in comparison
      */
     public function has(int $productId): bool
@@ -51,7 +67,7 @@ class CompareService
             }
 
             // Check category restriction
-            if (! empty($compare)) {
+            if (!empty($compare)) {
                 $firstProductId = $compare[0];
                 $firstProduct = Product::with('categories')->find($firstProductId);
 
@@ -59,9 +75,9 @@ class CompareService
                     $firstCategories = $firstProduct->categories->pluck('id')->toArray();
                     $newCategories = $product->categories->pluck('id')->toArray();
 
-                    $hasCommonCategory = ! empty(array_intersect($firstCategories, $newCategories));
+                    $hasCommonCategory = !empty(array_intersect($firstCategories, $newCategories));
 
-                    if (! $hasCommonCategory) {
+                    if (!$hasCommonCategory) {
                         throw new \RuntimeException('Products must be from the same category to compare. This product is from a different category.');
                     }
                 }

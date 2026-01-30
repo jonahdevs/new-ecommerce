@@ -80,7 +80,7 @@ new class extends Component {
                     </a>
 
                     {{-- Compare --}}
-                    <a href="" class="flex items-center gap-2">
+                    <a href="{{ route('products.compare') }}" wire:navigate class="flex items-center gap-2">
                         <div class="relative">
                             <!-- Compare Icon -->
                             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">

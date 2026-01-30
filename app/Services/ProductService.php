@@ -30,7 +30,7 @@ class ProductService
         if ($product->categories->isNotEmpty()) {
             $categoryIds = $product->categories->pluck('id')->toArray();
 
-            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->whereHas('categories', function ($query) use ($categoryIds) {
@@ -48,7 +48,7 @@ class ProductService
 
         // 2. Add same brand products if needed
         if ($relatedProducts->count() < $limit && $product->brand_id) {
-            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->where('brand_id', $product->brand_id)
@@ -72,7 +72,7 @@ class ProductService
                 $priceMin = $basePrice * 0.7; // -30%
                 $priceMax = $basePrice * 1.3; // +30%
 
-                $similarPriceProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                $similarPriceProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                     ->withAvg('reviews', 'rating')
                     ->with(['brand:id,name'])
                     ->where(function ($query) use ($priceMin, $priceMax) {
@@ -93,7 +93,7 @@ class ProductService
 
         // 4. If still not enough, get any active published products
         if ($relatedProducts->count() < $limit) {
-            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->where('id', '!=', $product->id)
@@ -164,7 +164,7 @@ class ProductService
         if ($product->categories->isNotEmpty()) {
             $categoryIds = $product->categories->pluck('id')->toArray();
 
-            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->whereHas('categories', function ($query) use ($categoryIds) {
@@ -182,7 +182,7 @@ class ProductService
 
         // 2. Add same brand products if needed
         if ($relatedProducts->count() < $limit && $product->brand_id) {
-            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->where('brand_id', $product->brand_id)
@@ -206,7 +206,7 @@ class ProductService
                 $priceMin = $basePrice * 0.7; // -30%
                 $priceMax = $basePrice * 1.3; // +30%
 
-                $similarPriceProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                $similarPriceProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                     ->withAvg('reviews', 'rating')
                     ->with(['brand:id,name'])
                     ->where(function ($query) use ($priceMin, $priceMax) {
@@ -227,7 +227,7 @@ class ProductService
 
         // 4. If still not enough, get any active published products
         if ($relatedProducts->count() < $limit) {
-            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->where('id', '!=', $product->id)
@@ -313,7 +313,7 @@ class ProductService
             $ids = session()->get('recently_viewed_products', []);
         }
 
-        return empty($ids) ? collect() : Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+        return empty($ids) ? collect() : Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
             ->withAvg('reviews', 'rating')
             ->with(['brand:id,name'])
             ->active()
