@@ -344,14 +344,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         </div>
 
         @if ($this->cartItems->isNotEmpty())
-            <div class="mt-10">
-                <livewire:product-recommendations type="cart_related" />
-            </div>
+            <livewire:product-recommendations type="cart_related" />
         @endif
 
-        <div class="mt-10">
-            <livewire:product-recommendations type="recently_viewed" />
-        </div>
-
+        <livewire:product-recommendations type="recently_viewed" />
     </div>
 </div>

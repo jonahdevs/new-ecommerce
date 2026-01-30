@@ -147,11 +147,43 @@ class WishlistService
 
             return false;
         } catch (\Exception $e) {
-            \Log::error('Error removing from wishlist', [
+            Log::error('Error removing from wishlist', [
                 'product_id' => $productId,
                 'error' => $e->getMessage(),
             ]);
             throw new \RuntimeException('Unable to remove from wishlist. Please try again.');
+        }
+    }
+
+    /**
+     * Merge guest wishlist with user wishlist on login
+     */
+    public function mergeGuestWishlist(): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+
+        $guestWishlist = session()->pull('wishlist', []);
+
+        if (empty($guestWishlist)) {
+            return;
+        }
+
+        $userId = Auth::id();
+
+        foreach ($guestWishlist as $productId) {
+            // Only add if not already in user's wishlist
+            $exists = WishlistItem::where('user_id', $userId)
+                ->where('product_id', $productId)
+                ->exists();
+
+            if (! $exists) {
+                WishlistItem::create([
+                    'user_id' => $userId,
+                    'product_id' => $productId,
+                ]);
+            }
         }
     }
 }

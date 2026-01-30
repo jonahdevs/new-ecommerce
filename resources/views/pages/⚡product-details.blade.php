@@ -275,7 +275,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         activeIndex: 0,
                         isBeginning: true,
                         isEnd: false,
-
+                    
                         init() {
                             // Wait for next tick to ensure DOM is ready
                             this.$nextTick(() => {
@@ -301,7 +301,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                         },
                                     },
                                 });
-
+                    
                                 // Initialize main slider
                                 this.mainSwiper = new Swiper('.mainSwiper', {
                                     spaceBetween: 10,
@@ -316,13 +316,13 @@ new #[Layout('layouts.guest')] class extends Component {
                                     on: {
                                         slideChange: (swiper) => {
                                             this.activeIndex = swiper.realIndex;
-
+                    
                                             // Ensure the active thumbnail is visible
                                             this.thumbSwiper.slideTo(swiper.realIndex);
                                         },
                                     },
                                 });
-
+                    
                                 // Set initial state
                                 this.isBeginning = this.thumbSwiper.isBeginning;
                                 this.isEnd = this.thumbSwiper.isEnd;
@@ -697,14 +697,9 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
 
 
-        <div class="mt-10">
-            <livewire:product-recommendations type="similar" :context="['product' => $product]" />
-        </div>
+        <livewire:product-recommendations type="similar" :context="['product' => $product]" />
 
-        <div class="mt-10">
-            <livewire:product-recommendations type="recently_viewed" />
-        </div>
-
+        <livewire:product-recommendations type="recently_viewed" />
     </div>
 </div>
 

@@ -273,6 +273,7 @@ class ProductService
         session()->push('viewed_product_ids', $product->id);
     }
 
+
     public function rememberRecentlyViewed(Product $product, int $limit = 12)
     {
         if (!Auth::check()) {
@@ -285,40 +286,61 @@ class ProductService
                 'recently_viewed_products',
                 $viewed->take($limit)->values()->toArray()
             );
-        } else {
-            $user = Auth::user();
+            return;
+        }
 
-            // Update or insert
-            $user->recentlyViewedProducts()
-                ->updateOrCreate(
-                    ['product_id' => $product->id],
-                    ['viewed_at' => now()]
-                );
+        $user = auth()->user();
 
-            // Trim old entries
+        $user->recentlyViewedProducts()->syncWithoutDetaching([
+            $product->id => ['viewed_at' => now()],
+        ]);
+
+        $totalCount = $user->recentlyViewedProducts()->count();
+
+        if ($totalCount > $limit) {
+            $idsToKeep = $user->recentlyViewedProducts()
+                ->orderByDesc('recently_viewed_products.viewed_at')
+                ->limit($limit)
+                ->pluck('products.id');
+
             $user->recentlyViewedProducts()
-                ->orderByDesc('viewed_at')
-                ->skip($limit)
-                ->take(PHP_INT_MAX)
-                ->delete();
+                ->whereNotIn('product_id', $idsToKeep)
+                ->detach();
         }
     }
 
     public function recentlyViewed(int $limit = 8)
     {
-        $ids = [];
-        if (Auth::check()) {
-            $ids = auth()->user()->recentlyViewedProducts()->latest('viewed_at')->limit($limit)->pluck('product_id')->toArray();
+        if (auth()->check()) {
+            $ids = auth()->user()
+                ->recentlyViewedProducts()
+                ->orderByDesc('recently_viewed_products.viewed_at')
+                ->limit($limit)
+                ->pluck('products.id')
+                ->toArray();
         } else {
             $ids = session()->get('recently_viewed_products', []);
         }
 
-        return empty($ids) ? collect() : Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+        if (empty($ids)) {
+            return collect();
+        }
+
+        return Product::select([
+            'products.id',
+            'products.name',
+            'products.slug',
+            'products.brand_id',
+            'products.price',
+            'products.sale_price',
+            'products.image_path',
+            'products.short_description',
+        ])
             ->withAvg('reviews', 'rating')
             ->with(['brand:id,name'])
             ->active()
-            ->whereIn('id', $ids)
-            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+            ->whereIn('products.id', $ids)
+            ->orderByRaw('FIELD(products.id, ' . implode(',', $ids) . ')')
             ->get();
     }
 }

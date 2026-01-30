@@ -399,5 +399,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </div>
             </div>
         </div>
+
+        <livewire:product-recommendations type="recently_viewed" />
     </section>
 </div>

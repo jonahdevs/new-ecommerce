@@ -260,7 +260,7 @@ new class extends Component {
                     activeIndex: 0,
                     isBeginning: true,
                     isEnd: false,
-
+                
                     init() {
                         this.thumbSwiper = new Swiper('.thumbSwiper', {
                             spaceBetween: 10,
@@ -283,7 +283,7 @@ new class extends Component {
                                 },
                             },
                         });
-
+                
                         // Initialize main slider
                         this.mainSwiper = new Swiper('.mainSwiper', {
                             spaceBetween: 10,
@@ -298,13 +298,13 @@ new class extends Component {
                             on: {
                                 slideChange: (swiper) => {
                                     this.activeIndex = swiper.realIndex;
-
+                
                                     // Ensure the active thumbnail is visible
                                     this.thumbSwiper.slideTo(swiper.realIndex);
                                 },
                             },
                         });
-
+                
                         // Set initial state
                         this.isBeginning = this.thumbSwiper.isBeginning;
                         this.isEnd = this.thumbSwiper.isEnd;
@@ -350,25 +350,33 @@ new class extends Component {
 
             <div class="col-span-2 pl-6">
                 <a href="{{ route('products.show', $product) }}" wire:navigate
-                    class="text-xl font-bold mt-1 hover:text-sheffield-blue hover:underline transition-colors duration-300">{{ $product->name }}</a>
+                    class="text-xl font-bold mt-2 mb-1 hover:text-sheffield-blue hover:underline transition-colors duration-300">{{ $product->name }}</a>
+
+                {{-- Star Rating - Always show 5 stars --}}
                 <div class="flex items-center gap-1 mb-2">
-                    @for ($i = 0; $i < 5; $i++)
-                        @if ($product->reviews_avg_rating && $i <= floor($product->reviews_avg_rating))
-                            {{-- Full star --}}
-                            <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        @elseif ($product->reviews_avg_rating && $i - 0.5 <= $product->reviews_avg_rating)
-                            {{-- Half star --}}
-                            <div class="relative w-4 h-4">
-                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                                <div class="absolute inset-0 overflow-hidden" style="width: 50%;">
-                                    <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <div class="flex gap-0.5">
+                        @for ($i = 1; $i <= 5; $i++)
+                            @if ($product->reviews_avg_rating && $i <= floor($product->reviews_avg_rating))
+                                {{-- Full star --}}
+                                <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            @elseif ($product->reviews_avg_rating && $i - 0.5 <= $product->reviews_avg_rating)
+                                {{-- Half star --}}
+                                <div class="relative w-4 h-4">
+                                    <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
+                                    <div class="absolute inset-0 overflow-hidden" style="width: 50%;">
+                                        <flux:icon.star variant="solid"
+                                            class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                    </div>
                                 </div>
-                            </div>
-                        @else
-                            {{-- Empty star --}}
-                            <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                        @endif
-                    @endfor
+                            @else
+                                {{-- Empty star --}}
+                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
+                            @endif
+                        @endfor
+                    </div>
+                    @if ($product->reviews_avg_rating)
+                        <span class="text-xs text-zinc-500">{{ number_format($product->reviews_avg_rating, 1) }}</span>
+                    @endif
                 </div>
 
                 <div class="my-4 text-zinc-500 text-sm line-clamp-3">{!! $product->short_description !!}</div>
@@ -389,7 +397,7 @@ new class extends Component {
                 @endif
 
                 @island
-                    <div class="mt-1 flex items-center gap-4">
+                    <div class="mt-3 flex items-center gap-4">
                         <flux:button.group>
                             <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
                                 wire:click="decreaseCartQuantity"></flux:button>

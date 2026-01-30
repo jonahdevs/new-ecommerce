@@ -9,6 +9,8 @@ use App\Services\CompareService;
 use App\Services\CartService;
 
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
+    public int $cartQuantity = 1;
+    public ?int $cartItemId = null;
     #[Computed]
     #[On('compare-updated')]
     public function products()
@@ -37,10 +39,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     {
         try {
             $cartService = app(CartService::class);
-            $cartService->addItem($this->product->id, $this->cartQuantity);
+            $cartService->addItem($productId, $this->cartQuantity);
 
             $this->inCart = true;
-            $cartItem = $cartService->getCartItem($this->product->id);
+            $cartItem = $cartService->getCartItem($productId);
             if ($cartItem) {
                 $this->cartItemId = $cartItem->id;
                 $this->cartQuantity = $cartItem->quantity;
@@ -63,19 +65,83 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 <flux:skeleton animate="shimmer" class="w-32 h-4" />
                 <flux:skeleton animate="shimmer" class="w-8 h-4" />
                 <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-44 h-4" />
             </div>
         </div>
 
         <section class="container mx-auto px-4 py-4 min-h-[80svh]">
-            <!-- Wishlist Header -->
-            <flux:skeleton class="w-48 h-4 mb-6" animate="shimmer" />
+            <!-- Compare Header -->
+            <div class="flex items-center justify-between mb-4">
+                <flux:skeleton class="w-48 h-8" animate="shimmer" />
+            </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                @for ($i = 0; $i < 6; $i++)
-                    <x-product-card-placeholder />
-                @endfor
+            <!-- Comparison Table Placeholder -->
+            <div class="border rounded-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b dark:border-zinc-700">
+                                <th class="p-4 text-left w-48">
+                                    <flux:skeleton animate="shimmer" class="w-24 h-4" />
+                                </th>
+                                @for ($i = 0; $i < 3; $i++)
+                                    <th class="p-4 text-center border-l dark:border-zinc-700">
+                                        <div class="space-y-3">
+                                            <!-- Product Image Skeleton -->
+                                            <flux:skeleton animate="shimmer" class="w-32 h-32 mx-auto" />
+                                            <!-- Product Name Skeleton -->
+                                            <flux:skeleton animate="shimmer" class="w-40 h-4 mx-auto" />
+                                        </div>
+                                    </th>
+                                @endfor
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y dark:divide-zinc-700">
+                            @foreach (['Review', 'Price', 'Brand', 'Categories', 'Description', 'Stock Status', 'Actions', 'Remove'] as $row)
+                                <tr>
+                                    <td class="p-4">
+                                        <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                                    </td>
+                                    @for ($i = 0; $i < 3; $i++)
+                                        <td class="p-4 text-center border-l dark:border-zinc-700">
+                                            @if ($row === 'Review')
+                                                <flux:skeleton animate="shimmer" class="w-32 h-4 mx-auto" />
+                                            @elseif ($row === 'Price')
+                                                <flux:skeleton animate="shimmer" class="w-24 h-5 mx-auto" />
+                                            @elseif ($row === 'Description')
+                                                <div class="space-y-2">
+                                                    <flux:skeleton animate="shimmer" class="w-full h-3 mx-auto" />
+                                                    <flux:skeleton animate="shimmer" class="w-5/6 h-3 mx-auto" />
+                                                    <flux:skeleton animate="shimmer" class="w-4/6 h-3 mx-auto" />
+                                                </div>
+                                            @elseif ($row === 'Actions')
+                                                <flux:skeleton animate="shimmer" class="w-32 h-8 mx-auto" />
+                                            @elseif ($row === 'Remove')
+                                                <flux:skeleton animate="shimmer" class="w-8 h-8 mx-auto" />
+                                            @else
+                                                <flux:skeleton animate="shimmer" class="w-28 h-4 mx-auto" />
+                                            @endif
+                                        </td>
+                                    @endfor
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mobile Notice Placeholder -->
+            <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg lg:hidden">
+                <flux:skeleton animate="shimmer" class="w-full h-4" />
+            </div>
+
+            <div class="mt-10">
+                <flux:skeleton animate="shimmer" class="w-44 h-5 mb-4" />
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    @for ($i = 1; $i <= 6; $i++)
+                        <x-product-card-placeholder />
+                    @endfor
+                </div>
             </div>
         </section>
 
@@ -125,11 +191,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                 <!-- Primary CTA -->
                 <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <flux:button href="{{ route('products.index') }}" variant="primary" class="w-full sm:w-auto">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
+                    <flux:button href="{{ route('products') }}" wire:navigate variant="primary" class="w-full sm:w-auto"
+                        icon="magnifying-glass">
                         Browse Products
                     </flux:button>
 
@@ -196,7 +259,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                         </div>
                                                     @else
                                                         {{-- Empty star --}}
-                                                        <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
+                                                        <flux:icon.star variant="solid"
+                                                            class="w-4 h-4 text-zinc-300" />
                                                     @endif
                                                 @endfor
                                             </div>
@@ -356,32 +420,34 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 @endforeach
                             </tr>
 
-                            <!-- Buy Now Row -->
-                            <tr>
-                                <td class="p-4 font-medium text-zinc-900 dark:text-white text-sm ">
-                                    Actions</td>
-                                @foreach ($this->products as $product)
-                                    <td class="p-4 text-center border-l dark:border-zinc-700">
-                                        <flux:button wire:click="addToCart({{ $product->id }})" variant="primary"
-                                            size="sm" icon="shopping-cart" class="cursor-pointer">Add to Cart
-                                        </flux:button>
-                                    </td>
-                                @endforeach
-                            </tr>
+                            @island
+                                <!-- Buy Now Row -->
+                                <tr>
+                                    <td class="p-4 font-medium text-zinc-900 dark:text-white text-sm ">
+                                        Actions</td>
+                                    @foreach ($this->products as $product)
+                                        <td class="p-4 text-center border-l dark:border-zinc-700">
+                                            <flux:button wire:click="addToCart({{ $product->id }})" variant="primary"
+                                                size="sm" icon="shopping-cart" class="cursor-pointer">Add to Cart
+                                            </flux:button>
+                                        </td>
+                                    @endforeach
+                                </tr>
 
-                            <!-- Remove Row -->
-                            <tr>
-                                <td class="p-4 font-medium text-zinc-900 dark:text-white text-sm ">
-                                    Remove</td>
-                                @foreach ($this->products as $product)
-                                    <td class="p-4 text-center border-l dark:border-zinc-700">
+                                <!-- Remove Row -->
+                                <tr>
+                                    <td class="p-4 font-medium text-zinc-900 dark:text-white text-sm ">
+                                        Remove</td>
+                                    @foreach ($this->products as $product)
+                                        <td class="p-4 text-center border-l dark:border-zinc-700">
 
-                                        <flux:button wire:click="removeProduct({{ $product->id }})" icon="trash"
-                                            size="sm" variant="ghost" class="text-red-500! cursor-pointer">
-                                        </flux:button>
-                                    </td>
-                                @endforeach
-                            </tr>
+                                            <flux:button wire:click="removeProduct({{ $product->id }})" icon="trash"
+                                                size="sm" variant="ghost" class="text-red-500! cursor-pointer">
+                                            </flux:button>
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endisland
                         </tbody>
                     </table>
                 </div>
@@ -394,5 +460,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </p>
             </div>
         @endif
+
+        <livewire:product-recommendations type="recently_viewed" />
     </section>
+
 </div>

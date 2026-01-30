@@ -30,7 +30,8 @@ new #[Defer] class extends Component {
     </div>
 @endplaceholder
 
-<div>
+<div @class(['pt-10' => $this->products->isNotEmpty()])>
+
     <h3 class="text-lg font-semibold mb-4">
         {{ match ($type) {
             'similar' => 'Similar Products',
@@ -123,4 +124,5 @@ new #[Defer] class extends Component {
             @endforeach
         </div>
     @endif
+
 </div>

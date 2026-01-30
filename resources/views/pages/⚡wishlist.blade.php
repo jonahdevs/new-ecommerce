@@ -16,7 +16,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return auth()
                 ->user()
                 ->wishlistProducts()
-                ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+                ->select(['products.id', 'products.name', 'products.slug', 'products.brand_id', 'products.price', 'products.sale_price', 'products.image_path'])
                 ->withAvg('reviews', 'rating')
                 ->with('brand:id,name')
                 ->active()
@@ -181,8 +181,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             @endforelse
         </div>
 
-        <div class="mt-10">
-            <livewire:product-recommendations type="recently_viewed" />
-        </div>
+        <livewire:product-recommendations type="recently_viewed" />
     </section>
 </div>

@@ -80,11 +80,18 @@ class User extends Authenticatable
      */
     public function wishlistProducts(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'wishlist_items')->withTimestamps();
+        return $this->belongsToMany(Product::class, 'wishlist_items', 'user_id', 'product_id')->withTimestamps();
     }
 
-    public function recentlyViewedProducts()
+    public function recentlyViewedProducts(): BelongsToMany
     {
-        return $this->hasMany(RecentlyViewedProduct::class);
+        return $this->belongsToMany(
+            Product::class,
+            'recently_viewed_products',
+            'user_id',
+            'product_id'
+        )
+            ->withPivot('viewed_at')
+            ->withTimestamps();
     }
 }

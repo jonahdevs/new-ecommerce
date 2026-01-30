@@ -17,15 +17,16 @@ use RuntimeException;
 class CartService
 {
 
-    public function getCart()
+    public function getCart($user = null)
     {
-        if (Auth::check()) {
+        if ($user) {
             // Authenticated user
             Cart::firstOrCreate(
                 [
-                    'user_id' => Auth::id(),
-                    ['expires_at' => now()->addDays(30)]
-                ]
+                    'user_id' => Auth::id()
+                ],
+                ['expires_at' => now()->addDays(30)]
+
             );
         }
 
@@ -289,5 +290,52 @@ class CartService
                 'discount' => $discount,
             ];
         }
+    }
+
+    public function mergeGuestCart(): void
+    {
+        if (!Auth::check()) {
+            return;
+        }
+
+        // Prefer a stored guest cart id (set when the guest cart was created)
+        $guestCartId = session()->pull('guest_cart_id');
+
+        if ($guestCartId) {
+            $guestCart = Cart::where('id', $guestCartId)
+                ->whereNull('user_id')
+                ->first();
+        } else {
+            $sessionId = session()->getId();
+
+            $guestCart = Cart::where('session_id', $sessionId)
+                ->whereNull('user_id')
+                ->first();
+        }
+
+        if (!$guestCart || $guestCart->items->isEmpty()) {
+            return;
+        }
+
+        $userCart = $this->getCart(Auth::user());
+
+        foreach ($guestCart->items as $guestItem) {
+            $existingItem = $userCart->items()
+                ->where('product_id', $guestItem->product_id)
+                ->where('variant_id', $guestItem->variant_id)
+                ->first();
+
+            if ($existingItem) {
+                $existingItem->increment('quantity', $guestItem->quantity);
+            } else {
+                $userCart->items()->create([
+                    'product_id' => $guestItem->product_id,
+                    'quantity' => $guestItem->quantity,
+                    'variant_id' => $guestItem->variant_id,
+                ]);
+            }
+        }
+
+        $guestCart->delete();
     }
 }
