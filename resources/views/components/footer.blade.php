@@ -69,6 +69,7 @@
                     Important Links
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-white"></span>
                 </h4>
+
                 <ul class="space-y-3">
                     <li>
                         <a href="#" class="text-zinc-300 hover:text-white transition-colors text-sm">

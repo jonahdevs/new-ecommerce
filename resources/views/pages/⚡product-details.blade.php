@@ -263,9 +263,9 @@ new #[Layout('layouts.guest')] class extends Component {
             <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
         </flux:breadcrumbs>
 
-        <div class="grid lg:grid-cols-4 gap-5">
+        <div class="grid lg:grid-cols-4 gap-5 lg:gap-10">
 
-            <div class=" lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 p-6">
+            <div class="lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10">
 
                 <div class="lg:col-span-2">
                     {{-- Product Image Slider --}}
