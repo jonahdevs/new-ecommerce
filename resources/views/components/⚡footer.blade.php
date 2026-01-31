@@ -1,3 +1,17 @@
+<?php
+
+use Livewire\Component;
+use App\Models\Category;
+use Livewire\Attributes\Computed;
+
+new class extends Component {
+    #[Computed]
+    public function categories()
+    {
+        return Category::active()->navbar()->orderBy('sort_order')->orderBy('name')->take(5)->get();
+    }
+};
+?>
 <!-- ====== Footer Section Start -->
 <footer class="relative z-10 bg-sheffield-blue-dark text-white pb-10 pt-20 mt-10">
     <div class="container mx-auto px-4">
@@ -35,31 +49,14 @@
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-white"></span>
                 </h4>
                 <ul class="space-y-3">
-                    <li>
-                        <a href="#" class="text-zinc-300 hover:text-white transition-colors text-sm">
-                            Buffet & Servery
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-zinc-300 hover:text-white transition-colors text-sm">
-                            Vegetable Preparation
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-zinc-300 hover:text-white transition-colors text-sm">
-                            Beverage Machines
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-zinc-300 hover:text-white transition-colors text-sm">
-                            Kitchen Small Ware
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-zinc-300 hover:text-white transition-colors text-sm">
-                            Meat Preparation
-                        </a>
-                    </li>
+                    @foreach ($this->categories as $category)
+                        <li>
+                            <a href="{{ route('products', ['category' => $category->slug]) }}" wire:navigate
+                                class="text-zinc-300 hover:text-white transition-colors text-sm">
+                                {{ $category->name }}
+                            </a>
+                        </li>
+                    @endforeach
                 </ul>
             </div>
 

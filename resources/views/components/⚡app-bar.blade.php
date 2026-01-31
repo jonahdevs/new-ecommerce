@@ -209,8 +209,7 @@ new class extends Component {
                         role="menuitem" aria-expanded="false">
                         <div class="relative h-9.25">
                             <a href="{{ route('products', ['category' => $category->slug]) }}"
-                                class="flex min-h-full items-center overflow-hidden text-ellipsis whitespace-nowrap border-l border-white/20 px-1.25 xl:px-2.5 border-b"
-                                wire:navigate>
+                                class="flex min-h-full items-center overflow-hidden text-ellipsis whitespace-nowrap border-l border-white/20 px-1.25 xl:px-2.5 border-b">
                                 <img alt="" loading="eager" width="26" height="26" decoding="async"
                                     data-nimg="1" class="duration-300 max-h-6.5 max-w-6.5 max-md:hidden invert"
                                     style="color:transparent" src="{{ $category->icon_url }}">

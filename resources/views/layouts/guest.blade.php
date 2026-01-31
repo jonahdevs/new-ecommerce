@@ -97,7 +97,7 @@
     </main>
 
     <x-toast-notification />
-    <x-footer />
+    <livewire:footer />
 
     @fluxScripts
 </body>

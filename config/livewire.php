@@ -70,7 +70,7 @@ return [
 
     'make_command' => [
         'type' => 'sfc', // Options: 'sfc', 'mfc', 'class'
-        'emoji' => false, // Options: true, false
+        'emoji' => true, // Options: true, false
         'with' => [
             'js' => false,
             'css' => false,
