@@ -452,7 +452,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_views');
+        Schema::dropIfExists('recently_viewed_products');
         Schema::dropIfExists('product_related');
         Schema::dropIfExists('product_cross_sells');
         Schema::dropIfExists('product_upsells');

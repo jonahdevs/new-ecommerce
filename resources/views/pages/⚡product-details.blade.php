@@ -461,7 +461,8 @@ new #[Layout('layouts.guest')] class extends Component {
                             </flux:button.group>
 
                             @if (!$inCart)
-                                <flux:button wire:click="addToCart" class="uppercase" variant="primary">
+                                <flux:button wire:click="addToCart" class="uppercase" variant="primary"
+                                    class="cursor-pointer">
                                     Add to Cart
                                 </flux:button>
                             @endif
