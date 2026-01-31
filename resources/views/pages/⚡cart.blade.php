@@ -277,17 +277,62 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                                         <div class="bg-zinc-50 px-3 py-2 flex items-center">
                                             <div class="flex items-center gap-4">
-                                                <flux:button wire:click="removeItem({{ $item->id }})"
-                                                    variant="ghost" size="xs" icon="trash"
-                                                    icon-variant="outline" class="cursor-pointer">Remove</flux:button>
+                                                <flux:modal.trigger name="remove-item-{{ $item->id }}">
+                                                    <flux:button variant="ghost" size="xs" icon="trash"
+                                                        icon-variant="outline" class="cursor-pointer">Remove
+                                                    </flux:button>
+                                                </flux:modal.trigger>
+
+                                                <flux:modal name="remove-item-{{ $item->id }}"
+                                                    class="min-w-[22rem] rounded-xs!">
+                                                    <div class="space-y-6">
+                                                        <div>
+                                                            <flux:heading size="lg">Remove from Cart
+                                                            </flux:heading>
+
+                                                            <flux:text class="mt-2">
+                                                                Do you really want to remove this item from cart?
+                                                            </flux:text>
+                                                        </div>
+
+                                                        <div class="flex gap-2">
+                                                            <flux:modal.close>
+                                                                <flux:button
+                                                                    wire:click="toggleWishlist({{ $item->product->id }})"
+                                                                    class="cursor-pointer">
+                                                                    <x-slot name="icon">
+                                                                        <flux:icon.heart
+                                                                            variant="{{ $this->inWishlist($item->product->id) ? 'solid' : 'outline' }}"
+                                                                            @class([
+                                                                                'size-4',
+                                                                                'text-red-500' => $this->inWishlist($item->product->id),
+                                                                            ]) />
+                                                                    </x-slot>
+                                                                    {{ $this->inWishlist($item->product->id) ? 'Remove Wishlist' : 'Save for later' }}
+                                                                </flux:button>
+                                                            </flux:modal.close>
+
+                                                            <flux:spacer />
+
+                                                            <flux:button type="submit" variant="danger"
+                                                                class="cursor-pointer" icon="trash"
+                                                                wire:click="removeItem({{ $item->id }})">Remove
+                                                                Item
+                                                            </flux:button>
+                                                        </div>
+                                                    </div>
+                                                </flux:modal>
+
                                                 <flux:button wire:click="toggleWishlist({{ $item->product->id }})"
                                                     variant="ghost" size="xs" class="cursor-pointer">
-                                                    <flux:icon.heart
-                                                        variant="{{ $this->inWishlist($item->product->id) ? 'solid' : 'outline' }}"
-                                                        @class([
-                                                            'size-4 inline-block me-1',
-                                                            'text-red-500' => $this->inWishlist($item->product->id),
-                                                        ]) />
+                                                    <x-slot name="icon">
+                                                        <flux:icon.heart
+                                                            variant="{{ $this->inWishlist($item->product->id) ? 'solid' : 'outline' }}"
+                                                            @class([
+                                                                'size-4',
+                                                                'text-red-500' => $this->inWishlist($item->product->id),
+                                                            ]) />
+                                                    </x-slot>
                                                     {{ $this->inWishlist($item->product->id) ? 'Remove Wishlist' : 'Add Wishlist' }}
                                                 </flux:button>
                                             </div>
@@ -313,14 +358,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             <h3 class="font-medium text-sm uppercase px-3 py-2 border-b">
                                 Cart Summary
                             </h3>
-                            <div class="p-3 space-y-2">
-
-                                <div class="flex items-center justify-between">
-                                    <p class="text-zinc-600 text-sm">Discount:</p>
-                                    <span
-                                        class="font-medium text-sm text-right">{{ format_currency($cartSummary['discount']) }}</span>
-                                </div>
-
+                            <div class="p-3 py-4 space-y-2">
                                 <div class="flex items-center justify-between">
                                     <p class="text-zinc-600 text-sm">Subtotal:</p>
                                     <span
@@ -331,10 +369,11 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             <div class="border-t p-3">
                                 <flux:button class="w-full group cursor-pointer" variant="primary">Proceed
                                     to Checkout
-                                    <flux:icon.chevron-right
-                                        class="w-4 h-4 ms-2 inline-block group-hover:translate-x-1 transition-transform" />
+                                    <x-slot name="iconTrailing">
+                                        <flux:icon.chevron-right
+                                            class="size-4 ms-3 group-hover:translate-x-1 transition-transform" />
+                                    </x-slot>
                                 </flux:button>
-
                             </div>
                         </div>
 

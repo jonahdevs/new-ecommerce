@@ -171,6 +171,15 @@ new class extends Component {
                     @endif
                 </figure>
             </a>
+
+            {{-- discount badge --}}
+            @if ($product->hasDiscount())
+                <span
+                    class="absolute left-0 top-2 rounded-e-full bg-sheffield-red px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    -{{ $product->discountPercentage() }}
+                </span>
+            @endif
+
             {{-- Quick action buttons --}}
             <div
                 class="absolute top-2 right-2 flex flex-col gap-2 translate-x-20 group-hover:translate-x-0 transition-transform duration-300">
@@ -260,7 +269,7 @@ new class extends Component {
                     activeIndex: 0,
                     isBeginning: true,
                     isEnd: false,
-                
+
                     init() {
                         this.thumbSwiper = new Swiper('.thumbSwiper', {
                             spaceBetween: 10,
@@ -283,7 +292,7 @@ new class extends Component {
                                 },
                             },
                         });
-                
+
                         // Initialize main slider
                         this.mainSwiper = new Swiper('.mainSwiper', {
                             spaceBetween: 10,
@@ -298,13 +307,13 @@ new class extends Component {
                             on: {
                                 slideChange: (swiper) => {
                                     this.activeIndex = swiper.realIndex;
-                
+
                                     // Ensure the active thumbnail is visible
                                     this.thumbSwiper.slideTo(swiper.realIndex);
                                 },
                             },
                         });
-                
+
                         // Set initial state
                         this.isBeginning = this.thumbSwiper.isBeginning;
                         this.isEnd = this.thumbSwiper.isEnd;

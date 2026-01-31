@@ -301,7 +301,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         activeIndex: 0,
                         isBeginning: true,
                         isEnd: false,
-                    
+
                         init() {
                             // Wait for next tick to ensure DOM is ready
                             this.$nextTick(() => {
@@ -327,7 +327,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                         },
                                     },
                                 });
-                    
+
                                 // Initialize main slider
                                 this.mainSwiper = new Swiper('.mainSwiper', {
                                     spaceBetween: 10,
@@ -342,13 +342,13 @@ new #[Layout('layouts.guest')] class extends Component {
                                     on: {
                                         slideChange: (swiper) => {
                                             this.activeIndex = swiper.realIndex;
-                    
+
                                             // Ensure the active thumbnail is visible
                                             this.thumbSwiper.slideTo(swiper.realIndex);
                                         },
                                     },
                                 });
-                    
+
                                 // Set initial state
                                 this.isBeginning = this.thumbSwiper.isBeginning;
                                 this.isEnd = this.thumbSwiper.isEnd;
@@ -515,23 +515,26 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <div class="p-3">
                         <h4 class="text-sm  font-medium text-slate-600">Choose your location</h4>
-                        <flux:select class="w-full mt-2" wire:model="selectedCounty">
+                        @island('location-selector')
+                            <flux:select class="w-full mt-2" wire:model.change="selectedCounty">
 
-                            @foreach ($this->counties as $county)
-                                <flux:select.option value="{{ $county->id }}">
-                                    {{ $county->name }}
-                                </flux:select.option>
-                            @endforeach
-                        </flux:select>
+                                @foreach ($this->counties as $county)
+                                    <flux:select.option value="{{ $county->id }}">
+                                        {{ $county->name }}
+                                    </flux:select.option>
+                                @endforeach
+                            </flux:select>
 
-                        <flux:select wire:model="selectedArea"
-                            :placeholder="$selectedCounty ? 'Select Area' : 'Select a county first'" class="mt-2">
-                            @foreach ($this->areas as $area)
-                                <flux:select.option value="{{ $area->id }}">
-                                    {{ $area->name }}
-                                </flux:select.option>
-                            @endforeach
-                        </flux:select>
+                            <flux:select wire:model="selectedArea"
+                                :placeholder="$selectedCounty ? 'Select Area' : 'Select a county first'"
+                                :disabled="!$selectedCounty" class="mt-2">
+                                @foreach ($this->areas as $area)
+                                    <flux:select.option value="{{ $area->id }}">
+                                        {{ $area->name }}
+                                    </flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        @endisland
                     </div>
 
                     <div class="border-t p-3 flex items-center">
@@ -572,7 +575,6 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 

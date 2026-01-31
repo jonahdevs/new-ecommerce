@@ -27,7 +27,7 @@
                                 this.initializeSwiper();
                             });
                         },
-                    
+
                         initializeSwiper() {
                             this.swiper = new Swiper('.promoSwiper', {
                                 direction: 'vertical',
@@ -45,7 +45,7 @@
                                 // },
                             });
                         },
-                    
+
                         destroy() {
                             if (this.swiper) {
                                 this.swiper.destroy(true, true);
