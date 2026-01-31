@@ -417,7 +417,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 localMax: {{ $maxPrice ?? ($this->priceRange->max_price ?? 1000000) }},
                                 absoluteMin: {{ $this->priceRange->min_price ?? 0 }},
                                 absoluteMax: {{ $this->priceRange->max_price ?? 1000000 }},
-
+                            
                                 // Ensure min doesn't exceed max
                                 updateMin() {
                                     this.localMin = parseFloat(this.localMin);
@@ -428,7 +428,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         this.localMin = this.absoluteMin;
                                     }
                                 },
-
+                            
                                 // Ensure max doesn't go below min
                                 updateMax() {
                                     this.localMax = parseFloat(this.localMax);
@@ -439,14 +439,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         this.localMax = this.absoluteMax;
                                     }
                                 },
-
+                            
                                 // Apply filter
                                 apply() {
                                     $wire.minPrice = this.localMin;
                                     $wire.maxPrice = this.localMax;
                                     $wire.applyPriceFilter();
                                 },
-
+                            
                                 // Reset to defaults
                                 reset() {
                                     this.localMin = this.absoluteMin;
@@ -657,8 +657,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @if ($this->selectedCategory)
                                 <flux:badge color="zinc" size="sm">
                                     {{ $this->selectedCategory->name }}
-                                    <button wire:click="clearCategory" class="ml-1.5 hover:text-red-600"
-                                        type="button">
+                                    <button wire:click="clearCategory"
+                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
                                 </flux:badge>
@@ -673,7 +673,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                     <flux:badge color="zinc" size="sm">
                                         {{ $brand->name }}
                                         <button wire:click="clearBrand('{{ $brandSlug }}')"
-                                            class="ml-1.5 hover:text-red-600" type="button">
+                                            class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                             <flux:icon.x-mark class="w-3 h-3" />
                                         </button>
                                     </flux:badge>
@@ -684,8 +684,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @if ($minPrice != ($this->priceRange->min_price ?? 0) || $maxPrice != ($this->priceRange->max_price ?? 1000000))
                                 <flux:badge color="zinc" size="sm">
                                     KES {{ number_format($minPrice) }} - {{ number_format($maxPrice) }}
-                                    <button wire:click="clearPriceFilter" class="ml-1.5 hover:text-red-600"
-                                        type="button">
+                                    <button wire:click="clearPriceFilter"
+                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
                                 </flux:badge>
@@ -695,7 +695,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @if ($minRating)
                                 <flux:badge color="zinc" size="sm">
                                     {{ $minRating }}+ Stars
-                                    <button wire:click="clearRating" class="ml-1.5 hover:text-red-600"
+                                    <button wire:click="clearRating" class="ml-1.5 hover:text-red-600 cursor-pointer"
                                         type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
@@ -706,8 +706,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @if ($inStock)
                                 <flux:badge color="zinc" size="sm">
                                     In Stock
-                                    <button wire:click="$set('inStock', false)" class="ml-1.5 hover:text-red-600"
-                                        type="button">
+                                    <button wire:click="$set('inStock', false)"
+                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
                                 </flux:badge>
@@ -717,8 +717,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @if ($featured)
                                 <flux:badge color="zinc" size="sm">
                                     Featured
-                                    <button wire:click="$set('featured', false)" class="ml-1.5 hover:text-red-600"
-                                        type="button">
+                                    <button wire:click="$set('featured', false)"
+                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
                                 </flux:badge>
@@ -728,8 +728,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @if ($onSale)
                                 <flux:badge color="zinc" size="sm">
                                     On Sale
-                                    <button wire:click="$set('onSale', false)" class="ml-1.5 hover:text-red-600"
-                                        type="button">
+                                    <button wire:click="$set('onSale', false)"
+                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
                                 </flux:badge>
@@ -737,9 +737,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         </div>
                     @endif
                 </div>
-
-
-
 
 
                 {{-- Products Grid --}}

@@ -28,6 +28,10 @@
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
 
+    /* --color-accent: var(--color-sheffield-blue);
+    --color-accent-content: var(--color-sheffield-blue-dark);
+    --color-accent-foreground: var(--color-white); */
+
     --color-sheffield-red: #c02434;
     --color-sheffield-red-light: #d02e3a;
     --color-sheffield-red-dark: #931e2d;
@@ -73,4 +77,6 @@ select:focus[data-flux-control] {
     @apply size-4;
 } */
 
-[x-cloak] { display: none !important; }
+[x-cloak] {
+    display: none !important;
+}

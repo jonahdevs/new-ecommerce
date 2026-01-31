@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -342,5 +343,60 @@ class ProductService
             ->whereIn('products.id', $ids)
             ->orderByRaw('FIELD(products.id, ' . implode(',', $ids) . ')')
             ->get();
+    }
+
+    public function syncRecentlyViewedOnLogin(int $limit = 12): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+
+        $user = Auth::user();
+
+        // Get session data
+        $sessionIds = session()->get('recently_viewed_products', []);
+
+        if (empty($sessionIds)) {
+            return;
+        }
+
+        // Get existing database records with their timestamps
+        $existingViews = $user->recentlyViewedProducts()
+            ->get(['products.id', 'recently_viewed_products.viewed_at'])
+            ->keyBy('id');
+
+        // Prepare sync data
+        $syncData = [];
+        $timestamp = now();
+
+        foreach ($sessionIds as $index => $productId) {
+            // Use existing timestamp if already in DB, otherwise use descending timestamps
+            // based on session order (most recent first)
+            $syncData[$productId] = [
+                'viewed_at' => $existingViews->has($productId)
+                    ? $existingViews[$productId]->pivot->viewed_at
+                    : $timestamp->copy()->subSeconds(count($sessionIds) - $index)
+            ];
+        }
+
+        // Merge session data into database without detaching existing ones
+        $user->recentlyViewedProducts()->syncWithoutDetaching($syncData);
+
+        // Enforce limit
+        $totalCount = $user->recentlyViewedProducts()->count();
+
+        if ($totalCount > $limit) {
+            $idsToKeep = $user->recentlyViewedProducts()
+                ->orderByDesc('recently_viewed_products.viewed_at')
+                ->limit($limit)
+                ->pluck('products.id');
+
+            $user->recentlyViewedProducts()
+                ->whereNotIn('product_id', $idsToKeep)
+                ->detach();
+        }
+
+        // Clear session data after successful sync
+        session()->forget('recently_viewed_products');
     }
 }

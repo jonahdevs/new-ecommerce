@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\SyncCartOnLogin;
+use App\Listeners\SyncRecentViewedOnLogin;
 use App\Listeners\SyncWishlistOnLogin;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
@@ -27,9 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Event::listen(Login::class, [SyncWishlistOnLogin::class, 'handle']);
-        // register cart merge on login
         Event::listen(Login::class, [SyncCartOnLogin::class, 'handle']);
+        Event::listen(Login::class, [SyncWishlistOnLogin::class, 'handle']);
+        Event::listen(Login::class, [SyncRecentViewedOnLogin::class, 'handle']);
 
         $this->configureDefaults();
     }
