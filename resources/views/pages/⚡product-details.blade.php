@@ -6,6 +6,8 @@ use App\Services\CartService;
 use App\Services\ReviewService;
 use App\Services\ProductService;
 use App\Models\Product;
+use App\Models\Area;
+use App\Models\County;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
@@ -16,6 +18,9 @@ new #[Layout('layouts.guest')] class extends Component {
     public bool $wishlisted = false;
     public bool $inCompare = false;
     public bool $inCart = false;
+
+    public $selectedCounty = null;
+    public $selectedArea = null;
 
     public string $selectedTab = 'description';
 
@@ -175,6 +180,27 @@ new #[Layout('layouts.guest')] class extends Component {
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove from cart');
         }
+    }
+
+    #[Computed]
+    public function counties()
+    {
+        return County::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function areas()
+    {
+        if (!$this->selectedCounty) {
+            return collect();
+        }
+
+        return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get();
+    }
+
+    public function updatedSelectedCounty()
+    {
+        $this->reset('selectedArea');
     }
 
     #[Computed]
@@ -489,16 +515,23 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <div class="p-3">
                         <h4 class="text-sm  font-medium text-slate-600">Choose your location</h4>
-                        <flux:select class="w-full mt-2" wire:model="selectedLocation">
+                        <flux:select class="w-full mt-2" wire:model="selectedCounty">
 
-                            {{-- @foreach ($locations as $location)
-                                <flux:select.option value="{{ $location->code }}">
-                                    {{ $location->name }}
+                            @foreach ($this->counties as $county)
+                                <flux:select.option value="{{ $county->id }}">
+                                    {{ $county->name }}
                                 </flux:select.option>
-                            @endforeach --}}
+                            @endforeach
                         </flux:select>
 
-                        <flux:select placeholder="" class="mt-2"></flux:select>
+                        <flux:select wire:model="selectedArea"
+                            :placeholder="$selectedCounty ? 'Select Area' : 'Select a county first'" class="mt-2">
+                            @foreach ($this->areas as $area)
+                                <flux:select.option value="{{ $area->id }}">
+                                    {{ $area->name }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
                     </div>
 
                     <div class="border-t p-3 flex items-center">
