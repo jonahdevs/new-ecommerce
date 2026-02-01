@@ -1,6 +1,6 @@
 <x-layouts::guest>
     <!-- Breadcrumb -->
-    <div class="container mx-auto px-4 py-4">
+    <div class="container mx-auto px-4 py-4 min-h-[80svh]">
         @isset($breadcrumbs)
             <flux:breadcrumbs>
                 <flux:breadcrumbs.item href="{{ route('home') }}">

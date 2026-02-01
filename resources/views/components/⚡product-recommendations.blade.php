@@ -48,7 +48,7 @@ new #[Defer] class extends Component {
                     if (this.swiper) {
                         this.swiper.destroy(true, true);
                     }
-            
+
                     this.$nextTick(() => {
                         this.swiper = new Swiper('#{{ $type }}', {
                             slidesPerView: 2,
@@ -77,7 +77,7 @@ new #[Defer] class extends Component {
                             },
                         });
                     });
-            
+
                 }
             }" class="relative">
                 <div class="swiper px-5" id="{{ $type }}">

@@ -175,7 +175,7 @@ new class extends Component {
             {{-- discount badge --}}
             @if ($product->hasDiscount())
                 <span
-                    class="absolute left-0 top-2 rounded-e-full bg-sheffield-red px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    class="absolute left-0 top-2 rounded-e-full bg-red-400 px-2 py-1 text-xs font-medium text-white tracking-wide">
                     -{{ $product->discountPercentage() }}
                 </span>
             @endif
@@ -183,11 +183,12 @@ new class extends Component {
             {{-- Quick action buttons --}}
             <div
                 class="absolute top-2 right-2 flex flex-col gap-2 translate-x-20 group-hover:translate-x-0 transition-transform duration-300">
-                <flux:button wire:click.stop="toggleWishlist" icon="heart" title="Wishlist"
-                    icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" @class([
-                        'cursor-pointer',
-                        'text-red-500! border-red-500!' => $wishlisted,
-                    ]) size="sm">
+                <flux:button wire:click.stop="toggleWishlist" icon="heart" title="Wishlist" size="sm"
+                    class="cursor-pointer">
+                    <x-slot name="icon">
+                        <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
+                            @class(['size-4', 'text-red-500' => $wishlisted]) />
+                    </x-slot>
                 </flux:button>
 
                 <flux:modal.trigger name="quick-view-product-{{ $product->id }}">
@@ -258,7 +259,7 @@ new class extends Component {
         </div>
     </div>
 
-    <flux:modal name="quick-view-product-{{ $product->id }}" class="w-full max-w-2xl rounded-xs!"
+    <flux:modal variant="floating" name="quick-view-product-{{ $product->id }}" class="w-full max-w-2xl rounded-xs!"
         overlay-class="bg-black backdrop-blur-lg">
 
         <div class="grid grid-cols-3 ">
@@ -384,7 +385,8 @@ new class extends Component {
                         @endfor
                     </div>
                     @if ($product->reviews_avg_rating)
-                        <span class="text-xs text-zinc-500">{{ number_format($product->reviews_avg_rating, 1) }}</span>
+                        <span
+                            class="text-xs text-zinc-500">{{ number_format($product->reviews_avg_rating, 1) }}</span>
                     @endif
                 </div>
 

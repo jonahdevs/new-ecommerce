@@ -7,6 +7,8 @@ use Livewire\Attributes\Defer;
 use App\Services\CartService;
 use App\Services\WishlistService;
 use App\Models\Cart;
+use Livewire\Attributes\On;
+use Flux\Flux;
 
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public array $cartSummary = [];
@@ -38,6 +40,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         try {
             $cartService = app(CartService::class);
             $cartService->removeItem($itemId);
+
+            Flux::modal('remove-item-' . $itemId)->close();
 
             $this->dispatch('notify', variant: 'success', message: 'Item removed from cart');
         } catch (\Throwable $th) {
@@ -283,7 +287,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                     </flux:button>
                                                 </flux:modal.trigger>
 
-                                                <flux:modal name="remove-item-{{ $item->id }}"
+                                                <flux:modal name="remove-item-{{ $item->id }}" variant="floating"
                                                     class="min-w-[22rem] rounded-xs!">
                                                     <div class="space-y-6">
                                                         <div>
@@ -360,14 +364,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             </h3>
                             <div class="p-3 py-4 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <p class="text-zinc-600 text-sm">Subtotal:</p>
+                                    <p class="text-zinc-600 text-sm font-medium">Subtotal:</p>
                                     <span
-                                        class="font-medium text-sm text-right">{{ format_currency($cartSummary['subtotal']) }}</span>
+                                        class="font-semibold text-right">{{ format_currency($cartSummary['subtotal']) }}</span>
                                 </div>
                             </div>
 
                             <div class="border-t p-3">
-                                <flux:button class="w-full group cursor-pointer" variant="primary">Proceed
+                                <flux:button :href="route('checkout.summary')" wire:navigate
+                                    class="w-full group cursor-pointer" variant="primary">Proceed
                                     to Checkout
                                     <x-slot name="iconTrailing">
                                         <flux:icon.chevron-right
@@ -385,6 +390,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         @if ($this->cartItems->isNotEmpty())
             <livewire:product-recommendations type="cart_related" />
         @endif
+
 
         <livewire:product-recommendations type="recently_viewed" />
     </div>

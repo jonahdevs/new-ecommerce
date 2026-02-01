@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -69,7 +70,7 @@ class User extends Authenticatable
 
     // ===============================================
     // RELATIONSHIPS
-    // =============================================== 
+    // ===============================================
     public function wishlistItems(): HasMany
     {
         return $this->hasMany(WishlistItem::class);
@@ -93,5 +94,16 @@ class User extends Authenticatable
         )
             ->withPivot('viewed_at')
             ->withTimestamps();
+    }
+
+    public function defaultAddress(): HasOne
+    {
+        return $this->hasOne(Address::class)
+            ->where('is_default', true);
+    }
+
+    public function address(): HasMany
+    {
+        return $this->hasMany(Address::class);
     }
 }

@@ -160,7 +160,8 @@ new class extends Component {
                         @endauth
 
                         <flux:navmenu class="mt-5.5! rounded-sm!">
-                            <flux:navmenu.item href="#" wire:navigate icon="user" icon-variant="outline">
+                            <flux:navmenu.item :href="route('customer.address.index')" wire:navigate icon="user"
+                                icon-variant="outline">
                                 Account
                             </flux:navmenu.item>
 
@@ -168,8 +169,9 @@ new class extends Component {
                                 Orders
                             </flux:navmenu.item>
 
-                            <flux:navmenu.item href="#" wire:navigate icon="heart" icon-variant="outline">
-                                Favorite Items
+                            <flux:navmenu.item :href="route('wishlist')" wire:navigate icon="heart"
+                                icon-variant="outline">
+                                Wishlist
                             </flux:navmenu.item>
 
                             @auth
@@ -177,6 +179,7 @@ new class extends Component {
                                     Messages
                                 </flux:navmenu.item>
                             @endauth
+
                             <flux:menu.separator />
                             @auth
                                 <form action="{{ route('logout') }}" method="post">
@@ -208,7 +211,7 @@ new class extends Component {
                     <li class="w-[16.66666666666667%] cursor-pointer hover:bg-sheffield-red-dark" tabindex="0"
                         role="menuitem" aria-expanded="false">
                         <div class="relative h-9.25">
-                            <a href="{{ route('products', ['category' => $category->slug]) }}"
+                            <a href="{{ route('products', ['category' => $category->slug]) }}" wire:navigate
                                 class="flex min-h-full items-center overflow-hidden text-ellipsis whitespace-nowrap border-l border-white/20 px-1.25 xl:px-2.5 border-b">
                                 <img alt="" loading="eager" width="26" height="26" decoding="async"
                                     data-nimg="1" class="duration-300 max-h-6.5 max-w-6.5 max-md:hidden invert"

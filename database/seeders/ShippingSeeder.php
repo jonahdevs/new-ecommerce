@@ -4,20 +4,19 @@ namespace Database\Seeders;
 
 use App\Models\Area;
 use App\Models\County;
+use App\Models\ShippingRate;
 use App\Models\ShippingZone;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\ShippingMethod;
+use App\Models\FreeShippingRule;
+use App\Models\PickupStation;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class ShippingSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Load JSON file
         $jsonPath = database_path('seeders/data/counties.json');
 
         if (!File::exists($jsonPath)) {
@@ -33,21 +32,31 @@ class ShippingSeeder extends Seeder
             return;
         }
 
-        $this->command->info('🚀 Starting Kenya Counties Seeder...');
+        $this->command->info('🚀 Starting Kenya Shipping Seeder...');
 
         DB::beginTransaction();
 
         try {
-            // Create Shipping Zones based on regions
+            $this->command->info('🚚 Creating shipping methods...');
+            $methods = $this->createShippingMethods();
+
             $this->command->info('📦 Creating shipping zones...');
             $zones = $this->createShippingZones();
 
-            // Process counties from JSON
             $this->command->info('🏛️  Creating counties and areas...');
             $this->processCounties($data['counties'], $zones);
 
+            $this->command->info('💰 Creating shipping rates...');
+            $this->createShippingRates($zones, $methods);
+
+            $this->command->info('📍 Creating pickup stations...');
+            $this->createPickupStations();
+
+            $this->command->info('🎁 Creating free shipping rules...');
+            $this->createFreeShippingRules($zones);
+
             DB::commit();
-            $this->command->info('✅ Successfully seeded all Kenya counties and areas!');
+            $this->command->info('✅ Successfully seeded all shipping data!');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->command->error('❌ Seeding failed: ' . $e->getMessage());
@@ -55,10 +64,46 @@ class ShippingSeeder extends Seeder
         }
     }
 
-
     /**
-     * Create shipping zones based on regions
+     * Create shipping methods
      */
+    private function createShippingMethods(): array
+    {
+        $methodDefinitions = [
+            [
+                'name' => 'Standard Delivery',
+                'code' => 'standard',
+                'description' => 'Regular delivery to your doorstep',
+                'icon' => 'truck',
+                'sort_order' => 1,
+            ],
+            [
+                'name' => 'Express Delivery',
+                'code' => 'express',
+                'description' => 'Fast delivery with priority handling',
+                'icon' => 'bolt',
+                'sort_order' => 2,
+            ],
+            [
+                'name' => 'Pickup Station',
+                'code' => 'pickup',
+                'description' => 'Collect from nearest pickup point',
+                'icon' => 'map-pin',
+                'sort_order' => 3,
+            ],
+        ];
+
+        $methods = [];
+
+        foreach ($methodDefinitions as $definition) {
+            $method = ShippingMethod::create($definition);
+            $methods[$definition['code']] = $method;
+            $this->command->info("  ✓ Created method: {$definition['name']}");
+        }
+
+        return $methods;
+    }
+
     private function createShippingZones(): array
     {
         $zoneDefinitions = [
@@ -122,16 +167,12 @@ class ShippingSeeder extends Seeder
         return $zones;
     }
 
-    /**
-     * Process counties and their areas from JSON data
-     */
     private function processCounties(array $counties, array $zones): void
     {
         $countyCount = 0;
         $areaCount = 0;
 
         foreach ($counties as $countyData) {
-            // Get the appropriate shipping zone
             $region = $countyData['region'];
 
             if (!isset($zones[$region])) {
@@ -139,7 +180,6 @@ class ShippingSeeder extends Seeder
                 continue;
             }
 
-            // Create county
             $county = County::create([
                 'name' => $countyData['name'],
                 'code' => $countyData['number'],
@@ -148,7 +188,6 @@ class ShippingSeeder extends Seeder
 
             $countyCount++;
 
-            // Create areas (towns) for this county
             if (isset($countyData['main_towns']) && is_array($countyData['main_towns'])) {
                 foreach ($countyData['main_towns'] as $town) {
                     Area::create([
@@ -165,5 +204,184 @@ class ShippingSeeder extends Seeder
         }
 
         $this->command->info("📊 Summary: {$countyCount} counties, {$areaCount} areas created");
+    }
+
+    /**
+     * Create shipping rates for each zone, method, and weight range
+     */
+    private function createShippingRates(array $zones, array $methods): void
+    {
+        // Standard Delivery Rates
+        $standardRates = [
+            'Nairobi' => [
+                ['min' => 0, 'max' => 1, 'price' => 200, 'days_min' => 1, 'days_max' => 2],
+                ['min' => 1, 'max' => 5, 'price' => 350, 'days_min' => 1, 'days_max' => 3],
+                ['min' => 5, 'max' => 10, 'price' => 500, 'days_min' => 2, 'days_max' => 3],
+                ['min' => 10, 'max' => 20, 'price' => 800, 'days_min' => 2, 'days_max' => 4],
+                ['min' => 20, 'max' => 50, 'price' => 1500, 'days_min' => 3, 'days_max' => 5],
+            ],
+            // Add other zones with similar structure...
+        ];
+
+        // Express Delivery Rates (30% more expensive, 50% faster)
+        $expressRates = [];
+        foreach ($standardRates as $zone => $rates) {
+            $expressRates[$zone] = array_map(function ($rate) {
+                return [
+                    'min' => $rate['min'],
+                    'max' => $rate['max'],
+                    'price' => $rate['price'] * 1.3, // 30% more
+                    'days_min' => max(1, ceil($rate['days_min'] * 0.5)),
+                    'days_max' => max(1, ceil($rate['days_max'] * 0.5)),
+                ];
+            }, $rates);
+        }
+
+        // Pickup Station Rates (15% cheaper, similar timeframes)
+        $pickupRates = [];
+        foreach ($standardRates as $zone => $rates) {
+            $pickupRates[$zone] = array_map(function ($rate) {
+                return [
+                    'min' => $rate['min'],
+                    'max' => $rate['max'],
+                    'price' => $rate['price'] * 0.85, // 15% discount
+                    'days_min' => $rate['days_min'],
+                    'days_max' => $rate['days_max'] + 1, // Slightly longer for pickup
+                ];
+            }, $rates);
+        }
+
+        $totalRates = 0;
+
+        // Create rates for each method
+        foreach ($zones as $regionName => $zone) {
+            // Standard
+            if (isset($standardRates[$regionName])) {
+                foreach ($standardRates[$regionName] as $rate) {
+                    ShippingRate::create([
+                        'shipping_zone_id' => $zone->id,
+                        'shipping_method_id' => $methods['standard']->id,
+                        'min_weight' => $rate['min'],
+                        'max_weight' => $rate['max'],
+                        'price' => $rate['price'],
+                        'estimated_days_min' => $rate['days_min'],
+                        'estimated_days_max' => $rate['days_max'],
+                        'is_active' => true,
+                    ]);
+                    $totalRates++;
+                }
+            }
+
+            // Express
+            if (isset($expressRates[$regionName])) {
+                foreach ($expressRates[$regionName] as $rate) {
+                    ShippingRate::create([
+                        'shipping_zone_id' => $zone->id,
+                        'shipping_method_id' => $methods['express']->id,
+                        'min_weight' => $rate['min'],
+                        'max_weight' => $rate['max'],
+                        'price' => $rate['price'],
+                        'estimated_days_min' => $rate['days_min'],
+                        'estimated_days_max' => $rate['days_max'],
+                        'is_active' => true,
+                    ]);
+                    $totalRates++;
+                }
+            }
+
+            // Pickup
+            if (isset($pickupRates[$regionName])) {
+                foreach ($pickupRates[$regionName] as $rate) {
+                    ShippingRate::create([
+                        'shipping_zone_id' => $zone->id,
+                        'shipping_method_id' => $methods['pickup']->id,
+                        'min_weight' => $rate['min'],
+                        'max_weight' => $rate['max'],
+                        'price' => $rate['price'],
+                        'estimated_days_min' => $rate['days_min'],
+                        'estimated_days_max' => $rate['days_max'],
+                        'is_active' => true,
+                    ]);
+                    $totalRates++;
+                }
+            }
+
+            $this->command->info("  ✓ Created rates for {$zone->name}");
+        }
+
+        $this->command->info("📊 Total shipping rates created: {$totalRates}");
+    }
+
+    /**
+     * Create pickup stations
+     */
+    private function createPickupStations(): void
+    {
+        // Get Nairobi county
+        $nairobi = County::where('name', 'Nairobi')->first();
+
+        if (!$nairobi) {
+            $this->command->warn("  ⚠ Nairobi county not found, skipping pickup stations");
+            return;
+        }
+
+        $stations = [
+            [
+                'name' => 'Nairobi CBD Pickup Hub',
+                'code' => 'NBO_CBD',
+                'county_id' => $nairobi->id,
+                'address' => 'Kimathi Street, Nairobi CBD',
+                'phone' => '+254712345678',
+                'operating_hours' => 'Mon-Sat: 8:00 AM - 8:00 PM, Sun: 10:00 AM - 6:00 PM',
+                'latitude' => -1.2864,
+                'longitude' => 36.8172,
+            ],
+            [
+                'name' => 'Westlands Pickup Point',
+                'code' => 'NBO_WST',
+                'county_id' => $nairobi->id,
+                'address' => 'Westlands Mall, Nairobi',
+                'phone' => '+254723456789',
+                'operating_hours' => 'Mon-Sun: 9:00 AM - 9:00 PM',
+                'latitude' => -1.2676,
+                'longitude' => 36.8074,
+            ],
+            [
+                'name' => 'Eastleigh Hub',
+                'code' => 'NBO_EST',
+                'county_id' => $nairobi->id,
+                'address' => '1st Avenue, Eastleigh',
+                'phone' => '+254734567890',
+                'operating_hours' => 'Mon-Sun: 8:00 AM - 8:00 PM',
+                'latitude' => -1.2884,
+                'longitude' => 36.8428,
+            ],
+        ];
+
+        foreach ($stations as $station) {
+            PickupStation::create($station);
+            $this->command->info("  ✓ Created pickup station: {$station['name']}");
+        }
+    }
+
+    private function createFreeShippingRules(array $zones): void
+    {
+        FreeShippingRule::create([
+            'name' => 'Nairobi Free Shipping',
+            'shipping_zone_id' => $zones['Nairobi']->id,
+            'min_order_amount' => 5000,
+            'max_weight' => 10,
+            'is_active' => true,
+        ]);
+
+        FreeShippingRule::create([
+            'name' => 'Nationwide Free Shipping',
+            'shipping_zone_id' => null,
+            'min_order_amount' => 10000,
+            'max_weight' => 20,
+            'is_active' => true,
+        ]);
+
+        $this->command->info("  ✓ Created free shipping rules");
     }
 }
