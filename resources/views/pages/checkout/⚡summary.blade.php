@@ -5,6 +5,18 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 
 new #[Layout('layouts.guest')] class extends Component {
+    public function mount()
+    {
+        $user = auth()->user();
+
+        // If no address exists → go to create address
+        if ($user->defaultAddress()->doesntExist()) {
+            return redirect()->route('checkout.addresses.create');
+        }
+
+        // If address exists → go to shipping options
+        return redirect()->route('checkout.shipping-options');
+    }
     #[Computed]
     public function defaultAddress()
     {
@@ -77,28 +89,10 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
 
                 </div>
-
-                <div class="bg-white rounded-sm border">
-                    <div class="px-3 py-2 border-b flex items-center justify-between">
-                        <flux:heading level="3" class="font-medium!" size="lg">Door Delivery</flux:heading>
-
-                        <flux:link href="#" class="text-sm group" color="blue">
-                            Change
-                            <flux:icon.chevron-right
-                                class="size-4 inline-block group-hover:translate-x-1 transition-transform" />
-                        </flux:link>
-                    </div>
-
-                    <div class="px-3 py-5">
-
-                    </div>
-
-                </div>
             </div>
             <div class="col-span-1">
 
             </div>
-
         </div>
 
     </div>

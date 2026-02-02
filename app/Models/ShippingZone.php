@@ -49,4 +49,8 @@ class ShippingZone extends Model
     {
         $query->where('is_active', true);
     }
+
+
+    // Helper method
+
 }

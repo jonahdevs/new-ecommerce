@@ -49,7 +49,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name');                  // Westlands, Rongai
             $table->foreignId('county_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('shipping_zone_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('shipping_zone_id')->nullable()->constrained()->cascadeOnUpdate()->restrictOnDelete();
             $table->timestamps();
 
             $table->index(['county_id', 'shipping_zone_id']);
@@ -83,15 +83,16 @@ return new class extends Migration {
 
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
 
-            $table->string('full_name');
-            $table->string('phone');
-            $table->string('alternative_phone')->nullable();
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('phone_number');
+            $table->string('alternative_phone_number')->nullable();
 
             $table->foreignId('county_id')->constrained('counties')->restrictOnDelete();
             $table->foreignId('area_id')->nullable()->constrained('areas')->nullOnDelete();
 
-            $table->text('street_address');
-            $table->text('delivery_instructions')->nullable();
+            $table->text('address');
+            $table->text('additional_information')->nullable();
 
             // 🔑 Snapshot of derived data
             $table->foreignId('shipping_zone_id')->constrained('shipping_zones')->restrictOnDelete();

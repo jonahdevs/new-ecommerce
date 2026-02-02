@@ -327,34 +327,14 @@ class ShippingSeeder extends Seeder
 
         $stations = [
             [
-                'name' => 'Nairobi CBD Pickup Hub',
-                'code' => 'NBO_CBD',
+                'name' => 'Nairobi Pickup Hub',
+                'code' => 'NBO_SYK',
                 'county_id' => $nairobi->id,
-                'address' => 'Kimathi Street, Nairobi CBD',
+                'address' => 'Off Old Mombasa Road before the Nairobi SGR Terminus',
                 'phone' => '+254712345678',
-                'operating_hours' => 'Mon-Sat: 8:00 AM - 8:00 PM, Sun: 10:00 AM - 6:00 PM',
+                'operating_hours' => 'Mon-Sat: 8:00 AM - 8:00 PM, Sat: 8:00 AM - 1:00 PM, Sun: Closed',
                 'latitude' => -1.2864,
                 'longitude' => 36.8172,
-            ],
-            [
-                'name' => 'Westlands Pickup Point',
-                'code' => 'NBO_WST',
-                'county_id' => $nairobi->id,
-                'address' => 'Westlands Mall, Nairobi',
-                'phone' => '+254723456789',
-                'operating_hours' => 'Mon-Sun: 9:00 AM - 9:00 PM',
-                'latitude' => -1.2676,
-                'longitude' => 36.8074,
-            ],
-            [
-                'name' => 'Eastleigh Hub',
-                'code' => 'NBO_EST',
-                'county_id' => $nairobi->id,
-                'address' => '1st Avenue, Eastleigh',
-                'phone' => '+254734567890',
-                'operating_hours' => 'Mon-Sun: 8:00 AM - 8:00 PM',
-                'latitude' => -1.2884,
-                'longitude' => 36.8428,
             ],
         ];
 

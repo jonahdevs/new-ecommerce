@@ -9,16 +9,14 @@ class Address extends Model
 {
     protected $fillable = [
         'user_id',
-        'label',
-        'full_name',
-        'phone',
-        'alternative_phone',
+        'first_name',
+        'last_name',
+        'phone_number',
+        'alternative_phone_number',
         'county_id',
         'area_id',
-        'street_address',
-        'building_name',
-        'apartment_number',
-        'delivery_instructions',
+        'address',
+        'additional_information',
         'shipping_zone_id',
         'is_default'
     ];
