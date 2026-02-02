@@ -47,19 +47,4 @@ class Address extends Model
     {
         return $this->belongsTo(ShippingZone::class);
     }
-
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        // Ensure only one default address per user
-        static::saving(function ($address) {
-            if ($address->is_default && $address->user_id) {
-                static::where('user_id', $address->user_id)
-                    ->where('id', '!=', $address->id)
-                    ->update(['is_default' => false]);
-            }
-        });
-    }
 }

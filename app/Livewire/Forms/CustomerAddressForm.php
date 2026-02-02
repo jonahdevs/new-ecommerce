@@ -52,11 +52,13 @@ class CustomerAddressForm extends Form
 
     public function store()
     {
+        \Log::info($this->all());
         $this->validate();
 
         if (!$this->is_default && !auth()->user()->addresses()->where('is_default', true)->exists()) {
             $this->is_default = true;
         }
+
 
         $address = auth()->user()->addresses()->create([
             'first_name' => $this->first_name,

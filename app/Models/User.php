@@ -108,7 +108,7 @@ class User extends Authenticatable
             ->where('is_default', true);
     }
 
-    public function address(): HasMany
+    public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
