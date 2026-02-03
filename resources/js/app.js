@@ -12,3 +12,4 @@ import 'swiper/css/bundle';
 window.Swiper = Swiper
 // Register modules globally so they're available in Alpine components
 Swiper.use([Navigation, Pagination, Scrollbar, Grid, Thumbs, FreeMode, Autoplay]);
+

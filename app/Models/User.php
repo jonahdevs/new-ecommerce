@@ -33,7 +33,8 @@ class User extends Authenticatable
         'avatar',
         'is_active',
         'newsletter_subscribed',
-        'default_payment_method'
+        'default_payment_method',
+
     ];
 
     /**

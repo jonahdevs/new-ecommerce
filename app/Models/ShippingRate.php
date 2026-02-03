@@ -36,6 +36,11 @@ class ShippingRate extends Model
         return $this->belongsTo(ShippingZone::class);
     }
 
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
     // ===============================================
     // SCOPES
     // ===============================================
@@ -49,5 +54,25 @@ class ShippingRate extends Model
     {
         $query->where('min_weight', '<=', $weight)
             ->where('max_weight', '>=', $weight);
+    }
+
+    // ===============================================
+    // HELPER METHODS
+    // ===============================================
+
+    /**
+     * Get formatted estimated delivery time
+     */
+    public function getEstimatedDeliveryAttribute(): ?string
+    {
+        if (!$this->estimated_days_min && !$this->estimated_days_max) {
+            return null;
+        }
+
+        if ($this->estimated_days_min === $this->estimated_days_max) {
+            return "{$this->estimated_days_min} days";
+        }
+
+        return "{$this->estimated_days_min}-{$this->estimated_days_max} days";
     }
 }

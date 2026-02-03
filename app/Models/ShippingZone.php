@@ -52,5 +52,24 @@ class ShippingZone extends Model
 
 
     // Helper method
+    public function availableShippingMethods()
+    {
+        return ShippingMethod::whereHas('shippingRates', function ($query) {
+            $query->where('shipping_zone_id', $this->id)
+                ->where('is_active', true);
+        })->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+    }
 
+    // Get rates for a specific method and weight
+    public function getRateForMethod($methodId, $weight)
+    {
+        return $this->shippingRates()
+            ->where('shipping_method_id', $methodId)
+            ->where('is_active', true)
+            ->where('min_weight', '<=', $weight)
+            ->where('max_weight', '>=', $weight)
+            ->first();
+    }
 }

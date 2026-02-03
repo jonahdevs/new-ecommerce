@@ -96,6 +96,9 @@ return new class extends Migration {
 
             // 🔑 Snapshot of derived data
             $table->foreignId('shipping_zone_id')->constrained('shipping_zones')->restrictOnDelete();
+            $table->foreignId('selected_shipping_method_id')->nullable()->after('shipping_zone_id')->constrained('shipping_methods')->nullOnDelete();
+            $table->foreignId('selected_shipping_rate_id')->nullable()->after('selected_shipping_method_id')->constrained('shipping_rates')->nullOnDelete();
+
             $table->boolean('is_default')->default(false);
 
             $table->timestamps();
@@ -104,6 +107,7 @@ return new class extends Migration {
             $table->index(['county_id', 'area_id']);
             $table->index('shipping_zone_id');
             $table->index(['user_id', 'is_default']);
+            $table->index('selected_shipping_method_id');
         });
 
         // ===============================================

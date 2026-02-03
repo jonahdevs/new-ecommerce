@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Address;
 use App\Models\Area;
 use App\Models\County;
+use Illuminate\Validation\ValidationException;
 use Livewire\Form;
 
 class CustomerAddressForm extends Form
@@ -59,6 +60,13 @@ class CustomerAddressForm extends Form
             $this->is_default = true;
         }
 
+        try {
+            //code...
+        } catch (\Throwable $th) {
+            //throw $th;
+        } catch (ValidationException $th) {
+        }
+
 
         $address = auth()->user()->addresses()->create([
             'first_name' => $this->first_name,
@@ -83,6 +91,11 @@ class CustomerAddressForm extends Form
     public function update()
     {
         $this->validate();
+
+        if (!$this->is_default && !auth()->user()->addresses()->where('is_default', true)->exists()) {
+            $this->is_default = true;
+        }
+        \Log::info($this->all());
 
         $this->address->update([
             'first_name' => $this->first_name,
