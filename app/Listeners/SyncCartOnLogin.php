@@ -23,6 +23,8 @@ class SyncCartOnLogin
      */
     public function handle(Login $event): void
     {
-        $this->cartService->mergeGuestCart();
+        $oldSessionId = session()->getId();
+
+        $this->cartService->mergeGuestCart($oldSessionId);
     }
 }

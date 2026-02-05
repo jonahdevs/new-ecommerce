@@ -19,35 +19,24 @@ class CartService
 
     public function getCart($user = null)
     {
-        if ($user) {
-            // Authenticated user
-            Cart::firstOrCreate(
-                [
-                    'user_id' => Auth::id()
-                ],
-                ['expires_at' => now()->addDays(30)]
+        if (Auth::check() || $user) {
+            $userId = $user?->id ?? Auth::id();
 
+            return Cart::firstOrCreate(
+                ['user_id' => $userId],
+                ['expires_at' => now()->addDays(30)]
             );
         }
 
         $sessionId = session()->getId();
 
-        Log::info('Creating or retrieving guest cart', [
-            'session_id' => $sessionId
-        ]);
 
         $cart = Cart::firstOrCreate(
             ['session_id' => $sessionId],
             ['expires_at' => now()->addDays(7)]
         );
 
-        // Save the guest cart in session so it can be referenced after
-        try {
-            session(['guest_cart_id' => $cart->id]);
-        } catch (Exception $e) {
-            //  ignore if session isn't available
-        }
-
+        session(['guest_cart_id' => $cart->id]);
         return $cart;
     }
 
@@ -299,24 +288,33 @@ class CartService
         }
     }
 
-    public function mergeGuestCart(): void
+    public function mergeGuestCart(?string $oldSessionId = null): void
     {
+
         if (!Auth::check()) {
+            Log::warning('Cart merge aborted: user not authenticated');
             return;
         }
 
-        // Prefer a stored guest cart id (set when the guest cart was created)
+        $user = Auth::user();
+
+        // Try to find guest cart
         $guestCartId = session()->pull('guest_cart_id');
+        $guestCart = null;
 
         if ($guestCartId) {
             $guestCart = Cart::where('id', $guestCartId)
                 ->whereNull('user_id')
+                ->with('items')
                 ->first();
-        } else {
-            $sessionId = session()->getId();
+        }
+
+        if (!$guestCart) {
+            $sessionId = $oldSessionId ?? session()->getId();
 
             $guestCart = Cart::where('session_id', $sessionId)
                 ->whereNull('user_id')
+                ->with('items')
                 ->first();
         }
 
@@ -324,25 +322,34 @@ class CartService
             return;
         }
 
-        $userCart = $this->getCart(Auth::user());
+        // Get or create user cart
+        $userCart = Cart::firstOrCreate(
+            ['user_id' => $user->id],
+            ['expires_at' => now()->addDays(30)]
+        );
 
+
+        // Merge items
         foreach ($guestCart->items as $guestItem) {
+
             $existingItem = $userCart->items()
                 ->where('product_id', $guestItem->product_id)
                 ->where('variant_id', $guestItem->variant_id)
                 ->first();
 
             if ($existingItem) {
+                // Merge quantities
                 $existingItem->increment('quantity', $guestItem->quantity);
             } else {
-                $userCart->items()->create([
-                    'product_id' => $guestItem->product_id,
-                    'quantity' => $guestItem->quantity,
-                    'variant_id' => $guestItem->variant_id,
-                ]);
+                // Transfer item to user cart
+                $guestItem->update(['cart_id' => $userCart->id]);
             }
         }
 
+        // Update user cart expiry
+        $userCart->update(['expires_at' => now()->addDays(30)]);
+
+        // Delete guest cart
         $guestCart->delete();
     }
 }
