@@ -15,8 +15,8 @@ class CustomerAddressForm extends Form
     public string $last_name = '';
     public string $phone_number = '';
     public ?string $alternative_phone_number = null;
-    public ?int $county_id = null;
-    public ?int $area_id = null;
+    public  $county_id = '';
+    public  $area_id = '';
     public string $address_text = '';
     public ?string $additional_information = null;
     public bool $is_default = false;
@@ -26,8 +26,8 @@ class CustomerAddressForm extends Form
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'phone_number' => ['required', 'string', 'max:255'],
-            'alternative_phone_number' => ['nullable', 'string', 'max:255'],
+            'phone_number' => ['required', 'string', 'regex:/^[0-9\s]{9,12}$/'],
+            'alternative_phone_number' => ['nullable', 'string', 'regex:/^[0-9\s]{9,12}$/'],
             'county_id' => ['required', 'exists:counties,id'],
             'area_id' => ['nullable', 'exists:areas,id'],
             'address_text' => ['required', 'string'],
@@ -53,20 +53,12 @@ class CustomerAddressForm extends Form
 
     public function store()
     {
-        \Log::info($this->all());
         $this->validate();
+        \Log::info($this->all());
 
         if (!$this->is_default && !auth()->user()->addresses()->where('is_default', true)->exists()) {
             $this->is_default = true;
         }
-
-        try {
-            //code...
-        } catch (\Throwable $th) {
-            //throw $th;
-        } catch (ValidationException $th) {
-        }
-
 
         $address = auth()->user()->addresses()->create([
             'first_name' => $this->first_name,
@@ -95,7 +87,6 @@ class CustomerAddressForm extends Form
         if (!$this->is_default && !auth()->user()->addresses()->where('is_default', true)->exists()) {
             $this->is_default = true;
         }
-        \Log::info($this->all());
 
         $this->address->update([
             'first_name' => $this->first_name,

@@ -19,8 +19,8 @@ new #[Layout('layouts.guest')] class extends Component {
     public bool $inCompare = false;
     public bool $inCart = false;
 
-    public $selectedCounty = null;
-    public $selectedArea = null;
+    public $selectedCounty = '';
+    public $selectedArea = '';
 
     public string $selectedTab = 'description';
 
@@ -185,7 +185,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function counties()
     {
-        return County::orderBy('name')->get();
+        return County::withShippingRates()->orderBy('name')->get();
     }
 
     #[Computed]
@@ -301,7 +301,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         activeIndex: 0,
                         isBeginning: true,
                         isEnd: false,
-
+                    
                         init() {
                             // Wait for next tick to ensure DOM is ready
                             this.$nextTick(() => {
@@ -327,7 +327,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                         },
                                     },
                                 });
-
+                    
                                 // Initialize main slider
                                 this.mainSwiper = new Swiper('.mainSwiper', {
                                     spaceBetween: 10,
@@ -342,13 +342,13 @@ new #[Layout('layouts.guest')] class extends Component {
                                     on: {
                                         slideChange: (swiper) => {
                                             this.activeIndex = swiper.realIndex;
-
+                    
                                             // Ensure the active thumbnail is visible
                                             this.thumbSwiper.slideTo(swiper.realIndex);
                                         },
                                     },
                                 });
-
+                    
                                 // Set initial state
                                 this.isBeginning = this.thumbSwiper.isBeginning;
                                 this.isEnd = this.thumbSwiper.isEnd;
@@ -516,10 +516,10 @@ new #[Layout('layouts.guest')] class extends Component {
                     <div class="p-3">
                         <h4 class="text-sm  font-medium text-slate-600">Choose your location</h4>
                         @island('location-selector')
-                            <flux:select class="w-full mt-2" wire:model.change="selectedCounty">
-
+                            <flux:select class="w-full mt-2" wire:model.change="selectedCounty"
+                                placeholder="Select County...">
                                 @foreach ($this->counties as $county)
-                                    <flux:select.option value="{{ $county->id }}">
+                                    <flux:select.option :value="$county->id">
                                         {{ $county->name }}
                                     </flux:select.option>
                                 @endforeach
@@ -529,7 +529,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 :placeholder="$selectedCounty ? 'Select Area' : 'Select a county first'"
                                 :disabled="!$selectedCounty" class="mt-2">
                                 @foreach ($this->areas as $area)
-                                    <flux:select.option value="{{ $area->id }}">
+                                    <flux:select.option :value="$area->id">
                                         {{ $area->name }}
                                     </flux:select.option>
                                 @endforeach

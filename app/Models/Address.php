@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PhoneNormalizationService;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -88,6 +89,22 @@ class Address extends Model
 
                 return implode(', ', array_filter($parts));
             }
+        );
+    }
+
+    protected function phoneNumber(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value,
+            set: fn($value) => app(PhoneNormalizationService::class)->normalize($value),
+        );
+    }
+
+    protected function alternativePhoneNumber(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value,
+            set: fn($value) => app(PhoneNormalizationService::class)->normalize($value),
         );
     }
 

@@ -18,6 +18,10 @@ new #[Layout('layouts.guest')] class extends Component {
         if (!$this->defaultAddress()) {
             return redirect()->route('checkout.addresses.create');
         }
+
+        if (auth()->user()->preferredShippingMethod()->exists()) {
+            $this->shippingMethod = auth()->user()->preferredShippingMethod->code;
+        }
     }
 
     #[Computed]
@@ -67,21 +71,23 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
-    public function saveAndContinue()
+    public function saveShippingMethod()
     {
-        $this->validate([
-            'selectedMethodId' => 'required|exists:shipping_methods,id',
-            'selectedRateId' => 'required|exists:shipping_rates,id',
+        $validated = $this->validate([
+            'shippingMethod' => 'required|exists:shipping_methods,code',
         ]);
 
-        // Save selected shipping method to address
-        $this->defaultAddress()->update([
-            'selected_shipping_method_id' => $this->selectedMethodId,
-            'selected_shipping_rate_id' => $this->selectedRateId,
-        ]);
+        try {
+            auth()
+                ->user()
+                ->update([
+                    'preferred_shipping_method_id' => ShippingMethod::where('code', $validated['shippingMethod'])->value('id'),
+                ]);
 
-        // Redirect back to checkout summary
-        return redirect()->route('checkout.summary');
+            $this->redirectRoute('checkout.summary', navigate: true);
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update the shipping method');
+        }
     }
 
     /**
@@ -96,8 +102,6 @@ new #[Layout('layouts.guest')] class extends Component {
         // For now, return a default weight for testing
         return 2.5; // 2.5 KG
     }
-
-    public function saveShippingMethod() {}
 };
 ?>
 
@@ -169,7 +173,11 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="bg-white border rounded-sm">
                     <div class="px-4 py-2 border-b flex items-center justify-between">
                         <div class="flex items-center gap-1">
-                            <flux:icon.check-circle variant="solid" class="text-zinc-500" />
+                            <flux:icon.check-circle variant="solid" @class([
+                                'size-5',
+                                'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
+                                'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
+                            ]) />
                             <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
                         </div>
                     </div>
@@ -177,7 +185,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <div class="p-5">
                         <!-- Available Shipping Methods -->
                         @if ($this->availableMethods->isEmpty())
-                            <div class="bg-white border rounded-lg p-8 text-center">
+                            <div class="p-8 text-center">
                                 <flux:icon.exclamation-triangle class="size-12 mx-auto text-zinc-400 mb-3" />
                                 <flux:heading level="3" class="mb-2">No Shipping Methods Available</flux:heading>
                                 <flux:text class="text-zinc-600">

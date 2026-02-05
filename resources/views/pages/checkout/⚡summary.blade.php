@@ -21,9 +21,9 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // If address exists but no shipping method selected → go to shipping options
-        // if (!$user->defaultAddress->hasSelectedShippingMethod()) {
-        //     return redirect()->route('checkout.shipping-options');
-        // }
+        if (auth()->user()->preferredShippingMethod()->doesntExist()) {
+            return redirect()->route('checkout.shipping-options');
+        }
     }
 
     #[Computed]
@@ -33,9 +33,9 @@ new #[Layout('layouts.guest')] class extends Component {
     }
 
     #[Computed]
-    public function selectedShippingMethod()
+    public function preferredShippingMethod()
     {
-        return $this->defaultAddress?->selectedShippingMethod;
+        return auth()->user()->preferredShippingMethod;
     }
 
     #[Computed]
@@ -79,7 +79,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 'text-green-500' => $this->defaultAddress,
                                 'text-zinc-500' => !$this->defaultAddress,
                             ]) />
-                            <flux:heading level="3" class="font-medium!">Delivery Address</flux:heading>
+                            <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
                         </div>
 
                         <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
@@ -116,7 +116,14 @@ new #[Layout('layouts.guest')] class extends Component {
                 <!-- Delivery Method Section -->
                 <div class="bg-white rounded-sm border">
                     <div class="px-4 py-2 border-b flex items-center justify-between">
-                        <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
+                        <div class="flex items-center gap-1">
+                            <flux:icon.check-circle variant="solid" @class([
+                                'size-5',
+                                'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
+                                'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
+                            ]) />
+                            <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
+                        </div>
 
                         <flux:link :href="route('checkout.shipping-options')" wire:navigate
                             icon:trailing="chevron-right" class="text-sm! group">Change
@@ -126,62 +133,21 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
 
                     <div class="px-4 py-5">
-                        @if ($this->selectedShippingMethod && $this->selectedShippingRate)
-                            <div class="flex items-start gap-4">
-                                <!-- Method Icon -->
-                                @if ($this->selectedShippingMethod->icon)
-                                    <div class="shrink-0">
-                                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                                            <flux:icon :name="$this->selectedShippingMethod->icon"
-                                                class="size-6 text-sheffield-blue" />
-                                        </div>
-                                    </div>
-                                @endif
+                        @if ($this->preferredShippingMethod && $this->preferredShippingMethod)
+                            <div class="flex items-center justify-between">
+                                <div>
 
-                                <!-- Method Details -->
-                                <div class="flex-1">
-                                    <flux:text class="font-semibold text-lg mb-1">
-                                        {{ $this->selectedShippingMethod->name }}
-                                    </flux:text>
+                                    <flux:heading>{{ $this->preferredShippingMethod->name }}</flux:heading>
 
-                                    @if ($this->selectedShippingMethod->description)
-                                        <flux:text class="text-zinc-600 text-sm mb-2">
-                                            {{ $this->selectedShippingMethod->description }}
-                                        </flux:text>
-                                    @endif
-
-                                    <div class="flex items-center gap-4 mt-2">
-                                        <!-- Delivery Time -->
-                                        @if ($this->selectedShippingRate->estimated_delivery)
-                                            <div class="flex items-center gap-1 text-sm text-zinc-600">
-                                                <flux:icon.clock class="size-4" />
-                                                <span>{{ $this->selectedShippingRate->estimated_delivery }}</span>
-                                            </div>
-                                        @endif
-
-                                        <!-- Weight Range -->
-                                        <div class="flex items-center gap-1 text-sm text-zinc-600">
-                                            <flux:icon.cube class="size-4" />
-                                            <span>{{ $this->selectedShippingRate->min_weight }}-{{ $this->selectedShippingRate->max_weight }}
-                                                KG</span>
-                                        </div>
-                                    </div>
+                                    <flux:text>{{ $this->preferredShippingMethod->description }}</flux:text>
                                 </div>
 
-                                <!-- Price -->
-                                <div class="shrink-0 text-right">
-                                    <flux:text class="text-sm text-zinc-600 mb-1">Shipping Cost</flux:text>
-                                    <flux:text class="text-xl font-bold text-sheffield-blue">
-                                        KES {{ number_format($this->selectedShippingRate->price, 2) }}
-                                    </flux:text>
-                                </div>
+                                <flux:icon :name="$this->preferredShippingMethod->icon" class="shrink-0" />
+
                             </div>
                         @else
                             <div class="text-center py-4">
                                 <flux:text class="text-zinc-600">No shipping method selected</flux:text>
-                                <flux:button size="sm" wire:click="changeShippingMethod" class="mt-3">
-                                    Select Shipping Method
-                                </flux:button>
                             </div>
                         @endif
                     </div>

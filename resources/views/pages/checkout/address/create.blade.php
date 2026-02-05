@@ -14,7 +14,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function counties()
     {
-        return County::orderBy('name')->get();
+        return County::withShippingRates()->orderBy('name')->get();
     }
 
     #[Computed]
@@ -29,7 +29,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function updatedFormCountyId()
     {
-        $this->form->area_id = null;
+        $this->form->area_id = '';
     }
 
     public function save()
@@ -37,7 +37,8 @@ new #[Layout('layouts.guest')] class extends Component {
         try {
             $this->form->store();
             $this->dispatch('notify', variant: 'success', message: 'Address saved successfully');
-            return $this->redirectRoute('checkout.addresses', navigate: true);
+
+            return $this->redirectRoute('checkout.summary', navigate: true);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {
@@ -83,10 +84,10 @@ new #[Layout('layouts.guest')] class extends Component {
                                 {{-- First Name --}}
                                 <flux:input wire:model="form.first_name" :label="__('First Name')" placeholder="John" />
 
-                                {{-- Last Name - FIXED --}}
+                                {{-- Last Name --}}
                                 <flux:input wire:model="form.last_name" :label="__('Last Name')" placeholder="Doe" />
 
-                                {{-- Phone Number - FIXED --}}
+                                {{-- Phone Number --}}
                                 <flux:field>
                                     <flux:label>{{ __('Phone Number') }}</flux:label>
                                     <flux:input.group>
@@ -97,7 +98,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                     <flux:error name="form.phone_number" />
                                 </flux:field>
 
-                                {{-- Alternative Phone Number - FIXED --}}
+                                {{-- Alternative Phone Number --}}
                                 <flux:field>
                                     <flux:label>{{ __('Alternative Phone Number') }}</flux:label>
                                     <flux:input.group>
@@ -109,32 +110,31 @@ new #[Layout('layouts.guest')] class extends Component {
                                 </flux:field>
 
                                 {{-- County --}}
-                                <flux:select class="w-full mt-2" wire:model.change="form.county_id"
+                                <flux:select wire:model.change="form.county_id" placeholder="Select County..."
                                     :label="__('Region/County')">
                                     @foreach ($this->counties as $county)
-                                        <flux:select.option value="{{ $county->id }}">
+                                        <flux:select.option :value="$county->id">
                                             {{ $county->name }}
                                         </flux:select.option>
                                     @endforeach
                                 </flux:select>
 
-                                {{-- Area - FIXED --}}
+                                {{-- Area --}}
                                 <flux:select wire:model.change="form.area_id" :label="__('City/Area')"
-                                    :placeholder="$form->county_id ? 'Select Area' : 'Select a county first'"
-                                    class="mt-2">
+                                    :placeholder="$form->county_id ? 'Select Area' : 'Select a county first'">
                                     @foreach ($this->areas as $area)
-                                        <flux:select.option value="{{ $area->id }}">
+                                        <flux:select.option :value="$area->id">
                                             {{ $area->name }}
                                         </flux:select.option>
                                     @endforeach
                                 </flux:select>
                             </div>
 
-                            {{-- Address - FIXED --}}
+                            {{-- Address --}}
                             <flux:input wire:model="form.address_text" :label="__('Address')"
                                 placeholder="Enter your Address" />
 
-                            {{-- Additional Info - FIXED --}}
+                            {{-- Additional Info --}}
                             <flux:textarea wire:model="form.additional_information"
                                 :label="__('Additional Information')" placeholder="Enter Additional Information" />
 

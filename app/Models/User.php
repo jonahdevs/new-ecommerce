@@ -35,7 +35,6 @@ class User extends Authenticatable
         'newsletter_subscribed',
         'default_payment_method',
         'preferred_shipping_method_id'
-
     ];
 
     /**
@@ -113,5 +112,10 @@ class User extends Authenticatable
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    public function preferredShippingMethod()
+    {
+        return $this->belongsTo(ShippingMethod::class, 'preferred_shipping_method_id');
     }
 }
