@@ -88,6 +88,11 @@
                 :current="request()->routeIs('admin.pickup-stations')">
                 Pickup Stations
             </flux:navlist.item>
+
+            <flux:navlist.item icon="gift" wire:navigate :href="route('admin.free-shipping')"
+                :current="request()->routeIs('admin.free-shipping')">
+                Free Shipping Rules
+            </flux:navlist.item>
         </flux:navlist.group>
 
         {{-- Customer --}}
