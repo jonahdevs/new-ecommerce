@@ -31,12 +31,12 @@ class ShippingRate extends Model
     // RELATIONSHIPS
     // ===============================================
 
-    public function shippingZone(): BelongsTo
+    public function zone(): BelongsTo
     {
         return $this->belongsTo(ShippingZone::class);
     }
 
-    public function shippingMethod(): BelongsTo
+    public function method(): BelongsTo
     {
         return $this->belongsTo(ShippingMethod::class);
     }

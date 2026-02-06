@@ -69,45 +69,14 @@
                 Areas
             </flux:navlist.item>
 
-            <flux:navlist.group heading="Warehouses" expandable expanded="false">
-                <flux:navlist.item icon="building-storefront" wire:navigate href="#">
-                    Zones
-                </flux:navlist.item>
-                <flux:navlist.item icon="plus-circle" wire:navigate href="#">
-                    Add New
-                </flux:navlist.item>
-            </flux:navlist.group>
-
-            <flux:navlist.group heading="Shipping Management" expandable expanded="false">
-                <flux:navlist.item icon="map" wire:navigate href="#">
-                    Shipping Zones
-                </flux:navlist.item>
-                <flux:navlist.item icon="currency-dollar" wire:navigate href="#">
-                    Shipping Rates
-                </flux:navlist.item>
-                <flux:navlist.item icon="calendar" wire:navigate href="#">
-                    Holidays & Config
-                </flux:navlist.item>
-            </flux:navlist.group>
-
-            <flux:navlist.item icon="clipboard-document-list" wire:navigate href="#">
-                Stock Levels
+            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.shipping-methods')"
+                :current="request()->routeIs('admin.shipping-methods')">
+                Methods
             </flux:navlist.item>
 
-            <flux:navlist.group heading="Stock Operations" expandable expanded="false">
-                <flux:navlist.item icon="arrow-path" wire:navigate href="#">
-                    Stock Transfers
-                </flux:navlist.item>
-                <flux:navlist.item icon="pencil-square" wire:navigate href="#">
-                    Stock Adjustments
-                </flux:navlist.item>
-                <flux:navlist.item icon="clock" wire:navigate href="#">
-                    Transaction History
-                </flux:navlist.item>
-            </flux:navlist.group>
-
-            <flux:navlist.item icon="exclamation-triangle" wire:navigate href="#">
-                Low Stock Alerts
+            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.shipping-rates')"
+                :current="request()->routeIs('admin.shipping-rates')">
+                Rates
             </flux:navlist.item>
         </flux:navlist.group>
 
