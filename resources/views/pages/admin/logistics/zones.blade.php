@@ -15,6 +15,7 @@ new #[Title('Shipping Zones')] class extends Component {
     public string $description = '';
     public ?int $editingId = null;
     public ?int $deletingId = null;
+    public bool $is_active = true;
 
     #[Computed]
     public function zones()
@@ -28,15 +29,12 @@ new #[Title('Shipping Zones')] class extends Component {
             'name' => 'required|min:3',
             'code' => 'required|unique:shipping_zones,code,' . ($this->editingId ?? 'NULL'),
             'description' => 'nullable',
+            'is_active' => 'boolean',
         ]);
 
-        if ($this->editingId) {
-            ShippingZone::find($this->editingId)->update($data);
-            Flux::toast('Zone updated successfully.');
-        } else {
-            ShippingZone::create($data);
-            Flux::toast('Zone created successfully.');
-        }
+        ShippingZone::updateOrCreate(['id' => $this->editingId], $data);
+
+        Flux::toast($this->editingId ? 'Zone updated.' : 'Zone created.');
 
         $this->resetForm();
         Flux::modal('zone-modal')->close();
@@ -49,8 +47,16 @@ new #[Title('Shipping Zones')] class extends Component {
         $this->name = $zone->name;
         $this->code = $zone->code;
         $this->description = $zone->description ?? '';
+        $this->is_active = (bool) $zone->is_active;
 
         Flux::modal('zone-modal')->show();
+    }
+
+    public function toggleStatus($id)
+    {
+        $zone = ShippingZone::findOrFail($id);
+        $zone->update(['is_active' => !$zone->is_active]);
+        Flux::toast('Zone status updated.');
     }
 
     public function confirmDelete($id)
@@ -73,7 +79,8 @@ new #[Title('Shipping Zones')] class extends Component {
 
     public function resetForm()
     {
-        $this->reset(['name', 'code', 'description', 'editingId']);
+        $this->reset(['name', 'code', 'description', 'editingId', 'is_active']);
+        $this->is_active = true;
     }
 }; ?>
 
@@ -84,7 +91,8 @@ new #[Title('Shipping Zones')] class extends Component {
             <flux:subheading>Manage delivery regions and rates.</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus" wire:click="resetForm" x-on:click="$flux.modal('zone-modal').show()">
+        <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('zone-modal').show()"
+            class="cursor-pointer">
             Add Zone
         </flux:button>
     </div>
@@ -94,6 +102,7 @@ new #[Title('Shipping Zones')] class extends Component {
             <flux:table.columns>
                 <flux:table.column>Zone Name</flux:table.column>
                 <flux:table.column>Code</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end">Actions</flux:table.column>
             </flux:table.columns>
 
@@ -104,15 +113,21 @@ new #[Title('Shipping Zones')] class extends Component {
                             <div class="font-semibold">{{ $zone->name }}</div>
                             <div class="text-xs text-zinc-500">{{ $zone->description }}</div>
                         </flux:table.cell>
+
                         <flux:table.cell>
                             <flux:badge size="sm">{{ $zone->code }}</flux:badge>
                         </flux:table.cell>
+
+                        <flux:table.cell>
+                            <flux:switch wire:click="toggleStatus({{ $zone->id }})" :checked="$zone->is_active" />
+                        </flux:table.cell>
+
                         <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
                                 wire:click="edit({{ $zone->id }})" />
 
-                            <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                wire:click="confirmDelete({{ $zone->id }})" />
+                            <flux:button variant="ghost" size="sm" icon="trash" color="red"
+                                class="cursor-pointer" wire:click="confirmDelete({{ $zone->id }})" />
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach
@@ -130,21 +145,25 @@ new #[Title('Shipping Zones')] class extends Component {
             <flux:input wire:model="code" label="Short Code" />
             <flux:textarea wire:model="description" label="Description" />
 
+            <flux:field variant="inline">
+                <flux:label>Active Status</flux:label>
+                <flux:description>Enable this zone for shipping calculations.</flux:description>
+                <flux:switch wire:model="is_active" />
+            </flux:field>
+
             <div class="flex">
                 <flux:spacer />
                 <flux:modal.close>
-                    <flux:button variant="ghost">Cancel</flux:button>
+                    <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary" class="ml-2">Save</flux:button>
+
+                <flux:button type="submit" variant="primary" class="ml-2 cursor-pointer">Save</flux:button>
             </div>
         </form>
     </flux:modal>
 
     <flux:modal name="delete-confirmation" class="md:w-88 space-y-6">
         <div class="flex flex-col items-center text-center">
-            <div class="p-3 mb-4 bg-red-100 rounded-full">
-                <flux:icon.trash class="text-red-600 size-6" />
-            </div>
             <flux:heading size="lg">Delete Shipping Zone?</flux:heading>
             <flux:subheading>
                 Are you sure? This action cannot be undone and may affect associated rates and locations.
@@ -153,10 +172,10 @@ new #[Title('Shipping Zones')] class extends Component {
 
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
-                <flux:button variant="ghost" class="w-full">Cancel</flux:button>
+                <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>
             </flux:modal.close>
 
-            <flux:button wire:click="delete" variant="primary" color="danger" class="flex-1">
+            <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">
                 Yes, Delete
             </flux:button>
         </div>

@@ -48,7 +48,7 @@ new #[Title('Manage Areas')] class extends Component {
             // Dropdown Filter Logic
             ->when($this->filterCounty, fn($q) => $q->where('county_id', $this->filterCounty))
             ->orderBy('name')
-            ->paginate(20);
+            ->paginate(10);
     }
 
     #[Computed]
@@ -120,11 +120,11 @@ new #[Title('Manage Areas')] class extends Component {
         </flux:button>
     </div>
 
-    <div class="flex flex-col md:flex-row gap-4 mb-4">
-        <div class="flex-1">
-            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search area or county name..."
-                icon="magnifying-glass" clearable />
-        </div>
+    <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+
+        <flux:input wire:model.live.debounce.300ms="search" placeholder="Search area or county name..."
+            icon="magnifying-glass" clearable class="max-w-md" />
+
 
         <div class="w-full md:w-64">
             <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable>
@@ -149,7 +149,9 @@ new #[Title('Manage Areas')] class extends Component {
                 @foreach ($this->areas as $area)
                     <flux:table.row :key="$area->id">
                         <flux:table.cell class="font-semibold">{{ $area->name }}</flux:table.cell>
+
                         <flux:table.cell>{{ $area->county->name }}</flux:table.cell>
+
                         <flux:table.cell>
                             @if ($area->shippingZone)
                                 <flux:badge color="orange" variant="flat" size="sm">
@@ -159,11 +161,13 @@ new #[Title('Manage Areas')] class extends Component {
                                 <span class="text-xs text-zinc-400">Default (from County)</span>
                             @endif
                         </flux:table.cell>
+
                         <flux:table.cell align="end">
                             <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                wire:click="edit({{ $area->id }})" />
+                                wire:click="edit({{ $area->id }})" class="cursor-pointer" />
+
                             <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                wire:click="confirmDelete({{ $area->id }})" />
+                                wire:click="confirmDelete({{ $area->id }})" class="cursor-pointer" />
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach

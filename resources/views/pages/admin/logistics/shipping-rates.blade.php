@@ -76,11 +76,11 @@ new #[Title('Shipping Rates')] class extends Component {
 <div>
     <div class="flex items-center justify-between mb-8">
         <div>
-            <flux:heading size="xl">Shipping Rate Matrix</flux:heading>
+            <flux:heading size="xl">Shipping Rate</flux:heading>
             <flux:subheading>Set prices based on zone, method, and weight.</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus" x-on:click="$flux.modal('rate-modal').show()">
+        <flux:button variant="primary" icon="plus" @click="$flux.modal('rate-modal').show()" class="cursor-pointer">
             Add New Rate
         </flux:button>
     </div>
@@ -99,20 +99,26 @@ new #[Title('Shipping Rates')] class extends Component {
                 @foreach ($this->rates as $rate)
                     <flux:table.row :key="$rate->id">
                         <flux:table.cell class="font-semibold">{{ $rate->zone?->name }}</flux:table.cell>
+
                         <flux:table.cell>{{ $rate->method?->name }}</flux:table.cell>
+
                         <flux:table.cell>
                             <flux:badge size="sm" color="zinc">
                                 {{ $rate->min_weight }}kg - {{ $rate->max_weight }}kg
                             </flux:badge>
                         </flux:table.cell>
+
                         <flux:table.cell class="font-mono font-bold">
                             KES {{ number_format($rate->price, 2) }}
                         </flux:table.cell>
+
                         <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
                                 wire:click="edit({{ $rate->id }})" />
+
                             <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                wire:click="delete({{ $rate->id }})" wire:confirm="Remove this rate?" />
+                                class="cursor-pointer" wire:click="delete({{ $rate->id }})"
+                                wire:confirm="Remove this rate?" />
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach
@@ -153,9 +159,10 @@ new #[Title('Shipping Rates')] class extends Component {
             <div class="flex pt-4">
                 <flux:spacer />
                 <flux:modal.close>
-                    <flux:button variant="ghost">Cancel</flux:button>
+                    <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary" class="ml-2">Save Rate</flux:button>
+
+                <flux:button type="submit" variant="primary" class="ml-2 cursor-pointer">Save Rate</flux:button>
             </div>
         </form>
     </flux:modal>

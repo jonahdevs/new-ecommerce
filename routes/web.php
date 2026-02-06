@@ -32,6 +32,7 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('areas', 'pages::admin.logistics.areas')->name('.areas');
     Route::livewire('shipping-methods', 'pages::admin.logistics.shipping-methods')->name('.shipping-methods');
     Route::livewire('shipping-rates', 'pages::admin.logistics.shipping-rates')->name('.shipping-rates');
+    Route::livewire('pickup-stations', 'pages::admin.logistics.pickup-stations')->name('.pickup-stations');
 });
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

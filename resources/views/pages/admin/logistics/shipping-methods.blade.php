@@ -103,18 +103,22 @@ new #[Title('Shipping Methods')] class extends Component {
                             <div class="font-semibold">{{ $method->name }}</div>
                             <div class="text-xs text-zinc-500">{{ $method->description }}</div>
                         </flux:table.cell>
+
                         <flux:table.cell>
                             <flux:badge size="sm" color="zinc">{{ $method->estimated_delivery }}
                             </flux:badge>
                         </flux:table.cell>
+
                         <flux:table.cell>
                             <flux:switch wire:click="toggleStatus({{ $method->id }})" :checked="$method->is_active" />
                         </flux:table.cell>
+
                         <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
                                 wire:click="edit({{ $method->id }})" />
+
                             <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                wire:click="confirmDelete({{ $method->id }})" />
+                                class="cursor-pointer" wire:click="confirmDelete({{ $method->id }})" />
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach
@@ -136,9 +140,10 @@ new #[Title('Shipping Methods')] class extends Component {
             <div class="flex">
                 <flux:spacer />
                 <flux:modal.close>
-                    <flux:button variant="ghost">Cancel</flux:button>
+                    <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary" class="ml-2">Save Method</flux:button>
+
+                <flux:button type="submit" variant="primary" class="ml-2 cursor-pointer">Save Method</flux:button>
             </div>
         </form>
     </flux:modal>
@@ -150,9 +155,10 @@ new #[Title('Shipping Methods')] class extends Component {
         </div>
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
-                <flux:button variant="ghost" class="w-full">Cancel</flux:button>
+                <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>
             </flux:modal.close>
-            <flux:button wire:click="delete" variant="primary" color="danger" class="flex-1">Confirm</flux:button>
+
+            <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Confirm</flux:button>
         </div>
     </flux:modal>
 </div>

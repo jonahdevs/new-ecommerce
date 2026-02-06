@@ -54,29 +54,39 @@
 
         {{-- Inventory Management --}}
         <flux:navlist.group heading="Logistics" class="grid">
-            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.zones')"
-                :current="request()->routeIs('admin.zones')">
-                Zones
+
+            {{-- Geographic Setup --}}
+            <flux:navlist.item icon="map" wire:navigate :href="route('admin.zones')"
+                :current="request()->routeIs('admin.zones*')">
+                Shipping Zones
             </flux:navlist.item>
 
-            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.counties')"
-                :current="request()->routeIs('admin.counties')">
-                Counties
+            <flux:navlist.group heading="Counties & Areas" expandable expanded="false" class="grid">
+                <flux:navlist.item icon="building-office-2" wire:navigate :href="route('admin.counties')"
+                    :current="request()->routeIs('admin.counties*')">
+                    Counties
+                </flux:navlist.item>
+
+                <flux:navlist.item icon="map-pin" wire:navigate :href="route('admin.areas')"
+                    :current="request()->routeIs('admin.areas*')">
+                    Areas
+                </flux:navlist.item>
+            </flux:navlist.group>
+
+            {{-- Shipping Configuration --}}
+            <flux:navlist.item icon="truck" wire:navigate :href="route('admin.shipping-methods')"
+                :current="request()->routeIs('admin.shipping-methods*')">
+                Delivery Methods
             </flux:navlist.item>
 
-            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.areas')"
-                :current="request()->routeIs('admin.areas')">
-                Areas
+            <flux:navlist.item icon="currency-dollar" wire:navigate :href="route('admin.shipping-rates')"
+                :current="request()->routeIs('admin.shipping-rates*')">
+                Shipping Rates
             </flux:navlist.item>
 
-            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.shipping-methods')"
-                :current="request()->routeIs('admin.shipping-methods')">
-                Methods
-            </flux:navlist.item>
-
-            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.shipping-rates')"
-                :current="request()->routeIs('admin.shipping-rates')">
-                Rates
+            <flux:navlist.item icon="building-storefront" wire:navigate :href="route('admin.pickup-stations')"
+                :current="request()->routeIs('admin.pickup-stations')">
+                Pickup Stations
             </flux:navlist.item>
         </flux:navlist.group>
 

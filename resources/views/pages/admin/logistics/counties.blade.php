@@ -28,7 +28,7 @@ new #[Title('Manage Counties')] class extends Component {
     #[Computed]
     public function zones()
     {
-        return ShippingZone::all();
+        return ShippingZone::active()->get();
     }
 
     public function save()
@@ -83,19 +83,21 @@ new #[Title('Manage Counties')] class extends Component {
             <flux:subheading>Map Kenyan counties to shipping zones.</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus" wire:click="resetForm"
-            x-on:click="$flux.modal('county-modal').show()">
+        <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('county-modal').show()"
+            class="cursor-pointer">
             Add County
         </flux:button>
     </div>
 
     <div class="mb-4">
-        <flux:input wire:model.live.debounce.300ms="search" placeholder="Search counties..." icon="magnifying-glass" />
+        <flux:input wire:model.live.debounce.300ms="search" placeholder="Search counties..." icon="magnifying-glass"
+            class="max-w-md" />
     </div>
 
     <flux:card class="overflow-hidden">
         <flux:table :paginate="$this->counties">
             <flux:table.columns>
+                <flux:table.column>Code</flux:table.column>
                 <flux:table.column>County Name</flux:table.column>
                 <flux:table.column>Zone</flux:table.column>
                 <flux:table.column align="end">Actions</flux:table.column>
@@ -104,15 +106,23 @@ new #[Title('Manage Counties')] class extends Component {
             <flux:table.rows>
                 @foreach ($this->counties as $county)
                     <flux:table.row :key="$county->id">
+                        <flux:table.cell>
+                            <flux:badge variant="outline" color="zinc" class="font-mono">
+                                {{ str_pad($county->code, 3, '0', STR_PAD_LEFT) }}
+                            </flux:badge>
+                        </flux:table.cell>
+
                         <flux:table.cell class="font-semibold">{{ $county->name }}</flux:table.cell>
+
                         <flux:table.cell>
                             <flux:badge color="zinc" variant="outline">{{ $county->shippingZone->name }}</flux:badge>
                         </flux:table.cell>
+
                         <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
                                 wire:click="edit({{ $county->id }})" />
                             <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                wire:click="confirmDelete({{ $county->id }})" />
+                                class="cursor-pointer" wire:click="confirmDelete({{ $county->id }})" />
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach
@@ -121,10 +131,17 @@ new #[Title('Manage Counties')] class extends Component {
     </flux:card>
 
     <flux:modal name="county-modal" class="md:w-100 space-y-6">
-        <flux:heading size="lg">{{ $editingId ? 'Edit County' : 'Add County' }}</flux:heading>
+        <flux:heading size="lg" class="text-center">{{ $editingId ? 'Edit County' : 'Add County' }}</flux:heading>
 
         <form wire:submit="save" class="space-y-4">
-            <flux:input wire:model="name" label="County Name" placeholder="e.g. Mombasa" />
+            <div class="grid grid-cols-4 gap-4">
+                <div class="col-span-1">
+                    <flux:input wire:model="code" label="Code" placeholder="047" maxlength="3" />
+                </div>
+                <div class="col-span-3">
+                    <flux:input wire:model="name" label="County Name" />
+                </div>
+            </div>
 
             <flux:select wire:model="shipping_zone_id" label="Shipping Zone" searchable placeholder="Select a zone...">
                 @foreach ($this->zones as $zone)
@@ -149,9 +166,10 @@ new #[Title('Manage Counties')] class extends Component {
         </div>
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
-                <flux:button variant="ghost" class="w-full">Cancel</flux:button>
+                <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>
             </flux:modal.close>
-            <flux:button wire:click="delete" variant="primary" color="danger" class="flex-1">Delete</flux:button>
+
+            <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
         </div>
     </flux:modal>
 </div>
