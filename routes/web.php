@@ -27,6 +27,10 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
 
 
 Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
+    Route::livewire('/categories', 'pages::admin.catalog.categories.index')->name('.categories');
+    Route::livewire('/categories/create', 'pages::admin.catalog.categories.create')->name('.categories.create');
+    Route::livewire('/categories/{category}/edit', 'pages::admin.catalog.categories.edit')->name('.categories.edit');
+
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
     Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');
     Route::livewire('areas', 'pages::admin.logistics.areas')->name('.areas');

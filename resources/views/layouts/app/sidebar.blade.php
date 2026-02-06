@@ -33,18 +33,20 @@
 
         {{-- Catalog Management --}}
         <flux:navlist.group heading="Catalog" class="grid">
-            <flux:navlist.item icon="folder" wire:navigate href="#">
-                Categories</flux:navlist.item>
-
-            <flux:navlist.item icon="building-office" wire:navigate href="#">
-                Brands
+            <flux:navlist.item icon="cube" wire:navigate href="#">
+                Products
             </flux:navlist.item>
 
-            <flux:navlist.item icon="cube" wire:navigate href="#">Products
+            <flux:navlist.item icon="folder" wire:navigate :href="route('admin.categories')">
+                Categories
             </flux:navlist.item>
 
             <flux:navlist.item icon="adjustments-horizontal" wire:navigate href="#">
                 Attributes
+            </flux:navlist.item>
+
+            <flux:navlist.item icon="building-office" wire:navigate href="#">
+                Brands
             </flux:navlist.item>
 
             <flux:navlist.item icon="tag" wire:navigate href="#">
