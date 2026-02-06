@@ -159,7 +159,11 @@ new class extends Component {
                             </button>
                         @endauth
 
-                        <flux:navmenu class="mt-5.5! rounded-sm!">
+                        <flux:navmenu @class([
+                            'rounded-sm!',
+                            'mt-4!' => auth()->check(),
+                            'mt-5.5!' => !auth()->check(),
+                        ])>
                             <flux:navmenu.item :href="route('customer.address.index')" wire:navigate icon="user"
                                 icon-variant="outline">
                                 Account

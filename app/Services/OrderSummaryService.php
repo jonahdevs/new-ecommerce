@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Cart;
+
 /**
  * Class OrderSummaryService.
  */
@@ -10,11 +12,14 @@ class OrderSummaryService
 
     public function summary()
     {
-        $subtotal = $this->calculateSubtotal();
-        $discount = $this->calculateDiscount();
-        $shipping_cost = 0;
-        $tax = 0;
-        $total = $this->calculateTotal();
+        $cart = auth()->user()->cart;
+
+        $subtotal = $this->calculateSubtotal($cart);
+        $discount = $this->calculateDiscount($cart);
+        $shipping_cost = $this->calculateShippingCost($cart);
+        $tax = $this->calculateTax($cart);
+
+        $total = $this->calculateTotal($subtotal, $discount, $tax, $shipping_cost);
 
         return [
             'subtotal' => format_currency($subtotal),
@@ -25,18 +30,18 @@ class OrderSummaryService
         ];
     }
 
-    protected function calculateSubtotal()
+    protected function calculateSubtotal(Cart $cart)
     {
-        $subtotal = auth()->user()->cart->items->reduce(function ($carry, $item) {
+        $subtotal = $cart->items->reduce(function ($carry, $item) {
             return $carry + ($item->product->final_price * $item->quantity);
         }, 0);
 
         return $subtotal;
     }
 
-    public function calculateDiscount()
+    public function calculateDiscount(Cart $cart)
     {
-        $discount = auth()->user()->cart->items->reduce(function ($carry, $item) {
+        $discount = $cart->items->reduce(function ($carry, $item) {
             $product = $item->product;
 
             if (!$product->sale_price) {
@@ -49,24 +54,18 @@ class OrderSummaryService
         return $discount;
     }
 
-    public function calculateShippingCost()
+    public function calculateShippingCost(Cart $cart)
+    {
+        return app(ShippingCalculatorService::class)->calculate($cart);
+    }
+
+    public function calculateTax(Cart $cart)
     {
         return 0;
     }
 
-    public function calculateTax()
+    public function calculateTotal($subtotal, $discount, $tax, $shipping_cost)
     {
-        return 0;
-    }
-
-    public function calculateTotal()
-    {
-        $subtotal = $this->calculateSubtotal();
-        $discount = $this->calculateDiscount();
-        $shipping_cost = $this->calculateShippingCost();
-        $tax = $this->calculateTax();
-
         return $subtotal + $shipping_cost + $tax;
     }
-
 }

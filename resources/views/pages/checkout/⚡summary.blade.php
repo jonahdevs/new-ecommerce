@@ -152,6 +152,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         @endif
                     </div>
                 </div>
+
+                <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+                </flux:link>
             </div>
 
             <!-- Order Summary Sidebar -->

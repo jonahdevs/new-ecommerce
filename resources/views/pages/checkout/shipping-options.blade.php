@@ -137,7 +137,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 'text-green-500' => $this->defaultAddress,
                                 'text-zinc-500' => !$this->defaultAddress,
                             ]) />
-                            <flux:heading level="3" class="font-medium!">Delivery Address</flux:heading>
+                            <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
                         </div>
 
                         <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
@@ -179,7 +179,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
                                 'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
                             ]) />
-                            <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
+                            <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
                         </div>
                     </div>
 
@@ -214,6 +214,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         @endif
                     </div>
                 </div>
+
+                <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+                </flux:link>
             </div>
 
             <!-- Order Summary Sidebar -->

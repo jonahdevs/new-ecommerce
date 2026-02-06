@@ -54,7 +54,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 'text-green-500' => auth()->user()->defaultAddress,
                                 'text-zinc-500' => !auth()->user()->defaultAddress,
                             ]) />
-                            <flux:heading level="3">Customer Addresses</flux:heading>
+                            <flux:heading level="3">Customer Address</flux:heading>
                         </div>
 
                         <flux:button size="xs" variant="ghost" icon="plus"
@@ -102,6 +102,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         <flux:heading level="3">Delivery Details</flux:heading>
                     </div>
                 </div>
+
+                <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+                </flux:link>
             </div>
 
             <div class="col-span-1">

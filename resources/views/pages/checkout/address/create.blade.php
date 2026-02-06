@@ -165,6 +165,9 @@ new #[Layout('layouts.guest')] class extends Component {
                             <flux:heading level="3">Delivery Details</flux:heading>
                         </div>
                     </div>
+
+                    <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+                    </flux:link>
                 </div>
                 <div class="col-span-1">
                     <livewire:order-summary />
