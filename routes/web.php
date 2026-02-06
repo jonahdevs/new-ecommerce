@@ -31,6 +31,10 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('/categories/create', 'pages::admin.catalog.categories.create')->name('.categories.create');
     Route::livewire('/categories/{category}/edit', 'pages::admin.catalog.categories.edit')->name('.categories.edit');
 
+    Route::livewire('/attributes', 'pages::admin.catalog.attributes.index')->name('.attributes');
+    Route::livewire('/attributes/create', 'pages::admin.catalog.attributes.create')->name('.attributes.create');
+    Route::livewire('/attributes/{attribute}/edit', 'pages::admin.catalog.attributes.edit')->name('.attributes.edit');
+
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
     Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');
     Route::livewire('areas', 'pages::admin.logistics.areas')->name('.areas');

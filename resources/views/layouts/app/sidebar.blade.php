@@ -41,7 +41,7 @@
                 Categories
             </flux:navlist.item>
 
-            <flux:navlist.item icon="adjustments-horizontal" wire:navigate href="#">
+            <flux:navlist.item icon="adjustments-horizontal" wire:navigate :href="route('admin.attributes')">
                 Attributes
             </flux:navlist.item>
 
