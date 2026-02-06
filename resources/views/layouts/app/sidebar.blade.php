@@ -33,7 +33,8 @@
 
         {{-- Catalog Management --}}
         <flux:navlist.group heading="Catalog" class="grid">
-            <flux:navlist.item icon="cube" wire:navigate href="#">
+            <flux:navlist.item icon="cube" wire:navigate :href="route('admin.products')" wire:navigate
+                :current="request()->routeIs('admin.products.*')">
                 Products
             </flux:navlist.item>
 
