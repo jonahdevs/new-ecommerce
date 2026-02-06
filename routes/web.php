@@ -25,6 +25,10 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
 });
 
+
+Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
+    Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
+});
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');

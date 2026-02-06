@@ -53,10 +53,14 @@
         </flux:navlist.group>
 
         {{-- Inventory Management --}}
-        <flux:navlist.group heading="Inventory" class="grid">
+        <flux:navlist.group heading="Logistics" class="grid">
+            <flux:navlist.item icon="clipboard-document-list" wire:navigate :href="route('admin.zones')">
+                Zones
+            </flux:navlist.item>
+
             <flux:navlist.group heading="Warehouses" expandable expanded="false">
                 <flux:navlist.item icon="building-storefront" wire:navigate href="#">
-                    All Warehouses
+                    Zones
                 </flux:navlist.item>
                 <flux:navlist.item icon="plus-circle" wire:navigate href="#">
                     Add New
