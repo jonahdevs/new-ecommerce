@@ -22,11 +22,11 @@ class OrderSummaryService
         $total = $this->calculateTotal($subtotal, $discount, $tax, $shipping_cost);
 
         return [
-            'subtotal' => format_currency($subtotal),
-            'discount' => format_currency($discount),
-            'shipping_cost' => format_currency($shipping_cost),
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'shipping_cost' => $shipping_cost,
             'tax' => $tax,
-            'total' => format_currency($total),
+            'total' => $total,
         ];
     }
 

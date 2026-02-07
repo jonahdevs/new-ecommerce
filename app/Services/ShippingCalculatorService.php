@@ -57,12 +57,10 @@ class ShippingCalculatorService
 
         $defaultAddress = $user->defaultAddress;
 
-        if (!$defaultAddress) {
-            throw new \Exception('User must have a default address set to calculate shipping.');
-        }
 
-        if (!$defaultAddress->shipping_zone_id) {
-            throw new \Exception('User address does not have a shipping zone assigned.');
+
+        if (!$defaultAddress || !$defaultAddress->shipping_zone_id) {
+            return 1;
         }
 
         return $defaultAddress->shipping_zone_id;

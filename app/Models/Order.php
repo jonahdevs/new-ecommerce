@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -70,5 +71,35 @@ class Order extends Model
     {
 
         return $this->hasMany(OrderStatusHistory::class);
+    }
+
+
+    // Accessors for money fields
+    protected function subtotal(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->subtotal_cents / 100,
+        );
+    }
+
+    protected function discount(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->discount_cents / 100,
+        );
+    }
+
+    protected function shipping(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->shipping_cents / 100,
+        );
+    }
+
+    protected function total(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->total_cents / 100,
+        );
     }
 }

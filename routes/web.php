@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PaymentCallbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::home')->name('home');
@@ -21,6 +22,9 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
     Route::livewire('/checkout/addresses/{address}/edit', 'pages::checkout.address.edit')->name('checkout.addresses.edit');
 
     Route::livewire('/checkout/shipping-options', 'pages::checkout.shipping-options')->name('checkout.shipping-options');
+
+    Route::get('/payment/callback', [PaymentCallbackController::class, 'success'])->name('payment.callback');
+    Route::get('/payment/cancel', [PaymentCallbackController::class, 'cancel'])->name('payment.cancel');
 
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
 });

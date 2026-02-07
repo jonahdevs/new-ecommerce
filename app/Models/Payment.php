@@ -40,4 +40,10 @@ class Payment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    // Accessor for amount in currency units
+    public function getAmountAttribute(): float
+    {
+        return $this->amount_cents / 100;
+    }
 }

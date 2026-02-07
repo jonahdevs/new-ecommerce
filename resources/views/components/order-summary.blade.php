@@ -1,8 +1,7 @@
 <?php
 
-use App\Models\Address;
-use App\Models\Cart;
-use App\Services\CartService;
+use App\Services\OrderService;
+use App\Services\PaymentService;
 use App\Services\OrderSummaryService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -13,6 +12,34 @@ new class extends Component {
     public function summary()
     {
         return app(OrderSummaryService::class)->summary();
+    }
+
+    public function proceedToCheckout()
+    {
+        try {
+            // Create order from cart
+            $order = app(OrderService::class)->createFromCart();
+
+            // Initialize payment with Pesawise
+            $paymentResponse = app(PaymentService::class)->createPaymentOrder($order);
+
+            // Extract payment data from response
+            $createdPaymentOrder = $paymentResponse['createdPaymentOrder'] ?? null;
+
+            if (!$createdPaymentOrder || !isset($createdPaymentOrder['loadUrl'])) {
+                throw new \Exception('Invalid payment response from gateway');
+            }
+
+            // Redirect to Pesawise payment page
+            return redirect()->away($createdPaymentOrder['loadUrl']);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', message: $e->getMessage(), type: 'error');
+
+            logger()->error('Payment initialization failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 };
 
@@ -28,7 +55,7 @@ new class extends Component {
                 <flux:icon.receipt class="text-inherit size-4 inline-block me-1" />
                 Subtotal
             </flux:text>
-            <flux:heading>{{ $this->summary['subtotal'] }}</flux:heading>
+            <flux:heading>{{ format_currency($this->summary['subtotal']) }}</flux:heading>
         </div>
 
         <div class="flex items-center justify-between">
@@ -36,7 +63,7 @@ new class extends Component {
                 <flux:icon.badge-percent class="text-inherit size-4 inline-block me-1" />
                 Discount
             </flux:text>
-            <flux:heading>{{ $this->summary['discount'] }}</flux:heading>
+            <flux:heading>{{ format_currency($this->summary['discount']) }}</flux:heading>
         </div>
 
         <div class="flex items-center justify-between">
@@ -44,17 +71,18 @@ new class extends Component {
                 <flux:icon.truck class="text-inherit size-4 inline-block me-1" />
                 Shipping
             </flux:text>
-            <flux:heading>{{ $this->summary['shipping_cost'] }}</flux:heading>
+            <flux:heading>{{ format_currency($this->summary['shipping_cost']) }}</flux:heading>
         </div>
     </div>
 
     <div class="flex items-center justify-between border-t px-3 py-2">
         <flux:text class="font-semibold text-base">Total</flux:text>
-        <flux:heading class="font-semibold text-base">{{ $this->summary['total'] }}</flux:heading>
+        <flux:heading class="font-semibold text-base">{{ format_currency($this->summary['total']) }}</flux:heading>
     </div>
 
     <div class="p-3 border-t">
-        <flux:button class="w-full group cursor-pointer" variant="primary">Proceed to Checkout
+        <flux:button wire:click="proceedToCheckout" class="w-full group cursor-pointer" variant="primary">Proceed to
+            Checkout
             <x-slot name="iconTrailing">
                 <flux:icon.chevron-right class="size-4 ms-3 group-hover:translate-x-1 transition-transform" />
             </x-slot>

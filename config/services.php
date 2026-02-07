@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'pesawise' => [
+        'api_url' => env('PESAWISE_API_URL', 'https://api.pesawise.xyz/api'),
+        'api_key' => env('PESAWISE_API_KEY'),
+        'api_secret' => env('PESAWISE_API_SECRET'),
+        'balance_id_kes' => env('PESAWISE_BALANCE_ID_KES', 1102801),
+        'balance_id_usd' => env('PESAWISE_BALANCE_ID_USD', 1102802),
+    ],
 ];
