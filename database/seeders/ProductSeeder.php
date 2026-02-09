@@ -98,17 +98,17 @@ class ProductSeeder extends Seeder
             }
         }
 
-        // Second pass: Attach accessories to products
-        $this->command->info('🔗 Attaching accessories to products...');
-        foreach ($productAccessories as $productSKU => $accessorySKUs) {
+        // Second pass: Attach cross-sell products
+        $this->command->info('🔗 Cross-sell products...');
+        foreach ($productAccessories as $productSKU => $crossSellSKUs) {
             $product = Product::where('sku', $productSKU)->first();
 
             if ($product) {
-                $accessoryIds = Product::whereIn('sku', $accessorySKUs)->pluck('id')->toArray();
+                $crossSellSKUs = Product::whereIn('sku', $crossSellSKUs)->pluck('id')->toArray();
 
-                if (!empty($accessoryIds)) {
-                    $product->accessories()->sync($accessoryIds);
-                    $this->command->info('✅ Attached ' . count($accessoryIds) . " accessories to {$product->name}");
+                if (!empty($crossSellSKUs)) {
+                    $product->crossSells()->sync($crossSellSKUs);
+                    $this->command->info('✅ Attached ' . count($crossSellSKUs) . " cross-sells to {$product->name}");
                 }
             } else {
                 $this->command->warn("⚠️  Product not found for SKU: {$productSKU}");
@@ -163,7 +163,6 @@ class ProductSeeder extends Seeder
                 : null,
             'canonical_url' => $productData['canonical_url'] ?? null,
             'status' => 'published',
-            'is_active' => true,
         ]);
 
         if ($category) {

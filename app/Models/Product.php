@@ -27,7 +27,6 @@ class Product extends Model
         'type',
         'image_path',
         'technical_specification',
-        'is_active',
         'is_featured',
         'weight',
         'height',
@@ -36,7 +35,6 @@ class Product extends Model
         'price',
         'sale_price',
         'cost_price',
-        'tax_rate',
         'manage_stock',
         'stock_quantity',
         'low_stock_threshold',
@@ -151,10 +149,10 @@ class Product extends Model
     /**
      * Get accessories for the product
      */
-    public function accessories(): BelongsToMany
+    public function crossSells(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'product_accessories', 'product_id', 'accessory_id')
-            ->withTimestamps();
+        return $this->belongsToMany(Product::class, 'product_cross_sells', 'product_id', 'cross_sell_id')
+            ->withTimestamps()->orderBy('sort_order');
     }
 
     /**
@@ -175,14 +173,9 @@ class Product extends Model
     #[Scope]
     protected function active(Builder $query)
     {
-        $query->where('is_active', true);
+        $query->where('published', 'published');
     }
 
-    #[Scope]
-    protected function published(Builder $query)
-    {
-        $query->where('status', 'published');
-    }
 
     #[Scope()]
     protected function newArrivals(Builder $query): void

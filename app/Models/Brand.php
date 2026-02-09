@@ -66,4 +66,13 @@ class Brand extends Model
     {
         $query->where('is_active', true);
     }
+
+    /**
+     * Scope to order brands
+     */
+    #[Scope()]
+    protected function ordered(Builder $query)
+    {
+        $query->orderBy('sort_order')->orderBy('name');
+    }
 }

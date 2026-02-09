@@ -27,7 +27,6 @@ return new class extends Migration {
 
             // properties
             $table->json('technical_specification')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->boolean('is_featured')->default(false);
 
             // Physical properties
@@ -40,7 +39,6 @@ return new class extends Migration {
             $table->decimal('price', 10, 2);
             $table->decimal('sale_price', 10, 2)->nullable(); // Discount price
             $table->decimal('cost_price', 10, 2)->nullable(); // Your price
-            $table->decimal('tax_rate', 5, 2)->default(0);
 
             // Quantity control
             $table->boolean('manage_stock')->default(true);
@@ -61,7 +59,8 @@ return new class extends Migration {
             $table->string('return_policy')->nullable();
 
             // Status
-            $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
+            $table->enum('status', ['draft', 'scheduled', 'published', 'archived'])->default('draft');
+            $table->timestamp('published_at')->nullable();
 
             // Analytics
             $table->integer('views_count')->default(0);
@@ -88,12 +87,9 @@ return new class extends Migration {
 
             // Indexes
             $table->index('status');
-            $table->index('is_active');
             $table->index('type');
             $table->index('is_featured');
             $table->index('requires_quotation');
-            $table->index(['is_active', 'status']);
-            $table->index(['is_active', 'requires_quotation']);
         });
 
         // ===============================================
@@ -373,20 +369,6 @@ return new class extends Migration {
         });
 
         // ===============================================
-        // PRODUCT ACCESSORIES (Simplified Pivot)
-        // ===============================================
-        Schema::create('product_accessories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('accessory_id')->constrained('products')->cascadeOnDelete();
-            $table->timestamps();
-
-            $table->unique(['product_id', 'accessory_id']);
-            $table->index('product_id');
-            $table->index('accessory_id');
-        });
-
-        // ===============================================
         // PRODUCT UPSELLS (Pivot)
         // ===============================================
         Schema::create('product_upsells', function (Blueprint $table) {
@@ -414,21 +396,6 @@ return new class extends Migration {
             $table->unique(['product_id', 'cross_sell_id']);
             $table->index('product_id');
             $table->index('cross_sell_id');
-        });
-
-        // ===============================================
-        // PRODUCT RELATED (Pivot)
-        // ===============================================
-        Schema::create('product_related', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('related_id')->constrained('products')->cascadeOnDelete();
-            $table->integer('sort_order')->default(0);
-            $table->timestamps();
-
-            $table->unique(['product_id', 'related_id']);
-            $table->index('product_id');
-            $table->index('related_id');
         });
 
         // ===============================================
