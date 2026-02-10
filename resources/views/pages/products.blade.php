@@ -291,7 +291,79 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <div class="flex gap-4 mt-4">
                 {{-- left sidebar --}}
 
-                <flux:skeleton animate="shimmer" class="hidden lg:block w-64 shrink-0 min-h-[80svh] sticky top-44" />
+                {{-- left sidebar --}}
+                <aside class="hidden lg:block w-64 shrink-0">
+                    <div class="sticky top-44">
+                        <div class="bg-white rounded-sm border">
+                            <div class="px-3 py-2 border-b">
+                                <flux:skeleton animate="shimmer" class="w-20 h-6" />
+                            </div>
+
+                            <div class="divide-y">
+                                {{-- Category filter placeholder --}}
+                                <div class="p-4">
+                                    <flux:skeleton animate="shimmer" class="w-24 h-5 mb-3" />
+                                    <div class="space-y-2">
+                                        @for ($i = 0; $i < 5; $i++)
+                                            <flux:skeleton animate="shimmer" class="w-full h-8" />
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                {{-- Price filter placeholder --}}
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <flux:skeleton animate="shimmer" class="w-28 h-5" />
+                                        <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                            <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                        </div>
+                                        <flux:skeleton animate="shimmer" class="w-full h-2 rounded-full" />
+                                        <div class="flex items-center gap-2">
+                                            <flux:skeleton animate="shimmer" class="w-full h-9" />
+                                            <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                            <flux:skeleton animate="shimmer" class="w-full h-9" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Rating filter placeholder --}}
+                                <div class="p-4">
+                                    <flux:skeleton animate="shimmer" class="w-20 h-5 mb-3" />
+                                    <div class="space-y-2">
+                                        @for ($i = 0; $i < 4; $i++)
+                                            <flux:skeleton animate="shimmer" class="w-full h-6" />
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                {{-- Brand filter placeholder --}}
+                                <div class="p-4">
+                                    <flux:skeleton animate="shimmer" class="w-16 h-5 mb-3" />
+                                    <flux:skeleton animate="shimmer" class="w-full h-8 mb-3" />
+                                    <div class="space-y-2">
+                                        @for ($i = 0; $i < 6; $i++)
+                                            <flux:skeleton animate="shimmer" class="w-full h-7" />
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                {{-- More filters placeholder --}}
+                                <div class="p-4">
+                                    <flux:skeleton animate="shimmer" class="w-28 h-5 mb-3" />
+                                    <div class="space-y-2">
+                                        @for ($i = 0; $i < 3; $i++)
+                                            <flux:skeleton animate="shimmer" class="w-full h-6" />
+                                        @endfor
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
 
                 {{-- Product section --}}
                 <div class="flex-1 @container/main">
@@ -390,8 +462,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                 <button type="button"
                                                     class="flex items-center gap-2 cursor-pointer hover:bg-zinc-50 p-2 rounded w-full text-left"
                                                     wire:click="selectCategory('{{ $category->slug }}')">
-                                                    <span
-                                                        class="w-2 h-2 rounded-full border border-sheffield-blue bg-white"></span>
+                                                    <flux:icon.chevron-right variant="micro" />
                                                     <span class="text-sm text-zinc-700">{{ $category->name }}</span>
                                                 </button>
                                             @endforeach

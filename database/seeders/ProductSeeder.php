@@ -205,13 +205,19 @@ class ProductSeeder extends Seeder
     protected function createProduct(array $productData, $category = null, $brand = null): Product
     {
         // Generate retail price
-        $retailPrice = fake()->numberBetween(50000, 500000);
+        if (!array_key_exists('price', $productData)) {
+            // Generate a random retail price
+            $retailPrice = fake()->numberBetween(50000, 500000);
 
-        // Generate sale price (optional). Ensure it's lower than retail price.
-        // If you don't want all products discounted, randomly choose.
-        $salePrice = fake()->boolean(60)   // 60% chance of having a sale price
-            ? fake()->numberBetween(20000, $retailPrice - 1000)
-            : null;
+            // Optional sale price (lower than retail)
+            $salePrice = fake()->boolean(60)
+                ? fake()->numberBetween(20000, $retailPrice - 1000)
+                : null;
+        } else {
+            // Use provided price
+            $retailPrice = $productData['price'];
+            $salePrice = null;
+        }
 
         // Validate required fields
         if (empty($productData['name']) || empty($productData['sku'])) {
