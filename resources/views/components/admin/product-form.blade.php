@@ -574,7 +574,7 @@ new class extends Component {
                     <flux:heading>Product Brand</flux:heading>
                 </div>
 
-                <div class="p-5 space-y-5">
+                <div class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewBrand }">
                     {{-- Brand Select --}}
                     <flux:select wire:model.live="form.brand_id" label="Brand" placeholder="-- Select Brand --">
                         <flux:select.option>No Brand</flux:select.option>
