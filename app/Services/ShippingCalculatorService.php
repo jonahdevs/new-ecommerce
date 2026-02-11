@@ -24,6 +24,9 @@ class ShippingCalculatorService
     {
         // 1. Calculate total weight
         $totalWeight = $this->calculateTotalWeight($cart);
+        \Log::info('Total weight calculated', [
+            'total_weight' => $totalWeight,
+        ]);
 
         // Apply minimum weight if needed
         $minWeight = config('shipping.min_order_weight_kg', 0.1);
@@ -103,6 +106,7 @@ class ShippingCalculatorService
      */
     protected function getShippingRate(int $shippingZoneId, int $shippingMethodId, float $totalWeightKg): float
     {
+        // Try to find exact match within weight range
         $rate = ShippingRate::query()
             ->where('shipping_zone_id', $shippingZoneId)
             ->where('shipping_method_id', $shippingMethodId)
@@ -111,37 +115,59 @@ class ShippingCalculatorService
             ->where('max_weight', '>=', $totalWeightKg)
             ->first();
 
-        // If no rate found, return fallback
-        if (!$rate) {
-            return 0;
+        if ($rate) {
+            return (float) $rate->price;
         }
 
-        return (float) $rate->price;
+        // No exact match found - check if weight is below or above all brackets
+        $allRates = ShippingRate::query()
+            ->where('shipping_zone_id', $shippingZoneId)
+            ->where('shipping_method_id', $shippingMethodId)
+            ->where('is_active', true)
+            ->orderBy('max_weight', 'desc')
+            ->get();
+
+        if ($allRates->isEmpty()) {
+            return 0; // No rates defined
+        }
+
+        $lowestMinWeight = $allRates->min('min_weight');
+        $highestMaxWeight = $allRates->max('max_weight');
+
+        // Weight is less than minimum (e.g., 0.5kg when minimum is 5kg)
+        if ($totalWeightKg < $lowestMinWeight) {
+            return (float) $allRates->min('price'); // Return cheapest
+        }
+
+        // Weight exceeds all brackets (e.g., 70kg when max is 50kg)
+        if ($totalWeightKg > $highestMaxWeight) {
+            // Return the rate of the highest weight bracket (20-50kg in your case)
+            return (float) $allRates->first()->price; // Already ordered by max_weight desc
+        }
+
+        return 0; // Fallback
     }
 
-    protected function calculateTotalWeight(Cart $cart)
+    protected function calculateTotalWeight(Cart $cart): float
     {
-        $totalWeightGrams = $cart->items->reduce(function ($carry, $item) {
+        $totalWeightKg = $cart->items->reduce(function ($carry, $item) {
             $product = $item->product;
-
 
             if (!$product) {
                 return $carry;
             }
 
-            $weightGrams = 0;
+            $weightKg = 0;
 
             if ($item->variant_id && $item->variant) {
-                // Variant has its own weight
-                $weightGrams = $item->variant->weight ?? $product->weight ?? 0;
+                $weightKg = $item->variant->weight ?? $product->weight ?? 0;
             } else {
-                // Use product weight
-                $weightGrams = $product->weight ?? 0;
+                $weightKg = $product->weight ?? 0;
             }
 
-            return $carry + ($weightGrams * $item->quantity);
-        }, 0);
+            return $carry + ($weightKg * $item->quantity);
+        }, 0.0);
 
-        return round($totalWeightGrams / 1000, 2);
+        return round($totalWeightKg, 2);
     }
 }

@@ -44,7 +44,7 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // Get all active shipping methods that have rates for this zone
-        return ShippingMethod::active()
+        $shippingMethods = ShippingMethod::active()
             ->where(function ($query) use ($zone) {
                 $query->where('code', 'pickup')->orWhereHas('rates', function ($query) use ($zone) {
                     $query->where('shipping_zone_id', $zone->id)->where('is_active', true)->where('min_weight', '<=', $this->cartWeight)->where('max_weight', '>=', $this->cartWeight);
@@ -59,6 +59,10 @@ new #[Layout('layouts.guest')] class extends Component {
                 return $method;
             })
             ->filter(fn($method) => $method->code === 'pickup' || $method->current_rate !== null);
+
+        \Log::info(json_encode($shippingMethods, JSON_PRETTY_PRINT));
+
+        return $shippingMethods;
     }
 
     public function selectMethod($methodId)
@@ -202,8 +206,39 @@ new #[Layout('layouts.guest')] class extends Component {
                                     <flux:radio.group wire:model="shippingMethod" label="Shipping Methods"
                                         variant="cards" class="max-sm:flex-col">
                                         @foreach ($this->availableMethods as $method)
-                                            <flux:radio :value="$method->code" :label="$method->name"
-                                                :description="$method->description" />
+                                            <flux:radio :value="$method->code" :label="$method->name">
+                                                <x-slot name="description">
+                                                    <p>{{ $method->description }}</p>
+                                                    <p class="mt-1 font-medium">
+                                                        @if ($method->current_rate)
+                                                            @php
+                                                                $min = $method->current_rate->estimated_days_min;
+                                                                $max = $method->current_rate->estimated_days_max;
+                                                            @endphp
+
+                                                            @if ($min && $max)
+                                                                @if ($min == $max)
+                                                                    Estimated delivery: {{ $min }} business
+                                                                    days
+                                                                @else
+                                                                    Estimated delivery:
+                                                                    {{ $min }}–{{ $max }} business
+                                                                    days
+                                                                @endif
+                                                            @elseif ($min)
+                                                                Estimated delivery: {{ $min }}+ business
+                                                                days
+                                                            @else
+                                                                Delivery time will be confirmed
+                                                            @endif
+                                                        @else
+                                                            @if ($method->code != 'pickup')
+                                                                Delivery time unavailable
+                                                            @endif
+                                                        @endif
+                                                    </p>
+                                                </x-slot>
+                                            </flux:radio>
                                         @endforeach
                                     </flux:radio.group>
                                 </div>
