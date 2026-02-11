@@ -15,7 +15,7 @@ class ShippingCalculatorService
     /**
      * Calculate shipping cost for a cart
      * Uses user's default address and preferred shipping method
-     * 
+     *
      * @param Cart $cart
      * @return float
      * @throws \Exception
@@ -35,6 +35,8 @@ class ShippingCalculatorService
         // 3. Determine which shipping method to use
         $shippingMethodId = $this->getPreferredShippingMethodId($cart->user);
 
+        \Log::info("Calculating shipping: Zone ID $shippingZoneId, Method ID $shippingMethodId, Total Weight $totalWeight kg");
+
         // 4. Get the specific rate
         $rate = $this->getShippingRate($shippingZoneId, $shippingMethodId, $totalWeight);
 
@@ -44,7 +46,7 @@ class ShippingCalculatorService
 
     /**
      * Get Shipping zone from user's default address
-     * 
+     *
      * @param \App\Models\User|null $user
      * @return int
      * @throws \Exception
@@ -68,7 +70,7 @@ class ShippingCalculatorService
 
     /**
      * Get user's preferred shipping method ID or fallback to standard
-     * 
+     *
      * @param \App\Models\User|null $user
      * @return int
      */
@@ -111,7 +113,7 @@ class ShippingCalculatorService
 
         // If no rate found, return fallback
         if (!$rate) {
-            return config('shipping.fallback_rate', 500.00);
+            return 0;
         }
 
         return (float) $rate->price;

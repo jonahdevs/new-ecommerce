@@ -110,7 +110,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 </flux:field>
 
                                 {{-- County --}}
-                                <flux:select wire:model.change="form.county_id" placeholder="Select County..."
+                                <flux:select wire:model.live="form.county_id" placeholder="Select County..."
                                     :label="__('Region/County')">
                                     @foreach ($this->counties as $county)
                                         <flux:select.option :value="$county->id">
@@ -120,7 +120,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 </flux:select>
 
                                 {{-- Area --}}
-                                <flux:select wire:model.change="form.area_id" :label="__('City/Area')"
+                                <flux:select wire:model="form.area_id" :label="__('City/Area')"
                                     :placeholder="$form->county_id ? 'Select Area' : 'Select a county first'">
                                     @foreach ($this->areas as $area)
                                         <flux:select.option :value="$area->id">

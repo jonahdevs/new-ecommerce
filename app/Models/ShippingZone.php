@@ -13,7 +13,6 @@ class ShippingZone extends Model
         'name',
         'code',
         'description',
-        'sort_order',
         'is_active'
     ];
 
@@ -58,7 +57,6 @@ class ShippingZone extends Model
             $query->where('shipping_zone_id', $this->id)
                 ->where('is_active', true);
         })->where('is_active', true)
-            ->orderBy('sort_order')
             ->get();
     }
 

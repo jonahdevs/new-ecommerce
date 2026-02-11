@@ -3,7 +3,7 @@
 use Livewire\Component;
 use Livewire\Attributes\Title;
 
-new #[Title('Create Product - Admin')] class extends Component {}; ?>
+new #[Title('Create Product')] class extends Component {}; ?>
 
 <div>
     <div class="flex items-center justify-between">

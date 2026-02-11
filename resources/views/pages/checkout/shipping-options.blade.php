@@ -44,10 +44,12 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // Get all active shipping methods that have rates for this zone
-        return ShippingMethod::whereHas('rates', function ($query) use ($zone) {
-            $query->where('shipping_zone_id', $zone->id)->where('is_active', true)->where('min_weight', '<=', $this->cartWeight)->where('max_weight', '>=', $this->cartWeight);
-        })
-            ->where('is_active', true)
+        return ShippingMethod::active()
+            ->where(function ($query) use ($zone) {
+                $query->where('code', 'pickup')->orWhereHas('rates', function ($query) use ($zone) {
+                    $query->where('shipping_zone_id', $zone->id)->where('is_active', true)->where('min_weight', '<=', $this->cartWeight)->where('max_weight', '>=', $this->cartWeight);
+                });
+            })
             ->orderBy('sort_order')
             ->get()
             ->map(function ($method) use ($zone) {
@@ -56,7 +58,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 $method->current_rate = $rate;
                 return $method;
             })
-            ->filter(fn($method) => $method->current_rate !== null);
+            ->filter(fn($method) => $method->code === 'pickup' || $method->current_rate !== null);
     }
 
     public function selectMethod($methodId)

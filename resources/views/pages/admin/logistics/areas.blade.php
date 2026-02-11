@@ -111,8 +111,11 @@ new #[Title('Manage Areas')] class extends Component {
 <div>
     <div class="flex items-center justify-between mb-8">
         <div>
-            <flux:heading size="xl">Areas & Towns</flux:heading>
-            <flux:subheading>Specific delivery locations within counties.</flux:subheading>
+            <flux:heading size="xl" class="mb-2">Areas & Towns</flux:heading>
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Areas & Towns</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" x-on:click="$flux.modal('area-modal').show()">
@@ -135,45 +138,42 @@ new #[Title('Manage Areas')] class extends Component {
         </div>
     </div>
 
+    <flux:table :paginate="$this->areas">
+        <flux:table.columns>
+            <flux:table.column>Area Name</flux:table.column>
+            <flux:table.column>County</flux:table.column>
+            <flux:table.column>Zone</flux:table.column>
+            <flux:table.column align="end">Actions</flux:table.column>
+        </flux:table.columns>
 
-    <flux:card class="overflow-hidden">
-        <flux:table :paginate="$this->areas">
-            <flux:table.columns>
-                <flux:table.column>Area Name</flux:table.column>
-                <flux:table.column>County</flux:table.column>
-                <flux:table.column>Zone Override</flux:table.column>
-                <flux:table.column align="end">Actions</flux:table.column>
-            </flux:table.columns>
+        <flux:table.rows>
+            @foreach ($this->areas as $area)
+                <flux:table.row :key="$area->id">
+                    <flux:table.cell class="font-semibold">{{ $area->name }}</flux:table.cell>
 
-            <flux:table.rows>
-                @foreach ($this->areas as $area)
-                    <flux:table.row :key="$area->id">
-                        <flux:table.cell class="font-semibold">{{ $area->name }}</flux:table.cell>
+                    <flux:table.cell>{{ $area->county->name }}</flux:table.cell>
 
-                        <flux:table.cell>{{ $area->county->name }}</flux:table.cell>
+                    <flux:table.cell>
+                        @if ($area->shippingZone)
+                            <flux:badge color="orange" variant="flat" size="sm">
+                                {{ $area->shippingZone->name }}
+                            </flux:badge>
+                        @else
+                            <span class="text-xs text-zinc-400">Default (from County)</span>
+                        @endif
+                    </flux:table.cell>
 
-                        <flux:table.cell>
-                            @if ($area->shippingZone)
-                                <flux:badge color="orange" variant="flat" size="sm">
-                                    {{ $area->shippingZone->name }}
-                                </flux:badge>
-                            @else
-                                <span class="text-xs text-zinc-400">Default (from County)</span>
-                            @endif
-                        </flux:table.cell>
+                    <flux:table.cell align="end">
+                        <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            wire:click="edit({{ $area->id }})" class="cursor-pointer" />
 
-                        <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                wire:click="edit({{ $area->id }})" class="cursor-pointer" />
-
-                            <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                wire:click="confirmDelete({{ $area->id }})" class="cursor-pointer" />
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-    </flux:card>
+                        <flux:button variant="ghost" size="sm" icon="trash" color="danger"
+                            wire:click="confirmDelete({{ $area->id }})" class="cursor-pointer" />
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
 
     <flux:modal name="area-modal" class="md:w-100 space-y-6">
         <flux:heading size="lg">{{ $editingId ? 'Edit Area' : 'Add New Area' }}</flux:heading>

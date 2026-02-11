@@ -11,14 +11,8 @@ class Area extends Model
         'name',
         'county_id',
         'shipping_zone_id',
-        'latitude',
-        'longitude'
     ];
 
-    protected $casts = [
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
-    ];
 
     // ===============================================
     // RELATIONSHIPS

@@ -30,7 +30,7 @@ class ProductForm extends Form
 
     // Tabs
     // General Tab
-    public float $price = 0;
+    public ?float $price = null;
 
     public ?float $sale_price = null;
 
@@ -75,7 +75,7 @@ class ProductForm extends Form
     // Status Visibility
     public string $status = 'draft';
 
-    public  $published_at = null;
+    public $published_at = null;
 
     public bool $is_featured = false;
 
@@ -100,7 +100,7 @@ class ProductForm extends Form
     public string $newTagInput = '';
 
     // brand
-    public  $brand_id = '';
+    public $brand_id = '';
 
     // new category
     public string $newCategoryName = '';
@@ -125,9 +125,9 @@ class ProductForm extends Form
             // Basic Information
             'name' => 'required|string|max:255',
             'model_number' => 'nullable|string|max:255',
-            'slug' => 'required|string|max:255|unique:products,slug,' . $productId,
+            'slug' => 'nullable|string|max:255|unique:products,slug,' . $productId,
             'short_description' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'product_type' => 'required|in:simple,variable',
 
             // Pricing
@@ -137,11 +137,13 @@ class ProductForm extends Form
 
             // Inventory
             'sku' => 'required|string|max:100|unique:products,sku,' . $productId,
+
             'manage_stock' => 'boolean',
             'stock_quantity' => 'required_if:manage_stock,true|integer|min:0',
             'allow_backorder' => 'required_if:manage_stock,true|in:no,notify,yes',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'stock_status' => 'required_without:manage_stock|in:in_stock,out_of_stock,backorder',
+
             'sold_individually' => 'boolean',
 
             // Shipping
@@ -162,7 +164,14 @@ class ProductForm extends Form
             'is_featured' => 'boolean',
 
             // Images
-            'image' => 'nullable|image|max:2048', // 2MB max
+            'image' => [
+                !is_null($this->product)
+                ? 'required_without:existing_image'
+                : 'required',
+                'nullable',
+                'image',
+                'max:2048'
+            ],
             'images.*' => 'nullable|image|max:2048',
 
             // Relationships
@@ -284,7 +293,7 @@ class ProductForm extends Form
         $this->selectedCrossSells = $product->crossSells()->pluck('related_product_id')->toArray();
 
         // Fill existing images
-        $this->existing_image = $product->image;
+        $this->existing_image = $product->image_path;
         $this->existingImages = $product->images ?? [];
     }
 
@@ -541,7 +550,7 @@ class ProductForm extends Form
             $product->crossSells()->sync($this->selectedCrossSells);
         }
 
-        // Handle image upload 
+        // Handle image upload
         $this->handleImageUpload($product);
 
         return $product;
@@ -552,6 +561,7 @@ class ProductForm extends Form
      */
     public function update(): void
     {
+        \Log::info('Updating product with data: ' . json_encode($this->all(), JSON_PRETTY_PRINT));
         // Validate the form
         $this->validate();
 
@@ -616,7 +626,8 @@ class ProductForm extends Form
 
             // Store new image
             $imagePath = $this->image->store('products', 'public');
-            $product->update(['image' => $imagePath]);
+
+            $product->update(['image_path' => $imagePath]);
         }
 
         // Handle gallery images

@@ -79,8 +79,11 @@ new #[Title('Manage Counties')] class extends Component {
 <div>
     <div class="flex items-center justify-between mb-8">
         <div>
-            <flux:heading size="xl">Counties</flux:heading>
-            <flux:subheading>Map Kenyan counties to shipping zones.</flux:subheading>
+            <flux:heading size="xl" class="mb-2">Counties</flux:heading>
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Counties</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('county-modal').show()"
@@ -94,41 +97,39 @@ new #[Title('Manage Counties')] class extends Component {
             class="max-w-md" />
     </div>
 
-    <flux:card class="overflow-hidden">
-        <flux:table :paginate="$this->counties">
-            <flux:table.columns>
-                <flux:table.column>Code</flux:table.column>
-                <flux:table.column>County Name</flux:table.column>
-                <flux:table.column>Zone</flux:table.column>
-                <flux:table.column align="end">Actions</flux:table.column>
-            </flux:table.columns>
+    <flux:table :paginate="$this->counties">
+        <flux:table.columns>
+            <flux:table.column>Code</flux:table.column>
+            <flux:table.column>County Name</flux:table.column>
+            <flux:table.column>Zone</flux:table.column>
+            <flux:table.column align="end">Actions</flux:table.column>
+        </flux:table.columns>
 
-            <flux:table.rows>
-                @foreach ($this->counties as $county)
-                    <flux:table.row :key="$county->id">
-                        <flux:table.cell>
-                            <flux:badge variant="outline" color="zinc" class="font-mono">
-                                {{ str_pad($county->code, 3, '0', STR_PAD_LEFT) }}
-                            </flux:badge>
-                        </flux:table.cell>
+        <flux:table.rows>
+            @foreach ($this->counties as $county)
+                <flux:table.row :key="$county->id">
+                    <flux:table.cell>
+                        <flux:badge variant="outline" color="zinc" class="font-mono">
+                            {{ str_pad($county->code, 3, '0', STR_PAD_LEFT) }}
+                        </flux:badge>
+                    </flux:table.cell>
 
-                        <flux:table.cell class="font-semibold">{{ $county->name }}</flux:table.cell>
+                    <flux:table.cell class="font-semibold">{{ $county->name }}</flux:table.cell>
 
-                        <flux:table.cell>
-                            <flux:badge color="zinc" variant="outline">{{ $county->shippingZone->name }}</flux:badge>
-                        </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:badge color="zinc" variant="outline">{{ $county->shippingZone->name }}</flux:badge>
+                    </flux:table.cell>
 
-                        <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
-                                wire:click="edit({{ $county->id }})" />
-                            <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                                class="cursor-pointer" wire:click="confirmDelete({{ $county->id }})" />
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-    </flux:card>
+                    <flux:table.cell align="end">
+                        <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
+                            wire:click="edit({{ $county->id }})" />
+                        <flux:button variant="ghost" size="sm" icon="trash" color="danger" class="cursor-pointer"
+                            wire:click="confirmDelete({{ $county->id }})" />
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
 
     <flux:modal name="county-modal" class="md:w-100 space-y-6">
         <flux:heading size="lg" class="text-center">{{ $editingId ? 'Edit County' : 'Add County' }}</flux:heading>

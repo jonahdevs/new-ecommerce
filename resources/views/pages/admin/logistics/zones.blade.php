@@ -87,8 +87,11 @@ new #[Title('Shipping Zones')] class extends Component {
 <div>
     <div class="flex items-center justify-between mb-8">
         <div>
-            <flux:heading size="xl">Shipping Zones</flux:heading>
-            <flux:subheading>Manage delivery regions and rates.</flux:subheading>
+            <flux:heading size="xl" class="mb-2">Shipping Zones</flux:heading>
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Shipping Zones</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('zone-modal').show()"
@@ -97,43 +100,42 @@ new #[Title('Shipping Zones')] class extends Component {
         </flux:button>
     </div>
 
-    <flux:card class="overflow-hidden">
-        <flux:table :paginate="$this->zones">
-            <flux:table.columns>
-                <flux:table.column>Zone Name</flux:table.column>
-                <flux:table.column>Code</flux:table.column>
-                <flux:table.column>Status</flux:table.column>
-                <flux:table.column align="end">Actions</flux:table.column>
-            </flux:table.columns>
+    <flux:table :paginate="$this->zones">
+        <flux:table.columns>
+            <flux:table.column>Zone Name</flux:table.column>
+            <flux:table.column>Code</flux:table.column>
+            <flux:table.column>Status</flux:table.column>
+            <flux:table.column align="end">Actions</flux:table.column>
+        </flux:table.columns>
 
-            <flux:table.rows>
-                @foreach ($this->zones as $zone)
-                    <flux:table.row :key="$zone->id">
-                        <flux:table.cell>
-                            <div class="font-semibold">{{ $zone->name }}</div>
-                            <div class="text-xs text-zinc-500">{{ $zone->description }}</div>
-                        </flux:table.cell>
+        <flux:table.rows>
+            @foreach ($this->zones as $zone)
+                <flux:table.row :key="$zone->id">
+                    <flux:table.cell>
+                        <div class="font-semibold">{{ $zone->name }}</div>
+                        <div class="text-xs text-zinc-500">{{ $zone->description }}</div>
+                    </flux:table.cell>
 
-                        <flux:table.cell>
-                            <flux:badge size="sm">{{ $zone->code }}</flux:badge>
-                        </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:badge size="sm">{{ $zone->code }}</flux:badge>
+                    </flux:table.cell>
 
-                        <flux:table.cell>
-                            <flux:switch wire:click="toggleStatus({{ $zone->id }})" :checked="$zone->is_active" />
-                        </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:switch wire:click="toggleStatus({{ $zone->id }})" :checked="$zone->is_active" />
+                    </flux:table.cell>
 
-                        <flux:table.cell align="end">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
-                                wire:click="edit({{ $zone->id }})" />
+                    <flux:table.cell align="end">
+                        <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
+                            wire:click="edit({{ $zone->id }})" />
 
-                            <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                                class="cursor-pointer" wire:click="confirmDelete({{ $zone->id }})" />
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-    </flux:card>
+                        <flux:button variant="ghost" size="sm" icon="trash" color="red" class="cursor-pointer"
+                            wire:click="confirmDelete({{ $zone->id }})" />
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
+
 
     <flux:modal name="zone-modal" class="md:w-100 space-y-6">
         <div>

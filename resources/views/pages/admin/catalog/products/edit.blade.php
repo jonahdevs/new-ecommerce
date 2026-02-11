@@ -4,11 +4,12 @@ use Livewire\Component;
 use Livewire\Attributes\Title;
 use App\Models\Product;
 
-new #[Title('Edit Product - Admin')] class extends Component {
+new #[Title('Edit Product')] class extends Component {
     public Product $product;
 
     public function mount(Product $product)
     {
+        \Log::info(json_encode($product, JSON_PRETTY_PRINT));
         $this->product = $product;
     }
 }; ?>
@@ -24,8 +25,9 @@ new #[Title('Edit Product - Admin')] class extends Component {
             </flux:breadcrumbs>
         </div>
 
-
-        <flux:button variant="primary" type="submit" form="product-form">Update</flux:button>
+        <flux:button variant="primary" type="submit" form="product-form" class="cursor-pointer">
+            Update
+        </flux:button>
     </div>
 
     <livewire:admin.product-form :product="$product" />

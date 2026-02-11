@@ -42,11 +42,15 @@ new class extends Component {
                 $this->dispatch('notify', variant: 'success', message: 'Product created successfully!');
                 return redirect()->route('admin.products');
             }
-            //code...
         } catch (ValidationException $e) {
+            $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
             throw $e;
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage());
+            \Log::error('Product save failed', [
+                'exception' => $th,
+                'component' => static::class,
+            ]);
         }
     }
 
@@ -644,7 +648,7 @@ new class extends Component {
                                     class="w-full h-full object-cover">
 
                                 <div
-                                    class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+                                    class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
                                     <flux:text class="opacity-0 group-hover:opacity-100 text-white font-semibold">
                                         Click to change
                                     </flux:text>
@@ -658,6 +662,8 @@ new class extends Component {
                             class="text-sm text-sheffield-blue cursor-pointer">Set product image
                         </flux:link>
                     @endif
+
+                    <flux:error name="form.image" />
                 </div>
             </flux:card>
 
@@ -682,10 +688,10 @@ new class extends Component {
 
                                         {{-- Delete button overlay --}}
                                         <div
-                                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+                                            class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
                                             <button type="button"
                                                 wire:click="form.removeGalleryImage('{{ $existingImage }}')"
-                                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2"
+                                                class="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2"
                                                 wire:confirm="Are you sure you want to remove this image?">
                                                 <flux:icon.trash variant="micro" class="size-4" />
                                             </button>
@@ -709,10 +715,10 @@ new class extends Component {
 
                                         {{-- Delete button overlay --}}
                                         <div
-                                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+                                            class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
                                             <button type="button"
                                                 wire:click="$set('form.images', {{ json_encode(array_values(array_filter($form->images, fn($key) => $key !== $index, ARRAY_FILTER_USE_KEY))) }})"
-                                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2">
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 cursor-pointer">
                                                 <flux:icon.trash variant="micro" class="size-4" />
                                             </button>
                                         </div>
@@ -737,6 +743,8 @@ new class extends Component {
                             {{ count($form->imagesToDelete) }} image(s) will be deleted when you save
                         </flux:text>
                     @endif
+
+                    <flux:error name="form.images" />
                 </div>
             </flux:card>
 
@@ -744,7 +752,7 @@ new class extends Component {
                 <div class="border-b px-3 py-2">
                     <flux:heading>Product Categories</flux:heading>
                 </div>
-                <div class="p-5 space-y-5">
+                <div class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewCategory }">
                     <div class="p-2 max-h-96 overflow-y-auto border-2"
                         wire:key="categories-{{ md5(json_encode($form->category_ids)) }}">
                         <div class="space-y-2 ">

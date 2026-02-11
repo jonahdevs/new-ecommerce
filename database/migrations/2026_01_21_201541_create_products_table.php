@@ -30,7 +30,7 @@ return new class extends Migration {
             $table->string('sku')->nullable();
             $table->boolean('manage_stock')->default(true);
             $table->integer('stock_quantity')->default(0);
-            $table->enum('allow_backorders', ['no', 'notify', 'yes'])->default('no');
+            $table->enum('allow_backorder', ['no', 'notify', 'yes'])->default('no');
 
             // Backorders
             $table->integer('max_backorder_quantity')->nullable();

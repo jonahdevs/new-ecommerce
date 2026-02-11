@@ -38,8 +38,11 @@ new #[Title('Products')] class extends Component {
 <div>
     <div class="flex items-center justify-between">
         <div>
-            <flux:heading size="xl">Products</flux:heading>
-            <flux:subheading>Manage your inventory, pricing, and variants</flux:subheading>
+            <flux:heading size="xl" class="mb-1">Products</flux:heading>
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Products</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
 
         <flux:button href="{{ route('admin.products.create') }}" variant="primary" icon="plus" wire:navigate>
@@ -47,11 +50,10 @@ new #[Title('Products')] class extends Component {
         </flux:button>
     </div>
 
-    <flux:separator class="my-6" />
 
-    <div class="flex items-center gap-4 mb-4">
-        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search by name or SKU..." class="flex-1"
-            class="max-w-md" />
+    <div class="flex items-center gap-4 mb-4 mt-6">
+        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search by name or SKU..."
+            class="flex-1" class="max-w-md" />
         {{-- You can add Category filters here later --}}
     </div>
 
@@ -85,9 +87,9 @@ new #[Title('Products')] class extends Component {
 
                     {{-- Category --}}
                     <flux:table.cell>
-                        @php $primaryCat = $product->categories->first(); @endphp
+
                         <flux:badge size="sm" variant="outline" color="zinc">
-                            {{ $primaryCat->name ?? 'Uncategorized' }}
+                            {{ $product->primaryCategory()?->name ?? 'Uncategorized' }}
                         </flux:badge>
                     </flux:table.cell>
 
@@ -109,12 +111,12 @@ new #[Title('Products')] class extends Component {
                     <flux:table.cell>
                         <flux:badge size="sm" variant="flat"
                             :color="match($product->status) {
-                                                                                                                                                                                                                                            'draft' => 'gray',
-                                                                                                                                                                                                                                            'scheduled' => 'blue',
-                                                                                                                                                                                                                                            'published' => 'green',
-                                                                                                                                                                                                                                            'archived' => 'amber',
-                                                                                                                                                                                                                                            default => 'gray',
-                                                                                                                                                                                                                                        }">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'draft' => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'scheduled' => 'blue',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'published' => 'green',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'archived' => 'amber',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            default => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }">
                             {{ ucfirst($product->status) }}
                         </flux:badge>
                     </flux:table.cell>

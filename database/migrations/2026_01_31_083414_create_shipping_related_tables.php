@@ -20,7 +20,6 @@ return new class extends Migration {
             $table->string('code')->unique()->nullable();      // Optional: NAI_CBD
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->integer('sort_order')->default(0);
             $table->timestamps();
 
             $table->index('is_active');
@@ -91,7 +90,6 @@ return new class extends Migration {
             // Price for this range & zone
             $table->decimal('price', 10, 2);       // e.g. 450.00
 
-            $table->string('name')->nullable();
             $table->integer('estimated_days_min')->nullable();
             $table->integer('estimated_days_max')->nullable();
 

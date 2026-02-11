@@ -11,10 +11,10 @@ class ShippingRate extends Model
 {
     protected $fillable = [
         'shipping_zone_id',
+        'shipping_method_id',
         'min_weight',
         'max_weight',
         'price',
-        'name',
         'estimated_days_min',
         'estimated_days_max',
         'is_active'
@@ -33,12 +33,12 @@ class ShippingRate extends Model
 
     public function zone(): BelongsTo
     {
-        return $this->belongsTo(ShippingZone::class);
+        return $this->belongsTo(ShippingZone::class, 'shipping_zone_id');
     }
 
     public function method(): BelongsTo
     {
-        return $this->belongsTo(ShippingMethod::class);
+        return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
     }
 
     // ===============================================
