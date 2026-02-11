@@ -122,9 +122,12 @@ new #[Title('Manage Counties')] class extends Component {
 
                     <flux:table.cell align="end">
                         <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
-                            wire:click="edit({{ $county->id }})" />
-                        <flux:button variant="ghost" size="sm" icon="trash" color="danger" class="cursor-pointer"
-                            wire:click="confirmDelete({{ $county->id }})" />
+                            wire:click="edit({{ $county->id }})" icon-variant="outline"
+                            class="cursor-pointer text-sheffield-blue!" />
+
+                        <flux:button variant="ghost" size="sm" icon="trash" color="danger"
+                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $county->id }})"
+                            icon-variant="outline" />
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach
@@ -161,10 +164,9 @@ new #[Title('Manage Counties')] class extends Component {
     </flux:modal>
 
     <flux:modal name="delete-confirmation" class="md:w-88 space-y-6">
-        <div class="text-center">
-            <flux:heading size="lg">Remove County?</flux:heading>
-            <flux:subheading>This will unbind it from its shipping zone.</flux:subheading>
-        </div>
+        <flux:heading size="lg" class="mb-2">Remove County?</flux:heading>
+        <flux:subheading>This will unbind it from its shipping zone.</flux:subheading>
+
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
                 <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>

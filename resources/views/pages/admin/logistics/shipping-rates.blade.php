@@ -18,6 +18,10 @@ new #[Title('Shipping Rates')] class extends Component {
     public ?int $estimated_days_max = null;
     public ?int $editingId = null;
 
+    // Delete State
+    public ?int $rateToDelete = null;
+    public ?string $rateDetailsToDelete = null;
+
     #[Computed]
     public function rates()
     {
@@ -70,10 +74,29 @@ new #[Title('Shipping Rates')] class extends Component {
         Flux::modal('rate-modal')->show();
     }
 
-    public function delete($id)
+    public function confirmDelete($id)
     {
-        ShippingRate::destroy($id);
-        Flux::toast(variant: 'danger', text: 'Rate removed.');
+        $rate = ShippingRate::with(['method', 'zone'])->findOrFail($id);
+        $this->rateToDelete = $id;
+        $this->rateDetailsToDelete = "{$rate->zone->name} - {$rate->method->name} ({$rate->min_weight}kg - {$rate->max_weight}kg)";
+
+        Flux::modal('delete-rate')->show();
+    }
+
+    public function delete()
+    {
+        try {
+            if ($this->rateToDelete) {
+                ShippingRate::destroy($this->rateToDelete);
+
+                Flux::toast(variant: 'success', text: 'Shipping rate deleted successfully.');
+                $this->rateToDelete = null;
+                $this->rateDetailsToDelete = null;
+            }
+        } catch (\Throwable $th) {
+            \Log::error('Error deleting shipping rate: ' . $th->getMessage(), ['exception' => $th]);
+            Flux::toast(variant: 'danger', text: 'Failed to delete shipping rate.');
+        }
     }
 }; ?>
 
@@ -81,10 +104,7 @@ new #[Title('Shipping Rates')] class extends Component {
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Shipping Rate</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Shipping Rate</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Configure pricing based on zones, methods, and weight ranges</flux:subheading>
         </div>
 
         <flux:button variant="primary" icon="plus" @click="$flux.modal('rate-modal').show()" class="cursor-pointer">
@@ -119,11 +139,13 @@ new #[Title('Shipping Rates')] class extends Component {
                     </flux:table.cell>
 
                     <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
-                            wire:click="edit({{ $rate->id }})" />
+                        <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $rate->id }})"
+                            icon-variant="outline" />
 
-                        <flux:button variant="ghost" size="sm" icon="trash" color="danger" class="cursor-pointer"
-                            wire:click="delete({{ $rate->id }})" wire:confirm="Remove this rate?" />
+                        <flux:button variant="ghost" size="sm" icon="trash" color="danger"
+                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $rate->id }})"
+                            icon-variant="outline" />
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach
@@ -174,6 +196,33 @@ new #[Title('Shipping Rates')] class extends Component {
                 </flux:modal.close>
 
                 <flux:button type="submit" variant="primary" class="ml-2 cursor-pointer">Save Rate</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+
+    {{-- Delete Confirmation Modal --}}
+    <flux:modal name="delete-rate" class="md:w-96">
+        <flux:heading size="lg" class="mb-2">Delete Shipping Rate</flux:heading>
+        <form wire:submit="delete" class="space-y-6">
+            <div>
+                <flux:subheading>
+                    @if ($rateDetailsToDelete)
+                        <p class="mt-2">Are you sure you want to delete <strong>{{ $rateDetailsToDelete }}</strong>?
+                        </p>
+                        <p class="mt-1 text-sm text-red-600">This action cannot be undone.</p>
+                    @endif
+                </flux:subheading>
+            </div>
+
+            <div class="flex gap-2 justify-evenly">
+                <flux:button type="button" variant="ghost" wire:click="$dispatch('modal-close', 'delete-rate')"
+                    class="w-full">
+                    Cancel
+                </flux:button>
+                <flux:button type="submit" variant="danger" class="cursor-pointer w-full">
+                    Delete Rate
+                </flux:button>
             </div>
         </form>
     </flux:modal>

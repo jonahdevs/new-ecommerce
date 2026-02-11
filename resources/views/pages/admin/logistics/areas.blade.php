@@ -165,10 +165,12 @@ new #[Title('Manage Areas')] class extends Component {
 
                     <flux:table.cell align="end">
                         <flux:button variant="ghost" size="sm" icon="pencil-square"
-                            wire:click="edit({{ $area->id }})" class="cursor-pointer" />
+                            wire:click="edit({{ $area->id }})" class="cursor-pointer text-sheffield-blue!"
+                            icon-variant="outline" />
 
                         <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                            wire:click="confirmDelete({{ $area->id }})" class="cursor-pointer" />
+                            wire:click="confirmDelete({{ $area->id }})" class="cursor-pointer text-red-500!"
+                            icon-variant="outline" />
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach
@@ -205,10 +207,10 @@ new #[Title('Manage Areas')] class extends Component {
     </flux:modal>
 
     <flux:modal name="delete-confirmation" class="md:w-88 space-y-6">
-        <div class="text-center">
-            <flux:heading size="lg">Delete Area?</flux:heading>
-            <flux:subheading>This area will be removed from its county.</flux:subheading>
-        </div>
+        <flux:heading size="lg" class="mb-2">Delete Area?</flux:heading>
+
+        <flux:subheading>This area will be removed from its county.</flux:subheading>
+
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
                 <flux:button variant="ghost" class="w-full">Cancel</flux:button>

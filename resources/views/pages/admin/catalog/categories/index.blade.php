@@ -136,7 +136,6 @@ new #[Title('Categories')] class extends Component {
         </flux:table.rows>
     </flux:table>
 
-
     {{-- Delete Confirmation Modal --}}
     <flux:modal name="delete-category" class="md:w-96">
         <flux:heading size="lg" class="mb-2">Delete Category</flux:heading>

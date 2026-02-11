@@ -126,10 +126,12 @@ new #[Title('Shipping Zones')] class extends Component {
 
                     <flux:table.cell align="end">
                         <flux:button variant="ghost" size="sm" icon="pencil-square" class="cursor-pointer"
-                            wire:click="edit({{ $zone->id }})" />
+                            wire:click="edit({{ $zone->id }})" icon-variant="outline"
+                            class="cursor-pointer text-sheffield-blue!" />
 
                         <flux:button variant="ghost" size="sm" icon="trash" color="red" class="cursor-pointer"
-                            wire:click="confirmDelete({{ $zone->id }})" />
+                            wire:click="confirmDelete({{ $zone->id }})" class="cursor-pointer text-red-500!"
+                            icon-variant="outline" />
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach
@@ -165,12 +167,11 @@ new #[Title('Shipping Zones')] class extends Component {
     </flux:modal>
 
     <flux:modal name="delete-confirmation" class="md:w-88 space-y-6">
-        <div class="flex flex-col items-center text-center">
-            <flux:heading size="lg">Delete Shipping Zone?</flux:heading>
-            <flux:subheading>
-                Are you sure? This action cannot be undone and may affect associated rates and locations.
-            </flux:subheading>
-        </div>
+        <flux:heading size="lg" class="mb-2">Delete Shipping Zone?</flux:heading>
+
+        <flux:subheading>
+            Are you sure? This action cannot be undone and may affect associated rates and locations.
+        </flux:subheading>
 
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
