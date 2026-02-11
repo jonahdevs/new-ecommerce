@@ -81,7 +81,6 @@ class ProductService
                     ->where('id', '!=', $product->id)
                     ->whereNotIn('id', $relatedProducts->pluck('id'))
                     ->active()
-                    ->published()
                     ->inRandomOrder()
                     ->limit($limit)
                     ->get();
@@ -212,7 +211,6 @@ class ProductService
                     ->where('id', '!=', $product->id)
                     ->whereNotIn('id', $relatedProducts->pluck('id'))
                     ->active()
-                    ->published()
                     ->inRandomOrder()
                     ->limit($limit)
                     ->get();

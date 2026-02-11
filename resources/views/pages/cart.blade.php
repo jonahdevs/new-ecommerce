@@ -77,6 +77,62 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart');
         }
     }
+
+    #[Computed]
+    public function hasAvailableAccessories()
+    {
+        foreach ($this->cartItems as $item) {
+            // Get cross-sells that are not already in cart
+            $crossSells = $item->product
+                ->crossSells()
+                ->whereNotIn('products.id', $this->cartItems->pluck('product_id'))
+                ->get();
+
+            if ($crossSells->isNotEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    #[Computed]
+    public function productsWithMissingAccessories()
+    {
+        $products = [];
+
+        foreach ($this->cartItems as $item) {
+            $crossSellsCount = $item->product
+                ->crossSells()
+                ->whereNotIn('products.id', $this->cartItems->pluck('product_id'))
+                ->count();
+
+            if ($crossSellsCount > 0) {
+                $products[] = [
+                    'id' => $item->product->id,
+                    'slug' => $item->product->slug,
+                    'name' => $item->product->name,
+                    'image' => $item->product->image_url,
+                    'accessories_count' => $crossSellsCount,
+                ];
+            }
+        }
+
+        return $products;
+    }
+
+    public function proceedToCheckout()
+    {
+        // Check if there are products with missing accessories
+        if ($this->hasAvailableAccessories) {
+            // Open the accessories confirmation modal
+            Flux::modal('accessories-confirmation')->show();
+            return;
+        }
+
+        // If no accessories, proceed directly to checkout
+        $this->redirect(route('checkout.summary'), navigate: true);
+    }
 };
 ?>
 
@@ -370,8 +426,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             </div>
 
                             <div class="border-t p-3">
-                                <flux:button :href="route('checkout.summary')" wire:navigate
-                                    class="w-full group cursor-pointer" variant="primary">Proceed
+                                <flux:button wire:click="proceedToCheckout" class="w-full group cursor-pointer"
+                                    variant="primary">Proceed
                                     to Checkout
                                     <x-slot name="iconTrailing">
                                         <flux:icon.chevron-right
@@ -393,4 +449,47 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         <livewire:product-recommendations type="recently_viewed" />
     </div>
+
+    {{-- Accessories Confirmation Modal --}}
+    <flux:modal name="accessories-confirmation" variant="flyout" class="w-full max-w-md">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Missing Accessories</flux:heading>
+                <flux:subheading class="mt-2">
+                    Some items in your cart have recommended accessories
+                </flux:subheading>
+            </div>
+
+            <div class="space-y-3">
+                @foreach ($this->productsWithMissingAccessories as $product)
+                    <div class="border rounded-sm p-3 flex items-start gap-3">
+                        <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}"
+                            class="w-16 h-16 object-cover rounded-sm">
+
+                        <div class="flex-1">
+                            <p class="font-medium text-sm">{{ $product['name'] }}</p>
+                            <p class="text-xs text-zinc-600 mt-1">
+                                Missing {{ $product['accessories_count'] }}
+                                {{ Str::plural('accessory', $product['accessories_count']) }}
+                            </p>
+
+                            <flux:button size="xs" variant="ghost" class="mt-2 cursor-pointer"
+                                href="{{ route('products.show', $product['slug']) }}#accessories">
+                                View accessories
+                            </flux:button>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="flex gap-2 pt-4 border-t">
+                <flux:modal.close>
+                    <flux:button variant="primary" class="cursor-pointer flex-1" :href="route('checkout.summary')"
+                        wire:navigate>
+                        Continue without accessories
+                    </flux:button>
+                </flux:modal.close>
+            </div>
+        </div>
+    </flux:modal>
 </div>

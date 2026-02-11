@@ -78,7 +78,6 @@ class Category extends Model
     public function activeProducts(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)
-            ->where('products.is_active', true)
             ->where('products.status', 'published')
             ->withPivot('is_primary', 'sort_order')
             ->withTimestamps()

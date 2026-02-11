@@ -579,14 +579,16 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
 
         @if ($this->accessories->count() > 0)
-            <h3 class="text-lg font-semibold mt-5 mb-4">
-                Accessories
-            </h3>
+            <div id="accessories" class="mt-5 scroll-mt-42.5">
+                <h3 class="text-lg font-semibold  mb-4">
+                    Accessories
+                </h3>
 
-            <div class="grid grid-cols-6 gap-4 ">
-                @foreach ($this->accessories as $accessory)
-                    <livewire:accessory-item :product="$accessory" />
-                @endforeach
+                <div class="grid grid-cols-6 gap-4 ">
+                    @foreach ($this->accessories as $accessory)
+                        <livewire:accessory-item :product="$accessory" />
+                    @endforeach
+                </div>
             </div>
         @endif
 
