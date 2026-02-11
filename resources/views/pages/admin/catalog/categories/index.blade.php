@@ -66,8 +66,8 @@ new #[Title('Categories')] class extends Component {
     </div>
 
     <div class="mb-4">
-        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search categories..."
-            class="max-w-md" />
+        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search categories..." class="max-w-md"
+            clearable />
     </div>
 
     <flux:table :paginate="$this->categories">

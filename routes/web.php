@@ -43,6 +43,10 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('/products/create', 'pages::admin.catalog.products.create')->name('.products.create');
     Route::livewire('/products/{product}/edit', 'pages::admin.catalog.products.edit')->name('.products.edit');
 
+    Route::livewire('/brands', 'pages::admin.catalog.brands.index')->name('.brands');
+    Route::livewire('/brands/create', 'pages::admin.catalog.brands.create')->name('.brands.create');
+    Route::livewire('/brands/{brand}/edit', 'pages::admin.catalog.brands.edit')->name('.brands.edit');
+
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
     Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');
     Route::livewire('areas', 'pages::admin.logistics.areas')->name('.areas');

@@ -38,15 +38,18 @@
                 Products
             </flux:navlist.item>
 
-            <flux:navlist.item icon="folder" wire:navigate :href="route('admin.categories')">
+            <flux:navlist.item icon="folder" wire:navigate :href="route('admin.categories')"
+                :current="request()->routeIs('admin.categories.*')">
                 Categories
             </flux:navlist.item>
 
-            <flux:navlist.item icon="adjustments-horizontal" wire:navigate :href="route('admin.attributes')">
+            <flux:navlist.item icon="adjustments-horizontal" wire:navigate :href="route('admin.attributes')"
+                :current="request()->routeIs('admin.attributes.*')">
                 Attributes
             </flux:navlist.item>
 
-            <flux:navlist.item icon="building-office" wire:navigate href="#">
+            <flux:navlist.item icon="building-office" wire:navigate :href="route('admin.brands')"
+                :current="request()->routeIs('admin.brands.*')">
                 Brands
             </flux:navlist.item>
 

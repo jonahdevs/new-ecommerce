@@ -1,0 +1,157 @@
+<?php
+use App\Models\Brand;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Livewire\Attributes\{Title, Computed};
+
+new #[Title('Brands')] class extends Component {
+    use WithPagination;
+
+    public $search = '';
+    public ?int $brandToDelete = null;
+    public ?string $brandNameToDelete = null;
+
+    public function confirmDelete($id, $name)
+    {
+        $this->brandToDelete = $id;
+        $this->brandNameToDelete = $name;
+        $this->modal('delete-brand')->show();
+    }
+
+    public function delete()
+    {
+        try {
+            if ($this->brandToDelete) {
+                $brand = Brand::findOrFail($this->brandToDelete);
+                $brand->delete();
+                $this->modal('delete-brand')->close();
+                $this->dispatch('notify', variant: 'success', message: 'Brand deleted successfully!');
+                $this->brandToDelete = null;
+                $this->brandNameToDelete = null;
+            }
+        } catch (\Throwable $th) {
+            \Log::error('Error deleting brand: ' . $th->getMessage(), ['exception' => $th]);
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to delete brand.');
+        }
+    }
+
+    #[Computed]
+    public function brands()
+    {
+        return Brand::query()->withCount('products')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->ordered()->paginate(15);
+    }
+}; ?>
+
+<div>
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <flux:heading size="xl">Brands</flux:heading>
+            <flux:subheading>Manage product brands and manufacturers</flux:subheading>
+        </div>
+
+        <flux:button variant="primary" icon="plus" :href="route('admin.brands.create')" wire:navigate>
+            Create Brand
+        </flux:button>
+    </div>
+
+    <div class="mb-4">
+        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search brands..." class="max-w-md"
+            clearable />
+    </div>
+    <flux:table :paginate="$this->brands">
+        <flux:table.columns>
+            <flux:table.column>Brand</flux:table.column>
+            <flux:table.column>Website</flux:table.column>
+            <flux:table.column>Products</flux:table.column>
+            <flux:table.column>Sort Order</flux:table.column>
+            <flux:table.column>Status</flux:table.column>
+            <flux:table.column align="end">Actions</flux:table.column>
+        </flux:table.columns>
+
+        <flux:table.rows>
+            @foreach ($this->brands as $brand)
+                <flux:table.row :key="$brand->id">
+                    <flux:table.cell class="flex items-center gap-3">
+                        @if ($brand->logo_path)
+                            <img src="{{ asset('storage/' . $brand->logo_path) }}"
+                                class="w-10 h-10 rounded object-contain bg-white p-1 border">
+                        @else
+                            <div
+                                class="w-10 h-10 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center rounded">
+                                <flux:icon name="building-storefront" variant="micro" />
+                            </div>
+                        @endif
+
+                        <div>
+                            <span class="font-medium text-zinc-800 dark:text-white">{{ $brand->name }}</span>
+                            <div class="text-xs text-zinc-500">{{ $brand->slug }}</div>
+                        </div>
+                    </flux:table.cell>
+
+                    <flux:table.cell>
+                        @if ($brand->website_url)
+                            <a href="{{ $brand->website_url }}" target="_blank"
+                                class="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                Visit
+                                <flux:icon name="arrow-top-right-on-square" variant="micro" />
+                            </a>
+                        @else
+                            <span class="text-zinc-400 text-sm">—</span>
+                        @endif
+                    </flux:table.cell>
+
+                    <flux:table.cell>
+                        <flux:badge size="sm" color="zinc" variant="subtle">
+                            {{ $brand->products_count }} products
+                        </flux:badge>
+                    </flux:table.cell>
+
+                    <flux:table.cell>
+                        <span class="text-sm text-zinc-600">{{ $brand->sort_order }}</span>
+                    </flux:table.cell>
+
+                    <flux:table.cell>
+                        <flux:badge size="sm" :color="$brand->is_active ? 'green' : 'red'" variant="flat">
+                            {{ $brand->is_active ? 'Active' : 'Inactive' }}
+                        </flux:badge>
+                    </flux:table.cell>
+
+                    <flux:table.cell align="end">
+                        <flux:button variant="ghost" size="sm" icon="pencil-square"
+                            :href="route('admin.brands.edit', $brand->id)" wire:navigate
+                            class="cursor-pointer text-sheffield-blue!" />
+
+                        <flux:button variant="ghost" size="sm" icon="trash" color="red"
+                            wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')"
+                            icon-variant="outline" class="cursor-pointer text-red-500!" />
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
+
+    {{-- Delete Confirmation Modal --}}
+    <flux:modal name="delete-brand" class="md:w-96">
+        <flux:heading size="lg" class="mb-2">Delete Brand</flux:heading>
+        <form wire:submit="delete" class="space-y-6">
+            <div>
+                <flux:subheading>
+                    @if ($brandNameToDelete)
+                        <p class="mt-2">Are you sure you want to delete <strong>{{ $brandNameToDelete }}</strong>?</p>
+                        <p class="mt-1 text-sm text-red-600">This action cannot be undone.</p>
+                    @endif
+                </flux:subheading>
+            </div>
+
+            <div class="flex gap-2 justify-evenly">
+                <flux:button type="button" variant="ghost" wire:click="$dispatch('modal-close', 'delete-brand')"
+                    class="w-full">
+                    Cancel
+                </flux:button>
+                <flux:button type="submit" variant="danger" class="cursor-pointer w-full">
+                    Delete Brand
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
+</div>
