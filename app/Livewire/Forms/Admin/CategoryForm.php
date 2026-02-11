@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms\Admin;
 
 use App\Models\Category;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
@@ -11,10 +12,7 @@ class CategoryForm extends Form
 {
     public ?Category $category = null;
 
-    #[Validate('required|min:3|max:255')]
     public $name = '';
-
-    #[Validate('nullable|max:255')] // Unique check handled in store/update
     public $slug = '';
 
     public $parent_id = null;
@@ -24,10 +22,7 @@ class CategoryForm extends Form
     public $show_in_navbar = false;
 
     // Media
-    #[Validate('nullable|image|max:2048')] // 2MB Max
     public $image_path;
-
-    #[Validate('nullable|image|max:1024')] // 1MB Max
     public $image_icon;
 
     public $icon_svg = '';
@@ -35,7 +30,26 @@ class CategoryForm extends Form
     // SEO
     public $meta_title = '';
     public $meta_description = '';
-    public $meta_keywords = [];
+    public $meta_keywords = '';
+
+    public function rules()
+    {
+        $categoryId = $this->category?->id;
+
+        return [
+            "name" => ["required", "string", "min:3", "max:255"],
+            "slug" => ["nullable", "string", "max:255", "unique:categories,slug," . $categoryId],
+            "parent_id" => ["nullable", "exists:categories,id"],
+            "description" => ["nullable", "string"],
+            "is_active" => ["boolean"],
+            "is_featured" => ["boolean"],
+            "show_in_navbar" => ["boolean"],
+            "icon_svg" => ["nullable", "string"],
+            "meta_title" => ["nullable", "string", "max:255"],
+            "meta_description" => ["nullable", "string"],
+            "meta_keywords" => ["nullable", "string"],
+        ];
+    }
 
     public function setCategory(Category $category)
     {
@@ -47,36 +61,48 @@ class CategoryForm extends Form
 
     public function store()
     {
-        $this->validate(['slug' => 'nullable|unique:categories,slug']);
+        $this->validate();
 
         $data = $this->prepareData();
-        Category::create($data);
+        return Category::create($data);
     }
 
     public function update()
     {
-        $this->validate(['slug' => 'nullable|unique:categories,slug,' . $this->category->id]);
+        $this->validate();
 
         $data = $this->prepareData();
         $this->category->update($data);
+        return $this->category;
     }
 
     protected function prepareData()
     {
         $data = $this->except(['category', 'image_path', 'image_icon']);
 
-        if (empty($this->slug)) {
+        // Auto-generate slug if empty
+        if (empty($data['slug'])) {
             $data['slug'] = Str::slug($this->name);
         }
 
-        if ($this->image_path) {
-            $data['image_path'] = $this->image_path->store('categories/banners', 'public');
-        }
-
-        if ($this->image_icon) {
-            $data['image_icon'] = $this->image_icon->store('categories/icons', 'public');
-        }
+        // Handle image uploads
+        $data = array_merge($data, $this->handleImageUploads());
 
         return $data;
+    }
+
+    protected function handleImageUploads(): array
+    {
+        $uploads = [];
+
+        if ($this->image_path instanceof UploadedFile) {
+            $uploads['image_path'] = $this->image_path->store('categories/banners', 'public');
+        }
+
+        if ($this->image_icon instanceof UploadedFile) {
+            $uploads['image_icon'] = $this->image_icon->store('categories/icons', 'public');
+        }
+
+        return $uploads;
     }
 }

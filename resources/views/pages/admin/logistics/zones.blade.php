@@ -20,7 +20,7 @@ new #[Title('Shipping Zones')] class extends Component {
     #[Computed]
     public function zones()
     {
-        return ShippingZone::orderBy('sort_order')->paginate(10);
+        return ShippingZone::paginate(10);
     }
 
     public function save()

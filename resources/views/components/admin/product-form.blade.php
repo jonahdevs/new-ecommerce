@@ -683,7 +683,7 @@ new class extends Component {
                                 <div class="relative group">
                                     <div
                                         class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200">
-                                        <img src="{{ Storage::url($existingImage) }}" alt="Gallery image"
+                                        <img src="{{ $existingImage->url }}" alt="Gallery image"
                                             class="w-full h-full object-cover">
 
                                         {{-- Delete button overlay --}}

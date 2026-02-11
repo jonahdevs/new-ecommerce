@@ -2,38 +2,61 @@
 use App\Models\Category;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Title;
+use Livewire\Attributes\{Title, Computed};
 
 new #[Title('Categories')] class extends Component {
     use WithPagination;
 
     public $search = '';
+    public ?int $categoryToDelete = null;
+    public ?string $categoryNameToDelete = null;
 
-    public function delete($id)
+    public function confirmDelete($id, $name)
     {
-        $category = Category::findOrFail($id);
-        // Safety check: handle children before deletion
-        $category->delete();
+        $this->categoryToDelete = $id;
+        $this->categoryNameToDelete = $name;
+        $this->modal('delete-category')->show();
     }
 
-    public function with()
+    public function delete()
     {
-        return [
-            'categories' => Category::query()
-                ->with(['parent'])
-                ->withCount('children')
-                ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
-                ->orderBy('sort_order')
-                ->paginate(15),
-        ];
+        try {
+            if ($this->categoryToDelete) {
+                $category = Category::findOrFail($this->categoryToDelete);
+                $category->delete();
+                $this->modal('delete-category')->close();
+
+                $this->dispatch('notify', variant: 'success', message: 'Category deleted successfully!');
+                $this->categoryToDelete = null;
+                $this->categoryNameToDelete = null;
+            }
+        } catch (\Throwable $th) {
+            \Log::error('Error deleting category: ' . $th->getMessage(), ['exception' => $th]);
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to delete category.');
+        }
+    }
+
+    #[Computed]
+    public function categories()
+    {
+        return Category::query()
+            ->with(['parent'])
+            ->withCount('children')
+            ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->orderBy('sort_order')
+            ->paginate(15);
     }
 }; ?>
 
 <div>
     <div class="flex justify-between items-center mb-6">
         <div>
-            <flux:heading size="xl">Categories</flux:heading>
-            <flux:subheading>Manage your product hierarchy and SEO</flux:subheading>
+            <flux:heading size="xl" class="mb-2">Categories</flux:heading>
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline">
+                </flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Categories</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
 
         <flux:modal.trigger name="category-form">
@@ -43,10 +66,11 @@ new #[Title('Categories')] class extends Component {
     </div>
 
     <div class="mb-4">
-        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search categories..." class="max-w-md" />
+        <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search categories..."
+            class="max-w-md" />
     </div>
 
-    <flux:table :paginate="$categories">
+    <flux:table :paginate="$this->categories">
         <flux:table.columns>
             <flux:table.column>Name</flux:table.column>
             <flux:table.column>Parent</flux:table.column>
@@ -57,7 +81,7 @@ new #[Title('Categories')] class extends Component {
         </flux:table.columns>
 
         <flux:table.rows>
-            @foreach ($categories as $category)
+            @foreach ($this->categories as $category)
                 <flux:table.row :key="$category->id">
                     <flux:table.cell class="flex items-center gap-3">
                         @if ($category->image_icon)
@@ -99,16 +123,46 @@ new #[Title('Categories')] class extends Component {
 
                     <flux:table.cell align="end">
                         <flux:button variant="ghost" size="sm" icon="pencil-square"
-                            :href="route('admin.categories.edit', $category->id)" wire:navigate />
+                            :href="route('admin.categories.edit', $category->id)" wire:navigate icon-variant="outline"
+                            class="cursor-pointer text-sheffield-blue!" title="Edit Category" />
 
                         <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                            wire:confirm="Deleting a parent category will delete all children. Continue?"
-                            wire:click="delete({{ $category->id }})" />
+                            wire:click="confirmDelete({{ $category->id }}, '{{ $category->name }}')"
+                            class="cursor-pointer" icon-variant="outline" class="text-red-500! cursor-pointer"
+                            title="Delete Category" />
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach
         </flux:table.rows>
     </flux:table>
 
-    {{-- <livewire:admin.categories.category-form /> --}}
+
+    {{-- Delete Confirmation Modal --}}
+    <flux:modal name="delete-category" class="md:w-96">
+        <flux:heading size="lg" class="mb-2">Delete Category</flux:heading>
+
+        <form wire:submit="delete" class="space-y-6">
+            <div>
+                <flux:subheading>
+                    @if ($categoryNameToDelete)
+                        <p class="mt-2">Are you sure you want to delete <strong>{{ $categoryNameToDelete }}</strong>?
+                        </p>
+                        <p class="mt-1 text-sm text-red-600">This action cannot be undone. All child categories will
+                            also be deleted.</p>
+                    @endif
+                </flux:subheading>
+            </div>
+
+            <div class="flex gap-2 justify-evenly items-center">
+                <flux:button type="button" variant="ghost" wire:click="$dispatch('modal-close', 'delete-category')"
+                    class="cursor-pointer w-full">
+                    Cancel
+                </flux:button>
+                <flux:button type="submit" variant="danger" class="cursor-pointer w-full">
+                    Delete Category
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
 </div>
