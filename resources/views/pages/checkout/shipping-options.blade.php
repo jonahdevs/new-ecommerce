@@ -208,27 +208,24 @@ new #[Layout('layouts.guest')] class extends Component {
                                         @foreach ($this->availableMethods as $method)
                                             <flux:radio :value="$method->code" :label="$method->name">
                                                 <x-slot name="description">
-                                                    <p>{{ $method->description }}</p>
 
                                                     <p class="mt-1 font-medium">
                                                         @if ($method->current_rate)
                                                             @php
                                                                 $min = $method->current_rate->estimated_days_min;
                                                                 $max = $method->current_rate->estimated_days_max;
-                                                                $price = $method->current_rate->price;
                                                             @endphp
 
                                                             @if ($min && $max)
                                                                 @if ($min == $max)
-                                                                    Estimated delivery: {{ $min }} business
+                                                                    {{ $min }} business
                                                                     days
                                                                 @else
-                                                                    Estimated delivery:
                                                                     {{ $min }}–{{ $max }} business
                                                                     days
                                                                 @endif
                                                             @elseif ($min)
-                                                                Estimated delivery: {{ $min }}+ business days
+                                                                {{ $min }}+ business days
                                                             @else
                                                                 Delivery time will be communicated after confirmation
                                                             @endif

@@ -270,9 +270,9 @@ new class extends Component {
                     activeIndex: 0,
                     isBeginning: true,
                     isEnd: false,
-
+                
                     init() {
-                        this.thumbSwiper = new Swiper('.thumbSwiper', {
+                        this.thumbSwiper = new Swiper(this.$refs.thumbSwiper, {
                             spaceBetween: 10,
                             slidesPerView: 4,
                             freeMode: true,
@@ -293,9 +293,9 @@ new class extends Component {
                                 },
                             },
                         });
-
+                
                         // Initialize main slider
-                        this.mainSwiper = new Swiper('.mainSwiper', {
+                        this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
                             spaceBetween: 10,
                             loop: true,
                             navigation: {
@@ -308,13 +308,13 @@ new class extends Component {
                             on: {
                                 slideChange: (swiper) => {
                                     this.activeIndex = swiper.realIndex;
-
+                
                                     // Ensure the active thumbnail is visible
                                     this.thumbSwiper.slideTo(swiper.realIndex);
                                 },
                             },
                         });
-
+                
                         // Set initial state
                         this.isBeginning = this.thumbSwiper.isBeginning;
                         this.isEnd = this.thumbSwiper.isEnd;
@@ -322,7 +322,8 @@ new class extends Component {
                 }">
                     {{-- Main Slider --}}
                     <div class="mb-4">
-                        <div class="swiper mainSwiper border border-2 rounded-sm  overflow-hidden px-2">
+                        <div class="swiper mainSwiper border border-2 rounded-sm  overflow-hidden px-2"
+                            x-ref="mainSwiper">
                             <div class="swiper-wrapper ">
                                 @foreach ($product->images as $image)
                                     <div class="swiper-slide">
@@ -339,7 +340,7 @@ new class extends Component {
 
                     {{-- Thumbnail Slider --}}
                     <div class="relative">
-                        <div class="swiper thumbSwiper px-12">
+                        <div class="swiper thumbSwiper px-12" x-ref="thumbSwiper">
                             <div class="swiper-wrapper">
                                 @foreach ($product->images as $image)
                                     <div class="swiper-slide cursor-pointer">
@@ -434,7 +435,6 @@ new class extends Component {
                         @endif
                     </div>
                 @endisland
-
             </div>
         </div>
     </flux:modal>

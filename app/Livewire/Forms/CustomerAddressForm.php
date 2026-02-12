@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Address;
 use App\Models\Area;
 use App\Models\County;
+use App\Services\PhoneNormalizationService;
 use Illuminate\Validation\ValidationException;
 use Livewire\Form;
 
@@ -42,8 +43,8 @@ class CustomerAddressForm extends Form
 
         $this->first_name = $address->first_name;
         $this->last_name = $address->last_name;
-        $this->phone_number = $address->phone_number;
-        $this->alternative_phone_number = $address->alternative_phone_number;
+        $this->phone_number =  preg_replace('/^254/', '', $address->phone_number);
+        $this->alternative_phone_number = preg_replace('/^254/', '', $address->alternative_phone_number);
         $this->county_id = $address->county_id;
         $this->area_id = $address->area_id;
         $this->address_text = $address->address;

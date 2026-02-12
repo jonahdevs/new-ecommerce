@@ -39,9 +39,8 @@ new #[Title('Product Attributes')] class extends Component {
         </flux:button>
     </div>
 
-    <flux:separator class="my-6" />
 
-    <div class="mb-4">
+    <div class="mb-4 mt-6">
         <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search attributes (e.g. Color)..."
             class="max-w-md" />
     </div>

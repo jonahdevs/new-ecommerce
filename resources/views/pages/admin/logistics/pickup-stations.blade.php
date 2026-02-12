@@ -116,10 +116,7 @@ new #[Title('Pickup Stations')] class extends Component {
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl">Pickup Stations</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Pickup Stations</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Manage pickup stations where customers can collect their orders.</flux:subheading>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('station-modal').show()"

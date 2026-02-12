@@ -88,10 +88,8 @@ new #[Title('Shipping Zones')] class extends Component {
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Shipping Zones</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Shipping Zones</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Group counties and towns into shipping zones to control delivery costs and availability.
+            </flux:subheading>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('zone-modal').show()"

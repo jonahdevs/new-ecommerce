@@ -52,11 +52,7 @@ new #[Title('Categories')] class extends Component {
     <div class="flex justify-between items-center mb-6">
         <div>
             <flux:heading size="xl" class="mb-2">Categories</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline">
-                </flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Categories</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Organize and manage product categories to structure your catalog.</flux:subheading>
         </div>
 
         <flux:modal.trigger name="category-form">

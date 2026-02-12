@@ -112,10 +112,8 @@ new #[Title('Manage Areas')] class extends Component {
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Areas & Towns</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Areas & Towns</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Organize towns and local areas to support accurate delivery coverage and address selection.
+            </flux:subheading>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" x-on:click="$flux.modal('area-modal').show()">

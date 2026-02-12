@@ -29,7 +29,16 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function defaultAddress()
     {
-        return auth()->user()->defaultAddress;
+        $user = auth()->user();
+
+        $sessionAddress = session('checkout_address_id');
+
+        // Use session address if exists and valid, otherwise use default address
+        if ($sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists()) {
+            return $user->addresses()->where('id', $sessionAddress)->first();
+        } else {
+            return auth()->user()->defaultAddress;
+        }
     }
 
     #[Computed]

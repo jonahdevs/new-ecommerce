@@ -5,13 +5,25 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 
 new #[Layout('layouts.guest')] class extends Component {
+    public $selectedAddress = null;
+
     public function mount()
     {
         $user = auth()->user();
 
         // If no address exists → go to create address
-        if ($user->defaultAddress()->doesntExist()) {
+        if ($user->addresses()->doesntExist()) {
             return redirect()->route('checkout.addresses.create');
+        }
+
+        // Check if there's a checkout address in session
+        $sessionAddress = session('checkout_address_id');
+
+        // Use session address if exists and valid, otherwise use default address
+        if ($sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists()) {
+            $this->selectedAddress = $sessionAddress;
+        } else {
+            $this->selectedAddress = $user->defaultAddress?->id ?? $user->addresses()->first()->id;
         }
     }
 
@@ -19,6 +31,30 @@ new #[Layout('layouts.guest')] class extends Component {
     public function addresses()
     {
         return auth()->user()->addresses;
+    }
+
+    public function selectAddress()
+    {
+        // Validate that the selected address belongs to the user
+        $user = auth()->user();
+
+        if (!$user->addresses()->where('id', $this->selectedAddress)->exists()) {
+            $this->addError('selectedAddress', 'Invalid address selected.');
+            return;
+        }
+
+        // Store selected address in session for checkout process
+        session(['checkout_address_id' => $this->selectedAddress]);
+
+        // Flash success message
+        $this->dispatch('notify', variant: 'success', message: 'Address selected for delivery.');
+
+        return $this->redirectRoute('checkout.summary', navigate: true);
+    }
+
+    public function clearCheckoutAddress()
+    {
+        session()->forget('checkout_address_id');
     }
 };
 ?>
@@ -45,7 +81,7 @@ new #[Layout('layouts.guest')] class extends Component {
         <flux:heading level="1" class="text-2xl! font-bold! mb-3">Customer Address</flux:heading>
 
         <div class="grid grid-cols-4 gap-6">
-            <div class="col-span-3 space-y-3">
+            <div class="md:col-span-3 space-y-3">
                 <div class="bg-white rounded-sm border">
                     <div class="px-3 py-2 border-b flex items-center justify-between gap-1">
                         <div class="flex items-center gap-1">
@@ -63,12 +99,14 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
 
                     <div class="p-5">
-                        <div class="space-y-2">
-                            @foreach ($this->addresses as $addressData)
-                                <div class="border rounded-md flex flex-col">
-                                    <div class="p-3 flex items-start">
+                        <form wire:submit="selectAddress">
+                            <flux:radio.group label="Shipping" variant="cards" wire:model="selectedAddress"
+                                class="grid! grid-cols-1! md:grid-cols-2! xl:grid-cols-3!">
+                                @foreach ($this->addresses as $addressData)
+                                    <flux:radio value="{{ $addressData->id }}">
+                                        <flux:radio.indicator />
                                         <div class="flex-1">
-                                            <flux:heading>{{ $addressData->full_name }}</flux:heading>
+                                            <flux:heading class="leading-4">{{ $addressData->full_name }}</flux:heading>
 
                                             <div class="text-zinc-500 text-sm my-3 space-y-1">
                                                 <flux:text>{{ $addressData->address }}</flux:text>
@@ -87,12 +125,18 @@ new #[Layout('layouts.guest')] class extends Component {
                                         </div>
 
                                         <flux:button :href="route('checkout.addresses.edit', $addressData->id)"
-                                            wire:navigate icon="pencil" size="xs" class="shrink-0"></flux:button>
-                                    </div>
+                                            wire:navigate icon="pencil" size="xs"
+                                            class="shrink-0 cursor-pointer z-20">
+                                        </flux:button>
+                                    </flux:radio>
+                                @endforeach
+                            </flux:radio.group>
 
-                                </div>
-                            @endforeach
-                        </div>
+                            <div class="flex items-center justify-end mt-5">
+                                <flux:button type="submit" variant="primary" class="cursor-pointer">Select Address
+                                </flux:button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -107,7 +151,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 </flux:link>
             </div>
 
-            <div class="col-span-1">
+            <div class="md:col-span-1">
                 <livewire:order-summary />
             </div>
         </div>

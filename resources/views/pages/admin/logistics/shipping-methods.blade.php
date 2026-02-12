@@ -78,10 +78,7 @@ new #[Title('Shipping Methods')] class extends Component {
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Shipping Methods</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Shipping Methods</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Manage the delivery options available to customers during checkout.</flux:subheading>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm"

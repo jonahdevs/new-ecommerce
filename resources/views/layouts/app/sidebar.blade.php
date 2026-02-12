@@ -20,16 +20,6 @@
             </flux:navlist.group>
         </flux:navlist>
 
-        {{-- Sales --}}
-        <flux:navlist.group heading="Order Management" class="grid">
-            <flux:navlist.item icon="shopping-cart" wire:navigate href="#">Orders</flux:navlist.item>
-            <flux:navlist.item icon="truck" wire:navigate href="#">Shipments
-            </flux:navlist.item>
-            <flux:navlist.item icon="arrow-uturn-left" wire:navigate href="#">Returns &
-                Refunds</flux:navlist.item>
-            <flux:navlist.item icon="banknotes" wire:navigate href="#">Transaction
-            </flux:navlist.item>
-        </flux:navlist.group>
 
         {{-- Catalog Management --}}
         <flux:navlist.group heading="Catalog" class="grid">
@@ -58,6 +48,18 @@
             </flux:navlist.item>
         </flux:navlist.group>
 
+        {{-- Sales --}}
+        <flux:navlist.group heading="Order Management" class="grid">
+            <flux:navlist.item icon="shopping-cart" wire:navigate href="#">Orders</flux:navlist.item>
+            <flux:navlist.item icon="truck" wire:navigate href="#">Shipments
+            </flux:navlist.item>
+            <flux:navlist.item icon="arrow-uturn-left" wire:navigate href="#">Returns &
+                Refunds</flux:navlist.item>
+            <flux:navlist.item icon="banknotes" wire:navigate href="#">Transaction
+            </flux:navlist.item>
+        </flux:navlist.group>
+
+
         {{-- Inventory Management --}}
         <flux:navlist.group heading="Logistics" class="grid">
 
@@ -82,7 +84,7 @@
             {{-- Shipping Configuration --}}
             <flux:navlist.item icon="truck" wire:navigate :href="route('admin.shipping-methods')"
                 :current="request()->routeIs('admin.shipping-methods*')">
-                Delivery Methods
+                Shipping Methods
             </flux:navlist.item>
 
             <flux:navlist.item icon="currency-dollar" wire:navigate :href="route('admin.shipping-rates')"

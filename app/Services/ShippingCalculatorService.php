@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\ShippingMethod;
 use App\Models\ShippingRate;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class ShippingCalculatorService.
@@ -24,7 +25,7 @@ class ShippingCalculatorService
     {
         // 1. Calculate total weight
         $totalWeight = $this->calculateTotalWeight($cart);
-        \Log::info('Total weight calculated', [
+        Log::info('Total weight calculated', [
             'total_weight' => $totalWeight,
         ]);
 
@@ -38,7 +39,7 @@ class ShippingCalculatorService
         // 3. Determine which shipping method to use
         $shippingMethodId = $this->getPreferredShippingMethodId($cart->user);
 
-        \Log::info("Calculating shipping: Zone ID $shippingZoneId, Method ID $shippingMethodId, Total Weight $totalWeight kg");
+        Log::info("Calculating shipping: Zone ID $shippingZoneId, Method ID $shippingMethodId, Total Weight $totalWeight kg");
 
         // 4. Get the specific rate
         $rate = $this->getShippingRate($shippingZoneId, $shippingMethodId, $totalWeight);
@@ -60,15 +61,24 @@ class ShippingCalculatorService
             throw new \Exception('User must be authenticated to calculate shipping.');
         }
 
-        $defaultAddress = $user->defaultAddress;
+        // Try checkout address first
+        $addressId = session('checkout_address_id');
 
-
-
-        if (!$defaultAddress || !$defaultAddress->shipping_zone_id) {
-            return 1;
+        if ($addressId) {
+            $address = $user->addresses()->find($addressId);
+            if ($address?->shipping_zone_id) {
+                return $address->shipping_zone_id;
+            }
         }
 
-        return $defaultAddress->shipping_zone_id;
+        // Fall back to default address
+        $defaultAddress = $user->defaultAddress;
+        if ($defaultAddress?->shipping_zone_id) {
+            return $defaultAddress->shipping_zone_id;
+        }
+
+        // Last resort: return default zone
+        return 1;
     }
 
     /**

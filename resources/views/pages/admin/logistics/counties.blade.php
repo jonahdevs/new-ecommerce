@@ -80,10 +80,7 @@ new #[Title('Manage Counties')] class extends Component {
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Counties</flux:heading>
-            <flux:breadcrumbs>
-                <flux:breadcrumbs.item href="#" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Counties</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
+            <flux:subheading>Manage counties used for customer addresses and delivery coverage.</flux:subheading>
         </div>
 
         <flux:button variant="primary" icon="plus" wire:click="resetForm" @click="$flux.modal('county-modal').show()"
