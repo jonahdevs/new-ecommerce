@@ -49,14 +49,15 @@
         </flux:navlist.group>
 
         {{-- Sales --}}
-        <flux:navlist.group heading="Order Management" class="grid">
-            <flux:navlist.item icon="shopping-cart" wire:navigate href="#">Orders</flux:navlist.item>
-            <flux:navlist.item icon="truck" wire:navigate href="#">Shipments
+        <flux:navlist.group heading="Sales" class="grid">
+            <flux:navlist.item icon="shopping-cart" wire:navigate :href="route('admin.orders')"
+                :current="request()->routeIs('admin.orders.*')">Orders
             </flux:navlist.item>
-            <flux:navlist.item icon="arrow-uturn-left" wire:navigate href="#">Returns &
-                Refunds</flux:navlist.item>
             <flux:navlist.item icon="banknotes" wire:navigate href="#">Transaction
             </flux:navlist.item>
+
+            <flux:navlist.item icon="arrow-uturn-left" wire:navigate href="#">Returns &
+                Refunds</flux:navlist.item>
         </flux:navlist.group>
 
 

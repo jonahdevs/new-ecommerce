@@ -46,10 +46,14 @@ new class extends Component {
     <form wire:submit="save" class="space-y-8 mt-6">
         @include('pages.admin.catalog.categories._form-fields')
 
-        <div class="flex justify-end gap-3 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border">
-            <flux:button variant="ghost" href="{{ route('admin.categories') }}" class="cursor-pointer">Cancel
-            </flux:button>
-            <flux:button type="submit" variant="primary" class="cursor-pointer">Create Category</flux:button>
-        </div>
+        <flux:card class="bg-zinc-50 dark:bg-z">
+
+
+            <div class="flex justify-end gap-3 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border">
+                <flux:button variant="ghost" href="{{ route('admin.categories') }}" class="cursor-pointer">Cancel
+                </flux:button>
+                <flux:button type="submit" variant="primary" class="cursor-pointer">Create Category</flux:button>
+            </div>
+        </flux:card>
     </form>
 </div>

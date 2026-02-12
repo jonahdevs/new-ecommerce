@@ -26,11 +26,19 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
     Route::get('/payment/callback', [PaymentCallbackController::class, 'success'])->name('payment.callback');
     Route::get('/payment/cancel', [PaymentCallbackController::class, 'cancel'])->name('payment.cancel');
 
+    Route::livewire('checkout/success', 'pages::checkout.success')->name('checkout.success');
+
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
 });
 
 
 Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
+    // Sales
+    Route::livewire('orders', 'pages::admin.sales.orders.index')->name('.orders');
+    Route::livewire('orders/{order}', 'pages::admin.sales.orders.show')->name('.orders.show');
+
+
+    // catalog
     Route::livewire('/categories', 'pages::admin.catalog.categories.index')->name('.categories');
     Route::livewire('/categories/create', 'pages::admin.catalog.categories.create')->name('.categories.create');
     Route::livewire('/categories/{category}/edit', 'pages::admin.catalog.categories.edit')->name('.categories.edit');

@@ -15,7 +15,8 @@ class CheckoutService
     public function __construct(
         private OrderService $orderService,
         private PesawiseService $pesawiseService
-    ) {}
+    ) {
+    }
 
     /**
      * Start the Checkout process
