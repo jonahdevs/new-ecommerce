@@ -5,28 +5,42 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymentCallbackController extends Controller
 {
     public function success(Request $request)
     {
-        // Pesawise will send payment data as query parameters
-        // You need to check their documentation for exact parameter names
+        // Log everything Pesawise sends
+        Log::info('Pesawise success callback', $request->all());
 
-        $notificationId = $request->get('notificationId'); // This is your order ID
-        $transactionId = $request->get('transactionId'); // Pesawise transaction ID
-        $status = $request->get('status'); // Payment status
+        $notificationId = $request->get('notificationId'); // Your order ID
+        $transactionId = $request->get('transactionId');
+        $status = $request->get('status');
 
         if (!$notificationId) {
-            dd('Invalid payment callback');
+            Log::error('Payment callback missing notificationId', $request->all());
             return redirect()->route('home')->with('error', 'Invalid payment callback');
         }
 
         $order = Order::find($notificationId);
 
         if (!$order) {
-            dd('Order not found');
+            Log::error('Order not found for payment callback', [
+                'notificationId' => $notificationId,
+                'request' => $request->all()
+            ]);
             return redirect()->route('home')->with('error', 'Order not found');
+        }
+
+        // Verify payment status is successful
+        if ($status !== 'COMPLETED' && $status !== 'SUCCESS') {
+            Log::warning('Payment callback with non-success status', [
+                'order_id' => $order->id,
+                'status' => $status,
+                'request' => $request->all()
+            ]);
+            return redirect()->route('home')->with('error', 'Payment not completed');
         }
 
         // Mark order as paid
@@ -36,14 +50,16 @@ class PaymentCallbackController extends Controller
             'callback_data' => $request->all(),
         ]);
 
-        dd('Payment successful! Your order has been confirmed.');
+        Log::info('Order marked as paid', ['order_id' => $order->id]);
 
-        return redirect()->route('orders.show', $order)
+        return redirect()->route('home')
             ->with('success', 'Payment successful! Your order has been confirmed.');
     }
 
     public function cancel(Request $request)
     {
+        Log::info('Pesawise cancel callback', $request->all());
+
         $notificationId = $request->get('notificationId');
 
         if ($notificationId) {
@@ -51,11 +67,11 @@ class PaymentCallbackController extends Controller
 
             if ($order) {
                 app(OrderService::class)->markPaymentAsFailed($order, 'Payment cancelled by user');
+                Log::info('Order payment marked as failed', ['order_id' => $order->id]);
             }
         }
 
-        dd('Payment was cancelled. Your order is still pending.');
         return redirect()->route('cart')
-            ->with('error', 'Payment was cancelled. Your order is still pending.');
+            ->with('error', 'Payment was cancelled. Please try again.');
     }
 }

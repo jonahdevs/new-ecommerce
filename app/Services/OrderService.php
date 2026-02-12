@@ -16,8 +16,6 @@ class OrderService
     public function createFromCart(?Cart $cart = null): Order
     {
         $cart = $cart ?? app(CartService::class)->getCart();
-
-        // Load relationships
         $cart->load('items.product');
 
         if (!$cart || $cart->items->isEmpty()) {
@@ -26,11 +24,7 @@ class OrderService
 
         return DB::transaction(function () use ($cart) {
             $user = auth()->user();
-
-            // Get summary from OrderSummaryService
             $summary = app(OrderSummaryService::class)->summary($cart);
-
-            // Get shipping address
             $shippingAddress = $user?->defaultAddress;
 
             if (!$shippingAddress && $user) {
@@ -53,34 +47,21 @@ class OrderService
                 'placed_at' => now(),
             ]);
 
-            // Create order items from cart
+            // Create order items
             foreach ($cart->items as $cartItem) {
-                $product = $cartItem->product;
-
-                $variant = null;
-                $variantName = '';
-                if ($cartItem->variant_id) {
-                    $variant = $product->variants()->where('id', $cartItem->variant_id)->first();
-                    $variantName = $variant ? " - {$variant->name}" : '';
-                }
-
-                $unitPrice = $variant?->price ?? $product->final_price;
-
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'product_variant_id' => $variant?->id,
-                    'sku' => $variant?->sku ?? $product->sku,
-                    'name' => $product->name . $variantName,
-                    'quantity' => $cartItem->quantity,
-                    'unit_price_cents' => $unitPrice * 100,
-                    'unit_tax_cents' => 0,
-                    'discount_cents' => 0,
-                    'total_cents' => ($unitPrice * $cartItem->quantity) * 100,
-                ]);
+                $this->createOrderItem($order, $cartItem);
             }
 
-            // Record initial status in history
+            // Create payment record
+            $order->payment()->create([
+                'amount_cents' => $summary['total'] * 100,
+                'currency' => 'KES',
+                'status' => 'pending',
+                'gateway' => 'pesawise',
+                'expires_at' => now()->addMinutes(30), // Pesawise default
+            ]);
+
+            // Record status history
             $order->statusHistory()->create([
                 'to_status' => 'pending',
                 'changed_by_user_id' => $user?->id,
@@ -92,20 +73,46 @@ class OrderService
                 ],
             ]);
 
-            // Create pending payment record
-            $order->payment()->create([
-                'amount_cents' => $summary['total'] * 100,
-                'currency' => 'KES',
-                'status' => 'pending',
-                'gateway' => 'pesawise',
-            ]);
-
-            // Clear cart after order creation
-            app(CartService::class)->clear();
-
             return $order->fresh(['items', 'statusHistory', 'payment']);
         });
     }
+
+    private function createOrderItem(Order $order, $cartItem): void
+    {
+        $product = $cartItem->product;
+        $variant = null;
+        $variantName = '';
+
+        if ($cartItem->variant_id) {
+            $variant = $product->variants()->where('id', $cartItem->variant_id)->first();
+            $variantName = $variant ? " - {$variant->name}" : '';
+        }
+
+        $unitPrice = $variant?->price ?? $product->final_price;
+
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_variant_id' => $variant?->id,
+            'sku' => $variant?->sku ?? $product->sku,
+            'name' => $product->name . $variantName,
+            'quantity' => $cartItem->quantity,
+            'unit_price_cents' => $unitPrice * 100,
+            'unit_tax_cents' => 0,
+            'discount_cents' => 0,
+            'total_cents' => ($unitPrice * $cartItem->quantity) * 100,
+        ]);
+    }
+
+    private function generateOrderReference(): string
+    {
+        do {
+            $reference = 'ORD-' . strtoupper(Str::random(10));
+        } while (Order::where('reference', $reference)->exists());
+
+        return $reference;
+    }
+
 
     /**
      * Update payment with Pesawise response data
@@ -162,6 +169,11 @@ class OrderService
             //         $item->product->decrement('stock_quantity', $item->quantity);
             //     }
             // }
+
+            // Clear cart ONLY after successful payment
+            if ($order->user_id) {
+                Cart::where('user_id', $order->user_id)->delete();
+            }
         });
     }
 
@@ -221,14 +233,5 @@ class OrderService
 
             // If order was paid, you might want to initiate refund here
         });
-    }
-
-    private function generateOrderReference(): string
-    {
-        do {
-            $reference = 'ORD-' . strtoupper(Str::random(10));
-        } while (Order::where('reference', $reference)->exists());
-
-        return $reference;
     }
 }

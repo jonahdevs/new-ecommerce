@@ -1,10 +1,8 @@
 <?php
 
-use App\Services\OrderService;
-use App\Services\PaymentService;
+use App\Services\CheckoutService;
 use App\Services\OrderSummaryService;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component {
@@ -17,21 +15,7 @@ new class extends Component {
     public function proceedToCheckout()
     {
         try {
-            // Create order from cart
-            $order = app(OrderService::class)->createFromCart();
-
-            // Initialize payment with Pesawise
-            $paymentResponse = app(PaymentService::class)->createPaymentOrder($order);
-
-            // Extract payment data from response
-            $createdPaymentOrder = $paymentResponse['createdPaymentOrder'] ?? null;
-
-            if (!$createdPaymentOrder || !isset($createdPaymentOrder['loadUrl'])) {
-                throw new \Exception('Invalid payment response from gateway');
-            }
-
-            // Redirect to Pesawise payment page
-            return redirect()->away($createdPaymentOrder['loadUrl']);
+            return app(CheckoutService::class)->initiateCheckout();
         } catch (\Exception $e) {
             $this->dispatch('notify', message: $e->getMessage(), type: 'error');
 

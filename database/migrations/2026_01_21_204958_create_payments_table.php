@@ -21,6 +21,12 @@ return new class extends Migration {
             $table->string('payment_method_token')->nullable();
             $table->string('card_brand')->nullable();
             $table->string('card_last4')->nullable();
+
+            $table->string('gateway_order_id')->nullable(); // Pesawise's orderId
+            $table->text('payment_url')->nullable(); // The loadUrl from gateway
+            $table->timestamp('paid_at')->nullable(); // When payment was completed
+            $table->timestamp('expires_at')->nullable();
+
             $table->json('meta')->nullable();
             $table->timestamps();
         });
