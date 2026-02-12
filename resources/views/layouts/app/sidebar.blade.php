@@ -20,7 +20,6 @@
             </flux:navlist.group>
         </flux:navlist>
 
-
         {{-- Catalog Management --}}
         <flux:navlist.group heading="Catalog" class="grid">
             <flux:navlist.item icon="cube" wire:navigate :href="route('admin.products')" wire:navigate
@@ -115,9 +114,10 @@
                 <flux:navlist.item icon="plus-circle" wire:navigate href="#">Add New Customer
                 </flux:navlist.item>
             </flux:navlist.group>
-            <flux:navlist.item icon="star" wire:navigate href="#">
-                Reviews
 
+            <flux:navlist.item icon="star" wire:navigate :href="route('admin.reviews')"
+                :current="request()->routeIs('admin.reviews*')">
+                Reviews
             </flux:navlist.item>
         </flux:navlist.group>
 

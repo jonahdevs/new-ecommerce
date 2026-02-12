@@ -59,7 +59,7 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
 
     Route::livewire('/tags', 'pages::admin.catalog.tags.index')->name('.tags');
     Route::livewire('/tags/create', 'pages::admin.catalog.tags.create')->name('.tags.create');
-    Route::livewire('/tags/{brand}/edit', 'pages::admin.catalog.tags.edit')->name('.tags.edit');
+    Route::livewire('/tags/{tag}/edit', 'pages::admin.catalog.tags.edit')->name('.tags.edit');
 
     // Logistics
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
@@ -69,6 +69,11 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('shipping-rates', 'pages::admin.logistics.shipping-rates')->name('.shipping-rates');
     Route::livewire('pickup-stations', 'pages::admin.logistics.pickup-stations')->name('.pickup-stations');
     Route::livewire('free-shipping', 'pages::admin.logistics.free-shipping')->name('.free-shipping');
+
+    // Engagement
+    Route::livewire('reviews', 'pages::admin.engagement.reviews.index')->name('.reviews');
+    Route::livewire('reviews/{review}', 'pages::admin.engagement.reviews.show')->name('.reviews.show');
+
 });
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
