@@ -20,7 +20,7 @@ new #[Title('Edit Product')] class extends Component {
             <flux:heading size="xl" class="mb-2">Edit Product</flux:heading>
             <flux:breadcrumbs>
                 <flux:breadcrumbs.item href="#" icon="squares-2x2" icon-variant="outline"></flux:breadcrumbs.item>
-                <flux:breadcrumbs.item :href="route('admin.products')">Products</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item :href="route('admin.products.index')">Products</flux:breadcrumbs.item>
                 <flux:breadcrumbs.item>Edit</flux:breadcrumbs.item>
             </flux:breadcrumbs>
         </div>

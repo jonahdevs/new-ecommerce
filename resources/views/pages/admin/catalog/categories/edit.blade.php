@@ -25,7 +25,7 @@ new class extends Component {
             $this->form->update();
             $this->dispatch('notify', variant: 'success', message: 'Category updated successfully!');
 
-            $this->redirectRoute('admin.categories', navigate: true);
+            $this->redirectRoute('admin.categories.index', navigate: true);
         } catch (\Throwable $th) {
             \Log::error('Error updating category: ' . $th->getMessage(), ['exception' => $th]);
             session()->flash('status', 'An error occurred while updating the category.');
@@ -45,7 +45,7 @@ new class extends Component {
 
     <flux:breadcrumbs>
         <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('admin.categories')">Categories</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.categories.index')">Categories</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Edit</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Order;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -11,84 +10,55 @@ use Illuminate\Support\Facades\Log;
  */
 class PesawiseService
 {
+
     private string $apiUrl;
     private string $apiKey;
     private string $apiSecret;
-    private int $balanceIdKes;
-    private int $balanceIdUsd;
+    private string $balanceId;
 
     public function __construct()
     {
         $this->apiUrl = config('services.pesawise.api_url');
         $this->apiKey = config('services.pesawise.api_key');
         $this->apiSecret = config('services.pesawise.api_secret');
-        $this->balanceIdKes = config('services.pesawise.balance_id_kes');
-        $this->balanceIdUsd = config('services.pesawise.balance_id_usd');
+        $this->balanceId = config('services.pesawise.balance_id_kes');
     }
 
     /**
      * Create payment order with Pesawise
      */
-    public function createPaymentOrder(Order $order): array
+    public function createPaymentOrder(Order $order)
     {
-        $this->validateOrder($order);
-
         $payload = $this->buildPayload($order);
 
-        Log::info('Creating Pesawise payment order', [
-            'order_id' => $order->id,
-            'reference' => $order->reference,
-            'amount' => $order->total,
-            'currency' => $order->currency,
-        ]);
-
         try {
-            $response = $this->makeApiRequest($payload);
+            $response = $this->initiatePayment($payload);
 
             $this->updatePaymentRecord($order, $response);
 
             return $response;
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('Pesawise API connection failed', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            throw new \Exception('Unable to connect to payment gateway. Please try again.');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
-            Log::error('Pesawise API request failed', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
+        } catch (\Throwable $th) {
             throw new \Exception('Payment gateway request failed. Please try again.');
-        }
-    }
-
-    private function validateOrder(Order $order): void
-    {
-        if (!$order->user && !$order->shipping_address) {
-            throw new \Exception('Order must have user or shipping address');
-        }
-
-        if (!$order->payment) {
-            throw new \Exception('Payment record not found for order');
         }
     }
 
     private function buildPayload(Order $order): array
     {
-        $balanceId = $order->currency === 'USD' ? $this->balanceIdUsd : $this->balanceIdKes;
 
-        return [
+        // Append order data directly to callback URLs as query parameters
+        // This ensures we get the data back even if Pesawise doesn't pass notificationId
+        $callbackUrl = route('payment.success');
+        $cancellationUrl = route('payment.cancel');
+
+        $payload = [
             'amount' => $order->total,
             'customerName' => $this->getCustomerName($order),
-            'currency' => $order->currency,
+            'currency' => "KES",
             'externalId' => $order->reference,
             'description' => "Payment for Order #{$order->reference}",
-            'balanceId' => $balanceId,
-            'callbackUrl' => route('payment.callback'),
-            'cancellationUrl' => route('payment.cancel'),
+            'balanceId' => $this->balanceId,
+            'callbackUrl' => $callbackUrl,
+            'cancellationUrl' => $cancellationUrl,
             'notificationId' => (string) $order->id,
             'timeValidityMinutes' => 30,
             'customerData' => [
@@ -100,60 +70,54 @@ class PesawiseService
                 'countryCode' => 'KE',
             ],
         ];
+
+        return $payload;
     }
 
-    private function makeApiRequest(array $payload): array
+    private function initiatePayment(array $payload)
     {
-        $response = Http::timeout(30)
-            ->withHeaders([
-                'api-key' => $this->apiKey,
-                'api-secret' => $this->apiSecret,
-                'Content-Type' => 'application/json',
-                'Accept' => '*/*',
-            ])
-            ->post("{$this->apiUrl}/e-com/create-order", $payload);
+        $curl = curl_init();
 
-        $responseData = $response->json();
-        \Log::info("Pesawise Response" . json_encode($responseData, JSON_PRETTY_PRINT));
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->apiUrl . "/e-com/create-order",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Accept: */*',
+                'api-key: ' . $this->apiKey,
+                'api-secret: ' . $this->apiSecret
+            ),
+        ));
 
-        if (!$response->successful() || !($responseData['success'] ?? false)) {
-            $this->handleApiError($response, $responseData);
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            $error = curl_error($curl);
+            curl_close($curl);
+            Log::error('Pesawise cURL Error: ' . $error);
+            throw new \Exception('Payment gateway connection failed');
         }
 
-        $createdPaymentOrder = $responseData['createdPaymentOrder'] ?? null;
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
 
-        if (!$createdPaymentOrder) {
-            throw new \Exception('Invalid payment response from gateway');
-        }
+        $decodedResponse = json_decode($response, true);
 
-        Log::info('Pesawise payment order created successfully', [
-            'request_id' => $responseData['requestId'] ?? null,
-            'pesawise_order_id' => $createdPaymentOrder['orderId'] ?? null,
-        ]);
+        // Log with JSON_PRETTY_PRINT
+        Log::info('Pesawise API Response test: ' . json_encode([
+            'http_code' => $httpCode,
+            'response' => $decodedResponse,
+            'payload' => $payload
+        ], JSON_PRETTY_PRINT));
 
-        return $responseData;
-    }
-
-    private function handleApiError($response, array $responseData): void
-    {
-        $errorDetail = $responseData['detail'] ?? 'Unknown error';
-        $errorStatus = $responseData['status'] ?? 'UNKNOWN';
-
-        Log::error('Pesawise payment creation failed', [
-            'status' => $response->status(),
-            'error_detail' => $errorDetail,
-            'error_status' => $errorStatus,
-            'response' => $responseData,
-        ]);
-
-        $userMessage = match ($errorStatus) {
-            'API_KEYS_INVALID' => 'Payment gateway configuration error. Please contact support.',
-            'BALANCE_NOT_FOUND' => 'Payment account configuration error. Please contact support.',
-            'CURRENCY_NOT_SUPPORTED' => 'Currency not supported. Please contact support.',
-            default => "Payment initialization failed: {$errorDetail}"
-        };
-
-        throw new \Exception($userMessage);
+        return  $decodedResponse;
     }
 
     private function updatePaymentRecord(Order $order, array $response): void

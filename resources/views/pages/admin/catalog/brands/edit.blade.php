@@ -21,7 +21,7 @@ new class extends Component {
         try {
             $this->form->update();
             $this->dispatch('notify', variant: 'success', message: 'Brand updated successfully!');
-            $this->redirectRoute('admin.brands', navigate: true);
+            $this->redirectRoute('admin.brands.index', navigate: true);
         } catch (\Throwable $th) {
             \Log::error('Error updating brand: ' . $th->getMessage(), ['exception' => $th]);
             $this->dispatch('notify', variant: 'danger', message: 'Failed to update brand. Please try again.');
@@ -34,7 +34,7 @@ new class extends Component {
 
     <flux:breadcrumbs>
         <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('admin.brands')">Brands</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.brands.index')">Brands</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Edit</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 

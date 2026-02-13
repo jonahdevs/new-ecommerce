@@ -94,7 +94,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
 
                         <flux:button size="xs" variant="ghost" icon="plus"
-                            :href="route('checkout.addresses.create')" wire:navigate class="text-sm! group">Add new
+                            :href="route('checkout.addresses.create')" wire:navigate class="text-xs! group">Add new
                         </flux:button>
                     </div>
 
