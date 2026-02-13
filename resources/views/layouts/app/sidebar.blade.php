@@ -20,7 +20,6 @@
             </flux:navlist.group>
         </flux:navlist>
 
-
         {{-- Catalog Management --}}
         <flux:navlist.group heading="Catalog" class="grid">
             <flux:navlist.item icon="cube" wire:navigate :href="route('admin.products')" wire:navigate
@@ -43,20 +42,24 @@
                 Brands
             </flux:navlist.item>
 
-            <flux:navlist.item icon="tag" wire:navigate href="#">
+            <flux:navlist.item icon="tag" wire:navigate :href="route('admin.tags')"
+                :current="request()->routeIs('admin.tags.*')">
                 Tags
             </flux:navlist.item>
         </flux:navlist.group>
 
         {{-- Sales --}}
-        <flux:navlist.group heading="Order Management" class="grid">
-            <flux:navlist.item icon="shopping-cart" wire:navigate href="#">Orders</flux:navlist.item>
-            <flux:navlist.item icon="truck" wire:navigate href="#">Shipments
+        <flux:navlist.group heading="Sales" class="grid">
+            <flux:navlist.item icon="shopping-cart" wire:navigate :href="route('admin.orders')"
+                :current="request()->routeIs('admin.orders.*')">Orders
             </flux:navlist.item>
+
+            <flux:navlist.item icon="banknotes" wire:navigate :href="route('admin.payments')"
+                :current="request()->routeIs('admin.payments.*')">Payments
+            </flux:navlist.item>
+
             <flux:navlist.item icon="arrow-uturn-left" wire:navigate href="#">Returns &
                 Refunds</flux:navlist.item>
-            <flux:navlist.item icon="banknotes" wire:navigate href="#">Transaction
-            </flux:navlist.item>
         </flux:navlist.group>
 
 
@@ -111,9 +114,10 @@
                 <flux:navlist.item icon="plus-circle" wire:navigate href="#">Add New Customer
                 </flux:navlist.item>
             </flux:navlist.group>
-            <flux:navlist.item icon="star" wire:navigate href="#">
-                Reviews
 
+            <flux:navlist.item icon="star" wire:navigate :href="route('admin.reviews')"
+                :current="request()->routeIs('admin.reviews*')">
+                Reviews
             </flux:navlist.item>
         </flux:navlist.group>
 

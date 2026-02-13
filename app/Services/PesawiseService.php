@@ -114,6 +114,7 @@ class PesawiseService
             ->post("{$this->apiUrl}/e-com/create-order", $payload);
 
         $responseData = $response->json();
+        \Log::info("Pesawise Response" . json_encode($responseData, JSON_PRETTY_PRINT));
 
         if (!$response->successful() || !($responseData['success'] ?? false)) {
             $this->handleApiError($response, $responseData);

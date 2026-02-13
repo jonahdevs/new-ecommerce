@@ -52,9 +52,9 @@ class PaymentCallbackController extends Controller
 
         Log::info('Order marked as paid', ['order_id' => $order->id]);
 
-        
 
-        return redirect()->route('home')
+
+        return redirect()->route('checkout.success')
             ->with('success', 'Payment successful! Your order has been confirmed.');
     }
 
@@ -73,7 +73,7 @@ class PaymentCallbackController extends Controller
             }
         }
 
-        return redirect()->route('cart')
+        return redirect()->route('checkout.summary')
             ->with('error', 'Payment was cancelled. Please try again.');
     }
 }

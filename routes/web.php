@@ -26,11 +26,21 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
     Route::get('/payment/callback', [PaymentCallbackController::class, 'success'])->name('payment.callback');
     Route::get('/payment/cancel', [PaymentCallbackController::class, 'cancel'])->name('payment.cancel');
 
+    Route::livewire('checkout/success', 'pages::checkout.success')->name('checkout.success');
+
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
 });
 
 
 Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
+    // Sales
+    Route::livewire('orders', 'pages::admin.sales.orders.index')->name('.orders');
+    Route::livewire('orders/{order}', 'pages::admin.sales.orders.show')->name('.orders.show');
+
+    Route::livewire('payments', 'pages::admin.sales.payments.index')->name('.payments');
+    Route::livewire('payments/{order}', 'pages::admin.sales.payments.show')->name('.payments.show');
+
+    // catalog
     Route::livewire('/categories', 'pages::admin.catalog.categories.index')->name('.categories');
     Route::livewire('/categories/create', 'pages::admin.catalog.categories.create')->name('.categories.create');
     Route::livewire('/categories/{category}/edit', 'pages::admin.catalog.categories.edit')->name('.categories.edit');
@@ -47,6 +57,11 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('/brands/create', 'pages::admin.catalog.brands.create')->name('.brands.create');
     Route::livewire('/brands/{brand}/edit', 'pages::admin.catalog.brands.edit')->name('.brands.edit');
 
+    Route::livewire('/tags', 'pages::admin.catalog.tags.index')->name('.tags');
+    Route::livewire('/tags/create', 'pages::admin.catalog.tags.create')->name('.tags.create');
+    Route::livewire('/tags/{tag}/edit', 'pages::admin.catalog.tags.edit')->name('.tags.edit');
+
+    // Logistics
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
     Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');
     Route::livewire('areas', 'pages::admin.logistics.areas')->name('.areas');
@@ -54,6 +69,11 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('shipping-rates', 'pages::admin.logistics.shipping-rates')->name('.shipping-rates');
     Route::livewire('pickup-stations', 'pages::admin.logistics.pickup-stations')->name('.pickup-stations');
     Route::livewire('free-shipping', 'pages::admin.logistics.free-shipping')->name('.free-shipping');
+
+    // Engagement
+    Route::livewire('reviews', 'pages::admin.engagement.reviews.index')->name('.reviews');
+    Route::livewire('reviews/{review}', 'pages::admin.engagement.reviews.show')->name('.reviews.show');
+
 });
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
