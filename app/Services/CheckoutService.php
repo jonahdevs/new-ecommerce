@@ -34,7 +34,6 @@ class CheckoutService
                 ->first();
 
             if ($existingOrder && $existingOrder->payment) {
-                // Reuse existing order
                 $paymentResponse = $this->pesawiseService->createPaymentOrder($existingOrder);
                 return redirect()->away($paymentResponse['createdPaymentOrder']['loadUrl']);
             }
