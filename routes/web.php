@@ -14,23 +14,21 @@ Route::livewire('compare', 'pages::product-compare')->name('products.compare');
 Route::livewire('/wishlist', 'pages::wishlist')->name('wishlist');
 Route::livewire('/cart', 'pages::cart')->name('cart');
 
+// Payment callback routes - MUST be outside auth middleware so Pesawise can access them
+Route::livewire('/payment/success', 'pages::checkout.success')->name('payment.success');
+Route::livewire('/payment/cancel', 'pages::checkout.cancel')->name('payment.cancel');
+
+
 Route::middleware(['auth', 'cart_not_empty'])->group(function () {
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
 
+    Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
     Route::livewire('/checkout/addresses', 'pages::checkout.address.index')->name('checkout.addresses');
     Route::livewire('/checkout/addresses/create', 'pages::checkout.address.create')->name('checkout.addresses.create');
     Route::livewire('/checkout/addresses/{address}/edit', 'pages::checkout.address.edit')->name('checkout.addresses.edit');
 
     Route::livewire('/checkout/shipping-options', 'pages::checkout.shipping-options')->name('checkout.shipping-options');
-
-    Route::get('/payment/callback', [PaymentCallbackController::class, 'success'])->name('payment.callback');
-    Route::get('/payment/cancel', [PaymentCallbackController::class, 'cancel'])->name('payment.cancel');
-
-    Route::livewire('checkout/success', 'pages::checkout.success')->name('checkout.success');
-
-    Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
 });
-
 
 Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     // Sales
@@ -73,7 +71,6 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     // Engagement
     Route::livewire('reviews', 'pages::admin.engagement.reviews.index')->name('.reviews');
     Route::livewire('reviews/{review}', 'pages::admin.engagement.reviews.show')->name('.reviews.show');
-
 });
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

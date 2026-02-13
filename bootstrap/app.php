@@ -18,6 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'cart_not_empty' => \App\Http\Middleware\EnsureCartIsNotEmpty::class,
         ]);
+
+        // Use custom CSRF middleware to exclude payment callbacks
+        $middleware->validateCsrfTokens(except: [
+            'payment/callback',
+            'payment/cancel',
+            'payment/callback/debug',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -92,9 +92,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
 
                         <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
-                            class="text-sm! group">Change
+                            class="text-xs! group">Change
                             <flux:icon.chevron-right
-                                class="size-4 ms-1 inline-block transition-transform group-hover:translate-x-2" />
+                                class="size-3.5 ms-1 inline-block transition-transform group-hover:translate-x-2" />
                         </flux:link>
                     </div>
 
@@ -135,9 +135,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
 
                         <flux:link :href="route('checkout.shipping-options')" wire:navigate
-                            icon:trailing="chevron-right" class="text-sm! group">Change
+                            icon:trailing="chevron-right" class="text-xs! group">Change
                             <flux:icon.chevron-right
-                                class="size-4 inline-block ms-1 group-hover:translate-x-2 transition-transform" />
+                                class="size-3.5 inline-block ms-1 group-hover:translate-x-2 transition-transform" />
                         </flux:link>
                     </div>
 

@@ -66,7 +66,7 @@ new #[Title('Orders')] class extends Component {
     {{-- Status Filter Tabs --}}
     <div class="flex gap-2 mb-6 overflow-x-auto">
         @foreach ($this->statusOptions as $status => $label)
-            <flux:button wire:click="$set('statusFilter', '{{ $status }}')"
+            <flux:button wire:click="$set('statusFilter', '{{ $status }}')" class="cursor-pointer"
                 variant="{{ $statusFilter === $status ? 'primary' : 'ghost' }}" size="sm">
                 {{ $label }}
                 <flux:badge size="sm" :color="$statusFilter === $status ? 'white' : 'zinc'">
@@ -96,7 +96,7 @@ new #[Title('Orders')] class extends Component {
         </flux:table.columns>
 
         <flux:table.rows>
-            @foreach ($this->orders as $order)
+            @forelse ($this->orders as $order)
                 <flux:table.row :key="$order->id">
                     {{-- Order Reference --}}
                     <flux:table.cell>
@@ -135,13 +135,13 @@ new #[Title('Orders')] class extends Component {
                         @if ($order->payment)
                             <flux:badge size="sm" variant="flat"
                                 :color="match($order->payment->status) {
-                                                                                                                                                                                                                                    'pending' => 'amber',
-                                                                                                                                                                                                                                    'processing' => 'blue',
-                                                                                                                                                                                                                                    'completed' => 'green',
-                                                                                                                                                                                                                                    'failed' => 'red',
-                                                                                                                                                                                                                                    'refunded' => 'purple',
-                                                                                                                                                                                                                                    default => 'gray',
-                                                                                                                                                                                                                                }">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'pending' => 'amber',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'processing' => 'blue',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'completed' => 'green',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'failed' => 'red',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'refunded' => 'purple',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    default => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }">
                                 {{ ucfirst($order->payment->status) }}
                             </flux:badge>
                         @else
@@ -153,24 +153,34 @@ new #[Title('Orders')] class extends Component {
                     <flux:table.cell>
                         <flux:badge size="sm" variant="flat"
                             :color="match($order->status) {
-                                                                                                                                                                                                        'pending' => 'amber',
-                                                                                                                                                                                                        'processing' => 'blue',
-                                                                                                                                                                                                        'shipped' => 'indigo',
-                                                                                                                                                                                                        'delivered' => 'green',
-                                                                                                                                                                                                        'cancelled' => 'red',
-                                                                                                                                                                                                        default => 'gray',
-                                                                                                                                                                                                    }">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'pending' => 'amber',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'processing' => 'blue',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'shipped' => 'indigo',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'delivered' => 'green',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'cancelled' => 'red',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                default => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }">
                             {{ ucfirst($order->status) }}
                         </flux:badge>
                     </flux:table.cell>
 
                     {{-- Actions --}}
                     <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="eye"
+                        <flux:button variant="ghost" size="sm" icon="eye" icon-variant="outline"
                             href="{{ route('admin.orders.show', $order) }}" wire:navigate />
                     </flux:table.cell>
                 </flux:table.row>
-            @endforeach
+            @empty
+                <flux:table.row>
+                    <flux:table.cell colspan="8" class="text-center py-12">
+                        <div class="flex flex-col items-center justify-center text-zinc-500">
+                            <flux:icon.inbox class="w-12 h-12 mb-3 text-zinc-400" />
+                            <p class="text-lg font-medium">No orders found</p>
+                            <p class="text-sm mt-1">Orders will appear here once customers place them.</p>
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
         </flux:table.rows>
     </flux:table>
 </div>

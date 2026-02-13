@@ -11,12 +11,28 @@ use Illuminate\Support\Facades\Log;
 /**
  * Class CheckoutService.
  */
-class CheckoutService
+class CheckoutServiceOld
 {
-    public function initiateCheckout()
+
+    public function __construct(
+        private OrderService $orderService,
+        private PesawiseService $pesawiseService,
+        private InventoryService $inventoryService
+    ) {}
+
+    /**
+     * Start the checkout process with comprehensive validation
+     */
+    public function initiateCheckout(?Cart $cart = null)
     {
-        $cart = app(CartService::class)->getCart();
+        $cart = $cart ?? app(CartService::class)->getCart();
         $correlationId = uniqid('checkout_', true);
+
+        Log::info('Checkout initiated', [
+            'correlation_id' => $correlationId,
+            'cart_id' => $cart->id,
+            'user_id' => auth()->id(),
+        ]);
 
         // Prevent double submission with distributed lock
         $lockKey = 'checkout:' . ($cart->user_id ?? $cart->session_id ?? session()->getId());
@@ -33,7 +49,7 @@ class CheckoutService
             }
 
             // 2. Check inventory availability BEFORE creating order
-            $unavailable = app(InventoryService::class)->checkAvailability($cart);
+            $unavailable = $this->inventoryService->checkAvailability($cart);
             if (!empty($unavailable)) {
                 $message = $this->formatInventoryError($unavailable);
                 throw new \Exception($message);
@@ -51,17 +67,31 @@ class CheckoutService
                 throw new \Exception("Minimum order value is " . format_currency($minOrderValue));
             }
 
-
             // 5. Check for existing reusable order
             $existingOrder = $this->findReusableOrder();
 
             if ($existingOrder) {
+                Log::info('Reusing existing order', [
+                    'correlation_id' => $correlationId,
+                    'order_id' => $existingOrder->id,
+                ]);
                 return $this->reuseExistingOrder($existingOrder, $correlationId);
             }
 
+            // 6. Create new order with inventory reservation
+            Log::info('Creating new order', [
+                'correlation_id' => $correlationId,
+                'cart_total' => $summary['total'],
+            ]);
+
             return $this->createNewOrder($cart, $correlationId);
-        } catch (\Throwable $th) {
-            throw $th;
+        } catch (\Exception $e) {
+            Log::error('Checkout failed', [
+                'correlation_id' => $correlationId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         } finally {
             $lock->release();
         }
@@ -106,34 +136,68 @@ class CheckoutService
             throw new \Exception('Payment link not found. Please try again.');
         }
 
+        Log::info('Redirecting to existing payment', [
+            'correlation_id' => $correlationId,
+            'order_id' => $existingOrder->id,
+            'payment_id' => $existingOrder->payment->id,
+        ]);
+
         return redirect()->away($loadUrl);
     }
 
-    private function createNewOrder(Cart $cart)
+    /**
+     * Create new order with full transaction safety
+     */
+    private function createNewOrder(Cart $cart, string $correlationId)
     {
+        $startTime = microtime(true);
+
         try {
-            return DB::transaction(function () use ($cart) {
-                // 1. Create Order
-                $order = app(OrderService::class)->createFromCart($cart);
+            return DB::transaction(function () use ($cart, $correlationId, $startTime) {
+                // 1. Create order
+                $order = $this->orderService->createFromCart($cart);
 
-                // 2. Reserve inventory (prevent overselling)
-                app(InventoryService::class)->reserveStock($order);
+                Log::info('Order created', [
+                    'correlation_id' => $correlationId,
+                    'order_id' => $order->id,
+                    'reference' => $order->reference,
+                ]);
 
-                // 3. Create Payment session 
-                $response = app(PesawiseService::class)->createPaymentOrder($order);
+                // 2. Reserve inventory (prevents overselling)
+                $this->inventoryService->reserveStock($order);
 
-                return redirect()->away($response['createdPaymentOrder']['loadUrl']);
+                Log::info('Inventory reserved', [
+                    'correlation_id' => $correlationId,
+                    'order_id' => $order->id,
+                ]);
+
+                // 3. Create payment session with Pesawise
+                $paymentResponse = $this->pesawiseService->createPaymentOrder($order);
+
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+
+                Log::info('Payment session created', [
+                    'correlation_id' => $correlationId,
+                    'order_id' => $order->id,
+                    'payment_url' => $paymentResponse['createdPaymentOrder']['loadUrl'] ?? null,
+                    'duration_ms' => $duration,
+                ]);
+
+                return redirect()->away($paymentResponse['createdPaymentOrder']['loadUrl']);
             });
-        } catch (\Throwable $th) {
+        } catch (\Exception $e) {
+            // Transaction will auto-rollback
             Log::error('Order creation failed', [
-                'error' => $th->getMessage(),
+                'correlation_id' => $correlationId,
+                'error' => $e->getMessage(),
             ]);
 
-            if (str_contains($th->getMessage(), 'Insufficient stock')) {
+            // Provide user-friendly error
+            if (str_contains($e->getMessage(), 'Insufficient stock')) {
                 throw new \Exception('Some items became unavailable. Please refresh and try again.');
             }
 
-            if (str_contains($th->getMessage(), 'payment gateway')) {
+            if (str_contains($e->getMessage(), 'payment gateway')) {
                 throw new \Exception('Unable to connect to payment service. Please try again in a moment.');
             }
 
