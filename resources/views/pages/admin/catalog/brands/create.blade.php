@@ -13,7 +13,7 @@ new class extends Component {
         try {
             $this->form->store();
             $this->dispatch('notify', variant: 'success', message: 'Brand created successfully!');
-            $this->redirectRoute('admin.brands', navigate: true);
+            $this->redirectRoute('admin.brands.index', navigate: true);
         } catch (\Throwable $th) {
             \Log::error('Error creating brand: ' . $th->getMessage(), ['exception' => $th]);
             $this->dispatch('notify', variant: 'danger', message: 'Failed to create brand. Please try again.');
@@ -26,7 +26,7 @@ new class extends Component {
 
     <flux:breadcrumbs>
         <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('admin.brands')">Brands</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.brands.index')">Brands</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Create</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 

@@ -40,7 +40,7 @@ new class extends Component {
 
         session()->flash('status', 'Tag updated successfully.');
 
-        return $this->redirect(route('admin.tags'), navigate: true);
+        return $this->redirect(route('admin.tags.index'), navigate: true);
     }
 };
 ?>
@@ -49,7 +49,7 @@ new class extends Component {
     <flux:header>
         <flux:heading size="xl">{{ $this->title() }}</flux:heading>
 
-        <flux:button variant="ghost" href="{{ route('admin.tags') }}" icon="arrow-left" wire:navigate>
+        <flux:button variant="ghost" :href="route('admin.tags.index')" icon="arrow-left" wire:navigate>
             Back to Tags
         </flux:button>
     </flux:header>

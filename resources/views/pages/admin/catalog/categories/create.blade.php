@@ -16,7 +16,7 @@ new class extends Component {
         try {
             $this->form->store();
             $this->dispatch('notify', variant: 'success', message: 'Category created successfully!');
-            $this->redirectRoute('admin.categories', navigate: true);
+            $this->redirectRoute('admin.categories.index', navigate: true);
         } catch (ValidationException $e) {
             $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
             throw $e;
@@ -39,7 +39,7 @@ new class extends Component {
 
     <flux:breadcrumbs>
         <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline"></flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('admin.categories')">Categories</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.categories.index')">Categories</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Create</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 

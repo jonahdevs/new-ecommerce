@@ -39,23 +39,23 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('payments/{order}', 'pages::admin.sales.payments.show')->name('.payments.show');
 
     // catalog
-    Route::livewire('/categories', 'pages::admin.catalog.categories.index')->name('.categories');
+    Route::livewire('/categories', 'pages::admin.catalog.categories.index')->name('.categories.index');
     Route::livewire('/categories/create', 'pages::admin.catalog.categories.create')->name('.categories.create');
     Route::livewire('/categories/{category}/edit', 'pages::admin.catalog.categories.edit')->name('.categories.edit');
 
-    Route::livewire('/attributes', 'pages::admin.catalog.attributes.index')->name('.attributes');
+    Route::livewire('/attributes', 'pages::admin.catalog.attributes.index')->name('.attributes.index');
     Route::livewire('/attributes/create', 'pages::admin.catalog.attributes.create')->name('.attributes.create');
     Route::livewire('/attributes/{attribute}/edit', 'pages::admin.catalog.attributes.edit')->name('.attributes.edit');
 
-    Route::livewire('/products', 'pages::admin.catalog.products.index')->name('.products');
+    Route::livewire('/products', 'pages::admin.catalog.products.index')->name('.products.index');
     Route::livewire('/products/create', 'pages::admin.catalog.products.create')->name('.products.create');
     Route::livewire('/products/{product}/edit', 'pages::admin.catalog.products.edit')->name('.products.edit');
 
-    Route::livewire('/brands', 'pages::admin.catalog.brands.index')->name('.brands');
+    Route::livewire('/brands', 'pages::admin.catalog.brands.index')->name('.brands.index');
     Route::livewire('/brands/create', 'pages::admin.catalog.brands.create')->name('.brands.create');
     Route::livewire('/brands/{brand}/edit', 'pages::admin.catalog.brands.edit')->name('.brands.edit');
 
-    Route::livewire('/tags', 'pages::admin.catalog.tags.index')->name('.tags');
+    Route::livewire('/tags', 'pages::admin.catalog.tags.index')->name('.tags.index');
     Route::livewire('/tags/create', 'pages::admin.catalog.tags.create')->name('.tags.create');
     Route::livewire('/tags/{tag}/edit', 'pages::admin.catalog.tags.edit')->name('.tags.edit');
 

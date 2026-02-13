@@ -41,7 +41,7 @@ new #[Title('Create Tag')] class extends Component {
 
         session()->flash('status', 'Tag created successfully.');
 
-        return $this->redirect(route('admin.tags'), navigate: true);
+        return $this->redirect(route('admin.tags.index'), navigate: true);
     }
 };
 ?>
@@ -50,7 +50,7 @@ new #[Title('Create Tag')] class extends Component {
     <flux:header>
         <flux:heading size="xl">Create Tag</flux:heading>
 
-        <flux:button variant="ghost" href="{{ route('admin.tags') }}" icon="arrow-left" wire:navigate>
+        <flux:button variant="ghost" :href="route('admin.tags.index')" icon="arrow-left" wire:navigate>
             Back to Tags
         </flux:button>
     </flux:header>

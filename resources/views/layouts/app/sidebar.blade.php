@@ -22,27 +22,27 @@
 
         {{-- Catalog Management --}}
         <flux:navlist.group heading="Catalog" class="grid">
-            <flux:navlist.item icon="cube" wire:navigate :href="route('admin.products')" wire:navigate
+            <flux:navlist.item icon="cube" wire:navigate :href="route('admin.products.index')" wire:navigate
                 :current="request()->routeIs('admin.products.*')">
                 Products
             </flux:navlist.item>
 
-            <flux:navlist.item icon="folder" wire:navigate :href="route('admin.categories')"
+            <flux:navlist.item icon="folder" wire:navigate :href="route('admin.categories.index')"
                 :current="request()->routeIs('admin.categories.*')">
                 Categories
             </flux:navlist.item>
 
-            <flux:navlist.item icon="adjustments-horizontal" wire:navigate :href="route('admin.attributes')"
+            <flux:navlist.item icon="adjustments-horizontal" wire:navigate :href="route('admin.attributes.index')"
                 :current="request()->routeIs('admin.attributes.*')">
                 Attributes
             </flux:navlist.item>
 
-            <flux:navlist.item icon="building-office" wire:navigate :href="route('admin.brands')"
+            <flux:navlist.item icon="building-office" wire:navigate :href="route('admin.brands.index')"
                 :current="request()->routeIs('admin.brands.*')">
                 Brands
             </flux:navlist.item>
 
-            <flux:navlist.item icon="tag" wire:navigate :href="route('admin.tags')"
+            <flux:navlist.item icon="tag" wire:navigate :href="route('admin.tags.index')"
                 :current="request()->routeIs('admin.tags.*')">
                 Tags
             </flux:navlist.item>
