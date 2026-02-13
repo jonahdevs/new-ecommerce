@@ -52,6 +52,8 @@ class PaymentCallbackController extends Controller
 
         Log::info('Order marked as paid', ['order_id' => $order->id]);
 
+        
+
         return redirect()->route('home')
             ->with('success', 'Payment successful! Your order has been confirmed.');
     }
