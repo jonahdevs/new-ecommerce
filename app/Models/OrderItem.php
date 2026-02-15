@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -44,5 +45,16 @@ class OrderItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+
+    // ===============================================
+    // Accessors
+    // ===============================================
+    protected function unitPrice(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->unit_price_cents / 100,
+        );
     }
 }

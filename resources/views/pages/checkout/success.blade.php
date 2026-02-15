@@ -7,163 +7,131 @@ use Illuminate\Support\Facades\Log;
 
 new #[Layout('layouts.guest')] class extends Component {
     public ?Order $order = null;
-    public bool $sessionExpired = false;
-    public bool $tokenInvalid = false;
 
     public function mount()
     {
         $token = request()->query('token');
 
-        // Validate token from URL matches session
         $sessionToken = session('payment_success_token');
         $orderId = session('payment_success_order_id');
         $expiresAt = session('payment_success_expires_at');
 
-        // Check 1: Token must match
-        if (!$token || $token !== $sessionToken) {
-            $this->tokenInvalid = true;
-            Log::warning('Invalid payment success token', [
-                'provided_token' => $token ? 'present' : 'missing',
-                'session_token' => $sessionToken ? 'present' : 'missing',
-            ]);
-            return;
-        }
-
-        // Check 2: Session must not be expired
-        if (!$expiresAt || now()->timestamp > $expiresAt) {
-            $this->sessionExpired = true;
-            Log::warning('Payment success session expired', [
-                'order_id' => $orderId,
-            ]);
-            return;
-        }
-
-        // Load order
         if ($orderId) {
-            $this->order = Order::with(['payment', 'items.product'])->find($orderId);
-
-            if ($this->order) {
-                // Mark payment as completed (or pending verification)
-                if ($this->order->payment->status === 'processing') {
-                    $this->order->payment->update([
-                        'status' => 'completed',
-                        'paid_at' => now(),
-                    ]);
-
-                    $this->order->update([
-                        'status' => 'confirmed',
-                    ]);
-                }
-
-                Log::info('Payment success page loaded', [
-                    'order_id' => $this->order->id,
-                ]);
-
-                // Clear the success session after loading (one-time use)
-                session()->forget(['payment_success_token', 'payment_success_order_id', 'payment_success_expires_at']);
-            } else {
-                $this->tokenInvalid = true;
-            }
-        } else {
-            $this->tokenInvalid = true;
+            $this->order = Order::with(['payment', 'items.product', 'user'])->find($orderId);
         }
     }
 };
 ?>
 
-<div class="container mx-auto px-4 py-8">
-    @if ($tokenInvalid)
-        <div class="max-w-md mx-auto text-center">
-            <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-                <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                    </path>
-                </svg>
-                <h2 class="text-xl font-bold text-red-800 mb-2">Invalid Access</h2>
-                <p class="text-red-600 mb-4">This payment confirmation link is invalid or has already been used.</p>
-                <a href="#" class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
-                    View My Orders
-                </a>
-            </div>
+
+
+<div class="mx-auto max-w-4xl px-4 py-12">
+
+    @if ($order)
+        <div class="flex flex-col gap-1 items-center text-center">
+            <flux:icon.check-circle class="size-12 text-green-500" />
+            <flux:heading class="text-2xl!">Thank you</flux:heading>
+            <flux:text class="text-lg">Your order has been received</flux:text>
+            <flux:text class="text-xs!">You will receive an email confirmation shortly</flux:text>
         </div>
-    @elseif($sessionExpired)
-        <div class="max-w-md mx-auto text-center">
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                <svg class="w-16 h-16 text-yellow-500 mx-auto mb-4" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h2 class="text-xl font-bold text-yellow-800 mb-2">Session Expired</h2>
-                <p class="text-yellow-600 mb-4">This payment confirmation has expired. Please check your orders.</p>
-                <a href="#"
-                    class="inline-block bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700">
-                    View My Orders
-                </a>
-            </div>
-        </div>
-    @elseif($order)
-        <div class="max-w-2xl mx-auto">
-            <!-- Success Message -->
-            <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-                <div class="flex items-center mb-4">
-                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div class="ml-4">
-                        <h1 class="text-2xl font-bold text-green-800">Payment Successful!</h1>
-                        <p class="text-green-600">Thank you for your order</p>
+
+        <flux:card class="mt-3">
+            <flux:heading>Order details</flux:heading>
+
+            <div class="space-y-3 mt-3">
+                <div class="flex items-center justify-between">
+                    <flux:text>Order number:</flux:text>
+                    <flux:heading>{{ $order->reference }}</flux:heading>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <flux:text>Date:</flux:text>
+                    <flux:heading>{{ $order->created_at->format('M j, Y') }}</flux:heading>
+                </div>
+
+
+                <div class="flex items-center justify-between">
+                    <flux:text>Payment method:</flux:text>
+                    <flux:heading>Card</flux:heading>
+                </div>
+
+                <flux:separator />
+
+                <div class="flex items-center">
+                    <div class="flex-1"></div>
+                    <div class="w-full max-w-sm space-y-2">
+                        <div class="flex items-center justify-between">
+                            <flux:text>Subtotal:</flux:text>
+                            <flux:heading>{{ format_currency($order->subtotal) }}</flux:heading>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <flux:text class="font-semibold text-zinc-800">Total:</flux:text>
+                            <flux:heading>{{ format_currency($order->total) }}</flux:heading>
+                        </div>
                     </div>
                 </div>
-
-                <div class="space-y-2 text-sm">
-                    <p><strong>Order Reference:</strong> {{ $order->reference }}</p>
-                    <p><strong>Amount:</strong> KES {{ number_format($order->total, 2) }}</p>
-                    <p><strong>Status:</strong>
-                        <span
-                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {{ ucfirst($order->status) }}
-                        </span>
-                    </p>
-                </div>
             </div>
+        </flux:card>
 
-            <!-- Order Details -->
-            <div class="bg-white border rounded-lg p-6 mb-6">
-                <h2 class="text-lg font-semibold mb-4">Order Details</h2>
+        <div class="py-6">
+            <flux:heading size="lg" class="mb-6">Products</flux:heading>
 
-                <div class="space-y-4">
-                    @foreach ($order->items as $item)
-                        <div class="flex items-center gap-4 pb-4 border-b last:border-b-0">
-                            <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}"
-                                class="w-16 h-16 object-cover rounded">
-                            <div class="flex-1">
-                                <p class="font-medium">{{ $item->product->name }}</p>
-                                <p class="text-sm text-gray-600">Qty: {{ $item->quantity }}</p>
+            <div class="space-y-6">
+                @foreach ($order->items as $item)
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-2">
+                                <flux:text class="font-medium text-gray-900">
+                                    {{ $item->quantity }} × {{ $item->product->name }}
+                                </flux:text>
+                                <flux:text class="font-medium text-gray-900">
+                                    {{ format_currency($item->price * $item->quantity) }}
+                                </flux:text>
                             </div>
-                            <p class="font-semibold">KES {{ number_format($item->price * $item->quantity, 2) }}</p>
                         </div>
-                    @endforeach
-                </div>
-            </div>
+                    </div>
 
-            <!-- Action Buttons -->
-            <div class="flex gap-4">
-                <a href="#"
-                    class="flex-1 text-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-                    View Order Details
-                </a>
-                <a href="{{ route('home') }}"
-                    class="flex-1 text-center bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300">
-                    Continue Shopping
-                </a>
+                    @if (!$loop->last)
+                        <div class="border-t border-gray-100"></div>
+                    @endif
+                @endforeach
             </div>
         </div>
-    @else
-        <div class="text-center">
-            <p class="text-gray-600">Loading order information...</p>
+
+        <flux:separator />
+
+        <div class="py-6">
+            <flux:heading size="lg" class="mb-6">Customer Details</flux:heading>
+
+            <div class="grid grid-cols-2">
+                <div class="space-y-1">
+                    <flux:heading>Contact</flux:heading>
+
+                    <flux:text>
+                        <span class="text-zinc-800">Email:</span>
+                        {{ $order->user?->email ?? ($order->shipping_address['email'] ?? 'N/A') }}
+                    </flux:text>
+
+                    <flux:text>
+                        <span class="text-zinc-800">Phone:</span>
+                        <span>{{ $order->user?->phone ?? ($order->shipping_address['phone'] ?? 'N/A') }}</span>
+                    </flux:text>
+                </div>
+
+                <div class="space-y-1">
+                    <flux:heading>Shipping Address</flux:heading>
+
+                    <flux:text>
+                        <span class="text-zinc-800">Email:</span>
+                        {{ $order->user?->email ?? ($order->shipping_address['email'] ?? 'N/A') }}
+                    </flux:text>
+
+                    <flux:text>
+                        <span class="text-zinc-800">Phone:</span>
+                        <span>{{ $order->user?->phone ?? ($order->shipping_address['phone'] ?? 'N/A') }}</span>
+                    </flux:text>
+                </div>
+            </div>
         </div>
     @endif
 </div>
