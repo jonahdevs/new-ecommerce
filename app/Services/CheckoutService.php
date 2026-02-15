@@ -51,7 +51,6 @@ class CheckoutService
                 throw new \Exception("Minimum order value is " . format_currency($minOrderValue));
             }
 
-
             // 5. Check for existing reusable order
             $existingOrder = $this->findReusableOrder();
 

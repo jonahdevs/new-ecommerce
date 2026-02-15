@@ -36,6 +36,12 @@ class PesawiseService
 
             $this->updatePaymentRecord($order, $response);
 
+            session([
+                'pesawise_payment_order_id' => $order->id,
+                'pesawise_payment_reference' => $order->reference,
+                'pesawise_payment_started_at' => now()->toISOString(),
+            ]);
+
             return $response;
         } catch (\Throwable $th) {
             throw new \Exception('Payment gateway request failed. Please try again.');
@@ -44,11 +50,16 @@ class PesawiseService
 
     private function buildPayload(Order $order): array
     {
-
         // Append order data directly to callback URLs as query parameters
         // This ensures we get the data back even if Pesawise doesn't pass notificationId
-        $callbackUrl = route('payment.success');
-        $cancellationUrl = route('payment.cancel');
+        $callbackUrl = route('payment.callback.success', [
+            'order_id' => $order->id,
+            'reference' => $order->reference
+        ]);
+        $cancellationUrl = route('payment.callback.cancel', [
+            'order_id' => $order->id,
+            'reference' => $order->reference
+        ]);
 
         $payload = [
             'amount' => $order->total,
@@ -110,14 +121,7 @@ class PesawiseService
 
         $decodedResponse = json_decode($response, true);
 
-        // Log with JSON_PRETTY_PRINT
-        Log::info('Pesawise API Response test: ' . json_encode([
-            'http_code' => $httpCode,
-            'response' => $decodedResponse,
-            'payload' => $payload
-        ], JSON_PRETTY_PRINT));
-
-        return  $decodedResponse;
+        return $decodedResponse;
     }
 
     private function updatePaymentRecord(Order $order, array $response): void

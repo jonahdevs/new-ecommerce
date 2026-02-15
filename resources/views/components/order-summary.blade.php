@@ -39,6 +39,13 @@ new class extends Component {
                 'user_id' => auth()->id(),
                 'session_id' => session()->getId(),
             ]);
+
+            \Log::error('Checkout initiation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'session_id' => session()->getId(),
+            ]);
         }
     }
 

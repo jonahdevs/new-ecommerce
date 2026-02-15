@@ -100,6 +100,48 @@
     <livewire:footer />
 
     @fluxScripts
+
+    <!-- After your notification component -->
+    <script>
+        // Bridge Laravel flash messages to Alpine notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('success'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        variant: 'success',
+                        message: @js(session('success'))
+                    }
+                }));
+            @endif
+
+            @if (session('error'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        variant: 'danger',
+                        message: @js(session('error'))
+                    }
+                }));
+            @endif
+
+            @if (session('warning'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        variant: 'warning',
+                        message: @js(session('warning'))
+                    }
+                }));
+            @endif
+
+            @if (session('info'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        variant: 'info',
+                        message: @js(session('info'))
+                    }
+                }));
+            @endif
+        });
+    </script>
 </body>
 
 </html>

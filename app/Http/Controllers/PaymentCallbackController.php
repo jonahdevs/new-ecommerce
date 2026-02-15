@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\CartService;
 use App\Services\OrderService;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Enhanced Payment Callback Controller with security and proper error handling
@@ -24,49 +26,109 @@ class PaymentCallbackController extends Controller
      * Handle successful payment callback from Pesawise
      * Simply redirect to success page - let Livewire handle the payment processing
      */
-    public function success(Request $request)
+    public function handleSuccess(Request $request)
     {
-        $correlationId = uniqid('callback_success_', true);
+        $orderId = $request->query('order_id')
+            ?? session('pesawise_payment_order_id');
+        $reference = $request->query('reference')
+            ?? session('pesawise_payment_reference');
 
-        Log::info('=== PESAWISE CALLBACK RECEIVED ===', [
-            'correlation_id' => $correlationId,
-            'timestamp' => now()->toISOString(),
-            'url' => $request->fullUrl(),
-            'data' => $request->all(),
-        ]);
+        // Validation: Must have identifiers
+        if (!$orderId || !$reference) {
+            return redirect()->route('checkout.summary')
+                ->with('error', 'Payment session expired. Please contact support if payment was deducted.');
+        }
 
-        // Simply redirect to success page
-        // The Livewire component will handle finding the order and processing payment
-        return redirect()->route('checkout.success');
+        try {
+            $order = Order::where('id', $orderId)
+                ->where('reference', $reference)
+                ->with('payment')
+                ->firstOrFail();
+
+            // Generate a temporary success token (expires in 5 minutes)
+            $successToken = Str::random(32);
+
+            session([
+                'payment_success_token' => $successToken,
+                'payment_success_order_id' => $order->id,
+                'payment_success_expires_at' => now()->addMinutes(5)->timestamp,
+            ]);
+
+            // Clear payment initiation session
+            session()->forget([
+                'pesawise_payment_order_id',
+                'pesawise_payment_reference',
+                'pesawise_payment_started_at'
+            ]);
+
+            Log::info('Payment success validated', [
+                'order_id' => $order->id,
+                'reference' => $order->reference,
+            ]);
+
+            app(CartService::class)->clear();
+
+            // Redirect to success page WITHOUT order ID in URL
+            return redirect()->route('checkout.success-page', [
+                'token' => $successToken // ← Only token in URL, not order ID
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payment success callback error', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('checkout.summary')
+                ->with('error', 'Order not found. Please contact support.');
+        }
+
     }
 
     /**
      * Handle payment cancellation callback from Pesawise
      */
-    public function cancel(Request $request)
+    public function handleCancel(Request $request)
     {
-        $correlationId = uniqid('callback_cancel_', true);
+        //  Try query params first, fallback to session
+        $orderId = $request->query('order_id')
+            ?? session('pesawise_payment_order_id');
+        $reference = $request->query('reference')
+            ?? session('pesawise_payment_reference');
 
-        Log::info('Pesawise cancel callback received', [
-            'correlation_id' => $correlationId,
-            'data' => $request->all(),
-        ]);
+        // Try to mark order as cancelled (best effort)
+        if ($orderId && $reference) {
+            try {
+                $order = Order::where('id', $orderId)
+                    ->where('reference', $reference)
+                    ->first();
 
-        // Try to get order_id from our appended URL parameter
-        $notificationId = $request->get('order_id')
-            ?? $request->get('notificationId')
-            ?? $request->query('order_id');
+                if ($order && $order->payment) {
+                    $order->payment->update([
+                        'status' => 'cancelled',
+                        'cancelled_at' => now(),
+                    ]);
 
-        if ($notificationId) {
-            $order = Order::find($notificationId);
-
-            if ($order && $order->status === 'pending') {
-                $this->markPaymentFailed($order, 'Payment cancelled by user', $correlationId);
+                    Log::info('Payment cancelled', [
+                        'order_id' => $order->id,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error marking payment as cancelled', [
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
+        // Clear all payment sessions
+        session()->forget([
+            'pesawise_payment_order_id',
+            'pesawise_payment_reference',
+            'pesawise_payment_started_at'
+        ]);
+
         return redirect()->route('checkout.summary')
-            ->with('error', 'Payment was cancelled. Please try again.');
+            ->with('info', 'Payment was cancelled. You can try again when ready.');
     }
 
     /**
@@ -132,7 +194,7 @@ class PaymentCallbackController extends Controller
 
     /**
      * Verify webhook signature from Pesawise
-     * 
+     *
      * @param Request $request
      * @return bool
      */
@@ -154,7 +216,7 @@ class PaymentCallbackController extends Controller
 
     /**
      * Make server-to-server call to verify payment status
-     * 
+     *
      * @param string $orderId
      * @return array|null
      */
