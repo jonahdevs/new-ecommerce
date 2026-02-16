@@ -26,208 +26,233 @@ class PaymentCallbackController extends Controller
      */
     public function handleSuccess(Request $request)
     {
-        $orderId = $request->query('order_id')
-            ?? session('pesawise_payment_order_id');
-        $reference = $request->query('reference')
-            ?? session('pesawise_payment_reference');
+        Log::info(
+            'Pesawise Callback Received: ' .
+                json_encode([
+                    'method' => $request->method(), // ✅ Add this
+                    'all_params' => $request->all(),
+                    'query_params' => $request->query(),
+                    'body' => $request->getContent(), // ✅ Also log raw body
+                    'url' => $request->fullUrl(),
+                ], JSON_PRETTY_PRINT)
+        );
 
-        // Validation: Must have identifiers
-        if (!$orderId || !$reference) {
-            return redirect()->route('checkout.summary')
-                ->with('error', 'Payment session expired. Please contact support if payment was deducted.');
+
+        if ($request->isMethod('post')) {
+            return $this->handleWebhook($request);
         }
 
+        return $this->handleUserRedirect($request);
+    }
+
+
+    public function handleSuccessPost(Request $request)
+    {
+        Log::info('Pesawise POST Callback Received', [
+            'all_params' => $request->all(),
+            'query_params' => $request->query(),
+            'url' => $request->fullUrl(),
+        ]);
+    }
+
+    /**
+     * Handle POST webhook from Pesawise server
+     */
+    private function handleWebhook(Request $request)
+    {
+        Log::info('Pesawise POST Callback Received', [
+            'all_params' => $request->all(),
+            'query_params' => $request->query(),
+            'url' => $request->fullUrl(),
+        ]);
         try {
-            $order = Order::where('id', $orderId)
-                ->where('reference', $reference)
-                ->with('payment')
-                ->firstOrFail();
+            $data = $request->json()->all();
 
-            // Generate a temporary success token (expires in 5 minutes)
-            $successToken = Str::random(32);
+            $status = $data['status'] ?? null;
+            $externalId = $data['externalId'] ?? null; // This is your order reference
+            $pesawiseOrderId = $data['orderId'] ?? null;
+            $amount = $data['amount'] ?? null;
 
-            session([
-                'payment_success_token' => $successToken,
-                'payment_success_order_id' => $order->id,
-                'payment_success_expires_at' => now()->addMinutes(5)->timestamp,
+            Log::info('Processing Pesawise webhook', [
+                'status' => $status,
+                'externalId' => $externalId,
+                'orderId' => $pesawiseOrderId,
+                'amount' => $amount,
             ]);
 
-            // Clear payment initiation session
-            session()->forget([
-                'pesawise_payment_order_id',
-                'pesawise_payment_reference',
-                'pesawise_payment_started_at'
-            ]);
+            if (!$externalId) {
+                Log::error('Webhook missing externalId');
+                return response()->json(['error' => 'Missing externalId'], 400);
+            }
 
-            Log::info('Payment success validated', [
-                'order_id' => $order->id,
-                'reference' => $order->reference,
-            ]);
+            $order = Order::where('reference', $externalId)->first();
 
-            app(CartService::class)->clear();
+            if (!$order) {
+                Log::error('Order not found for webhook', ['externalId' => $externalId]);
+                return response()->json(['error' => 'Order not found'], 404);
+            }
 
-            // Redirect to success page WITHOUT order ID in URL
-            return redirect()->route('checkout.success-page', [
-                'token' => $successToken // ← Only token in URL, not order ID
-            ]);
+            if ($status === 'SUCCESS') {
+                $this->processSuccessfulPayment($order, $pesawiseOrderId, $amount);
+            } else {
+                Log::warning('Payment webhook with non-SUCCESS status', [
+                    'status' => $status,
+                    'order_id' => $order->id,
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Webhook processed'
+            ], 200);
         } catch (\Exception $e) {
-            Log::error('Payment success callback error', [
-                'order_id' => $orderId,
+            Log::error('Webhook processing failed', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            return redirect()->route('checkout.summary')
-                ->with('error', 'Order not found. Please contact support.');
+            return response()->json([
+                'error' => 'Webhook processing failed'
+            ], 500);
         }
     }
 
     /**
-     * Handle payment cancellation callback from Pesawise
+     * Handle GET redirect when user clicks "Continue"
+     */
+    private function handleUserRedirect(Request $request)
+    {
+        // Get order from query parameters (that we set in buildPayload)
+        $orderId = $request->query('order_id');
+        $reference = $request->query('reference');
+
+        Log::info('Processing user redirect', [
+            'order_id' => $orderId,
+            'reference' => $reference,
+        ]);
+
+        if (!$orderId || !$reference) {
+            Log::error('Missing order parameters in redirect');
+
+            return redirect()->route('customer.orders.index')
+                ->with('info', 'Payment processing. You will receive a confirmation email shortly.');
+        }
+
+        $order = Order::where('id', $orderId)
+            ->where('reference', $reference)
+            ->first();
+
+        if (!$order) {
+            Log::error('Order not found for redirect', [
+                'order_id' => $orderId,
+                'reference' => $reference,
+            ]);
+
+            return redirect()->route('customer.orders.index')
+                ->with('error', 'Order not found.');
+        }
+
+        // Check if order is already paid (webhook might have already processed it)
+        if ($order->payment_status === 'paid') {
+            return redirect()->route('customer.orders.show', $order)
+                ->with('success', 'Payment successful! Your order is being processed.');
+        }
+
+        // If not paid yet, mark as pending verification
+        // The webhook will handle the actual confirmation
+        if ($order->payment_status !== 'paid') {
+            $order->update([
+                'payment_status' => 'pending_verification',
+            ]);
+        }
+
+        return redirect()->route('customer.orders.show', $order)
+            ->with('info', 'Payment is being verified. You will receive a confirmation shortly.');
+    }
+
+    /**
+     * Handle payment cancellation
      */
     public function handleCancel(Request $request)
     {
-        //  Try query params first, fallback to session
-        $orderId = $request->query('order_id')
-            ?? session('pesawise_payment_order_id');
-        $reference = $request->query('reference')
-            ?? session('pesawise_payment_reference');
+        Log::info('Pesawise Cancellation Callback', [
+            'query' => $request->query(),
+        ]);
 
-        // Try to mark order as cancelled (best effort)
+        $orderId = $request->query('order_id');
+        $reference = $request->query('reference');
+
         if ($orderId && $reference) {
-            try {
-                $order = Order::where('id', $orderId)
-                    ->where('reference', $reference)
-                    ->first();
+            $order = Order::where('id', $orderId)
+                ->where('reference', $reference)
+                ->first();
 
-                if ($order && $order->payment) {
+            if ($order) {
+                DB::transaction(function () use ($order) {
+                    $order->update([
+                        'payment_status' => 'cancelled',
+                        'status' => 'cancelled',
+                    ]);
+
                     $order->payment->update([
                         'status' => 'cancelled',
-                        'cancelled_at' => now(),
                     ]);
+                });
 
-                    Log::info('Payment cancelled', [
-                        'order_id' => $order->id,
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::error('Error marking payment as cancelled', [
-                    'error' => $e->getMessage(),
+                Log::info('Order cancelled', [
+                    'order_id' => $order->id,
+                    'reference' => $order->reference,
                 ]);
+
+                return redirect()->route('checkout.index')
+                    ->with('error', 'Payment was cancelled. Please try again.');
             }
         }
 
-        // Clear all payment sessions
-        session()->forget([
-            'pesawise_payment_order_id',
-            'pesawise_payment_reference',
-            'pesawise_payment_started_at'
-        ]);
-
-        return redirect()->route('checkout.summary')
-            ->with('info', 'Payment was cancelled. You can try again when ready.');
+        return redirect()->route('checkout.index')
+            ->with('info', 'Payment was cancelled.');
     }
 
     /**
-     * Webhook endpoint for server-to-server notifications (if Pesawise supports)
-     * This is more secure than relying solely on redirect callbacks
+     * Process successful payment
      */
-    public function webhook(Request $request)
+    private function processSuccessfulPayment(Order $order, ?string $pesawiseOrderId, ?int $amount)
     {
-        $correlationId = uniqid('webhook_', true);
-
-        Log::info('Pesawise webhook received', [
-            'correlation_id' => $correlationId,
-            'data' => $request->all(),
-            'headers' => $request->headers->all(),
-        ]);
-
-        // TODO: Verify webhook signature
-        // if (!$this->verifyWebhookSignature($request)) {
-        //     Log::error('Invalid webhook signature', [
-        //         'correlation_id' => $correlationId,
-        //     ]);
-        //     return response()->json(['error' => 'Invalid signature'], 403);
-        // }
-
-        $orderId = $request->get('orderId');
-        $status = $request->get('status');
-        $notificationId = $request->get('notificationId');
-
-        if (!$notificationId) {
-            return response()->json(['error' => 'Missing notificationId'], 400);
-        }
-
-        // Process webhook asynchronously for better reliability
-        // dispatch(new ProcessPesawiseWebhook($request->all(), $correlationId));
-
-        return response()->json(['status' => 'received'], 200);
-    }
-
-    /**
-     * Mark payment as failed and release inventory
-     */
-    private function markPaymentFailed(Order $order, string $reason, string $correlationId): void
-    {
-        try {
-            DB::transaction(function () use ($order, $reason, $correlationId) {
-                $this->orderService->markPaymentAsFailed($order, $reason);
-                $this->inventoryService->releaseReservation($order);
-            });
-
-            Log::info('Payment marked as failed', [
-                'correlation_id' => $correlationId,
-                'order_id' => $order->id,
-                'reason' => $reason,
+        DB::transaction(function () use ($order, $pesawiseOrderId, $amount) {
+            // Update order
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => 'processing',
             ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to mark payment as failed', [
-                'correlation_id' => $correlationId,
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
+
+            // Update payment record
+            $order->payment->update([
+                'status' => 'completed',
+                'paid_at' => now(),
+                'meta' => array_merge($order->payment->meta ?? [], [
+                    'pesawise_order_id' => $pesawiseOrderId,
+                    'paid_amount' => $amount,
+                    'confirmed_at' => now()->toISOString(),
+                ]),
             ]);
-        }
-    }
 
-    /**
-     * Verify webhook signature from Pesawise
-     *
-     * @param Request $request
-     * @return bool
-     */
-    private function verifyWebhookSignature(Request $request): bool
-    {
-        // TODO: Implement based on Pesawise documentation
-        // Example implementation:
+            Log::info('Payment processed successfully', [
+                'order_id' => $order->id,
+                'reference' => $order->reference,
+                'pesawise_order_id' => $pesawiseOrderId,
+                'amount' => $amount,
+            ]);
 
-        // $signature = $request->header('X-Pesawise-Signature');
-        // $payload = $request->getContent();
-        // $secret = config('services.pesawise.webhook_secret');
+            // Clear session data
+            session()->forget([
+                'pesawise_payment_order_id',
+                'pesawise_payment_reference',
+                'pesawise_payment_started_at',
+            ]);
 
-        // $expectedSignature = hash_hmac('sha256', $payload, $secret);
-
-        // return hash_equals($expectedSignature, $signature);
-
-        return true; // Placeholder
-    }
-
-    /**
-     * Make server-to-server call to verify payment status
-     *
-     * @param string $orderId
-     * @return array|null
-     */
-    private function verifyPaymentWithPesawise(string $orderId): ?array
-    {
-        // TODO: Implement server-to-server verification
-        // This is more secure than trusting redirect callbacks
-
-        // $response = Http::withHeaders([
-        //     'api-key' => config('services.pesawise.api_key'),
-        //     'api-secret' => config('services.pesawise.api_secret'),
-        // ])->get(config('services.pesawise.api_url') . "/orders/{$orderId}");
-
-        // return $response->json();
-
-        return null; // Placeholder
+            // Dispatch events (uncomment as needed)
+            // event(new OrderPaid($order));
+            // Mail::to($order->user)->send(new OrderConfirmationMail($order));
+        });
     }
 }

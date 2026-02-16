@@ -52,10 +52,10 @@ class PesawiseService
     {
         // Append order data directly to callback URLs as query parameters
         // This ensures we get the data back even if Pesawise doesn't pass notificationId
-        $callbackUrl = route('payment.callback.success', [
-            'order_id' => $order->id,
-            'reference' => $order->reference
-        ]);
+        $callbackUrl = route('payment.callback.success');
+
+        // $callbackUrl = "https://webhook.site/eeeb521c-4501-4eb5-95da-0c1055aea3d9";
+
         $cancellationUrl = route('payment.callback.cancel', [
             'order_id' => $order->id,
             'reference' => $order->reference

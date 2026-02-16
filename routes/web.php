@@ -14,10 +14,14 @@ Route::livewire('compare', 'pages::product-compare')->name('products.compare');
 Route::livewire('/wishlist', 'pages::wishlist')->name('wishlist');
 Route::livewire('/cart', 'pages::cart')->name('cart');
 
-Route::controller(PaymentCallbackController::class)->prefix('payment/callback')->name('payment.callback')->group(function () {
-    Route::get('success', 'handleSuccess')->name('.success');
-    Route::get('cancel', 'handleCancel')->name('.cancel');
-});
+
+Route::controller(PaymentCallbackController::class)
+    ->prefix('payment/callback')
+    ->name('payment.callback')
+    ->group(function () {
+        Route::match(['get', 'post'], 'success', 'handleSuccess')->name('.success');
+        Route::get('cancel', 'handleCancel')->name('.cancel');
+    });
 
 // Payment callback routes - MUST be outside auth middleware so Pesawise can access them
 Route::livewire('/payment/success', 'pages::checkout.success')->name('checkout.success-page');
