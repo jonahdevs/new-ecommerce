@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -28,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (request()->header('X-Forwarded-Proto') === 'https') {
+            URL::forceScheme('https');
+        }
         Event::listen(Login::class, SyncCartOnLogin::class);
         Event::listen(Login::class, SyncWishlistOnLogin::class);
         Event::listen(Login::class, SyncRecentViewedOnLogin::class);

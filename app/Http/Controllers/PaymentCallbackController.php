@@ -17,8 +17,7 @@ class PaymentCallbackController extends Controller
     public function __construct(
         private OrderService $orderService,
         private InventoryService $inventoryService
-    ) {
-    }
+    ) {}
 
     /**
      * Handle successful payment callback from Pesawise
@@ -36,7 +35,6 @@ class PaymentCallbackController extends Controller
         ]);
 
         // Simply redirect to success page
-        // The Livewire component will handle finding the order and processing payment
         return redirect()->route('checkout.success');
     }
 
