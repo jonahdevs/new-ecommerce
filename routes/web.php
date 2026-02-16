@@ -38,10 +38,10 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
 // customer
 Route::middleware('auth')->name('customer')->group(function () {
     Route::livewire('account', 'pages::customer.account')->name('.account');
-    // Route::livewire('orders', 'pages::customer.orders.index')->name('.orders');
-    // Route::livewire('orders/{order}', 'pages::customer.orders.show')->name('.orders.show');
-    // Route::livewire('reviews', 'pages::customer.reviews.index')->name('.reviews');
-    // Route::livewire('reviews/{review}', 'pages::customer.reviews.show')->name('.reviews.show');
+
+    Route::livewire('orders', 'pages::customer.orders.index')->name('.orders.index');
+    Route::livewire('orders/{order}', 'pages::customer.orders.show')->name('.orders.show');
+    Route::livewire('orders/{order}/tracking', 'pages::customer.orders.tracking')->name('.orders.tracking');
 });
 
 Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {

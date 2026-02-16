@@ -169,7 +169,8 @@ new class extends Component {
                                 Account
                             </flux:navmenu.item>
 
-                            <flux:navmenu.item href="#" wire:navigate icon="package" icon-variant="outline">
+                            <flux:navmenu.item :href="route('customer.orders.index')" wire:navigate icon="package"
+                                icon-variant="outline">
                                 Orders
                             </flux:navmenu.item>
 
