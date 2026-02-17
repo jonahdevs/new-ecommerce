@@ -2,7 +2,7 @@
     {
         "name": "Vegetable Processors",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/vegetable_processors_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Commercial vegetable processing equipment designed for efficient cutting, slicing, dicing, and shredding of vegetables in high-volume kitchen environments."
@@ -10,7 +10,7 @@
     {
         "name": "Potato Processors",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/potato_processors_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Specialist potato processing machinery including peelers, chippers, and slicers built to handle large quantities of potatoes with speed and consistency."
@@ -18,7 +18,7 @@
     {
         "name": "Meat Processors",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/meat_processors_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Professional meat processing equipment including mincers, slicers, and tenderisers designed for butcheries, delis, and commercial kitchens."
@@ -26,7 +26,7 @@
     {
         "name": "Meat Displays",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/meat_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "Refrigerated meat display cases and counters that keep fresh and cured meats at optimal temperatures while maximising product visibility for customers."
@@ -34,14 +34,14 @@
     {
         "name": "Juice Processors",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/juice_processors_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Commercial juicing and juice processing equipment including extractors, squeezers, and dispensers for restaurants, juice bars, and catering operations."
     },
     {
         "name": "Refrigeration",
-        "image_path": null,
+        "image_path": "categories/refrigeration_icon.png",
         "image_icon": null,
         "show_in_navbar": true,
         "is_featured": true,
@@ -50,7 +50,7 @@
     {
         "name": "Cold Displays",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/cold_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "Open and closed refrigerated display units ideal for showcasing chilled products such as beverages, dairy, salads, and deli items in retail and foodservice environments."
@@ -58,7 +58,7 @@
     {
         "name": "Pastry Displays",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/pastry_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "Elegant display cases designed to present pastries, cakes, and baked goods in an attractive and hygienic manner, suitable for bakeries, cafes, and patisseries."
@@ -66,7 +66,7 @@
     {
         "name": "Ice Cream Displays",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/ice_cream_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "Specialised freezer display units for gelato, sorbet, and ice cream, maintaining precise low temperatures while providing excellent product visibility and easy access."
@@ -74,7 +74,7 @@
     {
         "name": "Warm Displays",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/warm_display_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Heated display units that keep hot food items at safe serving temperatures, perfect for displaying pies, rotisserie items, and prepared hot foods in retail or foodservice settings."
@@ -82,7 +82,7 @@
     {
         "name": "Ovens",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/ovens_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "A comprehensive range of commercial ovens including convection, combi-steam, deck, and pizza ovens built for precision cooking and high-volume output in professional kitchens."
@@ -90,7 +90,7 @@
     {
         "name": "Bakery Preparation",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/bakery_preparation_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Bakery preparation equipment including dough mixers, proofers, dividers, and moulders designed to streamline production in artisan and industrial baking operations."
@@ -98,7 +98,7 @@
     {
         "name": "Buffet & Servery",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/buffet_servery_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Buffet and servery solutions including bain-maries, food warmers, sneeze guards, and serving counters tailored for hotels, canteens, events, and self-service environments."
@@ -106,7 +106,7 @@
     {
         "name": "Induction Cookers",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/induction_cooker_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "High-performance commercial induction cookers offering precise temperature control, energy efficiency, and rapid heating for professional kitchens and live cooking stations."
@@ -114,7 +114,7 @@
     {
         "name": "GN Containers",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/gn_containers_lids_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Gastronorm containers in a full range of standard sizes and materials, compatible with commercial ovens, bain-maries, and refrigeration units for versatile food storage and service."
@@ -122,7 +122,7 @@
     {
         "name": "Fast Food",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/fast_food_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Dedicated fast food equipment including grills, toasters, heat lamps, and holding units engineered for quick-service restaurants and high-throughput food operations."
@@ -130,7 +130,7 @@
     {
         "name": "Fryers",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/fryers_icon.png",
         "show_in_navbar": true,
         "is_featured": false,
         "description": "Commercial deep fryers in countertop and floor-standing models, offering precise oil temperature management and high capacity output for chips, chicken, and fried foods."
@@ -138,7 +138,7 @@
     {
         "name": "Beverage Equipment",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/beverage_equipment_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "A wide range of professional beverage equipment including coffee machines, blenders, water dispensers, and tea urns for cafes, restaurants, hotels, and office environments."
@@ -146,7 +146,7 @@
     {
         "name": "Food Transport",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/food_transport_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Insulated food transport containers, trolleys, and delivery systems designed to maintain safe food temperatures during transit for catering, healthcare, and events."
@@ -154,7 +154,7 @@
     {
         "name": "Hygiene",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/hygiene_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Commercial hygiene equipment and consumables including hand wash stations, sanitiser dispensers, and cleaning systems to uphold health and safety standards in food environments."
@@ -162,7 +162,7 @@
     {
         "name": "Rational Tablets",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/rational_tablets_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Genuine Rational cleaning tablets formulated for use with Rational combi ovens, ensuring thorough and efficient automated cleaning cycles and prolonged appliance performance."
@@ -170,7 +170,7 @@
     {
         "name": "Rational Accessories",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/rational_accessories_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Official Rational accessories including trays, racks, and gastronorm supports designed to expand the functionality and versatility of Rational combi-steam ovens."
@@ -178,7 +178,7 @@
     {
         "name": "Cleaning Solutions",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/cleaning_solutions_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Professional-grade cleaning solutions and detergents for commercial kitchen equipment, surfaces, and utensils, meeting food-safe and industry hygiene compliance standards."
@@ -186,7 +186,7 @@
     {
         "name": "Shelving & Storage",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/shelving_storage_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Heavy-duty shelving units, racking systems, and storage solutions built for commercial kitchens, storerooms, and cold rooms to organise ingredients and equipment efficiently."
@@ -194,7 +194,7 @@
     {
         "name": "Kitchen Smalls",
         "image_path": null,
-        "image_icon": null,
+        "image_icon": "categories/kitchen_small_icon.png",
         "show_in_navbar": false,
         "is_featured": false,
         "description": "Essential small kitchen tools and utensils including pots, pans, chopping boards, knives, and preparation accessories for everyday use in professional culinary environments."
