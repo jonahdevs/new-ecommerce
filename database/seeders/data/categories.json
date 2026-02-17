@@ -1,842 +1,202 @@
-{
-    "categories": [
-        {
-            "name": "Vegetable Preparation",
-            "image_path": "categories/seeder/vegetable prep.jpeg",
-            "image_icon": "categories/seeder/home-cooked-meal_3240255.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "description": "Professional vegetable preparation equipment and tools",
-            "sort_order": 2,
-            "meta_title": "Vegetable Preparation Equipment | Commercial Kitchen",
-            "meta_description": "High-quality vegetable preparation tools and equipment for commercial kitchens.",
-            "meta_keywords": [
-                "vegetable prep",
-                "food processor",
-                "commercial kitchen"
-            ],
-            "subcategories": [
-                {
-                    "name": "Potato Peelers",
-                    "description": "Commercial potato peeling machines for high-volume operations",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/vegetable/5125_11zon.jpg",
-                    "image_icon": "seeder/categories/vegetable/peel_5824846.png"
-                },
-                {
-                    "name": "Potato Chippers",
-                    "description": "Heavy-duty potato chipping and french fry cutting equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/vegetable/1694816664_JSPCC08.jpg"
-                },
-                {
-                    "name": "Potato Mashers",
-                    "description": "Commercial potato mashing and ricing equipment",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/vegetable/1694816328_Sheffield Potato Masher.jpg"
-                },
-                {
-                    "name": "Vegetable Processors",
-                    "description": "Multi-function vegetable processing and cutting machines",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/vegetable/1727936474_Capture 2.jpg"
-                },
-                {
-                    "name": "Graters",
-                    "description": "Professional graters and shredders for cheese and vegetables",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/vegetable/1694819684_RQ150.jpg"
-                },
-                {
-                    "name": "Spice Grinders",
-                    "description": "Commercial spice grinding and milling equipment",
-                    "sort_order": 6,
-                    "image_path": "seeder/categories/vegetable/1704195002_spice grinder.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Meat Preparations",
-            "image_path": "categories/seeder/meat prep.jpeg",
-            "image_icon": "categories/seeder/kitchen_13980421.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "description": "Professional meat processing and preparation equipment",
-            "sort_order": 5,
-            "meta_title": "Meat Preparation Equipment | Commercial Butchery Tools",
-            "meta_description": "Heavy-duty meat preparation equipment for butchers and commercial kitchens.",
-            "meta_keywords": [
-                "meat grinder",
-                "butchery equipment",
-                "meat processing"
-            ],
-            "subcategories": [
-                {
-                    "name": "Meat Mincers",
-                    "description": "Heavy-duty commercial meat grinding and mincing machines",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/meat/1747123284_Mincer.png"
-                },
-                {
-                    "name": "Meat Slicers",
-                    "description": "Professional deli and meat slicing equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/meat/1727265385_images.jpeg"
-                },
-                {
-                    "name": "Bone Saw Cutters",
-                    "description": "Commercial band saws and bone cutting equipment",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/meat/1694455750_EMPTK02.jpg"
-                },
-                {
-                    "name": "Humburger Press Machines",
-                    "description": "Manual and automatic hamburger patty press machines",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/meat/1694455750_EMPTK02.jpg"
-                },
-                {
-                    "name": "Marinators",
-                    "description": "Commercial meat marinating and tumbling equipment",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/meat/1694467098_tumble-marinator.jpg"
-                },
-                {
-                    "name": "Sausage Stuffers",
-                    "description": "Professional sausage making and stuffing machines",
-                    "sort_order": 6,
-                    "image_path": "seeder/categories/meat/1694494163_JSSF05.jpg"
-                },
-                {
-                    "name": "Meat Ball Machines",
-                    "description": "Automated meatball forming and shaping equipment",
-                    "sort_order": 7,
-                    "image_path": "seeder/categories/meat/1694466892_SXW280.jpg"
-                },
-                {
-                    "name": "Vacuum Packagers",
-                    "description": "Commercial vacuum sealing and packaging equipment",
-                    "sort_order": 8,
-                    "image_path": "seeder/categories/meat/1694466892_SXW280.jpg"
-                },
-                {
-                    "name": "Meat Saws",
-                    "description": "",
-                    "sort_order": 9,
-                    "image_path": ""
-                },
-                {
-                    "name": "Accessories",
-                    "description": "Professional butchery tools, knives, and meat prep accessories",
-                    "sort_order": 10,
-                    "image_path": "seeder/categories/meat/1694492560_PSEE98T.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Bakery Preparation",
-            "image_path": "categories/seeder/5401137c851395e29b045e8058ed9e49.jpg",
-            "image_icon": "categories/seeder/baker_3526975.png",
-            "description": "Professional bakery equipment and dough preparation tools",
-            "is_featured": true,
-            "show_in_navbar": true,
-            "sort_order": 6,
-            "meta_title": "Bakery Preparation Equipment | Commercial Baking Tools",
-            "meta_description": "Heavy-duty bakery preparation equipment for professional bakeries and pastry kitchens.",
-            "meta_keywords": [
-                "bakery equipment",
-                "dough mixer",
-                "commercial baking"
-            ],
-            "subcategories": [
-                {
-                    "name": "Spiral Mixers",
-                    "description": "Heavy-duty spiral dough mixers for bread and pizza dough",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/bakery/spiral_mixer.png"
-                },
-                {
-                    "name": "Planetary Mixers",
-                    "description": "Multi-purpose planetary mixers for pastries and batters",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/bakery/47288_11zon.jpg",
-                    "image_icon": "seeder/categories/bakery/mixer_640248.png"
-                },
-                {
-                    "name": "Dough Sheeters",
-                    "description": "Commercial dough rolling and sheeting machines",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/bakery/1745308235_JDR450B.jpg"
-                },
-                {
-                    "name": "Waffle Makers",
-                    "description": "Professional waffle irons and belgian waffle makers",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/bakery/2151516880_11zon.jpg",
-                    "image_icon": "seeder/categories/bakery/waffle_3577507.png"
-                },
-                {
-                    "name": "Crepe Machines",
-                    "description": "Commercial crepe makers and griddles",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/bakery/1732006262.jpeg"
-                },
-                {
-                    "name": "Bread Slicers",
-                    "description": "Automatic bread slicing machines for uniform cuts",
-                    "sort_order": 6,
-                    "image_path": "seeder/categories/bakery/1718_11zon.jpg",
-                    "image_icon": "seeder/categories/bakery/food_16213104.png"
-                },
-                {
-                    "name": "Silicone Moulds",
-                    "description": "Professional silicone baking molds and forms",
-                    "sort_order": 7,
-                    "image_path": "seeder/categories/bakery/1701380718_SCG04.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Refrigeration",
-            "image_path": "categories/seeder/fridges commercial.png",
-            "image_icon": "categories/seeder/fridge_13561436.png",
-            "is_featured": true,
-            "show_in_navbar": true,
-            "description": "Professional juice extraction and beverage processing equipment",
-            "sort_order": 7,
-            "meta_title": "Juice Processors | Commercial Juicing Equipment",
-            "meta_description": "Heavy-duty juice extraction equipment for juice bars, restaurants, and cafes.",
-            "meta_keywords": [
-                "juice extractor",
-                "commercial juicer",
-                "beverage processing"
-            ],
-            "subcategories": [
-                {
-                    "name": "Counter Chillers",
-                    "description": "Heavy-duty commercial blenders for smoothies and beverages",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/juice/1694724371_LAR04BN.jpg"
-                },
-                {
-                    "name": "Pizza Fridges",
-                    "description": "High-speed centrifugal juice extraction machines",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/juice/1698325585_Santos Juice 50C.jpg"
-                },
-                {
-                    "name": "Salad Displays & Salad Counters",
-                    "description": "Professional citrus fruit juicing equipment",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/juice/1724060788_65A Citrus Juicer.jpg"
-                },
-                {
-                    "name": "Drawer Chillers",
-                    "description": "Commercial orange juice extractors and squeezers",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/juice/1694727313_CANCAN 38.jpeg"
-                },
-                {
-                    "name": "Bar Line Chillers",
-                    "description": "Automated pineapple coring and slicing machines",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/juice/15844_11zon.jpg",
-                    "image_icon": "seeder/categories/juice/fruit_16206273.png"
-                },
-                {
-                    "name": "Upright Chillers",
-                    "description": "Heavy-duty sugarcane crushing and juice extraction equipment",
-                    "sort_order": 6,
-                    "image_path": "seeder/categories/juice/1694728920_JSEEC-300.jpg"
-                },
-                {
-                    "name": "Back Bar Chillers",
-                    "description": "Commercial milkshake spindle mixers and drink blenders",
-                    "sort_order": 7,
-                    "image_path": "seeder/categories/juice/1694729252_BMS N.jpg"
-                },
-                {
-                    "name": "Blast Chillers",
-                    "description": "High-speed food cutters and mixing processors",
-                    "sort_order": 8,
-                    "image_path": "seeder/categories/juice/1694729252_BMS N.jpg"
-                },
-                {
-                    "name": "Wine Coolers",
-                    "description": "Commercial ice crushing machines for beverages",
-                    "sort_order": 9,
-                    "image_path": "seeder/categories/juice/1698325337_53RA Santos Ice Crusher.jpg"
-                },
-                {
-                    "name": "Ice Cube Machines",
-                    "description": "Professional ice shaving equipment for frozen desserts and drinks",
-                    "sort_order": 10,
-                    "image_path": "seeder/categories/juice/1698325267_09A Santos Ice Shaver.jpg"
-                },
-                {
-                    "name": "Ice Flake Machines",
-                    "description": "Professional ice shaving equipment for frozen desserts and drinks",
-                    "sort_order": 10,
-                    "image_path": "seeder/categories/juice/1698325267_09A Santos Ice Shaver.jpg"
-                },
-                {
-                    "name": "Chest Freezers",
-                    "description": "Professional ice shaving equipment for frozen desserts and drinks",
-                    "sort_order": 10,
-                    "image_path": "seeder/categories/juice/1698325267_09A Santos Ice Shaver.jpg"
-                },
-                {
-                    "name": "Coolers",
-                    "description": "Professional ice shaving equipment for frozen desserts and drinks",
-                    "sort_order": 10,
-                    "image_path": "seeder/categories/juice/1698325267_09A Santos Ice Shaver.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Coffee Machines",
-            "image_path": "categories/seeder/coffee machines.jpeg",
-            "image_icon": "categories/seeder/coffee-machine_5847486.png",
-            "is_featured": true,
-            "show_in_navbar": true,
-            "description": "Professional juice extraction and beverage processing equipment",
-            "sort_order": 7,
-            "meta_title": "Juice Processors | Commercial Juicing Equipment",
-            "meta_description": "Heavy-duty juice extraction equipment for juice bars, restaurants, and cafes.",
-            "meta_keywords": [
-                "juice extractor",
-                "commercial juicer",
-                "beverage processing"
-            ],
-            "subcategories": [
-                {
-                    "name": "Semi Automatic",
-                    "description": "Heavy-duty commercial blenders for smoothies and beverages",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/juice/1694724371_LAR04BN.jpg"
-                },
-                {
-                    "name": "Automatic",
-                    "description": "High-speed centrifugal juice extraction machines",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/juice/1698325585_Santos Juice 50C.jpg"
-                },
-                {
-                    "name": "Coffee Brewers",
-                    "description": "Professional citrus fruit juicing equipment",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/juice/1724060788_65A Citrus Juicer.jpg"
-                },
-                {
-                    "name": "Coffee Grinders",
-                    "description": "Commercial orange juice extractors and squeezers",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/juice/1694727313_CANCAN 38.jpeg"
-                },
-                {
-                    "name": "Coffee Machine Accessories",
-                    "description": "Automated pineapple coring and slicing machines",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/juice/15844_11zon.jpg",
-                    "image_icon": "seeder/categories/juice/fruit_16206273.png"
-                }
-            ]
-        },
-        {
-            "name": "Juice Processors",
-            "image_path": "categories/seeder/juice processor.jpeg",
-            "image_icon": "categories/seeder/blender_1143303.png",
-            "is_featured": true,
-            "show_in_navbar": true,
-            "description": "Professional juice extraction and beverage processing equipment",
-            "sort_order": 7,
-            "meta_title": "Juice Processors | Commercial Juicing Equipment",
-            "meta_description": "Heavy-duty juice extraction equipment for juice bars, restaurants, and cafes.",
-            "meta_keywords": [
-                "juice extractor",
-                "commercial juicer",
-                "beverage processing"
-            ],
-            "subcategories": [
-                {
-                    "name": "Blenders",
-                    "description": "Heavy-duty commercial blenders for smoothies and beverages",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/juice/1694724371_LAR04BN.jpg"
-                },
-                {
-                    "name": "Centrifugal Juicers",
-                    "description": "High-speed centrifugal juice extraction machines",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/juice/1698325585_Santos Juice 50C.jpg"
-                },
-                {
-                    "name": "Citrus Juicers",
-                    "description": "Professional citrus fruit juicing equipment",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/juice/1724060788_65A Citrus Juicer.jpg"
-                },
-                {
-                    "name": "Orange Juicers",
-                    "description": "Commercial orange juice extractors and squeezers",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/juice/1694727313_CANCAN 38.jpeg"
-                },
-                {
-                    "name": "Pineapple Cutters",
-                    "description": "Automated pineapple coring and slicing machines",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/juice/15844_11zon.jpg",
-                    "image_icon": "seeder/categories/juice/fruit_16206273.png"
-                },
-                {
-                    "name": "Sugarcane Juicers",
-                    "description": "Heavy-duty sugarcane crushing and juice extraction equipment",
-                    "sort_order": 6,
-                    "image_path": "seeder/categories/juice/1694728920_JSEEC-300.jpg"
-                },
-                {
-                    "name": "Milk Shake Mixers",
-                    "description": "Commercial milkshake spindle mixers and drink blenders",
-                    "sort_order": 7,
-                    "image_path": "seeder/categories/juice/1694729252_BMS N.jpg"
-                },
-                {
-                    "name": "Cutter Mixers",
-                    "description": "High-speed food cutters and mixing processors",
-                    "sort_order": 8,
-                    "image_path": "seeder/categories/juice/1694729252_BMS N.jpg"
-                },
-                {
-                    "name": "Ice Crusher",
-                    "description": "Commercial ice crushing machines for beverages",
-                    "sort_order": 9,
-                    "image_path": "seeder/categories/juice/1698325337_53RA Santos Ice Crusher.jpg"
-                },
-                {
-                    "name": "Ice Shaver",
-                    "description": "Professional ice shaving equipment for frozen desserts and drinks",
-                    "sort_order": 10,
-                    "image_path": "seeder/categories/juice/1698325267_09A Santos Ice Shaver.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Hot Cooking",
-            "description": "Complete buffet and serving solutions for restaurants and catering",
-            "image_path": "categories/seeder/chef-with-gloves-flambeing-dish.jpg",
-            "image_icon": "categories/seeder/frying-pan_1963862.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "sort_order": 1,
-            "meta_title": "Hot Cooking Equipment | Commercial Kitchen Solutions",
-            "meta_description": "Professional hot cooking equipment for restaurants, hotels, and catering services.",
-            "meta_keywords": [
-                "buffet",
-                "servery",
-                "catering equipment"
-            ],
-            "subcategories": [
-                {
-                    "name": "Cookers",
-                    "description": "Professional cookers and food warmers for hot cooking service",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/buffet/5021_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/food_15520434.png"
-                },
-                {
-                    "name": "Grills",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Fryers",
-                    "description": "Commercial hot pass stations for kitchen to service area",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/buffet/1723721300_s-1152-5378-20-10-2016.jpg"
-                },
-                {
-                    "name": "Toasters",
-                    "description": "Self-service cereal and dry food dispensing systems",
-                    "sort_order": 6,
-                    "image_path": "seeder/categories/buffet/plastic-free-6746071_640.jpg",
-                    "image_icon": "seeder/categories/buffet/drink_12988216.png"
-                },
-                {
-                    "name": "Microwaves",
-                    "description": "Elegant soup serving vessels and tureens for buffet presentation",
-                    "sort_order": 7,
-                    "image_path": "seeder/categories/buffet/soup_toureens.jpg",
-                    "image_icon": "seeder/categories/buffet/grass-jelly_7416626.png"
-                },
-                {
-                    "name": "Plate Warmers",
-                    "description": "Commercial plate warming cabinets and heated plate dispensers",
-                    "sort_order": 8,
-                    "image_path": "seeder/categories/buffet/1694540769_DR1.jpg",
-                    "image_icon": ""
-                },
-                {
-                    "name": "Panini Grills",
-                    "description": "Commercial plate warming cabinets and heated plate dispensers",
-                    "sort_order": 8,
-                    "image_path": "seeder/categories/buffet/1694540769_DR1.jpg",
-                    "image_icon": ""
-                }
-            ]
-        },
-        {
-            "name": "Ovens",
-            "description": "Complete buffet and serving solutions for restaurants and catering",
-            "image_path": "categories/seeder/2150014899_11zon.jpg",
-            "image_icon": "categories/seeder/oven_2035181.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "sort_order": 1,
-            "meta_title": "Hot Cooking Equipment | Commercial Kitchen Solutions",
-            "meta_description": "Professional hot cooking equipment for restaurants, hotels, and catering services.",
-            "meta_keywords": [
-                "buffet",
-                "servery",
-                "catering equipment"
-            ],
-            "subcategories": [
-                {
-                    "name": "Pizza Ovens",
-                    "description": "Professional cookers and food warmers for hot cooking service",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/buffet/5021_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/food_15520434.png"
-                },
-                {
-                    "name": "Convection Ovens",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                }
-            ]
-        },
-        {
-            "name": "Rational-Combi Steamer",
-            "description": "Complete buffet and serving solutions for restaurants and catering",
-            "image_path": "categories/seeder/rational combi steamer.jpg",
-            "image_icon": "categories/seeder/technology_11482644.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "sort_order": 1,
-            "meta_title": "Hot Cooking Equipment | Commercial Kitchen Solutions",
-            "meta_description": "Professional hot cooking equipment for restaurants, hotels, and catering services.",
-            "meta_keywords": [
-                "buffet",
-                "servery",
-                "catering equipment"
-            ],
-            "subcategories": [
-                {
-                    "name": "Icombi Pro",
-                    "description": "Professional cookers and food warmers for hot cooking service",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/buffet/5021_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/food_15520434.png"
-                },
-                {
-                    "name": "Icombi Classic",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Cleaner, Care & Active Green Tabs",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Rational Oven Accessories",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                }
-            ]
-        },
-        {
-            "name": "Hygiene Products",
-            "description": "Complete buffet and serving solutions for restaurants and catering",
-            "image_path": "categories/seeder/2151113117_11zon.jpg",
-            "image_icon": "categories/seeder/sink_18286276.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "sort_order": 1,
-            "meta_title": "Hot Cooking Equipment | Commercial Kitchen Solutions",
-            "meta_description": "Professional hot cooking equipment for restaurants, hotels, and catering services.",
-            "meta_keywords": [
-                "buffet",
-                "servery",
-                "catering equipment"
-            ],
-            "subcategories": [
-                {
-                    "name": "Hand Wash Basins",
-                    "description": "Professional cookers and food warmers for hot cooking service",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/buffet/5021_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/food_15520434.png"
-                },
-                {
-                    "name": "Sinks",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Taps",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Sheffield Floor Gulleys",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Water Softeners",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Dust Bins",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Insectocutors",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Soap And Towel Dispensers",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Towel Warmers",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Knife Sterilizers",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                }
-            ]
-        },
-        {
-            "name": "Buffet & Servery",
-            "description": "Complete buffet and serving solutions for restaurants and catering",
-            "image_path": "categories/seeder/f60a73d2c63e930a8122d2f959d17f25.jpg",
-            "image_icon": "categories/seeder/serving_dish_12120580.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "sort_order": 1,
-            "meta_title": "Hot Cooking Equipment | Commercial Kitchen Solutions",
-            "meta_description": "Professional hot cooking equipment for restaurants, hotels, and catering services.",
-            "meta_keywords": [
-                "buffet",
-                "servery",
-                "catering equipment"
-            ],
-            "subcategories": [
-                {
-                    "name": "Chafing Dishes",
-                    "description": "Professional cookers and food warmers for hot cooking service",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/buffet/5021_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/food_15520434.png"
-                },
-                {
-                    "name": "Induction Chaffers & Cookers",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Hot Pass",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Cereal Dispensers",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Soup Tureens",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "Carving Stations",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                },
-                {
-                    "name": "GN Containers",
-                    "description": "Energy-efficient induction chafing dishes and cooking equipment",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/buffet/105_11zon.jpg",
-                    "image_icon": "seeder/categories/buffet/electric-stove_18643092.png"
-                }
-            ]
-        },
-        {
-            "name": "Kitchen Small Ware",
-            "image_path": "categories/seeder/kitchen small ware.jpeg",
-            "image_icon": "categories/seeder/cookware_11209457.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "description": "Essential small kitchen equipment and utensils",
-            "sort_order": 4,
-            "meta_title": "Kitchen Small Wares | Professional Utensils & Tools",
-            "meta_description": "Complete range of professional kitchen small wares and utensils.",
-            "meta_keywords": [
-                "kitchen tools",
-                "utensils",
-                "small wares"
-            ],
-            "subcategories": [
-                {
-                    "name": "Cutlery & Crockery",
-                    "description": "Professional tableware, cutlery, and serving dishes",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/kitchen/1701340692_WFPR.jpg"
-                },
-                {
-                    "name": "Pots and Pans",
-                    "description": "Commercial cookware including pots, pans, and skillets",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/kitchen/19627_11zon.jpg",
-                    "image_icon": "seeder/categories/kitchen/tool_16218552.png"
-                },
-                {
-                    "name": "Pressure Cookers",
-                    "description": "Heavy-duty commercial pressure cookers for fast cooking",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/kitchen/1701351124_PRESSURE-COOKER.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Beverage Machines",
-            "image_path": "categories/seeder/89ef57b82941079669a303b999440421.jpg",
-            "image_icon": "categories/seeder/dishwasher_4221314.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "description": "Commercial beverage equipment and coffee machines",
-            "sort_order": 3,
-            "meta_title": "Commercial Beverage Machines | Coffee & Drink Equipment",
-            "meta_description": "Professional beverage machines for cafes, restaurants, and hospitality.",
-            "meta_keywords": [
-                "coffee machine",
-                "beverage equipment",
-                "commercial drinks"
-            ],
-            "subcategories": [
-                {
-                    "name": "Juice Dispensers",
-                    "description": "Commercial juice and beverage dispensing systems",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/beverage/2149257466.jpg",
-                    "image_icon": "seeder/categories/beverage/slush-machine_3707382.png"
-                },
-                {
-                    "name": "Tea Urns",
-                    "description": "Large capacity tea brewing and serving urns",
-                    "sort_order": 2,
-                    "image_path": "seeder/categories/beverage/1724235305_BJY-U30-B-800x600.jpg"
-                },
-                {
-                    "name": "Water Boilers",
-                    "description": "Commercial water boiling and hot water dispensing units",
-                    "sort_order": 3,
-                    "image_path": "seeder/categories/beverage/1694427360_WB15A 20A 30A.jpg"
-                },
-                {
-                    "name": "Milk Boilers",
-                    "description": "Professional milk heating and boiling equipment",
-                    "sort_order": 4,
-                    "image_path": "seeder/categories/beverage/1694425478_9228 12& 20 & 36.jpg"
-                },
-                {
-                    "name": "Water Heaters",
-                    "description": "Heavy-duty commercial water heating systems",
-                    "sort_order": 5,
-                    "image_path": "seeder/categories/beverage/1694427777_2610007.jpg"
-                }
-            ]
-        },
-        {
-            "name": "Dishwashers",
-            "image_path": "categories/seeder/dishwashers.jpg",
-            "image_icon": "categories/seeder/milkshake_1092736.png",
-            "show_in_navbar": true,
-            "is_featured": true,
-            "description": "Commercial beverage equipment and coffee machines",
-            "sort_order": 3,
-            "meta_title": "Commercial Beverage Machines | Coffee & Drink Equipment",
-            "meta_description": "Professional beverage machines for cafes, restaurants, and hospitality.",
-            "meta_keywords": [
-                "coffee machine",
-                "beverage equipment",
-                "commercial drinks"
-            ],
-            "subcategories": [
-                {
-                    "name": "Pre Rinse Showers",
-                    "description": "Commercial juice and beverage dispensing systems",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/beverage/2149257466.jpg",
-                    "image_icon": "seeder/categories/beverage/slush-machine_3707382.png"
-                },
-                {
-                    "name": "DISHWASHER RACKS",
-                    "description": "Commercial juice and beverage dispensing systems",
-                    "sort_order": 1,
-                    "image_path": "seeder/categories/beverage/2149257466.jpg",
-                    "image_icon": "seeder/categories/beverage/slush-machine_3707382.png"
-                }
-            ]
-        }
-    ]
-}
+[
+    {
+        "name": "Vegetable Processors",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Commercial vegetable processing equipment designed for efficient cutting, slicing, dicing, and shredding of vegetables in high-volume kitchen environments."
+    },
+    {
+        "name": "Potato Processors",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Specialist potato processing machinery including peelers, chippers, and slicers built to handle large quantities of potatoes with speed and consistency."
+    },
+    {
+        "name": "Meat Processors",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Professional meat processing equipment including mincers, slicers, and tenderisers designed for butcheries, delis, and commercial kitchens."
+    },
+    {
+        "name": "Meat Displays",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "Refrigerated meat display cases and counters that keep fresh and cured meats at optimal temperatures while maximising product visibility for customers."
+    },
+    {
+        "name": "Juice Processors",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Commercial juicing and juice processing equipment including extractors, squeezers, and dispensers for restaurants, juice bars, and catering operations."
+    },
+    {
+        "name": "Refrigeration",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "Commercial refrigeration units including upright fridges, under-counter chillers, and walk-in cold rooms engineered for reliable food preservation in professional settings."
+    },
+    {
+        "name": "Cold Displays",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "Open and closed refrigerated display units ideal for showcasing chilled products such as beverages, dairy, salads, and deli items in retail and foodservice environments."
+    },
+    {
+        "name": "Pastry Displays",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "Elegant display cases designed to present pastries, cakes, and baked goods in an attractive and hygienic manner, suitable for bakeries, cafes, and patisseries."
+    },
+    {
+        "name": "Ice Cream Displays",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "Specialised freezer display units for gelato, sorbet, and ice cream, maintaining precise low temperatures while providing excellent product visibility and easy access."
+    },
+    {
+        "name": "Warm Displays",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Heated display units that keep hot food items at safe serving temperatures, perfect for displaying pies, rotisserie items, and prepared hot foods in retail or foodservice settings."
+    },
+    {
+        "name": "Ovens",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "A comprehensive range of commercial ovens including convection, combi-steam, deck, and pizza ovens built for precision cooking and high-volume output in professional kitchens."
+    },
+    {
+        "name": "Bakery Preparation",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Bakery preparation equipment including dough mixers, proofers, dividers, and moulders designed to streamline production in artisan and industrial baking operations."
+    },
+    {
+        "name": "Buffet & Servery",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Buffet and servery solutions including bain-maries, food warmers, sneeze guards, and serving counters tailored for hotels, canteens, events, and self-service environments."
+    },
+    {
+        "name": "Induction Cookers",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "High-performance commercial induction cookers offering precise temperature control, energy efficiency, and rapid heating for professional kitchens and live cooking stations."
+    },
+    {
+        "name": "GN Containers",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Gastronorm containers in a full range of standard sizes and materials, compatible with commercial ovens, bain-maries, and refrigeration units for versatile food storage and service."
+    },
+    {
+        "name": "Fast Food",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Dedicated fast food equipment including grills, toasters, heat lamps, and holding units engineered for quick-service restaurants and high-throughput food operations."
+    },
+    {
+        "name": "Fryers",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": false,
+        "description": "Commercial deep fryers in countertop and floor-standing models, offering precise oil temperature management and high capacity output for chips, chicken, and fried foods."
+    },
+    {
+        "name": "Beverage Equipment",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": true,
+        "is_featured": true,
+        "description": "A wide range of professional beverage equipment including coffee machines, blenders, water dispensers, and tea urns for cafes, restaurants, hotels, and office environments."
+    },
+    {
+        "name": "Food Transport",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Insulated food transport containers, trolleys, and delivery systems designed to maintain safe food temperatures during transit for catering, healthcare, and events."
+    },
+    {
+        "name": "Hygiene",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Commercial hygiene equipment and consumables including hand wash stations, sanitiser dispensers, and cleaning systems to uphold health and safety standards in food environments."
+    },
+    {
+        "name": "Rational Tablets",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Genuine Rational cleaning tablets formulated for use with Rational combi ovens, ensuring thorough and efficient automated cleaning cycles and prolonged appliance performance."
+    },
+    {
+        "name": "Rational Accessories",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Official Rational accessories including trays, racks, and gastronorm supports designed to expand the functionality and versatility of Rational combi-steam ovens."
+    },
+    {
+        "name": "Cleaning Solutions",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Professional-grade cleaning solutions and detergents for commercial kitchen equipment, surfaces, and utensils, meeting food-safe and industry hygiene compliance standards."
+    },
+    {
+        "name": "Shelving & Storage",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Heavy-duty shelving units, racking systems, and storage solutions built for commercial kitchens, storerooms, and cold rooms to organise ingredients and equipment efficiently."
+    },
+    {
+        "name": "Kitchen Smalls",
+        "image_path": null,
+        "image_icon": null,
+        "show_in_navbar": false,
+        "is_featured": false,
+        "description": "Essential small kitchen tools and utensils including pots, pans, chopping boards, knives, and preparation accessories for everyday use in professional culinary environments."
+    }
+]

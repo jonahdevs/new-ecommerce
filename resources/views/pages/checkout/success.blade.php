@@ -3,31 +3,53 @@
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use App\Models\Order;
-use Illuminate\Support\Facades\Log;
 
 new #[Layout('layouts.guest')] class extends Component {
     public ?Order $order = null;
+    public bool $verifying = false;
 
     public function mount()
     {
-        $token = request()->query('token');
-
-        $sessionToken = session('payment_success_token');
         $orderId = session('payment_success_order_id');
-        $expiresAt = session('payment_success_expires_at');
 
-        if ($orderId) {
-            $this->order = Order::with(['payment', 'items.product', 'user'])->find($orderId);
+        if (!$orderId) {
+            return redirect()->route('checkout.summary')->with('error', 'Session expired. Please contact support if you were charged.');
+        }
+
+        $this->order = Order::with(['payment', 'items.product', 'user'])->find($orderId);
+
+        if (!$this->order) {
+            return redirect()->route('checkout.summary')->with('error', 'Order not found. Please contact support.');
+        }
+
+        // If webhook hasn't fired yet, show verifying state
+        $this->verifying = $this->order->payment_status !== 'paid';
+    }
+
+    public function checkPaymentStatus()
+    {
+        // Stop polling once confirmed
+        if (!$this->verifying) {
+            return;
+        }
+
+        $this->order->refresh();
+
+        if ($this->order->payment->status === 'paid') {
+            $this->verifying = false;
         }
     }
 };
 ?>
 
-
-
-<div class="mx-auto max-w-4xl px-4 py-12">
-
-    @if ($order)
+<div class="mx-auto max-w-4xl px-4 py-12 min-h-[77svh]">
+    @if ($verifying)
+        <div wire:poll.2000ms="checkPaymentStatus" class="flex flex-col items-center text-center py-12">
+            <flux:icon.loading class="size-10 text-primary" />
+            <flux:heading class="text-2xl! mt-4">Verifying Payment</flux:heading>
+            <flux:text class="text-zinc-500 mt-1">Please wait while we confirm your payment...</flux:text>
+        </div>
+    @else
         <div class="flex flex-col items-center text-center">
             <flux:icon.check-circle class="size-12 text-green-500" />
             <flux:heading class="text-2xl! mt-1">Thank you</flux:heading>
@@ -49,10 +71,9 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:heading>{{ $order->created_at->format('M j, Y') }}</flux:heading>
                 </div>
 
-
                 <div class="flex items-center justify-between">
                     <flux:text>Payment method:</flux:text>
-                    <flux:heading>Card</flux:heading>
+                    <flux:heading>{{ ucfirst($order->payment->method ?? 'Card') }}</flux:heading>
                 </div>
 
                 <flux:separator />
@@ -81,10 +102,10 @@ new #[Layout('layouts.guest')] class extends Component {
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <div class="flex justify-between items-start mb-2">
-                                <flux:text class="font-medium ">
+                                <flux:text class="font-medium">
                                     {{ $item->quantity }} × {{ $item->product->name }}
                                 </flux:text>
-                                <flux:text class="font-medium ">
+                                <flux:text class="font-medium">
                                     {{ format_currency($item->price * $item->quantity) }}
                                 </flux:text>
                             </div>
@@ -106,30 +127,22 @@ new #[Layout('layouts.guest')] class extends Component {
             <div class="grid grid-cols-2">
                 <div class="space-y-1">
                     <flux:heading>Contact</flux:heading>
-
                     <flux:text>
                         <span class="text-zinc-800">Email:</span>
                         {{ $order->user?->email ?? ($order->shipping_address['email'] ?? 'N/A') }}
                     </flux:text>
-
                     <flux:text>
                         <span class="text-zinc-800">Phone:</span>
-                        <span>{{ $order->user?->phone_number ?? ($order->shipping_address['phone_number'] ?? 'N/A') }}</span>
+                        {{ $order->user?->phone_number ?? ($order->shipping_address['phone_number'] ?? 'N/A') }}
                     </flux:text>
                 </div>
 
                 <div class="space-y-1">
                     <flux:heading>Shipping Address</flux:heading>
-
                     <flux:text>
-                        {{ !empty($order->shipping_address['first_name']) || !empty($order->shipping_address['last_name'])
-                            ? trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? ''))
-                            : 'N/A' }}
+                        {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: 'N/A' }}
                     </flux:text>
-
-                    <flux:text>
-                        {{ $order->shipping_address['address'] }}
-                    </flux:text>
+                    <flux:text>{{ $order->shipping_address['address'] ?? 'N/A' }}</flux:text>
                 </div>
             </div>
         </div>

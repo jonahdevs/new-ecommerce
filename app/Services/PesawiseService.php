@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -24,93 +25,53 @@ class PesawiseService
         $this->balanceId = config('services.pesawise.balance_id_kes');
     }
 
+
     /**
-     * Create payment order with Pesawise
+     * Create payment order with Pesawise and return the response
      */
     public function createPaymentOrder(Order $order)
     {
-        $payload =         private function buildPayload(Order $order): array
-        {
-            // IMPORTANT: callbackUrl receives BOTH POST webhook AND GET redirect from Pesawise
-            // For local development with ngrok: Set PESAWISE_CALLBACK_BASE_URL in .env
-            // For production: Leave empty to use APP_URL
+        $payload =  $this->buildPayload($order);
 
-            $baseUrl = config('services.pesawise.callback_base_url') ?: config('app.url');
+        $response = Http::withHeaders([
+            'api-key' => $this->apiKey,
+            'api-secret' => $this->apiSecret,
+        ])->post("{$this->apiUrl}/e-com/create-order", $payload);
 
-            // Pesawise sends POST to this URL first with payment data,
-            // then GET when user clicks "Continue" button
-            $callbackUrl = rtrim($baseUrl, '/') . '/payment/callback/success';
-            $cancellationUrl = rtrim($baseUrl, '/') . '/payment/callback/cancel';
-
-            Log::info('Pesawise callback URLs', [
-                'baseUrl' => $baseUrl,
-                'callbackUrl' => $callbackUrl,
-                'externalId' => $order->reference,
+        if ($response->failed()) {
+            Log::error('Pesawise payment creation failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'order_id' => $order->id,
             ]);
-
-            $payload = [
-                'amount' => $order->total,
-                'customerName' => $this->getCustomerName($order),
-                'currency' => "KES",
-                'externalId' => $order->reference,
-                'description' => "Payment for Order #{$order->reference}",
-                'balanceId' => $this->balanceId,
-                'callbackUrl' => $callbackUrl,  // Receives BOTH POST and GET
-                'cancellationUrl' => $cancellationUrl,
-                'notificationId' => (string) $order->id,
-                'timeValidityMinutes' => 30,
-                'customerData' => [
-                    'email' => $order->user?->email ?? '',
-                    'phoneNumber' => $this->getPhoneNumber($order),
-                    'city' => $order->shipping_address['area']['name'] ?? 'Nairobi',
-                    'state' => $order->shipping_address['county']['name'] ?? 'Nairobi County',
-                    'address' => $order->shipping_address['address'] ?? '',
-                    'countryCode' => 'KE',
-                ],
-            ];
-
-            return $payload;
-        }
-;
-
-        try {
-            $response = $this->initiatePayment($payload);
-
-            $this->updatePaymentRecord($order, $response);
-
-            session([
-                'pesawise_payment_order_id' => $order->id,
-                'pesawise_payment_reference' => $order->reference,
-                'pesawise_payment_started_at' => now()->toISOString(),
-            ]);
-
-            return $response;
-        } catch (\Throwable $th) {
             throw new \Exception('Payment gateway request failed. Please try again.');
         }
+
+        $data = $response->json();
+
+        Log::info('Pesawise payment order created', [
+            'order_id' => $order->id,
+            'reference' => $order->reference,
+            'response' => $data,
+        ]);
+
+        $this->updatePaymentRecord($order, $data);
+
+        return $data;
     }
+
 
     private function buildPayload(Order $order): array
     {
-        // Use API route for POST webhook (no CSRF, cleaner handling)
-        $webhookUrl = url('/api/webhooks/pesawise');
-        
-        // Use web route for GET redirect (user clicks "Continue")
-        $callbackUrl = url('/payment/callback/success');
-        $cancellationUrl = url('/payment/callback/cancel');
-
-        // For testing with webhook.site
-        // $webhookUrl = "https://webhook.site/6b0dd07e-93f0-463e-b7d4-eb6dd106b577";
-
-        $payload = [
+        return [
             'amount' => $order->total,
             'customerName' => $this->getCustomerName($order),
-            'currency' => "KES",
+            'currency' => 'KES',
             'externalId' => $order->reference,
             'description' => "Payment for Order #{$order->reference}",
             'balanceId' => $this->balanceId,
-            'callbackUrl' => $webhookUrl,  // GET - user redirect
-            'cancellationUrl' => $cancellationUrl,
+            'callbackUrl' => url('payment/callback/success'),
+            'cancellationUrl' => url('payment/callback/cancel'),
             'notificationId' => (string) $order->id,
             'timeValidityMinutes' => 30,
             'customerData' => [
@@ -122,59 +83,9 @@ class PesawiseService
                 'countryCode' => 'KE',
             ],
         ];
-
-        // Add webhook URL if Pesawise supports it as a separate parameter
-        // Check Pesawise docs - they might have 'webhookUrl' or 'notificationUrl'
-        // $payload['webhookUrl'] = $webhookUrl;
-
-        Log::info('Pesawise payload', [
-            'webhookUrl' => $webhookUrl,
-            'callbackUrl' => $callbackUrl,
-            'externalId' => $order->reference,
-        ]);
-
-        return $payload;
     }
 
-    private function initiatePayment(array $payload)
-    {
-        $curl = curl_init();
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->apiUrl . "/e-com/create-order",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Accept: */*',
-                'api-key: ' . $this->apiKey,
-                'api-secret: ' . $this->apiSecret
-            ),
-        ));
-
-        $response = curl_exec($curl);
-
-        if (curl_errno($curl)) {
-            $error = curl_error($curl);
-            curl_close($curl);
-            Log::error('Pesawise cURL Error: ' . $error);
-            throw new \Exception('Payment gateway connection failed');
-        }
-
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        $decodedResponse = json_decode($response, true);
-
-        Log::info('Pesawise response: ' . json_encode($response, JSON_PRETTY_PRINT));
-        return $decodedResponse;
-    }
 
     private function updatePaymentRecord(Order $order, array $response): void
     {
@@ -195,26 +106,20 @@ class PesawiseService
 
     private function getCustomerName(Order $order): string
     {
-        if ($order->user && $order->user->name) {
+        if ($order->user?->name) {
             return $order->user->name;
         }
 
-        $shippingAddress = $order->shipping_address;
+        $first = $order->shipping_address['first_name'] ?? '';
+        $last = $order->shipping_address['last_name'] ?? '';
 
-        if (!empty($shippingAddress['first_name'])) {
-            $lastName = $shippingAddress['last_name'] ?? '';
-            return trim($shippingAddress['first_name'] . ' ' . $lastName);
-        }
-
-        return 'Guest Customer';
+        return trim("$first $last") ?: 'Guest Customer';
     }
 
     private function getPhoneNumber(Order $order): string
     {
-        if ($order->user && $order->user->phone_number) {
-            return $order->user->phone_number;
-        }
-
-        return $order->shipping_address['phone_number'] ?? '';
+        return $order->user?->phone_number
+            ?? $order->shipping_address['phone_number']
+            ?? '';
     }
 }

@@ -44,7 +44,7 @@ class ProductSeeder extends Seeder
         $this->command->info('🔄 Creating products...');
 
         // First pass: Create all main products and their accessories/cross-sells as products
-        foreach ($data['products'] as $index => $productData) {
+        foreach ($data as $index => $productData) {
             $brand = null;
             $category = null;
 

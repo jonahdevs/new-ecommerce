@@ -33,7 +33,7 @@ class CategorySeeder extends Seeder
             return;
         }
 
-        foreach ($data['categories'] as $categoryData) {
+        foreach ($data as $categoryData) {
             $this->createCategory($categoryData);
         }
     }
@@ -54,10 +54,6 @@ class CategorySeeder extends Seeder
             'is_active' => true,
             'is_featured' => $categoryData['is_featured'] ?? false,
             'show_in_navbar' => $categoryData['show_in_navbar'] ?? false,
-            'sort_order' => $categoryData['sort_order'],
-            'meta_title' => $categoryData['meta_title'],
-            'meta_description' => $categoryData['meta_description'],
-            'meta_keywords' => $categoryData['meta_keywords'],
         ]);
 
         // Create subcategories if they exist

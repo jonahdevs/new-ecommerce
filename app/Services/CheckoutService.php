@@ -45,7 +45,7 @@ class CheckoutService
             }
 
             // 4. Validate minimum order value (if applicable)
-            $summary = app(OrderSummaryService::class)->summary($cart);
+            $summary = app(OrderSummaryService::class)->summary();
             $minOrderValue = config('checkout.minimum_order_value', 0);
             if ($summary['total'] < $minOrderValue) {
                 throw new \Exception("Minimum order value is " . format_currency($minOrderValue));
@@ -55,10 +55,10 @@ class CheckoutService
             $existingOrder = $this->findReusableOrder();
 
             if ($existingOrder) {
-                return $this->reuseExistingOrder($existingOrder, $correlationId);
+                return $this->reuseExistingOrder($existingOrder);
             }
 
-            return $this->createNewOrder($cart, $correlationId);
+            return $this->createNewOrder($cart);
         } catch (\Throwable $th) {
             throw $th;
         } finally {
@@ -88,7 +88,7 @@ class CheckoutService
     /**
      * Reuse existing order instead of creating duplicate
      */
-    private function reuseExistingOrder(Order $existingOrder, string $correlationId)
+    private function reuseExistingOrder(Order $existingOrder)
     {
         // Check if payment link is still valid
         if ($existingOrder->payment->expires_at < now()) {
@@ -105,24 +105,36 @@ class CheckoutService
             throw new \Exception('Payment link not found. Please try again.');
         }
 
-        return redirect()->away($loadUrl);
+        // Store payment details in session for iframe page
+        session([
+            'pesawise_payment_url' => $loadUrl,
+            'pesawise_payment_reference' => $existingOrder->reference,
+        ]);
+
+        return redirect()->route('checkout.payment');
     }
 
     private function createNewOrder(Cart $cart)
     {
         try {
-            return DB::transaction(function () use ($cart) {
-                // 1. Create Order
+            $order = DB::transaction(function () use ($cart) {
                 $order = app(OrderService::class)->createFromCart($cart);
-
-                // 2. Reserve inventory (prevent overselling)
                 app(InventoryService::class)->reserveStock($order);
-
-                // 3. Create Payment session
                 $response = app(PesawiseService::class)->createPaymentOrder($order);
 
-                return redirect()->away($response['createdPaymentOrder']['loadUrl']);
+                // Attach response to order so we can access it after transaction
+                $order->pesawise_load_url = $response['createdPaymentOrder']['loadUrl'];
+
+                return $order;
             });
+
+            // Set session AFTER transaction commits successfully
+            session([
+                'pesawise_payment_url' => $order->pesawise_load_url,
+                'pesawise_payment_reference' => $order->reference,
+            ]);
+
+            return redirect()->route('checkout.payment');
         } catch (\Throwable $th) {
             Log::error('Order creation failed', [
                 'error' => $th->getMessage(),

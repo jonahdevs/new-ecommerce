@@ -104,33 +104,6 @@ new class extends Component {
         <flux:heading>Order Summary</flux:heading>
     </div>
 
-    {{-- Error Alert --}}
-    @if ($errorMessage)
-        <div class="p-3 border-b" x-data="{ show: true }" x-show="show" x-transition>
-            <div
-                class="flex items-start gap-2 p-3 rounded-lg
-                {{ $errorType === 'inventory' ? 'bg-orange-50 border border-orange-200' : 'bg-red-50 border border-red-200' }}">
-                <flux:icon.exclamation-circle
-                    class="size-5 {{ $errorType === 'inventory' ? 'text-orange-600' : 'text-red-600' }} flex-shrink-0 mt-0.5" />
-                <div class="flex-1">
-                    <flux:text class="{{ $errorType === 'inventory' ? 'text-orange-700' : 'text-red-700' }} text-sm">
-                        {{ $errorMessage }}
-                    </flux:text>
-
-                    @if ($errorType === 'address')
-                        <flux:button size="sm" variant="ghost" class="mt-2"
-                            wire:click="$dispatch('open-address-modal')">
-                            Add Address
-                        </flux:button>
-                    @endif
-                </div>
-                <button @click="show = false; $wire.clearError()" class="text-gray-400 hover:text-gray-600">
-                    <flux:icon.x-mark class="size-4" />
-                </button>
-            </div>
-        </div>
-    @endif
-
     {{-- Order Summary Details --}}
     <div class="p-5 flex flex-col gap-2">
         <div class="flex items-center justify-between">

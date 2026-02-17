@@ -25,6 +25,7 @@ Route::livewire('/payment/cancel', 'pages::checkout.cancel')->name('payment.canc
 
 Route::middleware(['auth', 'cart_not_empty'])->group(function () {
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
+    Route::livewire('/checkout/payment', 'pages::checkout.payment')->name('checkout.payment');
 
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
     Route::livewire('/checkout/addresses', 'pages::checkout.address.index')->name('checkout.addresses');
