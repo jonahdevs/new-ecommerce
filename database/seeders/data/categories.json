@@ -41,8 +41,8 @@
     },
     {
         "name": "Refrigeration",
-        "image_path": "categories/refrigeration_icon.png",
-        "image_icon": null,
+        "image_path": null,
+        "image_icon": "categories/refrigeration_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
         "description": "Commercial refrigeration units including upright fridges, under-counter chillers, and walk-in cold rooms engineered for reliable food preservation in professional settings."
