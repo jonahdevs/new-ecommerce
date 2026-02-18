@@ -85,7 +85,7 @@ return new class extends Migration {
 
             // Weight range (in KG)
             $table->decimal('min_weight', 8, 2);   // e.g. 0.00
-            $table->decimal('max_weight', 8, 2);   // e.g. 5.00
+            $table->decimal('max_weight', 8, 2)->nullable();   // e.g. 5.00
 
             // Price for this range & zone
             $table->decimal('price', 10, 2);       // e.g. 450.00

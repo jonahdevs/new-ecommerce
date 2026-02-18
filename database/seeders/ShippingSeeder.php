@@ -53,7 +53,7 @@ class ShippingSeeder extends Seeder
             $this->createPickupStations();
 
             $this->command->info('🎁 Creating free shipping rules...');
-            $this->createFreeShippingRules($zones);
+            // $this->createFreeShippingRules($zones);
 
             DB::commit();
             $this->command->info('✅ Successfully seeded all shipping data!');
@@ -107,47 +107,18 @@ class ShippingSeeder extends Seeder
     private function createShippingZones(): array
     {
         $zoneDefinitions = [
-            'Nairobi' => [
-                'name' => 'Nairobi Region',
-                'code' => 'NAIROBI',
-                'description' => 'Nairobi County and immediate suburbs',
+            'NAIROBI' => [
+                'name' => 'Nairobi',
+                'code' => 'NRB',
+                'description' => 'All delivery locations within Nairobi County including CBD and surrounding metropolitan areas.',
             ],
-            'Central' => [
-                'name' => 'Central Region',
-                'code' => 'CENTRAL',
-                'description' => 'Central Kenya counties',
-            ],
-            'Coast' => [
-                'name' => 'Coast Region',
-                'code' => 'COAST',
-                'description' => 'Coastal counties',
-            ],
-            'Eastern' => [
-                'name' => 'Eastern Region',
-                'code' => 'EASTERN',
-                'description' => 'Eastern Kenya counties',
-            ],
-            'North Eastern' => [
-                'name' => 'North Eastern Region',
-                'code' => 'NORTH_EASTERN',
-                'description' => 'North Eastern counties',
-            ],
-            'Western' => [
-                'name' => 'Western Region',
-                'code' => 'WESTERN',
-                'description' => 'Western Kenya counties',
-            ],
-            'Nyanza' => [
-                'name' => 'Nyanza Region',
-                'code' => 'NYANZA',
-                'description' => 'Nyanza counties',
-            ],
-            'Rift Valley' => [
-                'name' => 'Rift Valley Region',
-                'code' => 'RIFT_VALLEY',
-                'description' => 'Rift Valley counties',
+            'UPCOUNTRY' => [
+                'name' => 'Upcountry',
+                'code' => 'UPC',
+                'description' => 'All delivery locations outside Nairobi County including major towns and counties across Kenya.',
             ],
         ];
+
 
         $zones = [];
 
@@ -205,14 +176,18 @@ class ShippingSeeder extends Seeder
     {
         // Standard Delivery Rates
         $standardRates = [
-            'Nairobi' => [
-                ['min' => 0, 'max' => 1, 'price' => 200, 'days_min' => 1, 'days_max' => 2],
-                ['min' => 1, 'max' => 5, 'price' => 350, 'days_min' => 1, 'days_max' => 3],
-                ['min' => 5, 'max' => 10, 'price' => 500, 'days_min' => 2, 'days_max' => 3],
-                ['min' => 10, 'max' => 20, 'price' => 800, 'days_min' => 2, 'days_max' => 4],
-                ['min' => 20, 'max' => 50, 'price' => 1500, 'days_min' => 3, 'days_max' => 5],
+            'NAIROBI' => [
+                ['min' => 0, 'max' => 5, 'price' => 400, 'days_min' => 1, 'days_max' => 2],
+                ['min' => 5.1, 'max' => 20, 'price' => 800, 'days_min' => 1, 'days_max' => 3],
+                ['min' => 20.1, 'max' => 60, 'price' => 1200, 'days_min' => 2, 'days_max' => 3],
+                ['min' => 60.1, 'max' => null, 'price' => 1800, 'days_min' => 2, 'days_max' => 4],
             ],
-            // Add other zones with similar structure...
+            'UPCOUNTRY' => [
+                ['min' => 0, 'max' => 5, 'price' => 600, 'days_min' => 2, 'days_max' => 4],
+                ['min' => 5.1, 'max' => 20, 'price' => 1200, 'days_min' => 3, 'days_max' => 5],
+                ['min' => 20.1, 'max' => 60, 'price' => 1800, 'days_min' => 4, 'days_max' => 6],
+                ['min' => 60.1, 'max' => null, 'price' => 2700, 'days_min' => 5, 'days_max' => 7],
+            ],
         ];
 
         // Express Delivery Rates (30% more expensive, 50% faster)

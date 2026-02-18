@@ -23,21 +23,21 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // If webhook hasn't fired yet, show verifying state
-        $this->verifying = $this->order->payment_status !== 'paid';
+        // $this->verifying = $this->order->payment_status !== 'paid';
     }
 
     public function checkPaymentStatus()
     {
         // Stop polling once confirmed
-        if (!$this->verifying) {
-            return;
-        }
+        // if (!$this->verifying) {
+        //     return;
+        // }
 
         $this->order->refresh();
 
-        if ($this->order->payment->status === 'paid') {
-            $this->verifying = false;
-        }
+        // if ($this->order->payment->status === 'paid') {
+        //     $this->verifying = false;
+        // }
     }
 };
 ?>

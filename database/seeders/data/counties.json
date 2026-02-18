@@ -4,7 +4,7 @@
             "id": 1,
             "name": "Mombasa",
             "number": "001",
-            "region": "Coast",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Mombasa CBD",
                 "Nyali",
@@ -19,7 +19,7 @@
             "id": 2,
             "name": "Kwale",
             "number": "002",
-            "region": "Coast",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kwale",
                 "Ukunda",
@@ -32,7 +32,7 @@
             "id": 3,
             "name": "Kilifi",
             "number": "003",
-            "region": "Coast",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kilifi",
                 "Malindi",
@@ -45,7 +45,7 @@
             "id": 4,
             "name": "Tana River",
             "number": "004",
-            "region": "Coast",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Hola",
                 "Garsen",
@@ -56,7 +56,7 @@
             "id": 5,
             "name": "Lamu",
             "number": "005",
-            "region": "Coast",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Lamu Town",
                 "Mpeketoni",
@@ -67,7 +67,7 @@
             "id": 6,
             "name": "Taita Taveta",
             "number": "006",
-            "region": "Coast",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Voi",
                 "Wundanyi",
@@ -79,7 +79,7 @@
             "id": 7,
             "name": "Garissa",
             "number": "007",
-            "region": "North Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Garissa Town",
                 "Dadaab",
@@ -90,7 +90,7 @@
             "id": 8,
             "name": "Wajir",
             "number": "008",
-            "region": "North Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Wajir Town",
                 "Habaswein",
@@ -101,7 +101,7 @@
             "id": 9,
             "name": "Mandera",
             "number": "009",
-            "region": "North Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Mandera Town",
                 "Elwak",
@@ -112,7 +112,7 @@
             "id": 10,
             "name": "Marsabit",
             "number": "010",
-            "region": "North Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Marsabit Town",
                 "Moyale",
@@ -123,7 +123,7 @@
             "id": 11,
             "name": "Isiolo",
             "number": "011",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Isiolo Town",
                 "Garbatulla",
@@ -134,7 +134,7 @@
             "id": 12,
             "name": "Meru",
             "number": "012",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Meru Town",
                 "Maua",
@@ -146,7 +146,7 @@
             "id": 13,
             "name": "Tharaka Nithi",
             "number": "013",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Chuka",
                 "Kathwana",
@@ -157,7 +157,7 @@
             "id": 14,
             "name": "Embu",
             "number": "014",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Embu Town",
                 "Siakago",
@@ -168,7 +168,7 @@
             "id": 15,
             "name": "Kitui",
             "number": "015",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kitui Town",
                 "Mwingi",
@@ -179,7 +179,7 @@
             "id": 16,
             "name": "Machakos",
             "number": "016",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Machakos Town",
                 "Athi River",
@@ -192,7 +192,7 @@
             "id": 17,
             "name": "Makueni",
             "number": "017",
-            "region": "Eastern",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Wote",
                 "Makindu",
@@ -204,7 +204,7 @@
             "id": 18,
             "name": "Nyandarua",
             "number": "018",
-            "region": "Central",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Ol Kalou",
                 "Nyahururu",
@@ -215,7 +215,7 @@
             "id": 19,
             "name": "Nyeri",
             "number": "019",
-            "region": "Central",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Nyeri Town",
                 "Karatina",
@@ -227,7 +227,7 @@
             "id": 20,
             "name": "Kirinyaga",
             "number": "020",
-            "region": "Central",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kerugoya",
                 "Kutus",
@@ -239,7 +239,7 @@
             "id": 21,
             "name": "Murang'a",
             "number": "021",
-            "region": "Central",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Murang'a Town",
                 "Kenol",
@@ -251,7 +251,7 @@
             "id": 22,
             "name": "Kiambu",
             "number": "022",
-            "region": "Central",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Thika",
                 "Kikuyu",
@@ -268,7 +268,7 @@
             "id": 23,
             "name": "Turkana",
             "number": "023",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Lodwar",
                 "Kakuma",
@@ -279,7 +279,7 @@
             "id": 24,
             "name": "West Pokot",
             "number": "024",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kapenguria",
                 "Makutano",
@@ -290,7 +290,7 @@
             "id": 25,
             "name": "Samburu",
             "number": "025",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Maralal",
                 "Baragoi",
@@ -301,7 +301,7 @@
             "id": 26,
             "name": "Trans Nzoia",
             "number": "026",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kitale",
                 "Endebess",
@@ -312,7 +312,7 @@
             "id": 27,
             "name": "Uasin Gishu",
             "number": "027",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Eldoret",
                 "Burnt Forest",
@@ -324,7 +324,7 @@
             "id": 28,
             "name": "Elgeyo Marakwet",
             "number": "028",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Iten",
                 "Kapcherop",
@@ -335,7 +335,7 @@
             "id": 29,
             "name": "Nandi",
             "number": "029",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kapsabet",
                 "Mosoriot",
@@ -346,7 +346,7 @@
             "id": 30,
             "name": "Baringo",
             "number": "030",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kabarnet",
                 "Marigat",
@@ -357,7 +357,7 @@
             "id": 31,
             "name": "Laikipia",
             "number": "031",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Nanyuki",
                 "Nyahururu",
@@ -368,7 +368,7 @@
             "id": 32,
             "name": "Nakuru",
             "number": "032",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Nakuru Town",
                 "Naivasha",
@@ -382,7 +382,7 @@
             "id": 33,
             "name": "Narok",
             "number": "033",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Narok Town",
                 "Kilgoris",
@@ -393,7 +393,7 @@
             "id": 34,
             "name": "Kajiado",
             "number": "034",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kajiado Town",
                 "Ngong",
@@ -407,7 +407,7 @@
             "id": 35,
             "name": "Kericho",
             "number": "035",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kericho Town",
                 "Litein",
@@ -419,7 +419,7 @@
             "id": 36,
             "name": "Bomet",
             "number": "036",
-            "region": "Rift Valley",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Bomet Town",
                 "Sotik",
@@ -430,7 +430,7 @@
             "id": 37,
             "name": "Kakamega",
             "number": "037",
-            "region": "Western",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kakamega Town",
                 "Mumias",
@@ -443,7 +443,7 @@
             "id": 38,
             "name": "Vihiga",
             "number": "038",
-            "region": "Western",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Mbale",
                 "Hamisi",
@@ -454,7 +454,7 @@
             "id": 39,
             "name": "Bungoma",
             "number": "039",
-            "region": "Western",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Bungoma Town",
                 "Webuye",
@@ -466,7 +466,7 @@
             "id": 40,
             "name": "Busia",
             "number": "040",
-            "region": "Western",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Busia Town",
                 "Malaba",
@@ -477,7 +477,7 @@
             "id": 41,
             "name": "Siaya",
             "number": "041",
-            "region": "Nyanza",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Siaya Town",
                 "Bondo",
@@ -489,7 +489,7 @@
             "id": 42,
             "name": "Kisumu",
             "number": "042",
-            "region": "Nyanza",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kisumu City",
                 "Ahero",
@@ -501,7 +501,7 @@
             "id": 43,
             "name": "Homa Bay",
             "number": "043",
-            "region": "Nyanza",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Homa Bay Town",
                 "Ndhiwa",
@@ -513,7 +513,7 @@
             "id": 44,
             "name": "Migori",
             "number": "044",
-            "region": "Nyanza",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Migori Town",
                 "Rongo",
@@ -525,7 +525,7 @@
             "id": 45,
             "name": "Kisii",
             "number": "045",
-            "region": "Nyanza",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Kisii Town",
                 "Ogembo",
@@ -537,7 +537,7 @@
             "id": 46,
             "name": "Nyamira",
             "number": "046",
-            "region": "Nyanza",
+            "region": "UPCOUNTRY",
             "main_towns": [
                 "Nyamira Town",
                 "Kebirigo",
@@ -548,7 +548,7 @@
             "id": 47,
             "name": "Nairobi",
             "number": "047",
-            "region": "Nairobi",
+            "region": "NAIROBI",
             "main_towns": [
                 "Nairobi CBD",
                 "Westlands",

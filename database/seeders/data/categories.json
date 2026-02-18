@@ -1,10 +1,10 @@
 [
     {
         "name": "Vegetable Processors",
-        "image_path": null,
+        "image_path": "categories/vegetable_processors.jpeg",
         "image_icon": "categories/vegetable_processors_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "Commercial vegetable processing equipment designed for efficient cutting, slicing, dicing, and shredding of vegetables in high-volume kitchen environments."
     },
     {
@@ -17,15 +17,15 @@
     },
     {
         "name": "Meat Processors",
-        "image_path": null,
+        "image_path": "categories/meat_processors.jpeg",
         "image_icon": "categories/meat_processors_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "Professional meat processing equipment including mincers, slicers, and tenderisers designed for butcheries, delis, and commercial kitchens."
     },
     {
         "name": "Meat Displays",
-        "image_path": null,
+        "image_path": "categories/meat_display.jpg",
         "image_icon": "categories/meat_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
@@ -33,15 +33,15 @@
     },
     {
         "name": "Juice Processors",
-        "image_path": null,
+        "image_path": "categories/juice_processors.jpeg",
         "image_icon": "categories/juice_processors_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "Commercial juicing and juice processing equipment including extractors, squeezers, and dispensers for restaurants, juice bars, and catering operations."
     },
     {
         "name": "Refrigeration",
-        "image_path": null,
+        "image_path": "categories/refrigeration.png",
         "image_icon": "categories/refrigeration_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
@@ -49,7 +49,7 @@
     },
     {
         "name": "Cold Displays",
-        "image_path": null,
+        "image_path": "categories/cold_display.jpg",
         "image_icon": "categories/cold_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
@@ -57,7 +57,7 @@
     },
     {
         "name": "Pastry Displays",
-        "image_path": null,
+        "image_path": "categories/pastry_display.jpg",
         "image_icon": "categories/pastry_display_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
@@ -81,7 +81,7 @@
     },
     {
         "name": "Ovens",
-        "image_path": null,
+        "image_path": "categories/ovens.jpg",
         "image_icon": "categories/ovens_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
@@ -89,26 +89,26 @@
     },
     {
         "name": "Bakery Preparation",
-        "image_path": null,
+        "image_path": "categories/bakery_preparation.jpg",
         "image_icon": "categories/bakery_preparation_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "Bakery preparation equipment including dough mixers, proofers, dividers, and moulders designed to streamline production in artisan and industrial baking operations."
     },
     {
         "name": "Buffet & Servery",
-        "image_path": null,
+        "image_path": "categories/buffet_servery.jpg",
         "image_icon": "categories/buffet_servery_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "Buffet and servery solutions including bain-maries, food warmers, sneeze guards, and serving counters tailored for hotels, canteens, events, and self-service environments."
     },
     {
         "name": "Induction Cookers",
-        "image_path": null,
+        "image_path": "categories/induction_cookers.jpg",
         "image_icon": "categories/induction_cooker_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "High-performance commercial induction cookers offering precise temperature control, energy efficiency, and rapid heating for professional kitchens and live cooking stations."
     },
     {
@@ -129,15 +129,15 @@
     },
     {
         "name": "Fryers",
-        "image_path": null,
+        "image_path": "categories/fryers.jpg",
         "image_icon": "categories/fryers_icon.png",
         "show_in_navbar": true,
-        "is_featured": false,
+        "is_featured": true,
         "description": "Commercial deep fryers in countertop and floor-standing models, offering precise oil temperature management and high capacity output for chips, chicken, and fried foods."
     },
     {
         "name": "Beverage Equipment",
-        "image_path": null,
+        "image_path": "categories/beverage_equipment.jpeg",
         "image_icon": "categories/beverage_equipment_icon.png",
         "show_in_navbar": true,
         "is_featured": true,
