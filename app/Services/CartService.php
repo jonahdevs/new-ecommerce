@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
@@ -235,10 +236,20 @@ class CartService
         }
     }
 
-    public function clear(): void
+    public function clear(User $user = null): void
     {
         try {
+            if ($user) {
+                $user->cart->items()->delete();
+                return;
+            }
+
             $cart = $this->getCart();
+
+            Log::info('Clearing cart', [
+                'cart_id' => $cart->id,
+                'user_id' => $cart->user_id,
+            ]);
             $cart->items()->delete();
         } catch (Exception $e) {
             Log::error('Error clearing cart', [

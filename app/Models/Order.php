@@ -14,6 +14,7 @@ class Order extends Model
         'user_id',
         'reference',
         'status',
+        'payment_status',
         'currency',
         'subtotal_cents',
         'discount_cents',

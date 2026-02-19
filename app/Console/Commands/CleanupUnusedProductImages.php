@@ -22,7 +22,7 @@ class CleanupUnusedProductImages extends Command
      *
      * @var string
      */
-    protected $description = 'Clean up unused product images from storage/app/public/products/seeder that are not referenced in products.json';
+    protected $description = 'Clean up unused product images from storage that are not referenced in products.json (checks both image and gallery fields)';
 
     /**
      * Execute the console command.
@@ -163,7 +163,7 @@ class CleanupUnusedProductImages extends Command
         $images = collect();
 
         foreach ($products as $product) {
-            // Check for 'image' field
+            // Check for 'image' field (single image)
             if (isset($product['image']) && !empty($product['image'])) {
                 $imagePath = $product['image'];
                 // Extract just the filename from the path
@@ -171,7 +171,17 @@ class CleanupUnusedProductImages extends Command
                 $images->push($filename);
             }
 
-            // Check for 'images' array field (if you have multiple images)
+            // Check for 'gallery' field (array of images)
+            if (isset($product['gallery']) && is_array($product['gallery'])) {
+                foreach ($product['gallery'] as $imagePath) {
+                    if (!empty($imagePath)) {
+                        $filename = basename($imagePath);
+                        $images->push($filename);
+                    }
+                }
+            }
+
+            // Check for 'images' array field (if you have multiple images with different key)
             if (isset($product['images']) && is_array($product['images'])) {
                 foreach ($product['images'] as $imagePath) {
                     if (!empty($imagePath)) {

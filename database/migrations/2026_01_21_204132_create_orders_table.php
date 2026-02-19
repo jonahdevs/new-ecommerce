@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reference')->unique();
             $table->string('status')->default('pending');
+            $table->string('payment_status')->default('pending');
             $table->string('currency', 3)->default('KES');
 
             $table->bigInteger('subtotal_cents')->default(0);
@@ -35,6 +36,7 @@ return new class extends Migration {
             $table->json('billing_address')->nullable();
 
             $table->timestamp('placed_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
 
             // Indexes

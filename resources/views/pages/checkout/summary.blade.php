@@ -77,8 +77,8 @@ new #[Layout('layouts.guest')] class extends Component {
         <!-- Checkout Summary Header -->
         <flux:heading level="1" class="text-2xl! font-bold!">Checkout Summary</flux:heading>
 
-        <div class="mt-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-3 space-y-4">
+        <div class="mt-4 md:gap-6 lg:flex lg:items-start">
+            <div class="lg:flex-1 space-y-4">
                 <!-- Customer Address Section -->
                 <div class="border rounded-sm bg-white">
                     <div class="px-4 py-2 border-b flex items-center justify-between">
@@ -168,7 +168,7 @@ new #[Layout('layouts.guest')] class extends Component {
             </div>
 
             <!-- Order Summary Sidebar -->
-            <div class="lg:col-span-1">
+            <div class="w-full max-w-sm">
                 <livewire:order-summary />
             </div>
         </div>

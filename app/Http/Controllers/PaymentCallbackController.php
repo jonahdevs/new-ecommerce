@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -67,8 +67,9 @@ class PaymentCallbackController extends Controller
         // Clear session regardless
         $this->clearPaymentSession();
 
-        return redirect()->route('checkout.summary')
-            ->with('error', 'Payment was cancelled. Please try again.');
+        return $this->breakOutOfIframe(
+            route('checkout.summary', [], true) . '?cancelled=1'
+        );
     }
 
 
@@ -78,6 +79,8 @@ class PaymentCallbackController extends Controller
 
         try {
             $data = $request->json()->all();
+
+            log::info('Webhook payload: ' . json_encode($data, JSON_PRETTY_PRINT));
 
             $status = $data['status'] ?? null;
             $externalId = $data['externalId'] ?? null;
@@ -145,7 +148,11 @@ class PaymentCallbackController extends Controller
             return $this->breakOutOfIframe(route('checkout.summary'));
         }
 
-        session(['payment_success_order_id' => $order->id]);
+        session([
+            'payment_success_order_id' => $order->id,
+            'payment_success_expires_at' => now()->addMinutes(5)->timestamp,
+        ]);
+
         $this->clearPaymentSession();
 
         return $this->breakOutOfIframe(route('checkout.success-page'));
@@ -185,6 +192,8 @@ class PaymentCallbackController extends Controller
                     'confirmed_at' => now()->toISOString(),
                 ],
             ]);
+
+            app(CartService::class)->clear($order->user);
         });
 
         Log::info('Payment processed successfully', [

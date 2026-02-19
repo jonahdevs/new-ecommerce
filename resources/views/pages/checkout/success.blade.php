@@ -6,14 +6,21 @@ use App\Models\Order;
 
 new #[Layout('layouts.guest')] class extends Component {
     public ?Order $order = null;
-    public bool $verifying = false;
+    public bool $verifying = true;
 
     public function mount()
     {
         $orderId = session('payment_success_order_id');
+        $expiresAt = session('payment_success_expires_at');
 
         if (!$orderId) {
             return redirect()->route('checkout.summary')->with('error', 'Session expired. Please contact support if you were charged.');
+        }
+
+        // Check expiry
+        if (!$expiresAt || now()->timestamp > $expiresAt) {
+            session()->forget(['payment_success_order_id', 'payment_success_expires_at']);
+            return redirect()->route('customer.orders.index')->with('info', 'Looking for your order? You can find it here.');
         }
 
         $this->order = Order::with(['payment', 'items.product', 'user'])->find($orderId);
@@ -23,26 +30,26 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // If webhook hasn't fired yet, show verifying state
-        // $this->verifying = $this->order->payment_status !== 'paid';
+        $this->verifying = $this->order->payment_status !== 'paid';
     }
 
     public function checkPaymentStatus()
     {
         // Stop polling once confirmed
-        // if (!$this->verifying) {
-        //     return;
-        // }
+        if (!$this->verifying) {
+            return;
+        }
 
         $this->order->refresh();
 
-        // if ($this->order->payment->status === 'paid') {
-        //     $this->verifying = false;
-        // }
+        if ($this->order->payment->status === 'paid') {
+            $this->verifying = false;
+        }
     }
 };
 ?>
 
-<div class="mx-auto max-w-4xl px-4 py-12 min-h-[77svh]">
+<div class="mx-auto max-w-3xl px-4 py-12 min-h-[77svh]">
     @if ($verifying)
         <div wire:poll.2000ms="checkPaymentStatus" class="flex flex-col items-center text-center py-12">
             <flux:icon.loading class="size-10 text-primary" />
@@ -57,7 +64,7 @@ new #[Layout('layouts.guest')] class extends Component {
             <flux:text class="text-xs!">You will receive an email confirmation shortly</flux:text>
         </div>
 
-        <flux:card class="mt-3">
+        <flux:card class="mt-5">
             <flux:heading>Order details</flux:heading>
 
             <div class="space-y-3 mt-3">
@@ -106,7 +113,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                     {{ $item->quantity }} × {{ $item->product->name }}
                                 </flux:text>
                                 <flux:text class="font-medium">
-                                    {{ format_currency($item->price * $item->quantity) }}
+                                    {{ format_currency($item->unit_price * $item->quantity) }}
                                 </flux:text>
                             </div>
                         </div>
@@ -139,12 +146,60 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 <div class="space-y-1">
                     <flux:heading>Shipping Address</flux:heading>
+
+                    {{-- Full name --}}
                     <flux:text>
                         {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: 'N/A' }}
                     </flux:text>
+
+                    {{-- Phone --}}
+                    <flux:text>
+                        {{ $order->shipping_address['phone_number'] ?? 'N/A' }}
+                    </flux:text>
+
+                    {{-- Street address --}}
                     <flux:text>{{ $order->shipping_address['address'] ?? 'N/A' }}</flux:text>
+
+                    {{-- Area & County (from your Pesawise payload structure) --}}
+                    @if (!empty($order->shipping_address['area']['name']))
+                        <flux:text>{{ $order->shipping_address['area']['name'] }}</flux:text>
+                    @endif
+
+                    @if (!empty($order->shipping_address['county']['name']))
+                        <flux:text>{{ $order->shipping_address['county']['name'] }}</flux:text>
+                    @endif
+
+                    {{-- Country --}}
+                    <flux:text>Kenya</flux:text>
                 </div>
             </div>
+        </div>
+
+        <flux:separator />
+
+        <div class="mt-8 flex flex-col items-center space-y-4">
+            <div class="text-center">
+                <flux:heading size="lg">What's next?</flux:heading>
+                <flux:text class="mt-1">We'll notify you once your order is dispatched.</flux:text>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {{-- View Order Button --}}
+                <flux:button :href="route('customer.orders.show', $order->id)" wire:navigate variant="filled"
+                    class="w-full sm:w-48">
+                    View Order
+                </flux:button>
+
+                {{-- Back to Shopping Button --}}
+                <flux:button :href="route('products')" wire:navigate variant="outline" class="w-full sm:w-48">
+                    Continue Shopping
+                </flux:button>
+            </div>
+
+            <flux:text class="text-sm">
+                Need help? <a href="/contact" class="text-primary underline underline-offset-4">Contact our support
+                    team</a>
+            </flux:text>
         </div>
     @endif
 </div>
