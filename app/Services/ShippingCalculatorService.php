@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Cart;
+use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Models\ShippingRate;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -192,32 +194,35 @@ class ShippingCalculatorService
      * @param int|null $areaId
      * @return float
      */
-    public function calculateForProduct($product, int $quantity = 1, $user = null, $countyId = null, $areaId = null)
+    public function calculateForProduct(Product $product, int $quantity = 1, ?User $user = null, ?int $countyId = null, ?int $areaId = null, ?int $variantId = null)
     {
-        // Calculate product weight
-        $productWeight = $product->weight ?? 0;
-        $totalWeight = $productWeight * $quantity;
+        // Resolve weight - prefer variant weight if provided
+        $weight = $product->weight ?? 0;
 
-        // Apply minimum weight if needed
-        $minWeight = config('shipping.min_order_weight_kg', 0.1);
-        $totalWeight = max($totalWeight, $minWeight);
+        if ($variantId) {
+            $variant = $product->variants->find($variantId)
+                ?? $product->variants()->find($variantId);
+            $weight = $variant?->weight ?? $weight;
+        }
 
-        // Get shipping zone
+        $totalWeight = max($weight * $quantity, config('shipping.min_order_weight_kg', 0.1));
+
+        // Get Shipping zone
         $shippingZoneId = $this->resolveShippingZone($user, $countyId, $areaId);
 
         // Get shipping method
         try {
             $shippingMethodId = $this->getPreferredShippingMethodId($user);
-        } catch (\Exception $e) {
-            // Fallback to first active method if default not found
-            $fallbackMethod = ShippingMethod::where('is_active', true)->first();
-            $shippingMethodId = $fallbackMethod ? $fallbackMethod->id : 1;
+        } catch (\Throwable $th) {
+            $fallback = ShippingMethod::active()->first();
+            if (!$fallback)
+                throw new \Exception('No active shipping method found.');
+            $shippingMethodId = $fallback->id;
         }
 
-        // Calculate shipping rate
-        $rate = $this->getShippingRate($shippingZoneId, $shippingMethodId, $totalWeight);
+        logger()->info('Test');
 
-        return (float) $rate;
+        return $this->getShippingRate($shippingZoneId, $shippingMethodId, $totalWeight);
     }
 
     /**

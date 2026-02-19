@@ -16,25 +16,27 @@ use App\Models\ReviewHelpfulness;
 
 new #[Layout('layouts.guest')] class extends Component {
     public Product $product;
+
+    // Status flags
     public bool $wishlisted = false;
     public bool $inCompare = false;
     public bool $inCart = false;
 
+    // Location state
     public $selectedCounty = '';
     public $selectedArea = '';
 
+    // UI State
     public string $selectedTab = 'description';
+    public int $reviewsToShow = 5;
 
-    // cart management
+    // Cart State
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
-
-    public int $reviewsToShow = 5;
 
     public function mount(Product $product, WishlistService $wishlist, CompareService $compareService, CartService $cartService)
     {
         $productService = app(ProductService::class);
-
         $productService->recordView($product);
         $productService->rememberRecentlyViewed($product);
 
@@ -55,27 +57,54 @@ new #[Layout('layouts.guest')] class extends Component {
             }
         }
 
-        if (auth()->check() && auth()->user()->defaultAddress) {
-            $this->selectedCounty = auth()->user()->defaultAddress->county?->id;
-            $this->selectedArea = auth()->user()->defaultAddress->area?->id;
-        }
+        $this->initializeLocation();
     }
 
-    public function toggleWishlist(WishlistService $wishlistService)
+    protected function initializeLocation(): void
+    {
+        $user = auth()->user();
+
+        if ($user?->defaultAddress) {
+            // Eager load to avoid lazy load on county/area relationships
+            $user->defaultAddress->loadMissing(['county', 'area']);
+            $this->selectedCounty = $user->defaultAddress->county_id;
+            $this->selectedArea = $user->defaultAddress->area_id;
+            return;
+        }
+
+        // Guest or authenticated with no address - default to Nairobi
+        $nairobi = County::where('name', 'Nairobi')->first();
+        $this->selectedCounty = $nairobi?->id;
+        $this->selectedArea = null;
+    }
+
+    // -----------------------------------------------------------------------
+    // Wishlist
+    // -----------------------------------------------------------------------
+
+    public function toggleWishlist(WishlistService $wishlistService): void
     {
         try {
-            $added = $wishlistService->toggle($this->product?->id);
+            $added = $wishlistService->toggle($this->product->id);
             $this->wishlisted = $added;
 
             $this->dispatch('wishlist-updated');
-
             $this->dispatch('notify', variant: 'success', message: $added ? 'Added to wishlist' : 'Removed from wishlist');
         } catch (\Throwable $th) {
+            logger()->error('Wishlist toggle failed', [
+                'product_id' => $this->product->id ?? null,
+                'user_id' => auth()->id(),
+                'component' => static::class,
+            ]);
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
         }
     }
 
-    public function toggleCompare(CompareService $compareService)
+    // -----------------------------------------------------------------------
+    // Compare
+    // -----------------------------------------------------------------------
+
+    public function toggleCompare(CompareService $compareService): void
     {
         try {
             $added = $compareService->toggle($this->product->id);
@@ -87,11 +116,12 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->dispatch('notify', variant: 'success', message: $added ? 'Added to comparison' : 'Removed from comparison');
         } catch (\Exception $e) {
             $this->dispatch('notify', variant: 'danger', message: $e->getMessage() ?: 'Unable to update comparison');
-        } finally {
-            $this->loading = false;
         }
     }
 
+    // -----------------------------------------------------------------------
+    // Cart
+    // -----------------------------------------------------------------------
     public function addToCart(CartService $cartService)
     {
         try {
@@ -99,6 +129,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->inCart = true;
             $cartItem = $cartService->getCartItem($this->product->id);
+
             if ($cartItem) {
                 $this->cartItemId = $cartItem->id;
                 $this->cartQuantity = $cartItem->quantity;
@@ -114,27 +145,21 @@ new #[Layout('layouts.guest')] class extends Component {
     public function increaseCartQuantity(CartService $cartService)
     {
         try {
+            $newQuantity = $this->cartQuantity + 1;
+
+            if ($newQuantity > $this->product->stock_quantity) {
+                $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
+                return;
+            }
+
             if ($this->inCart && $this->cartItemId) {
-                // Product is in cart - update cart quantity
-                $newQuantity = $this->cartQuantity + 1;
-
-                if ($newQuantity > $this->product->stock_quantity) {
-                    $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
-                    return;
-                }
-
                 $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
                 $this->cartQuantity = $newQuantity;
-
-                $this->dispatch('cart-updated');
             } else {
-                // Product not in cart - just increase local quantity
-                if ($this->cartQuantity < $this->product->stock_quantity) {
-                    $this->cartQuantity++;
-                } else {
-                    $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
-                }
+                $this->cartQuantity++;
             }
+
+            $this->dispatch('cart-updated');
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update quantity');
         }
@@ -143,27 +168,21 @@ new #[Layout('layouts.guest')] class extends Component {
     public function decreaseCartQuantity(CartService $cartService)
     {
         try {
+            $newQuantity = $this->cartQuantity - 1;
+
+            if ($newQuantity < 1) {
+                $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
+                return;
+            }
+
             if ($this->inCart && $this->cartItemId) {
-                // Product is in cart - update cart quantity
-                $newQuantity = $this->cartQuantity - 1;
-
-                if ($newQuantity < 1) {
-                    $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
-                    return;
-                }
-
                 $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
                 $this->cartQuantity = $newQuantity;
-
-                $this->dispatch('cart-updated');
             } else {
-                // Product not in cart - just decrease local quantity
-                if ($this->cartQuantity > 1) {
-                    $this->cartQuantity--;
-                } else {
-                    $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
-                }
+                $this->cartQuantity--;
             }
+
+            $this->dispatch('cart-updated');
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update quantity');
         }
@@ -188,6 +207,16 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
+    // -----------------------------------------------------------------------
+    // Location / Shipping
+    // -----------------------------------------------------------------------
+
+    public function updatedSelectedCounty()
+    {
+        $this->selectedArea = null;
+        unset($this->areas);
+    }
+
     #[Computed]
     public function counties()
     {
@@ -204,48 +233,59 @@ new #[Layout('layouts.guest')] class extends Component {
         return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get();
     }
 
-    public function updatedSelectedCounty()
+    #[Computed]
+    public function estimatedShipping()
     {
-        $this->reset('selectedArea');
+        // Don't calculate without at minimum a county selected
+        if (!$this->selectedCounty) {
+            return null;
+        }
+
+        return app(ShippingCalculatorService::class)->calculateForProduct(product: $this->product, quantity: $this->cartQuantity, user: auth()->user(), countyId: $this->selectedCounty, areaId: $this->selectedArea, variantId: $this->selectedVariantId ?? null);
+    }
+
+    // -----------------------------------------------------------------------
+    // Reviews
+    // -----------------------------------------------------------------------
+
+    #[Computed]
+    public function reviewService()
+    {
+        return app(ReviewService::class);
     }
 
     #[Computed]
     public function ratingDistribution()
     {
-        $reviewService = app(ReviewService::class);
-        $distribution = $reviewService->ratingDistribution($this->product);
-        $totalReviews = $reviewService->totalReview($this->product);
+        $distribution = $this->reviewService->ratingDistribution($this->product);
+        $total = $this->totalReviews;
 
-        $result = [];
-        foreach ($distribution as $rating => $count) {
-            $result[$rating] = [
-                'count' => $count,
-                'percentage' => $totalReviews > 0 ? round(($count / $totalReviews) * 100) : 0,
-            ];
-        }
-
-        return $result;
+        return collect($distribution)
+            ->map(
+                fn($count) => [
+                    'count' => $count,
+                    'percentage' => $total > 0 ? round(($count / $total) * 100) : 0,
+                ],
+            )
+            ->all();
     }
 
     #[Computed]
     public function reviews()
     {
-        $reviewService = app(ReviewService::class);
-        return $reviewService->forProductPage($this->product, $this->reviewsToShow);
+        return $this->reviewService->forProductPage($this->product, $this->reviewsToShow);
     }
 
     #[Computed]
     public function totalReviews()
     {
-        $reviewService = app(ReviewService::class);
-        return $reviewService->totalReview($this->product);
+        return $this->reviewService->totalReview($this->product);
     }
 
     #[Computed]
     public function averageRating()
     {
-        $reviewService = app(ReviewService::class);
-        return $reviewService->averageRating($this->product);
+        return $this->reviewService->averageRating($this->product);
     }
 
     #[Computed]
@@ -254,9 +294,6 @@ new #[Layout('layouts.guest')] class extends Component {
         return $this->totalReviews > $this->reviewsToShow;
     }
 
-    /**
-     * Get user votes for all reviews on current page (prevents N+1 queries)
-     */
     #[Computed]
     public function userVotes()
     {
@@ -266,12 +303,16 @@ new #[Layout('layouts.guest')] class extends Component {
 
         $reviewIds = $this->reviews->pluck('id');
 
-        if (empty($reviewIds)) {
+        if ($reviewIds->isEmpty()) {
             return collect();
         }
 
         return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
     }
+
+    // -----------------------------------------------------------------------
+    // Accessories
+    // -----------------------------------------------------------------------
 
     #[Computed]
     public function accessories()
@@ -279,12 +320,9 @@ new #[Layout('layouts.guest')] class extends Component {
         return $this->product->crossSells()->active()->get();
     }
 
-    #[Computed]
-    public function estimatedShipping()
+    public function render()
     {
-        $shippingCalculator = app(ShippingCalculatorService::class);
-
-        return $shippingCalculator->calculateForProduct($this->product, $this->cartQuantity, auth()->user(), $this->selectedCounty ?: null, $this->selectedArea ?: null);
+        return $this->view()->title($this->product->name . ' — ' . config('app.name'));
     }
 };
 ?>
@@ -309,7 +347,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 <div class="lg:col-span-2">
                     {{-- Product Image Slider --}}
-                    <div class="w-full" x-data="{
+                    <div wire:ignore class="w-full" x-data="{
                         mainSwiper: null,
                         thumbSwiper: null,
                         activeIndex: 0,
@@ -463,13 +501,38 @@ new #[Layout('layouts.guest')] class extends Component {
 
                     <div class="my-4 text-zinc-500 text-sm">{!! $product->short_description !!}</div>
 
+                    <div wire:cloak class="mb-4">
 
-                    <div wire:show="selectedCounty" wire:cloak class="flex items-center mb-4 gap-3">
-                        <flux:text>Estimated Shipping fee from</flux:text>
+                        {{-- Calculating Shipping --}}
+                        <div>
+                            @if ($this->selectedCounty && $this->estimatedShipping !== null)
+                                <div class="flex items-center gap-2">
+                                    <flux:icon name="truck" variant="outline" class="w-4 h-4 text-zinc-400" />
 
-                        <flux:text class="font-semibold">
-                            {{ format_currency($this->estimatedShipping) }}
-                        </flux:text>
+                                    @if ($this->estimatedShipping > 0)
+                                        <flux:text>
+                                            Estimated shipping:
+                                            <span wire:loading.remove
+                                                wire:target="selectedCounty, selectedArea, cartQuantity"
+                                                class="font-semibold text-zinc-800">{{ format_currency($this->estimatedShipping) }}</span>
+
+                                            <x-my-loading wire:loading
+                                                wire:target="selectedCounty, selectedArea, cartQuantity"
+                                                class="loading-dots" />
+                                        </flux:text>
+                                    @else
+                                        <flux:text>
+                                            <span class="font-semibold text-green-600">Free shipping</span> to this
+                                            location
+                                        </flux:text>
+                                    @endif
+                                </div>
+                            @elseif (!$this->selectedCounty)
+                                <flux:text class="text-zinc-400 text-sm">Select a county to see shipping estimate.
+                                </flux:text>
+                            @endif
+                        </div>
+
                     </div>
 
                     <div>
@@ -489,45 +552,42 @@ new #[Layout('layouts.guest')] class extends Component {
                         @endif
                     </div>
 
-                    @island
-                        <div class="flex items-center gap-2 my-3 mt-5">
-                            <flux:button.group>
-                                <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
-                                    wire:click="decreaseCartQuantity"></flux:button>
+                    <div class="flex items-center gap-2 my-3 mt-5">
+                        <flux:button.group>
+                            <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
+                                wire:click="decreaseCartQuantity"></flux:button>
 
-                                <flux:input readonly value="{{ $cartQuantity }}"
-                                    class="max-w-9! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
-                                    style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;" />
+                            <flux:input readonly value="{{ $cartQuantity }}"
+                                class="max-w-9! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
+                                style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;" />
 
-                                <flux:button icon="plus" class="cursor-pointer text-zinc-500!" title="Increase Quantity"
-                                    wire:click="increaseCartQuantity"></flux:button>
+                            <flux:button icon="plus" class="cursor-pointer text-zinc-500!" title="Increase Quantity"
+                                wire:click="increaseCartQuantity"></flux:button>
 
-                                @if ($inCart)
-                                    <flux:button icon="trash" icon-variant="outline" class="cursor-pointer text-red-500!"
-                                        wire:click="removeFromCart" title="Remove Item from Cart">
-                                    </flux:button>
-                                @endif
-                            </flux:button.group>
-
-                            @if (!$inCart)
-                                <flux:button wire:click="addToCart" class="uppercase" variant="primary"
-                                    class="cursor-pointer">
-                                    Add to Cart
+                            @if ($inCart)
+                                <flux:button icon="trash" icon-variant="outline" class="cursor-pointer text-red-500!"
+                                    wire:click="removeFromCart" title="Remove Item from Cart">
                                 </flux:button>
                             @endif
+                        </flux:button.group>
 
-                            <flux:button wire:click.stop="toggleWishlist" icon="heart"
-                                icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" title="Wishlist"
-                                @class(['cursor-pointer', 'text-red-500!' => $wishlisted])>
+                        @if (!$inCart)
+                            <flux:button wire:click="addToCart" class="uppercase" variant="primary"
+                                class="cursor-pointer">
+                                Add to Cart
                             </flux:button>
+                        @endif
 
-                            <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
-                                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-red-500!' => $inCompare])></flux:button>
+                        <flux:button wire:click.stop="toggleWishlist" icon="heart"
+                            icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" title="Wishlist"
+                            @class(['cursor-pointer', 'text-red-500!' => $wishlisted])>
+                        </flux:button>
 
-                            <flux:button icon="share" icon-variant="outline" title="Share"></flux:button>
-                        </div>
-                    @endisland
+                        <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
+                            icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-red-500!' => $inCompare])></flux:button>
 
+                        <flux:button icon="share" icon-variant="outline" title="Share"></flux:button>
+                    </div>
                 </div>
             </div>
 
@@ -538,26 +598,25 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <div class="p-3">
                         <h4 class="text-sm  font-medium text-slate-600">Choose your location</h4>
-                        @island('location-selector')
-                            <flux:select class="w-full mt-2" wire:model.live="selectedCounty"
-                                placeholder="Select County...">
-                                @foreach ($this->counties as $county)
-                                    <flux:select.option :value="$county->id">
-                                        {{ $county->name }}
-                                    </flux:select.option>
-                                @endforeach
-                            </flux:select>
 
-                            <flux:select wire:model="selectedArea"
-                                :placeholder="$selectedCounty ? 'Select Area' : 'Select a county first'"
-                                :disabled="!$selectedCounty" class="mt-2">
-                                @foreach ($this->areas as $area)
-                                    <flux:select.option :value="$area->id">
-                                        {{ $area->name }}
-                                    </flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        @endisland
+                        <flux:select class="w-full mt-2" wire:model.live="selectedCounty"
+                            placeholder="Select County...">
+                            @foreach ($this->counties as $county)
+                                <flux:select.option :value="$county->id">
+                                    {{ $county->name }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:select wire:model.live="selectedArea"
+                            :placeholder="$selectedCounty ? 'Select Area' : 'Select a county first'"
+                            :disabled="!$selectedCounty" class="mt-2">
+                            @foreach ($this->areas as $area)
+                                <flux:select.option :value="$area->id">
+                                    {{ $area->name }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
                     </div>
 
                     <div class="border-t p-3 flex items-center">

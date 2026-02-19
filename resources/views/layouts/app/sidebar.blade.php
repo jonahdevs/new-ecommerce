@@ -90,14 +90,14 @@
                 Shipping Methods
             </flux:navlist.item>
 
-            <flux:navlist.item icon="currency-dollar" wire:navigate :href="route('admin.shipping-rates')"
-                :current="request()->routeIs('admin.shipping-rates*')">
-                Shipping Rates
-            </flux:navlist.item>
-
             <flux:navlist.item icon="building-storefront" wire:navigate :href="route('admin.pickup-stations')"
                 :current="request()->routeIs('admin.pickup-stations')">
                 Pickup Stations
+            </flux:navlist.item>
+
+            <flux:navlist.item icon="currency-dollar" wire:navigate :href="route('admin.shipping-rates')"
+                :current="request()->routeIs('admin.shipping-rates*')">
+                Shipping Rates
             </flux:navlist.item>
 
             <flux:navlist.item icon="gift" wire:navigate :href="route('admin.free-shipping')"
