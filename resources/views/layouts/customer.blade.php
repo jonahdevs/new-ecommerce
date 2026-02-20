@@ -19,7 +19,7 @@
             </flux:breadcrumbs>
         @endisset
 
-        <div class="flex flex-col lg:flex-row gap-6 mt-4">
+        <div class="flex flex-col lg:flex-row gap-4 mt-4">
 
             <!-- Sidebar -->
             <div class="w-full lg:w-64 shrink-0 bg-white rounded-lg border py-6 px-4 sticky! top-44! lg:self-start">

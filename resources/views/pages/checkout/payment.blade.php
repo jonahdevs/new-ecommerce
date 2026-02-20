@@ -22,7 +22,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div class="min-h-[80svh]">
     <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto py-4 px-4">
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home

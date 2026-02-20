@@ -5,7 +5,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 use App\Services\CartService;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Layout('layouts.checkout')] class extends Component {
     public function mount()
     {
         $user = auth()->user();
@@ -62,8 +62,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
     {{-- Breadcrumb --}}
-    <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto py-4 px-4">
+    <x-slot:breadcrumbs>
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
@@ -71,106 +71,93 @@ new #[Layout('layouts.guest')] class extends Component {
 
             <flux:breadcrumbs.item>Checkout</flux:breadcrumbs.item>
         </flux:breadcrumbs>
-    </div>
+    </x-slot:breadcrumbs>
 
-    <div class="mx-auto container px-4 py-4 min-h-[80svh]">
-        <!-- Checkout Summary Header -->
-        <flux:heading level="1" class="text-2xl! font-bold!">Checkout Summary</flux:heading>
+    <x-slot:heading>Checkout Summary</x-slot:heading>
 
-        <div class="mt-4 md:gap-4 lg:flex lg:items-start">
-            <div class="lg:flex-1 space-y-4">
-                <!-- Customer Address Section -->
-                <div class="border rounded-sm bg-white">
-                    <div class="px-4 py-2 border-b flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            <flux:icon.check-circle variant="solid" @class([
-                                'size-5',
-                                'text-green-500' => $this->defaultAddress,
-                                'text-zinc-500' => !$this->defaultAddress,
-                            ]) />
-                            <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
-                        </div>
-
-                        <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
-                            class="text-xs! group">Change
-                            <flux:icon.chevron-right
-                                class="size-3.5 ms-1 inline-block transition-transform group-hover:translate-x-2" />
-                        </flux:link>
-                    </div>
-
-                    <div class="px-4 py-5">
-                        @if (isset($this->defaultAddress))
-                            <flux:heading>{{ $this->defaultAddress->full_name }}
-                            </flux:heading>
-
-                            <div class="text-zinc-500 text-sm mt-3 space-y-1">
-                                <flux:text>{{ $this->defaultAddress->address }}</flux:text>
-
-                                <flux:text>
-                                    {{ implode(
-                                        ' | ',
-                                        array_filter([
-                                            $this->defaultAddress->area?->name . ', ' . $this->defaultAddress->county->name,
-                                            $this->defaultAddress->phone_number,
-                                        ]),
-                                    ) }}
-                                </flux:text>
-                            </div>
-                        @else
-                            <p>You have not set a default address</p>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Delivery Method Section -->
-                <div class="bg-white rounded-sm border">
-                    <div class="px-4 py-2 border-b flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            <flux:icon.check-circle variant="solid" @class([
-                                'size-5',
-                                'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
-                                'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
-                            ]) />
-                            <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
-                        </div>
-
-                        <flux:link :href="route('checkout.shipping-options')" wire:navigate
-                            icon:trailing="chevron-right" class="text-xs! group">Change
-                            <flux:icon.chevron-right
-                                class="size-3.5 inline-block ms-1 group-hover:translate-x-2 transition-transform" />
-                        </flux:link>
-                    </div>
-
-                    <div class="px-4 py-5">
-                        @if ($this->preferredShippingMethod && $this->preferredShippingMethod)
-                            <div class="flex items-center justify-between">
-                                <div>
-
-                                    <flux:heading>{{ $this->preferredShippingMethod->name }}</flux:heading>
-
-                                    <flux:text>{{ $this->preferredShippingMethod->description }}</flux:text>
-                                </div>
-
-                                <flux:icon :name="$this->preferredShippingMethod->icon" class="shrink-0"
-                                    variant="outline" />
-
-                            </div>
-                        @else
-                            <div class="text-center py-4">
-                                <flux:text class="text-zinc-600">No shipping method selected</flux:text>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
-                <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
-                </flux:link>
+    <!-- Customer Address Section -->
+    <div class="border rounded-sm bg-white mb-4">
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <div class="flex items-center gap-1">
+                <flux:icon.check-circle variant="solid" @class([
+                    'size-5',
+                    'text-green-500' => $this->defaultAddress,
+                    'text-zinc-500' => !$this->defaultAddress,
+                ]) />
+                <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
             </div>
 
-            <!-- Order Summary Sidebar -->
-            <div class="w-full max-w-xs">
-                <livewire:order-summary />
-            </div>
+            <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
+                class="text-xs! group">Change
+                <flux:icon.chevron-right
+                    class="size-3.5 ms-1 inline-block transition-transform group-hover:translate-x-2" />
+            </flux:link>
+        </div>
+
+        <div class="px-4 py-5">
+            @if (isset($this->defaultAddress))
+                <flux:heading>{{ $this->defaultAddress->full_name }}
+                </flux:heading>
+
+                <div class="text-zinc-500 text-sm mt-3 space-y-1">
+                    <flux:text>{{ $this->defaultAddress->address }}</flux:text>
+
+                    <flux:text>
+                        {{ implode(
+                            ' | ',
+                            array_filter([
+                                $this->defaultAddress->area?->name . ', ' . $this->defaultAddress->county->name,
+                                $this->defaultAddress->phone_number,
+                            ]),
+                        ) }}
+                    </flux:text>
+                </div>
+            @else
+                <p>You have not set a default address</p>
+            @endif
         </div>
     </div>
+
+    <!-- Delivery Method Section -->
+    <div class="bg-white rounded-sm border mb-4">
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <div class="flex items-center gap-1">
+                <flux:icon.check-circle variant="solid" @class([
+                    'size-5',
+                    'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
+                    'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
+                ]) />
+                <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
+            </div>
+
+            <flux:link :href="route('checkout.shipping-options')" wire:navigate icon:trailing="chevron-right"
+                class="text-xs! group">Change
+                <flux:icon.chevron-right
+                    class="size-3.5 inline-block ms-1 group-hover:translate-x-2 transition-transform" />
+            </flux:link>
+        </div>
+
+        <div class="px-4 py-5">
+            @if ($this->preferredShippingMethod && $this->preferredShippingMethod)
+                <div class="flex items-center justify-between">
+                    <div>
+
+                        <flux:heading>{{ $this->preferredShippingMethod->name }}</flux:heading>
+
+                        <flux:text>{{ $this->preferredShippingMethod->description }}</flux:text>
+                    </div>
+
+                    <flux:icon :name="$this->preferredShippingMethod->icon" class="shrink-0" variant="outline" />
+
+                </div>
+            @else
+                <div class="text-center py-4">
+                    <flux:text class="text-zinc-600">No shipping method selected</flux:text>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+    </flux:link>
 </div>

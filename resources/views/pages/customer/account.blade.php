@@ -38,8 +38,8 @@ new #[Layout('layouts.customer')] class extends Component {
 };
 ?>
 
-<div class="space-y-5">
-    <flux:card class="grid grid-cols-2 md:grid-cols-4 gap-6">
+<div class="space-y-4">
+    <flux:card class="grid grid-cols-2 md:grid-cols-4 gap-6 rounded-md">
         {{-- Favorite Products --}}
         <div class="flex items-center gap-4 group">
             <div
@@ -102,58 +102,62 @@ new #[Layout('layouts.customer')] class extends Component {
 
     </flux:card>
 
-    <flux:card class="p-0">
+    <flux:card class="p-0 rounded-md">
         <div class="border-b px-3 py-2">
-            <flux:heading>Account Overview</flux:heading>
+            <flux:heading size="lg">Account Overview</flux:heading>
         </div>
-        <div class="p-5 grid grid-cols-2 gap-5">
+        <div class="p-5 grid grid-cols-2 gap-4">
             <div class="border rounded-md">
                 <div class="px-4 py-2 border-b">
-                    <h3 class="font-medium text-sm text-zinc-600">Account Details</h3>
+                    <flux:heading class="font-medium text-zinc-600">Account Details</flux:heading>
                 </div>
                 <div class="p-4 text-sm space-y-1">
-                    <p>{{ $this->user->name }}</p>
-                    <p>{{ $this->user->email }}</p>
-                    <p>{{ $this->user->phone_number }}</p>
+                    <flux:text>{{ $this->user->name }}</flux:text>
+                    <flux:text>{{ $this->user->email }}</flux:text>
+                    <flux:text>{{ $this->user->phone_number }}</flux:text>
                 </div>
             </div>
 
             <div class="border rounded-md">
                 <div class="px-4 py-2 border-b flex justify-between items-center">
-                    <h3 class="font-medium text-sm text-zinc-600">Address Book</h3>
+                    <flux:heading class="font-medium text-zinc-600">Address Book</flux:heading>
 
                     <flux:button icon="pencil" size="xs" class="cursor-pointer" href="#">
                     </flux:button>
                 </div>
                 <div class="p-4 text-sm space-y-1">
                     @if ($user->defaultAddress)
-                        <p class="text-zinc-800">Default Shipping Address</p>
+                        <flux:heading>Default Shipping Address</flux:heading>
 
-                        <div class="text-zinc-500 text-sm mt-2">
-                            <p>{{ $this->user->defaultAddress->first_name . ' ' . $this->user->defaultAddress->last_name }}
-                            </p>
+                        <flux:text class="mt-2">{{ $this->user->defaultAddress->full_name }}
+                        </flux:text>
 
-                            <p>{{ $this->user->defaultAddress->address }}</p>
+                        <flux:text>{{ $this->user->defaultAddress->address }}</flux:text>
 
-                            <p>{{ $this->user->defaultAddress->city . ', ' . $this->user->defaultAddress->region }}</p>
-                            <p>{{ implode(' / ', array_filter([$this->user->defaultAddress->phone, $this->user->defaultAddress->additional_phone])) }}
-                            </p>
-                        </div>
+                        <flux:text>
+                            {{ $this->user->defaultAddress?->area?->name . ', ' . $this->user->defaultAddress?->county?->name }}
+                        </flux:text>
+
+                        <flux:text>
+                            {{ implode(' / ', array_filter([$this->user->defaultAddress?->phone_number, $this->user->defaultAddress?->alternative_phone_number])) }}
+                        </flux:text>
                     @endif
                 </div>
             </div>
 
             <div class="border rounded-md">
                 <div class="px-4 py-2 border-b">
-                    <h3 class="font-medium text-sm text-zinc-600">Newsletter preference</h3>
+                    <flux:heading class="font-medium text-zinc-600">Newsletter preference</flux:heading>
                 </div>
 
                 <div class="p-4 text-sm ">
-                    <p class="mb-3">Manage your email communications to stay updated with the latest news and offers.
-                    </p>
+                    <flux:text class="mb-3">Manage your email communications to stay updated with the latest news and
+                        offers.
+                    </flux:text>
 
-                    <a href="#" wire:navigate class="text-sheffield-blue hover:underline">Edit newsletter
-                        preference</a>
+                    <flux:link href="#" wire:navigate class="text-sheffield-blue hover:underline ">Edit newsletter
+                        preference
+                    </flux:link>
                 </div>
             </div>
         </div>

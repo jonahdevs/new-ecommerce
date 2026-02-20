@@ -5,7 +5,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 use App\Models\ShippingMethod;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Layout('layouts.checkout')] class extends Component {
     public $selectedMethodId = null;
     public $selectedRateId = null;
     public $cartWeight = 0; // You'll need to calculate this from cart
@@ -114,8 +114,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
     {{-- Breadcrumb --}}
-    <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto py-4 px-4">
+    <x-slot:breadcrumbs>
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
@@ -124,140 +124,126 @@ new #[Layout('layouts.guest')] class extends Component {
             <flux:breadcrumbs.item :href="route('checkout.summary')" wire:navigate>Checkout</flux:breadcrumbs.item>
             <flux:breadcrumbs.item>Shipping methods</flux:breadcrumbs.item>
         </flux:breadcrumbs>
-    </div>
+    </x-slot:breadcrumbs>
 
-    <div class="mx-auto container px-4 py-4 min-h-[80svh]">
-        <!-- Shipping Options Header -->
-        <flux:heading level="1" class="text-2xl! font-bold!">Shipping Methods</flux:heading>
-
-        <div class="mt-4 grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-            <div class="lg:col-span-3 space-y-4">
-
-                <!-- Customer Address Section -->
-                <div class="border rounded-sm bg-white">
-                    <div class="px-4 py-2 border-b flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            <flux:icon.check-circle variant="solid" @class([
-                                'size-5',
-                                'text-green-500' => $this->defaultAddress,
-                                'text-zinc-500' => !$this->defaultAddress,
-                            ]) />
-                            <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
-                        </div>
-
-                        <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
-                            class="text-xs! group">Change
-                            <flux:icon.chevron-right
-                                class="size-3.5 ms-1 inline-block transition-transform group-hover:translate-x-2" />
-                        </flux:link>
-                    </div>
-
-                    <div class="px-4 py-5">
-                        @if (isset($this->defaultAddress))
-                            <flux:heading>{{ $this->defaultAddress->full_name }}
-                            </flux:heading>
-
-                            <div class="text-zinc-500 text-sm mt-3 space-y-1">
-                                <flux:text>{{ $this->defaultAddress->address }}</flux:text>
-
-                                <flux:text>
-                                    {{ implode(
-                                        ' | ',
-                                        array_filter([
-                                            $this->defaultAddress->area?->name . ', ' . $this->defaultAddress->county->name,
-                                            $this->defaultAddress->phone_number,
-                                        ]),
-                                    ) }}
-                                </flux:text>
-                            </div>
-                        @else
-                            <p>You have not set a default address</p>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="bg-white border rounded-sm">
-                    <div class="px-4 py-2 border-b flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            <flux:icon.check-circle variant="solid" @class([
-                                'size-5',
-                                'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
-                                'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
-                            ]) />
-                            <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
-                        </div>
-                    </div>
-
-                    <div class="p-5">
-                        <!-- Available Shipping Methods -->
-                        @if ($this->availableMethods->isEmpty())
-                            <div class="p-8 text-center">
-                                <flux:icon.exclamation-triangle class="size-12 mx-auto text-zinc-400 mb-3" />
-                                <flux:heading level="3" class="mb-2">No Shipping Methods Available</flux:heading>
-                                <flux:text class="text-zinc-600">
-                                    Unfortunately, there are no shipping methods available for your location at this
-                                    time.
-                                </flux:text>
-                            </div>
-                        @else
-                            <form wire:submit="saveShippingMethod">
-                                <div class="space-y-4">
-                                    <flux:radio.group wire:model="shippingMethod" label="Shipping Methods"
-                                        variant="cards" class="max-sm:flex-col">
-                                        @foreach ($this->availableMethods as $method)
-                                            <flux:radio :value="$method->code" :label="$method->name">
-                                                <x-slot name="description">
-
-                                                    <p class="mt-1 font-medium">
-                                                        @if ($method->current_rate)
-                                                            @php
-                                                                $min = $method->current_rate->estimated_days_min;
-                                                                $max = $method->current_rate->estimated_days_max;
-                                                            @endphp
-
-                                                            @if ($min && $max)
-                                                                @if ($min == $max)
-                                                                    {{ $min }} business
-                                                                    days
-                                                                @else
-                                                                    {{ $min }}–{{ $max }} business
-                                                                    days
-                                                                @endif
-                                                            @elseif ($min)
-                                                                {{ $min }}+ business days
-                                                            @else
-                                                                Delivery time will be communicated after confirmation
-                                                            @endif
-                                                        @else
-                                                            @if ($method->code != 'pickup')
-                                                                Delivery time will be communicated after confirmation
-                                                            @endif
-                                                        @endif
-                                                    </p>
-                                                </x-slot>
-                                            </flux:radio>
-                                        @endforeach
-                                    </flux:radio.group>
-                                </div>
-
-                                <div class="flex items-center justify-end mt-4">
-                                    <flux:button type="submit" variant="primary" size="sm" class="cursor-pointer">
-                                        Confirm Delivery Details</flux:button>
-                                </div>
-                            </form>
-                        @endif
-                    </div>
-                </div>
-
-                <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
-                </flux:link>
+    <x-slot:heading>Shipping Methods</x-slot:heading>
+    <!-- Customer Address Section -->
+    <div class="border rounded-sm bg-white mb-4">
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <div class="flex items-center gap-1">
+                <flux:icon.check-circle variant="solid" @class([
+                    'size-5',
+                    'text-green-500' => $this->defaultAddress,
+                    'text-zinc-500' => !$this->defaultAddress,
+                ]) />
+                <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
             </div>
 
-            <!-- Order Summary Sidebar -->
-            <div class="col-span-1">
-                <livewire:order-summary />
-            </div>
+            <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
+                class="text-xs! group">Change
+                <flux:icon.chevron-right
+                    class="size-3.5 ms-1 inline-block transition-transform group-hover:translate-x-2" />
+            </flux:link>
+        </div>
+
+        <div class="px-4 py-5">
+            @if (isset($this->defaultAddress))
+                <flux:heading>{{ $this->defaultAddress->full_name }}
+                </flux:heading>
+
+                <div class="text-zinc-500 text-sm mt-3 space-y-1">
+                    <flux:text>{{ $this->defaultAddress->address }}</flux:text>
+
+                    <flux:text>
+                        {{ implode(
+                            ' | ',
+                            array_filter([
+                                $this->defaultAddress->area?->name . ', ' . $this->defaultAddress->county->name,
+                                $this->defaultAddress->phone_number,
+                            ]),
+                        ) }}
+                    </flux:text>
+                </div>
+            @else
+                <p>You have not set a default address</p>
+            @endif
         </div>
     </div>
+
+    <div class="bg-white border rounded-sm mb-4">
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <div class="flex items-center gap-1">
+                <flux:icon.check-circle variant="solid" @class([
+                    'size-5',
+                    'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
+                    'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
+                ]) />
+                <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
+            </div>
+        </div>
+
+        <div class="p-5">
+            <!-- Available Shipping Methods -->
+            @if ($this->availableMethods->isEmpty())
+                <div class="p-8 text-center">
+                    <flux:icon.exclamation-triangle class="size-12 mx-auto text-zinc-400 mb-3" />
+                    <flux:heading level="3" class="mb-2">No Shipping Methods Available</flux:heading>
+                    <flux:text class="text-zinc-600">
+                        Unfortunately, there are no shipping methods available for your location at this
+                        time.
+                    </flux:text>
+                </div>
+            @else
+                <form wire:submit="saveShippingMethod">
+                    <div class="space-y-4">
+                        <flux:radio.group wire:model="shippingMethod" label="Shipping Methods" variant="cards"
+                            class="max-sm:flex-col">
+                            @foreach ($this->availableMethods as $method)
+                                <flux:radio :value="$method->code" :label="$method->name">
+                                    <x-slot name="description">
+
+                                        <p class="mt-1 font-medium">
+                                            @if ($method->current_rate)
+                                                @php
+                                                    $min = $method->current_rate->estimated_days_min;
+                                                    $max = $method->current_rate->estimated_days_max;
+                                                @endphp
+
+                                                @if ($min && $max)
+                                                    @if ($min == $max)
+                                                        {{ $min }} business
+                                                        days
+                                                    @else
+                                                        {{ $min }}–{{ $max }} business
+                                                        days
+                                                    @endif
+                                                @elseif ($min)
+                                                    {{ $min }}+ business days
+                                                @else
+                                                    Delivery time will be communicated after confirmation
+                                                @endif
+                                            @else
+                                                @if ($method->code != 'pickup')
+                                                    Delivery time will be communicated after confirmation
+                                                @endif
+                                            @endif
+                                        </p>
+                                    </x-slot>
+                                </flux:radio>
+                            @endforeach
+                        </flux:radio.group>
+                    </div>
+
+                    <div class="flex items-center justify-end mt-4">
+                        <flux:button type="submit" variant="primary" size="sm" class="cursor-pointer">
+                            Confirm Delivery Details</flux:button>
+                    </div>
+                </form>
+            @endif
+        </div>
+    </div>
+
+    <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+    </flux:link>
+
 </div>
