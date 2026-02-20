@@ -139,21 +139,23 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 @placeholder
     <div>
         <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-4 px-4">
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-44 h-4" />
+            <div class="flex items-center gap-3 container mx-auto py-3 px-4">
+                <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
             </div>
         </div>
 
         <div class="mx-auto container px-4 py-4 min-h-[80svh]">
             <!-- Cart Header -->
-            <flux:skeleton class="w-48 h-4 mb-6" animate="shimmer" />
+            <div class="flex items-center justify-between">
+                <flux:skeleton class="w-32 h-6 mb-4" animate="shimmer" />
+                <flux:skeleton class="w-24 h-6 mb-4" animate="shimmer" />
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div class="lg:col-span-3">
+            <div class="space-y-4 lg:gap-4 lg:flex lg:items-start">
+                <div class="lg:flex-1">
                     <div class="space-y-4">
                         @for ($i = 0; $i < 2; $i++)
                             <div class="bg-white rounded-sm overflow-hidden border">
@@ -187,7 +189,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
 
-                <div class="lg:col-span-1">
+                <div class="w-full lg:max-w-xs">
                     <div class="bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b">
                             <flux:skeleton animate="shimmer" class="h-6 w-24 px-3 py-2 rounded-sm" />
@@ -222,10 +224,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 @endplaceholder
 
 <div>
-
     {{-- Breadcrumb --}}
     <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto py-4 px-4">
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
@@ -236,15 +237,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     </div>
 
     <div class="mx-auto container px-4 py-4 min-h-[80svh]">
-
         <!-- Cart Header -->
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-zinc-900">Cart</h1>
-            </div>
+        <div class="flex items-center justify-between mb-4 gap-4">
+            <flux:heading level="1" class="font-bold! text-2xl!">Cart</flux:heading>
+
+            <flux:button variant="filled" wire:click="clearCart" class="cursor-pointer" size="sm">Clear Cart
+            </flux:button>
         </div>
 
-        <div class="mt-4 md:gap-6 lg:flex lg:items-start">
+        <div class="space-y-4 lg:gap-4 lg:flex lg:items-start">
             <div class="lg:flex-1">
                 @if ($this->cartItems->isEmpty())
                     <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -286,30 +287,34 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         <div>
                             <section class="space-y-2">
                                 @foreach ($this->cartItems as $item)
-                                    <div class="rounded-sm bg-white overflow-hidden border">
+                                    <flux:card class="p-0 rounded-md overflow-hidden">
                                         <div class="flex items-start gap-3 p-3 py-4">
                                             <div class="shrink-0 px-4">
                                                 <img class="h-20 w-20" src="{{ $item->product->image_url }}"
                                                     alt="{{ $item->product->name }}" />
-
                                             </div>
 
                                             <div class="flex-1">
                                                 <a href="{{ route('products.show', $item->product) }}" wire:navigate
-                                                    class="text-base font-medium hover:underline">
+                                                    class="font-medium hover:underline">
                                                     {{ $item->product->name }}
                                                 </a>
 
+                                                <flux:text class="text-xs"><span class="text-zinc-600">Item no:
+                                                    </span>
+                                                    {{ $item->product->sku }}
+                                                </flux:text>
+
                                                 <flux:input.group class="mt-2">
-                                                    <flux:button icon="minus" size="sm"
+                                                    <flux:button icon="minus" size="xs"
                                                         class="cursor-pointer text-zinc-500!"
                                                         wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">
                                                     </flux:button>
                                                     <flux:input value="{{ $item->quantity }}" disabled
                                                         class="max-w-8! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
                                                         style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;"
-                                                        size="sm" />
-                                                    <flux:button icon="plus" size="sm"
+                                                        size="xs" />
+                                                    <flux:button icon="plus" size="xs"
                                                         class="cursor-pointer text-zinc-500!"
                                                         wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">
                                                     </flux:button>
@@ -333,7 +338,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                             </div>
                                         </div>
 
-                                        <div class="bg-zinc-50 px-3 py-2 flex items-center">
+                                        <div class="bg-zinc-50 px-3 py-2 flex items-center border-t border-zinc-100">
                                             <div class="flex items-center gap-4">
                                                 <flux:modal.trigger name="remove-item-{{ $item->id }}">
                                                     <flux:button variant="ghost" size="xs" icon="trash"
@@ -342,7 +347,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                 </flux:modal.trigger>
 
                                                 <flux:modal name="remove-item-{{ $item->id }}" variant="floating"
-                                                    class="min-w-[22rem] rounded-xs!">
+                                                    class="min-w-88 rounded-xs!">
                                                     <div class="space-y-6">
                                                         <div>
                                                             <flux:heading size="lg">Remove from Cart
@@ -401,7 +406,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                     class="font-medium text-sm">{{ format_currency($item->product->finalPrice * $item->quantity) }}</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </flux:card>
                                 @endforeach
                             </section>
                         </div>
@@ -410,7 +415,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             </div>
 
             @if ($this->cartItems->isNotEmpty())
-                <div class="w-full max-w-sm sticky top-44">
+                <div class="w-full lg:max-w-xs sticky top-44">
                     <div class="bg-white rounded-sm border">
                         <div>
                             <h3 class="font-medium text-sm uppercase px-3 py-2 border-b">

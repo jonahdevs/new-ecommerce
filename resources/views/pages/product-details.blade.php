@@ -328,19 +328,22 @@ new #[Layout('layouts.guest')] class extends Component {
 ?>
 
 <div>
-    <div class="container mx-auto px-4 py-4">
-        {{-- Breadcrumbs --}}
-        <flux:breadcrumbs class="mb-4">
+    {{-- Breadcrumbs --}}
+    <div class="bg-zinc-100">
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
+
             <flux:breadcrumbs.item href="{{ route('products', ['category' => $product->primaryCategory()->slug]) }}">
                 {{ $product->primaryCategory()->name }}
             </flux:breadcrumbs.item>
             <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
         </flux:breadcrumbs>
+    </div>
 
+    <div class="container mx-auto px-4 py-4">
         <div class="grid lg:grid-cols-4 gap-5 lg:gap-10">
 
             <div class="lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10">
@@ -467,6 +470,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             <span class="text-sheffield-blue font-semibold text-sm">{{ $product->brand?->name }}</span>
                         </div>
 
+
                         <div class="flex items-center gap-2">
                             <div class="flex items-center gap-1">
                                 @for ($i = 0; $i < 5; $i++)
@@ -499,7 +503,12 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
                     </div>
 
-                    <div class="my-4 text-zinc-500 text-sm">{!! $product->short_description !!}</div>
+                    @if ($product->sku)
+                        <flux:text class="mt-4">Item no: <span class="text-zinc-800">{{ $product->sku }}</span>
+                        </flux:text>
+                    @endif
+
+                    <flux:text class="my-4">{!! $product->short_description !!}</flux:text>
 
                     <div wire:cloak class="mb-4">
 
@@ -552,7 +561,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         @endif
                     </div>
 
-                    <div class="flex items-center gap-2 my-3 mt-5">
+                    <flux:separator class="my-5" />
+
+                    <div class="flex items-center gap-2 mb-3">
                         <flux:button.group>
                             <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
                                 wire:click="decreaseCartQuantity"></flux:button>
@@ -592,7 +603,7 @@ new #[Layout('layouts.guest')] class extends Component {
             </div>
 
             <div class="lg:col-span-1">
-                <div class="sticky top-44 border rounded-sm">
+                <div class="sticky top-44 border rounded-sm bg-white">
                     <div class="border-b px-3 py-2">
                         <h3 class="font-medium uppercase text-sm">Delivery & Returns</h3>
                     </div>

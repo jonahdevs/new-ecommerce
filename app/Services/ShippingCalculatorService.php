@@ -102,7 +102,7 @@ class ShippingCalculatorService
             ->first();
 
         if (!$standardMethod) {
-            throw new \Exception('Default shipping method not found.');
+            // throw new \Exception('Default shipping method not found.');
         }
 
         return $standardMethod->id;

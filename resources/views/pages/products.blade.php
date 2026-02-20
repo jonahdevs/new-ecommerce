@@ -277,18 +277,17 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 @placeholder
     <div>
         <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-4 px-4">
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-44 h-4" />
+            <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
+                <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
             </div>
         </div>
 
         <div class="container mx-auto px-4 py-4">
 
-            <div class="flex gap-4 mt-4">
+            <div class="flex gap-4">
                 {{-- left sidebar --}}
 
                 {{-- left sidebar --}}
@@ -404,7 +403,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 <div>
     <div class="bg-zinc-100">
         {{-- Breadcrumb --}}
-        <flux:breadcrumbs class="container px-4 py-4 mx-auto">
+        <flux:breadcrumbs class="container px-4 py-2.5 mx-auto">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
@@ -419,7 +418,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     </div>
 
     <div class="container mx-auto px-4 py-4">
-        <div class="flex gap-4 mt-4">
+        <div class="flex gap-4">
             {{-- Left sidebar  --}}
             <aside class="hidden lg:block w-64 shrink-0">
                 <div class="sticky top-44">
