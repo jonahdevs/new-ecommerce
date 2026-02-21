@@ -142,118 +142,128 @@ new #[Title('Payments')] class extends Component {
     </div>
 
     {{-- Payments Table --}}
-    <flux:table :paginate="$this->payments">
-        <flux:table.columns>
-            <flux:table.column>Transaction</flux:table.column>
-            <flux:table.column>Order</flux:table.column>
-            <flux:table.column>Customer</flux:table.column>
-            <flux:table.column>Gateway</flux:table.column>
-            <flux:table.column>Payment Method</flux:table.column>
-            <flux:table.column>Amount</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column>Date</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->payments">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Transaction</flux:table.column>
+                <flux:table.column>Order</flux:table.column>
+                <flux:table.column>Customer</flux:table.column>
+                <flux:table.column>Gateway</flux:table.column>
+                <flux:table.column>Payment Method</flux:table.column>
+                <flux:table.column>Amount</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column>Date</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse ($this->payments as $payment)
-                <flux:table.row :key="$payment->id">
-                    {{-- Transaction ID --}}
-                    <flux:table.cell>
-                        <div class="font-mono text-sm text-zinc-800 dark:text-white">
-                            {{ Str::limit($payment->transaction_id, 20) ?? 'N/A' }}
-                        </div>
-                    </flux:table.cell>
-
-                    {{-- Order Reference --}}
-                    <flux:table.cell>
-                        @if ($payment->order)
-                            <a href="{{ route('admin.orders.show', $payment->order) }}" wire:navigate
-                                class="font-medium text-blue-600 hover:text-blue-800">
-                                #{{ $payment->order->reference }}
-                            </a>
-                        @else
-                            <span class="text-zinc-500">N/A</span>
-                        @endif
-                    </flux:table.cell>
-
-                    {{-- Customer --}}
-                    <flux:table.cell>
-                        @if ($payment->order?->user)
-                            <div class="font-medium">{{ $payment->order->user->name }}</div>
-                            <div class="text-xs text-zinc-500">{{ $payment->order->user->email }}</div>
-                        @else
-                            <span class="text-zinc-500">N/A</span>
-                        @endif
-                    </flux:table.cell>
-
-                    {{-- Gateway --}}
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="blue">
-                            {{ ucfirst($payment->gateway) }}
-                        </flux:badge>
-                    </flux:table.cell>
-
-                    {{-- Payment Method --}}
-                    <flux:table.cell>
-                        @if ($payment->card_brand && $payment->card_last4)
-                            <div class="text-sm">
-                                {{ ucfirst($payment->card_brand) }} •••• {{ $payment->card_last4 }}
+            <flux:table.rows>
+                @forelse ($this->payments as $payment)
+                    <flux:table.row :key="$payment->id">
+                        {{-- Transaction ID --}}
+                        <flux:table.cell class="ps-4!">
+                            <div class="font-mono text-sm text-zinc-800 dark:text-white">
+                                {{ Str::limit($payment->transaction_id, 20) ?? 'N/A' }}
                             </div>
-                        @else
-                            <span class="text-zinc-500 text-sm">N/A</span>
-                        @endif
-                    </flux:table.cell>
+                        </flux:table.cell>
 
-                    {{-- Amount --}}
-                    <flux:table.cell>
-                        <div class="font-semibold text-zinc-900 dark:text-white">
-                            {{ format_currency($payment->amount) }}
-                        </div>
-                    </flux:table.cell>
+                        {{-- Order Reference --}}
+                        <flux:table.cell>
+                            @if ($payment->order)
+                                <a href="{{ route('admin.orders.show', $payment->order) }}" wire:navigate
+                                    class="font-medium text-blue-600 hover:text-blue-800">
+                                    #{{ $payment->order->reference }}
+                                </a>
+                            @else
+                                <span class="text-zinc-500">N/A</span>
+                            @endif
+                        </flux:table.cell>
 
-                    {{-- Status --}}
-                    <flux:table.cell>
-                        <flux:badge size="sm" variant="flat"
-                            :color="match($payment->status) {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'pending' => 'amber',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'processing' => 'blue',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'completed' => 'green',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'failed' => 'red',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'refunded' => 'purple',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            default => 'gray',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }">
-                            {{ ucfirst($payment->status) }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        {{-- Customer --}}
+                        <flux:table.cell>
+                            @if ($payment->order?->user)
+                                <div class="font-medium">{{ $payment->order->user->name }}</div>
+                                <div class="text-xs text-zinc-500">{{ $payment->order->user->email }}</div>
+                            @else
+                                <span class="text-zinc-500">N/A</span>
+                            @endif
+                        </flux:table.cell>
 
-                    {{-- Date --}}
-                    <flux:table.cell>
-                        <div>{{ $payment->created_at->format('M d, Y') }}</div>
-                        <div class="text-xs text-zinc-500">{{ $payment->created_at->format('h:i A') }}</div>
-                    </flux:table.cell>
+                        {{-- Gateway --}}
+                        <flux:table.cell>
+                            <flux:badge size="sm" color="blue">
+                                {{ ucfirst($payment->gateway) }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    {{-- Actions --}}
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="eye" icon-variant="outline"
-                            href="{{ route('admin.payments.show', $payment) }}" wire:navigate />
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="7" class="text-center py-12">
-                        <div class="flex flex-col items-center justify-center text-zinc-500">
-                            <svg class="w-12 h-12 mb-3 text-zinc-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            <p class="text-lg font-medium">No payments found</p>
-                            <p class="text-sm mt-1">Payment transactions will appear here once orders are placed.</p>
-                        </div>
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+                        {{-- Payment Method --}}
+                        <flux:table.cell>
+                            @if ($payment->card_brand && $payment->card_last4)
+                                <div class="text-sm">
+                                    {{ ucfirst($payment->card_brand) }} •••• {{ $payment->card_last4 }}
+                                </div>
+                            @else
+                                <span class="text-zinc-500 text-sm">N/A</span>
+                            @endif
+                        </flux:table.cell>
+
+                        {{-- Amount --}}
+                        <flux:table.cell>
+                            <div class="font-semibold text-zinc-900 dark:text-white">
+                                {{ format_currency($payment->amount) }}
+                            </div>
+                        </flux:table.cell>
+
+                        {{-- Status --}}
+                        <flux:table.cell>
+                            <flux:badge size="sm" variant="flat"
+                                :color="match($payment->status) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'pending' => 'amber',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'processing' => 'blue',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'completed' => 'green',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'failed' => 'red',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'refunded' => 'purple',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            default => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }">
+                                {{ ucfirst($payment->status) }}
+                            </flux:badge>
+                        </flux:table.cell>
+
+                        {{-- Date --}}
+                        <flux:table.cell>
+                            <div>{{ $payment->created_at->format('M d, Y') }}</div>
+                            <div class="text-xs text-zinc-500">{{ $payment->created_at->format('h:i A') }}</div>
+                        </flux:table.cell>
+
+                        {{-- Actions --}}
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="eye" icon-variant="outline"
+                                href="{{ route('admin.payments.show', $payment) }}" wire:navigate />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="7" class="text-center py-12">
+                            <div class="flex flex-col items-center justify-center text-zinc-500">
+                                <svg class="w-12 h-12 mb-3 text-zinc-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                <p class="text-lg font-medium">No payments found</p>
+                                <p class="text-sm mt-1">Payment transactions will appear here once orders are placed.
+                                </p>
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

@@ -66,7 +66,7 @@ new #[Title('Categories')] class extends Component {
             clearable />
     </div>
 
-    <flux:card class="p-0 rounded-md">
+    <flux:card class="p-0">
         <flux:table :paginate="$this->categories">
             <flux:table.columns>
                 <flux:table.column class="ps-4!">Name</flux:table.column>

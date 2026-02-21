@@ -163,3 +163,6 @@ select:focus[data-flux-control] {
 }
 
 /* end of admin sidebar customization */
+[data-flux-card] {
+    @apply rounded-md;
+}

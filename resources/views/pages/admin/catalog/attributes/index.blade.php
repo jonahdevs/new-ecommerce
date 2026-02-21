@@ -45,7 +45,7 @@ new #[Title('Product Attributes')] class extends Component {
             class="max-w-md" />
     </div>
 
-    <flux:card class="p-0 rounded-md">
+    <flux:card class="p-0">
         <flux:table :paginate="$attributes">
             <flux:table.columns>
                 <flux:table.column class="ps-4!">Name</flux:table.column>
