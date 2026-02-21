@@ -241,8 +241,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         <div class="flex items-center justify-between mb-4 gap-4">
             <flux:heading level="1" class="font-bold! text-2xl!">Cart</flux:heading>
 
-            <flux:button variant="filled" wire:click="clearCart" class="cursor-pointer" size="sm">Clear Cart
-            </flux:button>
+            @if ($this->cartItems->isNotEmpty())
+                <flux:button variant="filled" wire:click="clearCart" class="cursor-pointer" size="sm">Clear Cart
+                </flux:button>
+            @endif
         </div>
 
         <div class="space-y-4 lg:gap-4 lg:flex lg:items-start">

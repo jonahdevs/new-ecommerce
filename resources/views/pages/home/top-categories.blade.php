@@ -1,41 +1,4 @@
-<?php
-
-use App\Models\Category;
-use Livewire\Component;
-use Livewire\Attributes\Defer;
-use Livewire\Attributes\Computed;
-
-new #[Defer] class extends Component {
-    #[Computed]
-    public function topCategories()
-    {
-        return Category::active()->featured()->ordered()->get();
-    }
-};
-?>
-
-@placeholder
-    <div class="">
-        <div class="py-4">
-            <!-- Responsive Heading -->
-            <h2 class="font-semibold text-xl text-zinc-800 ">
-                Top Categories
-            </h2>
-        </div>
-        <div
-            class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
-            @for ($i = 0; $i < 14; $i++)
-                <div class="animate-pulse">
-                    <div class="w-full aspect-4/3 bg-zinc-200 rounded-md"></div>
-                    <div class="w-3/4 h-3 sm:h-4 mt-2 bg-zinc-200 mx-auto rounded"></div>
-                </div>
-            @endfor
-        </div>
-    </div>
-@endplaceholder
-
-
-<div>
+<div class="container mx-auto px-4">
     <div class="py-4">
         <!-- Responsive Heading -->
         <h2 class="font-semibold text-xl text-zinc-800 ">
@@ -46,7 +9,7 @@ new #[Defer] class extends Component {
     <div
         class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
         @foreach ($this->topCategories as $category)
-            <div class="group/card">
+            <div class="group/card" :key="'category-' . $category->id">
                 <a href="#" wire:navigate>
                     <div class="relative w-full rounded-md overflow-hidden">
                         @if ($category->image_url)
@@ -71,5 +34,4 @@ new #[Defer] class extends Component {
             </div>
         @endforeach
     </div>
-</div>
 </div>

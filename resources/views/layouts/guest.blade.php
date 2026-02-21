@@ -7,6 +7,7 @@
 
 <body class="bg-zinc-50 text-zinc-700 font-sans min-h-screen">
 
+
     <div class="bg-sheffield-red text-white">
         <section class="container mx-auto px-4">
             <div class="flex items-center justify-between py-2 text-sm gap-4">
@@ -27,7 +28,7 @@
                                 this.initializeSwiper();
                             });
                         },
-
+                    
                         initializeSwiper() {
                             this.swiper = new Swiper('.promoSwiper', {
                                 direction: 'vertical',
@@ -45,7 +46,7 @@
                                 // },
                             });
                         },
-
+                    
                         destroy() {
                             if (this.swiper) {
                                 this.swiper.destroy(true, true);
@@ -92,12 +93,16 @@
 
     <livewire:app-bar />
 
+
     <main>
         {{ $slot }}
     </main>
 
     <x-toast-notification />
-    <livewire:footer />
+
+    @persist('footer')
+        <livewire:footer />
+    @endpersist
 
     @fluxScripts
 

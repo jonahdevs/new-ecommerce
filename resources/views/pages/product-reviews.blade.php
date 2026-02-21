@@ -156,11 +156,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         <section class="bg-zinc-100">
             <div class="container mx-auto py-4 px-4">
                 <div class="flex items-center gap-3">
-                    <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-44 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
                 </div>
             </div>
         </section>
@@ -253,9 +254,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     <section class="container mx-auto px-4 py-4 min-h-[80svh]">
         <!-- Cart Header -->
         <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-zinc-900">Customer Reviews</h1>
-            </div>
+            <flux:heading level="1" class="text-2xl! font-bold! text-zinc-900">Customer Reviews</flux:heading>
         </div>
 
         <div class=" p-5">

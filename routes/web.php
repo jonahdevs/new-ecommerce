@@ -3,7 +3,7 @@
 use App\Http\Controllers\PaymentCallbackController;
 use Illuminate\Support\Facades\Route;
 
-Route::livewire('/', 'pages::home')->name('home');
+Route::livewire('/', 'pages::home.index')->name('home');
 
 // Products Routes
 Route::livewire('/products', 'pages::products')->name('products');

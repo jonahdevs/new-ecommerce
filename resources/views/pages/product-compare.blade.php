@@ -61,10 +61,11 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 @placeholder
     <div>
         <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-4 px-4">
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
+            <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
+                <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
             </div>
         </div>
 
@@ -151,7 +152,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 <div>
     {{-- Breadcrumb --}}
     <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto px-4 py-4">
+        <flux:breadcrumbs class="container mx-auto px-4 py-2.5">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
@@ -164,9 +165,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     <section class="container mx-auto px-4 py-4 min-h-[80svh]">
         <!-- Wishlist Header -->
         <div class="flex items-center justify-between mb-4">
-            <div>
-                <h1 class="text-2xl font-bold text-zinc-900">Product Compare</h1>
-            </div>
+            <flux:heading level="1" class="text-2xl! font-bold! text-zinc-900">Product Compare</flux:heading>
         </div>
 
         @if ($this->products->isEmpty())

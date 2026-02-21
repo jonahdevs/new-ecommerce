@@ -38,7 +38,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 @placeholder
     <div>
         <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-4 px-4">
+            <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
                 <flux:skeleton animate="shimmer" class="w-32 h-4" />
                 <flux:skeleton animate="shimmer" class="w-8 h-4" />
                 <flux:skeleton animate="shimmer" class="w-32 h-4" />
@@ -63,7 +63,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 <div>
     {{-- Breadcrumb --}}
     <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto px-4 py-4">
+        <flux:breadcrumbs class="container mx-auto px-4 py-2.5">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home

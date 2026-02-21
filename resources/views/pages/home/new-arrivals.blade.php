@@ -1,48 +1,4 @@
-<?php
-
-use App\Models\Product;
-use Livewire\Attributes\Defer;
-use Livewire\Attributes\Computed;
-use Livewire\Component;
-
-new #[Defer] class extends Component {
-    #[Computed]
-    public function products()
-    {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
-            ->with(['brand:id,name', 'images'])
-            ->withAvg('reviews', 'rating')
-            ->active()
-            ->newArrivals()
-            ->inRandomOrder()
-            ->limit(10)
-            ->get();
-    }
-};
-?>
-
-@placeholder
-    {{-- Loading state with matching structure --}}
-    <div class=" pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
-        <div class="lg:col-span-1 flex justify-center flex-col text-white px-3 md:px-5 py-4 lg:py-0">
-            <h4 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-5">New</h4>
-
-            <p class="text-sm sm:text-base font-medium tracking-wide">Just In! Explore Our Latest Product Arrivals</p>
-
-            <flux:button class="w-fit mt-4">Show All</flux:button>
-        </div>
-
-        <section class="px-3 md:px-5 lg:col-span-5 relative pb-4">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pb-4">
-                @for ($i = 0; $i < 5; $i++)
-                    <x-product-card-placeholder />
-                @endfor
-            </div>
-        </section>
-    </div>
-@endplaceholder
-
-<div>
+<div class="container mx-auto px-4">
     <div class=" pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
         <div class="lg:col-span-1 flex justify-center flex-col text-white px-3 md:px-5 py-4 lg:py-0">
             <h4 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-5">New</h4>

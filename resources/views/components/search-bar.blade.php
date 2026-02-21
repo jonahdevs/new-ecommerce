@@ -119,13 +119,13 @@ new class extends Component {
 
                 @foreach ($suggestions['products'] as $product)
                     <a href="{{ route('products.show', $product['slug']) }}" wire:navigate
-                        class=" flex items-start gap-3 text-left px-4 py-2 hover:bg-zinc-50 transition-colors ">
+                        class="flex items-start gap-3 text-left px-4 py-2 hover:bg-zinc-50 transition-colors ">
                         <!-- Product Image -->
                         @if ($product['image'])
                             <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}"
                                 class="w-12 h-12 object-cover rounded">
                         @else
-                            <flux:icon.photo class="w-12 h-12 bg-zinc-100 rounded shrink-0" />
+                            <flux:icon.photo class="w-12 h-12 bg-zinc-100 rounded shrink-0 stroke-1" />
                         @endif
 
                         {{-- Product Details --}}
