@@ -100,48 +100,51 @@ new #[Title('Shipping Methods')] class extends Component {
         </flux:button>
     </div>
 
-    <flux:table :paginate="$this->methods">
-        <flux:table.columns>
-            <flux:table.column>Method</flux:table.column>
-            <flux:table.column>Code</flux:table.column>
-            <flux:table.column>Estimated Delivery</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->methods">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Method</flux:table.column>
+                <flux:table.column>Code</flux:table.column>
+                <flux:table.column>Estimated Delivery</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->methods as $method)
-                <flux:table.row :key="$method->id">
-                    <flux:table.cell>
-                        <flux:heading>{{ $method->name }}</flux:heading>
-                        <flux:text class="text-xs!">{{ $method->description }}</flux:text>
-                    </flux:table.cell>
+            <flux:table.rows>
+                @foreach ($this->methods as $method)
+                    <flux:table.row :key="$method->id">
+                        <flux:table.cell class="ps-4!">
+                            <flux:heading>{{ $method->name }}</flux:heading>
+                            <flux:text class="text-xs!">{{ $method->description }}</flux:text>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" variant="outline" color="zinc">
-                            {{ $method->code ?? 'N/A' }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" variant="outline" color="zinc">
+                                {{ $method->code ?? 'N/A' }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <span class="text-sm text-zinc-600">{{ $method->estimated_delivery }}</span>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <span class="text-sm text-zinc-600">{{ $method->estimated_delivery }}</span>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:switch wire:click="toggleStatus({{ $method->id }})" :checked="$method->is_active" />
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:switch wire:click="toggleStatus({{ $method->id }})" :checked="$method->is_active" />
+                        </flux:table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $method->id }})" />
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $method->id }})" />
 
-                        <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline" color="red"
-                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $method->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                color="red" class="cursor-pointer text-red-500!"
+                                wire:click="confirmDelete({{ $method->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- Method Create / Edit Modal --}}
     <flux:modal name="method-modal" class="md:w-md space-y-6">
@@ -189,3 +192,11 @@ new #[Title('Shipping Methods')] class extends Component {
         </div>
     </flux:modal>
 </div>
+
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

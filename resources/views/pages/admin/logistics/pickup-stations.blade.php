@@ -139,49 +139,55 @@ new #[Title('Pickup Stations')] class extends Component {
             class="max-w-md" />
     </div>
 
-    <flux:table :paginate="$this->stations">
-        <flux:table.columns>
-            <flux:table.column>Station</flux:table.column>
-            <flux:table.column>Location</flux:table.column>
-            <flux:table.column>Contact / Hours</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->stations as $station)
-                <flux:table.row :key="$station->id">
-                    <flux:table.cell>
-                        <div class="font-semibold">{{ $station->name }}</div>
-                        <div class="text-xs text-zinc-500 font-mono">{{ $station->code }}</div>
-                    </flux:table.cell>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->stations">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Station</flux:table.column>
+                <flux:table.column>Location</flux:table.column>
+                <flux:table.column>Contact / Hours</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-                    <flux:table.cell>
-                        <div class="text-sm">{{ $station->county->name }}</div>
-                        <div class="text-xs text-zinc-500">{{ $station->area?->name ?? 'General Area' }}</div>
-                    </flux:table.cell>
+            <flux:table.rows>
+                @foreach ($this->stations as $station)
+                    <flux:table.row :key="$station->id">
+                        <flux:table.cell class="ps-4!">
+                            <div class="font-semibold">{{ $station->name }}</div>
+                            <div class="text-xs text-zinc-500 font-mono">{{ $station->code }}</div>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <div class="text-xs italic">{{ $station->phone ?: 'No phone' }}</div>
-                        <div class="text-[10px] text-zinc-500 truncate max-w-[150px]">{{ $station->operating_hours }}
-                        </div>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <div class="text-sm">{{ $station->county->name }}</div>
+                            <div class="text-xs text-zinc-500">{{ $station->area?->name ?? 'General Area' }}</div>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:switch wire:click="toggleActive({{ $station->id }})" :checked="$station->is_active" />
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <div class="text-xs italic">{{ $station->phone ?: 'No phone' }}</div>
+                            <div class="text-[10px] text-zinc-500 truncate max-w-[150px]">
+                                {{ $station->operating_hours }}
+                            </div>
+                        </flux:table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $station->id }})" />
+                        <flux:table.cell>
+                            <flux:switch wire:click="toggleActive({{ $station->id }})"
+                                :checked="$station->is_active" />
+                        </flux:table.cell>
 
-                        <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline" color="red"
-                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $station->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $station->id }})" />
+
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                color="red" class="cursor-pointer text-red-500!"
+                                wire:click="confirmDelete({{ $station->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- Station Create / Edit Modal --}}
     <flux:modal name="station-modal" class="md:w-140 space-y-6">
@@ -250,3 +256,10 @@ new #[Title('Pickup Stations')] class extends Component {
         </div>
     </flux:modal>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

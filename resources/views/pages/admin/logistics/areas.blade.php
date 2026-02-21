@@ -141,43 +141,46 @@ new #[Title('Manage Areas')] class extends Component {
             </flux:select>
         </div>
     </div>
+    .
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->areas">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Area Name</flux:table.column>
+                <flux:table.column>County</flux:table.column>
+                <flux:table.column>Zone</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-    <flux:table :paginate="$this->areas">
-        <flux:table.columns>
-            <flux:table.column>Area Name</flux:table.column>
-            <flux:table.column>County</flux:table.column>
-            <flux:table.column>Zone</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+            <flux:table.rows>
+                @foreach ($this->areas as $area)
+                    <flux:table.row :key="$area->id">
+                        <flux:table.cell class="font-semibold ps-4!">{{ $area->name }}</flux:table.cell>
 
-        <flux:table.rows>
-            @foreach ($this->areas as $area)
-                <flux:table.row :key="$area->id">
-                    <flux:table.cell class="font-semibold">{{ $area->name }}</flux:table.cell>
+                        <flux:table.cell>{{ $area->county->name }}</flux:table.cell>
 
-                    <flux:table.cell>{{ $area->county->name }}</flux:table.cell>
+                        <flux:table.cell>
+                            @if ($area->shippingZone)
+                                <flux:badge color="orange" variant="flat" size="sm">
+                                    {{ $area->shippingZone->name }}
+                                </flux:badge>
+                            @else
+                                <span class="text-xs text-zinc-400">Default (from County)</span>
+                            @endif
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        @if ($area->shippingZone)
-                            <flux:badge color="orange" variant="flat" size="sm">
-                                {{ $area->shippingZone->name }}
-                            </flux:badge>
-                        @else
-                            <span class="text-xs text-zinc-400">Default (from County)</span>
-                        @endif
-                    </flux:table.cell>
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $area->id }})" />
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $area->id }})" />
-
-                        <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline" color="red"
-                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $area->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                color="red" class="cursor-pointer text-red-500!"
+                                wire:click="confirmDelete({{ $area->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- Area Create / Edit Modal --}}
     <flux:modal name="area-modal" class="md:w-100 space-y-6">
@@ -222,3 +225,11 @@ new #[Title('Manage Areas')] class extends Component {
         </div>
     </flux:modal>
 </div>
+
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

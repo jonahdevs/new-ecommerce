@@ -84,41 +84,44 @@ new #[Title('Shipping Zones')] class extends Component {
         </flux:button>
     </div>
 
-    <flux:table :paginate="$this->zones">
-        <flux:table.columns>
-            <flux:table.column>Zone Name</flux:table.column>
-            <flux:table.column>Code</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->zones">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Zone Name</flux:table.column>
+                <flux:table.column>Code</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->zones as $zone)
-                <flux:table.row :key="$zone->id">
-                    <flux:table.cell>
-                        <div class="font-semibold">{{ $zone->name }}</div>
-                        <div class="text-xs text-zinc-500">{{ $zone->description }}</div>
-                    </flux:table.cell>
+            <flux:table.rows>
+                @foreach ($this->zones as $zone)
+                    <flux:table.row :key="$zone->id">
+                        <flux:table.cell class="ps-4!">
+                            <div class="font-semibold">{{ $zone->name }}</div>
+                            <div class="text-xs text-zinc-500">{{ $zone->description }}</div>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm">{{ $zone->code }}</flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm">{{ $zone->code }}</flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:switch wire:click="toggleStatus({{ $zone->id }})" :checked="$zone->is_active" />
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:switch wire:click="toggleStatus({{ $zone->id }})" :checked="$zone->is_active" />
+                        </flux:table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $zone->id }})" />
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $zone->id }})" />
 
-                        <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline" color="red"
-                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $zone->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                color="red" class="cursor-pointer text-red-500!"
+                                wire:click="confirmDelete({{ $zone->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- Zone Create / Edit Modal --}}
     <flux:modal name="zone-modal" class="md:w-100 space-y-6">
@@ -166,3 +169,11 @@ new #[Title('Shipping Zones')] class extends Component {
         </div>
     </flux:modal>
 </div>
+
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

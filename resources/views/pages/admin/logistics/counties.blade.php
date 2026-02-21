@@ -111,41 +111,46 @@ new #[Title('Manage Counties')] class extends Component {
             class="max-w-md" />
     </div>
 
-    <flux:table :paginate="$this->counties">
-        <flux:table.columns>
-            <flux:table.column>Code</flux:table.column>
-            <flux:table.column>County Name</flux:table.column>
-            <flux:table.column>Zone</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->counties as $county)
-                <flux:table.row :key="$county->id">
-                    <flux:table.cell>
-                        <flux:badge variant="outline" color="zinc" class="font-mono">
-                            {{ str_pad($county->code, 3, '0', STR_PAD_LEFT) }}
-                        </flux:badge>
-                    </flux:table.cell>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->counties">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Code</flux:table.column>
+                <flux:table.column>County Name</flux:table.column>
+                <flux:table.column>Zone</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-                    <flux:table.cell>{{ $county->name }}</flux:table.cell>
+            <flux:table.rows>
+                @foreach ($this->counties as $county)
+                    <flux:table.row :key="$county->id">
+                        <flux:table.cell class="ps-4!">
+                            <flux:badge variant="outline" color="zinc" class="font-mono">
+                                {{ str_pad($county->code, 3, '0', STR_PAD_LEFT) }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge color="zinc" variant="outline" size="sm">{{ $county->shippingZone->name }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>{{ $county->name }}</flux:table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $county->id }})" />
+                        <flux:table.cell>
+                            <flux:badge color="zinc" variant="outline" size="sm">
+                                {{ $county->shippingZone->name }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                        <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline" color="red"
-                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $county->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $county->id }})" />
+
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                color="red" class="cursor-pointer text-red-500!"
+                                wire:click="confirmDelete({{ $county->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- County Create / Edit Modal --}}
     <flux:modal name="county-modal" class="md:w-100 space-y-6">
@@ -194,3 +199,10 @@ new #[Title('Manage Counties')] class extends Component {
         </div>
     </flux:modal>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

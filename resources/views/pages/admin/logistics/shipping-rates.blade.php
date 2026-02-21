@@ -113,45 +113,47 @@ new #[Title('Shipping Rates')] class extends Component {
         </flux:button>
     </div>
 
-    <flux:table :paginate="$this->rates">
-        <flux:table.columns>
-            <flux:table.column>Zone</flux:table.column>
-            <flux:table.column>Method</flux:table.column>
-            <flux:table.column>Weight Range</flux:table.column>
-            <flux:table.column>Price</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->rates">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Zone</flux:table.column>
+                <flux:table.column>Method</flux:table.column>
+                <flux:table.column>Weight Range</flux:table.column>
+                <flux:table.column>Price</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->rates as $rate)
-                <flux:table.row :key="$rate->id">
-                    <flux:table.cell class="font-semibold">{{ $rate->zone?->name }}</flux:table.cell>
+            <flux:table.rows>
+                @foreach ($this->rates as $rate)
+                    <flux:table.row :key="$rate->id">
+                        <flux:table.cell class="font-semibold ps-4!">{{ $rate->zone?->name }}</flux:table.cell>
 
-                    <flux:table.cell>{{ $rate->method?->name }}</flux:table.cell>
+                        <flux:table.cell>{{ $rate->method?->name }}</flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="zinc">
-                            {{ $rate->min_weight }}kg - {{ $rate->max_weight }}kg
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" color="zinc">
+                                {{ $rate->min_weight }}kg - {{ $rate->max_weight }}kg
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell class="font-semibold">
-                        {{ format_currency($rate->price) }}
-                    </flux:table.cell>
+                        <flux:table.cell class="font-semibold">
+                            {{ format_currency($rate->price) }}
+                        </flux:table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square"
-                            class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $rate->id }})"
-                            icon-variant="outline" />
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $rate->id }})"
+                                icon-variant="outline" />
 
-                        <flux:button variant="ghost" size="sm" icon="trash" color="danger"
-                            class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $rate->id }})"
-                            icon-variant="outline" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" color="danger"
+                                class="cursor-pointer text-red-500!" wire:click="confirmDelete({{ $rate->id }})"
+                                icon-variant="outline" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     <flux:modal name="rate-modal" class="md:max-w-xl w-full space-y-6">
         <flux:heading size="lg" class="text-center font-semibold">
