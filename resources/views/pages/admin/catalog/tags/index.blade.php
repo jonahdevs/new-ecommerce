@@ -138,77 +138,88 @@ new #[Title('Tags')] class extends Component {
     </div>
 
     {{-- Tags Table --}}
-    <flux:table :paginate="$this->tags">
-        <flux:table.columns>
-            <flux:table.column>Tag</flux:table.column>
-            <flux:table.column>Slug</flux:table.column>
-            <flux:table.column>Products</flux:table.column>
-            <flux:table.column>Sort Order</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0 rounded-md">
+        <flux:table :paginate="$this->tags">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Tag</flux:table.column>
+                <flux:table.column>Slug</flux:table.column>
+                <flux:table.column>Products</flux:table.column>
+                <flux:table.column>Sort Order</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse ($this->tags as $tag)
-                <flux:table.row :key="$tag->id">
-                    {{-- Tag Name with Color --}}
-                    <flux:table.cell>
-                        <div class="flex items-center gap-3">
-                            <div class="w-4 h-4 rounded-full border"
-                                style="background-color: {{ $tag->color ?? '#6B7280' }}">
+            <flux:table.rows>
+                @forelse ($this->tags as $tag)
+                    <flux:table.row :key="$tag->id">
+                        {{-- Tag Name with Color --}}
+                        <flux:table.cell class="ps-4!">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 rounded-full border"
+                                    style="background-color: {{ $tag->color ?? '#6B7280' }}">
+                                </div>
+                                <div>
+                                    <div class="font-medium text-zinc-800 dark:text-white">{{ $tag->name }}</div>
+                                    @if ($tag->description)
+                                        <div class="text-xs text-zinc-500">{{ Str::limit($tag->description, 50) }}
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
-                            <div>
-                                <div class="font-medium text-zinc-800 dark:text-white">{{ $tag->name }}</div>
-                                @if ($tag->description)
-                                    <div class="text-xs text-zinc-500">{{ Str::limit($tag->description, 50) }}</div>
-                                @endif
-                            </div>
-                        </div>
-                    </flux:table.cell>
+                        </flux:table.cell>
 
-                    {{-- Slug --}}
-                    <flux:table.cell>
-                        <span class="font-mono text-sm text-zinc-600">{{ $tag->slug }}</span>
-                    </flux:table.cell>
+                        {{-- Slug --}}
+                        <flux:table.cell>
+                            <span class="font-mono text-sm text-zinc-600">{{ $tag->slug }}</span>
+                        </flux:table.cell>
 
-                    {{-- Products Count --}}
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="zinc">
-                            {{ $tag->products_count }} {{ Str::plural('product', $tag->products_count) }}
-                        </flux:badge>
-                    </flux:table.cell>
-
-                    {{-- Sort Order --}}
-                    <flux:table.cell>
-                        {{ $tag->sort_order ?? 0 }}
-                    </flux:table.cell>
-
-                    {{-- Status --}}
-                    <flux:table.cell>
-                        <button wire:click="toggleStatus({{ $tag->id }})" class="inline-flex">
-                            <flux:badge size="sm" variant="flat" :color="$tag->is_active ? 'green' : 'gray'">
-                                {{ $tag->is_active ? 'Active' : 'Inactive' }}
+                        {{-- Products Count --}}
+                        <flux:table.cell>
+                            <flux:badge size="sm" color="zinc">
+                                {{ $tag->products_count }} {{ Str::plural('product', $tag->products_count) }}
                             </flux:badge>
-                        </button>
-                    </flux:table.cell>
+                        </flux:table.cell>
 
-                    {{-- Actions --}}
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square"
-                            href="{{ route('admin.tags.edit', $tag) }}" wire:navigate />
+                        {{-- Sort Order --}}
+                        <flux:table.cell>
+                            {{ $tag->sort_order ?? 0 }}
+                        </flux:table.cell>
 
-                        <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                            wire:confirm="Delete this tag? This action cannot be undone if the tag is not used by any products."
-                            wire:click="delete({{ $tag->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="6" class="text-center text-zinc-500 py-8">
-                        No tags found
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+                        {{-- Status --}}
+                        <flux:table.cell>
+                            <button wire:click="toggleStatus({{ $tag->id }})" class="inline-flex">
+                                <flux:badge size="sm" variant="flat" :color="$tag->is_active ? 'green' : 'gray'">
+                                    {{ $tag->is_active ? 'Active' : 'Inactive' }}
+                                </flux:badge>
+                            </button>
+                        </flux:table.cell>
+
+                        {{-- Actions --}}
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                href="{{ route('admin.tags.edit', $tag) }}" wire:navigate />
+
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                class="text-red-500!"
+                                wire:confirm="Delete this tag? This action cannot be undone if the tag is not used by any products."
+                                wire:click="delete({{ $tag->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="6" class="text-center text-zinc-500 py-8">
+                            No tags found
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

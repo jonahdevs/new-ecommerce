@@ -111,3 +111,55 @@ select:focus[data-flux-control] {
 .mary-table-pagination button {
     @apply cursor-pointer;
 }
+
+/* admin sidebar customization */
+
+[data-flux-sidebar] {
+    @apply bg-sheffield-blue border-sheffield-blue-dark;
+}
+
+[data-flux-navlist-group] [data-flux-heading] {
+    @apply text-white/50 text-xs uppercase tracking-widest;
+}
+
+[data-flux-navlist-item] {
+    @apply text-white/75 rounded-md;
+}
+
+[data-flux-navlist-item]:hover {
+    @apply bg-sheffield-blue-light text-white;
+}
+
+[data-flux-navlist-item][data-current] {
+    @apply bg-white text-sheffield-blue font-semibold;
+}
+
+[data-flux-navlist-item] svg {
+    @apply text-inherit;
+}
+
+[data-flux-sidebar] [data-flux-separator] {
+    @apply border-white/15;
+}
+
+[data-flux-sidebar] [data-flux-brand] * {
+    @apply text-white;
+}
+
+/* Fix nested expandable group dark background */
+[data-flux-sidebar] [data-flux-navlist-group] {
+    @apply bg-transparent;
+}
+
+[data-flux-sidebar] [data-flux-navlist-group] button,
+[data-flux-sidebar] [data-flux-navlist-group] [role="button"] {
+    @apply bg-transparent text-white/75 hover:bg-sheffield-blue-light hover:text-white;
+}
+
+/* Expandable group expanded content area */
+[data-flux-sidebar] [data-flux-navlist-group] > div,
+[data-flux-sidebar] [data-flux-navlist-group] > ul {
+    @apply bg-transparent;
+}
+
+/* end of admin sidebar customization */

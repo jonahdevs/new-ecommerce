@@ -45,61 +45,71 @@ new #[Title('Product Attributes')] class extends Component {
             class="max-w-md" />
     </div>
 
-    <flux:table :paginate="$attributes">
-        <flux:table.columns>
-            <flux:table.column>Name</flux:table.column>
-            <flux:table.column>Type</flux:table.column>
-            <flux:table.column>Values Count</flux:table.column>
-            <flux:table.column>Usage</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0 rounded-md">
+        <flux:table :paginate="$attributes">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Name</flux:table.column>
+                <flux:table.column>Type</flux:table.column>
+                <flux:table.column>Values Count</flux:table.column>
+                <flux:table.column>Usage</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($attributes as $attribute)
-                <flux:table.row :key="$attribute->id">
-                    <flux:table.cell>
-                        <div class="font-medium text-zinc-800 dark:text-white">{{ $attribute->name }}</div>
-                        <div class="text-xs text-zinc-500">{{ $attribute->slug }}</div>
-                    </flux:table.cell>
+            <flux:table.rows>
+                @foreach ($attributes as $attribute)
+                    <flux:table.row :key="$attribute->id">
+                        <flux:table.cell class="ps-4!">
+                            <div class="font-medium text-zinc-800 dark:text-white">{{ $attribute->name }}</div>
+                            <div class="text-xs text-zinc-500">{{ $attribute->slug }}</div>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="zinc" variant="outline" class="capitalize">
-                            {{ $attribute->type }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" color="zinc" variant="outline" class="capitalize">
+                                {{ $attribute->type }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:text size="sm">{{ $attribute->values_count }} values</flux:text>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text size="sm">{{ $attribute->values_count }} values</flux:text>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <div class="flex gap-2">
-                            @if ($attribute->used_for_variations)
-                                <flux:badge size="sm" color="indigo" variant="subtle">Variations</flux:badge>
-                            @endif
-                            @if ($attribute->is_visible)
-                                <flux:badge size="sm" color="blue" variant="subtle">Visible</flux:badge>
-                            @endif
-                        </div>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <div class="flex gap-2">
+                                @if ($attribute->used_for_variations)
+                                    <flux:badge size="sm" color="indigo" variant="subtle">Variations</flux:badge>
+                                @endif
+                                @if ($attribute->is_visible)
+                                    <flux:badge size="sm" color="blue" variant="subtle">Visible</flux:badge>
+                                @endif
+                            </div>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" :color="$attribute->is_active ? 'green' : 'red'" variant="flat">
-                            {{ $attribute->is_active ? 'Active' : 'Inactive' }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" :color="$attribute->is_active ? 'green' : 'red'" variant="flat">
+                                {{ $attribute->is_active ? 'Active' : 'Inactive' }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square"
-                            href="{{ route('admin.attributes.edit', $attribute) }}" wire:navigate />
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                href="{{ route('admin.attributes.edit', $attribute) }}" wire:navigate />
 
-                        <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                            wire:confirm="Are you sure? This will remove the attribute and all its values."
-                            wire:click="delete({{ $attribute->id }})" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" class="text-red-500!"
+                                icon-variant="outline"
+                                wire:confirm="Are you sure? This will remove the attribute and all its values."
+                                wire:click="delete({{ $attribute->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

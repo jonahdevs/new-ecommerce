@@ -58,77 +58,80 @@ new #[Title('Brands')] class extends Component {
         <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search brands..." class="max-w-md"
             clearable />
     </div>
-    <flux:table :paginate="$this->brands">
-        <flux:table.columns>
-            <flux:table.column>Brand</flux:table.column>
-            <flux:table.column>Website</flux:table.column>
-            <flux:table.column>Products</flux:table.column>
-            <flux:table.column>Sort Order</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->brands as $brand)
-                <flux:table.row :key="$brand->id">
-                    <flux:table.cell class="flex items-center gap-3">
-                        @if ($brand->logo_path)
-                            <img src="{{ asset('storage/' . $brand->logo_path) }}"
-                                class="w-10 h-10 rounded object-contain bg-white p-1 border">
-                        @else
-                            <div
-                                class="w-10 h-10 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center rounded">
-                                <flux:icon name="building-storefront" variant="micro" />
+    <flux:card class="p-0 rounded-md">
+        <flux:table :paginate="$this->brands">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Brand</flux:table.column>
+                <flux:table.column>Website</flux:table.column>
+                <flux:table.column>Products</flux:table.column>
+                <flux:table.column>Sort Order</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
+
+            <flux:table.rows>
+                @foreach ($this->brands as $brand)
+                    <flux:table.row :key="$brand->id">
+                        <flux:table.cell class="flex items-center gap-3 ps-4!">
+                            @if ($brand->logo_path)
+                                <img src="{{ asset('storage/' . $brand->logo_path) }}"
+                                    class="w-10 h-10 rounded object-contain bg-white p-1 border">
+                            @else
+                                <div
+                                    class="w-10 h-10 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center rounded">
+                                    <flux:icon name="building-storefront" variant="micro" />
+                                </div>
+                            @endif
+
+                            <div>
+                                <span class="font-medium text-zinc-800 dark:text-white">{{ $brand->name }}</span>
+                                <div class="text-xs text-zinc-500">{{ $brand->slug }}</div>
                             </div>
-                        @endif
+                        </flux:table.cell>
 
-                        <div>
-                            <span class="font-medium text-zinc-800 dark:text-white">{{ $brand->name }}</span>
-                            <div class="text-xs text-zinc-500">{{ $brand->slug }}</div>
-                        </div>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            @if ($brand->website_url)
+                                <a href="{{ $brand->website_url }}" target="_blank"
+                                    class="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                    Visit
+                                    <flux:icon name="arrow-top-right-on-square" variant="micro" />
+                                </a>
+                            @else
+                                <span class="text-zinc-400 text-sm">—</span>
+                            @endif
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        @if ($brand->website_url)
-                            <a href="{{ $brand->website_url }}" target="_blank"
-                                class="text-blue-600 hover:underline text-sm flex items-center gap-1">
-                                Visit
-                                <flux:icon name="arrow-top-right-on-square" variant="micro" />
-                            </a>
-                        @else
-                            <span class="text-zinc-400 text-sm">—</span>
-                        @endif
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" color="zinc" variant="subtle">
+                                {{ $brand->products_count }} products
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="zinc" variant="subtle">
-                            {{ $brand->products_count }} products
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <span class="text-sm text-zinc-600">{{ $brand->sort_order }}</span>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <span class="text-sm text-zinc-600">{{ $brand->sort_order }}</span>
-                    </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" :color="$brand->is_active ? 'green' : 'red'" variant="flat">
+                                {{ $brand->is_active ? 'Active' : 'Inactive' }}
+                            </flux:badge>
+                        </flux:table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" :color="$brand->is_active ? 'green' : 'red'" variant="flat">
-                            {{ $brand->is_active ? 'Active' : 'Inactive' }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square"
+                                :href="route('admin.brands.edit', $brand->id)" wire:navigate
+                                class="cursor-pointer text-sheffield-blue!" />
 
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square"
-                            :href="route('admin.brands.edit', $brand->id)" wire:navigate
-                            class="cursor-pointer text-sheffield-blue!" />
-
-                        <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                            wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')"
-                            icon-variant="outline" class="cursor-pointer text-red-500!" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" color="red"
+                                wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')"
+                                icon-variant="outline" class="cursor-pointer text-red-500!" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- Delete Confirmation Modal --}}
     <flux:modal name="delete-brand" class="md:w-96">
@@ -155,3 +158,10 @@ new #[Title('Brands')] class extends Component {
         </form>
     </flux:modal>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

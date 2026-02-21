@@ -52,7 +52,10 @@
                     </flux:navlist.item>
 
                     <flux:navlist.item href="#" icon="eye">Recently Viewed</flux:navlist.item>
-                    <flux:navlist.item href="#" icon="heart" badge="#">Favorite
+
+                    <flux:navlist.item :href="route('wishlist')" icon="heart"
+                        :badge="auth()->user()->wishlistItems()->count() ?: null">
+                        Favorite
                         Items
                     </flux:navlist.item>
 
