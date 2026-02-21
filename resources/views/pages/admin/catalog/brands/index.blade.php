@@ -38,7 +38,7 @@ new #[Title('Brands')] class extends Component {
     #[Computed]
     public function brands()
     {
-        return Brand::query()->withCount('products')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->ordered()->paginate(15);
+        return Brand::query()->withCount('products')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->latest()->paginate(15);
     }
 }; ?>
 
