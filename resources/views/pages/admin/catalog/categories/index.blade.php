@@ -43,12 +43,18 @@ new #[Title('Categories')] class extends Component {
             ->with(['parent'])
             ->withCount('children')
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
-            ->orderBy('sort_order')
+            ->latest()
             ->paginate(15);
     }
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Categories</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex justify-between items-center mb-6">
         <div>
             <flux:heading size="xl" class="mb-2">Categories</flux:heading>

@@ -73,6 +73,12 @@ new #[Title('Reviews')] class extends Component {
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Reviews</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex items-center justify-between">
         <div>
             <flux:heading size="xl" class="mb-1">Reviews</flux:heading>
@@ -107,119 +113,131 @@ new #[Title('Reviews')] class extends Component {
         </flux:select>
     </div>
 
-    <flux:table :paginate="$this->reviews">
-        <flux:table.columns>
-            <flux:table.column>Review</flux:table.column>
-            <flux:table.column>Product</flux:table.column>
-            <flux:table.column>Rating</flux:table.column>
-            <flux:table.column>Customer</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column>Date</flux:table.column>
-            <flux:table.column align="end">Actions</flux:table.column>
-        </flux:table.columns>
+    <flux:card class="p-0">
+        <flux:table :paginate="$this->reviews">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Review</flux:table.column>
+                <flux:table.column>Product</flux:table.column>
+                <flux:table.column>Rating</flux:table.column>
+                <flux:table.column>Customer</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column>Date</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @foreach ($this->reviews as $review)
-                <flux:table.row :key="$review->id">
-                    {{-- Review Content --}}
-                    <flux:table.cell class="max-w-md">
-                        <div class="font-medium text-zinc-800 dark:text-white mb-1">
-                            {{ $review->title ?? 'No title' }}
-                        </div>
-                        <div class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
-                            {{ $review->review_text }}
-                        </div>
-                        @if ($review->images->count() > 0)
-                            <div class="flex gap-1 mt-2">
-                                <flux:badge size="sm" color="blue" variant="outline">
-                                    <flux:icon name="photo" class="w-3 h-3" />
-                                    {{ $review->images->count() }}
-                                    {{ $review->images->count() === 1 ? 'image' : 'images' }}
+            <flux:table.rows>
+                @foreach ($this->reviews as $review)
+                    <flux:table.row :key="$review->id">
+                        {{-- Review Content --}}
+                        <flux:table.cell class="max-w-md ps-4!">
+                            <div class="font-medium text-zinc-800 dark:text-white mb-1">
+                                {{ $review->title ?? 'No title' }}
+                            </div>
+                            <div class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                                {{ $review->review_text }}
+                            </div>
+                            @if ($review->images->count() > 0)
+                                <div class="flex gap-1 mt-2">
+                                    <flux:badge size="sm" color="blue" variant="outline">
+                                        <flux:icon name="photo" class="w-3 h-3" />
+                                        {{ $review->images->count() }}
+                                        {{ $review->images->count() === 1 ? 'image' : 'images' }}
+                                    </flux:badge>
+                                </div>
+                            @endif
+                        </flux:table.cell>
+
+                        {{-- Product --}}
+                        <flux:table.cell>
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded border bg-zinc-50 overflow-hidden flex-shrink-0">
+                                    @if ($review->product->image_path)
+                                        <img src="{{ $review->product->image_url }}" class="object-cover w-full h-full">
+                                    @else
+                                        <flux:icon name="photo" class="w-full h-full p-1.5 text-zinc-300" />
+                                    @endif
+                                </div>
+                                <div class="text-sm font-medium">{{ $review->product->name }}</div>
+                            </div>
+                        </flux:table.cell>
+
+                        {{-- Rating --}}
+                        <flux:table.cell>
+                            <div class="flex items-center gap-1">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <flux:icon name="star"
+                                        variant="{{ $i <= $review->rating ? 'solid' : 'outline' }}"
+                                        class="w-4 h-4 {{ $i <= $review->rating ? 'text-yellow-400' : 'text-zinc-300' }}" />
+                                @endfor
+                                <span class="text-sm font-medium ml-1">{{ $review->rating }}/5</span>
+                            </div>
+                            @if ($review->is_verified_purchase)
+                                <flux:badge size="sm" color="green" variant="flat" class="mt-1">
+                                    Verified Purchase
                                 </flux:badge>
-                            </div>
-                        @endif
-                    </flux:table.cell>
+                            @endif
+                        </flux:table.cell>
 
-                    {{-- Product --}}
-                    <flux:table.cell>
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded border bg-zinc-50 overflow-hidden flex-shrink-0">
-                                @if ($review->product->image_path)
-                                    <img src="{{ $review->product->image_url }}" class="object-cover w-full h-full">
-                                @else
-                                    <flux:icon name="photo" class="w-full h-full p-1.5 text-zinc-300" />
-                                @endif
-                            </div>
-                            <div class="text-sm font-medium">{{ $review->product->name }}</div>
-                        </div>
-                    </flux:table.cell>
+                        {{-- Customer --}}
+                        <flux:table.cell>
+                            <div class="font-medium text-sm">{{ $review->user->name }}</div>
+                            @if ($review->helpful_count > 0)
+                                <div class="text-xs text-zinc-500">
+                                    {{ $review->helpful_count }} found helpful
+                                </div>
+                            @endif
+                        </flux:table.cell>
 
-                    {{-- Rating --}}
-                    <flux:table.cell>
-                        <div class="flex items-center gap-1">
-                            @for ($i = 1; $i <= 5; $i++)
-                                <flux:icon name="star" variant="{{ $i <= $review->rating ? 'solid' : 'outline' }}"
-                                    class="w-4 h-4 {{ $i <= $review->rating ? 'text-yellow-400' : 'text-zinc-300' }}" />
-                            @endfor
-                            <span class="text-sm font-medium ml-1">{{ $review->rating }}/5</span>
-                        </div>
-                        @if ($review->is_verified_purchase)
-                            <flux:badge size="sm" color="green" variant="flat" class="mt-1">
-                                Verified Purchase
+                        {{-- Status --}}
+                        <flux:table.cell>
+                            <flux:badge size="sm" variant="flat"
+                                :color="match($review->status) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'pending' => 'amber',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'approved' => 'green',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'rejected' => 'red',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    default => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }">
+                                {{ ucfirst($review->status) }}
                             </flux:badge>
-                        @endif
-                    </flux:table.cell>
+                        </flux:table.cell>
 
-                    {{-- Customer --}}
-                    <flux:table.cell>
-                        <div class="font-medium text-sm">{{ $review->user->name }}</div>
-                        @if ($review->helpful_count > 0)
-                            <div class="text-xs text-zinc-500">
-                                {{ $review->helpful_count }} found helpful
-                            </div>
-                        @endif
-                    </flux:table.cell>
+                        {{-- Date --}}
+                        <flux:table.cell>
+                            <div class="text-sm">{{ $review->created_at->format('M d, Y') }}</div>
+                            <div class="text-xs text-zinc-500">{{ $review->created_at->diffForHumans() }}</div>
+                        </flux:table.cell>
 
-                    {{-- Status --}}
-                    <flux:table.cell>
-                        <flux:badge size="sm" variant="flat"
-                            :color="match($review->status) {
-                                                                                                                                                                                                                                                                                                                                                                                'pending' => 'amber',
-                                                                                                                                                                                                                                                                                                                                                                                'approved' => 'green',
-                                                                                                                                                                                                                                                                                                                                                                                'rejected' => 'red',
-                                                                                                                                                                                                                                                                                                                                                                                default => 'gray',
-                                                                                                                                                                                                                                                                                                                                                                            }">
-                            {{ ucfirst($review->status) }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        {{-- Actions --}}
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="eye" icon-variant="outline"
+                                href="{{ route('admin.reviews.show', $review) }}" wire:navigate
+                                tooltip="View Details" />
 
-                    {{-- Date --}}
-                    <flux:table.cell>
-                        <div class="text-sm">{{ $review->created_at->format('M d, Y') }}</div>
-                        <div class="text-xs text-zinc-500">{{ $review->created_at->diffForHumans() }}</div>
-                    </flux:table.cell>
+                            @if ($review->status === 'pending')
+                                <flux:button variant="ghost" size="sm" icon="check" class="text-green-500!"
+                                    icon-variant="outline" wire:confirm="Approve this review?"
+                                    wire:click="quickApprove({{ $review->id }})" tooltip="Quick Approve" />
 
-                    {{-- Actions --}}
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="eye"
-                            href="{{ route('admin.reviews.show', $review) }}" wire:navigate tooltip="View Details" />
+                                <flux:button variant="ghost" size="sm" icon="x-mark" class="text-red-500!"
+                                    icon-variant="outline" wire:confirm="Reject this review?"
+                                    wire:click="quickReject({{ $review->id }})" tooltip="Quick Reject" />
+                            @endif
 
-                        @if ($review->status === 'pending')
-                            <flux:button variant="ghost" size="sm" icon="check" color="green"
-                                wire:confirm="Approve this review?" wire:click="quickApprove({{ $review->id }})"
-                                tooltip="Quick Approve" />
-
-                            <flux:button variant="ghost" size="sm" icon="x-mark" color="red"
-                                wire:confirm="Reject this review?" wire:click="quickReject({{ $review->id }})"
-                                tooltip="Quick Reject" />
-                        @endif
-
-                        <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                            wire:confirm="Delete this review permanently?" wire:click="delete({{ $review->id }})"
-                            tooltip="Delete" />
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforeach
-        </flux:table.rows>
-    </flux:table>
+                            <flux:button variant="ghost" size="sm" icon="trash" class="text-red-500!"
+                                icon-variant="outline" wire:confirm="Delete this review permanently?"
+                                wire:click="delete({{ $review->id }})" tooltip="Delete" />
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 </div>
+
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

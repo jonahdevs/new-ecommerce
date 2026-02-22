@@ -72,6 +72,12 @@ new #[Title('Shipping Zones')] class extends Component {
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Shipping Zones</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Shipping Zones</flux:heading>

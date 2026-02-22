@@ -50,16 +50,16 @@ new #[Title('Create Tag')] class extends Component {
 
     <flux:heading size="xl">Create Tag</flux:heading>
 
-    <form wire:submit="save" class="mt-6 space-y-6">
+    <form wire:submit="save" class="mt-6 space-y-5">
         @include('pages.admin.catalog.tags._form-fields')
 
-        <div class="flex gap-3 justify-end">
+        <flux:card class="flex gap-3 justify-end bg-zinc-50 dark:bg-zinc-800">
             <flux:button variant="ghost" :href="route('admin.tags.index')" wire:navigate class="cursor-pointer">
                 Cancel
             </flux:button>
             <flux:button type="submit" variant="primary" class="cursor-pointer">
                 Create Tag
             </flux:button>
-        </div>
+        </flux:card>
     </form>
 </div>

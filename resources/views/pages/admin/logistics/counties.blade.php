@@ -19,7 +19,7 @@ new #[Title('Manage Counties')] class extends Component {
     #[Computed]
     public function counties()
     {
-        return County::with('shippingZone')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->orderBy('name')->paginate(10);
+        return County::with('shippingZone')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->orderBy('name')->paginate(15);
     }
 
     #[Computed]
@@ -95,6 +95,12 @@ new #[Title('Manage Counties')] class extends Component {
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Counties</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Counties</flux:heading>

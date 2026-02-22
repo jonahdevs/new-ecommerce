@@ -32,6 +32,9 @@ class CategoryForm extends Form
     public $meta_description = '';
     public $meta_keywords = '';
 
+    public $existingImageIcon = null;
+    public $existingBanner = null;
+
     public function rules()
     {
         $categoryId = $this->category?->id;
@@ -54,9 +57,25 @@ class CategoryForm extends Form
     public function setCategory(Category $category)
     {
         $this->category = $category;
-        $this->fill($category->toArray());
-        // Fix for JSON field
+
+        $this->fill($category->only([
+            'name',
+            'slug',
+            'parent_id',
+            'description',
+            'is_active',
+            'is_featured',
+            'show_in_navbar',
+            'icon_svg',
+            'meta_title',
+            'meta_description',
+        ]));
+
         $this->meta_keywords = $category->meta_keywords ?? [];
+
+        // Populate previews — don't touch the upload fields
+        $this->existingBanner = $category->image_path;
+        $this->existingImageIcon = $category->image_icon;
     }
 
     public function store()
@@ -97,10 +116,14 @@ class CategoryForm extends Form
 
         if ($this->image_path instanceof UploadedFile) {
             $uploads['image_path'] = $this->image_path->store('categories/banners', 'public');
+        } else {
+            $uploads['image_path'] = $this->existingBanner;
         }
 
         if ($this->image_icon instanceof UploadedFile) {
             $uploads['image_icon'] = $this->image_icon->store('categories/icons', 'public');
+        } else {
+            $uploads['image_icon'] = $this->existingImageIcon;
         }
 
         return $uploads;

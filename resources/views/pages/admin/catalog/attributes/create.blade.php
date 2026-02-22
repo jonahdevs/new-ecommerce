@@ -46,7 +46,7 @@ new class extends Component {
         </div>
 
         <div class="flex justify-end gap-3">
-            <flux:button href="{{ route('admin.attributes') }}" variant="ghost">Cancel</flux:button>
+            <flux:button href="{{ route('admin.attributes.index') }}" variant="ghost">Cancel</flux:button>
             <flux:button type="submit" variant="primary">Create & Add Values</flux:button>
         </div>
     </form>

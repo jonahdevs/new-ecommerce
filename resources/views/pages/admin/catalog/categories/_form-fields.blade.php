@@ -57,8 +57,8 @@
                     <flux:label>Category Icon (Image)</flux:label>
                     @if ($form->image_icon)
                         <img src="{{ $form->image_icon->temporaryUrl() }}" class="w-16 h-16 rounded border">
-                    @elseif(isset($category) && $category->image_icon)
-                        <img src="{{ asset('storage/' . $category->image_icon) }}" class="w-16 h-16 rounded border">
+                    @elseif ($form->existingImageIcon)
+                        <img src="{{ Storage::url($form->existingImageIcon) }}" class="w-16 h-16 rounded border">
                     @endif
                     <flux:input type="file" wire:model="form.image_icon" size="sm" />
                 </div>
@@ -76,17 +76,17 @@
                 </div>
             </div>
         </flux:card>
+
         <flux:card class="p-0">
             <div class="border-b px-3 py-2">
                 <flux:heading size="lg">Category Banner</flux:heading>
             </div>
-
             <div class="p-5 space-y-5">
                 @if ($form->image_path)
                     <img src="{{ $form->image_path->temporaryUrl() }}"
                         class="w-full aspect-video rounded border object-cover">
-                @elseif(isset($category) && $category->image_path)
-                    <img src="{{ asset('storage/' . $category->image_path) }}"
+                @elseif ($form->existingBanner)
+                    <img src="{{ Storage::url($form->existingBanner) }}"
                         class="w-full aspect-video rounded border object-cover">
                 @endif
                 <flux:input type="file" wire:model="form.image_path" />

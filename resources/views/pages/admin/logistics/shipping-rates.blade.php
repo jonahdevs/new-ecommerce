@@ -28,7 +28,7 @@ new #[Title('Shipping Rates')] class extends Component {
     {
         return ShippingRate::with(['method', 'zone'])
             ->orderBy('shipping_zone_id')
-            ->paginate(10);
+            ->paginate(15);
     }
 
     #[Computed]
@@ -102,6 +102,12 @@ new #[Title('Shipping Rates')] class extends Component {
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Shipping Rates</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Shipping Rate</flux:heading>
@@ -230,3 +236,10 @@ new #[Title('Shipping Rates')] class extends Component {
         </form>
     </flux:modal>
 </div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

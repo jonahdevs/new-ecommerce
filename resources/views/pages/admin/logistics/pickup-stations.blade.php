@@ -123,6 +123,12 @@ new #[Title('Pickup Stations')] class extends Component {
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Pickup Stations</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl">Pickup Stations</flux:heading>
@@ -135,10 +141,9 @@ new #[Title('Pickup Stations')] class extends Component {
     </div>
 
     <div class="mb-4">
-        <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name or code..." icon="magnifying-glass"
-            class="max-w-md" />
+        <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name or code..."
+            icon="magnifying-glass" class="max-w-md" />
     </div>
-
 
     <flux:card class="p-0">
         <flux:table :paginate="$this->stations">
@@ -252,7 +257,8 @@ new #[Title('Pickup Stations')] class extends Component {
             <flux:modal.close class="flex-1">
                 <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>
             </flux:modal.close>
-            <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Confirm Delete</flux:button>
+            <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Confirm Delete
+            </flux:button>
         </div>
     </flux:modal>
 </div>

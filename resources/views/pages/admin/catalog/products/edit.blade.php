@@ -174,8 +174,8 @@ new #[Title('Create Product')] class extends Component {
         <flux:button variant="primary" type="submit" form="product-form">Update</flux:button>
     </div>
 
-    <form wire:submit="save" class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4" id="product-form">
-        <div class="col-span-3 space-y-4">
+    <form wire:submit="save" class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-5" id="product-form">
+        <div class="col-span-3 space-y-5">
             {{-- Basic Information Section --}}
             @include('pages.admin.catalog.products.partials._basic-information')
 
@@ -313,7 +313,7 @@ new #[Title('Create Product')] class extends Component {
             @include('pages.admin.catalog.products.partials._seo')
         </div>
 
-        <div class="col-span-1 space-y-4">
+        <div class="col-span-1 space-y-5">
             @include('pages.admin.catalog.products.partials._sidebar')
 
         </div>

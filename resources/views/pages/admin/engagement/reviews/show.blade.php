@@ -23,7 +23,7 @@ new class extends Component {
         ]);
 
         session()->flash('status', 'Review approved successfully.');
-        return $this->redirect(route('admin.reviews'), navigate: true);
+        return $this->redirect(route('admin.reviews.index'), navigate: true);
     }
 
     public function reject()
@@ -35,45 +35,45 @@ new class extends Component {
         ]);
 
         session()->flash('status', 'Review rejected successfully.');
-        return $this->redirect(route('admin.reviews'), navigate: true);
+        return $this->redirect(route('admin.reviews.index'), navigate: true);
     }
 
     public function delete()
     {
         $this->review->delete();
         session()->flash('status', 'Review deleted successfully.');
-        return $this->redirect(route('admin.reviews'), navigate: true);
+        return $this->redirect(route('admin.reviews.index'), navigate: true);
     }
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.reviews.index')" wire:navigate>Reviews</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Details</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     {{-- Header --}}
-    <div class="mb-6">
-        <div class="flex items-center gap-2 mb-3">
-            <flux:button variant="ghost" size="sm" icon="arrow-left" href="{{ route('admin.reviews') }}" wire:navigate>
-                Back to Reviews
-            </flux:button>
+
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <flux:heading size="xl" class="mb-1">Review Details</flux:heading>
+            <flux:subheading>Review for {{ $review->product?->name }}</flux:subheading>
         </div>
 
-        <div class="flex items-start justify-between">
-            <div>
-                <flux:heading size="xl" class="mb-1">Review Details</flux:heading>
-                <flux:subheading>Review for {{ $review->product?->name }}</flux:subheading>
-            </div>
-
-            <flux:badge size="lg" variant="flat"
-                :color="match($review->status) {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'pending' => 'amber',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'approved' => 'green',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'rejected' => 'red',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    default => 'gray',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }">
-                {{ ucfirst($review->status) }}
-            </flux:badge>
-        </div>
+        <flux:badge size="lg" variant="flat"
+            :color="match($review->status) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'pending' => 'amber',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'approved' => 'green',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'rejected' => 'red',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    default => 'gray',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }">
+            {{ ucfirst($review->status) }}
+        </flux:badge>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {{-- Main Content --}}
         <div class="lg:col-span-2 space-y-6">
             {{-- Review Content Card --}}
@@ -183,7 +183,7 @@ new class extends Component {
         </div>
 
         {{-- Sidebar --}}
-        <div class="space-y-6">
+        <div class="space-y-5">
             {{-- Customer Info --}}
             <flux:card>
                 <flux:heading size="lg" class="mb-4">Customer</flux:heading>

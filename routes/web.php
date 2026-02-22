@@ -86,7 +86,7 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('free-shipping', 'pages::admin.logistics.free-shipping')->name('.free-shipping');
 
     // Engagement
-    Route::livewire('reviews', 'pages::admin.engagement.reviews.index')->name('.reviews');
+    Route::livewire('reviews', 'pages::admin.engagement.reviews.index')->name('.reviews.index');
     Route::livewire('reviews/{review}', 'pages::admin.engagement.reviews.show')->name('.reviews.show');
 });
 Route::view('dashboard', 'dashboard')

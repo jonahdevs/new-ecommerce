@@ -38,7 +38,7 @@ new #[Title('Manage Areas')] class extends Component {
             ->when($this->search, fn($q) => $q->where(fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhereHas('county', fn($c) => $c->where('name', 'like', "%{$this->search}%"))))
             ->when($this->filterCounty, fn($q) => $q->where('county_id', $this->filterCounty))
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate(15);
     }
 
     #[Computed]
@@ -117,6 +117,12 @@ new #[Title('Manage Areas')] class extends Component {
 }; ?>
 
 <div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('dashboard')" icon="home" icon-variant="outline" wire:navigate>
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Areas & Towns</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
     <div class="flex items-center justify-between mb-8">
         <div>
             <flux:heading size="xl" class="mb-2">Areas & Towns</flux:heading>

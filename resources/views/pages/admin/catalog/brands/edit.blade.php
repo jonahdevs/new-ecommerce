@@ -43,16 +43,16 @@ new class extends Component {
 
     <flux:heading size="xl">Edit Brand: {{ $brand->name }}</flux:heading>
 
-    <form wire:submit="save" class="space-y-8 mt-6">
+    <form wire:submit="save" class="space-y-5 mt-6">
         @include('pages.admin.catalog.brands._form-fields')
 
-        <div class="flex justify-end gap-3 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border">
+        <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-800">
             <flux:button variant="ghost" href="{{ route('admin.brands.index') }}" class="cursor-pointer">
                 Discard Changes
             </flux:button>
             <flux:button type="submit" variant="primary" class="cursor-pointer">
                 Save Brand
             </flux:button>
-        </div>
+        </flux:card>
     </form>
 </div>

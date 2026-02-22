@@ -115,7 +115,7 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-            <flux:navlist.item icon="star" wire:navigate :href="route('admin.reviews')"
+            <flux:navlist.item icon="star" wire:navigate :href="route('admin.reviews.index')"
                 :current="request()->routeIs('admin.reviews*')">
                 Reviews
             </flux:navlist.item>
