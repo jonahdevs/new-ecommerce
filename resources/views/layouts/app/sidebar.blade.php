@@ -110,12 +110,8 @@
 
         {{-- Customer --}}
         <flux:navlist.group heading="Customers" class="grid">
-            <flux:navlist.group heading="Customers" expandable expanded="false" class="grid">
-                <flux:navlist.item icon="users" wire:navigate href="#">All Customers
-                </flux:navlist.item>
-                <flux:navlist.item icon="plus-circle" wire:navigate href="#">Add New Customer
-                </flux:navlist.item>
-            </flux:navlist.group>
+            <flux:navlist.item icon="users" wire:navigate href="#">All Customers
+            </flux:navlist.item>
 
             <flux:navlist.item icon="star" wire:navigate :href="route('admin.reviews.index')"
                 :current="request()->routeIs('admin.reviews*')">
@@ -123,17 +119,21 @@
             </flux:navlist.item>
         </flux:navlist.group>
 
+        <flux:navlist.group heading="Access & Control" class="grid">
+            <flux:navlist.item icon="shield" wire:navigate :href="route('admin.roles.index')" wire:navigate
+                :current="request()->routeIs('admin.roles*')">Roles
+            </flux:navlist.item>
+
+            <flux:navlist.item icon="key" wire:navigate :href="route('admin.permissions.index')"
+                :current="request()->routeIs('admin.permissions*')">
+                Permissions
+            </flux:navlist.item>
+        </flux:navlist.group>
+
         {{-- Reports --}}
         <flux:navlist.group heading="Reports & Analytics" expanded="false" class="grid">
-            <flux:navlist.item icon="chart-bar" wire:navigate href="#">Sales Reports
+            <flux:navlist.item icon="chart-bar" wire:navigate href="#">Reports
             </flux:navlist.item>
-            <flux:navlist.item icon="archive-box" wire:navigate href="#">Inventory Reports
-            </flux:navlist.item>
-            <flux:navlist.item icon="user-group" wire:navigate href="#">Customer Reports
-            </flux:navlist.item>
-            <flux:navlist.item icon="currency-dollar" wire:navigate href="#">Revenue Reports
-            </flux:navlist.item>
-            <flux:navlist.item icon="truck" wire:navigate href="#">Shipping Reports</flux:navlist.item>
         </flux:navlist.group>
 
         {{-- Marketing & Content --}}
@@ -148,16 +148,8 @@
             </flux:navlist.item>
         </flux:navlist.group>
 
-        <flux:navlist.group heading="Settings" class="grid">
-            <flux:navlist.item icon="cog" wire:navigate href="#">General Settings
-            </flux:navlist.item>
-            <flux:navlist.item icon="credit-card" wire:navigate href="#">Payment Gateway
-            </flux:navlist.item>
-            <flux:navlist.item icon="calculator" wire:navigate href="#">Tax Settings
-            </flux:navlist.item>
-            <flux:navlist.item icon="at-symbol" wire:navigate href="#">Email Configuration
-            </flux:navlist.item>
-            <flux:navlist.item icon="shield-check" wire:navigate href="#">Roles & Permissions
+        <flux:navlist.group heading="Settings & Others" class="grid">
+            <flux:navlist.item icon="cog" wire:navigate href="#">Settings
             </flux:navlist.item>
         </flux:navlist.group>
     </flux:sidebar>
@@ -202,8 +194,8 @@
 
                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
-                    <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle"
-                        class="w-full" data-test="logout-button">
+                    <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle" class="w-full"
+                        data-test="logout-button">
                         {{ __('Log Out') }}
                     </flux:menu.item>
                 </form>

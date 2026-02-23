@@ -75,6 +75,10 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('/tags/create', 'pages::admin.catalog.tags.create')->name('.tags.create');
     Route::livewire('/tags/{tag}/edit', 'pages::admin.catalog.tags.edit')->name('.tags.edit');
 
+    Route::livewire('/roles', 'pages::admin.access-control.roles.index')->name('.roles.index');
+    Route::livewire('/roles/{role}/edit', 'pages::admin.access-control.roles.edit')->name('.roles.edit');
+    Route::livewire('/permissions', 'pages::admin.access-control.permissions.index')->name('.permissions.index');
+
     // Logistics
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
     Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');
