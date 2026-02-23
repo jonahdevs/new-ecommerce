@@ -71,6 +71,7 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('/brands/create', 'pages::admin.catalog.brands.create')->name('.brands.create');
     Route::livewire('/brands/{brand}/edit', 'pages::admin.catalog.brands.edit')->name('.brands.edit');
 
+
     Route::livewire('/tags', 'pages::admin.catalog.tags.index')->name('.tags.index');
     Route::livewire('/tags/create', 'pages::admin.catalog.tags.create')->name('.tags.create');
     Route::livewire('/tags/{tag}/edit', 'pages::admin.catalog.tags.edit')->name('.tags.edit');
@@ -89,6 +90,11 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('free-shipping', 'pages::admin.logistics.free-shipping')->name('.free-shipping');
 
     // Engagement
+    Route::livewire('/customers', 'pages::admin.engagement.customers.index')->name('.customers.index');
+    Route::livewire('/customers/create', 'pages::admin.engagement.customers.create')->name('.customers.create');
+    Route::livewire('/customers/{customer}/edit', 'pages::admin.engagement.customers.edit')->name('.customers.edit');
+    Route::livewire('/customers/{customer}/show', 'pages::admin.engagement.customers.show')->name('.customers.show');
+
     Route::livewire('reviews', 'pages::admin.engagement.reviews.index')->name('.reviews.index');
     Route::livewire('reviews/{review}', 'pages::admin.engagement.reviews.show')->name('.reviews.show');
 });

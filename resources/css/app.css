@@ -118,23 +118,23 @@ select:focus[data-flux-control] {
     @apply bg-sheffield-blue border-sheffield-blue-dark;
 }
 
-[data-flux-navlist-group] [data-flux-heading] {
+[data-flux-sidebar-group] [data-flux-heading] {
     @apply text-white/50 text-xs uppercase tracking-widest;
 }
 
-[data-flux-navlist-item] {
+[data-flux-sidebar-item] {
     @apply text-white/75 rounded-md;
 }
 
-[data-flux-navlist-item]:hover {
+[data-flux-sidebar-item]:hover {
     @apply bg-sheffield-blue-light text-white;
 }
 
-[data-flux-navlist-item][data-current] {
-    @apply bg-white text-sheffield-blue font-semibold;
+[data-flux-sidebar-item][data-current] {
+    @apply bg-white text-sheffield-blue;
 }
 
-[data-flux-navlist-item] svg {
+[data-flux-sidebar-item] svg {
     @apply text-inherit;
 }
 
@@ -147,18 +147,18 @@ select:focus[data-flux-control] {
 }
 
 /* Fix nested expandable group dark background */
-[data-flux-sidebar] [data-flux-navlist-group] {
+[data-flux-sidebar] [data-flux-sidebar-group] {
     @apply bg-transparent;
 }
 
-[data-flux-sidebar] [data-flux-navlist-group] button,
-[data-flux-sidebar] [data-flux-navlist-group] [role="button"] {
+[data-flux-sidebar] [data-flux-sidebar-group] button,
+[data-flux-sidebar] [data-flux-sidebar-group] [role="button"] {
     @apply bg-transparent text-white/75 hover:bg-sheffield-blue-light hover:text-white;
 }
 
 /* Expandable group expanded content area */
-[data-flux-sidebar] [data-flux-navlist-group] > div,
-[data-flux-sidebar] [data-flux-navlist-group] > ul {
+[data-flux-sidebar] [data-flux-sidebar-group] > div,
+[data-flux-sidebar] [data-flux-sidebar-group] > ul {
     @apply bg-transparent;
 }
 
