@@ -61,8 +61,7 @@ Route::middleware('auth')->prefix('admin')->name('admin')->group(function () {
     Route::livewire('/categories/{category}/edit', 'pages::admin.catalog.categories.edit')->name('.categories.edit');
 
     Route::livewire('/attributes', 'pages::admin.catalog.attributes.index')->name('.attributes.index');
-    Route::livewire('/attributes/create', 'pages::admin.catalog.attributes.create')->name('.attributes.create');
-    Route::livewire('/attributes/{attribute}/edit', 'pages::admin.catalog.attributes.edit')->name('.attributes.edit');
+    Route::livewire('/attributes/{attribute}/values', 'pages::admin.catalog.attributes.values')->name('.attributes.values');
 
     Route::livewire('/products', 'pages::admin.catalog.products.index')->name('.products.index');
     Route::livewire('/products/create', 'pages::admin.catalog.products.create')->name('.products.create');

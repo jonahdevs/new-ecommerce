@@ -106,9 +106,11 @@ return new class extends Migration {
             $table->id();
             $table->string('name'); // Color, Size, Material
             $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->enum('type', ['select', 'radio', 'checkbox', 'text', 'textarea', 'color', 'swatch', 'button']);
+            $table->string('watch_type')->nullable();
+            $table->string('watch_shape')->nullable();
+            $table->string('watch_size')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
             $table->timestamps();
 
             $table->index(['is_active']);
@@ -125,6 +127,7 @@ return new class extends Migration {
             $table->string('value'); // Red, Blue, Small, Large
             $table->string('label');
             $table->string('slug');
+            $table->text('description')->nullable();
 
             // Visual Display Options
             $table->string('color_code')->nullable(); // For color swatches (#FF0000)

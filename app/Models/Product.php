@@ -194,6 +194,11 @@ class Product extends Model
         return $this->morphMany(InventoryReservation::class, 'reservable');
     }
 
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     // ===============================================
     // SCOPES
     // ===============================================

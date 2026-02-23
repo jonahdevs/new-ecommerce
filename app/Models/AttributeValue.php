@@ -11,6 +11,7 @@ class AttributeValue extends Model
         'value',
         'label',
         'slug',
+        'description',
         'color_code',
         'image_path',
         'sort_order',

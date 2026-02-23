@@ -9,11 +9,10 @@ class Attribute extends Model
     protected $fillable = [
         'name',
         'slug',
-        'description',
-        'type',
+        'watch_type',
+        'watch_shape',
+        'watch_size',
         'is_active',
-        'is_visible',
-        'used_for_variations',
         'sort_order',
     ];
 
@@ -21,8 +20,6 @@ class Attribute extends Model
     {
         return [
             'is_active' => 'boolean',
-            'is_visible' => 'boolean',
-            'used_for_variations' => 'boolean',
         ];
     }
 

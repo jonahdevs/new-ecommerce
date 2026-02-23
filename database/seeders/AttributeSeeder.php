@@ -18,11 +18,8 @@ class AttributeSeeder extends Seeder
         $color = Attribute::create([
             'name' => 'Color',
             'slug' => 'color',
-            'description' => 'Product color options',
-            'type' => 'color',
+            'watch_type' => 'color',
             'is_active' => true,
-            'is_visible' => true,
-            'used_for_variations' => true,
             'sort_order' => 1,
         ]);
 
@@ -47,11 +44,8 @@ class AttributeSeeder extends Seeder
         $size = Attribute::create([
             'name' => 'Size',
             'slug' => 'size',
-            'description' => 'Product size options',
-            'type' => 'select',
+            'watch_type' => 'select',
             'is_active' => true,
-            'is_visible' => true,
-            'used_for_variations' => true,
             'sort_order' => 2,
         ]);
 
@@ -73,11 +67,8 @@ class AttributeSeeder extends Seeder
         $material = Attribute::create([
             'name' => 'Material',
             'slug' => 'material',
-            'description' => 'Product material composition',
-            'type' => 'checkbox',
+            'watch_type' => 'checkbox',
             'is_active' => false,
-            'is_visible' => true,
-            'used_for_variations' => true,
             'sort_order' => 3,
         ]);
 
@@ -100,11 +91,8 @@ class AttributeSeeder extends Seeder
         $style = Attribute::create([
             'name' => 'Style',
             'slug' => 'style',
-            'description' => 'Product style category',
-            'type' => 'radio',
+            'watch_type' => 'radio',
             'is_active' => true,
-            'is_visible' => true,
-            'used_for_variations' => true,
             'sort_order' => 4,
         ]);
 
@@ -125,11 +113,8 @@ class AttributeSeeder extends Seeder
         $origin = Attribute::create([
             'name' => 'Brand Origin',
             'slug' => 'brand-origin',
-            'description' => 'Country of brand origin',
-            'type' => 'select',
+            'watch_type' => 'select',
             'is_active' => true,
-            'is_visible' => true,
-            'used_for_variations' => true,
             'sort_order' => 5,
         ]);
 
@@ -152,11 +137,8 @@ class AttributeSeeder extends Seeder
         $condition = Attribute::create([
             'name' => 'Condition',
             'slug' => 'condition',
-            'description' => 'Product condition',
-            'type' => 'radio',
+            'watch_type' => 'radio',
             'is_active' => true,
-            'is_visible' => true,
-            'used_for_variations' => true,
             'sort_order' => 6,
         ]);
 

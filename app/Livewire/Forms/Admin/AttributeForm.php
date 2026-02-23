@@ -4,53 +4,84 @@ namespace App\Livewire\Forms\Admin;
 
 use App\Models\Attribute;
 use Livewire\Form;
-use Livewire\Attributes\Validate;
 use Illuminate\Support\Str;
 
 class AttributeForm extends Form
 {
     public ?Attribute $attribute = null;
 
-    #[Validate('required|min:2|max:255')]
     public $name = '';
-
-    #[Validate('nullable|max:255')]
     public $slug = '';
-
-    #[Validate('required|in:select,radio,checkbox,text,textarea,color,swatch,button')]
-    public $type = 'select';
-
-    public $description = '';
+    public $watch_type = 'select';
+    public $watch_shape = 'default';
+    public $watch_size = 24;
     public $is_active = true;
-    public $is_visible = true;
-    public $used_for_variations = true;
     public $sort_order = 0;
 
-    public function setAttribute(Attribute $attribute)
+    public function rules(): array
+    {
+        $attributeId = $this->attribute?->id;
+        return [
+            'name'       => 'required|min:2|max:255',
+            'slug'       => ['nullable', 'max:255', 'unique:attributes,slug,' . $attributeId],
+            'watch_type' => 'required|in:select,label,color,image',
+            'watch_shape' => 'required|in:default,rounded-corners,circle',
+            'watch_size' => 'integer|min:1',
+            'sort_order' => 'integer|min:0',
+            'is_active'  => 'boolean',
+        ];
+    }
+
+    public function setAttribute(Attribute $attribute): void
     {
         $this->attribute = $attribute;
-        $this->fill($attribute->toArray());
+        $this->fill($attribute->only([
+            'name',
+            'slug',
+            'watch_type',
+            'watch_shape',
+            'watch_size',
+            'is_active',
+            'sort_order',
+        ]));
     }
 
-    public function store()
+    public function store(): Attribute
     {
-        $this->validate(['slug' => 'nullable|unique:attributes,slug']);
+        $this->validate();
 
         if (empty($this->slug)) {
             $this->slug = Str::slug($this->name);
         }
 
-        return Attribute::create($this->all());
+        return Attribute::create($this->only([
+            'name',
+            'slug',
+            'watch_type',
+            'watch_shape',
+            'watch_size',
+            'is_active',
+            'sort_order',
+        ]));
     }
 
-    public function update()
+    public function update(): void
     {
-        $this->validate(['slug' => 'nullable|unique:attributes,slug,' . $this->attribute->id]);
+        $this->validate();
 
         if (empty($this->slug)) {
             $this->slug = Str::slug($this->name);
         }
 
-        $this->attribute->update($this->all());
+        $this->attribute->update($this->only([
+            'name',
+            'slug',
+            'watch_type',
+            'watch_shape',
+            'watch_size',
+            'description',
+            'is_active',
+            'sort_order',
+        ]));
     }
 }
