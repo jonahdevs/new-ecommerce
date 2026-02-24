@@ -82,7 +82,7 @@ new #[Title('Products')] class extends Component {
     </div>
 
 
-    <flux:card class="p-0 mt-6">
+    <flux:card class="p-0 mt-6 [&_[data-flux-columns]]:bg-zinc-50">
         {{-- Filters --}}
         <div class="flex items-center gap-4 px-5 py-3 border-b">
             <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search by name or SKU..."
@@ -109,7 +109,7 @@ new #[Title('Products')] class extends Component {
         {{-- Table --}}
         <flux:table :paginate="$this->products">
             <flux:table.columns sticky class="bg-white dark:bg-zinc-900">
-                <flux:table.column class="ps-4! bg-white dark:bg-zinc-900" sticky>
+                <flux:table.column class="ps-4! bg-zinc-50 dark:bg-zinc-900" sticky>
                     <span class="sr-only">Product Image</span>
                 </flux:table.column>
                 <flux:table.column>Product</flux:table.column>
