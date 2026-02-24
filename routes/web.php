@@ -82,6 +82,9 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin')
     Route::livewire('/roles/{role}/edit', 'pages::admin.access-control.roles.edit')->name('.roles.edit');
     Route::livewire('/permissions', 'pages::admin.access-control.permissions.index')->name('.permissions.index');
 
+    Route::livewire('/users/create', 'pages::admin.access-control.users.create')->name('.users.create');
+    Route::livewire('/users/{user}/edit', 'pages::admin.access-control.users.edit')->name('.users.edit');
+
     // Logistics
     Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
     Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');

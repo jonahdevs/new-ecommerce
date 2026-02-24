@@ -19,7 +19,11 @@ new class extends Component {
     #[Computed]
     public function groupedPermissions(): array
     {
-        return Permission::all()->groupBy(fn($p) => explode(' ', $p->name, 2)[1] ?? $p->name)->map(fn($group) => $group->pluck('name', 'name'))->toArray();
+        return Permission::all()
+            ->groupBy(fn($p) => explode('.', $p->name, 2)[1] ?? $p->name)
+            ->map(fn($group) => $group->pluck('name', 'name'))
+            ->sortKeys() // alphabetical order for consistency
+            ->toArray();
     }
 
     public function save(): void
@@ -44,47 +48,46 @@ new class extends Component {
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
         <flux:breadcrumbs.item :href="route('admin.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Edit {{ $role->name }} Role</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Edit Role Permissions</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <flux:heading size="xl">Edit {{ Str::ucfirst($role->name) }} Role</flux:heading>
+    <flux:heading size="xl">Edit {{ str($role->name)->replace('_', ' ')->title() }} Permissions</flux:heading>
     <flux:subheading>Manage permissions assigned to this role</flux:subheading>
 
     <form wire:submit="save" class="mt-6">
         <flux:card class="p-0">
             <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
-                <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
-                    @forelse ($this->groupedPermissions as $resource => $actions)
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-5 py-4">
+                @forelse ($this->groupedPermissions as $resource => $actions)
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-5 py-4">
 
-                            {{-- Resource Label --}}
-                            <div>
-                                <flux:heading class="capitalize">{{ $resource }}</flux:heading>
-                            </div>
-
-                            {{-- Permission Checkboxes --}}
-                            <div class="md:col-span-2 grid grid-cols-2 xl:grid-cols-4 gap-3">
-                                @foreach ($actions as $permissionName)
-                                    @php
-                                        $action = explode(' ', $permissionName, 2)[0];
-                                    @endphp
-                                    <flux:checkbox wire:model="form.permissions" :value="$permissionName"
-                                        :label="$action" :id="$permissionName" class="capitalize" />
-                                @endforeach
-                            </div>
-
+                        {{-- Resource Label --}}
+                        <div>
+                            <flux:heading class="capitalize">
+                                {{ Str::of($resource)->replace('-', ' ')->title() }}
+                            </flux:heading>
                         </div>
 
-                    @empty
-                        <div class="flex flex-col items-center gap-3 py-16">
-                            <flux:icon name="key" class="size-10 text-zinc-300" />
-                            <flux:heading size="lg" class="text-zinc-600">No Permissions Found</flux:heading>
-                            <flux:text class="text-sm text-zinc-400">
-                                No permissions have been created yet. Run your permission seeder to get started.
-                            </flux:text>
+                        {{-- Permission Checkboxes --}}
+                        <div class="md:col-span-2 grid grid-cols-2 xl:grid-cols-4 gap-3">
+                            @foreach ($actions as $permissionName)
+                                @php
+                                    $action = explode('.', $permissionName, 2)[0];
+                                @endphp
+                                <flux:checkbox wire:model="form.permissions" :value="$permissionName"
+                                    :label="Str::ucfirst($action)" :id="$permissionName" />
+                            @endforeach
                         </div>
-                    @endforelse
-                </div>
+
+                    </div>
+                @empty
+                    <div class="flex flex-col items-center gap-3 py-16">
+                        <flux:icon name="key" class="size-10 text-zinc-300" />
+                        <flux:heading size="lg" class="text-zinc-600">No Permissions Found</flux:heading>
+                        <flux:text class="text-sm text-zinc-400">
+                            No permissions have been created yet. Run your permission seeder to get started.
+                        </flux:text>
+                    </div>
+                @endforelse
             </div>
 
             {{-- Footer --}}

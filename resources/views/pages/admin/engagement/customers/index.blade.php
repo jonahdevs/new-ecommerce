@@ -28,7 +28,7 @@ new #[Title('Customers')] class extends Component {
     #[Computed]
     public function customers()
     {
-        return User::role('customer')
+        return User::customer()
             ->withCount('orders')
             ->when(
                 $this->search,

@@ -13,18 +13,23 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+
         User::factory()->create([
             'email' => 'customer@sheffieldafrica.com',
             'default_payment_method' => 'mpesa',
-        ])->assignRole('customer');
+        ]);
 
         User::factory()->create([
             'email' => 'admin@sheffieldafrica.com',
             'is_staff' => true,
         ])->assignRole('admin');
 
-        User::factory()->count(10)->create()->each(function (User $user) {
-            $user->assignRole('customer');
-        });
+        User::factory()->count(10)->create();
+
+        User::factory()->create([
+            'name' => 'Jonah Wakahiu',
+            'email' => 'jonah.wakahiu@sheffieldafrica.com',
+            'is_staff' => true
+        ])->assignRole('super_admin');
     }
 }

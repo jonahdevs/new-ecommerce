@@ -148,4 +148,10 @@ class User extends Authenticatable
     {
         $query->where('is_staff', true);
     }
+
+    #[Scope]
+    protected function customer(Builder $query)
+    {
+        $query->where('is_staff', false);
+    }
 }

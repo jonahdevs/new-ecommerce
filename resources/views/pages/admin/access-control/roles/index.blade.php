@@ -5,9 +5,13 @@ use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 use Livewire\Attributes\{Title, Computed};
 use App\Models\User;
+use App\Enums\UserStatus;
+use App\Livewire\Forms\Admin\RoleForm;
 
 new #[Title('Roles')] class extends Component {
     use WithPagination;
+
+    public RoleForm $form;
 
     public string $search = '';
     public string $role = '';
@@ -40,9 +44,16 @@ new #[Title('Roles')] class extends Component {
     }
 
     #[Computed]
+    public function userStatus()
+    {
+        return UserStatus::cases();
+    }
+
+    #[Computed]
     public function users()
     {
         return User::with('roles')
+            ->staff()
             ->when(
                 $this->search,
                 fn($q) => $q->where(function ($q) {
@@ -54,6 +65,39 @@ new #[Title('Roles')] class extends Component {
             ->latest()
             ->paginate($this->perPage);
     }
+
+    public function createRole(): void
+    {
+        try {
+            $this->form->store();
+            $this->dispatch('notify', variant: 'success', message: 'Role created successfully.');
+            $this->modal('create-role')->close();
+            $this->form->reset();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            logger()->error('Failed to create role.', ['exception' => $e->getMessage()]);
+            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+        }
+    }
+
+    public function deleteRole(Role $role): void
+    {
+        try {
+            if ($role->is_system) {
+                $this->dispatch('notify', variant: 'warning', message: 'System roles cannot be deleted.');
+                return;
+            }
+
+            // Move users to a default role before deleting
+            $role->users()->each(fn($user) => $user->removeRole($role->name));
+            $role->delete();
+
+            $this->dispatch('notify', variant: 'success', message: 'Role deleted successfully.');
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+        }
+    }
 }; ?>
 
 <div>
@@ -62,8 +106,18 @@ new #[Title('Roles')] class extends Component {
         <flux:breadcrumbs.item>Roles</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <flux:heading size="xl">Roles</flux:heading>
-    <flux:subheading>Manage roles and user permissions</flux:subheading>
+
+    <div class="flex items-center justify-between">
+        <div>
+            <flux:heading size="xl">Roles</flux:heading>
+            <flux:subheading>Manage roles and user permissions</flux:subheading>
+        </div>
+
+        <flux:button icon="shield-check" variant="primary" x-on:click="$flux.modal('create-role').show()"
+            class="cursor-pointer">
+            New Role
+        </flux:button>
+    </div>
 
     <div class="mt-6 space-y-8">
 
@@ -74,34 +128,24 @@ new #[Title('Roles')] class extends Component {
 
                     {{-- Header --}}
                     <div class="flex items-center justify-between flex-wrap gap-2">
-                        <flux:heading size="lg" class="capitalize">{{ $role->name }}</flux:heading>
+                        <flux:heading size="lg">{{ str($role->name)->replace('_', ' ')->title() }}</flux:heading>
 
                         {{-- Stacked Avatars --}}
-                        <div class="flex items-center -space-x-2">
+                        <flux:avatar.group>
                             @foreach ($role->users as $user)
                                 <flux:tooltip :content="$user->name">
-                                    <div
-                                        class="size-9 rounded-full border-2 border-white dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-700 overflow-hidden z-10 hover:z-20 hover:scale-105 transition-transform duration-200 shrink-0">
-                                        @if ($user->avatar)
-                                            <img src="{{ asset('storage/' . $user->avatar) }}"
-                                                class="w-full h-full object-cover" alt="{{ $user->name }}" />
-                                        @else
-                                            <div
-                                                class="w-full h-full grid place-items-center text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                                            </div>
-                                        @endif
-                                    </div>
+                                    @if ($user->avatar)
+                                        <flux:avatar circle size="sm" src="{{ $user->avatar }}" />
+                                    @else
+                                        <flux:avatar circle size="sm" name="{{ $user->name }}" />
+                                    @endif
                                 </flux:tooltip>
                             @endforeach
 
                             @if ($role->users_count > 4)
-                                <div
-                                    class="size-9 rounded-full border-2 border-white dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-700 grid place-items-center text-xs font-semibold text-zinc-500 z-10">
-                                    +{{ $role->users_count - 4 }}
-                                </div>
+                                <flux:avatar size="sm" circle> {{ $role->users_count - 4 }}+</flux:avatar>
                             @endif
-                        </div>
+                        </flux:avatar.group>
                     </div>
 
                     {{-- Details --}}
@@ -121,10 +165,20 @@ new #[Title('Roles')] class extends Component {
                         <flux:link :href="route('admin.roles.edit', $role->id)" wire:navigate class="text-sm">
                             Edit Role
                         </flux:link>
-                        <flux:tooltip content="Duplicate role">
-                            <flux:button icon="document-duplicate" icon-variant="outline" variant="ghost"
-                                size="sm" />
-                        </flux:tooltip>
+
+                        <div class="flex items-center gap-2">
+                            @if (!$role->is_system)
+                                <flux:button icon="trash" icon-variant="outline" variant="ghost" size="sm"
+                                    tooltip="Delete Role" class="text-red-500! cursor-pointer"
+                                    wire:click="deleteRole({{ $role->id }})"
+                                    wire:confirm="Are you sure you want to delete this role?" />
+                            @else
+                                <flux:tooltip content="System role — cannot be deleted">
+                                    <flux:icon name="lock-closed" class="size-4 text-zinc-400" />
+                                </flux:tooltip>
+                            @endif
+
+                        </div>
                     </div>
 
                 </flux:card>
@@ -142,20 +196,23 @@ new #[Title('Roles')] class extends Component {
                 <div class="ms-auto flex items-center gap-3 flex-wrap">
                     <flux:select wire:model.live="status" placeholder="All Status" class="w-36">
                         <flux:select.option value="">All Status</flux:select.option>
-                        <flux:select.option value="active">Active</flux:select.option>
-                        <flux:select.option value="inactive">Inactive</flux:select.option>
-                        <flux:select.option value="banned">Banned</flux:select.option>
+                        @foreach ($this->userStatus as $status)
+                            <flux:select.option value="{{ $status->value }}">{{ $status->label() }}
+                            </flux:select.option>
+                        @endforeach
                     </flux:select>
 
                     <flux:select wire:model.live="role" placeholder="All Roles" class="w-36">
                         <flux:select.option value="">All Roles</flux:select.option>
                         @foreach ($this->roles as $r)
-                            <flux:select.option :value="$r->name" class="capitalize">{{ $r->name }}
+                            <flux:select.option :value="$r->name" class="capitalize">
+                                {{ str($r->name)->replace('_', ' ')->title() }}
                             </flux:select.option>
                         @endforeach
                     </flux:select>
 
-                    <flux:button icon="plus-circle" variant="primary" size="sm" class="cursor-pointer">
+                    <flux:button icon="plus-circle" variant="primary" size="sm" class="cursor-pointer"
+                        :href="route('admin.users.create')" wire:navigate>
                         Add User
                     </flux:button>
                 </div>
@@ -183,18 +240,12 @@ new #[Title('Roles')] class extends Component {
 
                             <flux:table.cell>
                                 <div class="flex items-center gap-3">
-                                    <div
-                                        class="size-8 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden shrink-0">
-                                        @if ($user->avatar)
-                                            <img src="{{ asset('storage/' . $user->avatar) }}"
-                                                class="w-full h-full object-cover" alt="{{ $user->name }}" />
-                                        @else
-                                            <div
-                                                class="w-full h-full grid place-items-center text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                                            </div>
-                                        @endif
-                                    </div>
+                                    @if ($user->avatar)
+                                        <flux:avatar circle size="sm" src="{{ $user->avatar }}" />
+                                    @else
+                                        <flux:avatar circle size="sm" name="{{ $user->name }}" />
+                                    @endif
+
                                     <flux:text class="text-sm font-medium">{{ $user->name }}</flux:text>
                                 </div>
                             </flux:table.cell>
@@ -221,7 +272,7 @@ new #[Title('Roles')] class extends Component {
                                         @endphp
                                         <flux:badge size="sm" :color="$roleColor" variant="outline"
                                             class="capitalize">
-                                            {{ $r->name }}
+                                            {{ str($r->name)->replace('_', ' ')->title() }}
                                         </flux:badge>
                                     @endforeach
                                 </div>
@@ -240,18 +291,13 @@ new #[Title('Roles')] class extends Component {
                                 </flux:badge>
                             </flux:table.cell>
 
-                            <flux:table.cell class="pe-4!">
-                                <div class="flex items-center justify-end gap-1">
-                                    <flux:tooltip content="Edit">
-                                        <flux:button icon="pencil-square" variant="ghost" size="sm" />
-                                    </flux:tooltip>
-                                    <flux:tooltip content="Archive">
-                                        <flux:button icon="trash" icon-variant="outline" variant="ghost"
-                                            size="sm" class="text-red-500!" />
-                                    </flux:tooltip>
-                                </div>
-                            </flux:table.cell>
+                            <flux:table.cell class="pe-4! flex items-center justify-end gap-1">
+                                <flux:button icon="pencil-square" variant="ghost" size="sm" tooltip="Edit"
+                                    :href="route('admin.users.edit', $user)" class="cursor-pointer" wire:navigate />
 
+                                <flux:button icon="trash" icon-variant="outline" variant="ghost" tooltip="Delete"
+                                    size="sm" class="text-red-500! cursor-pointer" />
+                            </flux:table.cell>
                         </flux:table.row>
 
                     @empty
@@ -271,6 +317,41 @@ new #[Title('Roles')] class extends Component {
             </flux:table>
         </flux:card>
     </div>
+
+    <flux:modal name="create-role" class="md:w-96">
+        <div class="space-y-6">
+
+            <div>
+                <flux:heading size="lg">Create New Role</flux:heading>
+                <flux:subheading>
+                    Use lowercase letters and underscores only.
+                    e.g. <code
+                        class="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded">logistics_manager</code>
+                </flux:subheading>
+            </div>
+
+            <form wire:submit="createRole" class="space-y-4">
+                <flux:field>
+                    <flux:label>Role Name</flux:label>
+                    <flux:input wire:model="form.name" placeholder="e.g. logistics_manager" autofocus />
+                    <flux:description>
+                        This will display as "{{ str($form->name ?: 'role name')->replace('_', ' ')->title() }}"
+                    </flux:description>
+                    <flux:error name="form.name" />
+                </flux:field>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <flux:button variant="ghost" x-on:click="$flux.modal('create-role').close()">
+                        Cancel
+                    </flux:button>
+                    <flux:button type="submit" variant="primary">
+                        Create Role
+                    </flux:button>
+                </div>
+            </form>
+
+        </div>
+    </flux:modal>
 </div>
 
 <style>

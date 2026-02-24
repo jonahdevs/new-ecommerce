@@ -14,8 +14,8 @@ enum UserStatus: string
         return match ($this) {
             self::ACTIVE => 'Active',
             self::INACTIVE => 'In Active',
-            self::BANNED => 'banned',
-            self::SUSPENDED => 'suspended',
+            self::BANNED => 'Banned',
+            self::SUSPENDED => 'Suspended',
         };
     }
 }

@@ -4,13 +4,14 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\{Title, Computed};
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 new #[Title('Permissions')] class extends Component {
     use WithPagination;
 
     public string $search = '';
     public string $role = '';
-    public int $perPage = 10;
+    public int $perPage = 15;
 
     public function updatedSearch(): void
     {
@@ -29,6 +30,12 @@ new #[Title('Permissions')] class extends Component {
     public function permissions()
     {
         return Permission::with('roles')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->when($this->role, fn($q) => $q->whereHas('roles', fn($q) => $q->where('name', $this->role)))->latest()->paginate($this->perPage);
+    }
+
+    #[Computed]
+    public function roles()
+    {
+        return Role::all();
     }
 }; ?>
 
@@ -50,11 +57,13 @@ new #[Title('Permissions')] class extends Component {
                     placeholder="Search permissions..." class="max-w-xs" />
 
                 <div class="ms-auto">
-                    <flux:select wire:model.live="role" placeholder="All Roles" class="w-40">
+                    <flux:select wire:model.live="role" placeholder="All Roles" class="w-36">
                         <flux:select.option value="">All Roles</flux:select.option>
-                        <flux:select.option value="admin">Admin</flux:select.option>
-                        <flux:select.option value="manager">Manager</flux:select.option>
-                        <flux:select.option value="customer">Customer</flux:select.option>
+                        @foreach ($this->roles as $r)
+                            <flux:select.option :value="$r->name" class="capitalize">
+                                {{ str($r->name)->replace('_', ' ')->title() }}
+                            </flux:select.option>
+                        @endforeach
                     </flux:select>
                 </div>
             </div>
@@ -71,8 +80,8 @@ new #[Title('Permissions')] class extends Component {
                     @forelse ($this->permissions as $permission)
                         <flux:table.row :key="$permission->id">
 
-                            <flux:table.cell class="ps-5! capitalize">
-                                {{ $permission->name }}
+                            <flux:table.cell class="ps-5!">
+                                {{ str($permission->name)->replace('.', ' ') }}
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -93,7 +102,7 @@ new #[Title('Permissions')] class extends Component {
                                         @endphp
                                         <flux:badge size="sm" :color="$roleColor" variant="outline"
                                             :icon="$roleIcon" class="capitalize">
-                                            {{ $role->name }}
+                                            {{ str($role->name)->replace('_', ' ')->title() }}
                                         </flux:badge>
                                     @empty
                                         <flux:text class="text-sm text-zinc-400">—</flux:text>
