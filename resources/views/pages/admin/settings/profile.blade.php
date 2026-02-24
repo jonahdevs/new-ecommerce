@@ -65,14 +65,13 @@ new class extends Component {
     #[Computed]
     public function hasUnverifiedEmail(): bool
     {
-        return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
+        return Auth::user() instanceof MustVerifyEmail && !Auth::user()->hasVerifiedEmail();
     }
 
     #[Computed]
     public function showDeleteUser(): bool
     {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
+        return !Auth::user() instanceof MustVerifyEmail || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
     }
 }; ?>
 
@@ -81,7 +80,7 @@ new class extends Component {
 
     <flux:heading class="sr-only">{{ __('Profile Settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::admin.settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
@@ -93,7 +92,8 @@ new class extends Component {
                         <flux:text class="mt-4">
                             {{ __('Your email address is unverified.') }}
 
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
+                            <flux:link class="text-sm cursor-pointer"
+                                wire:click.prevent="resendVerificationNotification">
                                 {{ __('Click here to re-send the verification email.') }}
                             </flux:link>
                         </flux:text>
@@ -121,7 +121,7 @@ new class extends Component {
         </form>
 
         @if ($this->showDeleteUser)
-            <livewire:pages::settings.delete-user-form />
+            <livewire:pages::admin.settings.delete-user-form />
         @endif
-    </x-pages::settings.layout>
+    </x-pages::admin.settings.layout>
 </section>
