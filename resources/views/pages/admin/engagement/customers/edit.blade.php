@@ -1,10 +1,11 @@
 <?php
 
-use App\Models\User;
+use App\Models\{User, County, Area};
 use App\Livewire\Forms\Admin\CustomerForm;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Title;
+use Livewire\Attributes\{Title, Computed};
+use App\Enums\UserStatus;
 
 new #[Title('Edit Customer')] class extends Component {
     use WithFileUploads;
@@ -48,6 +49,35 @@ new #[Title('Edit Customer')] class extends Component {
                 'exception_message' => $e->getMessage(),
             ]);
             $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+        }
+    }
+
+    #[Computed]
+    public function counties()
+    {
+        return County::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function areas()
+    {
+        // Reactively filters when county_id changes
+        return $this->form->county_id ? Area::where('county_id', $this->form->county_id)->orderBy('name')->get() : collect();
+    }
+
+    #[Computed]
+    public function userStatus()
+    {
+        return UserStatus::cases();
+    }
+
+    public function sendPasswordReset(): void
+    {
+        try {
+            $this->form->sendPasswordResetLink();
+            $this->dispatch('notify', variant: 'success', message: 'Password reset link sent.');
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to send reset link.');
         }
     }
 }; ?>

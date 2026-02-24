@@ -1,10 +1,11 @@
 <?php
 
-use App\Models\User;
 use App\Livewire\Forms\Admin\CustomerForm;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Title;
+use Livewire\Attributes\{Title, Computed};
+use App\Models\{County, Area};
+use App\Enums\UserStatus;
 
 new #[Title('Create Customer')] class extends Component {
     use WithFileUploads;
@@ -26,6 +27,25 @@ new #[Title('Create Customer')] class extends Component {
             ]);
             $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
+    }
+
+    #[Computed]
+    public function counties()
+    {
+        return County::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function areas()
+    {
+        // Reactively filters when county_id changes
+        return $this->form->county_id ? Area::where('county_id', $this->form->county_id)->orderBy('name')->get() : collect();
+    }
+
+    #[Computed]
+    public function userStatus()
+    {
+        return UserStatus::cases();
     }
 }; ?>
 
