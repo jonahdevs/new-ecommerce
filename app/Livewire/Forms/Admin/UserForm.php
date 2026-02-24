@@ -29,7 +29,7 @@ class UserForm extends Form
         $this->email = $user->email;
         $this->phone_number = $user->phone_number ?? '';
         $this->role = $user->roles->first()?->name ?? '';
-        $this->status = $user->status;
+        $this->status = $user->status->value;
         $this->status_reason = $user->status_reason ?? '';
         $this->suspended_until = $user->suspended_until?->format('Y-m-d');
     }

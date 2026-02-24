@@ -15,7 +15,7 @@ new #[Title('Order Details')] class extends Component {
 
     public function mount(Order $order): void
     {
-        $this->order = $order->load(['products.images', 'payment', 'customer', 'statusHistories']);
+        $this->order = $order->load(['payment', 'user', 'statusHistories']);
         $this->status = $order->status;
     }
 
@@ -278,32 +278,32 @@ new #[Title('Order Details')] class extends Component {
                 <div class="p-5 text-sm space-y-4">
                     <div class="flex items-center gap-3">
                         <div class="size-12 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0">
-                            @if ($order->customer?->avatar)
-                                <img src="{{ asset('storage/' . $order->customer->avatar) }}"
-                                    class="w-full h-full object-cover" alt="{{ $order->customer->name }}" />
+                            @if ($order->user?->avatar)
+                                <img src="{{ asset('storage/' . $order->user->avatar) }}"
+                                    class="w-full h-full object-cover" alt="{{ $order->user->name }}" />
                             @else
                                 <div class="w-full h-full grid place-items-center font-semibold text-zinc-500">
-                                    {{ strtoupper(substr($order->customer?->name ?? 'U', 0, 1)) }}
+                                    {{ strtoupper(substr($order->user?->name ?? 'U', 0, 1)) }}
                                 </div>
                             @endif
                         </div>
                         <div>
-                            <flux:text class="font-medium">{{ $order->customer?->name }}</flux:text>
-                            <flux:link href="mailto:{{ $order->customer?->email }}" class="text-xs">
-                                {{ $order->customer?->email }}
+                            <flux:text class="font-medium">{{ $order->user?->name }}</flux:text>
+                            <flux:link href="mailto:{{ $order->user?->email }}" class="text-xs">
+                                {{ $order->user?->email }}
                             </flux:link>
                         </div>
                     </div>
 
                     <div>
                         <flux:text class="font-medium">Contact Number</flux:text>
-                        <flux:text class="text-zinc-400 mt-1">{{ $order->customer?->phone_number ?? '—' }}</flux:text>
+                        <flux:text class="text-zinc-400 mt-1">{{ $order->user?->phone_number ?? '—' }}</flux:text>
                     </div>
 
                     <div>
                         <flux:text class="font-medium">Shipping Address</flux:text>
-                        <flux:text class="text-zinc-400 mt-1">{{ $order->customer?->country }}</flux:text>
-                        <flux:text class="text-zinc-400">{{ $order->customer?->address }}</flux:text>
+                        <flux:text class="text-zinc-400 mt-1">{{ $order->user?->country }}</flux:text>
+                        <flux:text class="text-zinc-400">{{ $order->user?->address }}</flux:text>
                     </div>
                 </div>
             </flux:card>

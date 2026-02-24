@@ -56,7 +56,7 @@
 
             {{-- Sales --}}
             <flux:sidebar.group heading="Sales" class="grid">
-                <flux:sidebar.item icon="shopping-cart" wire:navigate :href="route('admin.orders')"
+                <flux:sidebar.item icon="shopping-cart" wire:navigate :href="route('admin.orders.index')"
                     :current="request()->routeIs('admin.orders.*')">Orders
                 </flux:sidebar.item>
 
