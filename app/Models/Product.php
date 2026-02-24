@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Attribute as ProductAttribute;
@@ -84,6 +85,7 @@ class Product extends Model
             'expected_restock_date' => 'date',
             'requires_quotation' => 'boolean',
             'min_order_quantity' => 'decimal:2',
+            'status' => ProductStatus::class
         ];
     }
 
@@ -209,7 +211,11 @@ class Product extends Model
     #[Scope]
     protected function active(Builder $query)
     {
-        $query->where('status', 'published');
+        $query->where('status', 'published')
+            ->where(function ($q) {
+                $q->where('price', '>', 0)
+                    ->orWhere('sale_price', '>', 0);
+            });
     }
 
 

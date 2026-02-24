@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Forms\Admin;
 
+use App\Enums\ProductStatus;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 use Illuminate\Support\Str;
 
@@ -159,7 +161,7 @@ class ProductForm extends Form
             'canonical_url' => 'nullable|string|max:255',
 
             // Status
-            'status' => 'required|in:draft,scheduled,published,archived',
+            'status' => ["required", Rule::enum(ProductStatus::class)],
             'published_at' => 'required_if:status,scheduled|nullable|date',
             'is_featured' => 'boolean',
 
@@ -276,7 +278,7 @@ class ProductForm extends Form
         $this->canonical_url = $product->canonical_url;
 
         // Fill status
-        $this->status = $product->status;
+        $this->status = $product->status->value;
         $this->published_at = $product->published_at;
         $this->is_featured = $product->is_featured;
 

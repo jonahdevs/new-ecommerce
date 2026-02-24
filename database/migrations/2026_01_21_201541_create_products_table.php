@@ -56,7 +56,7 @@ return new class extends Migration {
             $table->string('canonical_url', 500)->nullable();
 
             // Status
-            $table->enum('status', ['draft', 'scheduled', 'published', 'archived'])->default('draft');
+            $table->string('status')->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->boolean('is_featured')->default(false);
 
