@@ -62,7 +62,7 @@ class OrderService
             ]);
 
             // Record status history
-            $order->statusHistory()->create([
+            $order->statusHistories()->create([
                 'to_status' => 'pending',
                 'changed_by_user_id' => $user?->id,
                 'changed_by_type' => $user ? 'user' : 'system',
@@ -73,7 +73,7 @@ class OrderService
                 ],
             ]);
 
-            return $order->fresh(['items', 'statusHistory', 'payment']);
+            return $order->fresh(['items', 'statusHistories', 'payment']);
         });
     }
 
@@ -155,7 +155,7 @@ class OrderService
             }
 
             // Record status change
-            $order->statusHistory()->create([
+            $order->statusHistories()->create([
                 'from_status' => $previousStatus,
                 'to_status' => 'paid',
                 'changed_by_type' => 'system',
@@ -193,7 +193,7 @@ class OrderService
                 ]);
             }
 
-            $order->statusHistory()->create([
+            $order->statusHistories()->create([
                 'from_status' => $order->status,
                 'to_status' => 'payment_failed',
                 'changed_by_type' => 'system',
@@ -223,7 +223,7 @@ class OrderService
                 ]);
             }
 
-            $order->statusHistory()->create([
+            $order->statusHistories()->create([
                 'from_status' => $previousStatus,
                 'to_status' => 'cancelled',
                 'changed_by_user_id' => auth()->id(),

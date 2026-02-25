@@ -7,13 +7,13 @@ use Livewire\Attributes\Title;
 
 new #[Title('Mail Settings')] class extends Component {
     public string $driver = 'smtp';
-    public string $host = '';
+    public ?string $host = null;
     public int $port = 587;
-    public string $username = '';
-    public string $password = '';
+    public ?string $username = null;
+    public ?string $password = null;
     public string $encryption = 'tls';
-    public string $from_address = '';
-    public string $from_name = '';
+    public ?string $from_address = null;
+    public ?string $from_name = '';
 
     // Test email
     public string $test_email = '';
