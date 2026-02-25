@@ -6,14 +6,24 @@ use Spatie\LaravelSettings\Settings;
 
 class SeoSettings extends Settings
 {
-    public string  $meta_title;
-    public string  $meta_description;
-    public string  $meta_keywords;
-    public ?string $og_image;              // Open Graph image for social sharing
+    // Meta Tags
+    public string $meta_title;
+    public string $meta_description;
+    public ?string $meta_keywords;
+    public ?string $canonical_url;
+
+    // Open Graph
+    public ?string $og_title;
+    public ?string $og_description;
+    public ?string $og_image;
+
+    // Analytics & Verification
     public ?string $google_analytics_id;
     public ?string $google_tag_manager_id;
     public ?string $google_site_verification;
-    public bool    $indexing_enabled;      // controls robots meta tag
+
+    // Indexing
+    public bool $indexing_enabled;
 
     public static function group(): string
     {

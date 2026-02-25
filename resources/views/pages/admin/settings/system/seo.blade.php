@@ -1,70 +1,25 @@
 <?php
 
+use App\Livewire\Forms\Admin\SeoSettingsForm;
 use App\Settings\SeoSettings;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Title;
 
 new #[Title('SEO Settings')] class extends Component {
     use WithFileUploads;
 
-    public string $meta_title = '';
-    public string $meta_description = '';
-    public string $meta_keywords = '';
-    public $og_image = null;
-    public ?string $existing_og_image = null;
-    public string $google_analytics_id = '';
-    public string $google_tag_manager_id = '';
-    public string $google_site_verification = '';
-    public bool $indexing_enabled = true;
+    public SeoSettingsForm $form;
 
     public function mount(SeoSettings $settings): void
     {
-        $this->meta_title = $settings->meta_title;
-        $this->meta_description = $settings->meta_description;
-        $this->meta_keywords = $settings->meta_keywords;
-        $this->existing_og_image = $settings->og_image;
-        $this->google_analytics_id = $settings->google_analytics_id ?? '';
-        $this->google_tag_manager_id = $settings->google_tag_manager_id ?? '';
-        $this->google_site_verification = $settings->google_site_verification ?? '';
-        $this->indexing_enabled = $settings->indexing_enabled;
-    }
-
-    public function rules(): array
-    {
-        return [
-            'meta_title' => ['required', 'string', 'max:70'],
-            'meta_description' => ['required', 'string', 'max:160'],
-            'meta_keywords' => ['nullable', 'string', 'max:255'],
-            'og_image' => ['nullable', 'image', 'max:2048'],
-            'google_analytics_id' => ['nullable', 'string', 'max:50'],
-            'google_tag_manager_id' => ['nullable', 'string', 'max:50'],
-            'google_site_verification' => ['nullable', 'string', 'max:100'],
-            'indexing_enabled' => ['boolean'],
-        ];
+        $this->form->fromSettings($settings);
     }
 
     public function save(SeoSettings $settings): void
     {
-        $this->validate();
-
         try {
-            $settings->meta_title = $this->meta_title;
-            $settings->meta_description = $this->meta_description;
-            $settings->meta_keywords = $this->meta_keywords;
-            $settings->google_analytics_id = $this->google_analytics_id ?: null;
-            $settings->google_tag_manager_id = $this->google_tag_manager_id ?: null;
-            $settings->google_site_verification = $this->google_site_verification ?: null;
-            $settings->indexing_enabled = $this->indexing_enabled;
-
-            if ($this->og_image) {
-                $settings->og_image = $this->og_image->store('settings', 'public');
-                $this->existing_og_image = $settings->og_image;
-                $this->og_image = null;
-            }
-
-            $settings->save();
-
+            $this->form->save($settings);
             $this->dispatch('notify', variant: 'success', message: 'SEO settings saved.');
         } catch (\Throwable $e) {
             logger()->error('Failed to save SEO settings.', ['exception' => $e->getMessage()]);
@@ -74,9 +29,7 @@ new #[Title('SEO Settings')] class extends Component {
 
     public function removeOgImage(SeoSettings $settings): void
     {
-        $settings->og_image = null;
-        $settings->save();
-        $this->existing_og_image = null;
+        $this->form->removeOgImage($settings);
     }
 }; ?>
 
@@ -93,18 +46,10 @@ new #[Title('SEO Settings')] class extends Component {
                 </div>
 
                 <div class="p-5 space-y-5">
-                    {{-- Meta Title --}}
-                    <flux:input label="Meta Title" wire:model="meta_title" />
-
-                    {{-- Meta Keywords --}}
-                    <flux:input label="Meta Keywords (optional)" wire:model="meta_keywords" />
-
-                    {{-- Meta Description --}}
-                    <flux:textarea label="Meta Description" wire:model="meta_description" rows="3" />
-
-                    {{-- Canonical Url --}}
-                    <flux:input label="Canonical Url" wire:model="canonical_url" />
-
+                    <flux:input label="Meta Title" wire:model="form.meta_title" />
+                    <flux:input label="Meta Keywords (optional)" wire:model="form.meta_keywords" />
+                    <flux:textarea label="Meta Description" wire:model="form.meta_description" rows="3" />
+                    <flux:input label="Canonical URL" wire:model="form.canonical_url" />
                 </div>
             </flux:card>
 
@@ -115,34 +60,84 @@ new #[Title('SEO Settings')] class extends Component {
                 </div>
 
                 <div class="p-5 space-y-5">
-                    {{-- Og Title --}}
-                    <flux:input label="Og Title" wire:model.live="og_title" />
-
-                    {{-- Og Description --}}
-                    <flux:textarea label="Og Description" wire:model="og_description" rows="3" />
+                    <flux:input label="OG Title" wire:model.live="form.og_title" />
+                    <flux:textarea label="OG Description" wire:model="form.og_description" rows="3" />
 
                     <flux:field>
+                        <flux:label>OG Image</flux:label>
 
-                        <flux:label>Og Image</flux:label>
-                        <div class="flex items-center gap-2 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
+                        <div class="flex items-center gap-4 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
                             <div class="shrink-0">
-                                <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                @if ($form->existing_og_image)
+                                    <img src="{{ Storage::url($form->existing_og_image) }}"
+                                        class="size-20 object-cover rounded" alt="OG Image" />
+                                @elseif ($form->og_image)
+                                    <img src="{{ $form->og_image->temporaryUrl() }}"
+                                        class="size-20 object-cover rounded" alt="OG Image Preview" />
+                                @else
+                                    <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                @endif
                             </div>
 
                             <div>
                                 <flux:heading>OG Image</flux:heading>
-                                <flux:text class="text-xs">Recommended image size is 160px x 50px</flux:text>
+                                <flux:text class="text-xs">Recommended size: 1200px × 630px (max 2MB)</flux:text>
 
-                                <div class="flex items-center items-center gap-2 mt-2">
-                                    <flux:button class="cursor-pointer" variant="primary" size="xs">Change
-                                    </flux:button>
-                                    <flux:button class="cursor-pointer" size="xs">Cancel</flux:button>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <label>
+                                        <flux:button as="span" variant="primary" size="xs"
+                                            class="cursor-pointer">
+                                            {{ $form->existing_og_image ? 'Change' : 'Upload' }}
+                                        </flux:button>
+                                        <input type="file" wire:model="form.og_image" class="sr-only"
+                                            accept="image/*" />
+                                    </label>
+
+                                    @if ($form->existing_og_image)
+                                        <flux:button size="xs" wire:click="removeOgImage"
+                                            wire:confirm="Remove the current OG image?" class="cursor-pointer">
+                                            Remove
+                                        </flux:button>
+                                    @elseif ($form->og_image)
+                                        <flux:button size="xs" wire:click="$set('form.og_image', null)"
+                                            class="cursor-pointer">
+                                            Cancel
+                                        </flux:button>
+                                    @endif
                                 </div>
                             </div>
+                        </div>
+
+                        <flux:error name="form.og_image" />
                     </flux:field>
                 </div>
             </flux:card>
 
+            {{-- Analytics --}}
+            <flux:card class="p-0">
+                <div class="border-b px-3 py-2">
+                    <flux:heading>Analytics & Verification</flux:heading>
+                </div>
+
+                <div class="p-5 space-y-5">
+                    <flux:input label="Google Analytics ID" wire:model="form.google_analytics_id"
+                        placeholder="G-XXXXXXXXXX" />
+                    <flux:input label="Google Tag Manager ID" wire:model="form.google_tag_manager_id"
+                        placeholder="GTM-XXXXXXX" />
+                    <flux:input label="Google Site Verification" wire:model="form.google_site_verification" />
+                </div>
+            </flux:card>
+
+            {{-- Indexing --}}
+            <flux:card class="p-0">
+                <div class="border-b px-3 py-2">
+                    <flux:heading>Indexing</flux:heading>
+                </div>
+
+                <div class="p-5">
+                    <flux:checkbox wire:model="form.indexing_enabled" label="Allow search engines to index this site" />
+                </div>
+            </flux:card>
 
             <flux:separator />
 
@@ -151,6 +146,7 @@ new #[Title('SEO Settings')] class extends Component {
                     Save Changes
                 </flux:button>
             </div>
+
         </form>
     </x-pages::admin.settings.layout>
 </div>
