@@ -16,10 +16,10 @@ new #[Title('General Settings')] class extends Component {
         $this->form->fromSettings(app(GeneralSettings::class));
     }
 
-    public function save(GeneralSettings $settings): void
+    public function save(): void
     {
         try {
-            $this->form->save($settings);
+            $this->form->save(app(GeneralSettings::class));
             $this->dispatch('notify', variant: 'success', message: 'General settings saved.');
         } catch (\Throwable $e) {
             logger()->error('Failed to save general settings.', ['exception' => $e->getMessage()]);
@@ -27,9 +27,9 @@ new #[Title('General Settings')] class extends Component {
         }
     }
 
-    public function removeImage(GeneralSettings $settings, string $image): void
+    public function removeImage(string $image): void
     {
-        $this->form->removeImage($settings, $image);
+        $this->form->removeImage(app(GeneralSettings::class), $image);
     }
 }; ?>
 
@@ -59,37 +59,36 @@ new #[Title('General Settings')] class extends Component {
 
                     {{-- Logo Light --}}
                     <flux:field>
-                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
-                            <div class="shrink-0">
+                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm" x-data>
+                            <div class="shrink-0 w-20 h-20 rounded border bg-white dark:bg-black">
                                 @if ($form->existing_logo_light)
                                     <img src="{{ Storage::url($form->existing_logo_light) }}"
-                                        class="size-20 object-contain rounded" alt="Light Logo" />
+                                        class="w-full h-full object-contain p-1" alt="Light Logo" />
                                 @elseif ($form->logo_light)
                                     <img src="{{ $form->logo_light->temporaryUrl() }}"
-                                        class="size-20 object-contain rounded" alt="Light Logo Preview" />
+                                        class="w-full h-full object-contain p-1" alt="Light Logo Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-zinc-600! stroke-1!" />
+                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300 stroke-1!" />
                                 @endif
                             </div>
                             <div>
                                 <flux:heading>Logo (Light)</flux:heading>
                                 <flux:text class="text-xs">Recommended: 160px × 50px</flux:text>
                                 <div class="flex items-center gap-2 mt-2">
-                                    <label>
-                                        <flux:button as="span" variant="primary" size="xs"
-                                            class="cursor-pointer">
-                                            {{ $form->existing_logo_light ? 'Change' : 'Upload' }}
-                                        </flux:button>
-                                        <input type="file" wire:model="form.logo_light" class="sr-only"
-                                            accept="image/*" />
-                                    </label>
+                                    <input type="file" wire:model="form.logo_light" x-ref="logo_light"
+                                        class="sr-only" accept="image/*" />
+                                    <flux:button type="button" variant="primary" size="xs"
+                                        x-on:click="$refs.logo_light.click()" class="cursor-pointer">
+                                        {{ $form->existing_logo_light ? 'Change' : 'Upload' }}
+                                    </flux:button>
                                     @if ($form->existing_logo_light)
-                                        <flux:button size="xs" wire:click="removeImage('logo_light')"
-                                            wire:confirm="Remove light logo?" class="cursor-pointer">Remove
-                                        </flux:button>
+                                        <flux:button size="xs" type="button"
+                                            wire:click="removeImage('logo_light')" wire:confirm="Remove light logo?"
+                                            class="cursor-pointer">Remove</flux:button>
                                     @elseif ($form->logo_light)
-                                        <flux:button size="xs" wire:click="$set('form.logo_light', null)"
-                                            class="cursor-pointer">Cancel</flux:button>
+                                        <flux:button size="xs" type="button"
+                                            wire:click="$set('form.logo_light', null)" class="cursor-pointer">Cancel
+                                        </flux:button>
                                     @endif
                                 </div>
                             </div>
@@ -99,36 +98,35 @@ new #[Title('General Settings')] class extends Component {
 
                     {{-- Logo Dark --}}
                     <flux:field>
-                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
-                            <div class="shrink-0">
+                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm" x-data>
+                            <div class="shrink-0 w-20 h-20 rounded border bg-white dark:bg-black">
                                 @if ($form->existing_logo_dark)
                                     <img src="{{ Storage::url($form->existing_logo_dark) }}"
-                                        class="size-20 object-contain rounded" alt="Dark Logo" />
+                                        class="w-full h-full object-contain p-1" alt="Dark Logo" />
                                 @elseif ($form->logo_dark)
                                     <img src="{{ $form->logo_dark->temporaryUrl() }}"
-                                        class="size-20 object-contain rounded" alt="Dark Logo Preview" />
+                                        class="w-full h-full object-contain p-1" alt="Dark Logo Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-zinc-600! stroke-1!" />
+                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300 stroke-1!" />
                                 @endif
                             </div>
                             <div>
                                 <flux:heading>Logo (Dark)</flux:heading>
                                 <flux:text class="text-xs">Recommended: 160px × 50px</flux:text>
                                 <div class="flex items-center gap-2 mt-2">
-                                    <label>
-                                        <flux:button as="span" variant="primary" size="xs"
-                                            class="cursor-pointer">
-                                            {{ $form->existing_logo_dark ? 'Change' : 'Upload' }}
-                                        </flux:button>
-                                        <input type="file" wire:model="form.logo_dark" class="sr-only"
-                                            accept="image/*" />
-                                    </label>
+                                    <input type="file" wire:model="form.logo_dark" x-ref="logo_dark" class="sr-only"
+                                        accept="image/*" />
+                                    <flux:button type="button" variant="primary" size="xs"
+                                        x-on:click="$refs.logo_dark.click()" class="cursor-pointer">
+                                        {{ $form->existing_logo_dark ? 'Change' : 'Upload' }}
+                                    </flux:button>
                                     @if ($form->existing_logo_dark)
-                                        <flux:button size="xs" wire:click="removeImage('logo_dark')"
+                                        <flux:button size="xs" type="button" wire:click="removeImage('logo_dark')"
                                             wire:confirm="Remove dark logo?" class="cursor-pointer">Remove</flux:button>
                                     @elseif ($form->logo_dark)
-                                        <flux:button size="xs" wire:click="$set('form.logo_dark', null)"
-                                            class="cursor-pointer">Cancel</flux:button>
+                                        <flux:button size="xs" type="button"
+                                            wire:click="$set('form.logo_dark', null)" class="cursor-pointer">Cancel
+                                        </flux:button>
                                     @endif
                                 </div>
                             </div>
@@ -136,83 +134,83 @@ new #[Title('General Settings')] class extends Component {
                         <flux:error name="form.logo_dark" />
                     </flux:field>
 
-                    {{-- Logo Icon --}}
-                    <flux:field>
-                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
-                            <div class="shrink-0">
-                                @if ($form->existing_logo_icon)
-                                    <img src="{{ Storage::url($form->existing_logo_icon) }}"
-                                        class="size-20 object-contain rounded" alt="Logo Icon" />
-                                @elseif ($form->logo_icon)
-                                    <img src="{{ $form->logo_icon->temporaryUrl() }}"
-                                        class="size-20 object-contain rounded" alt="Logo Icon Preview" />
-                                @else
-                                    <flux:icon.photo class="size-20 text-zinc-500! stroke-1!" />
-                                @endif
-                            </div>
-                            <div>
-                                <flux:heading>Logo Icon</flux:heading>
-                                <flux:text class="text-xs">Recommended: 50px × 50px</flux:text>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <label>
-                                        <flux:button as="span" variant="primary" size="xs"
-                                            class="cursor-pointer">
-                                            {{ $form->existing_logo_icon ? 'Change' : 'Upload' }}
-                                        </flux:button>
-                                        <input type="file" wire:model="form.logo_icon" class="sr-only"
-                                            accept="image/*" />
-                                    </label>
-                                    @if ($form->existing_logo_icon)
-                                        <flux:button size="xs" wire:click="removeImage('logo_icon')"
-                                            wire:confirm="Remove logo icon?" class="cursor-pointer">Remove</flux:button>
-                                    @elseif ($form->logo_icon)
-                                        <flux:button size="xs" wire:click="$set('form.logo_icon', null)"
-                                            class="cursor-pointer">Cancel</flux:button>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        <flux:error name="form.logo_icon" />
-                    </flux:field>
-
                     {{-- Favicon --}}
                     <flux:field>
-                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
-                            <div class="shrink-0">
+                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm" x-data>
+                            <div class="shrink-0 w-20 h-20 rounded border bg-white dark:bg-black">
                                 @if ($form->existing_favicon)
                                     <img src="{{ Storage::url($form->existing_favicon) }}"
-                                        class="size-20 object-contain rounded" alt="Favicon" />
+                                        class="w-full h-full object-contain p-1" alt="Favicon" />
                                 @elseif ($form->favicon)
                                     <img src="{{ $form->favicon->temporaryUrl() }}"
-                                        class="size-20 object-contain rounded" alt="Favicon Preview" />
+                                        class="w-full h-full object-contain p-1" alt="Favicon Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-zinc-500! stroke-1!" />
+                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-200 stroke-1!" />
                                 @endif
                             </div>
                             <div>
                                 <flux:heading>Favicon</flux:heading>
                                 <flux:text class="text-xs">Recommended: 32px × 32px (max 512KB)</flux:text>
                                 <div class="flex items-center gap-2 mt-2">
-                                    <label>
-                                        <flux:button as="span" variant="primary" size="xs"
-                                            class="cursor-pointer">
-                                            {{ $form->existing_favicon ? 'Change' : 'Upload' }}
-                                        </flux:button>
-                                        <input type="file" wire:model="form.favicon" class="sr-only"
-                                            accept="image/*" />
-                                    </label>
+                                    <input type="file" wire:model="form.favicon" x-ref="favicon" class="sr-only"
+                                        accept="image/*" />
+                                    <flux:button type="button" variant="primary" size="xs"
+                                        x-on:click="$refs.favicon.click()" class="cursor-pointer">
+                                        {{ $form->existing_favicon ? 'Change' : 'Upload' }}
+                                    </flux:button>
                                     @if ($form->existing_favicon)
-                                        <flux:button size="xs" wire:click="removeImage('favicon')"
+                                        <flux:button size="xs" type="button" wire:click="removeImage('favicon')"
                                             wire:confirm="Remove favicon?" class="cursor-pointer">Remove</flux:button>
                                     @elseif ($form->favicon)
-                                        <flux:button size="xs" wire:click="$set('form.favicon', null)"
-                                            class="cursor-pointer">Cancel</flux:button>
+                                        <flux:button size="xs" type="button"
+                                            wire:click="$set('form.favicon', null)" class="cursor-pointer">Cancel
+                                        </flux:button>
                                     @endif
                                 </div>
                             </div>
                         </div>
                         <flux:error name="form.favicon" />
                     </flux:field>
+
+                    {{-- Apple Icon --}}
+                    <flux:field>
+                        <div class="flex items-center gap-3 bg-zinc-50 rounded-sm p-3 inset-shadow-sm" x-data>
+                            <div class="shrink-0 w-20 h-20 rounded border bg-white dark:bg-black">
+                                @if ($form->existing_apple_icon)
+                                    <img src="{{ Storage::url($form->existing_apple_icon) }}"
+                                        class="w-full h-full object-contain p-1" alt="Logo Icon" />
+                                @elseif ($form->apple_icon)
+                                    <img src="{{ $form->apple_icon->temporaryUrl() }}"
+                                        class="w-full h-full object-contain p-1" alt="Logo Icon Preview" />
+                                @else
+                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300 stroke-1!" />
+                                @endif
+                            </div>
+                            <div>
+                                <flux:heading>Apple Icon</flux:heading>
+                                <flux:text class="text-xs">Recommended: 50px × 50px</flux:text>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <input type="file" wire:model="form.apple_icon" x-ref="apple_icon"
+                                        class="sr-only" accept="image/*" />
+                                    <flux:button type="button" variant="primary" size="xs"
+                                        x-on:click="$refs.apple_icon.click()" class="cursor-pointer">
+                                        {{ $form->existing_apple_icon ? 'Change' : 'Upload' }}
+                                    </flux:button>
+                                    @if ($form->existing_apple_icon)
+                                        <flux:button size="xs" type="button"
+                                            wire:click="removeImage('apple_icon')" wire:confirm="Remove apple icon?"
+                                            class="cursor-pointer">Remove</flux:button>
+                                    @elseif ($form->apple_icon)
+                                        <flux:button size="xs" type="button"
+                                            wire:click="$set('form.apple_icon', null)" class="cursor-pointer">Cancel
+                                        </flux:button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <flux:error name="form.apple_icon" />
+                    </flux:field>
+
 
                 </div>
             </flux:card>

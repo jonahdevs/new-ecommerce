@@ -54,7 +54,7 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin')
     Route::livewire('orders', 'pages::admin.sales.orders.index')->name('.orders.index');
     Route::livewire('orders/{order}', 'pages::admin.sales.orders.show')->name('.orders.show');
 
-    Route::livewire('payments', 'pages::admin.sales.payments.index')->name('.payments');
+    Route::livewire('payments', 'pages::admin.sales.payments.index')->name('.payments.index');
     Route::livewire('payments/{order}', 'pages::admin.sales.payments.show')->name('.payments.show');
 
     // catalog

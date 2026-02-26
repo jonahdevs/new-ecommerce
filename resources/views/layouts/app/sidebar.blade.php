@@ -60,7 +60,7 @@
                     :current="request()->routeIs('admin.orders.*')">Orders
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="banknotes" wire:navigate :href="route('admin.payments')"
+                <flux:sidebar.item icon="banknotes" wire:navigate :href="route('admin.payments.index')"
                     :current="request()->routeIs('admin.payments.*')">Payments
                 </flux:sidebar.item>
 

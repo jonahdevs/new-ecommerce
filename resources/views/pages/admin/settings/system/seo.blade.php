@@ -67,15 +67,15 @@ new #[Title('SEO Settings')] class extends Component {
                         <flux:label>OG Image</flux:label>
 
                         <div class="flex items-center gap-4 bg-zinc-50 rounded-sm p-3 inset-shadow-sm">
-                            <div class="shrink-0">
+                            <div class="shrink-0 w-20 h-20 rounded border bg-white dark:bg-black">
                                 @if ($form->existing_og_image)
                                     <img src="{{ Storage::url($form->existing_og_image) }}"
-                                        class="size-20 object-cover rounded" alt="OG Image" />
+                                        class="w-full h-full object-cover" alt="OG Image" />
                                 @elseif ($form->og_image)
-                                    <img src="{{ $form->og_image->temporaryUrl() }}"
-                                        class="size-20 object-cover rounded" alt="OG Image Preview" />
+                                    <img src="{{ $form->og_image->temporaryUrl() }}" class="w-full h-full object-cover"
+                                        alt="OG Image Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300 stroke-1!" />
                                 @endif
                             </div>
 
@@ -84,14 +84,13 @@ new #[Title('SEO Settings')] class extends Component {
                                 <flux:text class="text-xs">Recommended size: 1200px × 630px (max 2MB)</flux:text>
 
                                 <div class="flex items-center gap-2 mt-2">
-                                    <label>
-                                        <flux:button as="span" variant="primary" size="xs"
-                                            class="cursor-pointer">
-                                            {{ $form->existing_og_image ? 'Change' : 'Upload' }}
-                                        </flux:button>
-                                        <input type="file" wire:model="form.og_image" class="sr-only"
-                                            accept="image/*" />
-                                    </label>
+                                    <flux:button as="span" variant="primary" size="xs" class="cursor-pointer"
+                                        x-on:click="$refs.og_image.click()">
+                                        {{ $form->existing_og_image ? 'Change' : 'Upload' }}
+                                    </flux:button>
+
+                                    <input type="file" wire:model="form.og_image" x-ref="og_image" class="sr-only"
+                                        accept="image/*" />
 
                                     @if ($form->existing_og_image)
                                         <flux:button size="xs" wire:click="removeOgImage"

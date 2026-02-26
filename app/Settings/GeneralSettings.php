@@ -14,7 +14,7 @@ class GeneralSettings extends Settings
     // Images
     public ?string $logo_light = null;
     public ?string $logo_dark = null;
-    public ?string $logo_icon = null;
+    public ?string $apple_icon = null;
     public ?string $favicon = null;
 
     // Address

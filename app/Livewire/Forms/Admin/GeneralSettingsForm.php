@@ -15,12 +15,12 @@ class GeneralSettingsForm extends Form
     // Images
     public $logo_light = null;
     public $logo_dark = null;
-    public $logo_icon = null;
+    public $apple_icon = null;
     public $favicon = null;
 
     public ?string $existing_logo_light = null;
     public ?string $existing_logo_dark = null;
-    public ?string $existing_logo_icon = null;
+    public ?string $existing_apple_icon = null;
     public ?string $existing_favicon = null;
 
     // Address
@@ -41,23 +41,23 @@ class GeneralSettingsForm extends Form
     public function rules(): array
     {
         return [
-            'company_name' => ['required', 'string', 'max:100'],
-            'email_address' => ['required', 'email', 'max:100'],
-            'phone_number' => ['required', 'string', 'max:20'],
+            'company_name' => ['nullable', 'string', 'max:100'],
+            'email_address' => ['nullable', 'email', 'max:100'],
+            'phone_number' => ['nullable', 'string', 'max:20'],
 
             'logo_light' => ['nullable', 'image', 'max:2048'],
             'logo_dark' => ['nullable', 'image', 'max:2048'],
-            'logo_icon' => ['nullable', 'image', 'max:2048'],
+            'apple_icon' => ['nullable', 'image', 'max:2048'],
             'favicon' => ['nullable', 'image', 'max:512'],
 
-            'address' => ['required', 'string', 'max:255'],
-            'country' => ['required', 'string', 'max:100'],
-            'town' => ['required', 'string', 'max:100'],
-            'postal_code' => ['required', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'town' => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
 
-            'currency' => ['required', 'string', 'max:10'],
-            'currency_symbol' => ['required', 'string', 'max:10'],
-            'timezone' => ['required', 'string', 'timezone'],
+            'currency' => ['nullable', 'string', 'max:10'],
+            'currency_symbol' => ['nullable', 'string', 'max:10'],
+            'timezone' => ['nullable', 'string', 'timezone'],
 
             'vat_number' => ['nullable', 'string', 'max:50'],
             'registration_number' => ['nullable', 'string', 'max:50'],
@@ -72,7 +72,7 @@ class GeneralSettingsForm extends Form
 
         $this->existing_logo_light = $settings->logo_light;
         $this->existing_logo_dark = $settings->logo_dark;
-        $this->existing_logo_icon = $settings->logo_icon;
+        $this->existing_apple_icon = $settings->apple_icon;
         $this->existing_favicon = $settings->favicon;
 
         $this->address = $settings->address ?? '';
@@ -108,7 +108,7 @@ class GeneralSettingsForm extends Form
         $settings->vat_number = $this->vat_number ?: null;
         $settings->registration_number = $this->registration_number ?: null;
 
-        foreach (['logo_light', 'logo_dark', 'logo_icon', 'favicon'] as $image) {
+        foreach (['logo_light', 'logo_dark', 'apple_icon', 'favicon'] as $image) {
             if ($this->$image) {
                 $path = $this->$image->store('settings', 'public');
                 $settings->$image = $path;

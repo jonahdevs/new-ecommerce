@@ -92,10 +92,11 @@ return new class extends Migration {
             $table->softDeletes();
 
             // Indexes
-            $table->index('status');
-            $table->index('type');
-            $table->index('is_featured');
-            $table->index('requires_quotation');
+            $table->index(['status', 'created_at']);   // default sort + newest
+            $table->index(['status', 'price']);         // price filter + price sort
+            $table->index(['status', 'is_featured']);   // featured filter (replaces single is_featured)
+            $table->index(['status', 'stock_quantity']); // in_stock filter
+            $table->index(['status', 'sale_price']);    // on_sale filter
         });
 
         // ===============================================

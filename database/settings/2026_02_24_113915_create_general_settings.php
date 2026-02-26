@@ -13,7 +13,7 @@ return new class extends SettingsMigration {
         // Images
         $this->migrator->add('general.logo_light', null);
         $this->migrator->add('general.logo_dark', null);
-        $this->migrator->add('general.logo_icon', null);
+        $this->migrator->add('general.apple_icon', null);
         $this->migrator->add('general.favicon', null);
 
         // Address
