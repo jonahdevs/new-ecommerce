@@ -373,7 +373,7 @@ new #[Title('Categories')] class extends Component {
                                 <flux:button variant="primary" icon="plus-circle" size="sm" class="cursor-pointer">
                                     Add Category
                                 </flux:button>
-                                <flux:menu class="max-h-72 overflow-y-auto w-56">
+                                <flux:menu class="max-h-72! overflow-y-auto w-56">
                                     @foreach ($this->availableCategories as $cat)
                                         <flux:menu.item wire:click="addPlacement({{ $cat->id }})"
                                             wire:key="avail-{{ $cat->id }}">

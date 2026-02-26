@@ -255,7 +255,7 @@ new class extends Component {
                     <flux:heading class="text-red-600">Danger Zone</flux:heading>
                 </div>
                 <div class="p-5">
-                    <flux:button color="red" variant="outline" size="sm" icon="trash" wire:click="delete"
+                    <flux:button variant="danger" size="sm" icon="trash" wire:click="delete"
                         class="cursor-pointer"
                         wire:confirm="Are you sure you want to permanently delete this review? This action cannot be undone.">
                         Delete Review Permanently
