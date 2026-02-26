@@ -194,7 +194,7 @@ new #[Title('Roles')] class extends Component {
                     placeholder="Search users..." class="max-w-xs" />
 
                 <div class="ms-auto flex items-center gap-3 flex-wrap">
-                    <flux:select wire:model.live="status" placeholder="All Status" class="w-36">
+                    <flux:select wire:model.live="status" class="w-36">
                         <flux:select.option value="">All Status</flux:select.option>
                         @foreach ($this->userStatus as $status)
                             <flux:select.option value="{{ $status->value }}">{{ $status->label() }}
@@ -202,7 +202,7 @@ new #[Title('Roles')] class extends Component {
                         @endforeach
                     </flux:select>
 
-                    <flux:select wire:model.live="role" placeholder="All Roles" class="w-36">
+                    <flux:select wire:model.live="role" class="w-36">
                         <flux:select.option value="">All Roles</flux:select.option>
                         @foreach ($this->roles as $r)
                             <flux:select.option :value="$r->name" class="capitalize">

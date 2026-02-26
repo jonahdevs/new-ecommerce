@@ -155,8 +155,8 @@ new class extends Component {
     }
 };
 ?>
-<div
-    {{ $attributes->class(['bg-white overflow-hidden h-full border hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group rounded-sm']) }}>
+<flux:card
+    {{ $attributes->class(['p-0 overflow-hidden h-full hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group']) }}>
     <div class="h-full flex flex-col">
         <div class="relative">
             <a href="{{ route('products.show', $product) }}" wire:navigate wire:click.stop class="block">
@@ -438,7 +438,7 @@ new class extends Component {
             </div>
         </div>
     </flux:modal>
-</div>
+</flux:card>
 
 
 <style>

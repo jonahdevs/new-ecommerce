@@ -55,40 +55,40 @@ new #[Defer] class extends Component {
                         this.swiper.destroy(true, true);
                     }
             
-                    this.$nextTick(() => {
-                        this.swiper = new Swiper('#{{ $type }}', {
-                            slidesPerView: 2,
-                            spaceBetween: 12,
-                            loop: {{ $loop ? 'true' : 'false' }},
-                            speed: {{ $speed }},
-                            @if($autoplay)
-                            autoplay: {
+                    this.swiper = new Swiper('#{{ $type }}', {
+                        slidesPerView: 2,
+                        spaceBetween: 12,
+                        loop: {{ $loop ? 'true' : 'false' }},
+                        speed: {{ $speed }},
+                        @if ($autoplay) autoplay: {
                                 delay: {{ $autoplayDelay }},
                                 disableOnInteraction: false,
                                 pauseOnMouseEnter: true,
+                            }, @endif
+                        breakpoints: {
+                            375: {
+                                slidesPerView: 2,
                             },
-                            @endif
-                            breakpoints: {
-                                375: {
-                                    slidesPerView: 2,
-                                },
-                                480: {
-                                    slidesPerView: 2,
-                                },
-                                640: {
-                                    slidesPerView: 3,
-                                },
-                                768: {
-                                    slidesPerView: 4,
-                                },
-                                1024: {
-                                    slidesPerView: 5,
-                                },
-                                1280: {
-                                    slidesPerView: 6,
-                                },
+                            480: {
+                                slidesPerView: 2,
                             },
-                        });
+                            640: {
+                                slidesPerView: 3,
+                            },
+                            768: {
+                                slidesPerView: 4,
+                            },
+                            1024: {
+                                slidesPerView: 5,
+                            },
+                            1280: {
+                                slidesPerView: 6,
+                            },
+                        },
+                    });
+            
+                    this.$nextTick(() => {
+                        document.getElementById('{{ $type }}').classList.remove('opacity-0');
                     });
             
                 }
@@ -106,22 +106,14 @@ new #[Defer] class extends Component {
                 <!-- Navigation buttons -->
                 <button type="button" @click="swiper?.slidePrev()"
                     class="absolute top-1/2 left-0  -translate-y-1/2 -translate-x-1/2 z-30 flex items-center justify-center cursor-pointer group focus:outline-none w-8 h-8 rounded-full bg-sheffield-blue/30 group-hover:bg-sheffield-blue/50 group-focus:ring-4 group-focus:ring-sheffield-blue/70 group-focus:outline-none">
-                    <svg class="w-3.5 h-3.5 text-white rtl:rotate-180" aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 1 1 5l4 4" />
-                    </svg>
+                    <flux:icon.arrow-long-left class="size-4 text-white" />
                     <span class="sr-only">Previous</span>
                 </button>
 
                 <button type="button" @click="swiper?.slideNext()"
                     class="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-30 flex items-center justify-center cursor-pointer group focus:outline-none w-8 h-8 rounded-full bg-sheffield-blue/30 group-hover:bg-sheffield-blue/50 group-focus:ring-4 group-focus:ring-sheffield-blue/70 group-focus:outline-none">
-                    <svg class="w-3.5 h-3.5 text-white rtl:rotate-180" aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m1 9 4-4-4-4" />
-                    </svg>
 
+                    <flux:icon.arrow-long-right class="size-4 text-white" />
                     <span class="sr-only">Next</span>
                 </button>
             </div>

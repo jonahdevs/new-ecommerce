@@ -57,7 +57,7 @@ new #[Title('Permissions')] class extends Component {
                     placeholder="Search permissions..." class="max-w-xs" />
 
                 <div class="ms-auto">
-                    <flux:select wire:model.live="role" placeholder="All Roles" class="w-36">
+                    <flux:select wire:model.live="role" class="w-36">
                         <flux:select.option value="">All Roles</flux:select.option>
                         @foreach ($this->roles as $r)
                             <flux:select.option :value="$r->name" class="capitalize">

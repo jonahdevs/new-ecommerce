@@ -100,20 +100,20 @@ new #[Title('Reviews')] class extends Component {
                 placeholder="Search by product, user, or review content..." class="flex-1 max-w-md" />
 
             <div class="ms-auto flex items-center gap-3">
-                <flux:select wire:model.live="statusFilter" placeholder="All Statuses" class="w-40">
-                    <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                <flux:select wire:model.live="statusFilter" class="w-40">
+                    <flux:select.option value="">All Statuses</flux:select.option>
+                    <flux:select.option value="pending">Pending</flux:select.option>
+                    <flux:select.option value="approved">Approved</flux:select.option>
+                    <flux:select.option value="rejected">Rejected</flux:select.option>
                 </flux:select>
 
-                <flux:select wire:model.live="ratingFilter" placeholder="All Ratings" class="w-40">
-                    <option value="">All Ratings</option>
-                    <option value="5">5 Stars</option>
-                    <option value="4">4 Stars</option>
-                    <option value="3">3 Stars</option>
-                    <option value="2">2 Stars</option>
-                    <option value="1">1 Star</option>
+                <flux:select wire:model.live="ratingFilter" class="w-40">
+                    <flux:select.option value="">All Ratings</flux:select.option>
+                    <flux:select.option value="5">5 Stars</flux:select.option>
+                    <flux:select.option value="4">4 Stars</flux:select.option>
+                    <flux:select.option value="3">3 Stars</flux:select.option>
+                    <flux:select.option value="2">2 Stars</flux:select.option>
+                    <flux:select.option value="1">1 Star</flux:select.option>
                 </flux:select>
             </div>
         </div>

@@ -90,14 +90,14 @@ new #[Title('Products')] class extends Component {
 
             {{-- You can add Category filters here later --}}
             <div class="flex items-center gap-3 ms-auto">
-                <flux:select wire:model.live="status" placeholder="All Statuses" class="max-w-40">
+                <flux:select wire:model.live="status" class="max-w-40">
                     <flux:select.option value="">All Status</flux:select.option>
                     @foreach ($this->statuses as $s)
                         <flux:select.option value="{{ $s->value }}">{{ $s->label() }}</flux:select.option>
                     @endforeach
                 </flux:select>
 
-                <flux:select wire:model.live="category" placeholder="All Categories" class="max-w-48">
+                <flux:select wire:model.live="category" class="max-w-48">
                     <flux:select.option value="">All Categories</flux:select.option>
                     @foreach ($this->categories as $cat)
                         <flux:select.option value="{{ $cat->id }}">{{ $cat->name }}</flux:select.option>
@@ -131,7 +131,7 @@ new #[Title('Products')] class extends Component {
                                 @if ($product->image_path)
                                     <img src="{{ $product->image_url }}" class="object-cover w-full h-full">
                                 @else
-                                    <flux:icon name="photo" class="w-full h-full p-2 text-zinc-300" />
+                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
                                 @endif
                             </div>
                         </flux:table.cell>

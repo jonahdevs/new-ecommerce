@@ -242,14 +242,16 @@ new #[Title('Categories')] class extends Component {
                 <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search categories..."
                     class="max-w-sm" clearable />
 
-                <flux:select wire:model.live="statusFilter" class="w-40">
-                    <flux:select.option value="">All Statuses</flux:select.option>
-                    @foreach (\App\Enums\CategoryStatus::cases() as $status)
-                        <flux:select.option value="{{ $status->value }}">
-                            {{ $status->label() }}
-                        </flux:select.option>
-                    @endforeach
-                </flux:select>
+                <div class="ms-auto">
+                    <flux:select wire:model.live="statusFilter" class="w-40">
+                        <flux:select.option value="">All Statuses</flux:select.option>
+                        @foreach (\App\Enums\CategoryStatus::cases() as $status)
+                            <flux:select.option value="{{ $status->value }}">
+                                {{ $status->label() }}
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
             </div>
 
             <flux:table :paginate="$this->categories">

@@ -282,7 +282,7 @@ new #[Layout('layouts.guest')] class extends Component {
         <img src="{{ asset('images/home/THIN BANNER.png') }}" alt="banner" class="w-full h-auto">
     </section>
 
-    @island('new-arrivals', lazy: true)
+    @island('new-arrivals', defer: true)
         @placeholder
             {{-- Loading state with matching structure --}}
             <div class="container mx-auto pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
@@ -314,7 +314,7 @@ new #[Layout('layouts.guest')] class extends Component {
         </a>
     </section>
 
-    @island(name: 'products', lazy: true)
+    @island(name: 'products', defer: true)
         @placeholder
             <div class="container mx-auto px-4">
 

@@ -23,10 +23,10 @@ class FortifyServiceProvider extends ServiceProvider
             public function toResponse($request)
             {
                 if ($request->user()->is_staff) {
-                    return redirect()->route('admin.dashboard');
+                    return redirect()->intended(route('admin.dashboard'));
                 }
 
-                return redirect()->route('customer.account');
+                return redirect()->intended(route('customer.account'));
             }
         });
     }

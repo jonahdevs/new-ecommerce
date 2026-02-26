@@ -9,7 +9,7 @@ new class extends Component {
     #[Computed(persist: true)]
     public function categories()
     {
-        return Category::inSection(CategorySection::Navbar)->take(5)->get();
+        return Category::inSection(CategorySection::Footer)->take(5)->get();
     }
 };
 ?>

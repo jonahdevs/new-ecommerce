@@ -344,9 +344,9 @@ new #[Layout('layouts.guest')] class extends Component {
     </div>
 
     <div class="container mx-auto px-4 py-4">
-        <div class="grid lg:grid-cols-4 gap-5 lg:gap-10">
+        <div class="grid lg:grid-cols-4 gap-5">
 
-            <div class="lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10">
+            <flux:card class="lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10">
 
                 <div class="lg:col-span-2">
                     {{-- Product Image Slider --}}
@@ -358,51 +358,53 @@ new #[Layout('layouts.guest')] class extends Component {
                         isEnd: false,
                     
                         init() {
+                            this.thumbSwiper = new Swiper('#thumbSwiper', {
+                                spaceBetween: 10,
+                                slidesPerView: 4,
+                                freeMode: true,
+                                watchSlidesProgress: true,
+                                loop: true,
+                                breakpoints: {
+                                    640: {
+                                        slidesPerView: 5,
+                                    },
+                                    768: {
+                                        slidesPerView: 6,
+                                    },
+                                },
+                                on: {
+                                    slideChange: (swiper) => {
+                                        this.isBeginning = swiper.isBeginning;
+                                        this.isEnd = swiper.isEnd;
+                                    },
+                                },
+                            });
+                    
+                            // Initialize main slider
+                            this.mainSwiper = new Swiper('#mainSwiper', {
+                                spaceBetween: 10,
+                                loop: true,
+                                navigation: {
+                                    nextEl: '.swiper-button-next',
+                                    prevEl: '.swiper-button-prev',
+                                },
+                                thumbs: {
+                                    swiper: this.thumbSwiper,
+                                },
+                                on: {
+                                    slideChange: (swiper) => {
+                                        this.activeIndex = swiper.realIndex;
+                    
+                                        // Ensure the active thumbnail is visible
+                                        this.thumbSwiper.slideTo(swiper.realIndex);
+                                    },
+                                },
+                            });
+                    
                             // Wait for next tick to ensure DOM is ready
                             this.$nextTick(() => {
-                                // Initialize thumbnail slider first
-                                this.thumbSwiper = new Swiper('.thumbSwiper', {
-                                    spaceBetween: 10,
-                                    slidesPerView: 4,
-                                    freeMode: true,
-                                    watchSlidesProgress: true,
-                                    loop: true,
-                                    breakpoints: {
-                                        640: {
-                                            slidesPerView: 5,
-                                        },
-                                        768: {
-                                            slidesPerView: 6,
-                                        },
-                                    },
-                                    on: {
-                                        slideChange: (swiper) => {
-                                            this.isBeginning = swiper.isBeginning;
-                                            this.isEnd = swiper.isEnd;
-                                        },
-                                    },
-                                });
-                    
-                                // Initialize main slider
-                                this.mainSwiper = new Swiper('.mainSwiper', {
-                                    spaceBetween: 10,
-                                    loop: true,
-                                    navigation: {
-                                        nextEl: '.swiper-button-next',
-                                        prevEl: '.swiper-button-prev',
-                                    },
-                                    thumbs: {
-                                        swiper: this.thumbSwiper,
-                                    },
-                                    on: {
-                                        slideChange: (swiper) => {
-                                            this.activeIndex = swiper.realIndex;
-                    
-                                            // Ensure the active thumbnail is visible
-                                            this.thumbSwiper.slideTo(swiper.realIndex);
-                                        },
-                                    },
-                                });
+                                document.getElementById('thumbSwiper').classList.remove('opacity-0');
+                                document.getElementById('mainSwiper').classList.remove('opacity-0');
                     
                                 // Set initial state
                                 this.isBeginning = this.thumbSwiper.isBeginning;
@@ -411,8 +413,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         },
                     }">
                         {{-- Main Slider --}}
-                        <div class="mb-4" x-cloak x-show="mainSwiper">
-                            <div class="swiper mainSwiper border border-2 rounded-sm  overflow-hidden px-2">
+                        <div class="mb-4">
+                            <div class="swiper border border-2 rounded-sm  overflow-hidden px-2 opacity-0 transition-opacity duration-500"
+                                id="mainSwiper">
                                 <div class="swiper-wrapper ">
                                     @foreach ($product->images as $image)
                                         <div class="swiper-slide">
@@ -435,7 +438,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 <flux:icon.chevron-left class="size-6 stroke-2" variant="solid" />
                             </button> --}}
 
-                            <div class="swiper thumbSwiper px-12">
+                            <div class="swiper px-12 opacity-0 transition-opacity duration-500" id="thumbSwiper">
                                 <div class="swiper-wrapper">
                                     @foreach ($product->images as $image)
                                         <div class="swiper-slide cursor-pointer">
@@ -600,12 +603,12 @@ new #[Layout('layouts.guest')] class extends Component {
                         <flux:button icon="share" icon-variant="outline" title="Share"></flux:button>
                     </div>
                 </div>
-            </div>
+            </flux:card>
 
             <div class="lg:col-span-1">
-                <div class="sticky top-44 border rounded-sm bg-white">
+                <flux:card class="sticky top-44 p-0">
                     <div class="border-b px-3 py-2">
-                        <h3 class="font-medium uppercase text-sm">Delivery & Returns</h3>
+                        <flux:heading>Delivery & Returns</flux:heading>
                     </div>
                     <div class="p-3">
                         <h4 class="text-sm  font-medium text-slate-600">Choose your location</h4>
@@ -666,7 +669,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             </flux:text>
                         </div>
                     </div>
-                </div>
+                </flux:card>
             </div>
         </div>
 
@@ -686,7 +689,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
         {{--  --}}
 
-        <div class="border pb-6 relative pt-10 px-6 mt-10">
+        <flux:card class="pb-6 relative pt-10 px-6 mt-10">
             <div class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
 
                 <flux:button x-show="$wire.selectedTab == 'description'" @click="$wire.selectedTab = 'description'"
@@ -824,7 +827,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
             </div>
-        </div>
+        </flux:card>
 
 
         <livewire:product-recommendations type="similar" :context="['product' => $product]" />

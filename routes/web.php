@@ -20,7 +20,7 @@ Route::match(['get', 'post'], 'payment/callback/cancel', [PaymentCallbackControl
 Route::livewire('/payment/success', 'pages::checkout.success')->name('checkout.success-page');
 Route::livewire('/payment/cancel', 'pages::checkout.cancel')->name('payment.cancel');
 
-Route::middleware(['auth', 'cart_not_empty'])->group(function () {
+Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
     Route::livewire('/checkout/payment', 'pages::checkout.payment')->name('checkout.payment');
 
@@ -33,7 +33,7 @@ Route::middleware(['auth', 'cart_not_empty'])->group(function () {
 });
 
 // customer
-Route::middleware('auth')->name('customer')->group(function () {
+Route::middleware(['auth', 'customer'])->name('customer')->group(function () {
     Route::livewire('account', 'pages::customer.account')->name('.account');
 
     Route::livewire('orders', 'pages::customer.orders.index')->name('.orders.index');

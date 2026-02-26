@@ -25,7 +25,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $this->cartSummary = $cartService->summary($this->cart);
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function cartItems()
     {
         $cartService = app(CartService::class);
@@ -193,7 +193,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
 
-                <div class="w-full lg:max-w-xs">
+                <div class="w-full lg:max-w-md">
                     <div class="bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b">
                             <flux:skeleton animate="shimmer" class="h-6 w-24 px-3 py-2 rounded-sm" />
@@ -293,11 +293,17 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         <div>
                             <section class="space-y-2">
                                 @foreach ($this->cartItems as $item)
-                                    <flux:card class="p-0 rounded-md overflow-hidden">
+                                    <flux:card class="p-0 overflow-hidden">
                                         <div class="flex items-start gap-3 p-3 py-4">
-                                            <div class="shrink-0 px-4">
-                                                <img class="h-20 w-20" src="{{ $item->product->image_url }}"
-                                                    alt="{{ $item->product->name }}" />
+                                            <div
+                                                class="shrink-0 w-20 h-20 rounded border bg-zinc-50 overflow-hidden px-4">
+                                                @if ($item->product->image_path)
+                                                    <img class="object-cover w-full h-full"
+                                                        src="{{ $item->product->image_url }}"
+                                                        alt="{{ $item->product->name }}" />
+                                                @else
+                                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
+                                                @endif
                                             </div>
 
                                             <div class="flex-1">
@@ -421,7 +427,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             </div>
 
             @if ($this->cartItems->isNotEmpty())
-                <div class="w-full lg:max-w-xs sticky top-44">
+                <div class="w-full lg:max-w-sm sticky top-44">
                     <div class="bg-white rounded-sm border">
                         <div>
                             <h3 class="font-medium text-sm uppercase px-3 py-2 border-b">

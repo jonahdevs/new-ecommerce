@@ -83,7 +83,7 @@ new #[Title('Customers')] class extends Component {
                 class="max-w-xs" />
 
             <div class="ms-auto flex items-center gap-3">
-                <flux:select wire:model.live="status" placeholder="All Status" class="w-36">
+                <flux:select wire:model.live="status" class="w-36">
                     <flux:select.option value="">All Status</flux:select.option>
                     <flux:select.option value="active">Active</flux:select.option>
                     <flux:select.option value="inactive">Inactive</flux:select.option>

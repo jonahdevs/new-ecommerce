@@ -99,7 +99,7 @@ new class extends Component {
 
 ?>
 
-<div class="border bg-white rounded-sm sticky top-44">
+<flux:card class="p-0 sticky top-44">
     <div class="px-3 py-2 border-b">
         <flux:heading>Order Summary</flux:heading>
     </div>
@@ -155,7 +155,7 @@ new class extends Component {
             <span>Secure checkout powered by Pesawise</span>
         </div>
     </div>
-</div>
+</flux:card>
 
 {{-- Alpine.js for additional interactivity --}}
 @script
