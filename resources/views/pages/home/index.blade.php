@@ -35,13 +35,17 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function products()
     {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+        $products = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
             ->withAvg('reviews', 'rating')
             ->with('brand:id,name')
             ->active()
             ->inRandomOrder()
             ->limit(24)
             ->get();
+
+        \Log::info('products: ' . json_encode($products, JSON_PRETTY_PRINT));
+
+        return $products;
     }
 };
 ?>
@@ -156,15 +160,12 @@ new #[Layout('layouts.guest')] class extends Component {
             </div>
 
             <!-- Slider controls -->
+
             <button type="button" @click="swiper.slidePrev()"
                 class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
                 <span
                     class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30 dark:bg-zinc-800/30 hover:bg-white/50 dark:hover:bg-zinc-800/60 focus:ring-4 focus:ring-white dark:focus:ring-zinc-800/70 focus:outline-none">
-                    <svg class="w-4 h-4 text-white rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                        width="24" height="24" fill="none" viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m15 19-7-7 7-7" />
-                    </svg>
+                    <flux:icon.arrow-long-left class="size-4 text-white" />
                     <span class="sr-only">Previous</span>
                 </span>
             </button>
@@ -173,11 +174,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
                 <span
                     class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30 dark:bg-zinc-800/30 hover:bg-white/50 dark:hover:bg-zinc-800/60 focus:ring-4 focus:ring-white dark:focus:ring-zinc-800/70 focus:outline-none">
-                    <svg class="w-4 h-4 text-white rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                        width="24" height="24" fill="none" viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m9 5 7 7-7 7" />
-                    </svg>
+                    <flux:icon.arrow-long-right class="size-4 text-white" />
                     <span class="sr-only">Next</span>
                 </span>
             </button>
@@ -285,10 +282,10 @@ new #[Layout('layouts.guest')] class extends Component {
         <img src="{{ asset('images/home/THIN BANNER.png') }}" alt="banner" class="w-full h-auto">
     </section>
 
-    @island('new-arrivals')
+    @island('new-arrivals', lazy: true)
         @placeholder
             {{-- Loading state with matching structure --}}
-            <div class=" pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
+            <div class="container mx-auto pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
                 <div class="lg:col-span-1 flex justify-center flex-col text-white px-3 md:px-5 py-4 lg:py-0">
                     <h4 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-5">New</h4>
 
@@ -317,7 +314,7 @@ new #[Layout('layouts.guest')] class extends Component {
         </a>
     </section>
 
-    @island(name: 'featured-products', lazy: true)
+    @island(name: 'products', lazy: true)
         @placeholder
             <div class="container mx-auto px-4">
 

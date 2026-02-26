@@ -24,47 +24,46 @@
                     breakpoints: {
                         375: {
                             slidesPerView: 2,
+                            slidesPerGroup: 2,
+                            grid: { rows: 2, fill: 'row' }
                         },
                         480: {
                             slidesPerView: 2,
+                            slidesPerGroup: 2,
+                            grid: { rows: 2, fill: 'row' }
                         },
                         640: {
                             slidesPerView: 3,
-                            grid: {
-                                rows: 2,
-                                fill: 'row'
-                            }
+                            slidesPerGroup: 3,
+                            grid: { rows: 2, fill: 'row' }
                         },
                         768: {
                             slidesPerView: 4,
-                            grid: {
-                                rows: 2,
-                                fill: 'row'
-                            }
+                            slidesPerGroup: 4,
+                            grid: { rows: 2, fill: 'row' }
                         },
                         1024: {
                             slidesPerView: 5,
-                            grid: {
-                                rows: 2,
-                                fill: 'row'
-                            }
+                            slidesPerGroup: 5,
+                            grid: { rows: 2, fill: 'row' }
                         },
                         1280: {
                             slidesPerView: 6,
-                            grid: {
-                                rows: 2,
-                                fill: 'row'
-                            }
+                            slidesPerGroup: 6,
+                            grid: { rows: 2, fill: 'row' }
                         },
                     },
                 });
+                this.$nextTick(() => {
+                    document.getElementById('youMayAlsoLike').classList.remove('opacity-0')
+                })
             }
         }">
-            <div class="swiper" id="youMayAlsoLike">
+            <div class="swiper opacity-0 transition-opacity duration-500" id="youMayAlsoLike">
                 <div class="swiper-wrapper pb-5">
                     @foreach ($this->products as $product)
-                        <div class="swiper-slide h-auto!">
-                            <livewire:product-card :product="$product" :key="'product-' . $product->id" />
+                        <div class="swiper-slide h-auto!" :key="'product-' . $product->id">
+                            <livewire:product-card :product="$product" />
                         </div>
                     @endforeach
                 </div>

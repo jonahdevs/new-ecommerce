@@ -35,13 +35,16 @@
                             },
                         },
                     });
+                    this.$nextTick(() => {
+                        document.getElementById('newArrivalsSwiper').classList.remove('opacity-0');
+                    });
                 }
             }">
-                <div class="swiper" id="newArrivalsSwiper">
+                <div class="swiper opacity-0 transition-opacity duration-500" id="newArrivalsSwiper">
                     <div class="swiper-wrapper pb-4">
-                        @foreach ($this->products as $product)
-                            <div class="swiper-slide h-auto!">
-                                <livewire:product-card :product="$product" :key="'product-' . $product->id" />
+                        @foreach ($this->newArrivals as $product)
+                            <div class="swiper-slide h-auto!" :key="'product-' . $product->id">
+                                <livewire:product-card :product="$product" />
                             </div>
                         @endforeach
                     </div>
