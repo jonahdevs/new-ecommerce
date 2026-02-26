@@ -6,105 +6,201 @@ use Livewire\Component;
 use Livewire\Attributes\Title;
 
 new #[Title('Mail Settings')] class extends Component {
-    public string $driver = 'smtp';
-    public ?string $host = null;
-    public int $port = 587;
-    public ?string $username = null;
-    public ?string $password = null;
-    public string $encryption = 'tls';
-    public ?string $from_address = null;
-    public ?string $from_name = '';
+    public string $active_driver = 'smtp';
 
-    // Test email
-    public string $test_email = '';
-    public bool $sending_test = false;
+    // SMTP
+    public string $smtp_host = '';
+    public int $smtp_port = 587;
+    public string $smtp_username = '';
+    public string $smtp_password = '';
+    public string $smtp_encryption = 'tls';
+
+    // Mailgun
+    public string $mailgun_domain = '';
+    public string $mailgun_secret = '';
+    public string $mailgun_endpoint = 'api.mailgun.net';
+
+    // Amazon SES
+    public string $ses_key = '';
+    public string $ses_secret = '';
+    public string $ses_region = 'us-east-1';
+
+    // Postmark
+    public string $postmark_token = '';
+
+    // Sender
+    public string $from_address = '';
+    public string $from_name = '';
 
     public function mount(MailSettings $settings): void
     {
-        $this->driver = $settings->driver;
-        $this->host = $settings->host;
-        $this->port = $settings->port;
-        $this->username = $settings->username;
-        $this->password = $settings->password;
-        $this->encryption = $settings->encryption;
-        $this->from_address = $settings->from_address;
-        $this->from_name = $settings->from_name;
+        $this->active_driver = $settings->active_driver ?? 'smtp';
+
+        $this->smtp_host = $settings->smtp_host ?? '';
+        $this->smtp_port = $settings->smtp_port ?? 587;
+        $this->smtp_username = $settings->smtp_username ?? '';
+        $this->smtp_password = $settings->smtp_password ?? '';
+        $this->smtp_encryption = $settings->smtp_encryption ?? 'tls';
+
+        $this->mailgun_domain = $settings->mailgun_domain ?? '';
+        $this->mailgun_secret = $settings->mailgun_secret ?? '';
+        $this->mailgun_endpoint = $settings->mailgun_endpoint ?? 'api.mailgun.net';
+
+        $this->ses_key = $settings->ses_key ?? '';
+        $this->ses_secret = $settings->ses_secret ?? '';
+        $this->ses_region = $settings->ses_region ?? 'us-east-1';
+
+        $this->postmark_token = $settings->postmark_token ?? '';
+
+        $this->from_address = $settings->from_address ?? '';
+        $this->from_name = $settings->from_name ?? '';
     }
 
-    public function rules(): array
+    public function activate(string $driver, MailSettings $settings): void
     {
-        return [
-            'driver' => ['required', 'string', 'in:smtp,sendmail,mailgun,ses,postmark,log'],
-            'host' => ['required', 'string', 'max:255'],
-            'port' => ['required', 'integer', 'in:25,465,587,2525'],
-            'username' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'max:255'],
-            'encryption' => ['required', 'string', 'in:tls,ssl,none'],
-            'from_address' => ['required', 'email'],
-            'from_name' => ['required', 'string', 'max:100'],
-        ];
+        $settings->active_driver = $driver;
+        $settings->save();
+        $this->active_driver = $driver;
+        $this->applyMailConfig();
+        $this->dispatch('notify', variant: 'success', message: ucfirst($driver) . ' is now the active mail driver.');
     }
 
-    public function save(MailSettings $settings): void
+    public function saveSmtp(MailSettings $settings): void
     {
-        $this->validate();
+        $this->validateOnly('smtp_*', [
+            'smtp_host' => ['required', 'string', 'max:255'],
+            'smtp_port' => ['required', 'integer', 'in:25,465,587,2525'],
+            'smtp_username' => ['required', 'string', 'max:255'],
+            'smtp_password' => ['required', 'string', 'max:255'],
+            'smtp_encryption' => ['required', 'string', 'in:tls,ssl,none'],
+        ]);
 
         try {
-            $settings->driver = $this->driver;
-            $settings->host = $this->host;
-            $settings->port = $this->port;
-            $settings->username = $this->username;
-            $settings->password = '';
-            $settings->encryption = $this->encryption;
-            $settings->from_address = $this->from_address;
-            $settings->from_name = $this->from_name;
+            $settings->smtp_host = $this->smtp_host;
+            $settings->smtp_port = $this->smtp_port;
+            $settings->smtp_username = $this->smtp_username;
+            $settings->smtp_password = $this->smtp_password;
+            $settings->smtp_encryption = $this->smtp_encryption;
+            $this->saveSender($settings);
             $settings->save();
 
-            // Apply to running config immediately
             $this->applyMailConfig();
-
-            $this->dispatch('notify', variant: 'success', message: 'Mail settings saved.');
+            $this->modal('smtp-config')->close();
+            $this->dispatch('notify', variant: 'success', message: 'SMTP settings saved.');
         } catch (\Throwable $e) {
-            logger()->error('Failed to save mail settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to save SMTP settings.');
         }
     }
 
-    public function sendTestEmail(): void
+    public function saveMailgun(MailSettings $settings): void
     {
-        $this->validateOnly('test_email', [
-            'test_email' => ['required', 'email'],
+        $this->validateOnly('mailgun_*', [
+            'mailgun_domain' => ['required', 'string', 'max:255'],
+            'mailgun_secret' => ['required', 'string', 'max:255'],
+            'mailgun_endpoint' => ['required', 'string', 'max:255'],
         ]);
 
-        $this->sending_test = true;
+        try {
+            $settings->mailgun_domain = $this->mailgun_domain;
+            $settings->mailgun_secret = $this->mailgun_secret;
+            $settings->mailgun_endpoint = $this->mailgun_endpoint;
+            $this->saveSender($settings);
+            $settings->save();
+
+            $this->applyMailConfig();
+            $this->modal('mailgun-config')->close();
+            $this->dispatch('notify', variant: 'success', message: 'Mailgun settings saved.');
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to save Mailgun settings.');
+        }
+    }
+
+    public function saveSes(MailSettings $settings): void
+    {
+        $this->validateOnly('ses_*', [
+            'ses_key' => ['required', 'string', 'max:255'],
+            'ses_secret' => ['required', 'string', 'max:255'],
+            'ses_region' => ['required', 'string', 'max:50'],
+        ]);
+
+        try {
+            $settings->ses_key = $this->ses_key;
+            $settings->ses_secret = $this->ses_secret;
+            $settings->ses_region = $this->ses_region;
+            $this->saveSender($settings);
+            $settings->save();
+
+            $this->applyMailConfig();
+            $this->modal('ses-config')->close();
+            $this->dispatch('notify', variant: 'success', message: 'Amazon SES settings saved.');
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to save SES settings.');
+        }
+    }
+
+    public function savePostmark(MailSettings $settings): void
+    {
+        $this->validateOnly('postmark_*', [
+            'postmark_token' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $settings->postmark_token = $this->postmark_token;
+            $this->saveSender($settings);
+            $settings->save();
+
+            $this->applyMailConfig();
+            $this->modal('postmark-config')->close();
+            $this->dispatch('notify', variant: 'success', message: 'Postmark settings saved.');
+        } catch (\Throwable $e) {
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to save Postmark settings.');
+        }
+    }
+
+    public function sendTestEmail(string $email): void
+    {
+        $this->validate(['_test_email' => 'required|email'], ['_test_email' => $email], ['_test_email' => 'email address']);
 
         try {
             $this->applyMailConfig();
-
-            Mail::raw('This is a test email from your Sheffield Africa store.', function ($message) {
-                $message->to($this->test_email)->subject('Test Email — Sheffield Africa');
+            Mail::raw('This is a test email from your Sheffield Africa store.', function ($message) use ($email) {
+                $message->to($email)->subject('Test Email — Sheffield Africa');
             });
 
-            $this->dispatch('notify', variant: 'success', message: "Test email sent to {$this->test_email}.");
-            $this->test_email = '';
+            $this->dispatch('notify', variant: 'success', message: "Test email sent to {$email}.");
         } catch (\Throwable $e) {
             logger()->error('Failed to send test email.', ['exception' => $e->getMessage()]);
             $this->dispatch('notify', variant: 'danger', message: 'Failed to send. Check your mail configuration.');
-        } finally {
-            $this->sending_test = false;
         }
     }
 
-    // Apply settings to Laravel's running mail config without restarting
+    private function saveSender(MailSettings $settings): void
+    {
+        $this->validateOnly('from_*', [
+            'from_address' => ['required', 'email'],
+            'from_name' => ['required', 'string', 'max:100'],
+        ]);
+
+        $settings->from_address = $this->from_address;
+        $settings->from_name = $this->from_name;
+    }
+
     private function applyMailConfig(): void
     {
         config([
-            'mail.default' => $this->driver,
-            'mail.mailers.smtp.host' => $this->host,
-            'mail.mailers.smtp.port' => $this->port,
-            'mail.mailers.smtp.username' => $this->username,
-            'mail.mailers.smtp.password' => $this->password,
-            'mail.mailers.smtp.encryption' => $this->encryption === 'none' ? null : $this->encryption,
+            'mail.default' => $this->active_driver,
+            'mail.mailers.smtp.host' => $this->smtp_host,
+            'mail.mailers.smtp.port' => $this->smtp_port,
+            'mail.mailers.smtp.username' => $this->smtp_username,
+            'mail.mailers.smtp.password' => $this->smtp_password,
+            'mail.mailers.smtp.encryption' => $this->smtp_encryption === 'none' ? null : $this->smtp_encryption,
+            'services.mailgun.domain' => $this->mailgun_domain,
+            'services.mailgun.secret' => $this->mailgun_secret,
+            'services.mailgun.endpoint' => $this->mailgun_endpoint,
+            'services.ses.key' => $this->ses_key,
+            'services.ses.secret' => $this->ses_secret,
+            'services.ses.region' => $this->ses_region,
+            'services.postmark.token' => $this->postmark_token,
             'mail.from.address' => $this->from_address,
             'mail.from.name' => $this->from_name,
         ]);
@@ -114,122 +210,327 @@ new #[Title('Mail Settings')] class extends Component {
 <div>
     @include('partials.settings-heading')
 
-    <x-pages::admin.settings.layout :heading="__('Mail Settings')" :subheading="__('Configure your outgoing email server')">
-        <form wire:submit="save" class="space-y-6">
+    <x-pages::admin.settings.layout :heading="__('Mail Settings')" :subheading="__('Configure and activate your outgoing mail driver')">
 
-            {{-- SMTP Configuration --}}
-            <div class="space-y-4">
-                <flux:subheading class="font-medium">SMTP Configuration</flux:subheading>
+        {{-- Driver Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                <flux:field>
-                    <flux:label>Mail Driver</flux:label>
-                    <flux:select wire:model="driver">
-                        <flux:select.option value="smtp">SMTP</flux:select.option>
-                        <flux:select.option value="mailgun">Mailgun</flux:select.option>
-                        <flux:select.option value="ses">Amazon SES</flux:select.option>
-                        <flux:select.option value="postmark">Postmark</flux:select.option>
-                        <flux:select.option value="sendmail">Sendmail</flux:select.option>
-                        <flux:select.option value="log">Log (Testing only)</flux:select.option>
-                    </flux:select>
-                    <flux:error name="driver" />
-                </flux:field>
-
-                <flux:field>
-                    <flux:label>SMTP Host</flux:label>
-                    <flux:input wire:model="host" placeholder="e.g. smtp.mailgun.org" />
-                    <flux:error name="host" />
-                </flux:field>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <flux:field>
-                        <flux:label>Port</flux:label>
-                        <flux:select wire:model="port">
-                            <flux:select.option value="25">25</flux:select.option>
-                            <flux:select.option value="465">465 (SSL)</flux:select.option>
-                            <flux:select.option value="587">587 (TLS)</flux:select.option>
-                            <flux:select.option value="2525">2525</flux:select.option>
-                        </flux:select>
-                        <flux:error name="port" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Encryption</flux:label>
-                        <flux:select wire:model="encryption">
-                            <flux:select.option value="tls">TLS</flux:select.option>
-                            <flux:select.option value="ssl">SSL</flux:select.option>
-                            <flux:select.option value="none">None</flux:select.option>
-                        </flux:select>
-                        <flux:error name="encryption" />
-                    </flux:field>
+            {{-- SMTP --}}
+            <flux:card class="p-0">
+                <div class="flex items-start justify-between gap-3 p-5">
+                    <div>
+                        <flux:heading size="lg">SMTP</flux:heading>
+                        <flux:text class="text-xs text-zinc-400 mt-1">
+                            Send mail via any standard SMTP server.
+                        </flux:text>
+                    </div>
+                    <flux:switch wire:key="switch-smtp-{{ $active_driver }}" :checked="$active_driver === 'smtp'"
+                        wire:click="activate('smtp')"
+                        wire:confirm="{{ $active_driver === 'smtp' ? '' : 'Set SMTP as the active mail driver?' }}" />
                 </div>
 
-                <flux:field>
-                    <flux:label>Username</flux:label>
-                    <flux:input wire:model="username" placeholder="SMTP username" />
-                    <flux:error name="username" />
-                </flux:field>
+                <flux:separator />
 
-                <flux:field>
-                    <flux:label>Password</flux:label>
-                    <flux:input wire:model="password" type="password" placeholder="SMTP password" />
-                    <flux:error name="password" />
-                </flux:field>
-            </div>
+                <div class="flex items-center justify-between px-5 py-2">
+                    @if ($smtp_host && $smtp_username)
+                        <flux:badge size="sm" color="green" variant="soft" icon="check-circle">Configured
+                        </flux:badge>
+                    @else
+                        <flux:badge size="sm" color="yellow" variant="soft" icon="exclamation-triangle">Not
+                            configured</flux:badge>
+                    @endif
 
-            <flux:separator />
+                    <flux:button icon="cog-6-tooth" variant="ghost" size="sm" icon-variant="outline"
+                        x-on:click="$flux.modal('smtp-config').show()" tooltip="Configure SMTP"
+                        class="cursor-pointer" />
+                </div>
+            </flux:card>
 
-            {{-- Sender Details --}}
-            <div class="space-y-4">
-                <flux:subheading class="font-medium">Sender Details</flux:subheading>
+            {{-- Mailgun --}}
+            <flux:card class="p-0">
+                <div class="flex items-start justify-between gap-3 p-5">
+                    <div>
+                        <flux:heading size="lg">Mailgun</flux:heading>
+                        <flux:text class="text-xs text-zinc-400 mt-1">
+                            Transactional email via Mailgun's API.
+                        </flux:text>
+                    </div>
+                    <flux:switch wire:key="switch-mailgun-{{ $active_driver }}" :checked="$active_driver === 'mailgun'"
+                        wire:click="activate('mailgun')"
+                        wire:confirm="{{ $active_driver === 'mailgun' ? '' : 'Set Mailgun as the active mail driver?' }}" />
+                </div>
 
-                <flux:field>
-                    <flux:label>From Address</flux:label>
-                    <flux:input wire:model="from_address" type="email" placeholder="hello@sheffield.com" />
-                    <flux:description>The email address your customers will see emails from.</flux:description>
-                    <flux:error name="from_address" />
-                </flux:field>
+                <flux:separator />
 
-                <flux:field>
-                    <flux:label>From Name</flux:label>
-                    <flux:input wire:model="from_name" placeholder="Sheffield Africa" />
-                    <flux:description>The name your customers will see emails from.</flux:description>
-                    <flux:error name="from_name" />
-                </flux:field>
-            </div>
+                <div class="flex items-center justify-between px-5 py-2">
+                    @if ($mailgun_domain && $mailgun_secret)
+                        <flux:badge size="sm" color="green" variant="soft" icon="check-circle">Configured
+                        </flux:badge>
+                    @else
+                        <flux:badge size="sm" color="yellow" variant="soft" icon="exclamation-triangle">Not
+                            configured</flux:badge>
+                    @endif
 
-            <flux:separator />
+                    <flux:button icon="cog-6-tooth" variant="ghost" size="sm" icon-variant="outline"
+                        x-on:click="$flux.modal('mailgun-config').show()" tooltip="Configure Mailgun"
+                        class="cursor-pointer" />
+                </div>
+            </flux:card>
 
-            <div class="flex justify-end">
-                <flux:button type="submit" variant="primary">
-                    Save Changes
-                </flux:button>
-            </div>
+            {{-- Amazon SES --}}
+            <flux:card class="p-0">
+                <div class="flex items-start justify-between gap-3 p-5">
+                    <div>
+                        <flux:heading size="lg">Amazon SES</flux:heading>
+                        <flux:text class="text-xs text-zinc-400 mt-1">
+                            High-volume email delivery via AWS SES.
+                        </flux:text>
+                    </div>
+                    <flux:switch wire:key="switch-ses-{{ $active_driver }}" :checked="$active_driver === 'ses'"
+                        wire:click="activate('ses')"
+                        wire:confirm="{{ $active_driver === 'ses' ? '' : 'Set Amazon SES as the active mail driver?' }}" />
+                </div>
 
-        </form>
+                <flux:separator />
 
-        {{-- Test Email — separate from the save form --}}
-        <div class="mt-8 space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
-            <div>
-                <flux:subheading class="font-medium">Send Test Email</flux:subheading>
-                <flux:text class="text-xs text-zinc-400 mt-1">
-                    Verify your mail configuration is working correctly.
-                    Make sure you save your settings before sending a test.
-                </flux:text>
-            </div>
+                <div class="flex items-center justify-between px-5 py-2">
+                    @if ($ses_key && $ses_secret)
+                        <flux:badge size="sm" color="green" variant="soft" icon="check-circle">Configured
+                        </flux:badge>
+                    @else
+                        <flux:badge size="sm" color="yellow" variant="soft" icon="exclamation-triangle">Not
+                            configured</flux:badge>
+                    @endif
 
-            <div class="flex items-start gap-3">
-                <flux:field class="flex-1">
-                    <flux:input wire:model="test_email" type="email" placeholder="test@example.com" />
-                    <flux:error name="test_email" />
-                </flux:field>
+                    <flux:button icon="cog-6-tooth" variant="ghost" size="sm" icon-variant="outline"
+                        x-on:click="$flux.modal('ses-config').show()" tooltip="Configure SES" class="cursor-pointer" />
+                </div>
+            </flux:card>
 
-                <flux:button wire:click="sendTestEmail" wire:loading.attr="disabled" icon="paper-airplane"
-                    variant="ghost">
-                    <span wire:loading.remove wire:target="sendTestEmail">Send Test</span>
-                    <span wire:loading wire:target="sendTestEmail">Sending...</span>
-                </flux:button>
-            </div>
+            {{-- Postmark --}}
+            <flux:card class="p-0">
+                <div class="flex items-start justify-between gap-3 p-5">
+                    <div>
+                        <flux:heading size="lg">Postmark</flux:heading>
+                        <flux:text class="text-xs text-zinc-400 mt-1">
+                            Developer-friendly transactional email via Postmark.
+                        </flux:text>
+                    </div>
+                    <flux:switch wire:key="switch-postmark-{{ $active_driver }}"
+                        :checked="$active_driver === 'postmark'" wire:click="activate('postmark')"
+                        wire:confirm="{{ $active_driver === 'postmark' ? '' : 'Set Postmark as the active mail driver?' }}" />
+                </div>
+
+                <flux:separator />
+
+                <div class="flex items-center justify-between px-5 py-2">
+                    @if ($postmark_token)
+                        <flux:badge size="sm" color="green" variant="soft" icon="check-circle">Configured
+                        </flux:badge>
+                    @else
+                        <flux:badge size="sm" color="yellow" variant="soft" icon="exclamation-triangle">Not
+                            configured</flux:badge>
+                    @endif
+
+                    <flux:button icon="cog-6-tooth" variant="ghost" size="sm" icon-variant="outline"
+                        x-on:click="$flux.modal('postmark-config').show()" tooltip="Configure Postmark"
+                        class="cursor-pointer" />
+                </div>
+            </flux:card>
+
         </div>
+
+
+        {{-- Modals --}}
+
+        {{-- Sender Details — shared partial inside each modal --}}
+
+        {{-- SMTP Config --}}
+        <flux:modal name="smtp-config" class="md:w-120">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">SMTP Configuration</flux:heading>
+                    <flux:subheading>Enter your SMTP server credentials</flux:subheading>
+                </div>
+
+                <form wire:submit="saveSmtp" class="space-y-4">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:field class="col-span-2">
+                            <flux:label>Host</flux:label>
+                            <flux:input wire:model="smtp_host" placeholder="e.g. smtp.mailgun.org" />
+                            <flux:error name="smtp_host" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Port</flux:label>
+                            <flux:select wire:model="smtp_port">
+                                <flux:select.option value="25">25</flux:select.option>
+                                <flux:select.option value="465">465 (SSL)</flux:select.option>
+                                <flux:select.option value="587">587 (TLS)</flux:select.option>
+                                <flux:select.option value="2525">2525</flux:select.option>
+                            </flux:select>
+                            <flux:error name="smtp_port" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Encryption</flux:label>
+                            <flux:select wire:model="smtp_encryption">
+                                <flux:select.option value="tls">TLS</flux:select.option>
+                                <flux:select.option value="ssl">SSL</flux:select.option>
+                                <flux:select.option value="none">None</flux:select.option>
+                            </flux:select>
+                            <flux:error name="smtp_encryption" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Username</flux:label>
+                            <flux:input wire:model="smtp_username" placeholder="SMTP username" />
+                            <flux:error name="smtp_username" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Password</flux:label>
+                            <flux:input wire:model="smtp_password" type="password" placeholder="SMTP password" />
+                            <flux:error name="smtp_password" />
+                        </flux:field>
+                    </div>
+
+                    <flux:separator />
+
+                    @include('partials.mail-sender-fields')
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <flux:button variant="ghost" x-on:click="$flux.modal('smtp-config').close()"
+                            class="cursor-pointer">Cancel</flux:button>
+                        <flux:button type="submit" variant="primary" class="cursor-pointer">Save Credentials
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </flux:modal>
+
+        {{-- Mailgun Config --}}
+        <flux:modal name="mailgun-config" class="md:w-120">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Mailgun Configuration</flux:heading>
+                    <flux:subheading>Enter your Mailgun API credentials</flux:subheading>
+                </div>
+
+                <form wire:submit="saveMailgun" class="space-y-4">
+                    <flux:field>
+                        <flux:label>Domain</flux:label>
+                        <flux:input wire:model="mailgun_domain" placeholder="e.g. mg.yourdomain.com" />
+                        <flux:error name="mailgun_domain" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Secret Key</flux:label>
+                        <flux:input wire:model="mailgun_secret" type="password" placeholder="key-..." />
+                        <flux:error name="mailgun_secret" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>API Endpoint</flux:label>
+                        <flux:select wire:model="mailgun_endpoint">
+                            <flux:select.option value="api.mailgun.net">api.mailgun.net (US)</flux:select.option>
+                            <flux:select.option value="api.eu.mailgun.net">api.eu.mailgun.net (EU)</flux:select.option>
+                        </flux:select>
+                        <flux:error name="mailgun_endpoint" />
+                    </flux:field>
+
+                    <flux:separator />
+
+                    @include('partials.mail-sender-fields')
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <flux:button variant="ghost" x-on:click="$flux.modal('mailgun-config').close()"
+                            class="cursor-pointer">Cancel</flux:button>
+                        <flux:button type="submit" variant="primary" class="cursor-pointer">Save Credentials
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </flux:modal>
+
+        {{-- SES Config --}}
+        <flux:modal name="ses-config" class="md:w-120">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Amazon SES Configuration</flux:heading>
+                    <flux:subheading>Enter your AWS IAM credentials</flux:subheading>
+                </div>
+
+                <form wire:submit="saveSes" class="space-y-4">
+                    <flux:field>
+                        <flux:label>Access Key ID</flux:label>
+                        <flux:input wire:model="ses_key" placeholder="AKIA..." />
+                        <flux:error name="ses_key" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Secret Access Key</flux:label>
+                        <flux:input wire:model="ses_secret" type="password" placeholder="Secret access key" />
+                        <flux:error name="ses_secret" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Region</flux:label>
+                        <flux:select wire:model="ses_region">
+                            <flux:select.option value="us-east-1">us-east-1 (N. Virginia)</flux:select.option>
+                            <flux:select.option value="us-west-2">us-west-2 (Oregon)</flux:select.option>
+                            <flux:select.option value="eu-west-1">eu-west-1 (Ireland)</flux:select.option>
+                            <flux:select.option value="eu-central-1">eu-central-1 (Frankfurt)</flux:select.option>
+                            <flux:select.option value="ap-southeast-1">ap-southeast-1 (Singapore)</flux:select.option>
+                            <flux:select.option value="af-south-1">af-south-1 (Cape Town)</flux:select.option>
+                        </flux:select>
+                        <flux:error name="ses_region" />
+                    </flux:field>
+
+                    <flux:separator />
+
+                    @include('partials.mail-sender-fields')
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <flux:button variant="ghost" x-on:click="$flux.modal('ses-config').close()"
+                            class="cursor-pointer">Cancel</flux:button>
+                        <flux:button type="submit" variant="primary" class="cursor-pointer">Save Credentials
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </flux:modal>
+
+        {{-- Postmark Config --}}
+        <flux:modal name="postmark-config" class="md:w-120">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Postmark Configuration</flux:heading>
+                    <flux:subheading>Enter your Postmark server token</flux:subheading>
+                </div>
+
+                <form wire:submit="savePostmark" class="space-y-4">
+                    <flux:field>
+                        <flux:label>Server Token</flux:label>
+                        <flux:input wire:model="postmark_token" type="password"
+                            placeholder="Server token from Postmark dashboard" />
+                        <flux:error name="postmark_token" />
+                    </flux:field>
+
+                    <flux:separator />
+
+                    @include('partials.mail-sender-fields')
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <flux:button variant="ghost" x-on:click="$flux.modal('postmark-config').close()"
+                            class="cursor-pointer">Cancel</flux:button>
+                        <flux:button type="submit" variant="primary" class="cursor-pointer">Save Credentials
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </flux:modal>
 
     </x-pages::admin.settings.layout>
 </div>

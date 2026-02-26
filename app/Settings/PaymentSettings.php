@@ -52,14 +52,23 @@ class PaymentSettings extends Settings
     public static function encrypted(): array
     {
         return [
+            // Pesawise
             'pesawise_api_secret',
             'pesawise_webhook_secret',
+
+            // Pesapal
             'pesapal_consumer_secret',
             'pesapal_webhook_secret',
+
+            // PayPal
             'paypal_client_secret',
             'paypal_webhook_id',
+
+            // Stripe
             'stripe_secret_key',
             'stripe_webhook_secret',
+
+            // M-Pesa
             'mpesa_consumer_secret',
             'mpesa_passkey',
         ];

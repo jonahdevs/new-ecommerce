@@ -6,9 +6,9 @@ return new class extends SettingsMigration {
     public function up(): void
     {
         // Identity
-        $this->migrator->add('general.company_name', '');
-        $this->migrator->add('general.email_address', '');
-        $this->migrator->add('general.phone_number', '');
+        $this->migrator->add('general.company_name', 'Sheffield Africa');
+        $this->migrator->add('general.email_address', 'info@sheffieldafrica.com');
+        $this->migrator->add('general.phone_number', '+254 713 777 111');
 
         // Images
         $this->migrator->add('general.logo_light', null);
@@ -17,9 +17,9 @@ return new class extends SettingsMigration {
         $this->migrator->add('general.favicon', null);
 
         // Address
-        $this->migrator->add('general.address', '');
-        $this->migrator->add('general.country', '');
-        $this->migrator->add('general.town', '');
+        $this->migrator->add('general.address', 'Off Old Mombasa Road before the Nairobi SGR Terminus');
+        $this->migrator->add('general.country', 'Kenya');
+        $this->migrator->add('general.town', 'Nairobi');
         $this->migrator->add('general.postal_code', '');
 
         // Localization

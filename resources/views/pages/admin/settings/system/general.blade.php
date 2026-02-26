@@ -68,7 +68,7 @@ new #[Title('General Settings')] class extends Component {
                                     <img src="{{ $form->logo_light->temporaryUrl() }}"
                                         class="size-20 object-contain rounded" alt="Light Logo Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                    <flux:icon.photo class="size-20 text-zinc-600! stroke-1!" />
                                 @endif
                             </div>
                             <div>
@@ -108,7 +108,7 @@ new #[Title('General Settings')] class extends Component {
                                     <img src="{{ $form->logo_dark->temporaryUrl() }}"
                                         class="size-20 object-contain rounded" alt="Dark Logo Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                    <flux:icon.photo class="size-20 text-zinc-600! stroke-1!" />
                                 @endif
                             </div>
                             <div>
@@ -147,7 +147,7 @@ new #[Title('General Settings')] class extends Component {
                                     <img src="{{ $form->logo_icon->temporaryUrl() }}"
                                         class="size-20 object-contain rounded" alt="Logo Icon Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                    <flux:icon.photo class="size-20 text-zinc-500! stroke-1!" />
                                 @endif
                             </div>
                             <div>
@@ -186,7 +186,7 @@ new #[Title('General Settings')] class extends Component {
                                     <img src="{{ $form->favicon->temporaryUrl() }}"
                                         class="size-20 object-contain rounded" alt="Favicon Preview" />
                                 @else
-                                    <flux:icon.photo class="size-20 text-inherit! stroke-1!" />
+                                    <flux:icon.photo class="size-20 text-zinc-500! stroke-1!" />
                                 @endif
                             </div>
                             <div>
