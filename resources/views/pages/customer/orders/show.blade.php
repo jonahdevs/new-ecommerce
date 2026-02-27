@@ -42,9 +42,9 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     @foreach ($order->items as $item)
                         <div class="border rounded-md p-4">
                             {{-- Status Badges & Date --}}
-                            <div>
-                                <flux:badge size="sm">
-                                    {{ ucfirst($order->status) }}
+                            <div class="mb-1">
+                                <flux:badge size="sm" :color="$order->status->color()">
+                                    {{ $order->status->label() }}
                                 </flux:badge>
                                 {{-- @if ($order->status === 'delivered')
                                     <span class="text-xs text-zinc-500">

@@ -35,11 +35,13 @@
                 </div>
 
                 <flux:navlist class="w-full text-xl [&_svg]:w-7 [&_svg]:h-7">
-                    <flux:navlist.item :href="route('customer.account')" icon="user" wire:navigate>
+                    <flux:navlist.item :href="route('customer.account')" icon="user" wire:navigate
+                        :current="request()->routeIs('customer.account')">
                         My Account
                     </flux:navlist.item>
 
-                    <flux:navlist.item :href="route('customer.orders.index')" icon="package" wire:navigate>
+                    <flux:navlist.item :href="route('customer.orders.index')" icon="package" wire:navigate
+                        :current="request()->routeIs('customer.orders.*')">
                         Orders
                     </flux:navlist.item>
 
@@ -53,7 +55,7 @@
 
                     <flux:navlist.item href="#" icon="eye">Recently Viewed</flux:navlist.item>
 
-                    <flux:navlist.item :href="route('wishlist')" icon="heart"
+                    <flux:navlist.item :href="route('wishlist')" wire:navigate icon="heart"
                         :badge="auth()->user()->wishlistItems()->count() ?: null">
                         Favorite
                         Items

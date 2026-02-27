@@ -2,27 +2,34 @@
 
 use App\Models\Order;
 use Livewire\Component;
-use Livewire\Attributes\Title;
+use Livewire\Attributes\{Title, Computed};
+use App\Enums\OrdersStatus;
+use Illuminate\Validation\Rule;
 
 new #[Title('Order Details')] class extends Component {
     public Order $order;
     public string $status = '';
     public string $note = '';
 
-    public array $orderStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded', 'failed'];
     public array $timelineStatuses = ['pending', 'processing', 'shipped', 'delivered'];
 
     public function mount(Order $order): void
     {
         $this->order = $order->load(['payment', 'user', 'statusHistories.changedBy', 'items' => ['product']]);
 
-        $this->status = $order->status;
+        $this->status = $order->status->value;
+    }
+
+    #[Computed(persist: true)]
+    public function orderStatuses()
+    {
+        return OrdersStatus::cases();
     }
 
     public function updateStatus(): void
     {
         $this->validate([
-            'status' => 'required|in:' . implode(',', $this->orderStatuses),
+            'status' => ['required', Rule::enum(OrdersStatus::class)],
             'note' => 'nullable|string|max:1000',
         ]);
 
@@ -32,7 +39,7 @@ new #[Title('Order Details')] class extends Component {
                 'to_status' => $this->status,
                 'notes' => $this->note ?: null,
                 'changed_by_user_id' => auth()->id(),
-                'changed_by_type' => 'admin',
+                'changed_by_type' => 'user',
             ]);
 
             $this->order->update(['status' => $this->status]);
@@ -70,44 +77,17 @@ new #[Title('Order Details')] class extends Component {
                     <div class="flex items-center gap-3 flex-wrap">
                         <flux:text class="font-medium">#{{ $order->reference ?? $order->id }}</flux:text>
 
-                        @php
-                            $statusIcon = match ($order->status) {
-                                'pending' => 'clock',
-                                'processing' => 'arrow-path',
-                                'shipped' => 'truck',
-                                'delivered' => 'package',
-                                'cancelled' => 'ban',
-                                'refunded' => 'arrow-uturn-left',
-                                'failed' => 'x-circle',
-                                default => 'clock',
-                            };
-                            $statusColor = match ($order->status) {
-                                'pending' => 'yellow',
-                                'processing' => 'blue',
-                                'shipped' => 'indigo',
-                                'delivered' => 'green',
-                                'cancelled' => 'red',
-                                'refunded' => 'teal',
-                                'failed' => 'red',
-                                default => 'zinc',
-                            };
-                            $paymentColor = match ($order->payment?->status) {
-                                'success' => 'green',
-                                'pending' => 'yellow',
-                                'failed' => 'red',
-                                default => 'zinc',
-                            };
-                        @endphp
-
                         <flux:tooltip content="Order Status">
-                            <flux:badge :color="$statusColor" :icon="$statusIcon" size="sm" class="capitalize">
-                                {{ $order->status }}
+                            <flux:badge :color="$order->status?->color()" :icon="$order->status?->icon()" size="sm"
+                                class="capitalize">
+                                {{ $order->status->label() }}
                             </flux:badge>
                         </flux:tooltip>
 
                         <flux:tooltip content="Payment Status">
-                            <flux:badge :color="$paymentColor" size="sm" variant="soft" class="capitalize">
-                                {{ $order->payment?->status ?? '—' }}
+                            <flux:badge :color="$order->payment?->status->color()" size="sm" variant="soft"
+                                class="capitalize">
+                                {{ $order->payment?->status->label() ?? '—' }}
                             </flux:badge>
                         </flux:tooltip>
                     </div>
@@ -144,16 +124,15 @@ new #[Title('Order Details')] class extends Component {
                                     <flux:table.cell class="ps-0!">
                                         <div class="flex items-center gap-3">
                                             <div
-                                                class="shrink-0 w-12 rounded border overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-                                                @if ($item->product?->image_url)
-                                                    <img :src="$item->product?->image_url" alt="{{ $item->name }}"
-                                                        class="aspect-square w-full object-cover" />
+                                                class="shrink-0 w-12 h-12 rounded border overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+                                                @if ($item->product?->image_path)
+                                                    <img src="{{ $item->product?->image_url }}"
+                                                        alt="{{ $item->name }}" class="w-full h-full object-cover" />
                                                 @else
                                                     <flux:icon name="photo" class="w-full h-full p-2 text-zinc-300" />
                                                 @endif
                                             </div>
                                             <div>
-                                                <flux:text>{{ $item->product?->image_url }}</flux:text>
                                                 <flux:text class="text-sm">{{ $item->product?->name }}</flux:text>
                                                 @if ($item->productVariant)
                                                     <flux:text class="text-xs text-zinc-400">
@@ -254,19 +233,19 @@ new #[Title('Order Details')] class extends Component {
                     <flux:heading>Order Summary</flux:heading>
                 </div>
                 <div class="px-5 divide-y divide-zinc-100 dark:divide-zinc-700 text-sm text-zinc-500">
-                    @foreach ([['icon' => 'receipt-text', 'label' => 'Subtotal', 'value' => $order->subtotal], ['icon' => 'tag', 'label' => 'Discount', 'value' => $order->discount], ['icon' => 'truck', 'label' => 'Shipping', 'value' => $order->shipping], ['icon' => 'receipt-percent', 'label' => 'Tax', 'value' => $order->tax_cents / 100]] as $row)
+                    @foreach ([['icon' => 'receipt-text', 'label' => 'Subtotal', 'value' => format_currency($order->subtotal)], ['icon' => 'tag', 'label' => 'Discount', 'value' => format_currency($order->discount)], ['icon' => 'truck', 'label' => 'Shipping', 'value' => format_currency($order->shipping)], ['icon' => 'receipt-percent', 'label' => 'Tax', 'value' => format_currency($order->tax_cents / 100)]] as $row)
                         <div class="flex items-center justify-between py-2">
                             <div class="flex items-center gap-2">
                                 <flux:icon name="{{ $row['icon'] }}" class="size-4" />
                                 <span>{{ $row['label'] }}:</span>
                             </div>
-                            <span>{{ number_format($row['value'], 2) }}</span>
+                            <flux:heading>{{ $row['value'] }}</flux:headi>
                         </div>
                     @endforeach
                 </div>
                 <div class="px-5 py-3 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700">
                     <flux:text class="font-medium">Total</flux:text>
-                    <flux:text class="font-semibold">{{ number_format($order->total, 2) }}</flux:text>
+                    <flux:text class="font-semibold">{{ format_currency($order->total) }}</flux:text>
                 </div>
             </flux:card>
 
@@ -276,11 +255,16 @@ new #[Title('Order Details')] class extends Component {
                     <flux:heading>Payment Information</flux:heading>
                 </div>
                 <div class="p-5 text-sm space-y-2 text-zinc-500">
-                    <p>Transaction ID: <span>{{ $order->payment?->transaction_id ?? '—' }}</span></p>
-                    <p>Method: <span>{{ $order->payment?->method ?? '—' }}</span></p>
-                    <p>Amount Paid: <span>{{ number_format($order->payment?->amount ?? 0, 2) }}</span></p>
-                    <p>Paid At: <span>{{ $order->payment?->paid_at?->format('M d, Y H:i') ?? '—' }}</span></p>
-                    <p>Status: <span class="capitalize">{{ $order->payment?->status ?? '—' }}</span></p>
+                    <p>Transaction ID: <span class="text-zinc-700">{{ $order->payment?->transaction_id ?? '—' }}</span>
+                    </p>
+                    <p>Method: <span class="text-zinc-700">{{ $order->payment?->method ?? '—' }}</span></p>
+                    <p>Amount Paid: <span
+                            class="text-zinc-700">{{ format_currency($order->payment?->amount ?? 0) }}</span></p>
+                    <p>Paid At: <span
+                            class="text-zinc-700">{{ $order->payment?->paid_at?->format('M d, Y H:i') ?? '—' }}</span>
+                    </p>
+                    <p>Status: <span class="text-zinc-700"
+                            class="capitalize">{{ $order->payment?->status ?? '—' }}</span></p>
                 </div>
             </flux:card>
 
@@ -317,11 +301,11 @@ new #[Title('Order Details')] class extends Component {
                     <div>
                         <flux:text class="font-medium">Shipping Address</flux:text>
                         @if ($order->shipping_address)
-                            <flux:text class="text-zinc-400 mt-1">{{ $order->shipping_address['address'] ?? '' }}
+                            <flux:text class="text-zinc-400 mt-1">
+                                {{ $order->shipping_address['address'] ?? '' }}
                             </flux:text>
-                            <flux:text class="text-zinc-400">{{ $order->shipping_address['town'] ?? '' }},
-                                {{ $order->shipping_address['country'] ?? '' }}</flux:text>
-                            <flux:text class="text-zinc-400">{{ $order->shipping_address['postal_code'] ?? '' }}
+                            <flux:text class="text-zinc-400">{{ $order->shipping_address['area'] ?? '' }}
+                                {{ $order->shipping_address['county'] ?? '' }}
                             </flux:text>
                         @else
                             <flux:text class="text-zinc-400 mt-1">—</flux:text>
@@ -342,14 +326,14 @@ new #[Title('Order Details')] class extends Component {
 
             <form wire:submit="updateStatus" class="space-y-4">
                 <flux:select wire:model="status" label="Status">
-                    @foreach ($orderStatuses as $s)
-                        <flux:select.option :value="$s" class="capitalize">{{ ucfirst($s) }}
+                    @foreach ($this->orderStatuses as $s)
+                        <flux:select.option :value="$s->value" class="capitalize">{{ $s->label() }}
                         </flux:select.option>
                     @endforeach
                 </flux:select>
 
-                <flux:textarea wire:model="note" label="Note (optional)" placeholder="Note about this status change..."
-                    rows="3" />
+                <flux:textarea wire:model="note" label="Note (optional)"
+                    placeholder="Note about this status change..." rows="3" />
 
                 <div class="flex justify-end gap-3 pt-2">
                     <flux:modal.close>

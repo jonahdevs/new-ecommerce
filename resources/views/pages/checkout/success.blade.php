@@ -64,28 +64,60 @@ new #[Layout('layouts.guest')] class extends Component {
             <flux:text class="text-xs!">You will receive an email confirmation shortly</flux:text>
         </div>
 
-        <flux:card class="mt-5">
-            <flux:heading>Order details</flux:heading>
+        <flux:card class="mt-5 p-0">
+            <div class="p-5">
+                <flux:heading>Order details</flux:heading>
 
-            <div class="space-y-3 mt-3">
-                <div class="flex items-center justify-between">
-                    <flux:text>Order number:</flux:text>
-                    <flux:heading>{{ $order->reference }}</flux:heading>
+                <div class="space-y-3 mt-3">
+                    <div class="flex items-center justify-between">
+                        <flux:text>Order number:</flux:text>
+                        <flux:heading>{{ $order->reference }}</flux:heading>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <flux:text>Date:</flux:text>
+                        <flux:heading>{{ $order->created_at->format('M j, Y') }}</flux:heading>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <flux:text>Payment method:</flux:text>
+                        <flux:heading>{{ ucfirst($order->payment->method ?? 'Card') }}</flux:heading>
+                    </div>
+
+
                 </div>
+            </div>
 
-                <div class="flex items-center justify-between">
-                    <flux:text>Date:</flux:text>
-                    <flux:heading>{{ $order->created_at->format('M j, Y') }}</flux:heading>
-                </div>
+            <flux:separator />
 
-                <div class="flex items-center justify-between">
-                    <flux:text>Payment method:</flux:text>
-                    <flux:heading>{{ ucfirst($order->payment->method ?? 'Card') }}</flux:heading>
+
+            <div class="py-6 px-5">
+                <flux:heading size="lg" class="mb-6">Products</flux:heading>
+
+                <div>
+                    @foreach ($order->items as $item)
+                        <div @class(['flex justify-between items-start py-5'])>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-2">
+                                    <flux:text class="font-medium">
+                                        {{ $item->quantity }} × {{ $item->product->name }}
+                                    </flux:text>
+                                    <flux:text class="font-medium">
+                                        {{ format_currency($item->unit_price * $item->quantity) }}
+                                    </flux:text>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!$loop->last)
+                            <div class="border-t border-dotted border-zinc-200"></div>
+                        @endif
+                    @endforeach
                 </div>
 
                 <flux:separator />
 
-                <div class="flex items-center">
+                <div class="flex items-center mt-5">
                     <div class="flex-1"></div>
                     <div class="w-full max-w-sm space-y-2">
                         <div class="flex items-center justify-between">
@@ -99,83 +131,57 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
             </div>
-        </flux:card>
 
-        <div class="py-6">
-            <flux:heading size="lg" class="mb-6">Products</flux:heading>
+            <flux:separator />
 
-            <div class="space-y-6">
-                @foreach ($order->items as $item)
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <div class="flex justify-between items-start mb-2">
-                                <flux:text class="font-medium">
-                                    {{ $item->quantity }} × {{ $item->product->name }}
-                                </flux:text>
-                                <flux:text class="font-medium">
-                                    {{ format_currency($item->unit_price * $item->quantity) }}
-                                </flux:text>
-                            </div>
-                        </div>
+            <div class="py-6 px-5">
+                <flux:heading size="lg" class="mb-6">Customer Details</flux:heading>
+
+                <div class="grid grid-cols-2">
+                    <div class="space-y-1">
+                        <flux:heading>Contact</flux:heading>
+                        <flux:text>
+                            <span class="text-zinc-800">Email:</span>
+                            {{ $order->user?->email ?? ($order->shipping_address['email'] ?? 'N/A') }}
+                        </flux:text>
+                        <flux:text>
+                            <span class="text-zinc-800">Phone:</span>
+                            {{ $order->user?->phone_number ?? ($order->shipping_address['phone_number'] ?? 'N/A') }}
+                        </flux:text>
                     </div>
 
-                    @if (!$loop->last)
-                        <div class="border-t border-dotted border-zinc-200"></div>
-                    @endif
-                @endforeach
-            </div>
-        </div>
+                    <div class="space-y-1">
+                        <flux:heading>Shipping Address</flux:heading>
 
-        <flux:separator />
+                        {{-- Full name --}}
+                        <flux:text>
+                            {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: 'N/A' }}
+                        </flux:text>
 
-        <div class="py-6">
-            <flux:heading size="lg" class="mb-6">Customer Details</flux:heading>
+                        {{-- Phone --}}
+                        <flux:text>
+                            {{ $order->shipping_address['phone_number'] ?? 'N/A' }}
+                        </flux:text>
 
-            <div class="grid grid-cols-2">
-                <div class="space-y-1">
-                    <flux:heading>Contact</flux:heading>
-                    <flux:text>
-                        <span class="text-zinc-800">Email:</span>
-                        {{ $order->user?->email ?? ($order->shipping_address['email'] ?? 'N/A') }}
-                    </flux:text>
-                    <flux:text>
-                        <span class="text-zinc-800">Phone:</span>
-                        {{ $order->user?->phone_number ?? ($order->shipping_address['phone_number'] ?? 'N/A') }}
-                    </flux:text>
-                </div>
+                        {{-- Street address --}}
+                        <flux:text>{{ $order->shipping_address['address'] ?? 'N/A' }}</flux:text>
 
-                <div class="space-y-1">
-                    <flux:heading>Shipping Address</flux:heading>
+                        {{-- Area & County (from your Pesawise payload structure) --}}
+                        @if (!empty($order->shipping_address['area']['name']))
+                            <flux:text>{{ $order->shipping_address['area']['name'] }}</flux:text>
+                        @endif
 
-                    {{-- Full name --}}
-                    <flux:text>
-                        {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: 'N/A' }}
-                    </flux:text>
+                        @if (!empty($order->shipping_address['county']['name']))
+                            <flux:text>{{ $order->shipping_address['county']['name'] }}</flux:text>
+                        @endif
 
-                    {{-- Phone --}}
-                    <flux:text>
-                        {{ $order->shipping_address['phone_number'] ?? 'N/A' }}
-                    </flux:text>
-
-                    {{-- Street address --}}
-                    <flux:text>{{ $order->shipping_address['address'] ?? 'N/A' }}</flux:text>
-
-                    {{-- Area & County (from your Pesawise payload structure) --}}
-                    @if (!empty($order->shipping_address['area']['name']))
-                        <flux:text>{{ $order->shipping_address['area']['name'] }}</flux:text>
-                    @endif
-
-                    @if (!empty($order->shipping_address['county']['name']))
-                        <flux:text>{{ $order->shipping_address['county']['name'] }}</flux:text>
-                    @endif
-
-                    {{-- Country --}}
-                    <flux:text>Kenya</flux:text>
+                        {{-- Country --}}
+                        <flux:text>Kenya</flux:text>
+                    </div>
                 </div>
             </div>
-        </div>
+        </flux:card>
 
-        <flux:separator />
 
         <div class="mt-8 flex flex-col items-center space-y-4">
             <div class="text-center">

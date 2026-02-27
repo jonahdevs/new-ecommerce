@@ -86,7 +86,7 @@ new #[Title('Products')] class extends Component {
         {{-- Filters --}}
         <div class="flex items-center gap-4 px-5 py-3 border-b">
             <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search by name or SKU..."
-                class="flex-1" class="max-w-md" clearable />
+                class="max-w-md" clearable />
 
             {{-- You can add Category filters here later --}}
             <div class="flex items-center gap-3 ms-auto">

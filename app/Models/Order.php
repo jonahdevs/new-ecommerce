@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrdersStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,6 +48,7 @@ class Order extends Model
             'estimated_delivery_from' => 'date',
             'estimated_delivery_to' => 'date',
             'actual_delivery_date' => 'date',
+            'status' => OrdersStatus::class
         ];
     }
 

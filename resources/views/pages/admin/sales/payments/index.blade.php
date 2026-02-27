@@ -137,7 +137,7 @@ new #[Title('Payments')] class extends Component {
 
 
     {{-- Payments Table --}}
-    <flux:card class="p-0">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
 
         {{-- Filters --}}
         <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b">

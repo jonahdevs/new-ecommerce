@@ -48,12 +48,12 @@ new #[Layout('layouts.customer')] class extends Component {
                 <div class="min-h-[50svh] flex flex-col items-center gap-2 justify-center">
                     <flux:icon.shopping-bag class="size-12 text-zinc-400" />
                     <flux:heading>No orders yet</flux:heading>
-                    <flux:text> When you place your order, it will appear here. Start shopping to discover amazing
-                        products!
+                    <flux:text>
+                        When you place your order, it will appear here. Start shopping to discover amazing products!
                     </flux:text>
 
-                    <flux:button :href="route('products')" variant="primary" icon="shopping-bag" wire:navigate>Start
-                        Shopping
+                    <flux:button :href="route('products')" variant="primary" icon="shopping-bag" wire:navigate>
+                        Start Shopping
                     </flux:button>
                 </div>
             @else
@@ -85,11 +85,13 @@ new #[Layout('layouts.customer')] class extends Component {
                                         {{-- Order Info --}}
                                         <div class="flex items-center gap-4 mt-1 text-xs text-zinc-600">
                                             <flux:text class="text-sm!">Order n° {{ $order->reference }}</flux:text>
-                                            <flux:badge size="sm">{{ ucfirst($order->status) }}</flux:badge>
+                                            <flux:badge size="sm" :color="$order->status->color()">
+                                                {{ $order->status->label() }}</flux:badge>
                                         </div>
                                     </div>
 
-                                    <flux:link :href="route('customer.orders.show', $order)" class="text-sm!">See
+                                    <flux:link :href="route('customer.orders.show', $order)" wire:navigate
+                                        class="text-sm!">See
                                         details</flux:link>
                                 </div>
                             @empty
@@ -137,11 +139,13 @@ new #[Layout('layouts.customer')] class extends Component {
                                         {{-- Order Info --}}
                                         <div class="flex items-center gap-4 mt-1 text-xs text-zinc-600">
                                             <flux:text>Order {{ $order->reference }}</flux:text>
-                                            <flux:badge size="sm">{{ ucfirst($order->status) }}</flux:badge>
+                                            <flux:badge size="sm" :color="$order->status->color()">
+                                                {{ $order->status->label() }}</flux:badge>
                                         </div>
                                     </div>
 
-                                    <flux:link :href="route('customer.orders.show', $order)" class="text-sm!">See
+                                    <flux:link :href="route('customer.orders.show', $order)" wire:navigate
+                                        class="text-sm!">See
                                         details</flux:link>
                                 </div>
                             @empty

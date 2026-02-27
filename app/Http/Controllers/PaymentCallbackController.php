@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Services\CartService;
 use Illuminate\Http\Request;
@@ -183,7 +184,7 @@ class PaymentCallbackController extends Controller
             ]);
 
             $order->payment->update([
-                'status' => 'completed',
+                'status' => PaymentStatus::SUCCESS,
                 'paid_at' => now(),
                 'meta' => [
                     ...($order->payment->meta ?? []),
