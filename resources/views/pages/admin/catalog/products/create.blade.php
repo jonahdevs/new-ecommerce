@@ -173,8 +173,8 @@ new #[Title('Create Product')] class extends Component {
             @include('pages.admin.catalog.products.partials._basic-information')
 
             {{-- Product Data --}}
-            <flux:card class="p-0">
-                <div class="border-b px-3 py-2">
+            <flux:card class="p-0" x-data="{ expanded: true }">
+                <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
                     <div class="flex items-center gap-3">
                         <flux:heading>Product Data</flux:heading>
 
@@ -183,9 +183,13 @@ new #[Title('Create Product')] class extends Component {
                             <flux:select.option value="variable">Variable Product</flux:select.option>
                         </flux:select>
                     </div>
+
+                    <flux:button icon="chevron-down" size="xs" variant="ghost"
+                        class="cursor-pointer transition-transform duration-300"
+                        x-bind:class="{ 'rotate-180': expanded }" @click="expanded = !expanded" />
                 </div>
 
-                <div class="grid grid-cols-4">
+                <div x-show="expanded" x-cloak x-collapse class="grid grid-cols-4">
                     <div class="col-span-1 bg-zinc-100 border-r flex flex-col divide-y overflow-hidden rounded-bl-xl">
                         <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                             x-bind:class="{ 'bg-zinc-200!': $wire.activeTab === 'general' }" icon="truck"

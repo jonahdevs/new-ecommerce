@@ -1,8 +1,13 @@
-<flux:card class="p-0">
-    <div class="border-b px-3 py-2">
+<flux:card class="p-0" x-data="{ expanded: true }">
+    <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
         <flux:heading>Status & Visibility</flux:heading>
+
+        <flux:button icon="chevron-down" size="xs" variant="ghost"
+            class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
+            @click="expanded = !expanded" />
     </div>
-    <div class="p-5 space-y-5">
+
+    <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5">
         {{-- Publication Status --}}
 
         <flux:select wire:model="form.status" label="Publication Status">
@@ -38,12 +43,16 @@
 </flux:card>
 
 {{-- BRAND CARD --}}
-<flux:card class="p-0">
-    <div class="border-b px-3 py-2">
+<flux:card class="p-0" x-data="{ expanded: true }">
+    <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
         <flux:heading>Product Brand</flux:heading>
+
+        <flux:button icon="chevron-down" size="xs" variant="ghost"
+            class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
+            @click="expanded = !expanded" />
     </div>
 
-    <div class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewBrand }">
+    <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewBrand }">
         {{-- Brand Select --}}
         <flux:select wire:model.live="form.brand_id" label="Brand" placeholder="-- Select Brand --">
             <flux:select.option>No Brand</flux:select.option>
@@ -78,12 +87,16 @@
     </div>
 </flux:card>
 
-<flux:card class="p-0">
-    <div class="border-b px-3 py-2">
+<flux:card class="p-0" x-data="{ expanded: true }">
+    <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
         <flux:heading>Product Image</flux:heading>
+
+        <flux:button icon="chevron-down" size="xs" variant="ghost"
+            class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
+            @click="expanded = !expanded" />
     </div>
 
-    <div class="p-5">
+    <div class="p-5" x-show="expanded" x-cloak x-collapse>
         <input type="file" class="hidden" id="product-image-input" wire:model="form.image" />
 
         @if ($form->image)
@@ -131,12 +144,16 @@
     </div>
 </flux:card>
 
-<flux:card class="p-0">
-    <div class="border-b px-3 py-2">
+<flux:card class="p-0" x-data="{ expanded: true }">
+    <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
         <flux:heading>Product Gallery</flux:heading>
+
+        <flux:button icon="chevron-down" size="xs" variant="ghost"
+            class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
+            @click="expanded = !expanded" />
     </div>
 
-    <div class="p-5">
+    <div x-show="expanded" x-cloak x-collapse class="p-5">
         <input type="file" class="hidden" id="product-gallery-input" wire:model="form.images" multiple />
 
         @if (!empty($form->images) || !empty($form->existingImages))
@@ -146,7 +163,8 @@
                     <div class="relative group">
                         <div
                             class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200">
-                            <img src="{{ $existingImage->url }}" alt="Gallery image" class="w-full h-full object-cover">
+                            <img src="{{ $existingImage->url }}" alt="Gallery image"
+                                class="w-full h-full object-cover">
 
                             {{-- Delete button overlay --}}
                             <div
@@ -209,11 +227,15 @@
     </div>
 </flux:card>
 
-<flux:card class="p-0">
-    <div class="border-b px-3 py-2">
+<flux:card class="p-0" x-data="{ expanded: true }">
+    <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
         <flux:heading>Product Categories</flux:heading>
+
+        <flux:button icon="chevron-down" size="xs" variant="ghost"
+            class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
+            @click="expanded = !expanded" />
     </div>
-    <div class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewCategory }">
+    <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewCategory }">
         <div class="p-2 max-h-96 overflow-y-auto border-2"
             wire:key="categories-{{ md5(json_encode($form->category_ids)) }}">
             <div class="space-y-2 ">
@@ -250,12 +272,16 @@
     </div>
 </flux:card>
 
-<flux:card class="p-0">
-    <div class="border-b px-3 py-2">
+<flux:card class="p-0" x-data="{ expanded: true }">
+    <div class="border-b px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
         <flux:heading>Product Tag</flux:heading>
+
+        <flux:button icon="chevron-down" size="xs" variant="ghost"
+            class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
+            @click="expanded = !expanded" />
     </div>
 
-    <div class="p-5 space-y-5">
+    <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5">
         <flux:input.group>
             <flux:input wire:model="form.newTagInput" />
             <flux:button type="button" wire:click="addTags" class="cursor-pointer">Add</flux:button>
