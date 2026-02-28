@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\PhoneNormalizationService;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,16 +18,15 @@ class Address extends Model
         'address',
         'additional_information',
         'shipping_zone_id',
-        'is_default'
+        'is_default',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
     ];
 
-    // ===============================================
-    // RELATIONSHIPS
-    // ===============================================
+    // ── Relationships ─────────────────────────────────────────────────────────
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -50,97 +47,34 @@ class Address extends Model
         return $this->belongsTo(ShippingZone::class);
     }
 
-    public function selectedShippingMethod(): BelongsTo
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    public function getFullNameAttribute(): string
     {
-        return $this->belongsTo(ShippingMethod::class, 'selected_shipping_method_id');
+        return "{$this->first_name} {$this->last_name}";
     }
 
-    public function selectedShippingRate(): BelongsTo
+    public function getDisplayAddressAttribute(): string
     {
-        return $this->belongsTo(ShippingRate::class, 'selected_shipping_rate_id');
-    }
+        $parts = array_filter([
+            $this->address,
+            $this->area?->name,
+            $this->county->name,
+        ]);
 
-    // ===============================================
-    // ACCESSORS
-    // ===============================================
-
-    /**
-     * Get the full name
-     */
-    protected function fullName(): Attribute
-    {
-        return Attribute::make(
-            get: fn() => "{$this->first_name} {$this->last_name}",
-        );
+        return implode(', ', $parts);
     }
 
     /**
-     * Get the full address string
+     * Resolve and store the shipping zone at save time.
+     * Call this before saving when county_id or area_id changes.
      */
-    protected function fullAddress(): Attribute
+    public function resolveShippingZone(): void
     {
-        return Attribute::make(
-            get: function () {
-                $parts = [
-                    $this->address,
-                    $this->area?->name,
-                    $this->county?->name,
-                ];
+        $area = $this->area_id ? Area::with('county.shippingZone', 'shippingZone')->find($this->area_id) : null;
 
-                return implode(', ', array_filter($parts));
-            }
-        );
-    }
-
-    protected function phoneNumber(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value) => $value,
-            set: fn($value) => app(PhoneNormalizationService::class)->normalize($value),
-        );
-    }
-
-    protected function alternativePhoneNumber(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value) => $value,
-            set: fn($value) => app(PhoneNormalizationService::class)->normalize($value),
-        );
-    }
-
-    // ===============================================
-    // HELPER METHODS
-    // ===============================================
-
-    /**
-     * Check if shipping method is selected
-     */
-    public function hasSelectedShippingMethod(): bool
-    {
-        return !is_null($this->selected_shipping_method_id);
-    }
-
-    /**
-     * Get available shipping methods for this address's zone
-     */
-    public function availableShippingMethods()
-    {
-        if (!$this->shippingZone) {
-            return collect();
-        }
-
-        return $this->shippingZone->availableShippingMethods();
-    }
-
-    /**
-     * Get shipping rate for a specific method and weight
-     */
-    public function getShippingRateForMethod($methodId, $weight)
-    {
-        if (!$this->shippingZone) {
-            return null;
-        }
-
-        return $this->shippingZone->getRateForMethod($methodId, $weight);
+        $this->shipping_zone_id = $area
+            ? ($area->shipping_zone_id ?? $area->county->shipping_zone_id)
+            : County::find($this->county_id)?->shipping_zone_id;
     }
 }

@@ -37,7 +37,7 @@ new #[Title('Vehicle Rates')] class extends Component {
         }
 
         return VehicleRate::where('shipping_method_id', $this->selectedMethodId)
-            ->when(!$this->showHistory, fn($q) => $q->where('status', VehicleRateStatus::Active->value))
+            ->when(!$this->showHistory, fn($q) => $q->where('status', VehicleRateStatus::ACTIVE->value))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->orderByRaw("FIELD(vehicle_type, 'motorbike','van','truck_3t','truck_5t','truck_7t','truck_10t')")
             ->get();
@@ -106,7 +106,7 @@ new #[Title('Vehicle Rates')] class extends Component {
         }
 
         try {
-            VehicleRate::findOrFail($this->deletingId)->update(['status' => VehicleRateStatus::Deprecated->value]);
+            VehicleRate::findOrFail($this->deletingId)->update(['status' => VehicleRateStatus::DEPRECATED->value]);
 
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
@@ -191,7 +191,7 @@ new #[Title('Vehicle Rates')] class extends Component {
                 <flux:table.rows>
                     @forelse ($this->rates as $rate)
                         <flux:table.row :key="$rate->id"
-                            class="{{ $rate->status === VehicleRateStatus::Deprecated->value || ($rate->status instanceof \App\Enums\VehicleRateStatus && $rate->status === \App\Enums\VehicleRateStatus::Deprecated) ? 'opacity-50' : '' }}">
+                            class="{{ $rate->status === VehicleRateStatus::DEPRECATED->value || ($rate->status instanceof \App\Enums\VehicleRateStatus && $rate->status === \App\Enums\VehicleRateStatus::DEPRECATED) }}">
 
                             <flux:table.cell class="ps-4!">
                                 <div class="font-semibold">{{ $rate->vehicle_label }}</div>

@@ -143,7 +143,7 @@ class User extends Authenticatable
     }
 
     // ===============================================
-    // Scope
+    // SCOPE
     // ===============================================
     #[Scope]
     protected function staff(Builder $query)
@@ -155,5 +155,14 @@ class User extends Authenticatable
     protected function customer(Builder $query)
     {
         $query->where('is_staff', false);
+    }
+
+    // ===============================================
+    // HELPER METHODS
+    // ===============================================
+
+    public function getDefaultAddress(): ?Address
+    {
+        return $this->addresses()->where('is_default', true)->first();
     }
 }

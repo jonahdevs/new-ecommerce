@@ -74,7 +74,8 @@
             <flux:sidebar.group heading="Logistics" class="grid">
 
                 {{-- Dashboard --}}
-                <flux:sidebar.item icon="chart-bar-square" wire:navigate href="#">
+                <flux:sidebar.item icon="chart-bar-square" wire:navigate :href="route('admin.logistics.overview')"
+                    :current="request()->routeIs('admin.logistics.overview')">
                     Overview
                 </flux:sidebar.item>
 
@@ -99,7 +100,9 @@
                             :current="request()->routeIs('admin.logistics.configurations.locations.counties')">
                             Counties
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="map-pin" wire:navigate href="#">
+                        <flux:sidebar.item icon="map-pin" wire:navigate
+                            :href="route('admin.logistics.configurations.locations.areas')"
+                            :current="request()->routeIs('admin.logistics.configurations.locations.areas')">
                             Areas
                         </flux:sidebar.item>
                     </flux:sidebar.group>

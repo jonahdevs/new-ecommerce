@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
+use App\Enums\ShippingZoneStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -13,13 +12,12 @@ class ShippingZone extends Model
         'name',
         'code',
         'description',
-        'is_active'
+        'status',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'status' => ShippingZoneStatus::class,
     ];
-
 
     // ===============================================
     // RELATIONSHIPS
@@ -30,6 +28,10 @@ class ShippingZone extends Model
         return $this->hasMany(County::class);
     }
 
+    /**
+     * Areas that have explicitly overridden to this zone.
+     * Does not include areas inheriting via their county.
+     */
     public function areas(): HasMany
     {
         return $this->hasMany(Area::class);
@@ -40,34 +42,31 @@ class ShippingZone extends Model
         return $this->hasMany(ShippingRate::class);
     }
 
-    // ===============================================
-    // SCOPES
-    // ===============================================
-    #[Scope]
-    protected function active(Builder $query)
+    public function freeShippingRules(): HasMany
     {
-        $query->where('is_active', true);
+        return $this->hasMany(FreeShippingRule::class);
     }
 
-
-    // Helper method
-    public function availableShippingMethods()
+    public function deliveryOrders(): HasMany
     {
-        return ShippingMethod::whereHas('shippingRates', function ($query) {
-            $query->where('shipping_zone_id', $this->id)
-                ->where('is_active', true);
-        })->where('is_active', true)
-            ->get();
+        return $this->hasMany(DeliveryOrder::class);
     }
 
-    // Get rates for a specific method and weight
-    public function getRateForMethod($methodId, $weight)
+    // ===============================================
+    // Scope
+    // ===============================================
+
+    public function scopeActive($query)
     {
-        return $this->shippingRates()
-            ->where('shipping_method_id', $methodId)
-            ->where('is_active', true)
-            ->where('min_weight', '<=', $weight)
-            ->where('max_weight', '>=', $weight)
-            ->first();
+        return $query->where('status', ShippingZoneStatus::ACTIVE->value);
+    }
+
+    // ===============================================
+    // HELPERS
+    // ===============================================
+
+    public function isActive(): bool
+    {
+        return $this->status === ShippingZoneStatus::ACTIVE;
     }
 }

@@ -22,7 +22,8 @@ class DatabaseSeeder extends Seeder
             TagSeeder::class,
             ProductSeeder::class,
             ReviewSeeder::class,
-            ShippingSeeder::class
+            ShippingSeeder::class,
+            DeliveryOrderSeeder::class,
         ]);
     }
 }

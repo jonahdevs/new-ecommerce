@@ -63,12 +63,12 @@ new #[Title('Flat Rates')] class extends Component {
 
         // Fetch all rates (active + expired) for the selected method
         $allRates = ShippingRate::where('shipping_method_id', $this->selectedMethodId)
-            ->whereIn('status', [ShippingRateStatus::Active->value, ShippingRateStatus::Expired->value])
+            ->whereIn('status', [ShippingRateStatus::ACTIVE->value, ShippingRateStatus::EXPIRED->value])
             ->orderByDesc('created_at')
             ->get();
 
-        $activeRates = $allRates->where('status', ShippingRateStatus::Active->value);
-        $expiredRates = $allRates->where('status', ShippingRateStatus::Expired->value);
+        $activeRates = $allRates->where('status', ShippingRateStatus::ACTIVE->value);
+        $expiredRates = $allRates->where('status', ShippingRateStatus::EXPIRED->value);
 
         // Derive unique weight tiers from active rates, sorted by min_weight
         $tiers = $activeRates->unique(fn($r) => $r->min_weight . '-' . ($r->max_weight ?? 'max'))->sortBy('min_weight')->values();
@@ -167,7 +167,7 @@ new #[Title('Flat Rates')] class extends Component {
     public function expireRate(int $rateId): void
     {
         try {
-            ShippingRate::findOrFail($rateId)->update(['status' => ShippingRateStatus::Expired->value]);
+            ShippingRate::findOrFail($rateId)->update(['status' => ShippingRateStatus::EXPIRED->value]);
             $this->dispatch('notify', variant: 'warning', message: 'Rate expired.');
             unset($this->matrix);
         } catch (\Throwable $e) {

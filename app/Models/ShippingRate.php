@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\ShippingRateStatus;
 use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ShippingRate extends Model
 {
@@ -14,65 +15,102 @@ class ShippingRate extends Model
         'shipping_method_id',
         'min_weight',
         'max_weight',
+        'weight_label',
         'price',
         'estimated_days_min',
         'estimated_days_max',
-        'is_active'
+        'status',
     ];
 
     protected $casts = [
         'min_weight' => 'decimal:2',
         'max_weight' => 'decimal:2',
         'price' => 'decimal:2',
-        'is_active' => 'boolean',
+        'estimated_days_min' => 'integer',
+        'estimated_days_max' => 'integer',
+        'status' => ShippingRateStatus::class,
     ];
 
     // ===============================================
     // RELATIONSHIPS
     // ===============================================
 
-    public function zone(): BelongsTo
+    public function shippingZone(): BelongsTo
     {
-        return $this->belongsTo(ShippingZone::class, 'shipping_zone_id');
+        return $this->belongsTo(ShippingZone::class);
     }
 
-    public function method(): BelongsTo
+    public function shippingMethod(): BelongsTo
     {
-        return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
+    public function addons(): HasMany
+    {
+        return $this->hasMany(ShippingRateAddon::class);
+    }
+
+    public function deliveryOrders(): HasMany
+    {
+        return $this->hasMany(DeliveryOrder::class);
     }
 
     // ===============================================
-    // SCOPES
+    // Scope
     // ===============================================
+    #[Scope()]
+
+    protected function active($query)
+    {
+        $query->where('status', ShippingRateStatus::ACTIVE->value);
+    }
+
     #[Scope]
-    protected function active(Builder $query)
+    protected function expired($query)
     {
-        $query->where('is_active', true);
-    }
-    #[Scope]
-    protected function forWeight(Builder $query, $weight)
-    {
-        $query->where('min_weight', '<=', $weight)
-            ->where('max_weight', '>=', $weight);
+        $query->where('status', ShippingRateStatus::EXPIRED->value);
     }
 
     // ===============================================
-    // HELPER METHODS
+    // HELPERS
     // ===============================================
 
     /**
-     * Get formatted estimated delivery time
+     * Check if a given weight falls within this rate's bracket.
      */
-    public function getEstimatedDeliveryAttribute(): ?string
+    public function coversWeight(float $weightKg): bool
     {
-        if (!$this->estimated_days_min && !$this->estimated_days_max) {
-            return null;
+        if ($weightKg < $this->min_weight) {
+            return false;
         }
 
-        if ($this->estimated_days_min === $this->estimated_days_max) {
-            return "{$this->estimated_days_min} days";
+        if ($this->max_weight === null) {
+            return true; // XL tier — no upper limit
         }
 
-        return "{$this->estimated_days_min}-{$this->estimated_days_max} days";
+        return $weightKg <= $this->max_weight;
+    }
+
+    /**
+     * Active PUS addons for this rate.
+     * Optionally scope to a specific station (or return all-station addons).
+     */
+    public function activeAddons(?int $stationId = null): HasMany
+    {
+        return $this->addons()
+            ->where('status', \App\Enums\ShippingRateAddonStatus::ACTIVE->value)
+            ->where(
+                fn($q) => $q->whereNull('pickup_station_id')
+                    ->orWhere('pickup_station_id', $stationId)
+            );
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === ShippingRateStatus::ACTIVE;
+    }
+    public function isExpired(): bool
+    {
+        return $this->status === ShippingRateStatus::EXPIRED;
     }
 }

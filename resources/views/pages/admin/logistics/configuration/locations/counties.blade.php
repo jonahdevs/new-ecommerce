@@ -128,8 +128,6 @@ new #[Title('Counties')] class extends Component {
         </flux:button>
     </div>
 
-
-
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
         {{-- Filters --}}
         <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b">

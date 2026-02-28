@@ -98,6 +98,8 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin')
 
     // Logistics
     Route::prefix('logistics')->name('.logistics')->group(function () {
+        Route::livewire('overview', 'pages::admin.logistics.dashboard')->name('.overview');
+
         Route::prefix('configuration')->name('.configurations')->group(function () {
             Route::livewire('providers', 'pages::admin.logistics.configuration.providers')->name('.providers');
             Route::livewire('zones', 'pages::admin.logistics.configuration.zones')->name('.zones');
@@ -105,8 +107,8 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin')
 
             Route::prefix('locations')->name('.locations')->group(function () {
                 Route::livewire('counties', 'pages::admin.logistics.configuration.locations.counties')->name('.counties');
+                Route::livewire('areas', 'pages::admin.logistics.configuration.locations.areas')->name('.areas');
             });
-
 
             // rates
             Route::prefix('rates')->name('.rates')->group(function () {

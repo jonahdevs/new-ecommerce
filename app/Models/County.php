@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +12,6 @@ class County extends Model
         'name',
         'code',
         'shipping_zone_id',
-        'sort_order'
     ];
 
     // ===============================================
@@ -31,19 +28,13 @@ class County extends Model
         return $this->hasMany(Area::class);
     }
 
-    
-    // ===============================================
-    // SCOPES
-    // ===============================================
-
-    /**
-     * Scope to get only counties that have shipping rates active
-     */
-    #[Scope]
-    protected function withShippingRates(Builder $query)
+    public function pickupStations(): HasMany
     {
-        $query->whereHas('shippingZone.shippingRates', function ($query) {
-            $query->where('is_active', true);
-        });
+        return $this->hasMany(PickupStation::class);
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
     }
 }
