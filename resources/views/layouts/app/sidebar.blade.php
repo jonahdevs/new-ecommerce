@@ -70,47 +70,101 @@
 
             <flux:sidebar.spacer class="my-2" />
 
-            {{-- Inventory Management --}}
+            {{-- Logistics Management --}}
             <flux:sidebar.group heading="Logistics" class="grid">
 
-                {{-- Geographic Setup --}}
-                <flux:sidebar.item icon="map" wire:navigate :href="route('admin.zones')"
-                    :current="request()->routeIs('admin.zones*')">
-                    Shipping Zones
+                {{-- Dashboard --}}
+                <flux:sidebar.item icon="chart-bar-square" wire:navigate href="#">
+                    Overview
                 </flux:sidebar.item>
 
-                <flux:sidebar.group heading="Counties & Areas" expandable expanded="false" class="grid">
-                    <flux:sidebar.item icon="building-office-2" wire:navigate :href="route('admin.counties')"
-                        :current="request()->routeIs('admin.counties*')">
-                        Counties
+                {{--  Configuration  --}}
+                <flux:sidebar.group heading="Configuration" expandable expanded="false" class="grid">
+
+                    <flux:sidebar.item icon="building-office" wire:navigate
+                        :href="route('admin.logistics.configurations.providers')"
+                        :current="request()->routeIs('admin.logistics.configurations.providers')">
+                        Providers
                     </flux:sidebar.item>
 
-                    <flux:sidebar.item icon="map-pin" wire:navigate :href="route('admin.areas')"
-                        :current="request()->routeIs('admin.areas*')">
-                        Areas
+                    <flux:sidebar.item icon="map" wire:navigate
+                        :href="route('admin.logistics.configurations.zones')"
+                        :current="request()->routeIs('admin.logistics.configurations.zones')">
+                        Zones
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.group heading="Locations" expandable expanded="false" class="grid">
+                        <flux:sidebar.item icon="building-office-2" wire:navigate
+                            :href="route('admin.logistics.configurations.locations.counties')"
+                            :current="request()->routeIs('admin.logistics.configurations.locations.counties')">
+                            Counties
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="map-pin" wire:navigate href="#">
+                            Areas
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+
+                    <flux:sidebar.item icon="truck" wire:navigate
+                        :href="route('admin.logistics.configurations.methods')"
+                        :current="request()->routeIs('admin.logistics.configurations.methods')">
+                        Methods
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.group heading="Rates" expandable expanded="false" class="grid">
+                        <flux:sidebar.item icon="table-cells" wire:navigate
+                            :href="route('admin.logistics.configurations.rates.flat')"
+                            :current="request()->routeIs('admin.logistics.configurations.rates.flat')">
+                            Flat Rates
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item icon="calculator" wire:navigate
+                            :href="route('admin.logistics.configurations.rates.vehicle')"
+                            :current="request()->routeIs('admin.logistics.configurations.rates.vehicle')">
+                            Vehicle Rates
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item icon="plus-circle" wire:navigate
+                            :href="route('admin.logistics.configurations.rates.addons')"
+                            :current="request()->routeIs('admin.logistics.configurations.rates.addons')">
+                            Rate Addons
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+
+                    <flux:sidebar.item icon="building-storefront" wire:navigate
+                        :href="route('admin.logistics.configurations.pickup-stations')"
+                        :current="request()->routeIs('admin.logistics.configurations.pickup-stations')">
+                        Pickup Stations
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="gift" wire:navigate
+                        :href="route('admin.logistics.configurations.free-shipping-rules')"
+                        :current="request()->routeIs('admin.logistics.configurations.free-shipping-rules')">
+                        Free Shipping Rules
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                {{-- Shipping Configuration --}}
-                <flux:sidebar.item icon="truck" wire:navigate :href="route('admin.shipping-methods')"
-                    :current="request()->routeIs('admin.shipping-methods*')">
-                    Shipping Methods
-                </flux:sidebar.item>
+                {{--  Operations  --}}
+                <flux:sidebar.group heading="Operations" expandable expanded="false" class="grid">
 
-                <flux:sidebar.item icon="building-storefront" wire:navigate :href="route('admin.pickup-stations')"
-                    :current="request()->routeIs('admin.pickup-stations')">
-                    Pickup Stations
-                </flux:sidebar.item>
+                    <flux:sidebar.item icon="clipboard-document-list" wire:navigate
+                        :href="route('admin.logistics.operations.delivery-orders')"
+                        :current="request()->routeIs('admin.logistics.operations.delivery-orders')">
+                        Delivery Orders
+                    </flux:sidebar.item>
 
-                <flux:sidebar.item icon="currency-dollar" wire:navigate :href="route('admin.shipping-rates')"
-                    :current="request()->routeIs('admin.shipping-rates*')">
-                    Shipping Rates
-                </flux:sidebar.item>
+                    <flux:sidebar.item icon="arrow-uturn-left" wire:navigate
+                        :href="route('admin.logistics.operations.returns')"
+                        :current="request()->routeIs('admin.logistics.operations.returns')">
+                        Returns
+                    </flux:sidebar.item>
 
-                {{-- <flux:sidebar.item icon="gift" wire:navigate :href="route('admin.free-shipping')"
-                :current="request()->routeIs('admin.free-shipping')">
-                Free Shipping Rules
-            </flux:sidebar.item> --}}
+                    <flux:sidebar.item icon="building-storefront" wire:navigate
+                        :href="route('admin.logistics.operations.pus-tracker')"
+                        :current="request()->routeIs('admin.logistics.operations.pus-tracker')">
+                        PUS Tracker
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
             </flux:sidebar.group>
 
             <flux:sidebar.spacer class="my-2" />
@@ -211,8 +265,8 @@
 
                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
-                    <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle" class="w-full"
-                        data-test="logout-button">
+                    <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle"
+                        class="w-full" data-test="logout-button">
                         {{ __('Log Out') }}
                     </flux:menu.item>
                 </form>

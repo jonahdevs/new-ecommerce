@@ -2,58 +2,75 @@
 
 namespace App\Livewire\Forms\Admin;
 
+use App\Enums\ShippingZoneStatus;
 use App\Models\ShippingZone;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class ShippingZoneForm extends Form
 {
     public ?ShippingZone $zone = null;
+
     public string $name = '';
     public string $code = '';
-    public ?string $description = null;
-    public bool $is_active = false;
+    public string $description = '';
+    public string $status = 'active';
 
     public function rules(): array
     {
-        $zoneId = $this->zone?->id;
+        $uniqueCode = 'nullable|string|max:50|alpha_dash|unique:shipping_zones,code';
+
+        if ($this->zone) {
+            $uniqueCode .= ",{$this->zone->id}";
+        }
 
         return [
-            "name" => 'required|min:3',
-            "code" => "required|unique:shipping_zones,code," . $zoneId,
-            "description" => "nullable|string",
-            'is_active' => 'boolean'
+            'name'        => 'required|string|max:100',
+            'code'        => $uniqueCode,
+            'description' => 'nullable|string|max:500',
+            'status'      => 'required|string|in:' . implode(',', array_column(ShippingZoneStatus::cases(), 'value')),
         ];
     }
 
-    public function setZone(ShippingZone $zone)
+    public function messages(): array
     {
-        $this->zone = $zone;
-        $this->fill($zone->toArray());
+        return [
+            'code.alpha_dash' => 'Code may only contain letters, numbers, dashes and underscores.',
+            'code.unique'     => 'This code is already taken by another zone.',
+        ];
     }
 
-    public function store()
+    public function setZone(ShippingZone $zone): void
+    {
+        $this->zone        = $zone;
+        $this->name        = $zone->name;
+        $this->code        = $zone->code ?? '';
+        $this->description = $zone->description ?? '';
+        $this->status      = $zone->status instanceof ShippingZoneStatus
+            ? $zone->status->value
+            : $zone->status;
+    }
+
+    public function store(): void
     {
         $this->validate();
-        $data = $this->prepareData();
 
-        return ShippingZone::create($data);
+        ShippingZone::create([
+            'name'        => $this->name,
+            'code'        => $this->code ?: null,
+            'description' => $this->description ?: null,
+            'status'      => $this->status,
+        ]);
     }
 
-
-    public function update()
+    public function update(): void
     {
         $this->validate();
 
-        $data = $this->prepareData();
-        $this->zone->update($data);
-        return $this->zone;
+        $this->zone->update([
+            'name'        => $this->name,
+            'code'        => $this->code ?: null,
+            'description' => $this->description ?: null,
+            'status'      => $this->status,
+        ]);
     }
-
-    public function prepareData()
-    {
-        $data = $this->except(['zone']);
-        return $data;
-    }
-
 }

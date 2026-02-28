@@ -1,0 +1,366 @@
+<?php
+
+use App\Enums\AddonType;
+use App\Enums\ShippingRateAddonStatus;
+use App\Models\PickupStation;
+use App\Models\ShippingMethod;
+use App\Models\ShippingRate;
+use App\Models\ShippingRateAddon;
+use App\Livewire\Forms\Admin\ShippingRateAddonForm;
+use Livewire\Attributes\{Title, Computed, Url};
+use Livewire\WithPagination;
+use Livewire\Component;
+use Flux\Flux;
+
+new #[Title('Rate Addons')] class extends Component {
+    use WithPagination;
+
+    public ShippingRateAddonForm $form;
+    public ?int $deletingId = null;
+
+    #[Url(history: true)]
+    public string $filterMethod = '';
+
+    #[Url(history: true)]
+    public string $filterAddonType = '';
+
+    #[Url(history: true)]
+    public string $filterStatus = '';
+
+    public function updatedFilterMethod(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedFilterAddonType(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    #[Computed]
+    public function addons()
+    {
+        return ShippingRateAddon::with(['shippingRate.shippingZone', 'shippingRate.shippingMethod', 'pickupStation'])
+            ->when($this->filterMethod, fn($q) => $q->whereHas('shippingRate', fn($r) => $r->where('shipping_method_id', $this->filterMethod)))
+            ->when($this->filterAddonType, fn($q) => $q->where('addon_type', $this->filterAddonType))
+            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+    }
+
+    // Only flat/pus methods make sense for addons
+    #[Computed]
+    public function methods()
+    {
+        return ShippingMethod::whereIn('type', ['flat', 'pus'])
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+    }
+
+    // Active flat rates — what an addon stacks on top of
+    #[Computed]
+    public function baseRates()
+    {
+        return ShippingRate::with(['shippingZone', 'shippingMethod'])
+            ->where('status', 'active')
+            ->when($this->filterMethod, fn($q) => $q->where('shipping_method_id', $this->filterMethod))
+            ->orderBy('shipping_method_id')
+            ->orderBy('min_weight')
+            ->get()
+            ->map(
+                fn($r) => [
+                    'id' => $r->id,
+                    'label' => "{$r->shippingMethod->name} · {$r->shippingZone->name} · {$r->weight_label}",
+                ],
+            );
+    }
+
+    #[Computed]
+    public function pickupStations()
+    {
+        return PickupStation::where('status', 'active')->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function addonTypes(): array
+    {
+        return AddonType::cases();
+    }
+
+    #[Computed]
+    public function statuses(): array
+    {
+        return ShippingRateAddonStatus::cases();
+    }
+
+    public function openCreate(): void
+    {
+        $this->form->reset();
+        Flux::modal('addon-modal')->show();
+    }
+
+    public function save(): void
+    {
+        try {
+            $isEditing = (bool) $this->form->addon;
+            $isEditing ? $this->form->update() : $this->form->store();
+
+            $this->form->reset();
+            Flux::modal('addon-modal')->close();
+            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Addon updated.' : 'Addon added.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            logger()->error('Failed to save rate addon.', [
+                'exception' => $e->getMessage(),
+                'addon_id' => $this->form->addon?->id,
+                'user_id' => auth()->id(),
+            ]);
+            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+        }
+    }
+
+    public function edit(ShippingRateAddon $addon): void
+    {
+        $this->form->setAddon($addon);
+        Flux::modal('addon-modal')->show();
+    }
+
+    public function confirmDelete(int $id): void
+    {
+        $this->deletingId = $id;
+        Flux::modal('delete-confirmation')->show();
+    }
+
+    public function delete(): void
+    {
+        if (!$this->deletingId) {
+            return;
+        }
+
+        try {
+            ShippingRateAddon::destroy($this->deletingId);
+            $this->deletingId = null;
+            Flux::modal('delete-confirmation')->close();
+            $this->dispatch('notify', variant: 'danger', message: 'Addon deleted.');
+        } catch (\Throwable $e) {
+            logger()->error('Failed to delete rate addon.', [
+                'exception' => $e->getMessage(),
+                'addon_id' => $this->deletingId,
+                'user_id' => auth()->id(),
+            ]);
+            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this addon.');
+        }
+    }
+}; ?>
+
+<div>
+    <flux:breadcrumbs class="mb-2">
+        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
+        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>Rate Addons</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <flux:heading size="xl" class="mb-2">Rate Addons</flux:heading>
+            <flux:subheading>Surcharges that stack on top of flat rates. Used primarily for PUS pickup station fees.
+            </flux:subheading>
+        </div>
+        <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
+            Add Addon
+        </flux:button>
+    </div>
+
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+        {{-- Filters --}}
+        <div class="flex flex-col md:flex-row justify-end gap-4 px-5 py-3 border-b">
+            <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable class="md:w-56">
+                @foreach ($this->methods as $method)
+                    <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            <flux:select wire:model.live="filterAddonType" placeholder="All Types" clearable class="md:w-44">
+                @foreach ($this->addonTypes as $type)
+                    <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="md:w-44">
+                @foreach ($this->statuses as $status)
+                    <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
+
+        <flux:table :paginate="$this->addons">
+            <flux:table.columns>
+                <flux:table.column class="ps-4!">Base Rate</flux:table.column>
+                <flux:table.column>Type</flux:table.column>
+                <flux:table.column>Label</flux:table.column>
+                <flux:table.column>Amount</flux:table.column>
+                <flux:table.column>Station Scope</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
+            </flux:table.columns>
+
+            <flux:table.rows>
+                @forelse ($this->addons as $addon)
+                    <flux:table.row :key="$addon->id">
+                        <flux:table.cell class="ps-4!">
+                            <div class="text-sm font-medium">{{ $addon->shippingRate->shippingMethod->name }}</div>
+                            <div class="text-xs text-zinc-400">
+                                {{ $addon->shippingRate->shippingZone->name }}
+                                &middot; {{ $addon->shippingRate->weight_label }}
+                            </div>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            @php
+                                $type =
+                                    $addon->addon_type instanceof \App\Enums\AddonType
+                                        ? $addon->addon_type
+                                        : \App\Enums\AddonType::from($addon->addon_type);
+                            @endphp
+                            <flux:badge color="orange" variant="flat" size="sm">{{ $type->label() }}</flux:badge>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            <span class="text-sm">{{ $addon->label ?? '—' }}</span>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            <span class="font-medium text-sm">KES {{ number_format($addon->addon_amount, 0) }}</span>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            @if ($addon->pickupStation)
+                                <span
+                                    class="text-xs text-zinc-600 dark:text-zinc-300">{{ $addon->pickupStation->name }}</span>
+                            @else
+                                <span class="text-xs text-zinc-400">All stations</span>
+                            @endif
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            @php
+                                $status =
+                                    $addon->status instanceof \App\Enums\ShippingRateAddonStatus
+                                        ? $addon->status
+                                        : \App\Enums\ShippingRateAddonStatus::from($addon->status);
+                            @endphp
+                            <flux:badge :color="$status->color()" variant="flat" size="sm">{{ $status->label() }}
+                            </flux:badge>
+                        </flux:table.cell>
+
+                        <flux:table.cell align="end" class="pe-4!">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
+                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $addon->id }})" />
+                            <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
+                                color="red" class="cursor-pointer text-red-500!"
+                                wire:click="confirmDelete({{ $addon->id }})" />
+                        </flux:table.cell>
+                    </flux:table.row>
+
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="7" class="py-12 text-center">
+                            <div class="flex flex-col items-center gap-3 text-zinc-400">
+                                <flux:icon.plus-circle class="w-10 h-10 opacity-40" />
+                                <div>
+                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No rate addons found
+                                    </p>
+                                    <p class="text-xs mt-0.5">
+                                        @if ($this->filterMethod || $this->filterAddonType || $this->filterStatus)
+                                            No results match your current filters.
+                                        @else
+                                            Add PUS surcharges or other fees that stack on top of base rates.
+                                        @endif
+                                    </p>
+                                </div>
+                                @if ($this->filterMethod || $this->filterAddonType || $this->filterStatus)
+                                    <flux:button variant="ghost" size="sm"
+                                        wire:click="$set('filterMethod', ''); $set('filterAddonType', ''); $set('filterStatus', '')">
+                                        Clear filters
+                                    </flux:button>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
+
+    {{-- Create / Edit Modal --}}
+    <flux:modal name="addon-modal" class="md:w-120 space-y-6">
+        <flux:heading size="lg">{{ $form->addon ? 'Edit Addon' : 'Add Rate Addon' }}</flux:heading>
+
+        <form wire:submit="save" class="space-y-4">
+            <flux:select wire:model="form.shipping_rate_id" label="Base Rate" searchable placeholder="Select a rate...">
+                @foreach ($this->baseRates as $rate)
+                    <flux:select.option value="{{ $rate['id'] }}">{{ $rate['label'] }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            <div class="grid grid-cols-2 gap-4">
+                <flux:select wire:model="form.addon_type" label="Addon Type">
+                    @foreach ($this->addonTypes as $type)
+                        <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:input wire:model="form.addon_amount" label="Amount (KES)" type="number" min="0"
+                    step="0.01" placeholder="e.g. 300" />
+            </div>
+
+            <flux:input wire:model="form.label" label="Label (Optional)" placeholder="e.g. Pickup Station Surcharge" />
+
+            <flux:select wire:model="form.pickup_station_id" label="Station Scope (Optional)" clearable
+                placeholder="Applies to all stations">
+                @foreach ($this->pickupStations as $station)
+                    <flux:select.option value="{{ $station->id }}">{{ $station->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            <flux:select wire:model="form.status" label="Status">
+                @foreach ($this->statuses as $status)
+                    <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            <div class="flex">
+                <flux:spacer />
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" class="ml-2 cursor-pointer">Save Addon</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    {{-- Delete Confirmation --}}
+    <flux:modal name="delete-confirmation" class="md:w-88 space-y-6">
+        <flux:heading size="lg" class="mb-2">Delete Addon?</flux:heading>
+        <flux:subheading>This surcharge will be permanently removed and will no longer apply at checkout.
+        </flux:subheading>
+        <div class="flex gap-3">
+            <flux:modal.close class="flex-1">
+                <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
+        </div>
+    </flux:modal>
+</div>
+
+<style>
+    [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>

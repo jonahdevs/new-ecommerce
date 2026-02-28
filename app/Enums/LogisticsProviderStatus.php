@@ -9,19 +9,28 @@ enum LogisticsProviderStatus: string
 
         // Operational or billing issue — still referenced in historical
         // orders but unavailable at checkout.
-    case Suspended = 'suspended';
+    case SUSPENDED = 'suspended';
 
     public function label(): string
     {
         return match ($this) {
             self::ACTIVE    => 'Active',
             self::INACTIVE  => 'Inactive',
-            self::Suspended => 'Suspended',
+            self::SUSPENDED => 'Suspended',
         };
     }
 
     public function isAvailable(): bool
     {
         return $this === self::ACTIVE;
+    }
+
+    public function color()
+    {
+        return match ($this) {
+            self::ACTIVE    => 'green',
+            self::INACTIVE  => 'zinc',
+            self::SUSPENDED => 'red',
+        };
     }
 }

@@ -39,4 +39,13 @@ class PickupStation extends Model
     {
         return $this->belongsTo(Area::class);
     }
+
+    public function deliveryOrders()
+    {
+        return $this->hasMany(DeliveryOrder::class);
+    }
+    public function logisticsProvider()
+    {
+        return $this->belongsTo(LogisticsProvider::class);
+    }
 }

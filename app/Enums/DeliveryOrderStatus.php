@@ -47,4 +47,21 @@ enum DeliveryOrderStatus: string
     {
         return ! $this->isTerminal();
     }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::PENDING        => 'zinc',
+            self::PICKEDUP       => 'blue',
+            self::INTRANSIT      => 'blue',
+            self::OUTFORDELIVERY => 'purple',
+            self::DELIVERED      => 'green',
+            self::FAILED         => 'red',
+            self::ATSTATION      => 'orange',
+            self::COLLECTED      => 'green',
+            self::RETURNING      => 'yellow',
+            self::RETURNED       => 'zinc',
+            self::CANCELLED      => 'red',
+        };
+    }
 }

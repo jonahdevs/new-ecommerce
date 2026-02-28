@@ -97,13 +97,35 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin')
     Route::livewire('/users/{user}/edit', 'pages::admin.access-control.users.edit')->name('.users.edit');
 
     // Logistics
-    Route::livewire('zones', 'pages::admin.logistics.zones')->name('.zones');
-    Route::livewire('counties', 'pages::admin.logistics.counties')->name('.counties');
-    Route::livewire('areas', 'pages::admin.logistics.areas')->name('.areas');
-    Route::livewire('shipping-methods', 'pages::admin.logistics.shipping-methods')->name('.shipping-methods');
-    Route::livewire('shipping-rates', 'pages::admin.logistics.shipping-rates')->name('.shipping-rates');
-    Route::livewire('pickup-stations', 'pages::admin.logistics.pickup-stations')->name('.pickup-stations');
-    Route::livewire('free-shipping', 'pages::admin.logistics.free-shipping')->name('.free-shipping');
+    Route::prefix('logistics')->name('.logistics')->group(function () {
+        Route::prefix('configuration')->name('.configurations')->group(function () {
+            Route::livewire('providers', 'pages::admin.logistics.configuration.providers')->name('.providers');
+            Route::livewire('zones', 'pages::admin.logistics.configuration.zones')->name('.zones');
+            Route::livewire('methods', 'pages::admin.logistics.configuration.methods')->name('.methods');
+
+            Route::prefix('locations')->name('.locations')->group(function () {
+                Route::livewire('counties', 'pages::admin.logistics.configuration.locations.counties')->name('.counties');
+            });
+
+
+            // rates
+            Route::prefix('rates')->name('.rates')->group(function () {
+                Route::livewire('addons', 'pages::admin.logistics.configuration.rates.addons')->name('.addons');
+                Route::livewire('flat', 'pages::admin.logistics.configuration.rates.flat')->name('.flat');
+                Route::livewire('vehicle', 'pages::admin.logistics.configuration.rates.vehicle')->name('.vehicle');
+            });
+
+            Route::livewire('pickup-stations', 'pages::admin.logistics.configuration.pickup-stations')->name('.pickup-stations');
+            Route::livewire('free-shipping-rules', 'pages::admin.logistics.configuration.free-shipping-rules')->name('.free-shipping-rules');
+        });
+
+        // rates
+        Route::prefix('operations')->name('.operations')->group(function () {
+            Route::livewire('delivery-orders', 'pages::admin.logistics.operations.delivery-orders')->name('.delivery-orders');
+            Route::livewire('pus-tracker', 'pages::admin.logistics.operations.pus-tracker')->name('.pus-tracker');
+            Route::livewire('returns', 'pages::admin.logistics.operations.returns')->name('.returns');
+        });
+    });
 
     // Engagement
     Route::livewire('/customers', 'pages::admin.engagement.customers.index')->name('.customers.index');
