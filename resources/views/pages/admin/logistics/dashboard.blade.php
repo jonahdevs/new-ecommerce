@@ -103,7 +103,7 @@ new #[Title('Logistics Overview')] class extends Component {
 
 <div class="space-y-6">
 
-    {{-- ── Header ───────────────────────────────────────────────────────── --}}
+    {{--  Header  --}}
     <div class="flex items-end justify-between">
         <div>
             <flux:heading size="xl">Logistics Overview</flux:heading>
@@ -117,7 +117,7 @@ new #[Title('Logistics Overview')] class extends Component {
         </div>
     </div>
 
-    {{-- ── Top stat cards ────────────────────────────────────────────────── --}}
+    {{--  Top stat cards  --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
         {{-- Active Deliveries --}}
@@ -194,8 +194,17 @@ new #[Title('Logistics Overview')] class extends Component {
             <div class="flex items-center gap-1.5 mt-1">
                 @if ($this->stats['revenue_change'] !== null)
                     @php $up = $this->stats['revenue_change'] >= 0; @endphp
-                    <span class="text-xs font-medium {{ $up ? 'text-green-600' : 'text-red-500' }}">
-                        {{ $up ? '↑' : '↓' }} {{ abs($this->stats['revenue_change']) }}%
+                    <span @class([
+                        'text-sm font-medium flex items-center gap-0.5',
+                        'text-green-600' => $up,
+                        'text-red-500' => !$up,
+                    ])>
+                        @if ($up)
+                            <flux:icon.arrow-long-up class="size-3.5" />
+                        @else
+                            <flux:icon.arrow-long-down class="size-3.5" />
+                        @endif
+                        {{ abs($this->stats['revenue_change']) }}%
                     </span>
                     <span class="text-xs text-zinc-400">vs last month</span>
                 @else
@@ -205,7 +214,7 @@ new #[Title('Logistics Overview')] class extends Component {
         </flux:card>
     </div>
 
-    {{-- ── Middle row ─────────────────────────────────────────────────────── --}}
+    {{--  Middle row  --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {{-- Recent Orders (spans 2 cols) --}}
@@ -373,7 +382,7 @@ new #[Title('Logistics Overview')] class extends Component {
         </div>
     </div>
 
-    {{-- ── Bottom row ──────────────────────────────────────────────────────── --}}
+    {{--  Bottom row ─ --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {{-- Needs Attention --}}

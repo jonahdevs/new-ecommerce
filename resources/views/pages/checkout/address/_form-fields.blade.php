@@ -53,7 +53,7 @@
     <flux:textarea wire:model="form.additional_information" :label="__('Additional Information')"
         placeholder="Enter Additional Information" />
 
-    @if (auth()->user()->addresses()->where('is_default', true)->exists())
+    @if ($this->hasDefaultAddress)
         <flux:field variant="inline">
             <flux:checkbox wire:model="form.is_default" />
             <flux:label>Set as default Address</flux:label>

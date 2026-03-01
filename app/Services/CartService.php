@@ -299,6 +299,55 @@ class CartService
         }
     }
 
+    /**
+     * Get the total weight of all items in the cart in kilograms.
+     *
+     * Products store weight in kg (after migration from grams).
+     * Products with no weight set default to 0.5 kg per item.
+     *
+     * Used by ShippingCalculator to find the correct rate bracket.
+     */
+    public function getWeight(?Cart $cart = null): float
+    {
+        $cart = $cart ?? $this->getCart();
+
+        if (!$cart || !$cart->items()->exists()) {
+            return 0;
+        }
+
+        $totalWeight = $cart->items()
+            ->with('product')
+            ->get()
+            ->reduce(function (float $carry, $item) {
+                // Weight in kg — default 0.5 kg if product has no weight set
+                $weightKg = $item->product?->weight ?? 0.5;
+                return $carry + ($weightKg * $item->quantity);
+            }, 0.0);
+
+        // Round to 3 decimal places (nearest gram)
+        return round($totalWeight, 3);
+    }
+
+    /**
+     * Get the cart subtotal (final price after any sale price applied).
+     * Used by ShippingCalculator for free shipping rule checks.
+     */
+    public function getSubtotal(?Cart $cart = null): float
+    {
+        $cart = $cart ?? $this->getCart();
+
+        if (!$cart || !$cart->items()->exists()) {
+            return 0.0;
+        }
+
+        return (float) $cart->items()
+            ->with('product')
+            ->get()
+            ->reduce(function (float $carry, $item) {
+                return $carry + ($item->product->final_price * $item->quantity);
+            }, 0.0);
+    }
+
     public function mergeGuestCart(?string $oldSessionId = null): void
     {
 

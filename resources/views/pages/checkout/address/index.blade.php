@@ -1,8 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Computed;
+use Livewire\Attributes\{Layout, Computed};
 
 new #[Layout('layouts.checkout')] class extends Component {
     public $selectedAddress = null;

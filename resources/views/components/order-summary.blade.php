@@ -1,6 +1,14 @@
 <?php
 
-use App\Services\CheckoutService;
+// ============================================================
+//  UPDATED order-summary.blade.php
+//  Reads from OrderSummaryService which reads from session.
+//  The completeOrder() method now creates a DeliveryOrder.
+// ============================================================
+
+use App\Enums\DeliveryOrderStatus;
+use App\Models\DeliveryOrder;
+use App\Services\CheckoutSession;
 use App\Services\OrderSummaryService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -11,86 +19,52 @@ new class extends Component {
     public ?string $errorType = null;
 
     #[Computed]
-    public function summary()
+    public function summary(): array
     {
         return app(OrderSummaryService::class)->summary();
     }
 
-    public function completeOrder()
+    public function completeOrder(): mixed
     {
-        // Reset state
         $this->errorMessage = null;
         $this->errorType = null;
         $this->isProcessing = true;
 
         try {
-            // Attempt checkout
-            return app(CheckoutService::class)->initiateCheckout();
+            return app(\App\Services\CheckoutService::class)->initiateCheckout();
         } catch (\Exception $e) {
             $this->isProcessing = false;
-
-            // Categorize and format error for user
             $this->handleCheckoutError($e);
 
-            // Log for debugging
             logger()->error('Checkout initiation failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => auth()->id(),
-                'session_id' => session()->getId(),
-            ]);
-
-            \Log::error('Checkout initiation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
                 'user_id' => auth()->id(),
                 'session_id' => session()->getId(),
             ]);
         }
+
+        return null;
     }
 
-    /**
-     * Handle checkout errors and provide user-friendly messages
-     */
     private function handleCheckoutError(\Exception $e): void
     {
         $message = $e->getMessage();
 
-        // Categorize error and set appropriate type
-        if (str_contains($message, 'already in progress')) {
-            $this->errorType = 'processing';
-            $this->errorMessage = 'Your checkout is being processed. Please wait...';
-        } elseif (str_contains($message, 'out of stock') || str_contains($message, 'became unavailable')) {
-            $this->errorType = 'inventory';
-            $this->errorMessage = $message; // Already user-friendly from service
-            $this->dispatch('refresh-cart'); // Trigger cart refresh
-        } elseif (str_contains($message, 'shipping address')) {
-            $this->errorType = 'address';
-            $this->errorMessage = 'Please add a shipping address to continue.';
-            $this->dispatch('open-address-modal'); // Open address form
-        } elseif (str_contains($message, 'cart is empty')) {
-            $this->errorType = 'empty-cart';
-            $this->errorMessage = 'Your cart is empty.';
-        } elseif (str_contains($message, 'minimum order value')) {
-            $this->errorType = 'minimum-order';
-            $this->errorMessage = $message;
-        } elseif (str_contains($message, 'payment gateway') || str_contains($message, 'payment service')) {
-            $this->errorType = 'gateway';
-            $this->errorMessage = 'Unable to connect to payment service. Please try again in a moment.';
-        } else {
-            // Generic error
-            $this->errorType = 'general';
-            $this->errorMessage = 'An error occurred during checkout. Please try again or contact support if the issue persists.';
-        }
+        [$this->errorType, $this->errorMessage] = match (true) {
+            str_contains($message, 'already in progress') => ['processing', 'Your checkout is being processed. Please wait...'],
+            str_contains($message, 'out of stock') => ['inventory', $message],
+            str_contains($message, 'shipping not selected') => ['shipping', 'Please select a shipping method to continue.'],
+            str_contains($message, 'shipping address') => ['address', 'Please add a shipping address to continue.'],
+            str_contains($message, 'cart is empty') => ['empty-cart', 'Your cart is empty.'],
+            str_contains($message, 'minimum order value') => ['min-order', $message],
+            str_contains($message, 'payment') => ['gateway', 'Unable to connect to payment service. Please try again.'],
+            default => ['general', 'Something went wrong. Please try again or contact support.'],
+        };
 
-        // Dispatch notification
-        $this->dispatch('notify', message: $this->errorMessage, type: 'error');
+        $this->dispatch('notify', message: $this->errorMessage, variant: 'danger');
     }
 
-    /**
-     * Clear error and allow retry
-     */
-    public function clearError()
+    public function clearError(): void
     {
         $this->errorMessage = null;
         $this->errorType = null;
@@ -104,77 +78,101 @@ new class extends Component {
         <flux:heading>Order Summary</flux:heading>
     </div>
 
-    {{-- Order Summary Details --}}
-    <div class="p-5 flex flex-col gap-2">
+    <div class="p-4 flex flex-col gap-3">
+        {{-- Subtotal --}}
         <div class="flex items-center justify-between">
-            <flux:text>
-                <flux:icon.receipt class="text-inherit size-4 inline-block me-1" />
+            <flux:text class="flex items-center gap-1">
+                <flux:icon.receipt class="size-4" />
                 Subtotal
             </flux:text>
             <flux:heading>{{ format_currency($this->summary['subtotal']) }}</flux:heading>
         </div>
 
+        {{-- Discount --}}
+        @if ($this->summary['discount'] > 0)
+            <div class="flex items-center justify-between">
+                <flux:text class="flex items-center gap-1 text-green-600">
+                    <flux:icon.badge-percent class="size-4" />
+                    Discount
+                </flux:text>
+                <flux:heading class="text-green-600">
+                    − {{ format_currency($this->summary['discount']) }}
+                </flux:heading>
+            </div>
+        @endif
+
+        {{-- Shipping --}}
         <div class="flex items-center justify-between">
-            <flux:text>
-                <flux:icon.badge-percent class="text-inherit size-4 inline-block me-1" />
-                Discount
+            <flux:text class="flex items-center gap-1">
+                <flux:icon.truck class="size-4" />
+                Shipping
+                @if ($this->summary['shipping_method'])
+                    <span class="text-zinc-400 text-xs ml-1">({{ $this->summary['shipping_method'] }})</span>
+                @endif
             </flux:text>
-            <flux:heading>{{ format_currency($this->summary['discount']) }}</flux:heading>
+
+            @if (!$this->summary['shipping_selected'])
+                <flux:link :href="route('checkout.shipping')" wire:navigate class="text-xs text-orange-500">
+                    Select method
+                </flux:link>
+            @elseif ($this->summary['shipping_cost'] === 0.0)
+                <flux:heading class="text-green-600">Free</flux:heading>
+            @else
+                <flux:heading>{{ format_currency($this->summary['shipping_cost']) }}</flux:heading>
+            @endif
         </div>
 
-        <div class="flex items-center justify-between">
-            <flux:text>
-                <flux:icon.truck class="text-inherit size-4 inline-block me-1" />
-                Shipping
-            </flux:text>
-            <flux:heading>{{ format_currency($this->summary['shipping_cost']) }}</flux:heading>
-        </div>
+        {{-- Station name for PUS --}}
+        @if ($this->summary['station_name'])
+            <div class="text-xs text-zinc-400 -mt-2 pl-5">
+                Pickup at: {{ $this->summary['station_name'] }}
+            </div>
+        @endif
+
+        {{-- Delivery window --}}
+        @if ($this->summary['shipping_window'])
+            <div class="text-xs text-zinc-400 -mt-2 pl-5">
+                Est. {{ $this->summary['shipping_window'] }}
+            </div>
+        @endif
     </div>
 
     {{-- Total --}}
-    <div class="flex items-center justify-between border-t px-3 py-2">
-        <flux:text class="font-semibold text-base">Total</flux:text>
-        <flux:heading class="font-semibold text-base">
+    <div class="flex items-center justify-between border-t px-4 py-3">
+        <flux:text class="font-semibold">Total</flux:text>
+        <flux:heading class="font-semibold text-lg">
             {{ format_currency($this->summary['total']) }}
         </flux:heading>
     </div>
 
-    {{-- Checkout Button --}}
+    {{-- Error message --}}
+    @if ($this->errorMessage)
+        <div class="px-4 pb-3">
+            <div class="bg-red-50 border border-red-200 rounded-md px-3 py-2 text-xs text-red-700">
+                {{ $this->errorMessage }}
+            </div>
+        </div>
+    @endif
+
+    {{-- Place order --}}
     <div class="p-3 border-t">
-        <flux:button wire:click="completeOrder" class="w-full group cursor-pointer relative" variant="primary">
-            Place Order
-            {{-- Icon --}}
+        <flux:button wire:click="completeOrder" class="w-full group cursor-pointer" variant="primary"
+            :disabled="! $this->summary['shipping_selected'] || $isProcessing">
+            {{ $isProcessing ? 'Processing...' : 'Place Order' }}
             <x-slot name="iconTrailing">
                 <flux:icon.chevron-right class="size-4 ms-3 group-hover:translate-x-1 transition-transform" />
             </x-slot>
         </flux:button>
 
-        {{-- Security Badge --}}
-        <div class="mt-2 flex items-center justify-center gap-1 text-xs text-gray-500">
+        @if (!$this->summary['shipping_selected'])
+            <p class="text-xs text-center text-orange-500 mt-2">
+                Select a shipping method to place your order
+            </p>
+        @endif
+
+        <div class="mt-2 flex items-center justify-center gap-1 text-xs text-zinc-400">
             <flux:icon.lock-closed class="size-3" />
             <span>Secure checkout powered by Pesawise</span>
         </div>
     </div>
 </flux:card>
-
-{{-- Alpine.js for additional interactivity --}}
-@script
-    <script>
-        // Prevent double-click submission
-        let checkoutInProgress = false;
-
-        $wire.on('checkout-started', () => {
-            checkoutInProgress = true;
-        });
-
-        $wire.on('checkout-completed', () => {
-            checkoutInProgress = false;
-        });
-
-        // Listen for cart updates
-        $wire.on('refresh-cart', () => {
-            // Trigger cart component refresh
-            window.dispatchEvent(new CustomEvent('cart-updated'));
-        });
-    </script>
-@endscript

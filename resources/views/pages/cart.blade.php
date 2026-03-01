@@ -135,7 +135,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         }
 
         // If no accessories, proceed directly to checkout
-        $this->redirect(route('checkout.summary'), navigate: true);
+        $this->redirect(route('checkout.shipping'), navigate: true);
     }
 };
 ?>
@@ -500,7 +500,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
             <div class="flex gap-2 pt-4 border-t">
                 <flux:modal.close>
-                    <flux:button variant="primary" class="cursor-pointer flex-1" :href="route('checkout.summary')"
+                    <flux:button variant="primary" class="cursor-pointer flex-1" :href="route('checkout.shipping')"
                         wire:navigate>
                         Continue without accessories
                     </flux:button>

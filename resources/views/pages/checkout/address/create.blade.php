@@ -14,7 +14,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     #[Computed]
     public function counties()
     {
-        return County::withShippingRates()->orderBy('name')->get();
+        return County::orderBy('name')->get();
     }
 
     #[Computed]
@@ -25,6 +25,12 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         return Area::where('county_id', $this->form->county_id)->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function hasDefaultAddress(): bool
+    {
+        return auth()->user()->addresses()->where('is_default', true)->exists();
     }
 
     public function updatedFormCountyId()
@@ -42,6 +48,10 @@ new #[Layout('layouts.checkout')] class extends Component {
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {
+            logger()->error('Failed to save address', [
+                'user_id' => auth()->id(),
+                'error' => $th->getMessage(),
+            ]);
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage());
         }
     }

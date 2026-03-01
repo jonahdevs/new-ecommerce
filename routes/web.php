@@ -32,6 +32,7 @@ Route::livewire('/payment/success', 'pages::checkout.success')->name('checkout.s
 Route::livewire('/payment/cancel', 'pages::checkout.cancel')->name('payment.cancel');
 
 Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
+    Route::livewire('/checkout/shipping', 'pages::checkout.shipping')->name('checkout.shipping');
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
     Route::livewire('/checkout/payment', 'pages::checkout.payment')->name('checkout.payment');
 
@@ -39,8 +40,6 @@ Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
     Route::livewire('/checkout/addresses', 'pages::checkout.address.index')->name('checkout.addresses');
     Route::livewire('/checkout/addresses/create', 'pages::checkout.address.create')->name('checkout.addresses.create');
     Route::livewire('/checkout/addresses/{address}/edit', 'pages::checkout.address.edit')->name('checkout.addresses.edit');
-
-    Route::livewire('/checkout/shipping-options', 'pages::checkout.shipping-options')->name('checkout.shipping-options');
 });
 
 // customer

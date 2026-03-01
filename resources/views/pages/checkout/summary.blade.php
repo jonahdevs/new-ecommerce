@@ -1,64 +1,56 @@
 <?php
 
-use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Computed;
 use App\Services\CartService;
+use App\Services\CheckoutSession;
+use Livewire\Attributes\{Computed, Layout};
+use Livewire\Component;
 
 new #[Layout('layouts.checkout')] class extends Component {
-    public function mount()
+    public function mount(): void
     {
-        $user = auth()->user();
         $cartService = app(CartService::class);
 
-        if (!$cartService->getCart()->items()->exists()) {
-            $this->redirectRoute('cart');
+        // Guard: empty cart
+        if (!$cartService->hasItems()) {
+            $this->redirectRoute('cart', navigate: true);
+            return;
         }
 
-        // If no address exists → go to create address
-        if ($user->defaultAddress()->doesntExist()) {
-            return redirect()->route('checkout.addresses.create');
+        // Guard: no address
+        if (auth()->user()->addresses()->doesntExist()) {
+            $this->redirectRoute('customer.checkout.addresses.create', navigate: true);
+            return;
         }
 
-        // If address exists but no shipping method selected → go to shipping options
-        if (auth()->user()->preferredShippingMethod()->doesntExist()) {
-            return redirect()->route('checkout.shipping-options');
+        // Guard: shipping not selected — send them to pick one
+        if (!app(CheckoutSession::class)->hasShipping()) {
+            $this->redirectRoute('checkout.shipping', navigate: true);
+            return;
         }
     }
 
     #[Computed]
-    public function defaultAddress()
+    public function address()
     {
+        $checkoutSession = app(CheckoutSession::class);
         $user = auth()->user();
 
-        $sessionAddress = session('checkout_address_id');
+        $addressId = $checkoutSession->getAddressId() ?? ($user->addresses()->where('is_default', true)->value('id') ?? $user->addresses()->oldest()->value('id'));
 
-        // Use session address if exists and valid, otherwise use default address
-        if ($sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists()) {
-            return $user->addresses()->where('id', $sessionAddress)->first();
-        } else {
-            return auth()->user()->defaultAddress;
-        }
+        return \App\Models\Address::with(['county', 'area', 'shippingZone'])->find($addressId);
     }
 
     #[Computed]
-    public function preferredShippingMethod()
+    public function shipping(): ?array
     {
-        return auth()->user()->preferredShippingMethod;
+        return app(CheckoutSession::class)->getShipping();
     }
 
-    #[Computed]
-    public function selectedShippingRate()
+    public function changeShipping(): mixed
     {
-        return $this->defaultAddress?->selectedShippingRate;
+        return $this->redirectRoute('checkout.shipping', navigate: true);
     }
-
-    public function changeShippingMethod()
-    {
-        return redirect()->route('checkout.shipping-options');
-    }
-};
-?>
+}; ?>
 
 <div>
     {{-- Breadcrumb --}}
@@ -68,96 +60,71 @@ new #[Layout('layouts.checkout')] class extends Component {
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
-
             <flux:breadcrumbs.item>Checkout</flux:breadcrumbs.item>
         </flux:breadcrumbs>
     </x-slot:breadcrumbs>
 
     <x-slot:heading>Checkout Summary</x-slot:heading>
 
-    <!-- Customer Address Section -->
+    {{-- Address --}}
     <div class="border rounded-sm bg-white mb-4">
         <div class="px-4 py-2 border-b flex items-center justify-between">
-            <div class="flex items-center gap-1">
-                <flux:icon.check-circle variant="solid" @class([
-                    'size-5',
-                    'text-green-500' => $this->defaultAddress,
-                    'text-zinc-500' => !$this->defaultAddress,
-                ]) />
-                <flux:heading level="3" class="font-medium!">Customer Address</flux:heading>
+            <div class="flex items-center gap-1.5">
+                <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
+                <flux:heading level="3" class="font-medium!">Delivery Address</flux:heading>
             </div>
-
-            <flux:link :href="route('checkout.addresses')" wire:navigate icon:trailing="chevron-right"
-                class="text-xs! group">Change
-                <flux:icon.chevron-right
-                    class="size-3.5 ms-1 inline-block transition-transform group-hover:translate-x-2" />
+            <flux:link :href="route('checkout.addresses')" wire:navigate class="text-xs!">
+                Change <flux:icon.chevron-right class="size-3.5 ms-1 inline-block" />
             </flux:link>
         </div>
 
-        <div class="px-4 py-5">
-            @if (isset($this->defaultAddress))
-                <flux:heading>{{ $this->defaultAddress->full_name }}
-                </flux:heading>
-
-                <div class="text-zinc-500 text-sm mt-3 space-y-1">
-                    <flux:text>{{ $this->defaultAddress->address }}</flux:text>
-
+        <div class="px-4 py-4">
+            @if ($this->address)
+                <flux:heading>{{ $this->address->full_name }}</flux:heading>
+                <div class="mt-2 space-y-1 text-sm text-zinc-500">
+                    <flux:text>{{ $this->address->address }}</flux:text>
                     <flux:text>
-                        {{ implode(
-                            ' | ',
-                            array_filter([
-                                $this->defaultAddress->area?->name . ', ' . $this->defaultAddress->county->name,
-                                $this->defaultAddress->phone_number,
-                            ]),
-                        ) }}
+                        {{ implode(', ', array_filter([$this->address->area?->name, $this->address->county?->name])) }}
+                        · {{ format_phone($this->address->phone_number) }}
                     </flux:text>
                 </div>
-            @else
-                <p>You have not set a default address</p>
             @endif
         </div>
     </div>
 
-    <!-- Delivery Method Section -->
-    <div class="bg-white rounded-sm border mb-4">
+    {{-- Shipping method --}}
+    <div class="border rounded-sm bg-white mb-4">
         <div class="px-4 py-2 border-b flex items-center justify-between">
-            <div class="flex items-center gap-1">
-                <flux:icon.check-circle variant="solid" @class([
-                    'size-5',
-                    'text-green-500' => auth()->user()->preferredShippingMethod()->exists(),
-                    'text-zinc-500' => auth()->user()->preferredShippingMethod()->doesntExist(),
-                ]) />
-                <flux:heading level="3" class="font-medium!">Delivery Details</flux:heading>
+            <div class="flex items-center gap-1.5">
+                <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
+                <flux:heading level="3" class="font-medium!">Shipping Method</flux:heading>
             </div>
-
-            <flux:link :href="route('checkout.shipping-options')" wire:navigate icon:trailing="chevron-right"
-                class="text-xs! group">Change
-                <flux:icon.chevron-right
-                    class="size-3.5 inline-block ms-1 group-hover:translate-x-2 transition-transform" />
+            <flux:link href="#" wire:click.prevent="changeShipping" class="text-xs!">
+                Change <flux:icon.chevron-right class="size-3.5 ms-1 inline-block" />
             </flux:link>
         </div>
 
-        <div class="px-4 py-5">
-            @if ($this->preferredShippingMethod && $this->preferredShippingMethod)
+        <div class="px-4 py-4">
+            @if ($this->shipping)
                 <div class="flex items-center justify-between">
                     <div>
-
-                        <flux:heading>{{ $this->preferredShippingMethod->name }}</flux:heading>
-
-                        <flux:text>{{ $this->preferredShippingMethod->description }}</flux:text>
+                        <flux:heading>{{ $this->shipping['method_name'] }}</flux:heading>
+                        <flux:text class="text-sm text-zinc-500 mt-1">
+                            {{ $this->shipping['delivery_window'] }}
+                            @if ($this->shipping['station_name'])
+                                · Pickup: {{ $this->shipping['station_name'] }}
+                            @endif
+                        </flux:text>
                     </div>
-
-                    <flux:icon :name="$this->preferredShippingMethod->icon" class="shrink-0" variant="outline" />
-
-                </div>
-            @else
-                <div class="text-center py-4">
-                    <flux:text class="text-zinc-600">No shipping method selected</flux:text>
+                    <span class="font-semibold text-sm">
+                        {{ $this->shipping['cost'] == 0 ? 'Free' : format_currency($this->shipping['cost']) }}
+                    </span>
                 </div>
             @endif
         </div>
     </div>
 
-    <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
+    <flux:link :href="route('products')" wire:navigate class="text-xs">
+        ← Continue shopping
     </flux:link>
 </div>

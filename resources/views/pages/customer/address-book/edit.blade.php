@@ -12,13 +12,14 @@ new #[Layout('layouts.customer')] class extends Component {
 
     public function mount(Address $address)
     {
+        abort_if($address->user_id !== auth()->id(), 403);
         $this->form->setAddress($address);
     }
 
     #[Computed]
     public function counties()
     {
-        return County::withShippingRates()->orderBy('name')->get();
+        return County::orderBy('name')->get();
     }
 
     #[Computed]
@@ -31,7 +32,13 @@ new #[Layout('layouts.customer')] class extends Component {
         return Area::where('county_id', $this->form->county_id)->orderBy('name')->get();
     }
 
-    public function updatedFormCountyId()
+    #[Computed]
+    public function hasDefaultAddress(): bool
+    {
+        return auth()->user()->addresses()->where('is_default', true)->exists();
+    }
+
+    public function updatedFormCountyId(): void
     {
         $this->form->area_id = '';
     }
@@ -45,6 +52,11 @@ new #[Layout('layouts.customer')] class extends Component {
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {
+            logger()->error('Failed to update address', [
+                'user_id' => auth()->id(),
+                'address_id' => $this->address->id,
+                'error' => $th->getMessage(),
+            ]);
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage());
         }
     }

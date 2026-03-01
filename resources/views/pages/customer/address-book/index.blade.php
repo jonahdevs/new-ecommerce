@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use Livewire\Attributes\{Layout, Computed};
+use Illuminate\Support\Facades\DB;
 
 new #[Layout('layouts.customer')] class extends Component {
     #[Computed]

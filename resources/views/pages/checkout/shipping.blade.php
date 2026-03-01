@@ -1,0 +1,299 @@
+<?php
+
+use App\Models\Address;
+use App\Services\CartService;
+use App\Services\CheckoutSession;
+use App\Services\Shipping\ShippingCalculator;
+use App\Services\Shipping\ShippingOption;
+use Livewire\Attributes\{Computed, Layout, Locked};
+use Livewire\Component;
+
+new #[Layout('layouts.checkout')] class extends Component {
+    // The selected method code — bound to the radio group
+    public string $selectedMethod = '';
+
+    // PUS only — the chosen station ID
+    public ?int $selectedStationId = null;
+
+    #[Locked]
+    public ?int $addressId = null;
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+        $cartService = app(CartService::class);
+
+        // Guard: empty cart
+        if (!$cartService->hasItems()) {
+            $this->redirectRoute('cart', navigate: true);
+            return;
+        }
+
+        // Guard: no address at all
+        if ($user->addresses()->doesntExist()) {
+            $this->redirectRoute('customer.address-book.create', navigate: true);
+            return;
+        }
+
+        // Resolve which address to calculate for
+        $checkoutSession = app(CheckoutSession::class);
+        $sessionAddressId = $checkoutSession->getAddressId();
+
+        $this->addressId = $sessionAddressId && $user->addresses()->where('id', $sessionAddressId)->exists() ? $sessionAddressId : $user->addresses()->where('is_default', true)->value('id') ?? $user->addresses()->oldest()->value('id');
+
+        // Guard: address exists but has no shipping zone resolved
+        if (!$this->address?->shipping_zone_id) {
+            $this->dispatch('notify', variant: 'danger', message: 'Your address is missing location details. Please update it.');
+            $this->redirectRoute('customer.address-book.index', navigate: true);
+            return;
+        }
+
+        // Pre-select the method if one is already in the session
+        if ($checkoutSession->hasShipping()) {
+            $this->selectedMethod = $checkoutSession->getShipping()['method_code'] ?? '';
+            $this->selectedStationId = $checkoutSession->getPickupStationId();
+        }
+    }
+
+    // ── Computed ──────────────────────────────────────────────────────────────
+
+    #[Computed]
+    public function address(): ?Address
+    {
+        return $this->addressId ? Address::with(['county', 'area', 'shippingZone'])->find($this->addressId) : null;
+    }
+
+    #[Computed]
+    public function shippingOptions(): \Illuminate\Support\Collection
+    {
+        if (!$this->address) {
+            return collect();
+        }
+
+        $cartService = app(CartService::class);
+
+        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, areaId: $this->address->area_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
+    }
+
+    #[Computed]
+    public function selectedOption(): ?ShippingOption
+    {
+        return $this->shippingOptions->firstWhere('methodCode', $this->selectedMethod);
+    }
+
+    #[Computed]
+    public function pusOption(): ?ShippingOption
+    {
+        return $this->shippingOptions->firstWhere('methodType', 'pus');
+    }
+
+    #[Computed]
+    public function currentPusOption(): ?ShippingOption
+    {
+        if (!$this->selectedOption?->isPus()) {
+            return null;
+        }
+
+        // Recalculate for the chosen station
+        if ($this->selectedStationId) {
+            return app(ShippingCalculator::class)->recalculateForStation(option: $this->selectedOption, stationId: $this->selectedStationId, weightKg: app(CartService::class)->getWeight());
+        }
+
+        return $this->selectedOption;
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+
+    public function updatedSelectedMethod(): void
+    {
+        // Clear station when switching away from PUS
+        if ($this->selectedMethod !== $this->pusOption?->methodCode) {
+            $this->selectedStationId = null;
+        }
+    }
+
+    public function confirm(): mixed
+    {
+        // Validate a method is selected
+        if (!$this->selectedOption) {
+            $this->dispatch('notify', variant: 'danger', message: 'Please select a shipping method.');
+            return null;
+        }
+
+        // PUS requires a station
+        if ($this->selectedOption->isPus() && !$this->selectedStationId) {
+            $this->dispatch('notify', variant: 'danger', message: 'Please select a pickup station.');
+            return null;
+        }
+
+        // Build the option to store — use station-specific option if PUS
+        $option = $this->selectedOption->isPus() ? $this->currentPusOption : $this->selectedOption;
+
+        // Store to session via CheckoutSession
+        $stationName = null;
+        if ($this->selectedStationId) {
+            $stationName = $option->pickupStations?->firstWhere('id', $this->selectedStationId)?->name;
+        }
+
+        app(CheckoutSession::class)->setShipping([
+            'method_id' => $option->methodId,
+            'method_name' => $option->methodName,
+            'method_code' => $option->methodCode,
+            'method_type' => $option->methodType,
+            'cost' => $option->cost,
+            'zone_id' => $option->shippingZoneId,
+            'rate_id' => $option->shippingRateId,
+            'station_id' => $this->selectedStationId,
+            'station_name' => $stationName,
+            'cost_breakdown' => $option->costBreakdown,
+            'delivery_window' => $option->deliveryWindow(),
+        ]);
+
+        return $this->redirectRoute('checkout.summary', navigate: true);
+    }
+}; ?>
+
+<div>
+    {{-- Breadcrumb --}}
+    <x-slot:breadcrumbs>
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
+            <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
+                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
+                Home
+            </flux:breadcrumbs.item>
+            <flux:breadcrumbs.item :href="route('checkout.summary')" wire:navigate>
+                Checkout
+            </flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>Shipping</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    </x-slot:breadcrumbs>
+
+    <x-slot:heading>Shipping Method</x-slot:heading>
+
+    {{-- Address card --}}
+    <div class="border rounded-sm bg-white mb-4">
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+                <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
+                <flux:heading level="3" class="font-medium!">Delivering to</flux:heading>
+            </div>
+            <flux:link :href="route('checkout.addresses')" wire:navigate class="text-xs!">
+                Change
+                <flux:icon.chevron-right class="size-3.5 ms-1 inline-block" />
+            </flux:link>
+        </div>
+
+        <div class="px-4 py-4">
+            @if ($this->address)
+                <flux:heading>{{ $this->address->full_name }}</flux:heading>
+                <div class="mt-2 space-y-1">
+                    <flux:text>{{ $this->address->address }}</flux:text>
+                    <flux:text>
+                        {{ implode(', ', array_filter([$this->address->area?->name, $this->address->county?->name])) }}
+                    </flux:text>
+                    <flux:text class="text-zinc-400 text-xs">
+                        Zone: {{ $this->address->shippingZone?->name ?? '—' }}
+                    </flux:text>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- Shipping methods --}}
+    <div class="bg-white border rounded-sm mb-4">
+        <div class="px-4 py-2 border-b">
+            <flux:heading level="3" class="font-medium!">Choose a shipping method</flux:heading>
+        </div>
+
+        <div class="p-4">
+            @if ($this->shippingOptions->isEmpty())
+                <div class="py-10 text-center">
+                    <flux:icon.exclamation-triangle class="size-10 mx-auto text-zinc-400 mb-3" />
+                    <flux:heading level="3" class="mb-1">No shipping options available</flux:heading>
+                    <flux:text class="text-zinc-500 text-sm">
+                        We couldn't find shipping options for your location. Please
+                        <flux:link :href="route('customer.address-book.index')" wire:navigate>
+                            update your address
+                        </flux:link>
+                        or contact support.
+                    </flux:text>
+                </div>
+            @else
+                <div class="space-y-3">
+                    @foreach ($this->shippingOptions as $option)
+                        @php $isSelected = $this->selectedMethod === $option->methodCode; @endphp
+
+                        <label @class([
+                            'flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors',
+                            'border-zinc-800 bg-zinc-50 dark:border-zinc-300 dark:bg-zinc-800' => $isSelected,
+                            'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700' => !$isSelected,
+                        ])>
+                            <input type="radio" wire:model.live="selectedMethod" value="{{ $option->methodCode }}"
+                                class="mt-1 accent-zinc-800" />
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-medium text-sm">{{ $option->methodName }}</span>
+                                    <span @class([
+                                        'text-sm font-semibold shrink-0',
+                                        'text-green-600' => $option->isFree(),
+                                        'text-zinc-800 dark:text-zinc-100' => !$option->isFree(),
+                                    ])>
+                                        {{ $option->formattedCost() }}
+                                    </span>
+                                </div>
+
+                                <p class="text-xs text-zinc-500 mt-0.5">
+                                    {{ $option->deliveryWindow() }}
+                                    @if ($option->isPus())
+                                        · Collect from a pickup station
+                                    @endif
+                                </p>
+
+                                {{-- PUS station picker --}}
+                                @if ($option->isPus() && $isSelected && $option->pickupStations?->isNotEmpty())
+                                    <div class="mt-3 pt-3 border-t border-zinc-200">
+                                        <flux:select wire:model.live="selectedStationId"
+                                            placeholder="Select a pickup station..." size="sm">
+                                            @foreach ($option->pickupStations as $station)
+                                                <flux:select.option :value="$station->id">
+                                                    {{ $station->name }}
+                                                    @if ($station->county_id === $this->address?->county_id)
+                                                        (Nearby)
+                                                    @endif
+                                                </flux:select.option>
+                                            @endforeach
+                                        </flux:select>
+
+                                        @if ($this->selectedStationId && $this->currentPusOption)
+                                            <div class="mt-2 flex items-center justify-between text-xs">
+                                                <span class="text-zinc-500">Updated cost with station surcharge</span>
+                                                <span class="font-semibold">
+                                                    {{ $this->currentPusOption->formattedCost() }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+
+                <div class="flex justify-end mt-5">
+                    <flux:button wire:click="confirm" variant="primary" class="cursor-pointer"
+                        :disabled="! $this->selectedMethod">
+                        Confirm Shipping Method
+                        <x-slot name="iconTrailing">
+                            <flux:icon.chevron-right class="size-4 ms-2" />
+                        </x-slot>
+                    </flux:button>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <flux:link :href="route('products')" wire:navigate class="text-xs">
+        ← Continue shopping
+    </flux:link>
+</div>
