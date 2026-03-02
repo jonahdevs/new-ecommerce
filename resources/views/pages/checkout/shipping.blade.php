@@ -31,7 +31,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
         // Guard: no address at all
         if ($user->addresses()->doesntExist()) {
-            $this->redirectRoute('customer.address-book.create', navigate: true);
+            $this->redirectRoute('checkout.addresses.create', navigate: true);
             return;
         }
 

@@ -295,14 +295,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 @foreach ($this->cartItems as $item)
                                     <flux:card class="p-0 overflow-hidden">
                                         <div class="flex items-start gap-3 p-3 py-4">
-                                            <div
-                                                class="shrink-0 w-20 h-20 rounded border bg-zinc-50 overflow-hidden px-4">
+                                            <div class="shrink-0 w-20 h-20 rounded border bg-zinc-50 overflow-hidden">
                                                 @if ($item->product->image_path)
                                                     <img class="object-cover w-full h-full"
                                                         src="{{ $item->product->image_url }}"
                                                         alt="{{ $item->product->name }}" />
                                                 @else
-                                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
+                                                    <flux:icon.photo
+                                                        class="w-full h-full p-2 text-zinc-200 stroke-1" />
                                                 @endif
                                             </div>
 

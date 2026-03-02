@@ -105,17 +105,17 @@ class ProductService
         }
 
         // 5. Apply tag-based scoring to prioritize products with matching tags
-        if ($product->tags && is_array($product->tags)) {
-            $relatedProducts = $relatedProducts->map(function ($product) {
-                $matchingTags = 0;
-                if ($product->tags && is_array($product->tags)) {
-                    $matchingTags = count(array_intersect($product->tags, $product->tags));
-                }
-                $product->tag_match_score = $matchingTags;
+        // if ($product->tags && is_array($product->tags)) {
+        //     $relatedProducts = $relatedProducts->map(function ($product) {
+        //         $matchingTags = 0;
+        //         if ($product->tags && is_array($product->tags)) {
+        //             $matchingTags = count(array_intersect($product->tags, $product->tags));
+        //         }
+        //         $product->tag_match_score = $matchingTags;
 
-                return $product;
-            })->sortByDesc('tag_match_score');
-        }
+        //         return $product;
+        //     })->sortByDesc('tag_match_score');
+        // }
 
         // Return unique products up to the limit
         return $relatedProducts->unique('id')->take($limit);
@@ -235,17 +235,17 @@ class ProductService
         }
 
         // 5. Apply tag-based scoring to prioritize products with matching tags
-        if ($product->tags && is_array($product->tags)) {
-            $relatedProducts = $relatedProducts->map(function ($product) {
-                $matchingTags = 0;
-                if ($product->tags && is_array($product->tags)) {
-                    $matchingTags = count(array_intersect($product->tags, $product->tags));
-                }
-                $product->tag_match_score = $matchingTags;
+        // if ($product->tags && is_array($product->tags)) {
+        //     $relatedProducts = $relatedProducts->map(function ($product) {
+        //         $matchingTags = 0;
+        //         if ($product->tags && is_array($product->tags)) {
+        //             $matchingTags = count(array_intersect($product->tags, $product->tags));
+        //         }
+        //         $product->tag_match_score = $matchingTags;
 
-                return $product;
-            })->sortByDesc('tag_match_score');
-        }
+        //         return $product;
+        //     })->sortByDesc('tag_match_score');
+        // }
 
         // Return unique products up to the limit
         return $relatedProducts->unique('id')->take($limit);
