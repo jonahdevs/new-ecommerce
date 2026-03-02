@@ -14,7 +14,7 @@ class CheckoutSession
     private const KEY_SHIPPING = 'checkout.shipping';
     private const KEY_ADDRESS = 'checkout.address_id';
 
-    // ── Shipping ──────────────────────────────────────────────────────────────
+    //  Shipping
 
     public function setShipping(array $option): void
     {
@@ -95,7 +95,7 @@ class CheckoutSession
         session()->forget(self::KEY_SHIPPING);
     }
 
-    // ── Address ───────────────────────────────────────────────────────────────
+    //  Address
 
     public function setAddressId(int $addressId): void
     {
@@ -112,11 +112,26 @@ class CheckoutSession
         session()->forget(self::KEY_ADDRESS);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    //  Helpers
 
     public function isComplete(): bool
     {
         return $this->hasShipping();
+    }
+
+    public function setPaymentMethod(string $method): void
+    {
+        session(['checkout.payment_method' => $method]);
+    }
+
+    public function getPaymentMethod(): string
+    {
+        return session('checkout.payment_method', 'mpesa');
+    }
+
+    public function hasPaymentMethod(): bool
+    {
+        return session()->has('checkout.payment_method');
     }
 
     /**
@@ -125,6 +140,10 @@ class CheckoutSession
      */
     public function clear(): void
     {
-        session()->forget([self::KEY_SHIPPING, self::KEY_ADDRESS]);
+        session()->forget([
+            'checkout.shipping',
+            'checkout.address_id',
+            'checkout.payment_method', // ← add this
+        ]);
     }
 }

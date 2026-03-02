@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\ShippingMethodStatus;
+use App\Enums\ShippingRateStatus;
 use App\Models\Cart;
 use App\Models\Product;
 use App\Models\ShippingMethod;
@@ -98,7 +100,7 @@ class ShippingCalculatorService
 
         // Fallback to standard method
         $standardMethod = ShippingMethod::where('code', config('shipping.default_method_code', 'standard'))
-            ->where('is_active', true)
+            ->where('status', ShippingMethodStatus::ACTIVE)
             ->first();
 
         if (!$standardMethod) {
@@ -122,7 +124,7 @@ class ShippingCalculatorService
         $rate = ShippingRate::query()
             ->where('shipping_zone_id', $shippingZoneId)
             ->where('shipping_method_id', $shippingMethodId)
-            ->where('is_active', true)
+            ->where('status', ShippingRateStatus::ACTIVE)
             ->where('min_weight', '<=', $totalWeightKg)
             ->where('max_weight', '>=', $totalWeightKg)
             ->first();
@@ -135,7 +137,7 @@ class ShippingCalculatorService
         $allRates = ShippingRate::query()
             ->where('shipping_zone_id', $shippingZoneId)
             ->where('shipping_method_id', $shippingMethodId)
-            ->where('is_active', true)
+            ->where('status', ShippingRateStatus::ACTIVE)
             ->orderBy('max_weight', 'desc')
             ->get();
 
@@ -214,7 +216,7 @@ class ShippingCalculatorService
         try {
             $shippingMethodId = $this->getPreferredShippingMethodId($user);
         } catch (\Throwable $th) {
-            $fallback = ShippingMethod::active()->first();
+            $fallback = ShippingMethod::where('status', ShippingMethodStatus::ACTIVE)->first();
             if (!$fallback)
                 throw new \Exception('No active shipping method found.');
             $shippingMethodId = $fallback->id;

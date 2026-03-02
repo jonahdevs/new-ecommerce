@@ -37,11 +37,32 @@ return [
 
     'pesawise' => [
         'api_url' => env('PESAWISE_API_URL', 'https://api.pesawise.xyz/api'),
+        'pesawise_mode_production' => env('PESAWISE_MODE_PRODUCTION'),
         'api_key' => env('PESAWISE_API_KEY'),
         'api_secret' => env('PESAWISE_API_SECRET'),
         'balance_id_kes' => env('PESAWISE_BALANCE_ID_KES', 1102801),
         'balance_id_usd' => env('PESAWISE_BALANCE_ID_USD', 1102802),
         'callback_base_url' => env('PESAWISE_CALLBACK_BASE_URL'),
+    ],
+
+    'paypal' => [
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'client_id' => env('PAYPAL_MODE') === 'live'
+            ? env('PAYPAL_LIVE_CLIENT_ID')
+            : env('PAYPAL_SANDBOX_CLIENT_ID'),
+        'secret' => env('PAYPAL_MODE') === 'live'
+            ? env('PAYPAL_LIVE_SECRET')
+            : env('PAYPAL_SANDBOX_SECRET'),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+    ],
+
+    'mpesa' => [
+        'environment' => env('MPESA_ENV', 'sandbox'), // sandbox or production
+        'consumer_key' => env('MPESA_CONSUMER_KEY'),
+        'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
+        'passkey' => env('MPESA_PASSKEY'),
+        'shortcode' => env('MPESA_SHORTCODE', '174379'), // 174379 is sandbox default
+        'callback_url' => env('MPESA_CALLBACK_URL', env('APP_URL') . '/checkout/mpesa/callback'),
     ],
 
     'google' => [

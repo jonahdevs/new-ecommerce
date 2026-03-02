@@ -12,8 +12,7 @@ class OrderSummaryService
     public function __construct(
         private readonly CartService $cartService,
         private readonly CheckoutSession $checkoutSession,
-    ) {
-    }
+    ) {}
 
     /**
      * Build the complete summary array for the order-summary component.

@@ -149,7 +149,7 @@ new #[Layout('layouts.checkout')] class extends Component {
             'delivery_window' => $option->deliveryWindow(),
         ]);
 
-        return $this->redirectRoute('checkout.summary', navigate: true);
+        return $this->redirectRoute('checkout.payment-methods', navigate: true);
     }
 }; ?>
 

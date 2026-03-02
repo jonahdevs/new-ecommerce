@@ -35,11 +35,25 @@ Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
     Route::livewire('/checkout/shipping', 'pages::checkout.shipping')->name('checkout.shipping');
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
     Route::livewire('/checkout/payment', 'pages::checkout.payment')->name('checkout.payment');
+    Route::livewire('/checkout/payment-methods', 'pages::checkout.payment-methods')->name('checkout.payment-methods');
 
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');
     Route::livewire('/checkout/addresses', 'pages::checkout.address.index')->name('checkout.addresses');
     Route::livewire('/checkout/addresses/create', 'pages::checkout.address.create')->name('checkout.addresses.create');
     Route::livewire('/checkout/addresses/{address}/edit', 'pages::checkout.address.edit')->name('checkout.addresses.edit');
+});
+
+// Payment callbacks (redirect-back from gateway)
+Route::prefix('payment')->name('payment.')->group(function () {
+    Route::get('/callback/success', [App\Http\Controllers\Payment\CallbackController::class, 'success'])->name('callback.success');
+    Route::get('/callback/cancel',  [App\Http\Controllers\Payment\CallbackController::class, 'cancel'])->name('callback.cancel');
+});
+
+// Webhooks — CSRF exempt, verified by gateway signatures
+Route::prefix('webhooks')->name('payment.webhook.')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+    Route::post('/pesawise', App\Http\Controllers\Webhooks\PesawiseWebhookController::class)->name('pesawise');
+    Route::post('/mpesa',    App\Http\Controllers\Webhooks\MpesaWebhookController::class)->name('mpesa');
+    Route::post('/stripe',   App\Http\Controllers\Webhooks\StripeWebhookController::class)->name('stripe');
 });
 
 // customer

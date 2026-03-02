@@ -193,7 +193,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </div>
 
-                <div class="w-full lg:max-w-md">
+                <div class="w-xs">
                     <div class="bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b">
                             <flux:skeleton animate="shimmer" class="h-6 w-24 px-3 py-2 rounded-sm" />
@@ -427,7 +427,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             </div>
 
             @if ($this->cartItems->isNotEmpty())
-                <div class="w-full lg:max-w-sm sticky top-44">
+                <div class="w-xs sticky top-44">
                     <div class="bg-white rounded-sm border">
                         <div>
                             <h3 class="font-medium text-sm uppercase px-3 py-2 border-b">
@@ -435,10 +435,20 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             </h3>
                             <div class="p-3 py-4 space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <p class="text-zinc-600 text-sm font-medium">Subtotal:</p>
-                                    <span
-                                        class="font-semibold text-right">{{ format_currency($cartSummary['subtotal']) }}</span>
+                                    <flux:text>Subtotal:</flux:text>
+                                    <flux:heading class="text-right">
+                                        {{ format_currency($cartSummary['subtotal']) }}
+                                    </flux:heading>
                                 </div>
+
+                                @if ($cartSummary['discount'] > 0)
+                                    <div class="flex items-center justify-between">
+                                        <flux:text>Discount:</flux:text>
+                                        <flux:heading class="text-green-600 text-right">
+                                            − {{ format_currency($cartSummary['discount']) }}
+                                        </flux:heading>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="border-t p-3">

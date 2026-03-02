@@ -2,173 +2,238 @@
 
 namespace App\Services;
 
-use App\Models\Cart;
+use App\Enums\DeliveryOrderStatus;
+use App\Models\Address;
+use App\Models\DeliveryOrder;
 use App\Models\Order;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Payment;
+use App\Models\PickupStation;
+use App\Models\ShippingMethod;
+use App\Models\ShippingRate;
+use App\Services\Payment\PaymentService;
+use App\Services\Payment\ValueObjects\PaymentResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
-/**
- * Class CheckoutService.
- */
 class CheckoutService
 {
-    public function initiateCheckout()
-    {
-        $cart = app(CartService::class)->getCart();
-        $correlationId = uniqid('checkout_', true);
-
-        // Prevent double submission with distributed lock
-        $lockKey = 'checkout:' . ($cart->user_id ?? $cart->session_id ?? session()->getId());
-        $lock = Cache::lock($lockKey, 10);
-
-        if (!$lock->get()) {
-            throw new \Exception('Checkout already in progress. Please wait.');
-        }
-
-        try {
-            // 1. Validate cart is not empty
-            if ($cart->items->isEmpty()) {
-                throw new \Exception('Your cart is empty');
-            }
-
-            // 2. Check inventory availability BEFORE creating order
-            $unavailable = app(InventoryService::class)->checkAvailability($cart);
-            if (!empty($unavailable)) {
-                $message = $this->formatInventoryError($unavailable);
-                throw new \Exception($message);
-            }
-
-            // 3. Validate user has shipping address (for logged in users)
-            if (auth()->check() && !auth()->user()->defaultAddress) {
-                throw new \Exception('Please add a shipping address before checkout');
-            }
-
-            // 4. Validate minimum order value (if applicable)
-            $summary = app(OrderSummaryService::class)->summary();
-            $minOrderValue = config('checkout.minimum_order_value', 0);
-            if ($summary['total'] < $minOrderValue) {
-                throw new \Exception("Minimum order value is " . format_currency($minOrderValue));
-            }
-
-            // 5. Check for existing reusable order
-            $existingOrder = $this->findReusableOrder();
-
-            if ($existingOrder) {
-                return $this->reuseExistingOrder($existingOrder);
-            }
-
-            return $this->createNewOrder($cart);
-        } catch (\Throwable $th) {
-            throw $th;
-        } finally {
-            $lock->release();
-        }
-    }
+    public function __construct(
+        private readonly CartService     $cartService,
+        private readonly CheckoutSession $checkoutSession,
+        private readonly PaymentService  $paymentService,
+    ) {}
 
     /**
-     * Find an existing order that can be reused (within payment validity window)
+     * The main checkout entry point.
+     *
+     * Creates: Order → OrderItems → DeliveryOrder → Payment
+     * Then initiates payment and returns a PaymentResponse.
+     *
+     * The Livewire component handles the PaymentResponse to either:
+     *   - Redirect (Pesawise/Pesapal)
+     *   - Show iframe (Pesawise iframe)
+     *   - Show STK push waiting screen (M-Pesa)
+     *   - Show Stripe Elements (Card)
      */
-    private function findReusableOrder(): ?Order
+    public function initiateCheckout(): PaymentResponse
     {
-        if (!auth()->check()) {
-            return null;
+        $user = auth()->user();
+        $cart = $this->cartService->getCart();
+
+        //  Pre-flight checks 
+
+        if (! $cart || ! $cart->items()->exists()) {
+            throw new \RuntimeException('Your cart is empty.');
         }
 
-        return Order::where('user_id', auth()->id())
-            ->where('status', 'pending')
-            ->where('created_at', '>=', now()->subMinutes(30))
-            ->whereHas('payment', function ($query) {
-                $query->where('status', 'pending')
-                    ->where('expires_at', '>', now());
-            })
-            ->first();
-    }
-
-    /**
-     * Reuse existing order instead of creating duplicate
-     */
-    private function reuseExistingOrder(Order $existingOrder)
-    {
-        // Check if payment link is still valid
-        if ($existingOrder->payment->expires_at < now()) {
-            // Payment expired, we could create a new payment session
-            // but it's safer to let it expire and create fresh order
-            throw new \Exception('Previous order expired. Please try again.');
+        if ($user->addresses()->doesntExist()) {
+            throw new \RuntimeException('Please add a shipping address to continue.');
         }
 
-        // Use existing payment link from meta
-        $loadUrl = $existingOrder->payment->meta['load_url'] ?? null;
-
-        if (!$loadUrl) {
-            // This shouldn't happen, but handle gracefully
-            throw new \Exception('Payment link not found. Please try again.');
+        if (! $this->checkoutSession->isComplete()) {
+            throw new \RuntimeException('Shipping not selected. Please select a shipping method.');
         }
 
-        // Store payment details in session for iframe page
-        session([
-            'pesawise_payment_url' => $loadUrl,
-            'pesawise_payment_reference' => $existingOrder->reference,
-        ]);
+        //  Resolve address 
 
-        return redirect()->route('checkout.payment');
-    }
+        $addressId = $this->checkoutSession->getAddressId()
+            ?? $user->addresses()->where('is_default', true)->value('id')
+            ?? $user->addresses()->oldest()->value('id');
 
-    private function createNewOrder(Cart $cart)
-    {
-        try {
-            $order = DB::transaction(function () use ($cart) {
-                $order = app(OrderService::class)->createFromCart($cart);
-                app(InventoryService::class)->reserveStock($order);
-                $response = app(PesawiseService::class)->createPaymentOrder($order);
+        $address = Address::with(['county', 'area', 'shippingZone'])->findOrFail($addressId);
 
-                // Attach response to order so we can access it after transaction
-                $order->pesawise_load_url = $response['createdPaymentOrder']['loadUrl'];
+        //  Build cart summary 
 
-                return $order;
-            });
+        $cartItems    = $cart->items()->with('product')->get();
+        $cartSummary  = $this->cartService->summary($cart);
+        $shippingData = $this->checkoutSession->getShipping();
 
-            // Set session AFTER transaction commits successfully
-            session([
-                'pesawise_payment_url' => $order->pesawise_load_url,
-                'pesawise_payment_reference' => $order->reference,
+        $subtotalCents  = (int) round($cartSummary['subtotal'] * 100);
+        $discountCents  = (int) round($cartSummary['discount'] * 100);
+        $shippingCents  = (int) round($shippingData['cost'] * 100);
+        $totalCents     = max(0, $subtotalCents - $discountCents + $shippingCents);
+
+        //  Create everything in a transaction 
+
+        $order = DB::transaction(function () use (
+            $user,
+            $cartItems,
+            $cart,
+            $address,
+            $subtotalCents,
+            $discountCents,
+            $shippingCents,
+            $totalCents,
+            $shippingData
+        ) {
+            // 1. Validate stock for all items before committing
+            foreach ($cartItems as $item) {
+                if ($item->product->stock_quantity < $item->quantity) {
+                    throw new \RuntimeException(
+                        "{$item->product->name} only has {$item->product->stock_quantity} units available."
+                    );
+                }
+            }
+
+            // 2. Create the Order
+            $order = Order::create([
+                'user_id'          => $user->id,
+                'reference'        => $this->generateReference(),
+                'status'           => 'pending',
+                'payment_status'   => 'pending',
+                'currency'         => 'KES',
+                'subtotal_cents'   => $subtotalCents,
+                'discount_cents'   => $discountCents,
+                'shipping_cents'   => $shippingCents,
+                'tax_cents'        => 0,
+                'total_cents'      => $totalCents,
+                'shipping_address' => $this->snapshotAddress($address),
+                'billing_address'  => $this->snapshotAddress($address),
+                'placed_at'        => now(),
+                'expires_at'       => now()->addMinutes(30),
             ]);
 
-            return redirect()->route('checkout.payment');
-        } catch (\Throwable $th) {
-            Log::error('Order creation failed', [
-                'error' => $th->getMessage(),
+            // 3. Create OrderItems + decrement stock
+            foreach ($cartItems as $item) {
+                $order->items()->create([
+                    'product_id'         => $item->product_id,
+                    'product_variant_id' => $item->variant_id,
+                    'sku'                => $item->product->sku,
+                    'name'               => $item->product->name,
+                    'quantity'           => $item->quantity,
+                    'unit_price_cents'   => (int) round($item->product->final_price * 100),
+                    'unit_tax_cents'     => 0,
+                    'discount_cents'     => (int) round(
+                        ($item->product->price - $item->product->final_price) * 100 * $item->quantity
+                    ),
+                    'total_cents'        => (int) round($item->product->final_price * 100 * $item->quantity),
+                ]);
+
+                // Decrement stock
+                $item->product->decrement('stock_quantity', $item->quantity);
+            }
+
+            // 4. Create DeliveryOrder
+            $shippingMethod = ShippingMethod::find($shippingData['method_id']);
+            $shippingRate   = $shippingData['rate_id']
+                ? ShippingRate::find($shippingData['rate_id'])
+                : null;
+
+            $collectionDeadline = null;
+            if ($shippingData['station_id']) {
+                $station = PickupStation::find($shippingData['station_id']);
+                $collectionDeadline = $station?->collectionDeadline()->format('Y-m-d H:i:s');
+            }
+
+            DeliveryOrder::create([
+                'order_id'              => $order->id,
+                'logistics_provider_id' => $shippingMethod?->logistics_provider_id,
+                'shipping_method_id'    => $shippingData['method_id'],
+                'shipping_zone_id'      => $shippingData['zone_id'],
+                'shipping_rate_id'      => $shippingData['rate_id'],
+                'vehicle_rate_id'       => null,
+                'pickup_station_id'     => $shippingData['station_id'],
+                'shipping_cost'         => $shippingData['cost'],
+                'cost_breakdown'        => $shippingData['cost_breakdown'],
+                'package_weight_kg'     => $this->cartService->getWeight($cart),
+                'is_return'             => false,
+                'status'                => DeliveryOrderStatus::PENDING->value,
+                'estimated_delivery_at' => now()->addDays(
+                    $shippingRate?->estimated_days_max ?? 5
+                ),
+                'collection_deadline_at' => $collectionDeadline,
             ]);
 
-            if (str_contains($th->getMessage(), 'Insufficient stock')) {
-                throw new \Exception('Some items became unavailable. Please refresh and try again.');
+            // 5. Create Payment record
+            Payment::create([
+                'order_id'   => $order->id,
+                'amount_cents' => $totalCents,
+                'currency'   => 'KES',
+                'status'     => 'pending',
+                'gateway'    => $this->paymentService->activeGateway(),
+                'expires_at' => now()->addMinutes(30),
+            ]);
+
+            return $order;
+        });
+
+        //  Initiate payment (outside transaction — external API call)
+
+        try {
+            $payment  = $order->payment;
+            $response = $this->paymentService->initiate($order, $payment);
+
+            if ($response->isFailed()) {
+                Log::error('Payment initiation failed after order created', [
+                    'order_id' => $order->id,
+                    'message'  => $response->message,
+                ]);
             }
 
-            if (str_contains($th->getMessage(), 'payment gateway')) {
-                throw new \Exception('Unable to connect to payment service. Please try again in a moment.');
+            // Clear cart + session ONLY after successful payment initiation
+            if (! $response->isFailed()) {
+                $this->cartService->clear();
+                $this->checkoutSession->clear();
             }
 
-            throw new \Exception('Unable to process checkout. Please try again.');
+            return $response;
+        } catch (\Throwable $e) {
+            Log::error('Payment initiation threw exception', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return PaymentResponse::failed($e->getMessage());
         }
     }
 
-    /**
-     * Format inventory error message for user
-     */
-    private function formatInventoryError(array $unavailable): string
+    //  Private helpers 
+
+    private function generateReference(): string
     {
-        if (count($unavailable) === 1) {
-            $item = $unavailable[0];
-            return "{$item['product']} is out of stock. Only {$item['available']} available.";
-        }
+        do {
+            $reference = 'ORD-' . strtoupper(Str::random(8));
+        } while (Order::where('reference', $reference)->exists());
 
-        $products = array_column($unavailable, 'product');
-        $list = implode(', ', array_slice($products, 0, 3));
+        return $reference;
+    }
 
-        if (count($products) > 3) {
-            $list .= ' and ' . (count($products) - 3) . ' more';
-        }
-
-        return "Some items are out of stock: {$list}. Please update your cart.";
+    /**
+     * Snapshot the address at order placement time.
+     * Stored as JSON so it's immutable even if the address is later edited.
+     */
+    private function snapshotAddress(Address $address): array
+    {
+        return [
+            'first_name'   => $address->first_name,
+            'last_name'    => $address->last_name,
+            'full_name'    => $address->full_name,
+            'phone_number' => $address->phone_number,
+            'address'      => $address->address,
+            'area'         => $address->area?->name,
+            'county'       => $address->county?->name,
+            'zone'         => $address->shippingZone?->name,
+        ];
     }
 }

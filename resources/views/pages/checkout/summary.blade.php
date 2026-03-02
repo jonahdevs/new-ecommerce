@@ -9,22 +9,26 @@ new #[Layout('layouts.checkout')] class extends Component {
     public function mount(): void
     {
         $cartService = app(CartService::class);
+        $checkoutSession = app(CheckoutSession::class);
 
-        // Guard: empty cart
         if (!$cartService->hasItems()) {
             $this->redirectRoute('cart', navigate: true);
             return;
         }
 
-        // Guard: no address
         if (auth()->user()->addresses()->doesntExist()) {
-            $this->redirectRoute('customer.checkout.addresses.create', navigate: true);
+            $this->redirectRoute('customer.address-book.create', navigate: true);
             return;
         }
 
-        // Guard: shipping not selected — send them to pick one
-        if (!app(CheckoutSession::class)->hasShipping()) {
+        if (!$checkoutSession->hasShipping()) {
             $this->redirectRoute('checkout.shipping', navigate: true);
+            return;
+        }
+
+        // If custom gateway and no payment method chosen yet, go to payment page
+        if (app(\App\Services\Payment\PaymentService::class)->isCustom() && !session('checkout.payment_method')) {
+            $this->redirectRoute('checkout.payment-methods', navigate: true);
             return;
         }
     }

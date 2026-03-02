@@ -289,7 +289,15 @@ class CartService
             }, 0);
 
             $discount = $cart->items->reduce(function ($carry, $item) {
-                return $carry + (($item->product->price - $item->product->sale_price) * $item->quantity);
+
+                $price = $item->product->price;
+                $sale = $item->product->sale_price;
+
+                if ($sale && $sale < $price) {
+                    return $carry + (($price - $sale) * $item->quantity);
+                }
+
+                return $carry;
             }, 0);
 
             return [
