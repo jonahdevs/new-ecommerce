@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Payment;
+namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
@@ -30,9 +30,10 @@ class PaymentService
 {
     public function __construct(
         private readonly PaymentSettings $settings,
-    ) {}
+    ) {
+    }
 
-    //  Main operations 
+    //  Main operations
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
     {
@@ -44,7 +45,7 @@ class PaymentService
         return $this->gateway()->verify($reference);
     }
 
-    //  Gateway resolution 
+    //  Gateway resolution
 
     public function gateway(?string $name = null): PaymentGateway
     {
@@ -52,10 +53,10 @@ class PaymentService
 
         return match ($active) {
             'pesawise' => app(PesawiseGateway::class),
-            'mpesa'    => app(MpesaGateway::class),
-            'stripe'   => app(StripeGateway::class),
-            'custom'   => app(CustomGateway::class),
-            default    => throw new \InvalidArgumentException("Unknown payment gateway: {$active}"),
+            'mpesa' => app(MpesaGateway::class),
+            'stripe' => app(StripeGateway::class),
+            'custom' => app(CustomGateway::class),
+            default => throw new \InvalidArgumentException("Unknown payment gateway: {$active}"),
         };
     }
 

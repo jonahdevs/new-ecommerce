@@ -16,43 +16,43 @@ use Stripe\Webhook;
 class StripeGateway implements PaymentGateway
 {
     private StripeClient $stripe;
-    private string       $webhookSecret;
+    private string $webhookSecret;
 
     public function __construct(PaymentSettings $settings)
     {
         $secretKey = $settings->stripe_secret_key ?? '';
 
-        $this->stripe        = new StripeClient($secretKey);
+        $this->stripe = new StripeClient($secretKey);
         $this->webhookSecret = $settings->stripe_webhook_secret ?? '';
     }
 
-    //  Interface implementation 
+    //  Interface implementation
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
     {
         try {
             $intent = $this->stripe->paymentIntents->create([
-                'amount'               => $order->total_cents, // already in cents
-                'currency'             => strtolower($order->currency ?? 'kes'),
-                'metadata'             => [
-                    'order_id'        => $order->id,
+                'amount' => $order->total_cents, // already in cents
+                'currency' => strtolower($order->currency ?? 'kes'),
+                'metadata' => [
+                    'order_id' => $order->id,
                     'order_reference' => $order->reference,
                 ],
-                'description'         => "Order #{$order->reference}",
-                'receipt_email'       => $order->user?->email,
+                'description' => "Order #{$order->reference}",
+                'receipt_email' => $order->user?->email,
             ]);
 
             $payment->update([
                 'gateway_order_id' => $intent->id,
-                'status'           => 'processing',
-                'meta'             => [
+                'status' => 'processing',
+                'meta' => [
                     'payment_intent_id' => $intent->id,
-                    'initiated_at'      => now()->toISOString(),
+                    'initiated_at' => now()->toISOString(),
                 ],
             ]);
 
             Log::info('Stripe Payment Intent created', [
-                'order_id'  => $order->id,
+                'order_id' => $order->id,
                 'intent_id' => $intent->id,
             ]);
 
@@ -61,7 +61,7 @@ class StripeGateway implements PaymentGateway
         } catch (\Throwable $e) {
             Log::error('Stripe initiation failed', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return PaymentResponse::failed($e->getMessage());
@@ -74,13 +74,13 @@ class StripeGateway implements PaymentGateway
             $intent = $this->stripe->paymentIntents->retrieve($reference);
 
             return match ($intent->status) {
-                'succeeded'            => PaymentStatus::paid($intent->id, $intent->status),
-                'processing'           => PaymentStatus::processing(),
+                'succeeded' => PaymentStatus::paid($intent->id, $intent->status),
+                'processing' => PaymentStatus::processing(),
                 'requires_payment_method',
                 'requires_confirmation',
-                'requires_action'      => PaymentStatus::pending(),
-                'canceled'             => PaymentStatus::cancelled(),
-                default                => PaymentStatus::failed($intent->status),
+                'requires_action' => PaymentStatus::pending(),
+                'canceled' => PaymentStatus::cancelled(),
+                default => PaymentStatus::failed($intent->status),
             };
         } catch (\Throwable $e) {
             return PaymentStatus::failed($e->getMessage());
@@ -101,44 +101,45 @@ class StripeGateway implements PaymentGateway
         }
 
         match ($event->type) {
-            'payment_intent.succeeded'       => $this->handleSucceeded($event->data->object),
-            'payment_intent.payment_failed'  => $this->handleFailed($event->data->object),
-            'payment_intent.canceled'        => $this->handleCancelled($event->data->object),
-            default                          => null,
+            'payment_intent.succeeded' => $this->handleSucceeded($event->data->object),
+            'payment_intent.payment_failed' => $this->handleFailed($event->data->object),
+            'payment_intent.canceled' => $this->handleCancelled($event->data->object),
+            default => null,
         };
     }
 
-    // Webhook event handlers 
+    // Webhook event handlers
 
     private function handleSucceeded(object $intent): void
     {
-        $payment = \App\Models\Payment::where('gateway_order_id', $intent->id)->first();
-        if (! $payment) return;
+        $payment = Payment::where('gateway_order_id', $intent->id)->first();
+        if (!$payment)
+            return;
 
         $payment->update([
-            'status'         => 'paid',
+            'status' => 'paid',
             'transaction_id' => $intent->id,
-            'card_brand'     => $intent->payment_method_types[0] ?? null,
-            'paid_at'        => now(),
-            'meta'           => array_merge($payment->meta ?? [], (array) $intent),
+            'card_brand' => $intent->payment_method_types[0] ?? null,
+            'paid_at' => now(),
+            'meta' => array_merge($payment->meta ?? [], (array) $intent),
         ]);
 
         $payment->order?->update([
-            'status'         => 'confirmed',
+            'status' => 'confirmed',
             'payment_status' => 'paid',
         ]);
     }
 
     private function handleFailed(object $intent): void
     {
-        $payment = \App\Models\Payment::where('gateway_order_id', $intent->id)->first();
+        $payment = Payment::where('gateway_order_id', $intent->id)->first();
         $payment?->update(['status' => 'failed']);
         $payment?->order?->update(['payment_status' => 'failed']);
     }
 
     private function handleCancelled(object $intent): void
     {
-        $payment = \App\Models\Payment::where('gateway_order_id', $intent->id)->first();
+        $payment = Payment::where('gateway_order_id', $intent->id)->first();
         $payment?->update(['status' => 'cancelled']);
         $payment?->order?->update(['status' => 'cancelled', 'payment_status' => 'cancelled']);
     }

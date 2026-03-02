@@ -297,7 +297,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         <div class="flex items-start gap-3 p-3 py-4">
                                             <div class="shrink-0 w-20 h-20 rounded border bg-zinc-50 overflow-hidden">
                                                 @if ($item->product->image_path)
-                                                    <img class="object-cover w-full h-full"
+                                                    <img class="object-contain w-full h-full"
                                                         src="{{ $item->product->image_url }}"
                                                         alt="{{ $item->product->name }}" />
                                                 @else

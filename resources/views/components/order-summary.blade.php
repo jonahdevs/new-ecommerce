@@ -3,7 +3,7 @@
 use App\Services\CheckoutSession;
 use App\Services\OrderSummaryService;
 use App\Services\Payment\Gateways\CustomGateway;
-use App\Services\Payment\PaymentService;
+use App\Services\PaymentService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use Livewire\Attributes\Computed;
 use Livewire\Component;

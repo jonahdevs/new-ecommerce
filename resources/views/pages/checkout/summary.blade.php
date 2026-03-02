@@ -4,6 +4,7 @@ use App\Services\CartService;
 use App\Services\CheckoutSession;
 use Livewire\Attributes\{Computed, Layout};
 use Livewire\Component;
+use App\Services\PaymentService;
 
 new #[Layout('layouts.checkout')] class extends Component {
     public function mount(): void
@@ -27,7 +28,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         // If custom gateway and no payment method chosen yet, go to payment page
-        if (app(\App\Services\Payment\PaymentService::class)->isCustom() && !session('checkout.payment_method')) {
+        if (app(PaymentService::class)->isCustom() && !session('checkout.payment_method')) {
             $this->redirectRoute('checkout.payment-methods', navigate: true);
             return;
         }

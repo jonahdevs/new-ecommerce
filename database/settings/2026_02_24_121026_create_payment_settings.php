@@ -2,11 +2,10 @@
 
 use Spatie\LaravelSettings\Migrations\SettingsMigration;
 
-return new class extends SettingsMigration
-{
+return new class extends SettingsMigration {
     public function up(): void
     {
-        $this->migrator->add('payment.active_gateway', 'custom');
+        $this->migrator->add('payment.active_gateway', 'pesawise');
 
         // Pesawise
         $this->migrator->add('payment.pesawise_mode_production', false);

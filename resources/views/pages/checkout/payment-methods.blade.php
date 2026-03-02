@@ -3,7 +3,7 @@
 use App\Models\Address;
 use App\Services\CheckoutSession;
 use App\Services\Payment\Gateways\CustomGateway;
-use App\Services\Payment\PaymentService;
+use App\Services\PaymentService;
 use Livewire\Attributes\{Computed, Layout, Locked};
 use Livewire\Component;
 

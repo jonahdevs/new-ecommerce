@@ -15,11 +15,11 @@ class CallbackController extends Controller
         $reference = $request->input('externalId') ?? $request->input('reference');
 
         if ($reference) {
-            $order  = Order::where('reference', $reference)->first();
+            $order = Order::where('reference', $reference)->first();
             $status = $paymentService->verify($reference);
 
             if ($status->isPaid && $order) {
-                return redirect()->route('orders.show', $order)
+                return redirect()->route('customer.orders.show', $order)
                     ->with('success', 'Payment successful! Your order has been placed.');
             }
         }
