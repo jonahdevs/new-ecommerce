@@ -7,11 +7,8 @@ use Livewire\Component;
 
 new class extends Component {
     public bool $isProcessing = false;
-    public ?string $errorMessage = null;
-    public ?string $errorType = null;
 
     //  Computed
-
     #[Computed]
     public function summary(): array
     {
@@ -40,21 +37,14 @@ new class extends Component {
         return null;
     }
 
-    public function clearError(): void
-    {
-        $this->errorMessage = null;
-        $this->errorType = null;
-    }
-
     //  Response handler
 
     private function handlePaymentResponse(PaymentResponse $response): mixed
     {
         if ($response->isFailed()) {
             $this->isProcessing = false;
-            $this->errorType = 'gateway';
-            $this->errorMessage = $response->message ?? 'Payment initiation failed. Please try again.';
-            $this->dispatch('notify', variant: 'danger', message: $this->errorMessage);
+
+            $this->dispatch('notify', variant: 'danger', message: $response->message ?? 'Payment initiation failed. Please try again.');
             return null;
         }
 
@@ -72,18 +62,20 @@ new class extends Component {
     {
         $message = $e->getMessage();
 
-        [$this->errorType, $this->errorMessage] = match (true) {
-            str_contains($message, 'already in progress') => ['processing', 'Your checkout is being processed. Please wait...'],
-            str_contains($message, 'out of stock'), str_contains($message, 'units available') => ['inventory', $message],
-            str_contains($message, 'shipping not selected') => ['shipping', 'Please select a shipping method to continue.'],
-            str_contains($message, 'shipping address') => ['address', 'Please add a shipping address to continue.'],
-            str_contains($message, 'cart is empty') => ['empty-cart', 'Your cart is empty.'],
-            str_contains($message, 'minimum order') => ['min-order', $message],
-            str_contains($message, 'payment') => ['gateway', 'Unable to connect to payment service. Please try again.'],
-            default => ['general', 'Something went wrong. Please try again.'],
+        $errorMessage = match (
+            true // ← local variable, not $this->
+        ) {
+            str_contains($message, 'already in progress') => 'Your checkout is being processed. Please wait...',
+            str_contains($message, 'out of stock'), str_contains($message, 'units available') => $message,
+            str_contains($message, 'shipping not selected') => 'Please select a shipping method to continue.',
+            str_contains($message, 'shipping address') => 'Please add a shipping address to continue.',
+            str_contains($message, 'cart is empty') => 'Your cart is empty.',
+            str_contains($message, 'minimum order') => $message,
+            str_contains($message, 'payment') => 'Unable to connect to payment service. Please try again.',
+            default => 'Something went wrong. Please try again.',
         };
 
-        $this->dispatch('notify', variant: 'danger', message: $this->errorMessage);
+        $this->dispatch('notify', variant: 'danger', message: $errorMessage);
     }
 };
 
@@ -193,19 +185,7 @@ new class extends Component {
         </div>
     </div>
 
-    {{-- Pesawise iframe modal --}}
-    <flux:modal name="payment-iframe" class="w-full max-w-2xl p-0">
-        <div x-data="{ url: '' }"
-            x-on:open-payment-iframe.window="url = $event.detail.url; $flux.modal('payment-iframe').show()">
-            <div class="px-4 py-2.5 border-b flex items-center justify-between">
-                <flux:heading>Complete Payment</flux:heading>
-                <flux:modal.close>
-                    <flux:button icon="x-mark" variant="ghost" size="xs" class="cursor-pointer" />
-                </flux:modal.close>
-            </div>
-            <iframe x-bind:src="url" class="w-full h-150 border-0" allow="payment"></iframe>
-        </div>
-    </flux:modal>
+
     {{-- M-Pesa STK waiting screen --}}
     <flux:modal name="stk-waiting" class="max-w-sm">
         <div x-data="stkWaiting()" x-on:stk-push-initiated.window="start($event.detail.checkoutRequestId)"
@@ -270,7 +250,7 @@ new class extends Component {
                         if (this.timeLeft <= 0) {
                             clearInterval(this.interval);
                             // Redirect to order status page — let webhook update the order
-                            window.location.href = '/orders/pending';
+                            window.location.href = '{{ route('customer.orders.index') }}';
                         }
                     }, 1000);
                 },

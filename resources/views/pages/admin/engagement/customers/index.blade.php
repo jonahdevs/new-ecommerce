@@ -75,10 +75,10 @@ new #[Title('Customers')] class extends Component {
     </div>
 
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 mt-6">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800 mt-6">
 
         {{-- Filters --}}
-        <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b ">
+        <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass" placeholder="Search customers..."
                 class="max-w-xs" />
 

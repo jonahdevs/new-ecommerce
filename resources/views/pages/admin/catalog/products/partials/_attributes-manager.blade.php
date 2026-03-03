@@ -3,9 +3,7 @@
 use App\Models\Attribute;
 use App\Models\AttributeValue;
 use App\Models\Product;
-use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
+use Livewire\Attributes\{Computed, On};
 use Livewire\Component;
 
 new class extends Component {
@@ -18,8 +16,6 @@ new class extends Component {
         if ($product?->exists) {
             $this->productId = $product->id;
             $this->loadExistingAttributes($product);
-        } else {
-            $this->selectedAttributes = [];
         }
     }
 
@@ -37,10 +33,20 @@ new class extends Component {
                     'is_visible' => $attr->pivot->is_visible,
                     'is_variation_attribute' => $attr->pivot->is_variation_attribute,
                     'sort_order' => $attr->pivot->sort_order,
-                    'values' => $product->attributes()->where('attributes.id', $attr->id)->first()->pivot->values ?? [],
+                    'values' => json_decode($product->attributes()->where('attributes.id', $attr->id)->first()->pivot->values ?? '[]', true) ?? [],
                 ],
             )
             ->toArray();
+    }
+
+    // -----------------------------------------------
+    // Push state to parent on save
+    // -----------------------------------------------
+
+    #[On('push-state-to-parent')]
+    public function pushState(): void
+    {
+        $this->dispatch('attributes-state-ready', attributes: $this->selectedAttributes);
     }
 
     // -----------------------------------------------
@@ -70,7 +76,7 @@ new class extends Component {
 
         if ($already) {
             $this->dispatch('notify', variant: 'warning', message: 'Attribute already added.');
-            $this->selectedExistingAttribute = null; // reset
+            $this->selectedExistingAttribute = null;
             return;
         }
 
@@ -100,7 +106,7 @@ new class extends Component {
     }
 
     // -----------------------------------------------
-    // Get values for an existing attribute (for choices component)
+    // Get values for existing attribute
     // -----------------------------------------------
 
     public function getProductAttributeValues(int $attributeId): array
@@ -109,7 +115,7 @@ new class extends Component {
     }
 
     // -----------------------------------------------
-    // Dispatch to VariationsManager
+    // Notify VariationsManager when variation attributes change
     // -----------------------------------------------
 
     public function dispatchAttributesUpdated(): void
@@ -120,69 +126,6 @@ new class extends Component {
     }
 
     // -----------------------------------------------
-    // Save (called by parent on product-saved event)
-    // -----------------------------------------------
-
-    #[On('product-saved')]
-    public function save(int $productId): void
-    {
-        $product = Product::findOrFail($productId);
-
-        $syncData = [];
-
-        foreach ($this->selectedAttributes as $index => $attr) {
-            // If new attribute, create it first
-            if ($attr['is_new']) {
-                if (empty($attr['name'])) {
-                    continue;
-                }
-
-                $attribute = Attribute::firstOrCreate(['slug' => Str::slug($attr['name'])], ['name' => $attr['name'], 'is_active' => true]);
-
-                // Create new values from pipe-separated string
-                $valueIds = [];
-                if (!empty($attr['values'])) {
-                    $rawValues = explode('|', $attr['values']);
-                    foreach ($rawValues as $val) {
-                        $val = trim($val);
-                        if (!$val) {
-                            continue;
-                        }
-
-                        $attrValue = AttributeValue::firstOrCreate(['attribute_id' => $attribute->id, 'slug' => Str::slug($val)], ['value' => $val, 'label' => $val, 'slug' => Str::slug($val)]);
-                        $valueIds[] = $attrValue->id;
-                    }
-                }
-            } else {
-                $attribute = Attribute::find($attr['attribute_id']);
-                if (!$attribute) {
-                    continue;
-                }
-                $valueIds = is_array($attr['values']) ? $attr['values'] : [];
-            }
-
-            $syncData[$attribute->id] = [
-                'is_variation_attribute' => $attr['is_variation_attribute'],
-                'is_visible' => $attr['is_visible'],
-                'sort_order' => $index,
-                'values' => json_encode($valueIds),
-            ];
-
-            // Sync product_attribute_values
-            $product->attributeValues()->detach(AttributeValue::where('attribute_id', $attribute->id)->pluck('id'));
-
-            if (!empty($valueIds)) {
-                $product->attributeValues()->attach($valueIds);
-            }
-        }
-
-        $product->attributes()->sync($syncData);
-
-        $this->dispatch('notify', variant: 'success', message: 'Attributes saved.');
-        $this->dispatchAttributesUpdated();
-    }
-
-    // -----------------------------------------------
     // Computed
     // -----------------------------------------------
 
@@ -190,11 +133,6 @@ new class extends Component {
     public function productAttributes()
     {
         return Attribute::where('is_active', true)->orderBy('sort_order')->get();
-    }
-
-    public function render()
-    {
-        return view('pages.admin.catalog.products.partials._attributes-manager');
     }
 };
 ?>
@@ -214,19 +152,20 @@ new class extends Component {
 
     {{-- Toolbar --}}
     <div class="flex items-center gap-3">
-        <flux:button type="button" wire:click="addNewAttribute" icon="plus">
+        <flux:button type="button" wire:click="addNewAttribute" icon="plus" size="sm">
             Add New
         </flux:button>
 
-        <flux:select wire:model.live="selectedExistingAttribute" placeholder="Add existing" class="max-w-fit">
+        <flux:select wire:model.live="selectedExistingAttribute" placeholder="Add existing" class="max-w-fit"
+            size="sm">
             @foreach ($this->productAttributes as $attr)
                 <flux:select.option :value="$attr->id">{{ ucfirst($attr->name) }}</flux:select.option>
             @endforeach
         </flux:select>
 
         @if (!empty($selectedAttributes))
-            <div class="ms-auto flex items-center gap-2 text-sm">
-                <span>{{ count($selectedAttributes) }} attribute(s)</span>
+            <div class="ms-auto flex items-center gap-2 text-xs!">
+                <span class="me-2">{{ count($selectedAttributes) }} attribute(s)</span>
                 (
                 <button type="button" @click="allCollapsed = true"
                     class="text-blue-500 italic cursor-pointer">Expand</button>
@@ -240,12 +179,12 @@ new class extends Component {
 
     {{-- Attribute Rows --}}
     @foreach ($selectedAttributes as $index => $attr)
-        <div class="border p-5 rounded-sm" wire:key="attribute-{{ $index }}" x-data="{ collapsed: {{ $loop->first ? 'true' : 'false' }} }"
+        <flux:card class="p-0" wire:key="attribute-{{ $index }}" x-data="{ collapsed: {{ $loop->first ? 'true' : 'false' }} }"
             @toggle-all-attributes.window="collapsed = $event.detail.collapsed">
 
             {{-- Header --}}
-            <div class="flex items-center gap-4" :class="{ 'border-b pb-1 mb-4': collapsed }">
-                <flux:heading size="lg">
+            <div class="flex items-center gap-4 px-4 py-2" :class="{ 'border-b': collapsed }">
+                <flux:heading>
                     {{ $attr['name'] ? ucfirst($attr['name']) : 'New Attribute' }}
                 </flux:heading>
 
@@ -257,16 +196,19 @@ new class extends Component {
                             empty($attr['name']) &&
                             empty($attr['values'])
                         ))
-                        <button type="button" wire:click="removeSelectedAttribute({{ $index }})"
-                            class="text-red-500 cursor-pointer">Remove</button>
+                        <flux:button type="button" icon="trash" icon-variant="outline" size="xs" variant="ghost"
+                            class="cursor-pointer text-red-500!" tooltip="Delete Attribute"
+                            wire:click="removeSelectedAttribute({{ $index }})" />
                     @endif
-                    <button type="button" @click="collapsed = !collapsed"
-                        class="text-blue-500 cursor-pointer">Edit</button>
+
+                    <flux:button icon="chevron-down" size="xs" variant="ghost"
+                        class="cursor-pointer transition-transform duration-300"
+                        x-bind:class="{ 'rotate-180': collapsed }" @click="collapsed = !collapsed" />
                 </div>
             </div>
 
             {{-- Body --}}
-            <div x-cloak x-show="collapsed" x-collapse class="grid grid-cols-3 gap-5">
+            <div x-cloak x-show="collapsed" x-collapse class="grid grid-cols-3 gap-5 p-5">
                 <div class="col-span-1 space-y-4">
                     @if ($attr['is_new'])
                         <flux:input label="Name" wire:model.blur="selectedAttributes.{{ $index }}.name"
@@ -294,6 +236,6 @@ new class extends Component {
                     @endif
                 </div>
             </div>
-        </div>
+        </flux:card>
     @endforeach
 </div>

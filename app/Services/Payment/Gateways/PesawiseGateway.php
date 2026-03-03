@@ -25,7 +25,7 @@ class PesawiseGateway implements PaymentGateway
     public function __construct(PaymentSettings $settings)
     {
         // Credentials now come from Spatie settings, not config
-        $this->isProduction = $settings->pesawise_mode_production ?? config('services.pesawise_mode_production');
+        $this->isProduction = ($settings->pesawise_env ?: config('services.pesawise.env')) === 'production';
         $this->apiKey = $settings->pesawise_api_key ?? config('services.pesawise.api_key');
         $this->apiSecret = $settings->pesawise_api_secret ?? config('services.pesawise.api_secret');
         $this->balanceId = $settings->pesawise_account_number ?? config('services.pesawise.balance_id_kes');

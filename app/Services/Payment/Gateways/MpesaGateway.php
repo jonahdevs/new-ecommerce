@@ -25,7 +25,7 @@ class MpesaGateway implements PaymentGateway
 
     public function __construct(PaymentSettings $settings)
     {
-        $this->isProduction   = $settings->mpesa_env ?? config('services.mpesa.environment');
+        $this->isProduction   = ($settings->mpesa_env ?: config('services.mpesa.env')) === 'production';
         $this->consumerKey    = $settings->mpesa_consumer_key ?? config('services.mpesa.consumer_key');
         $this->consumerSecret = $settings->mpesa_consumer_secret ?? config('services.mpesa.consumer_secret');
         $this->shortcode      = $settings->mpesa_shortcode ?? config('services.mpesa.shortcode');

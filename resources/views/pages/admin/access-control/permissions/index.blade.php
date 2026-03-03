@@ -49,10 +49,10 @@ new #[Title('Permissions')] class extends Component {
     <flux:subheading>View and filter all permissions across roles</flux:subheading>
 
     <div class="mt-6">
-        <flux:card class="p-0">
+        <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
             {{-- Filters --}}
-            <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
                 <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass"
                     placeholder="Search permissions..." class="max-w-xs" />
 

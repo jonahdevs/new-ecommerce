@@ -1,10 +1,8 @@
 <?php
 
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Models\AttributeValue;
+use App\Models\Product;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -12,6 +10,7 @@ new class extends Component {
     public ?int $productId = null;
     public array $variants = [];
     public array $availableAttributes = [];
+    public array $variantsToDelete = [];
 
     // Bulk action inputs
     public ?float $bulkPrice = null;
@@ -64,6 +63,16 @@ new class extends Component {
     }
 
     // -----------------------------------------------
+    // Push state to parent on save
+    // -----------------------------------------------
+
+    #[On('push-state-to-parent')]
+    public function pushState(): void
+    {
+        $this->dispatch('variants-state-ready', variants: $this->variants, toDelete: $this->variantsToDelete);
+    }
+
+    // -----------------------------------------------
     // Listen for attributes updated from AttributesManager
     // -----------------------------------------------
 
@@ -71,6 +80,26 @@ new class extends Component {
     public function updateAvailableAttributes(array $attributes): void
     {
         $this->availableAttributes = $attributes;
+    }
+
+    // -----------------------------------------------
+    // Deactivate / Reactivate
+    // -----------------------------------------------
+
+    #[On('deactivate-all-variants')]
+    public function deactivateAllVariants(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            $this->variants[$index]['is_active'] = false;
+        }
+    }
+
+    #[On('reactivate-all-variants')]
+    public function reactivateAllVariants(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            $this->variants[$index]['is_active'] = true;
+        }
     }
 
     // -----------------------------------------------
@@ -86,7 +115,6 @@ new class extends Component {
             return;
         }
 
-        // Build value options per attribute
         $attributeValueGroups = [];
 
         foreach ($variationAttributes as $attr) {
@@ -116,24 +144,17 @@ new class extends Component {
             return;
         }
 
-        // Cartesian product of all attribute value groups
         $combinations = $this->cartesian($attributeValueGroups);
-
-        // Get existing hashes to avoid duplicates (merge strategy)
         $existingHashes = collect($this->variants)->pluck('attribute_hash')->toArray();
-
         $newCount = 0;
 
         foreach ($combinations as $combination) {
             $valueIds = collect($combination)->pluck('value_id')->sort()->toArray();
             $hash = md5(implode('-', $valueIds));
 
-            // Skip if this combination already exists
             if (in_array($hash, $existingHashes)) {
                 continue;
             }
-
-            $attributes = collect($combination)->mapWithKeys(fn($c) => [$c['attribute_name'] => $c['value']])->toArray();
 
             $this->variants[] = [
                 'id' => null,
@@ -153,7 +174,7 @@ new class extends Component {
                 'description' => null,
                 'is_active' => true,
                 'is_default' => false,
-                'attributes' => $attributes,
+                'attributes' => collect($combination)->mapWithKeys(fn($c) => [$c['attribute_name'] => $c['value']])->toArray(),
                 'attribute_value_ids' => $valueIds,
                 'attribute_hash' => $hash,
             ];
@@ -195,16 +216,15 @@ new class extends Component {
     }
 
     // -----------------------------------------------
-    // Remove Variation
+    // Remove Variation (queued - deleted on save)
     // -----------------------------------------------
 
     public function removeVariant(int $index): void
     {
         $variant = $this->variants[$index];
 
-        // If saved to DB, delete it
         if (!empty($variant['id'])) {
-            ProductVariant::find($variant['id'])?->delete();
+            $this->variantsToDelete[] = $variant['id'];
         }
 
         array_splice($this->variants, $index, 1);
@@ -212,17 +232,19 @@ new class extends Component {
     }
 
     // -----------------------------------------------
-    // Clear All Variants
+    // Clear All Variants (queues all for deletion)
     // -----------------------------------------------
 
     public function clearAllVariants(): void
     {
-        if ($this->productId) {
-            ProductVariant::where('product_id', $this->productId)->delete();
+        foreach ($this->variants as $variant) {
+            if (!empty($variant['id'])) {
+                $this->variantsToDelete[] = $variant['id'];
+            }
         }
 
         $this->variants = [];
-        $this->dispatch('notify', variant: 'success', message: 'All variations deleted.');
+        $this->dispatch('notify', variant: 'success', message: 'All variations removed. Save product to apply changes.');
     }
 
     // -----------------------------------------------
@@ -303,57 +325,6 @@ new class extends Component {
     }
 
     // -----------------------------------------------
-    // Save (called by parent on product-saved event)
-    // -----------------------------------------------
-
-    #[On('product-saved')]
-    public function save(int $productId): void
-    {
-        $this->productId = $productId;
-
-        foreach ($this->variants as $index => $variant) {
-            $variantData = [
-                'product_id' => $productId,
-                'name' => $variant['name'],
-                'sku' => $variant['sku'] ?: $this->generateSku($productId, $index),
-                'price' => $variant['price'],
-                'sale_price' => $variant['sale_price'],
-                'manage_stock' => $variant['manage_stock'],
-                'stock_quantity' => $variant['stock_quantity'],
-                'stock_status' => $variant['stock_status'],
-                'allow_backorders' => $variant['allow_backorders'],
-                'low_stock_threshold' => $variant['low_stock_threshold'],
-                'weight' => $variant['weight'],
-                'length' => $variant['length'],
-                'width' => $variant['width'],
-                'height' => $variant['height'],
-                'description' => $variant['description'],
-                'is_active' => $variant['is_active'],
-                'is_default' => $variant['is_default'],
-                'sort_order' => $index,
-                'attributes' => $variant['attributes'],
-            ];
-
-            if (!empty($variant['id'])) {
-                // Update existing
-                $savedVariant = ProductVariant::find($variant['id']);
-                $savedVariant?->update($variantData);
-            } else {
-                // Create new
-                $savedVariant = ProductVariant::create($variantData);
-                $this->variants[$index]['id'] = $savedVariant->id;
-            }
-
-            // Sync attribute values
-            if (!empty($variant['attribute_value_ids'])) {
-                $savedVariant->attributeValues()->sync($variant['attribute_value_ids']);
-            }
-        }
-
-        $this->dispatch('notify', variant: 'success', message: 'Variations saved.');
-    }
-
-    // -----------------------------------------------
     // Helpers
     // -----------------------------------------------
 
@@ -373,18 +344,9 @@ new class extends Component {
 
         return $result;
     }
-
-    private function generateSku(int $productId, int $index): string
-    {
-        return strtoupper('VAR-' . $productId . '-' . ($index + 1) . '-' . Str::random(4));
-    }
-
-    public function render()
-    {
-        return view('pages.admin.catalog.products.partials._variations-manager');
-    }
 };
 ?>
+
 
 {{-- Variations Manager --}}
 <div class="space-y-4" x-data="{
@@ -398,17 +360,19 @@ new class extends Component {
     {{-- Toolbar --}}
     <div class="flex gap-2 items-center">
         <div class="flex items-center gap-3">
-            <flux:button type="button" wire:click="generateVariations" icon="sparkles">
+            <flux:button type="button" wire:click="generateVariations" icon="sparkles" class="cursor-pointer"
+                size="sm">
                 Generate Variations
             </flux:button>
 
-            <flux:button type="button" wire:click="addVariant" icon="plus">
+            <flux:button type="button" wire:click="addVariant" icon="plus" class="cursor-pointer" size="sm">
                 Add Manual
             </flux:button>
 
             @if (!empty($variants))
                 <flux:dropdown>
-                    <flux:button icon:trailing="chevron-down">Bulk Actions</flux:button>
+                    <flux:button icon:trailing="chevron-down" class="cursor-pointer" size="sm">Bulk Actions
+                    </flux:button>
                     <flux:menu class="min-w-32">
                         <flux:menu.group heading="Status">
                             <flux:menu.item wire:click="toggleAllVariantsActive">
@@ -454,8 +418,8 @@ new class extends Component {
         </div>
 
         @if (!empty($variants))
-            <div class="ms-auto flex items-center gap-2 text-sm">
-                <span>{{ count($variants) }} variation(s)</span>
+            <div class="ms-auto flex items-center gap-1 text-xs">
+                <span class="me-2">{{ count($variants) }} variation(s)</span>
                 (
                 <button type="button" @click="allCollapsed = true"
                     class="text-blue-500 italic cursor-pointer">Expand</button>
@@ -471,106 +435,110 @@ new class extends Component {
     @if (!empty($variants))
         <div class="space-y-4">
             @foreach ($variants as $index => $variant)
-                <div class="border rounded-lg p-4 shadow-xs"
-                    wire:key="variant-{{ $index }}-{{ $variant['attribute_hash'] ?? $index }}"
-                    x-data="{
-                        collapsed: {{ $loop->first ? 'true' : 'false' }},
-                        readonlyName: @js(!empty($variant['name']))
-                    }" @toggle-all-variants.window="collapsed = $event.detail.collapsed">
+                <flux:card class="p-0">
+                    <div wire:key="variant-{{ $index }}-{{ $variant['attribute_hash'] ?? $index }}"
+                        x-data="{
+                            collapsed: {{ $loop->first ? 'true' : 'false' }},
+                            readonlyName: @js(!empty($variant['name']))
+                        }" @toggle-all-variants.window="collapsed = $event.detail.collapsed">
 
-                    {{-- Variant Header --}}
-                    <div class="flex items-center justify-between" :class="{ 'border-b pb-1 mb-3': collapsed }">
-                        <flux:heading size="lg">
-                            {{ !empty($variant['attributes']) ? implode(' - ', array_values($variant['attributes'])) : 'Manual Variation #' . ($index + 1) }}
-                        </flux:heading>
+                        {{-- Variant Header --}}
+                        <div class="flex items-center justify-between px-3 py-2" :class="{ 'border-b': collapsed }">
+                            <flux:heading>
+                                {{ !empty($variant['attributes']) ? implode(' - ', array_values($variant['attributes'])) : 'Manual Variation #' . ($index + 1) }}
+                            </flux:heading>
 
-                        <div class="flex items-center gap-3 text-sm">
-                            <button type="button" wire:click="removeVariant({{ $index }})"
-                                wire:confirm="Remove this variation?"
-                                class="text-red-500 cursor-pointer">Remove</button>
-                            <button type="button" @click="collapsed = !collapsed"
-                                class="text-blue-500 cursor-pointer">Edit</button>
-                        </div>
-                    </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <flux:button type="button" icon="trash" icon-variant="outline" size="xs"
+                                    variant="ghost" class="cursor-pointer text-red-500!" tooltip="Delete Variation"
+                                    wire:click="removeVariant({{ $index }})" />
 
-                    {{-- Variant Body --}}
-                    <div x-cloak x-show="collapsed" x-collapse class="py-4 space-y-5">
-
-                        {{-- SKU --}}
-                        <div class="grid grid-cols-2 gap-3">
-                            <flux:input wire:model="variants.{{ $index }}.sku" label="SKU"
-                                placeholder="Leave blank to auto-generate" />
-                        </div>
-
-                        {{-- Flags --}}
-                        <div class="flex items-center gap-4 border-y py-3">
-                            <flux:checkbox wire:model="variants.{{ $index }}.is_active" label="Active" />
-                            <flux:checkbox wire:model.live="variants.{{ $index }}.manage_stock"
-                                label="Manage Stock" />
-                            <flux:checkbox wire:model="variants.{{ $index }}.is_default"
-                                label="Default Variation" />
-                        </div>
-
-                        {{-- Variation Name --}}
-                        <flux:input wire:model="variants.{{ $index }}.name" ::readonly="readonlyName"
-                            label="Variation Name">
-                            <x-slot name="iconTrailing">
-                                <flux:button size="sm" variant="subtle" @click="readonlyName = !readonlyName"
-                                    icon="pencil" class="-mr-1" />
-                            </x-slot>
-                        </flux:input>
-
-                        {{-- Pricing --}}
-                        <div class="grid grid-cols-2 gap-3">
-                            <flux:input type="number" step="0.01" wire:model="variants.{{ $index }}.price"
-                                label="Regular Price (KES)" />
-                            <flux:input type="number" step="0.01"
-                                wire:model="variants.{{ $index }}.sale_price" label="Sale Price (KES)" />
-                        </div>
-
-                        {{-- Stock --}}
-                        @if ($variant['manage_stock'])
-                            <div class="grid grid-cols-2 gap-3">
-                                <flux:input type="number" wire:model="variants.{{ $index }}.stock_quantity"
-                                    label="Stock Quantity" min="0" />
-                                <flux:select label="Allow Backorders"
-                                    wire:model="variants.{{ $index }}.allow_backorders">
-                                    <flux:select.option value="0">Do not allow</flux:select.option>
-                                    <flux:select.option value="1">Allow</flux:select.option>
-                                </flux:select>
+                                <flux:button icon="chevron-down" size="xs" variant="ghost"
+                                    class="cursor-pointer transition-transform duration-300"
+                                    x-bind:class="{ 'rotate-180': collapsed }" @click="collapsed = !collapsed" />
                             </div>
-                            <flux:input wire:model="variants.{{ $index }}.low_stock_threshold"
-                                label="Low Stock Threshold" type="number" min="0" />
-                        @else
-                            <flux:select wire:model="variants.{{ $index }}.stock_status" label="Stock Status">
-                                <flux:select.option value="in_stock">In Stock</flux:select.option>
-                                <flux:select.option value="out_of_stock">Out of Stock</flux:select.option>
-                                <flux:select.option value="backorder">Backorder</flux:select.option>
-                            </flux:select>
-                        @endif
-
-                        {{-- Shipping --}}
-                        <div class="grid grid-cols-2 gap-3">
-                            <flux:input label="Weight (kg)" type="number" step="0.01"
-                                wire:model="variants.{{ $index }}.weight" />
-                            <flux:field>
-                                <flux:label>Dimensions (L x W x H)</flux:label>
-                                <flux:input.group>
-                                    <flux:input placeholder="Length"
-                                        wire:model="variants.{{ $index }}.length" />
-                                    <flux:input placeholder="Width"
-                                        wire:model="variants.{{ $index }}.width" />
-                                    <flux:input placeholder="Height"
-                                        wire:model="variants.{{ $index }}.height" />
-                                </flux:input.group>
-                            </flux:field>
                         </div>
 
-                        {{-- Description --}}
-                        <flux:textarea wire:model="variants.{{ $index }}.description" label="Description"
-                            rows="2" />
+                        {{-- Variant Body --}}
+                        <div x-cloak x-show="collapsed" x-collapse class="p-5 space-y-5">
+
+                            {{-- SKU --}}
+                            <div class="grid grid-cols-2 gap-3">
+                                <flux:input wire:model="variants.{{ $index }}.sku" label="SKU"
+                                    placeholder="Leave blank to auto-generate" />
+                            </div>
+
+                            {{-- Flags --}}
+                            <div class="flex items-center gap-4 border-y py-3">
+                                <flux:checkbox wire:model="variants.{{ $index }}.is_active" label="Active" />
+                                <flux:checkbox wire:model.live="variants.{{ $index }}.manage_stock"
+                                    label="Manage Stock" />
+                                <flux:checkbox wire:model="variants.{{ $index }}.is_default"
+                                    label="Default Variation" />
+                            </div>
+
+                            {{-- Variation Name --}}
+                            <flux:input wire:model="variants.{{ $index }}.name" ::readonly="readonlyName"
+                                label="Variation Name">
+                                <x-slot name="iconTrailing">
+                                    <flux:button size="sm" variant="subtle" @click="readonlyName = !readonlyName"
+                                        icon="pencil" class="-mr-1" />
+                                </x-slot>
+                            </flux:input>
+
+                            {{-- Pricing --}}
+                            <div class="grid grid-cols-2 gap-3">
+                                <flux:input type="number" step="0.01"
+                                    wire:model="variants.{{ $index }}.price" label="Regular Price (KES)" />
+                                <flux:input type="number" step="0.01"
+                                    wire:model="variants.{{ $index }}.sale_price" label="Sale Price (KES)" />
+                            </div>
+
+                            {{-- Stock --}}
+                            @if ($variant['manage_stock'])
+                                <div class="grid grid-cols-2 gap-3">
+                                    <flux:input type="number" wire:model="variants.{{ $index }}.stock_quantity"
+                                        label="Stock Quantity" min="0" />
+                                    <flux:select label="Allow Backorders"
+                                        wire:model="variants.{{ $index }}.allow_backorders">
+                                        <flux:select.option value="0">Do not allow</flux:select.option>
+                                        <flux:select.option value="1">Allow</flux:select.option>
+                                    </flux:select>
+                                </div>
+                                <flux:input wire:model="variants.{{ $index }}.low_stock_threshold"
+                                    label="Low Stock Threshold" type="number" min="0" />
+                            @else
+                                <flux:select wire:model="variants.{{ $index }}.stock_status"
+                                    label="Stock Status">
+                                    <flux:select.option value="in_stock">In Stock</flux:select.option>
+                                    <flux:select.option value="out_of_stock">Out of Stock</flux:select.option>
+                                    <flux:select.option value="backorder">Backorder</flux:select.option>
+                                </flux:select>
+                            @endif
+
+                            {{-- Shipping --}}
+                            <div class="grid grid-cols-2 gap-3">
+                                <flux:input label="Weight (kg)" type="number" step="0.01"
+                                    wire:model="variants.{{ $index }}.weight" />
+                                <flux:field>
+                                    <flux:label>Dimensions (L x W x H)</flux:label>
+                                    <flux:input.group>
+                                        <flux:input placeholder="Length"
+                                            wire:model="variants.{{ $index }}.length" />
+                                        <flux:input placeholder="Width"
+                                            wire:model="variants.{{ $index }}.width" />
+                                        <flux:input placeholder="Height"
+                                            wire:model="variants.{{ $index }}.height" />
+                                    </flux:input.group>
+                                </flux:field>
+                            </div>
+
+                            {{-- Description --}}
+                            <flux:textarea wire:model="variants.{{ $index }}.description" label="Description"
+                                rows="2" />
+                        </div>
                     </div>
-                </div>
+                </flux:card>
             @endforeach
         </div>
     @else

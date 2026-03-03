@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment\Gateways;
 
+use App\Enums\OrdersStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Payment\Contracts\PaymentGateway;
@@ -21,6 +22,7 @@ class StripeGateway implements PaymentGateway
     public function __construct(PaymentSettings $settings)
     {
         $secretKey = $settings->stripe_secret_key ?? config('services.stripe.secret_key');
+
 
         $this->stripe = new StripeClient($secretKey);
         $this->webhookSecret = $settings->stripe_webhook_secret ?? '';
@@ -53,7 +55,7 @@ class StripeGateway implements PaymentGateway
                 ],
             ]);
 
-            \Log::info('Stripe PaymentIntent created', [
+            Log::info('Stripe PaymentIntent created', [
                 'order_id'  => $order->id,
                 'intent_id' => $intent->id,
             ]);
@@ -63,7 +65,7 @@ class StripeGateway implements PaymentGateway
                 route('checkout.card-payment', ['order' => $order->reference])
             );
         } catch (\Throwable $e) {
-            \Log::error('Stripe initiation failed', [
+            Log::error('Stripe initiation failed', [
                 'order_id' => $order->id,
                 'error'    => $e->getMessage(),
             ]);
@@ -144,7 +146,10 @@ class StripeGateway implements PaymentGateway
     private function handleCancelled(object $intent): void
     {
         $payment = Payment::where('gateway_order_id', $intent->id)->first();
-        $payment?->update(['status' => 'cancelled']);
-        $payment?->order?->update(['status' => 'cancelled', 'payment_status' => 'cancelled']);
+        $payment?->update(['status' => 'failed']);
+        $payment?->order?->update([
+            'status'         => OrdersStatus::CANCELLED,
+            'payment_status' => 'failed',
+        ]);
     }
 }

@@ -24,7 +24,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
         // If already paid — go straight to confirmation
         if ($orderModel->payment?->status === 'paid') {
-            $this->redirectRoute('orders.confirmation', $orderModel, navigate: true);
+            $this->redirectRoute('customer.orders.confirmation', $orderModel, navigate: true);
             return;
         }
 
@@ -63,7 +63,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function returnUrl(): string
     {
-        return route('orders.confirmation', $this->order);
+        return route('customer.orders.confirmation', $this->order);
     }
 };
 ?>

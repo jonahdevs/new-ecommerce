@@ -222,7 +222,7 @@ new #[Title('Products')] class extends Component {
                         {{-- Product Info --}}
                         <flux:table.cell>
                             <div class="font-medium text-zinc-800 dark:text-white">{{ $product->name }}</div>
-                            <div class="text-xs text-zinc-500">SKU: {{ $product->sku ?? 'N/A' }}</div>
+                            <flux:text class="text-xs">SKU: {{ $product->sku ?? 'N/A' }}</flux:text>
                         </flux:table.cell>
 
                         {{-- Category --}}

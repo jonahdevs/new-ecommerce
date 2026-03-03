@@ -1,6 +1,6 @@
 {{-- Basic Information Section --}}
 <flux:card class="p-0" x-data="{ expanded: true }">
-    <div class="px-3 py-2 flex items-center justify-between" :class="{ 'border-b': expanded }">
+    <div class="px-3 py-2 flex items-center justify-between dark:border-zinc-600" :class="{ 'border-b ': expanded }">
         <flux:heading>Basic Information</flux:heading>
 
         <flux:button icon="chevron-down" size="xs" variant="ghost"

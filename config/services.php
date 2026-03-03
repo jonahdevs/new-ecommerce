@@ -37,7 +37,7 @@ return [
 
     'pesawise' => [
         'api_url' => env('PESAWISE_API_URL', 'https://api.pesawise.xyz/api'),
-        'pesawise_mode_production' => env('PESAWISE_MODE_PRODUCTION'),
+        'env' => env('PESAWISE_ENV'),
         'api_key' => env('PESAWISE_API_KEY'),
         'api_secret' => env('PESAWISE_API_SECRET'),
         'balance_id_kes' => env('PESAWISE_BALANCE_ID_KES', 1102801),
@@ -46,7 +46,7 @@ return [
     ],
 
     'paypal' => [
-        'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'env' => env('PAYPAL_ENV', 'sandbox'),
         'client_id' => env('PAYPAL_MODE') === 'live'
             ? env('PAYPAL_LIVE_CLIENT_ID')
             : env('PAYPAL_SANDBOX_CLIENT_ID'),
@@ -57,7 +57,7 @@ return [
     ],
 
     'mpesa' => [
-        'environment' => env('MPESA_ENV', 'sandbox'), // sandbox or production
+        'env' => env('MPESA_ENV', 'sandbox'), // sandbox or production
         'consumer_key' => env('MPESA_CONSUMER_KEY'),
         'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
         'passkey' => env('MPESA_PASSKEY'),

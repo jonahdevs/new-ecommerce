@@ -278,33 +278,27 @@ class CartService
      */
     public function summary(Cart $cart)
     {
-        if (!$cart) {
-            return [
-                'subtotal' => 0,
-                'discount' => 0,
-            ];
-        } else {
-            $subtotal = $cart->items->reduce(function ($carry, $item) {
-                return $carry + ($item->product->final_price * $item->quantity);
-            }, 0);
 
-            $discount = $cart->items->reduce(function ($carry, $item) {
+        $subtotal = $cart->items->reduce(function ($carry, $item) {
+            return $carry + ($item->product->final_price * $item->quantity);
+        }, 0);
 
-                $price = $item->product->price;
-                $sale = $item->product->sale_price;
+        $discount = $cart->items->reduce(function ($carry, $item) {
 
-                if ($sale && $sale < $price) {
-                    return $carry + (($price - $sale) * $item->quantity);
-                }
+            $price = $item->product->price;
+            $sale = $item->product->sale_price;
 
-                return $carry;
-            }, 0);
+            if ($sale && $sale < $price) {
+                return $carry + (($price - $sale) * $item->quantity);
+            }
 
-            return [
-                'subtotal' => $subtotal,
-                'discount' => $discount,
-            ];
-        }
+            return $carry;
+        }, 0);
+
+        return [
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+        ];
     }
 
     /**

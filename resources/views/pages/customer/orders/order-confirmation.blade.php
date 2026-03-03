@@ -18,7 +18,7 @@ new #[Layout('layouts.guest')] class extends Component {
         // Only the order owner can view this page
         abort_if($order->user_id !== auth()->id(), 403);
 
-        $this->order = $order->load(['items.product', 'payment', 'deliveryOrder.shippingMethod', 'deliveryOrder.pickupStation', 'user']);
+        $this->order = $order->load(['items.product', 'payment', 'deliveryOrder.shippingMethod', 'deliveryOrder.pickupStation', 'deliveryOrder.shippingRate', 'user']);
 
         // Verify Stripe payment if returning from 3DS
         $this->verifyStripeIfNeeded();
@@ -27,7 +27,7 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->sendConfirmationEmailOnce();
     }
 
-    // ── Computed ──────────────────────────────────────────────────────────────
+    //  Computed
 
     #[Computed]
     public function isPaid(): bool
@@ -84,7 +84,7 @@ new #[Layout('layouts.guest')] class extends Component {
         return null;
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
+    //  Private
 
     /**
      * When Stripe redirects back after 3DS, the URL contains
@@ -117,6 +117,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 // Refresh the model
                 $this->order->refresh();
+                unset($this->isPaid);
             }
         }
     }

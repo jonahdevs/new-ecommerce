@@ -46,29 +46,29 @@ new #[Title('Payment Settings')] class extends Component {
     {
         $this->active_gateway = $settings->active_gateway;
 
-        $this->pesawise_mode_production = $settings->pesawise_mode_production;
+        $this->pesawise_mode_production = $settings->pesawise_env == 'production';
         $this->pesawise_api_key = $settings->pesawise_api_key ?? '';
         $this->pesawise_api_secret = $settings->pesawise_api_secret ?? '';
         $this->pesawise_account_number = $settings->pesawise_account_number ?? '';
         $this->pesawise_webhook_secret = $settings->pesawise_webhook_secret ?? '';
 
-        $this->pesapal_mode_production = $settings->pesapal_mode_production;
+        $this->pesapal_mode_production = $settings->pesapal_env == 'production';
         $this->pesapal_consumer_key = $settings->pesapal_consumer_key ?? '';
         $this->pesapal_consumer_secret = $settings->pesapal_consumer_secret ?? '';
         $this->pesapal_webhook_secret = $settings->pesapal_webhook_secret ?? '';
         $this->pesapal_ipn_id = $settings->pesapal_ipn_id ?? '';
 
-        $this->paypal_mode_production = $settings->paypal_mode_production;
+        $this->paypal_mode_production = $settings->paypal_env == 'production';
         $this->paypal_client_id = $settings->paypal_client_id ?? '';
         $this->paypal_client_secret = $settings->paypal_client_secret ?? '';
         $this->paypal_webhook_id = $settings->paypal_webhook_id ?? '';
 
-        $this->stripe_mode_production = $settings->stripe_mode_production;
+        $this->stripe_mode_production = $settings->stripe_env == 'production';
         $this->stripe_public_key = $settings->stripe_public_key ?? '';
         $this->stripe_secret_key = $settings->stripe_secret_key ?? '';
         $this->stripe_webhook_secret = $settings->stripe_webhook_secret ?? '';
 
-        $this->mpesa_mode_production = $settings->mpesa_mode_production;
+        $this->mpesa_mode_production = $settings->mpesa_env == 'production';
         $this->mpesa_consumer_key = $settings->mpesa_consumer_key ?? '';
         $this->mpesa_consumer_secret = $settings->mpesa_consumer_secret ?? '';
         $this->mpesa_shortcode = $settings->mpesa_shortcode ?? '';

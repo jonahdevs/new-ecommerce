@@ -6,11 +6,11 @@ use App\Enums\ProductStatus;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Tag;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 use Illuminate\Support\Str;
+use Spatie\Tags\Tag;
 
 class ProductForm extends Form
 {
@@ -28,7 +28,7 @@ class ProductForm extends Form
 
     public ?string $description = null;
 
-    public string $product_type = 'simple';
+    public string $type = 'simple';
 
     // Tabs
     // General Tab
@@ -130,7 +130,7 @@ class ProductForm extends Form
             'slug' => 'nullable|string|max:255|unique:products,slug,' . $productId,
             'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
-            'product_type' => 'required|in:simple,variable',
+            'type' => 'required|in:simple,variable',
 
             // Pricing
             'price' => 'required|numeric|min:0',
@@ -168,8 +168,8 @@ class ProductForm extends Form
             // Images
             'image' => [
                 !is_null($this->product)
-                ? 'required_without:existing_image'
-                : 'required',
+                    ? 'required_without:existing_image'
+                    : 'required',
                 'nullable',
                 'image',
                 'max:2048'
@@ -249,7 +249,7 @@ class ProductForm extends Form
         $this->short_description = $product->short_description;
         $this->description = $product->description;
 
-        $this->product_type = $product->product_type ?? 'simple';
+        $this->type = $product->type ?? 'simple';
 
         // Fill pricing
         $this->price = $product->price;
@@ -323,37 +323,7 @@ class ProductForm extends Form
         $this->newTagInput = '';
     }
 
-    /**
-     * Add a single tag or attach existing one
-     */
-    private function addOrAttachTag(string $tagName): void
-    {
-        // Normalize the tag name
-        $normalizedName = trim($tagName);
 
-        if (empty($normalizedName)) {
-            return;
-        }
-
-        // Check if tag exists (case-insensitive)
-        $tag = Tag::whereRaw('LOWER(name) = ?', [strtolower($normalizedName)])->first();
-
-        // If tag doesn't exist, create it
-        if (!$tag) {
-            $tag = Tag::create([
-                'name' => $normalizedName,
-                'slug' => Str::slug($normalizedName),
-                'color' => '#3B82F6', // Default blue color
-                'is_active' => true,
-                'sort_order' => 0,
-            ]);
-        }
-
-        // Add to tag_ids if not already present
-        if (!in_array($tag->id, $this->tag_ids)) {
-            $this->tag_ids[] = $tag->id;
-        }
-    }
     /**
      * Remove a tag from the selection
      */
@@ -503,57 +473,12 @@ class ProductForm extends Form
         // Validate the form
         $this->validate();
 
-        $product = Product::create([
-            'name' => $this->name,
-            'model_number' => $this->model_number,
-            'slug' => $this->slug ?: Str::slug($this->name),
-            'short_description' => $this->short_description,
-            'description' => $this->description,
-            'product_type' => $this->product_type,
-            'price' => $this->price,
-            'sale_price' => $this->sale_price,
-            'cost_price' => $this->cost_price,
-            'sku' => $this->sku,
-            'manage_stock' => $this->manage_stock,
-            'stock_quantity' => $this->stock_quantity,
-            'allow_backorder' => $this->allow_backorder,
-            'low_stock_threshold' => $this->low_stock_threshold,
-            'stock_status' => $this->stock_status,
-            'sold_individually' => $this->sold_individually,
-            'weight' => $this->weight,
-            'length' => $this->length,
-            'width' => $this->width,
-            'height' => $this->height,
-            'meta_title' => $this->meta_title,
-            'meta_description' => $this->meta_description,
-            'meta_keywords' => $this->meta_keywords,
-            'canonical_url' => $this->canonical_url,
-            'status' => $this->status,
-            'published_at' => $this->published_at,
-            'is_featured' => $this->is_featured,
-            'brand_id' => $this->brand_id ?: null,
-        ]);
+        $product = Product::create(array_merge(
+            $this->productData(),
+            ['slug' => $this->slug ?: Str::slug($this->name)]
+        ));
 
-        // Sync categories
-        if (!empty($this->category_ids)) {
-            $product->categories()->sync($this->category_ids);
-        }
-
-        // Sync tags
-        if (!empty($this->tag_ids)) {
-            $product->tags()->sync($this->tag_ids);
-        }
-
-        if (!empty($this->selectedUpsells)) {
-            $product->upsells()->sync($this->selectedUpsells);
-        }
-
-        if (!empty($this->selectedCrossSells)) {
-            $product->crossSells()->sync($this->selectedCrossSells);
-        }
-
-        // Handle image upload
-        $this->handleImageUpload($product);
+        $this->syncRelationships($product);
 
         return $product;
     }
@@ -563,55 +488,63 @@ class ProductForm extends Form
      */
     public function update(): void
     {
-        \Log::info('Updating product with data: ' . json_encode($this->all(), JSON_PRETTY_PRINT));
-        // Validate the form
         $this->validate();
 
-        $this->product->update([
-            'name' => $this->name,
-            'model_number' => $this->model_number,
-            'slug' => $this->slug,
-            'short_description' => $this->short_description,
-            'description' => $this->description,
-            'product_type' => $this->product_type,
-            'price' => $this->price,
-            'sale_price' => $this->sale_price,
-            'cost_price' => $this->cost_price,
-            'sku' => $this->sku,
-            'manage_stock' => $this->manage_stock,
-            'stock_quantity' => $this->stock_quantity,
-            'allow_backorder' => $this->allow_backorder,
+        $this->product->update($this->productData());
+
+        $this->syncRelationships($this->product);
+    }
+
+    /**
+     * Shared product data array
+     */
+    private function productData(): array
+    {
+        return [
+            'name'                => $this->name,
+            'model_number'        => $this->model_number,
+            'slug'                => $this->slug ?: Str::slug($this->name),
+            'short_description'   => $this->short_description,
+            'description'         => $this->description,
+            'type'                => $this->type,
+            'price'               => $this->price,
+            'sale_price'          => $this->sale_price,
+            'cost_price'          => $this->cost_price,
+            'sku'                 => $this->sku,
+            'manage_stock'        => $this->manage_stock,
+            'stock_quantity'      => $this->stock_quantity,
+            'allow_backorder'     => $this->allow_backorder,
             'low_stock_threshold' => $this->low_stock_threshold,
-            'stock_status' => $this->stock_status,
-            'sold_individually' => $this->sold_individually,
-            'weight' => $this->weight,
-            'length' => $this->length,
-            'width' => $this->width,
-            'height' => $this->height,
-            'meta_title' => $this->meta_title,
-            'meta_description' => $this->meta_description,
-            'meta_keywords' => $this->meta_keywords,
-            'canonical_url' => $this->canonical_url,
-            'status' => $this->status,
-            'published_at' => $this->published_at,
-            'is_featured' => $this->is_featured,
-            'brand_id' => $this->brand_id ?: null,
-        ]);
+            'stock_status'        => $this->stock_status,
+            'sold_individually'   => $this->sold_individually,
+            'weight'              => $this->weight,
+            'length'              => $this->length,
+            'width'               => $this->width,
+            'height'              => $this->height,
+            'meta_title'          => $this->meta_title,
+            'meta_description'    => $this->meta_description,
+            'meta_keywords'       => $this->meta_keywords,
+            'canonical_url'       => $this->canonical_url,
+            'status'              => $this->status,
+            'published_at'        => $this->published_at,
+            'is_featured'         => $this->is_featured,
+            'brand_id'            => $this->brand_id ?: null,
+        ];
+    }
 
-        // Sync categories
-        $this->product->categories()->sync($this->category_ids);
-
-        // Sync tags
-        $this->product->tags()->sync($this->tag_ids);
-
-        //  Sync upsells
-        $this->product->upsells()->sync($this->selectedUpsells);
-
-        //  Sync cross-sells
-        $this->product->crossSells()->sync($this->selectedCrossSells);
-
-        // Handle image upload
-        $this->handleImageUpload($this->product);
+    /**
+     * Sync all relationships
+     */
+    private function syncRelationships(Product $product): void
+    {
+        $product->categories()->sync($this->category_ids);
+        $product->syncTagsWithType(
+            Tag::whereIn('id', $this->tag_ids)->get(),
+            'badge'
+        );
+        $product->upsells()->sync($this->selectedUpsells);
+        $product->crossSells()->sync($this->selectedCrossSells);
+        $this->handleImageUpload($product);
     }
 
     /**
@@ -683,5 +616,29 @@ class ProductForm extends Form
     {
         unset($this->images[$index]);
         $this->images = array_values($this->images);
+    }
+
+    /**
+     * Add a single tag using Spatie
+     */
+    private function addOrAttachTag(string $tagName): void
+    {
+        $normalizedName = trim($tagName);
+
+        if (empty($normalizedName)) return;
+
+        $tag = Tag::findOrCreate($normalizedName);
+
+        if (!in_array($tag->id, $this->tag_ids)) {
+            $this->tag_ids[] = $tag->id;
+        }
+    }
+
+    /**
+     * Get product ID helper
+     */
+    public function getProductId(): ?int
+    {
+        return $this->product?->id;
     }
 }

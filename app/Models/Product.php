@@ -110,14 +110,7 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
     }
 
-    /**
-     * Get all tags for the product
-     */
-    public function tags(): BelongsToMany
-    {
-        return $this->belongsToMany(Tag::class)
-            ->withTimestamps();
-    }
+
 
     /**
      * Get all attributes for the product

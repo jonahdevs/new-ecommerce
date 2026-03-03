@@ -20,7 +20,7 @@ Route::livewire('/wishlist', 'pages::wishlist')->name('wishlist');
 Route::livewire('/cart', 'pages::cart')->name('cart');
 
 
-Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
+Route::middleware(['auth', 'customer'])->group(function () {
     Route::livewire('/checkout/shipping', 'pages::checkout.shipping')->name('checkout.shipping');
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
     Route::livewire('/checkout/card-payment', 'pages::checkout.card-payment')->name('checkout.card-payment');
