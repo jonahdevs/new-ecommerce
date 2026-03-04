@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\OrdersStatus;
+use App\Enums\PaymentStatus;
 use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Services\Payment\PaymentService;
@@ -18,7 +20,7 @@ new #[Layout('layouts.guest')] class extends Component {
         // Only the order owner can view this page
         abort_if($order->user_id !== auth()->id(), 403);
 
-        $this->order = $order->load(['items.product', 'payment', 'deliveryOrder.shippingMethod', 'deliveryOrder.pickupStation', 'deliveryOrder.shippingRate', 'user']);
+        $this->order = $order->load(['items.product', 'payment', 'user']);
 
         // Verify Stripe payment if returning from 3DS
         $this->verifyStripeIfNeeded();
@@ -32,19 +34,19 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function isPaid(): bool
     {
-        return $this->order->payment?->status === 'paid';
+        return $this->order->payment?->status === PaymentStatus::PAID->value;
     }
 
     #[Computed]
     public function isPending(): bool
     {
-        return in_array($this->order->payment?->status, ['pending', 'processing']);
+        return in_array($this->order->payment?->status, [PaymentStatus::PENDING->value, PaymentStatus::PROCESSING->value]);
     }
 
     #[Computed]
     public function isFailed(): bool
     {
-        return $this->order->payment?->status === 'failed';
+        return $this->order->payment?->status === PaymentStatus::FAILED->value;
     }
 
     #[Computed]
@@ -56,7 +58,7 @@ new #[Layout('layouts.guest')] class extends Component {
             'pesawise' => 'Pesawise',
             'pesapal' => 'Pesapal',
             'paypal' => 'PayPal',
-            'custom' => session('checkout.payment_method') === 'card' ? 'Card' : 'M-Pesa',
+            'custom' => $this->resolveCustomPaymentLabel(),
             default => ucfirst($this->order->payment?->gateway ?? 'Unknown'),
         };
     }
@@ -64,27 +66,23 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function deliveryWindow(): ?string
     {
-        $delivery = $this->order->deliveryOrder;
-
-        if (!$delivery) {
-            return null;
-        }
-
-        $min = $delivery->shippingRate?->estimated_days_min;
-        $max = $delivery->shippingRate?->estimated_days_max;
-
-        if ($min && $max) {
-            return $min === $max ? "{$min} days" : "{$min}–{$max} days";
-        }
-
-        if ($delivery->estimated_delivery_at) {
-            return 'By ' . $delivery->estimated_delivery_at->format('D, M j');
-        }
-
-        return null;
+        // Read from shipping_snapshot — DeliveryOrder not created yet at this stage
+        return $this->order->shipping_snapshot['delivery_window'] ?? null;
     }
 
-    //  Private
+    #[Computed]
+    public function shippingMethod(): ?string
+    {
+        return $this->order->shipping_snapshot['method_name'] ?? null;
+    }
+
+    #[Computed]
+    public function stationName(): ?string
+    {
+        return $this->order->shipping_snapshot['station_name'] ?? null;
+    }
+
+    // Private
 
     /**
      * When Stripe redirects back after 3DS, the URL contains
@@ -105,48 +103,45 @@ new #[Layout('layouts.guest')] class extends Component {
 
             if ($status->isPaid) {
                 $this->order->payment->update([
-                    'status' => 'paid',
+                    'status' => PaymentStatus::PAID->value,
                     'transaction_id' => $status->transactionId,
                     'paid_at' => now(),
                 ]);
 
-                $this->order->update([
-                    'status' => 'confirmed',
-                    'payment_status' => 'paid',
-                ]);
+                // Use transitionTo — records status history
+                $this->order->transitionTo(OrdersStatus::CONFIRMED, notes: 'Payment confirmed via Stripe 3DS redirect', changedByType: 'system');
+                $this->order->update(['payment_status' => PaymentStatus::PAID->value]);
 
-                // Refresh the model
+                // Refresh model + clear computed cache
                 $this->order->refresh();
                 unset($this->isPaid);
+
+                // Clear cart + session if not already cleared by webhook
+                app(\App\Services\CartService::class)->clear(\App\Models\User::find($this->order->user_id));
+                app(\App\Services\CheckoutSession::class)->clear();
             }
         }
     }
 
     /**
      * Send confirmation email only on the first visit.
-     * Uses the payment record to track whether it's been sent.
+     * Uses the payment record meta to track whether it's been sent.
      */
     private function sendConfirmationEmailOnce(): void
     {
-        // Only send if paid and not yet sent
         if (!$this->isPaid) {
             return;
         }
 
         $alreadySent = $this->order->payment?->meta['confirmation_email_sent'] ?? false;
 
-        if ($alreadySent) {
-            return;
-        }
-
-        if (!$this->order->user?->email) {
+        if ($alreadySent || !$this->order->user?->email) {
             return;
         }
 
         try {
             Mail::to($this->order->user->email)->queue(new OrderConfirmationMail($this->order));
 
-            // Mark as sent in payment meta
             $meta = $this->order->payment->meta ?? [];
             $meta['confirmation_email_sent'] = true;
             $meta['confirmation_email_sent_at'] = now()->toISOString();
@@ -160,6 +155,16 @@ new #[Layout('layouts.guest')] class extends Component {
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * For custom gateway, the payment method (card/mpesa) is stored
+     * in payment meta since session is cleared after payment.
+     */
+    private function resolveCustomPaymentLabel(): string
+    {
+        $method = $this->order->payment?->meta['payment_method'] ?? null;
+        return $method === 'card' ? 'Card' : 'M-Pesa';
     }
 };
 ?>
@@ -194,7 +199,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="mt-2 flex items-center gap-2">
                     <flux:badge color="zinc" size="sm">{{ $order->reference }}</flux:badge>
                     <flux:text class="text-xs text-zinc-400">
-                        {{ $order->placed_at?->format('M j, Y · g:i A') }}
+                        {{ $order->created_at->format('M j, Y · g:i A') }}
                     </flux:text>
                 </div>
             </div>
@@ -234,7 +239,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     What happens next
                 </flux:heading>
                 <div class="space-y-2">
-                    @foreach ([['icon' => 'clipboard-document-check', 'text' => 'We\'re preparing your order for dispatch.'], ['icon' => 'truck', 'text' => 'You\'ll receive a notification when your order is on its way.'], ['icon' => 'map-pin', 'text' => $this->deliveryWindow ? 'Estimated delivery: ' . $this->deliveryWindow . '.' : 'Delivery time will be communicated shortly.']] as $step)
+                    @foreach ([['icon' => 'clipboard-document-check', 'text' => "We're preparing your order for dispatch."], ['icon' => 'truck', 'text' => "You'll receive a notification when your order is on its way."], ['icon' => 'map-pin', 'text' => $this->deliveryWindow ? 'Estimated delivery: ' . $this->deliveryWindow . '.' : 'Delivery time will be communicated shortly.']] as $step)
                         <div class="flex items-start gap-2.5">
                             <flux:icon :name="$step['icon']" class="size-4 text-blue-500 shrink-0 mt-0.5" />
                             <flux:text class="text-sm text-blue-700">{{ $step['text'] }}</flux:text>
@@ -255,21 +260,27 @@ new #[Layout('layouts.guest')] class extends Component {
             <div class="divide-y">
                 @foreach ($order->items as $item)
                     <div class="flex items-start gap-3 p-4">
-                        {{-- Product image --}}
+                        {{-- Product image — read from snapshot, fallback to live product --}}
                         <div class="w-14 h-14 rounded border bg-zinc-50 overflow-hidden shrink-0">
-                            @if ($item->product?->image_path)
-                                <img src="{{ $item->product->image_url }}" alt="{{ $item->name }}"
+                            @php $imagePath = $item->product_snapshot['image_path'] ?? $item->product?->image_path; @endphp
+                            @if ($imagePath)
+                                <img src="{{ asset($imagePath) }}"
+                                    alt="{{ $item->product_snapshot['name'] ?? $item->product?->name }}"
                                     class="w-full h-full object-cover" />
                             @else
                                 <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
                             @endif
                         </div>
 
-                        {{-- Details --}}
+                        {{-- Details — read from snapshot --}}
                         <div class="flex-1 min-w-0">
-                            <p class="font-medium text-sm truncate">{{ $item->name }}</p>
-                            @if ($item->sku)
-                                <flux:text class="text-xs text-zinc-400">SKU: {{ $item->sku }}</flux:text>
+                            <p class="font-medium text-sm truncate">
+                                {{ $item->product_snapshot['name'] ?? ($item->product?->name ?? '—') }}
+                            </p>
+                            @if ($item->product_snapshot['sku'] ?? null)
+                                <flux:text class="text-xs text-zinc-400">
+                                    SKU: {{ $item->product_snapshot['sku'] }}
+                                </flux:text>
                             @endif
                             <flux:text class="text-xs text-zinc-500 mt-0.5">
                                 Qty: {{ $item->quantity }}
@@ -314,24 +325,25 @@ new #[Layout('layouts.guest')] class extends Component {
                 </div>
             </div>
 
-            {{-- Shipping method --}}
+            {{-- Shipping method — read from shipping_snapshot --}}
             <div class="bg-white border rounded-lg p-4">
                 <div class="flex items-center gap-1.5 mb-3">
                     <flux:icon.truck class="size-4 text-zinc-400" />
                     <flux:heading level="3" class="text-sm! font-semibold!">Shipping</flux:heading>
                 </div>
-                @if ($order->deliveryOrder)
-                    <p class="font-medium text-sm">
-                        {{ $order->deliveryOrder->shippingMethod?->name }}
-                    </p>
+
+                @if ($this->shippingMethod)
+                    <p class="font-medium text-sm">{{ $this->shippingMethod }}</p>
+
                     @if ($this->deliveryWindow)
                         <flux:text class="text-sm text-zinc-500">
                             Est. {{ $this->deliveryWindow }}
                         </flux:text>
                     @endif
-                    @if ($order->deliveryOrder->pickupStation)
+
+                    @if ($this->stationName)
                         <flux:text class="text-xs text-zinc-400 mt-1">
-                            Pickup: {{ $order->deliveryOrder->pickupStation->name }}
+                            Pickup: {{ $this->stationName }}
                         </flux:text>
                     @endif
                 @else

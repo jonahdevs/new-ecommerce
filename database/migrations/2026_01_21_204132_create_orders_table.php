@@ -24,25 +24,12 @@ return new class extends Migration {
             $table->bigInteger('tax_cents')->default(0);
             $table->bigInteger('total_cents')->default(0);
 
-            // Shipping Management
-            $table->boolean('is_pickup')->default(false);
-            $table->timestamp('pickup_ready_at')->nullable();
-            $table->timestamp('pickup_collected_at')->nullable();
-            $table->date('estimated_delivery_from')->nullable();
-            $table->date('estimated_delivery_to')->nullable();
-            $table->date('actual_delivery_date')->nullable();
-
             $table->json('shipping_address')->nullable();
             $table->json('billing_address')->nullable();
+            $table->json('shipping_snapshot')->nullable();
 
-            $table->timestamp('placed_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
-
-            // Indexes
-            // $table->index('shipping_zone_id');
-            // $table->index('warehouse_id');
-            $table->index('is_pickup');
         });
 
         Schema::create('order_items', function (Blueprint $table) {
@@ -51,14 +38,13 @@ return new class extends Migration {
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
 
-            $table->string('sku')->nullable();
-            $table->string('name');
-            $table->integer('quantity')->unsigned();
-
+            $table->unsignedBigInteger('quantity');
             $table->bigInteger('unit_price_cents');
             $table->bigInteger('unit_tax_cents')->default(0);
             $table->bigInteger('discount_cents')->default(0);
             $table->bigInteger('total_cents');
+
+            $table->json('product_snapshot')->nullable();
 
             $table->timestamps();
         });

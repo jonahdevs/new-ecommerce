@@ -17,7 +17,7 @@ new #[Layout('layouts.customer')] class extends Component {
             ->orders()
             ->whereIn('status', ['pending', 'processing', 'shipped', 'delivered'])
             ->with('items.product')
-            ->latest('placed_at')
+            ->latest()
             ->paginate(5);
     }
 
@@ -29,7 +29,7 @@ new #[Layout('layouts.customer')] class extends Component {
             ->orders()
             ->whereIn('status', ['cancelled', 'returned'])
             ->with('items.product')
-            ->latest('placed_at')
+            ->latest()
             ->paginate(5);
     }
 };

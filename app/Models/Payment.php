@@ -19,6 +19,10 @@ class Payment extends Model
         'payment_method_token',
         'card_brand',
         'card_last4',
+        'gateway_order_id',
+        'payment_url',
+        'paid_at',
+        'expires_at',
         'meta',
     ];
 
@@ -26,7 +30,8 @@ class Payment extends Model
     {
         return [
             'meta' => 'array',
-            'status' => PaymentStatus::class
+            'status' => PaymentStatus::class,
+            'paid_at' => 'datetime',
         ];
     }
 

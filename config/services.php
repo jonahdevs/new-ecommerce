@@ -65,7 +65,8 @@ return [
         'callback_url' => env('MPESA_CALLBACK_URL', env('APP_URL') . '/checkout/mpesa/callback'),
     ],
     'stripe' => [
-        'secret_key' => env('STRIPE_SECRET')
+        'secret_key' => env('STRIPE_SECRET'),
+        'publishable_key' => env('STRIPE_KEY'),
     ],
     'google' => [
         'client_id'     => env('GOOGLE_CLIENT_ID'),
