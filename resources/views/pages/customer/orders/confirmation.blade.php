@@ -181,228 +181,121 @@ new #[Layout('layouts.guest')] class extends Component {
         </flux:breadcrumbs>
     </div>
 
-    <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="container mx-auto px-4 py-12 max-w-2xl">
+        {{-- Print Button --}}
+        <div class="flex justify-end mb-4 print:hidden">
+            <flux:button variant="ghost" onclick="window.print()" icon="printer">Print Receipt</flux:button>
+        </div>
 
-        {{-- ── Status banner ── --}}
-        @if ($this->isPaid)
-            <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <flux:icon.check-circle variant="solid" class="size-9 text-green-500" />
-                </div>
-                <flux:heading level="1" class="text-2xl! font-bold! mb-1">
-                    Order Confirmed!
-                </flux:heading>
-                <flux:text class="text-zinc-500">
-                    Thank you, {{ $order->user?->first_name ?? ($order->shipping_address['first_name'] ?? 'there') }}.
-                    Your order has been placed successfully.
-                </flux:text>
-                <div class="mt-2 flex items-center gap-2">
-                    <flux:badge color="zinc" size="sm">{{ $order->reference }}</flux:badge>
-                    <flux:text class="text-xs text-zinc-400">
-                        {{ $order->created_at->format('M j, Y · g:i A') }}
-                    </flux:text>
-                </div>
-            </div>
-        @elseif ($this->isPending)
-            <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-                    <flux:icon.clock class="size-9 text-amber-500" />
-                </div>
-                <flux:heading level="1" class="text-2xl! font-bold! mb-1">
-                    Payment Pending
-                </flux:heading>
-                <flux:text class="text-zinc-500">
-                    Your order {{ $order->reference }} has been placed. We're waiting for payment confirmation.
-                </flux:text>
-            </div>
-        @elseif ($this->isFailed)
-            <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                    <flux:icon.x-circle variant="solid" class="size-9 text-red-500" />
-                </div>
-                <flux:heading level="1" class="text-2xl! font-bold! mb-1">
-                    Payment Failed
-                </flux:heading>
-                <flux:text class="text-zinc-500 mb-4">
-                    Unfortunately your payment could not be processed. Your order has not been confirmed.
-                </flux:text>
-                <flux:button :href="route('checkout.summary')" wire:navigate variant="primary" class="cursor-pointer">
-                    Try Again
-                </flux:button>
-            </div>
-        @endif
+        {{-- The "Paper" Container --}}
+        <div class="bg-white border border-zinc-200 shadow-sm p-8 print:border-none print:shadow-none">
 
-        {{-- ── What happens next (paid only) ── --}}
-        @if ($this->isPaid)
-            <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
-                <flux:heading level="3" class="text-sm! font-semibold! text-blue-800 mb-3">
-                    What happens next
-                </flux:heading>
-                <div class="space-y-2">
-                    @foreach ([['icon' => 'clipboard-document-check', 'text' => "We're preparing your order for dispatch."], ['icon' => 'truck', 'text' => "You'll receive a notification when your order is on its way."], ['icon' => 'map-pin', 'text' => $this->deliveryWindow ? 'Estimated delivery: ' . $this->deliveryWindow . '.' : 'Delivery time will be communicated shortly.']] as $step)
-                        <div class="flex items-start gap-2.5">
-                            <flux:icon :name="$step['icon']" class="size-4 text-blue-500 shrink-0 mt-0.5" />
-                            <flux:text class="text-sm text-blue-700">{{ $step['text'] }}</flux:text>
-                        </div>
-                    @endforeach
+            {{-- Receipt Header --}}
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <flux:heading level="1" class="text-3xl! font-bold! text-zinc-900 mb-1">Receipt
+                    </flux:heading>
+                    <flux:text class="text-zinc-500">Order #{{ $order->reference }}</flux:text>
                 </div>
-            </div>
-        @endif
-
-        {{-- ── Order items ── --}}
-        <div class="bg-white border rounded-lg mb-4 overflow-hidden">
-            <div class="px-4 py-2.5 border-b">
-                <flux:heading level="3" class="font-medium!">
-                    Order Items ({{ $order->items->count() }})
-                </flux:heading>
+                <div class="text-right">
+                    <img src="{{ asset('logo.png') }}" alt="{{ config('site.site.name') }} Logo"
+                        class="h-8 sm:h-10 lg:h-12 w-auto transition-transform duration-300 hover:scale-105" />
+                </div>
             </div>
 
-            <div class="divide-y">
+            {{-- Status / Date --}}
+            <div class="border-b-2 border-dashed border-zinc-200 pb-6 mb-6">
+                <div class="flex justify-between text-sm text-zinc-600 mb-2">
+                    <span>Date:</span>
+                    <span class="font-medium text-zinc-900">{{ $order->created_at->format('M j, Y') }}</span>
+                </div>
+                <div class="flex justify-between text-sm text-zinc-600">
+                    <span>Status:</span>
+                    <flux:badge color="{{ $this->isPaid ? 'green' : 'amber' }}" size="sm">
+                        {{ ucfirst($order->payment_status) }}</flux:badge>
+                </div>
+            </div>
+
+            {{-- Items Table --}}
+            <div class="space-y-4 mb-8">
+                <div class="grid grid-cols-12 text-xs uppercase tracking-wider text-zinc-400 font-bold mb-2">
+                    <div class="col-span-7">Item</div>
+                    <div class="col-span-2 text-center">Qty</div>
+                    <div class="col-span-3 text-right">Price</div>
+                </div>
+
                 @foreach ($order->items as $item)
-                    <div class="flex items-start gap-3 p-4">
-                        {{-- Product image — read from snapshot, fallback to live product --}}
-                        <div class="w-14 h-14 rounded border bg-zinc-50 overflow-hidden shrink-0">
-                            @php $imagePath = $item->product_snapshot['image_path'] ?? $item->product?->image_path; @endphp
-                            @if ($imagePath)
-                                <img src="{{ asset($imagePath) }}"
-                                    alt="{{ $item->product_snapshot['name'] ?? $item->product?->name }}"
-                                    class="w-full h-full object-cover" />
-                            @else
-                                <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
-                            @endif
+                    <div class="grid grid-cols-12 text-sm items-center">
+                        <div class="col-span-7">
+                            <div class="font-medium text-zinc-800">{{ $item->product_snapshot['name'] ?? 'Product' }}
+                            </div>
+                            <div class="text-xs text-zinc-400">SKU: {{ $item->product_snapshot['sku'] ?? 'N/A' }}
+                            </div>
                         </div>
-
-                        {{-- Details — read from snapshot --}}
-                        <div class="flex-1 min-w-0">
-                            <p class="font-medium text-sm truncate">
-                                {{ $item->product_snapshot['name'] ?? ($item->product?->name ?? '—') }}
-                            </p>
-                            @if ($item->product_snapshot['sku'] ?? null)
-                                <flux:text class="text-xs text-zinc-400">
-                                    SKU: {{ $item->product_snapshot['sku'] }}
-                                </flux:text>
-                            @endif
-                            <flux:text class="text-xs text-zinc-500 mt-0.5">
-                                Qty: {{ $item->quantity }}
-                                × {{ format_currency($item->unit_price_cents / 100) }}
-                            </flux:text>
-                        </div>
-
-                        {{-- Line total --}}
-                        <span class="font-semibold text-sm shrink-0">
-                            {{ format_currency($item->total_cents / 100) }}
-                        </span>
+                        <div class="col-span-2 text-center text-zinc-600">{{ $item->quantity }}</div>
+                        <div class="col-span-3 text-right font-medium text-zinc-900">
+                            {{ format_currency($item->total_cents / 100) }}</div>
                     </div>
                 @endforeach
             </div>
-        </div>
 
-        {{-- ── Two column: address + shipping ── --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-
-            {{-- Delivery address --}}
-            <div class="bg-white border rounded-lg p-4">
-                <div class="flex items-center gap-1.5 mb-3">
-                    <flux:icon.map-pin class="size-4 text-zinc-400" />
-                    <flux:heading level="3" class="text-sm! font-semibold!">Delivering to</flux:heading>
-                </div>
-                <div class="space-y-1">
-                    <p class="font-medium text-sm">
-                        {{ $order->shipping_address['full_name'] ?? '' }}
-                    </p>
-                    <flux:text class="text-sm text-zinc-500">
-                        {{ $order->shipping_address['address'] ?? '' }}
-                    </flux:text>
-                    <flux:text class="text-sm text-zinc-500">
-                        {{ implode(
-                            ', ',
-                            array_filter([$order->shipping_address['area'] ?? null, $order->shipping_address['county'] ?? null]),
-                        ) }}
-                    </flux:text>
-                    <flux:text class="text-xs text-zinc-400">
-                        {{ format_phone($order->shipping_address['phone_number'] ?? '') }}
-                    </flux:text>
-                </div>
-            </div>
-
-            {{-- Shipping method — read from shipping_snapshot --}}
-            <div class="bg-white border rounded-lg p-4">
-                <div class="flex items-center gap-1.5 mb-3">
-                    <flux:icon.truck class="size-4 text-zinc-400" />
-                    <flux:heading level="3" class="text-sm! font-semibold!">Shipping</flux:heading>
-                </div>
-
-                @if ($this->shippingMethod)
-                    <p class="font-medium text-sm">{{ $this->shippingMethod }}</p>
-
-                    @if ($this->deliveryWindow)
-                        <flux:text class="text-sm text-zinc-500">
-                            Est. {{ $this->deliveryWindow }}
-                        </flux:text>
-                    @endif
-
-                    @if ($this->stationName)
-                        <flux:text class="text-xs text-zinc-400 mt-1">
-                            Pickup: {{ $this->stationName }}
-                        </flux:text>
-                    @endif
-                @else
-                    <flux:text class="text-sm text-zinc-400">—</flux:text>
-                @endif
-            </div>
-        </div>
-
-        {{-- ── Payment + order totals ── --}}
-        <div class="bg-white border rounded-lg mb-6 overflow-hidden">
-            <div class="px-4 py-2.5 border-b">
-                <flux:heading level="3" class="font-medium!">Order Summary</flux:heading>
-            </div>
-
-            <div class="p-4 space-y-2">
-                <div class="flex justify-between text-sm">
-                    <flux:text>Subtotal</flux:text>
-                    <span>{{ format_currency($order->subtotal) }}</span>
-                </div>
-
-                @if ($order->discount > 0)
+            {{-- Totals Grid: Pushed to the right --}}
+            <div class="flex justify-end pt-6 border-t border-zinc-100">
+                <div class="w-full sm:w-64 space-y-2">
+                    {{-- Subtotal --}}
                     <div class="flex justify-between text-sm">
-                        <flux:text class="text-green-600">Discount</flux:text>
-                        <span class="text-green-600">− {{ format_currency($order->discount) }}</span>
+                        <flux:text class="text-zinc-500">Subtotal</flux:text>
+                        <flux:text class="font-mono text-zinc-700">{{ format_currency($order->subtotal) }}</flux:text>
                     </div>
-                @endif
 
-                <div class="flex justify-between text-sm">
-                    <flux:text>Shipping</flux:text>
-                    <span>
-                        {{ $order->shipping == 0 ? 'Free' : format_currency($order->shipping) }}
-                    </span>
-                </div>
+                    {{-- Discount --}}
+                    @if ($order->discount > 0)
+                        <div class="flex justify-between text-sm">
+                            <flux:text class="text-green-600">Discount</flux:text>
+                            <flux:text class="font-mono text-green-600">-{{ format_currency($order->discount) }}
+                            </flux:text>
+                        </div>
+                    @endif
 
-                <div class="flex justify-between font-semibold border-t pt-2 mt-2">
-                    <span>Total</span>
-                    <span>{{ format_currency($order->total) }}</span>
+                    {{-- Shipping --}}
+                    <div class="flex justify-between text-sm pb-2">
+                        <flux:text class="text-zinc-500">Shipping</flux:text>
+                        <flux:text class="font-mono text-zinc-700">
+                            {{ $order->shipping == 0 ? 'FREE' : format_currency($order->shipping) }}
+                        </flux:text>
+                    </div>
+
+                    {{-- Final Total with a more distinct separator --}}
+                    <div class="border-t border-dashed border-zinc-300 pt-3 flex justify-between items-baseline">
+                        <flux:heading class="text-base! font-bold text-zinc-900">Total</flux:heading>
+                        <div class="text-right">
+                            <flux:heading class="text-xl! font-mono text-zinc-900">
+                                {{ format_currency($order->total) }}
+                            </flux:heading>
+                            <flux:text class="text-[10px] text-zinc-400 block -mt-1 uppercase">Inclusive of VAT
+                            </flux:text>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- Payment method row --}}
-            <div class="flex items-center justify-between px-4 py-3 border-t bg-zinc-50">
-                <div class="flex items-center gap-1.5">
-                    <flux:icon.credit-card class="size-4 text-zinc-400" />
-                    <flux:text class="text-sm">{{ $this->paymentMethodLabel }}</flux:text>
+            {{-- Footer Details --}}
+            <div class="mt-10 pt-6 border-t border-zinc-100 grid grid-cols-2 gap-8 text-xs text-zinc-500">
+                <div>
+                    <p class="font-bold text-zinc-700 mb-1">Delivering To:</p>
+                    <p>{{ $order->shipping_address['full_name'] }}</p>
+                    <p>{{ $order->shipping_address['address'] }}</p>
                 </div>
-
-                @if ($this->isPaid)
-                    <flux:badge color="green" size="sm" icon="check">Paid</flux:badge>
-                @elseif ($this->isPending)
-                    <flux:badge color="amber" size="sm">Pending</flux:badge>
-                @else
-                    <flux:badge color="red" size="sm">Failed</flux:badge>
-                @endif
+                <div>
+                    <p class="font-bold text-zinc-700 mb-1">Payment Method:</p>
+                    <p>{{ $this->paymentMethodLabel }}</p>
+                    <p>Transaction: {{ $order->payment->transaction_id ?? 'PENDING' }}</p>
+                </div>
             </div>
         </div>
 
-        {{-- ── Actions ── --}}
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        {{-- Actions (Not printed) --}}
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3  print:hidden mt-5">
             <flux:button :href="route('home')" wire:navigate variant="ghost" class="cursor-pointer w-full sm:w-auto">
                 Continue Shopping
             </flux:button>
@@ -413,6 +306,5 @@ new #[Layout('layouts.guest')] class extends Component {
                 View All Orders
             </flux:button>
         </div>
-
     </div>
 </div>

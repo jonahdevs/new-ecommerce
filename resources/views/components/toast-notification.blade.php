@@ -55,14 +55,14 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center  p-4 px-0">
+                        <flux:card class="flex items-center p-4 relative">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.information-circle class="text-sky-500" />
                             </div>
 
                             <flux:separator vertical />
 
-                            <div class="px-3">
+                            <div class="ps-3">
                                 <flux:heading x-text="notification.heading" class="text-sky-500 mb-0.5">Design
                                     Deleted!</flux:heading>
                                 <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
@@ -88,14 +88,14 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center  p-4 px-0">
+                        <flux:card class="flex items-center p-4 relative">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.check-circle class="text-green-500" />
                             </div>
 
                             <flux:separator vertical />
 
-                            <div class="px-3">
+                            <div class="ps-3">
                                 <flux:heading x-text="notification.heading" class="text-green-500 mb-0.5">Design
                                     Deleted!</flux:heading>
                                 <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
@@ -121,14 +121,14 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center  p-4 px-0">
+                        <flux:card class="flex items-center p-4 relative">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.exclamation-circle class="text-amber-500" />
                             </div>
 
                             <flux:separator vertical />
 
-                            <div class="px-3">
+                            <div class="ps-3">
                                 <flux:heading x-text="notification.heading" class="text-amber-500 mb-0.5">Design
                                     Deleted!</flux:heading>
                                 <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
@@ -154,14 +154,14 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center  p-4 px-0">
+                        <flux:card class="flex items-center p-4 relative">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.x-circle class="text-red-500" />
                             </div>
 
                             <flux:separator vertical />
 
-                            <div class="px-3">
+                            <div class="ps-3">
                                 <flux:heading x-text="notification.heading" class="text-red-500 mb-0.5">Design
                                     Deleted!</flux:heading>
                                 <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>

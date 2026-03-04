@@ -61,14 +61,14 @@ new #[Layout('layouts.checkout')] class extends Component {
         app(CheckoutSession::class)->setPaymentMethod($this->paymentMethod);
     }
 
-    public function confirm(): mixed
+    public function confirm()
     {
         // For custom gateway, persist the chosen method
         if ($this->isCustomGateway) {
             app(CheckoutSession::class)->setPaymentMethod($this->paymentMethod);
         }
 
-        return $this->redirectRoute('checkout.summary', navigate: true);
+        $this->redirectRoute('checkout.summary', navigate: true);
     }
 }; ?>
 
@@ -90,7 +90,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     <x-slot:heading>Payment</x-slot:heading>
 
     {{-- 1. Address — confirmed, read-only --}}
-    <div class="border rounded-sm bg-white mb-4">
+    <flux:card class="p-0 mb-4">
         <div class="px-4 py-2 border-b flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
@@ -116,10 +116,10 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
             @endif
         </div>
-    </div>
+    </flux:card>
 
     {{-- 2. Shipping — confirmed, read-only --}}
-    <div class="border rounded-sm bg-white mb-4">
+    <flux:card class="p-0 mb-4">
         <div class="px-4 py-2 border-b flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
@@ -149,12 +149,12 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
             @endif
         </div>
-    </div>
+    </flux:card>
 
-    {{-- 3. Payment method --}}
-    <div class="border rounded-sm bg-white mb-4">
-        <div class="px-4 py-2 border-b">
-            <div class="flex items-center gap-1.5">
+    {{-- 3. Payment Method Section --}}
+    <flux:card class="p-0 mb-4 overflow-hidden">
+        <div class="px-4 py-3 border-b bg-zinc-50/50 dark:bg-white/5">
+            <div class="flex items-center gap-2">
                 <flux:icon.check-circle variant="solid" @class([
                     'size-5',
                     'text-green-500' => $this->isCustomGateway
@@ -163,107 +163,96 @@ new #[Layout('layouts.checkout')] class extends Component {
                     'text-zinc-300' =>
                         $this->isCustomGateway && !in_array($paymentMethod, ['mpesa', 'card']),
                 ]) />
-                <flux:heading level="3" class="font-medium!">Payment Method</flux:heading>
+                <flux:heading level="3" class="font-semibold">Payment Method</flux:heading>
             </div>
         </div>
 
-        <div class="p-5">
+        <div class="p-0">
             @if ($this->isCustomGateway)
-                {{-- Custom gateway — customer chooses M-Pesa or Card --}}
-                <div class="grid grid-cols-2 gap-3">
+                {{-- We use a standard radio group here without the "cards" variant to keep the radios normal size --}}
+                <flux:radio.group wire:model.live="paymentMethod" class="flex flex-col">
 
-                    {{-- M-Pesa --}}
-                    <label @class([
-                        'flex flex-col items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors',
-                        'border-zinc-800 bg-zinc-50 ring-1 ring-zinc-800 dark:border-zinc-300 dark:bg-zinc-800' =>
-                            $paymentMethod === 'mpesa',
-                        'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700' =>
-                            $paymentMethod !== 'mpesa',
-                    ])>
-                        <input type="radio" wire:model.live="paymentMethod" value="mpesa" class="sr-only" />
-                        <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
-                            {{-- Swap this div with your actual M-Pesa SVG logo --}}
-                            <span class="text-green-700 font-bold text-sm">M-Pesa</span>
+                    {{-- M-Pesa Option --}}
+                    <label
+                        class="group flex items-center justify-between p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-800">
+                        <div class="flex items-start gap-4">
+                            {{-- Standard Radio --}}
+                            <div class="flex items-center h-5 mt-1">
+                                <flux:radio value="mpesa" />
+                            </div>
+                            <div>
+                                <flux:label class="font-medium text-zinc-800 dark:text-white cursor-pointer">M-Pesa
+                                </flux:label>
+                                <flux:description>Pay via STK push directly to your phone.</flux:description>
+                            </div>
                         </div>
-                        <div class="text-center">
-                            <p class="font-medium text-sm">M-Pesa</p>
-                            <p class="text-xs text-zinc-500 mt-0.5">Pay via STK push</p>
+
+                        {{-- Right Aligned Logo --}}
+                        <div class="shrink-0 ml-4">
+                            <div
+                                class="w-12 h-12 bg-white dark:bg-zinc-900 rounded-md flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                                <span class="text-[10px] font-black text-green-600 uppercase">M-Pesa</span>
+                            </div>
                         </div>
-                        @if ($paymentMethod === 'mpesa')
-                            <flux:badge color="green" size="sm">Selected</flux:badge>
-                        @endif
                     </label>
 
-                    {{-- Card --}}
-                    <label @class([
-                        'flex flex-col items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors',
-                        'border-zinc-800 bg-zinc-50 ring-1 ring-zinc-800 dark:border-zinc-300 dark:bg-zinc-800' =>
-                            $paymentMethod === 'card',
-                        'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700' =>
-                            $paymentMethod !== 'card',
-                    ])>
-                        <input type="radio" wire:model.live="paymentMethod" value="card" class="sr-only" />
-                        <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
-                            <flux:icon.credit-card class="size-7 text-blue-600" />
+                    {{-- Card Option --}}
+                    <label
+                        class="group flex items-center justify-between p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-800">
+                        <div class="flex items-start gap-4">
+                            {{-- Standard Radio --}}
+                            <div class="flex items-center h-5 mt-1">
+                                <flux:radio value="card" />
+                            </div>
+                            <div>
+                                <flux:label class="font-medium text-zinc-800 dark:text-white cursor-pointer">Credit or
+                                    Debit Card</flux:label>
+                                <flux:description>Visa, Mastercard, or Amex via Stripe.</flux:description>
+                            </div>
                         </div>
-                        <div class="text-center">
-                            <p class="font-medium text-sm">Card</p>
-                            <p class="text-xs text-zinc-500 mt-0.5">Visa, Mastercard, Amex</p>
-                        </div>
-                        @if ($paymentMethod === 'card')
-                            <flux:badge color="blue" size="sm">Selected</flux:badge>
-                        @endif
-                    </label>
-                </div>
 
-                {{-- Context hint --}}
-                <div class="mt-4 p-3 bg-zinc-50 rounded-md border border-zinc-100">
+                        {{-- Right Aligned Logo --}}
+                        <div class="shrink-0 ml-4">
+                            <div
+                                class="w-12 h-12 bg-white dark:bg-zinc-900 rounded-md flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                                <flux:icon.credit-card class="size-6 text-zinc-600 dark:text-zinc-400" />
+                            </div>
+                        </div>
+                    </label>
+
+                </flux:radio.group>
+
+                {{-- Contextual Info Box --}}
+                <div
+                    class="m-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
                     @if ($paymentMethod === 'mpesa')
-                        <div class="flex items-start gap-2">
-                            <flux:icon.device-phone-mobile class="size-4 text-green-600 shrink-0 mt-0.5" />
-                            <flux:text class="text-xs text-zinc-600">
-                                After placing your order, you'll receive an M-Pesa STK push on your registered phone
-                                number.
-                                Enter your PIN to complete payment. The request expires in 60 seconds.
-                            </flux:text>
+                        <div class="flex gap-2">
+                            <flux:icon.information-circle class="size-4 text-green-600 mt-0.5" />
+                            <flux:text size="sm">Enter your PIN on the STK push within 60 seconds.</flux:text>
                         </div>
                     @else
-                        <div class="flex items-start gap-2">
-                            <flux:icon.lock-closed class="size-4 text-blue-600 shrink-0 mt-0.5" />
-                            <flux:text class="text-xs text-zinc-600">
-                                You'll be taken to a secure card payment form powered by Stripe.
-                                Your card details are never stored on our servers.
-                            </flux:text>
+                        <div class="flex gap-2">
+                            <flux:icon.lock-closed class="size-4 text-blue-600 mt-0.5" />
+                            <flux:text size="sm">Securely processed. We never store your card data.</flux:text>
                         </div>
                     @endif
                 </div>
             @else
-                {{-- Single gateway — just show what will be used --}}
-                <div class="flex items-center gap-3 p-3 bg-zinc-50 rounded-md border border-zinc-100">
-                    <flux:icon.credit-card class="size-5 text-zinc-500" />
-                    <div>
-                        <flux:text class="font-medium text-sm capitalize">
-                            {{ $this->activeGateway }}
-                        </flux:text>
-                        <flux:text class="text-xs text-zinc-500">
-                            You'll be redirected to complete payment securely.
-                        </flux:text>
-                    </div>
-                    <flux:icon.check-circle variant="solid" class="size-5 text-green-500 ms-auto" />
+                {{-- Fallback for Single Gateway --}}
+                <div class="p-4 flex items-center justify-between">
+                    <flux:text class="font-medium capitalize">{{ $this->activeGateway }}</flux:text>
+                    <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
                 </div>
             @endif
 
-            {{-- Confirm button --}}
-            <div class="flex justify-end mt-5">
+            {{-- Footer Action --}}
+            <div class="p-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end bg-zinc-50/30">
                 <flux:button wire:click="confirm" variant="primary" class="cursor-pointer">
-                    Continue to Review
-                    <x-slot name="iconTrailing">
-                        <flux:icon.chevron-right class="size-4 ms-2" />
-                    </x-slot>
+                    Confirm Payment Method
                 </flux:button>
             </div>
         </div>
-    </div>
+    </flux:card>
 
     <flux:link :href="route('products')" wire:navigate class="text-xs">
         ← Continue shopping

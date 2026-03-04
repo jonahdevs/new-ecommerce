@@ -58,7 +58,7 @@ new #[Layout('layouts.guest')] class extends Component {
         autoplayDelay: 5000,
         progressCircumference: 2 * Math.PI * 18,
         progressOffset: 0,
-    
+
         init() {
             this.swiper = new Swiper('#heroSwiper', {
                 loop: true,
@@ -282,30 +282,31 @@ new #[Layout('layouts.guest')] class extends Component {
         <img src="{{ asset('images/home/THIN BANNER.png') }}" alt="banner" class="w-full h-auto">
     </section>
 
-    @island('new-arrivals', defer: true)
-        @placeholder
-            {{-- Loading state with matching structure --}}
-            <div class="container mx-auto pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
-                <div class="lg:col-span-1 flex justify-center flex-col text-white px-3 md:px-5 py-4 lg:py-0">
-                    <h4 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-5">New</h4>
+    <div class="container mx-auto px-4">
+        <div class=" pt-4 bg-sheffield-red border rounded-sm grid grid-cols-1 lg:grid-cols-6 gap-4">
+            <div class="lg:col-span-1 flex justify-center flex-col text-white px-3 md:px-5 py-4 lg:py-0">
+                <h4 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-5">New</h4>
 
-                    <p class="text-sm sm:text-base font-medium tracking-wide">Just In! Explore Our Latest Product Arrivals</p>
+                <p class="text-sm sm:text-base font-medium tracking-wide">Just In! Explore Our Latest Product Arrivals
+                </p>
 
-                    <flux:button class="w-fit mt-4">Show All</flux:button>
-                </div>
-
-                <section class="px-3 md:px-5 lg:col-span-5 relative pb-4">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pb-4">
-                        @for ($i = 0; $i < 5; $i++)
-                            <x-product-card-placeholder />
-                        @endfor
-                    </div>
-                </section>
+                <flux:button class="w-fit mt-4">Show All</flux:button>
             </div>
-        @endplaceholder
+            @island('new-arrivals', defer: true)
+                @placeholder
+                    <section class="px-3 md:px-5 lg:col-span-5 relative pb-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pb-4">
+                            @for ($i = 0; $i < 5; $i++)
+                                <x-product-card-placeholder />
+                            @endfor
+                        </div>
+                    </section>
+                @endplaceholder
 
-        @include('pages.home.new-arrivals')
-    @endisland
+                @include('pages.home.new-arrivals')
+            @endisland
+        </div>
+    </div>
 
     <section class="container mx-auto px-4 mt-6">
         <a href="#" class=" block overflow-hidden rounded-sm">
