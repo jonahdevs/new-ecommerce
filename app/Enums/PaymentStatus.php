@@ -7,6 +7,7 @@ enum PaymentStatus: string
     case ABANDONED = 'abandoned';
     case FAILED = 'failed';
     case ONGOING = 'ongoing';
+    case PAID       = 'paid';
     case PENDING = 'pending';
     case PROCESSING = 'processing';
     case QUEUED = 'queued';
@@ -22,13 +23,15 @@ enum PaymentStatus: string
     public function color(): string
     {
         return match ($this) {
-            self::SUCCESS => 'emerald',
-            self::FAILED => 'red',
-            self::ABANDONED => 'zinc',
-            self::PENDING, self::PROCESSING => 'amber',
-            self::ONGOING => 'blue',
-            self::QUEUED => 'purple',
-            self::REVERSED => 'orange',
+            self::PAID, self::SUCCESS => 'emerald',
+            self::FAILED              => 'red',
+            self::ABANDONED           => 'zinc',
+            self::PENDING,
+            self::PROCESSING          => 'amber',
+            self::ONGOING             => 'blue',
+            self::QUEUED              => 'purple',
+            self::REVERSED            => 'orange',
+            self::CANCELLED           => 'rose',
         };
     }
 }

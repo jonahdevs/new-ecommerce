@@ -19,6 +19,8 @@ new #[Layout('layouts.guest')] class extends Component {
             ->with(['payment', 'items.product', 'deliveryOrder.shippingMethod', 'user'])
             ->firstOrFail();
 
+        \Log::info('Order Model: ' . $orderModel);
+
         // Only the owner can access this page
         abort_if($orderModel->user_id !== auth()->id(), 403);
 
@@ -57,7 +59,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function publicKey(): string
     {
-        return app(\App\Settings\PaymentSettings::class)->stripe_public_key ?? '';
+        return app(\App\Settings\PaymentSettings::class)->stripe_public_key ?: config('services.stripe.publishable_key');
     }
 
     #[Computed]
@@ -88,13 +90,13 @@ new #[Layout('layouts.guest')] class extends Component {
 
             {{-- ── Left: Payment form (3 cols) ── --}}
             <div class="lg:col-span-3">
-                <div class="bg-white border rounded-lg overflow-hidden">
+                <flux:card class="p-0">
                     <div class="px-5 py-3.5 border-b flex items-center gap-2">
                         <flux:icon.credit-card class="size-4 text-zinc-400" />
                         <flux:heading level="3" class="font-medium!">Card Details</flux:heading>
                     </div>
 
-                    <div class="p-5" x-data="stripePayment()" x-init="init()">
+                    <div class="p-5" x-data="stripePayment">
 
                         {{-- Error alert --}}
                         <div x-show="errorMessage" x-transition
@@ -176,14 +178,14 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
 
                     </div>
-                </div>
+                </flux:card>
             </div>
 
             {{-- ── Right: Order summary (2 cols) ── --}}
             <div class="lg:col-span-2">
 
                 {{-- Order reference --}}
-                <div class="bg-white border rounded-lg mb-4 overflow-hidden">
+                <flux:card class="p-0">
                     <div class="px-4 py-3 border-b">
                         <flux:heading level="3" class="font-medium!">Order Summary</flux:heading>
                     </div>
@@ -243,7 +245,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             <span>{{ format_currency($this->order->total) }}</span>
                         </div>
                     </div>
-                </div>
+                </flux:card>
 
                 {{-- Delivery info --}}
                 @if ($this->order->deliveryOrder)
@@ -267,126 +269,115 @@ new #[Layout('layouts.guest')] class extends Component {
     </div>
 </div>
 
-{{-- Stripe JS --}}
-<script src="https://js.stripe.com/v3/"></script>
+
+
 
 @script
     <script>
-        function stripePayment() {
-            return {
-                stripe: null,
-                elements: null,
-                cardNumber: null,
-                cardExpiry: null,
-                cardCvc: null,
-                cardholderName: '',
-                loading: false,
-                ready: false,
-                errorMessage: '',
+        Alpine.data('stripePayment', () => ({
+            stripe: null,
+            elements: null,
+            cardNumber: null,
+            cardExpiry: null,
+            cardCvc: null,
+            cardholderName: '',
+            loading: false,
+            ready: false,
+            errorMessage: '',
 
-                init() {
-                    const publicKey = @js($this->publicKey);
-                    const clientSecret = @js($this->clientSecret);
-                    const returnUrl = @js($this->returnUrl);
+            init() {
+                const publicKey = @js($this->publicKey);
+                const clientSecret = @js($this->clientSecret);
+                const returnUrl = @js($this->returnUrl);
 
-                    if (!publicKey || !clientSecret) {
-                        this.errorMessage = 'Payment configuration error. Please contact support.';
-                        return;
-                    }
+                if (!publicKey || !clientSecret) {
+                    this.errorMessage = 'Payment configuration error. Please contact support.';
+                    return;
+                }
 
-                    this.stripe = Stripe(publicKey);
-                    this.elements = this.stripe.elements();
+                this.stripe = Stripe(publicKey);
+                this.elements = this.stripe.elements();
 
-                    // Shared style for all fields
-                    const style = {
-                        base: {
-                            fontSize: '14px',
-                            color: '#18181b',
-                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                            fontSmoothing: 'antialiased',
-                            '::placeholder': {
-                                color: '#a1a1aa'
-                            },
-                            iconColor: '#71717a',
+                const style = {
+                    base: {
+                        fontSize: '14px',
+                        color: '#18181b',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        fontSmoothing: 'antialiased',
+                        '::placeholder': {
+                            color: '#a1a1aa'
                         },
-                        invalid: {
-                            color: '#ef4444',
-                            iconColor: '#ef4444',
-                        },
-                    };
+                        iconColor: '#71717a',
+                    },
+                    invalid: {
+                        color: '#ef4444',
+                        iconColor: '#ef4444',
+                    },
+                };
 
-                    // Mount each element
-                    this.cardNumber = this.elements.create('cardNumber', {
-                        style,
-                        showIcon: true
+                this.cardNumber = this.elements.create('cardNumber', {
+                    style,
+                    showIcon: true
+                });
+                this.cardExpiry = this.elements.create('cardExpiry', {
+                    style
+                });
+                this.cardCvc = this.elements.create('cardCvc', {
+                    style
+                });
+
+                this.cardNumber.mount('#stripe-card-number');
+                this.cardExpiry.mount('#stripe-card-expiry');
+                this.cardCvc.mount('#stripe-card-cvc');
+
+                this.cardNumber.on('ready', () => {
+                    this.ready = true;
+                });
+
+                [this.cardNumber, this.cardExpiry, this.cardCvc].forEach(el => {
+                    el.on('change', (e) => {
+                        this.errorMessage = e.error ? e.error.message : '';
                     });
-                    this.cardExpiry = this.elements.create('cardExpiry', {
-                        style
-                    });
-                    this.cardCvc = this.elements.create('cardCvc', {
-                        style
-                    });
+                });
 
-                    this.cardNumber.mount('#stripe-card-number');
-                    this.cardExpiry.mount('#stripe-card-expiry');
-                    this.cardCvc.mount('#stripe-card-cvc');
+                this._clientSecret = clientSecret;
+                this._returnUrl = returnUrl;
+            },
 
-                    // Track ready state
-                    this.cardNumber.on('ready', () => {
-                        this.ready = true;
-                    });
+            async submitPayment() {
+                if (this.loading) return;
 
-                    // Clear errors on change
-                    [this.cardNumber, this.cardExpiry, this.cardCvc].forEach(el => {
-                        el.on('change', (e) => {
-                            this.errorMessage = e.error ? e.error.message : '';
-                        });
-                    });
+                this.loading = true;
+                this.errorMessage = '';
 
-                    // Store return URL for confirmCardPayment
-                    this._clientSecret = clientSecret;
-                    this._returnUrl = returnUrl;
-                },
-
-                async submitPayment() {
-                    if (this.loading) return;
-
-                    this.loading = true;
-                    this.errorMessage = '';
-
-                    const {
-                        paymentIntent,
-                        error
-                    } = await this.stripe.confirmCardPayment(
-                        this._clientSecret, {
-                            payment_method: {
-                                card: this.cardNumber,
-                                billing_details: {
-                                    name: this.cardholderName || undefined,
-                                },
+                const {
+                    paymentIntent,
+                    error
+                } = await this.stripe.confirmCardPayment(
+                    this._clientSecret, {
+                        payment_method: {
+                            card: this.cardNumber,
+                            billing_details: {
+                                name: this.cardholderName || undefined,
                             },
-                            return_url: this._returnUrl,
-                        }
-                    );
-
-                    if (error) {
-                        // Show error to customer (e.g. insufficient funds)
-                        this.errorMessage = error.message;
-                        this.loading = false;
-                        return;
+                        },
+                        return_url: this._returnUrl,
                     }
+                );
 
-                    if (paymentIntent && paymentIntent.status === 'succeeded') {
-                        // Payment confirmed — go to confirmation page
-                        window.location.href = this._returnUrl;
-                        return;
-                    }
-
-                    // Requires redirect for 3DS — Stripe handles this automatically
-                    // via return_url when confirmCardPayment resolves
+                if (error) {
+                    this.errorMessage = error.message;
                     this.loading = false;
-                },
-            };
-        }
+                    return;
+                }
+
+                if (paymentIntent && paymentIntent.status === 'succeeded') {
+                    window.location.href = this._returnUrl;
+                    return;
+                }
+
+                this.loading = false;
+            },
+        }));
     </script>
 @endscript

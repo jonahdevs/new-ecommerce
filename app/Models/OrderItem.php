@@ -12,19 +12,19 @@ class OrderItem extends Model
         'order_id',
         'product_id',
         'product_variant_id',
-        'sku',
-        'name',
         'quantity',
         'unit_price_cents',
         'unit_tax_cents',
         'discount_cents',
         'total_cents',
+        'product_snapshot'
     ];
 
     protected function casts(): array
     {
         return [
             'quantity' => 'integer',
+            'product_snapshot' => 'array',
         ];
     }
 
@@ -55,6 +55,27 @@ class OrderItem extends Model
     {
         return Attribute::make(
             get: fn() => $this->unit_price_cents / 100,
+        );
+    }
+
+    protected function total(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->total_cents / 100,
+        );
+    }
+
+    protected function unitTax(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->unit_tax_cents / 100,
+        );
+    }
+
+    protected function discount(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->discount_cents / 100,
         );
     }
 }

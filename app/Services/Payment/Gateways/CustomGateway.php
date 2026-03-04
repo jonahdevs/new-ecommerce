@@ -28,6 +28,14 @@ class CustomGateway implements PaymentGateway
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
     {
+        $method = app(CheckoutSession::class)->getPaymentMethod();
+
+        $payment->update([
+            'meta' => array_merge($payment->meta ?? [], [
+                'payment_method' => $method,
+            ]),
+        ]);
+
         return $this->resolveGateway()->initiate($order, $payment);
     }
 

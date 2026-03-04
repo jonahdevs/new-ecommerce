@@ -19,11 +19,11 @@ Route::livewire('compare', 'pages::product-compare')->name('products.compare');
 Route::livewire('/wishlist', 'pages::wishlist')->name('wishlist');
 Route::livewire('/cart', 'pages::cart')->name('cart');
 
+Route::livewire('/checkout/card-payment/{order}', 'pages::checkout.card-payment')->middleware(['auth', 'customer'])->name('checkout.card-payment');
 
 Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
     Route::livewire('/checkout/shipping', 'pages::checkout.shipping')->name('checkout.shipping');
     Route::livewire('/checkout/summary', 'pages::checkout.summary')->name('checkout.summary');
-    Route::livewire('/checkout/card-payment', 'pages::checkout.card-payment')->name('checkout.card-payment');
     Route::livewire('/checkout/payment-methods', 'pages::checkout.payment')->name('checkout.payment-methods');
 
     Route::livewire('customer/address/index', 'pages::customer.address.index')->name('customer.address.index');

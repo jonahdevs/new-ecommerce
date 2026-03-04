@@ -5,7 +5,7 @@ use Spatie\LaravelSettings\Migrations\SettingsMigration;
 return new class extends SettingsMigration {
     public function up(): void
     {
-        $this->migrator->add('payment.active_gateway', 'pesawise');
+        $this->migrator->add('payment.active_gateway', 'custom');
 
         // Pesawise
         $this->migrator->add('payment.pesawise_env', 'sandbox');

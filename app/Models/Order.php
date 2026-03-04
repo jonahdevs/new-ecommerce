@@ -25,31 +25,18 @@ class Order extends Model
         'total_cents',
         'shipping_address',
         'billing_address',
-        'placed_at',
-        'shipping_zone_id',
-        'warehouse_id',
-        'is_pickup',
-        'pickup_ready_at',
-        'pickup_collected_at',
-        'estimated_delivery_from',
-        'estimated_delivery_to',
-        'actual_delivery_date',
+        'shipping_snapshot',
         'expires_at'
     ];
 
     protected function casts(): array
     {
         return [
-            'shipping_address' => 'array',
-            'billing_address' => 'array',
-            'placed_at' => 'datetime',
-            'is_pickup' => 'boolean',
-            'pickup_ready_at' => 'datetime',
-            'pickup_collected_at' => 'datetime',
-            'estimated_delivery_from' => 'date',
-            'estimated_delivery_to' => 'date',
-            'actual_delivery_date' => 'date',
-            'status' => OrdersStatus::class
+            'shipping_address'  => 'array',
+            'billing_address'   => 'array',
+            'shipping_snapshot' => 'array',
+            'expires_at'        => 'datetime',
+            'status'            => OrdersStatus::class,
         ];
     }
 
@@ -132,7 +119,7 @@ class Order extends Model
     // Helper Method
     // ===============================================
 
-    public function transitionTo(OrdersStatus $new): void
+    public function transitionTo(OrdersStatus $new, ?string $notes = null, string $changedByType = 'system'): void
     {
         if (!$this->status->canTransitionTo($new)) {
             throw new \Exception(
@@ -140,6 +127,17 @@ class Order extends Model
             );
         }
 
+        $old = $this->status;
+
         $this->update(['status' => $new]);
+
+        // Auto-record every transition
+        $this->statusHistories()->create([
+            'from_status'        => $old->value,
+            'to_status'          => $new->value,
+            'changed_by_user_id' => auth()->id(),
+            'changed_by_type'    => auth()->check() ? 'user' : $changedByType,
+            'notes'              => $notes,
+        ]);
     }
 }
