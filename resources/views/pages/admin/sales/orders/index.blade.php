@@ -185,37 +185,92 @@ new #[Title('Orders')] class extends Component {
 
     {{-- Stats Row --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <flux:card class="p-4">
-            <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Orders</flux:text>
-            <flux:heading size="xl">{{ number_format($this->stats['total']) }}</flux:heading>
+        <flux:card class="p-4 border-l-4 border-l-blue-500 rounded-l-none!">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Orders</flux:text>
+                    <flux:heading size="xl" class="text-2xl! font-bold!">
+                        {{ number_format($this->stats['total']) }}
+                    </flux:heading>
+                    <flux:text class="text-xs text-zinc-400 mt-1">All time</flux:text>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                    <flux:icon.shopping-bag class="size-5 text-blue-500" />
+                </div>
+            </div>
         </flux:card>
-        <flux:card class="p-4">
-            <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Revenue</flux:text>
-            <flux:heading size="xl">{{ format_currency($this->stats['revenue']) }}</flux:heading>
+
+        <flux:card class="p-4 border-l-4 border-l-emerald-500 rounded-l-none!">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Revenue</flux:text>
+                    <flux:heading size="xl" class="text-2xl! font-bold!">
+                        {{ format_currency($this->stats['revenue']) }}
+                    </flux:heading>
+                    <flux:text class="text-xs text-zinc-400 mt-1">All time</flux:text>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                    <flux:icon.banknotes class="size-5 text-emerald-500" />
+                </div>
+            </div>
         </flux:card>
-        <flux:card class="p-4">
-            <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Orders Today</flux:text>
-            <flux:heading size="xl">{{ number_format($this->stats['today']) }}</flux:heading>
+
+        <flux:card class="p-4 border-l-4 border-l-violet-500 rounded-l-none!">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Orders Today</flux:text>
+                    <flux:heading size="xl" class="text-2xl! font-bold!">
+                        {{ number_format($this->stats['today']) }}
+                    </flux:heading>
+                    <flux:text class="text-xs text-zinc-400 mt-1">{{ now()->format('M j, Y') }}</flux:text>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center shrink-0">
+                    <flux:icon.calendar-days class="size-5 text-violet-500" />
+                </div>
+            </div>
         </flux:card>
-        <flux:card class="p-4 border-l-2 border-amber-400">
-            <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Pending / Processing</flux:text>
-            <flux:heading size="xl">{{ number_format($this->stats['pending']) }}</flux:heading>
+
+        <flux:card class="p-4 border-l-4 border-l-amber-500 rounded-l-none!">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Pending / Processing
+                    </flux:text>
+                    <flux:heading size="xl" class="text-2xl! font-bold!">
+                        {{ number_format($this->stats['pending']) }}
+                    </flux:heading>
+                    <flux:text class="text-xs text-zinc-400 mt-1">Needs attention</flux:text>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                    <flux:icon.clock class="size-5 text-amber-500" />
+                </div>
+            </div>
         </flux:card>
     </div>
 
     {{-- Status Filter Tabs --}}
-    <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+    <div class="flex gap-2 overflow-x-auto pb-1 mb-4">
         @foreach ($this->statusOptions as $status => $label)
-            <flux:button wire:click="$set('statusFilter', '{{ $status }}')"
-                variant="{{ $statusFilter === $status ? 'primary' : 'ghost' }}" size="sm"
-                class="cursor-pointer shrink-0">
+            @php
+                $isActive = $statusFilter === $status;
+                $count = $this->statusCounts[$status] ?? 0;
+            @endphp
+            <button wire:click="$set('statusFilter', '{{ $status }}')" @class([
+                'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap border cursor-pointer',
+                'bg-zinc-900 text-white border-zinc-900' => $isActive,
+                'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-400 hover:text-zinc-700' => !$isActive,
+            ])>
                 {{ $label }}
-                <flux:badge size="sm" :color="$statusFilter === $status ? 'white' : 'zinc'">
-                    {{ $this->statusCounts[$status] ?? 0 }}
-                </flux:badge>
-            </flux:button>
+                <span @class([
+                    'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[1.25rem]',
+                    'bg-white text-zinc-900' => $isActive,
+                    'bg-zinc-100 text-zinc-500' => !$isActive,
+                ])>
+                    {{ $count }}
+                </span>
+            </button>
         @endforeach
     </div>
+
 
     {{-- Filters Row --}}
     <flux:card class="p-0 mt-4">
