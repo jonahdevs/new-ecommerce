@@ -59,9 +59,6 @@
                 <flux:sidebar.item icon="banknotes" wire:navigate :href="route('admin.payments.index')"
                     :current="request()->routeIs('admin.payments.*')">Payments
                 </flux:sidebar.item>
-
-                <flux:sidebar.item icon="arrow-uturn-left" wire:navigate href="#">Returns &
-                    Refunds</flux:sidebar.item>
             </flux:sidebar.group>
 
             <flux:sidebar.spacer class="my-2" />

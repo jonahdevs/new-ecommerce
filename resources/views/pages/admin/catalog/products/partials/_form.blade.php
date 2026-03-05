@@ -115,12 +115,12 @@
 
                     {{-- Attributes --}}
                     <div wire:cloak wire:show="activeTab == 'attributes'">
-                        <livewire:pages::admin.catalog.products.partials._attributes-manager :product="$product ?? null" />
+                        @include('pages.admin.catalog.products.partials._attributes')
                     </div>
 
                     {{-- Variations --}}
                     <div wire:cloak wire:show="activeTab == 'variations'">
-                        <livewire:pages::admin.catalog.products.partials._variations-manager :product="$product ?? null" />
+                        @include('pages.admin.catalog.products.partials._variations')
                     </div>
 
                     @include('pages.admin.catalog.products.partials._advanced')

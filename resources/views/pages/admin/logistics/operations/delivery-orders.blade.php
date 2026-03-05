@@ -292,77 +292,122 @@ new #[Title('Delivery Orders')] class extends Component {
         <flux:breadcrumbs.item>Delivery Orders</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
+    {{-- Header & Bulk Actions --}}
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div class="flex-1">
             <flux:heading size="xl" class="mb-2">Delivery Orders</flux:heading>
-            <flux:subheading>Track and manage all forward deliveries. Use bulk actions to update multiple orders at
-                once.</flux:subheading>
+            <flux:subheading>Track and manage all forward deliveries.</flux:subheading>
         </div>
 
-        {{-- Bulk action bar —shows only when rows are selected --}}
         @if (count($this->selected))
-            <div class="flex items-center gap-3">
-                <span class="text-sm text-zinc-500">{{ count($this->selected) }} selected</span>
-                <flux:select wire:model.live="bulkStatus" placeholder="Set status..." class="w-48">
+            <div class="flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
+                <span class="text-sm font-medium text-zinc-500">{{ count($this->selected) }} selected</span>
+                <flux:select wire:model.live="bulkStatus" placeholder="Update status..." class="w-48" small>
                     <flux:select.option value="picked_up">Picked Up</flux:select.option>
                     <flux:select.option value="in_transit">In Transit</flux:select.option>
                     <flux:select.option value="out_for_delivery">Out for Delivery</flux:select.option>
                     <flux:select.option value="delivered">Delivered</flux:select.option>
                 </flux:select>
-                <flux:button variant="primary" wire:click="$flux.modal('bulk-confirm').show()" :disabled="!$bulkStatus"
-                    class="cursor-pointer">
+                <flux:button variant="primary" size="sm" wire:click="$flux.modal('bulk-confirm').show()"
+                    :disabled="!$bulkStatus">
                     Apply
                 </flux:button>
-                <flux:button variant="ghost" wire:click="$set('selected', []); $set('selectAll', false)"
-                    class="cursor-pointer">
-                    Clear
-                </flux:button>
-            </div>
-        @endif
-    </div>
-
-    {{-- Filters --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <flux:input wire:model.live.debounce.300ms="search" placeholder="Order ID, reference..." icon="magnifying-glass"
-            clearable class="col-span-2 md:col-span-1" />
-
-        <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
-            @foreach ($this->statuses as $status)
-                <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable>
-            @foreach ($this->methods as $method)
-                <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:select wire:model.live="filterZone" placeholder="All Zones" clearable>
-            @foreach ($this->zones as $zone)
-                <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable>
-            @foreach ($this->providers as $provider)
-                <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:input wire:model.live="filterDateFrom" type="date" label="" placeholder="From date" />
-        <flux:input wire:model.live="filterDateTo" type="date" label="" placeholder="To date" />
-
-        @if ($search || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
-            <div class="flex items-end">
-                <flux:button variant="ghost" size="sm" wire:click="clearFilters" class="cursor-pointer">
-                    Clear all filters
+                <flux:button variant="ghost" size="sm" wire:click="$set('selected', []); $set('selectAll', false)">
+                    Cancel
                 </flux:button>
             </div>
         @endif
     </div>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+        <div>
+            <div class="flex flex-col md:flex-row md:justify-between border-b px-5 py-2 gap-3">
+                {{-- 1. Main Search --}}
+                <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by Order, Reference, or ID..."
+                    class="max-w-md" icon="magnifying-glass" clearable />
+
+
+                {{-- 2. The "Big Two" Filters (Status & Method) --}}
+                <div class="flex gap-2">
+                    <flux:select wire:model.live="filterStatus" placeholder="All Statuses" class="w-44" clearable
+                        small>
+                        @foreach ($this->statuses as $status)
+                            <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+
+                    {{-- 3. Everything Else in one "More Filters" Dropdown --}}
+                    <flux:dropdown>
+                        <flux:button icon="adjustments-horizontal" variant="ghost">
+                            Filters
+                            @if ($filterMethod || $filterZone || $filterProvider || $filterDateFrom)
+                                <span class="ml-2 w-2 h-2 rounded-full bg-indigo-500"></span>
+                            @endif
+                        </flux:button>
+
+                        <flux:menu class="min-w-72">
+                            <div class="p-4 space-y-4">
+
+                                <flux:heading size="sm">Advanced Filters</flux:heading>
+
+                                <flux:select wire:model.live="filterMethod" label="Shipping Method"
+                                    placeholder="All Methods" small>
+                                    @foreach ($this->methods as $method)
+                                        <flux:select.option value="{{ $method->id }}">{{ $method->name }}
+                                        </flux:select.option>
+                                    @endforeach
+                                </flux:select>
+
+                                <flux:select wire:model.live="filterZone" label="Shipping Zone" placeholder="All Zones"
+                                    small>
+                                    @foreach ($this->zones as $zone)
+                                        <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}
+                                        </flux:select.option>
+                                    @endforeach
+                                </flux:select>
+
+                                <flux:select wire:model.live="filterProvider" label="Provider"
+                                    placeholder="All Providers" small>
+                                    @foreach ($this->providers as $provider)
+                                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}
+                                        </flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                                <div class="space-y-2">
+                                    <flux:label>Date Range</flux:label>
+                                    <div class="flex items-center gap-2">
+                                        <flux:input wire:model.live="filterDateFrom" type="date" size="sm" />
+                                        <span class="text-zinc-400">-</span>
+                                        <flux:input wire:model.live="filterDateTo" type="date" size="sm" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <flux:menu.separator />
+
+                            <flux:button variant="ghost" size="sm" wire:click="clearFilters"
+                                class="w-full cursor-pointer">
+                                Reset All Filters
+                            </flux:button>
+                        </flux:menu>
+                    </flux:dropdown>
+                </div>
+            </div>
+
+            {{-- 4. Active Filter Tags (Optional but helpful) --}}
+            @if ($filterMethod || $filterZone || $filterProvider || $filterDateFrom)
+                <div class="flex flex-wrap gap-2 animate-in fade-in zoom-in-95 duration-200 px-5 py-2 border-b">
+                    <span
+                        class="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-center mr-1">Active:</span>
+                    @if ($filterMethod)
+                        <flux:badge size="sm" closable wire:click="$set('filterMethod', '')" variant="flat">Method:
+                            {{ $this->methods->find($filterMethod)?->name }}</flux:badge>
+                    @endif
+                    {{-- Add similar badges for Zone, Provider, etc. --}}
+                </div>
+            @endif
+        </div>
+
         <flux:table :paginate="$this->orders">
             <flux:table.columns>
                 {{-- Checkbox column --}}

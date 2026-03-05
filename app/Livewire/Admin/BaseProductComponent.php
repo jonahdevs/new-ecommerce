@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Forms\Admin\ProductForm;
+use App\Models\Attribute;
+use App\Models\AttributeValue;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -10,8 +12,8 @@ use App\Models\Tag;
 use App\Services\Product\ProductAttributeService;
 use App\Services\Product\ProductVariationService;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,16 +29,31 @@ abstract class BaseProductComponent extends Component
     public string $pendingProductType = '';
 
     // -----------------------------------------------
-    // Two-phase save state
+    // Attributes State
     // -----------------------------------------------
 
-    public array $collectedAttributes = [];
-    public array $collectedVariants = [];
-    public array $collectedVariantsToDelete = [];
-    public int $stateCollected = 0;
+    public array $selectedAttributes = [];
+    public ?int $selectedExistingAttribute = null;
 
     // -----------------------------------------------
-    // Entry point — validate then collect state
+    // Variations State
+    // -----------------------------------------------
+
+    public array $variants = [];
+    public array $variantsToDelete = [];
+    public array $availableAttributes = [];
+
+    // Bulk action inputs
+    public ?float $bulkPrice = null;
+    public ?float $bulkSalePrice = null;
+    public ?int $bulkStockQuantity = null;
+    public ?float $bulkWeight = null;
+    public ?float $bulkLength = null;
+    public ?float $bulkWidth = null;
+    public ?float $bulkHeight = null;
+
+    // -----------------------------------------------
+    // Save — clean and simple
     // -----------------------------------------------
 
     public function save(): void
@@ -48,74 +65,370 @@ abstract class BaseProductComponent extends Component
             throw $e;
         }
 
-        // Reset collection counters
-        $this->collectedAttributes = [];
-        $this->collectedVariants = [];
-        $this->collectedVariantsToDelete = [];
-        $this->stateCollected = 0;
-
-        // Ask children to push their state up
-        $this->dispatch('push-state-to-parent');
-    }
-
-    // -----------------------------------------------
-    // Collect state from children
-    // -----------------------------------------------
-
-    #[On('attributes-state-ready')]
-    public function onAttributesReady(array $attributes): void
-    {
-        $this->collectedAttributes = $attributes;
-        $this->stateCollected++;
-        $this->attemptSave();
-    }
-
-    #[On('variants-state-ready')]
-    public function onVariantsReady(array $variants, array $toDelete): void
-    {
-        $this->collectedVariants = $variants;
-        $this->collectedVariantsToDelete = $toDelete;
-        $this->stateCollected++;
-        $this->attemptSave();
-    }
-
-    // -----------------------------------------------
-    // Attempt save once both children have responded
-    // -----------------------------------------------
-
-    private function attemptSave(): void
-    {
-        if ($this->stateCollected < 2) return;
-
         $this->executeSave();
     }
 
-    // -----------------------------------------------
-    // Execute save — implemented by Create/Edit
-    // -----------------------------------------------
-
     abstract protected function executeSave(): void;
-
-    // -----------------------------------------------
-    // Shared save logic using services
-    // -----------------------------------------------
 
     protected function persistProduct(Product $product): void
     {
         app(ProductAttributeService::class)->save(
             $product,
-            $this->collectedAttributes
+            $this->selectedAttributes
         );
 
         app(ProductVariationService::class)->save(
             $product,
-            $this->collectedVariants,
-            $this->collectedVariantsToDelete
+            $this->variants,
+            $this->variantsToDelete
         );
     }
 
     // -----------------------------------------------
-    // Product Type Switching
+    // Load existing data (called in Edit mount)
+    // -----------------------------------------------
+
+    protected function loadProductAttributes(Product $product): void
+    {
+        $this->selectedAttributes = $product
+            ->attributes()
+            ->with('values')
+            ->get()
+            ->map(fn($attr) => [
+                'attribute_id' => $attr->id,
+                'name' => $attr->name,
+                'is_new' => false,
+                'is_visible' => $attr->pivot->is_visible,
+                'is_variation_attribute' => $attr->pivot->is_variation_attribute,
+                'sort_order' => $attr->pivot->sort_order,
+                'values' => json_decode(
+                    $product->attributes()
+                        ->where('attributes.id', $attr->id)
+                        ->first()->pivot->values ?? '[]',
+                    true
+                ) ?? [],
+            ])
+            ->toArray();
+
+        // Sync variation attributes to variations manager
+        $this->syncAvailableAttributes();
+    }
+
+    protected function loadProductVariants(Product $product): void
+    {
+        $this->variants = $product
+            ->variants()
+            ->with('attributeValues.attribute')
+            ->get()
+            ->map(fn($variant) => [
+                'id' => $variant->id,
+                'name' => $variant->name,
+                'sku' => $variant->sku,
+                'price' => $variant->price,
+                'sale_price' => $variant->sale_price,
+                'manage_stock' => $variant->manage_stock,
+                'stock_quantity' => $variant->stock_quantity,
+                'stock_status' => $variant->stock_status,
+                'allow_backorders' => $variant->allow_backorders,
+                'low_stock_threshold' => $variant->low_stock_threshold,
+                'weight' => $variant->weight,
+                'length' => $variant->length,
+                'width' => $variant->width,
+                'height' => $variant->height,
+                'description' => $variant->description,
+                'is_active' => $variant->is_active,
+                'is_default' => $variant->is_default,
+                'attributes' => $variant->attributeValues
+                    ->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])
+                    ->toArray(),
+                'attribute_value_ids' => $variant->attributeValues->pluck('id')->toArray(),
+                'attribute_hash' => md5(implode('-', $variant->attributeValues->pluck('id')->sort()->toArray())),
+            ])
+            ->toArray();
+    }
+
+    // -----------------------------------------------
+    // Attributes Methods
+    // -----------------------------------------------
+
+    public function addNewAttribute(): void
+    {
+        $this->selectedAttributes[] = [
+            'attribute_id' => null,
+            'name' => '',
+            'is_new' => true,
+            'is_visible' => true,
+            'is_variation_attribute' => false,
+            'sort_order' => count($this->selectedAttributes),
+            'values' => '',
+        ];
+    }
+
+    public function updatedSelectedExistingAttribute($attributeId): void
+    {
+        if (!$attributeId)
+            return;
+
+        $already = collect($this->selectedAttributes)
+            ->pluck('attribute_id')
+            ->contains((int) $attributeId);
+
+        if ($already) {
+            $this->dispatch('notify', variant: 'warning', message: 'Attribute already added.');
+            $this->selectedExistingAttribute = null;
+            return;
+        }
+
+        $attribute = Attribute::find($attributeId);
+        if (!$attribute)
+            return;
+
+        $this->selectedAttributes[] = [
+            'attribute_id' => $attribute->id,
+            'name' => $attribute->name,
+            'is_new' => false,
+            'is_visible' => true,
+            'is_variation_attribute' => false,
+            'sort_order' => count($this->selectedAttributes),
+            'values' => [],
+        ];
+
+        $this->selectedExistingAttribute = null;
+        $this->syncAvailableAttributes();
+    }
+
+    public function removeSelectedAttribute(int $index): void
+    {
+        array_splice($this->selectedAttributes, $index, 1);
+        $this->selectedAttributes = array_values($this->selectedAttributes);
+        $this->syncAvailableAttributes();
+    }
+
+    public function updatedSelectedAttributes(): void
+    {
+        $this->syncAvailableAttributes();
+    }
+
+    private function syncAvailableAttributes(): void
+    {
+        $this->availableAttributes = collect($this->selectedAttributes)
+            ->filter(fn($a) => $a['is_variation_attribute'])
+            ->values()
+            ->toArray();
+    }
+
+    public function getProductAttributeValues(int $attributeId): array
+    {
+        return AttributeValue::where('attribute_id', $attributeId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($v) => ['id' => $v->id, 'name' => $v->label ?: $v->value])
+            ->toArray();
+    }
+
+    // -----------------------------------------------
+    // Variations Methods
+    // -----------------------------------------------
+
+    public function generateVariations(): void
+    {
+        $variationAttributes = collect($this->availableAttributes)
+            ->filter(fn($a) => $a['is_variation_attribute'])
+            ->values();
+
+        if ($variationAttributes->isEmpty()) {
+            $this->dispatch('notify', variant: 'warning', message: 'No attributes marked as "Used for variations".');
+            return;
+        }
+
+        $attributeValueGroups = [];
+
+        foreach ($variationAttributes as $attr) {
+            $valueIds = is_array($attr['values']) ? $attr['values'] : [];
+            if (empty($valueIds))
+                continue;
+
+            $values = AttributeValue::whereIn('id', $valueIds)->get();
+            if ($values->isEmpty())
+                continue;
+
+            $attributeValueGroups[] = $values->map(fn($v) => [
+                'attribute_name' => $attr['name'],
+                'value' => $v->value,
+                'value_id' => $v->id,
+            ])->toArray();
+        }
+
+        if (empty($attributeValueGroups)) {
+            $this->dispatch('notify', variant: 'warning', message: 'Please select values for your variation attributes.');
+            return;
+        }
+
+        $combinations = $this->cartesian($attributeValueGroups);
+        $existingHashes = collect($this->variants)->pluck('attribute_hash')->toArray();
+        $newCount = 0;
+
+        foreach ($combinations as $combination) {
+            $valueIds = collect($combination)->pluck('value_id')->sort()->toArray();
+            $hash = md5(implode('-', $valueIds));
+
+            if (in_array($hash, $existingHashes))
+                continue;
+
+            $this->variants[] = [
+                'id' => null,
+                'name' => null,
+                'sku' => '',
+                'price' => null,
+                'sale_price' => null,
+                'manage_stock' => true,
+                'stock_quantity' => 0,
+                'stock_status' => 'in_stock',
+                'allow_backorders' => false,
+                'low_stock_threshold' => null,
+                'weight' => null,
+                'length' => null,
+                'width' => null,
+                'height' => null,
+                'description' => null,
+                'is_active' => true,
+                'is_default' => false,
+                'attributes' => collect($combination)
+                    ->mapWithKeys(fn($c) => [$c['attribute_name'] => $c['value']])
+                    ->toArray(),
+                'attribute_value_ids' => $valueIds,
+                'attribute_hash' => $hash,
+            ];
+
+            $newCount++;
+        }
+
+        $this->dispatch('notify', variant: 'success', message: "{$newCount} new variation(s) generated.");
+    }
+
+    public function addVariant(): void
+    {
+        $this->variants[] = [
+            'id' => null,
+            'name' => null,
+            'sku' => '',
+            'price' => null,
+            'sale_price' => null,
+            'manage_stock' => true,
+            'stock_quantity' => 0,
+            'stock_status' => 'in_stock',
+            'allow_backorders' => false,
+            'low_stock_threshold' => null,
+            'weight' => null,
+            'length' => null,
+            'width' => null,
+            'height' => null,
+            'description' => null,
+            'is_active' => true,
+            'is_default' => false,
+            'attributes' => [],
+            'attribute_value_ids' => [],
+            'attribute_hash' => Str::uuid(),
+        ];
+    }
+
+    public function removeVariant(int $index): void
+    {
+        $variant = $this->variants[$index];
+
+        if (!empty($variant['id'])) {
+            $this->variantsToDelete[] = $variant['id'];
+        }
+
+        array_splice($this->variants, $index, 1);
+        $this->variants = array_values($this->variants);
+    }
+
+    public function clearAllVariants(): void
+    {
+        foreach ($this->variants as $variant) {
+            if (!empty($variant['id'])) {
+                $this->variantsToDelete[] = $variant['id'];
+            }
+        }
+
+        $this->variants = [];
+        $this->dispatch('notify', variant: 'success', message: 'All variations removed. Save to apply.');
+    }
+
+    // -----------------------------------------------
+    // Bulk Actions
+    // -----------------------------------------------
+
+    public function toggleAllVariantsActive(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            $this->variants[$index]['is_active'] = !$variant['is_active'];
+        }
+    }
+
+    public function toggleAllVariantsManageStock(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            $this->variants[$index]['manage_stock'] = !$variant['manage_stock'];
+        }
+    }
+
+    public function setAllVariantsStockStatus(string $status): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            $this->variants[$index]['stock_status'] = $status;
+        }
+    }
+
+    public function applyBulkPricing(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            if ($this->bulkPrice !== null)
+                $this->variants[$index]['price'] = $this->bulkPrice;
+            if ($this->bulkSalePrice !== null)
+                $this->variants[$index]['sale_price'] = $this->bulkSalePrice;
+        }
+
+        $this->bulkPrice = $this->bulkSalePrice = null;
+        $this->dispatch('notify', variant: 'success', message: 'Pricing applied to all variations.');
+        $this->dispatch('close-modal', name: 'bulk-pricing');
+    }
+
+    public function applyBulkStock(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            if ($this->bulkStockQuantity !== null) {
+                $this->variants[$index]['stock_quantity'] = $this->bulkStockQuantity;
+            }
+        }
+
+        $this->bulkStockQuantity = null;
+        $this->dispatch('notify', variant: 'success', message: 'Stock applied to all variations.');
+        $this->dispatch('close-modal', name: 'bulk-stock');
+    }
+
+    public function applyBulkDimensions(): void
+    {
+        foreach ($this->variants as $index => $variant) {
+            if ($this->bulkWeight !== null)
+                $this->variants[$index]['weight'] = $this->bulkWeight;
+            if ($this->bulkLength !== null)
+                $this->variants[$index]['length'] = $this->bulkLength;
+            if ($this->bulkWidth !== null)
+                $this->variants[$index]['width'] = $this->bulkWidth;
+            if ($this->bulkHeight !== null)
+                $this->variants[$index]['height'] = $this->bulkHeight;
+        }
+
+        $this->bulkWeight = $this->bulkLength = $this->bulkWidth = $this->bulkHeight = null;
+        $this->dispatch('notify', variant: 'success', message: 'Dimensions applied to all variations.');
+        $this->dispatch('close-modal', name: 'bulk-dimensions');
+    }
+
+    // -----------------------------------------------
+    // Type Switching
     // -----------------------------------------------
 
     public function updatedFormType(string $value): void
@@ -134,7 +447,9 @@ abstract class BaseProductComponent extends Component
 
         if ($value === 'variable' && $productId) {
             app(ProductVariationService::class)->reactivateAll($productId);
-            $this->dispatch('reactivate-all-variants');
+            foreach ($this->variants as $index => $variant) {
+                $this->variants[$index]['is_active'] = true;
+            }
             $this->dispatch('notify', variant: 'success', message: 'Variations restored.');
         }
     }
@@ -147,10 +462,13 @@ abstract class BaseProductComponent extends Component
             app(ProductVariationService::class)->deactivateAll($productId);
         }
 
+        foreach ($this->variants as $index => $variant) {
+            $this->variants[$index]['is_active'] = false;
+        }
+
         $this->form->type = $this->pendingProductType;
         $this->pendingProductType = '';
         $this->showTypeChangeModal = false;
-        $this->dispatch('deactivate-all-variants');
         $this->dispatch('notify', variant: 'warning', message: 'Switched to Simple. All variations deactivated.');
     }
 
@@ -164,6 +482,12 @@ abstract class BaseProductComponent extends Component
     // -----------------------------------------------
     // Computed Properties
     // -----------------------------------------------
+
+    #[Computed]
+    public function productAttributes()
+    {
+        return Attribute::where('is_active', true)->orderBy('sort_order')->get();
+    }
 
     #[Computed]
     public function products()
@@ -315,8 +639,8 @@ abstract class BaseProductComponent extends Component
 
         foreach ($categories as $category) {
             $result[] = [
-                'id'    => $category->id,
-                'name'  => $category->name,
+                'id' => $category->id,
+                'name' => $category->name,
                 'depth' => $depth,
             ];
 
@@ -326,6 +650,23 @@ abstract class BaseProductComponent extends Component
                     $this->flattenCategories($category->children, $depth + 1)
                 );
             }
+        }
+
+        return $result;
+    }
+
+    private function cartesian(array $arrays): array
+    {
+        $result = [[]];
+
+        foreach ($arrays as $values) {
+            $append = [];
+            foreach ($result as $product) {
+                foreach ($values as $value) {
+                    $append[] = array_merge($product, [$value]);
+                }
+            }
+            $result = $append;
         }
 
         return $result;

@@ -180,6 +180,7 @@ new #[Title('PUS Tracker')] class extends Component {
             <p class="text-2xl font-bold text-red-600">{{ $this->stats['overdue'] }}</p>
         </flux:card>
 
+
         <flux:card
             class="p-4 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors border-orange-100 dark:border-orange-900"
             wire:click="$set('filterUrgency', 'today')">
