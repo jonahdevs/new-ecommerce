@@ -89,7 +89,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     <x-slot:heading>Edit Address</x-slot:heading>
 
-    <div class="bg-white rounded-sm border mb-4">
+    <flux:card class="p-0 mb-4">
         <div class="px-3 py-2 border-b flex items-center gap-1">
             <flux:icon.check-circle variant="solid" class="size-5 text-zinc-500" />
             <flux:heading level="3">Customer Address</flux:heading>
@@ -110,14 +110,22 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </flux:button>
             </div>
         </form>
-    </div>
+    </flux:card>
 
-    <div class="bg-white opacity-70 rounded-sm border mb-4">
+    <flux:card class="p-0 mb-4">
         <div class="px-3 py-2 flex items-center gap-1">
             <flux:icon.check-circle variant="solid" class="size-5 text-zinc-600" />
             <flux:heading level="3">Delivery Details</flux:heading>
         </div>
-    </div>
+    </flux:card>
+
+
+    <flux:card class="opacity-70 p-0  mb-4">
+        <div class="px-3 py-2 flex items-center gap-1">
+            <flux:icon.check-circle variant="solid" class="size-5 text-zinc-600" />
+            <flux:heading level="3">Payment Methods</flux:heading>
+        </div>
+    </flux:card>
 
     <flux:link :href="route('products')" wire:navigate class="text-xs">Go back & continue shopping
     </flux:link>

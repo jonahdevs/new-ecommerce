@@ -20,6 +20,7 @@ Route::livewire('/wishlist', 'pages::wishlist')->name('wishlist');
 Route::livewire('/cart', 'pages::cart')->name('cart');
 
 Route::livewire('/checkout/card-payment/{order}', 'pages::checkout.card-payment')->middleware(['auth', 'customer'])->name('checkout.card-payment');
+Route::livewire('/checkout/pay/{order}', 'pages::checkout.pay')->middleware(['auth', 'customer'])->name('checkout.pay');
 
 Route::middleware(['auth', 'cart_not_empty', 'customer'])->group(function () {
     Route::livewire('/checkout/shipping', 'pages::checkout.shipping')->name('checkout.shipping');
@@ -49,10 +50,10 @@ Route::prefix('webhooks')->name('payment.webhook.')->withoutMiddleware([\App\Htt
 Route::middleware(['auth', 'customer', 'verified'])->name('customer')->group(function () {
     Route::livewire('account', 'pages::customer.account')->name('.account');
 
-    Route::livewire('orders/{order}/confirmation', 'pages::customer.orders.confirmation')->name('.orders.confirmation');
     Route::livewire('orders', 'pages::customer.orders.index')->name('.orders.index');
-    Route::livewire('orders/{order}', 'pages::customer.orders.show')->name('.orders.show');
+    Route::livewire('orders/{order}/confirmation', 'pages::customer.orders.confirmation')->name('.orders.confirmation');
     Route::livewire('orders/{order}/tracking', 'pages::customer.orders.tracking')->name('.orders.tracking');
+    Route::livewire('orders/{order}', 'pages::customer.orders.show')->name('.orders.show');
 
     Route::prefix('address-book')->name('.address-book')->group(function () {
         Route::livewire('/', 'pages::customer.address-book.index')->name('.index');

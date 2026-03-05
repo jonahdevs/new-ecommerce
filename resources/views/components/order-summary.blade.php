@@ -2,7 +2,7 @@
 
 use App\Services\OrderSummaryService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
-use Livewire\Attributes\Computed;
+use Livewire\Attributes\{Computed, On};
 use Livewire\Component;
 
 new class extends Component {
@@ -13,6 +13,12 @@ new class extends Component {
     public function summary(): array
     {
         return app(OrderSummaryService::class)->summary();
+    }
+
+    #[Computed]
+    public function cartItems()
+    {
+        return app(\App\Services\CartService::class)->getCart()->items()->with('product')->get();
     }
 
     public function completeOrder(): mixed
@@ -77,9 +83,17 @@ new class extends Component {
 
         $this->dispatch('notify', variant: 'danger', message: $errorMessage);
     }
+
+    #[On('shipping-updated')]
+    public function refreshSummary(): void
+    {
+        unset($this->summary);
+    }
 };
 
 ?>
+
+
 
 <flux:card class="p-0 sticky top-44">
 
@@ -88,79 +102,77 @@ new class extends Component {
         <flux:heading>Order Summary</flux:heading>
     </div>
 
-    {{-- Line items --}}
-    <div class="p-4 flex flex-col gap-3">
+    {{-- Items --}}
+    <div class="divide-y max-h-52 overflow-y-auto">
+        @foreach ($this->cartItems as $item)
+            <div class="flex items-center gap-2.5 px-4 py-3">
+                <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
+                    @if ($item->product?->image_path)
+                        <img src="{{ asset($item->product->image_path) }}" alt="{{ $item->product->name }}"
+                            class="w-full h-full object-cover" />
+                    @else
+                        <flux:icon.photo class="w-full h-full p-1.5 text-zinc-300" />
+                    @endif
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium truncate">{{ $item->product->name }}</p>
+                    <p class="text-xs text-zinc-400">× {{ $item->quantity }}</p>
+                </div>
+                <span class="text-xs font-semibold shrink-0">
+                    {{ format_currency($item->product->final_price * $item->quantity) }}
+                </span>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Totals --}}
+    <div class="px-4 py-3 border-t space-y-1.5">
 
         {{-- Subtotal --}}
-        <div class="flex items-center justify-between">
-            <flux:text class="flex items-center gap-1.5">
-                <flux:icon.receipt class="size-4 shrink-0" />
+        <div class="flex justify-between text-sm text-zinc-500">
+            <span class="flex items-center gap-1.5">
+                <flux:icon.receipt class="size-3.5 shrink-0" />
                 Subtotal
-            </flux:text>
-            <flux:heading>{{ format_currency($this->summary['subtotal']) }}</flux:heading>
+            </span>
+            <span>{{ format_currency($this->summary['subtotal']) }}</span>
         </div>
 
-        {{-- Discount — only show if non-zero --}}
+        {{-- Discount --}}
         @if ($this->summary['discount'] > 0)
-            <div class="flex items-center justify-between">
-                <flux:text class="flex items-center gap-1.5 text-green-600">
-                    <flux:icon.badge-percent class="size-4 shrink-0" />
+            <div class="flex justify-between text-sm text-green-600">
+                <span class="flex items-center gap-1.5">
+                    <flux:icon.badge-percent class="size-3.5 shrink-0" />
                     Discount
-                </flux:text>
-                <flux:heading class="text-green-600">
-                    − {{ format_currency($this->summary['discount']) }}
-                </flux:heading>
+                </span>
+                <span>− {{ format_currency($this->summary['discount']) }}</span>
             </div>
         @endif
 
         {{-- Shipping --}}
-        <div class="flex items-center justify-between">
-            <flux:text class="flex items-center gap-1.5">
-                <flux:icon.truck class="size-4 shrink-0" />
-                <span>
-                    Shipping
-                    @if ($this->summary['shipping_method'])
-                        <span class="text-zinc-400 text-xs">· {{ $this->summary['shipping_method'] }}</span>
-                    @endif
-                </span>
-            </flux:text>
+        <div class="flex justify-between text-sm text-zinc-500">
+            <span class="flex items-center gap-1.5">
+                <flux:icon.truck class="size-3.5 shrink-0" />
+                Shipping
+            </span>
 
             @if (!$this->summary['shipping_selected'])
-                <flux:link :href="route('checkout.shipping')" wire:navigate class="text-xs text-amber-500">
+                <flux:link :href="route('checkout.shipping')" wire:navigate class="text-amber-500">
                     Select
-                    <flux:icon.arrow-long-right class="size-4 inline-block ms-1" />
+                    <flux:icon.arrow-long-right class="size-3.5 inline-block ms-0.5" />
                 </flux:link>
             @elseif ($this->summary['shipping_cost'] == 0)
-                <flux:heading class="text-green-600">Free</flux:heading>
+                <span class="text-green-600 font-medium">Free</span>
             @else
-                <flux:heading>{{ format_currency($this->summary['shipping_cost']) }}</flux:heading>
+                <span>{{ format_currency($this->summary['shipping_cost']) }}</span>
             @endif
         </div>
 
-        {{-- PUS station --}}
-        @if ($this->summary['station_name'])
-            <flux:text class="text-xs text-zinc-400 -mt-2 pl-6">
-                Pickup: {{ $this->summary['station_name'] }}
-            </flux:text>
-        @endif
-
-        {{-- Delivery window --}}
-        @if ($this->summary['shipping_window'])
-            <flux:text class="text-xs text-zinc-400 -mt-2 pl-6">
-                Est. {{ $this->summary['shipping_window'] }}
-            </flux:text>
-        @endif
-
+        {{-- Total --}}
+        <div class="flex justify-between font-semibold text-sm border-t pt-2 mt-1">
+            <span>Total</span>
+            <span>{{ format_currency($this->summary['total']) }}</span>
+        </div>
     </div>
-
-    {{-- Total --}}
-    <div class="flex items-center justify-between border-t px-4 py-3">
-        <flux:text class="font-semibold text-base">Total</flux:text>
-        <flux:heading class="font-semibold text-lg">
-            {{ format_currency($this->summary['total']) }}
-        </flux:heading>
-    </div>
-
 
     {{-- Place order button --}}
     <div class="p-3 border-t">
@@ -184,7 +196,6 @@ new class extends Component {
             <span>Secure checkout</span>
         </div>
     </div>
-
 
     {{-- M-Pesa STK waiting screen --}}
     <flux:modal name="stk-waiting" class="max-w-sm">
@@ -215,6 +226,7 @@ new class extends Component {
             </div>
         </div>
     </flux:modal>
+
 </flux:card>
 
 

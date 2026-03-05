@@ -1,151 +1,261 @@
 <?php
 
-use Livewire\Component;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
-use Livewire\Attributes\{Layout, Computed, Title};
+use Livewire\Attributes\{Computed, Layout, Title};
+use Livewire\Component;
 
 new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Component {
     public Order $order;
 
-    public function mount(Order $order)
+    public function mount(Order $order): void
     {
-        $this->order = $order->loadCount('items');
+        $this->order = $order->load(['items.product', 'payment'])->loadCount('items');
     }
 };
 ?>
 
 <div>
     <flux:card class="rounded-md p-0">
+
+        {{-- Header --}}
         <div class="flex items-center gap-3 px-3 py-2 border-b">
             <flux:button size="xs" icon="arrow-long-left" variant="ghost" class="cursor-pointer"
-                :href="route('customer.orders.index')" wire:navigate></flux:button>
-
+                :href="route('customer.orders.index')" wire:navigate />
             <flux:heading size="lg">Order Details</flux:heading>
         </div>
 
         <section class="p-5">
 
+            {{-- Order meta --}}
             <div class="space-y-1">
                 <flux:heading>Order n° {{ $order->reference }}</flux:heading>
-                <flux:text>{{ $order->items_count }} {{ Str::plural('item', $order->items_count) }}</flux:text>
+                <flux:text>
+                    {{ $order->items_count }} {{ Str::plural('item', $order->items_count) }}
+                </flux:text>
                 <flux:text>Placed on {{ $order->created_at->format('M j, Y') }}</flux:text>
                 <flux:heading>{{ format_currency($order->total) }}</flux:heading>
             </div>
 
             <flux:separator class="my-5" />
 
-            {{-- Items Section --}}
-            <div>
-                <flux:heading class="text-lg" class="mb-4">Items in Your Order</flux:heading>
+            {{-- ── Items ── --}}
+            <flux:heading class="text-lg mb-4">Items in Your Order</flux:heading>
 
-                <div class="space-y-4">
-                    @foreach ($order->items as $item)
-                        <div class="border rounded-md p-4">
-                            {{-- Status Badges & Date --}}
-                            <div class="mb-1">
-                                <flux:badge size="sm" :color="$order->status->color()">
-                                    {{ $order->status->label() }}
-                                </flux:badge>
-                                {{-- @if ($order->status === 'delivered')
-                                    <span class="text-xs text-zinc-500">
-                                        On
-                                        {{ $order->actual_delivery_date ? $order->actual_delivery_date->format('d-m') : '' }}
-                                    </span>
-                                @endif --}}
-                            </div>
+            <div class="space-y-4">
+                @foreach ($order->items as $item)
+                    @php
+                        $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—');
+                        $sku = $item->product_snapshot['sku'] ?? null;
+                        $imagePath = $item->product_snapshot['image_path'] ?? $item->product?->image_path;
+                    @endphp
 
-                            {{-- Item Content --}}
-                            <div class="flex gap-4">
-                                {{-- Product Image --}}
-                                <div class="shrink-0">
-                                    @if ($item->product?->image_path)
-                                        <a :href=" route('products.show', $item->product)" wire:navigate>
-                                            <img src="{{ $item->product->image_url }}" alt="{{ $item->name }}"
-                                                class="w-20 h-20 object-contain rounded">
-                                        </a>
-                                    @else
-                                        <div class="w-20 h-20 bg-zinc-100 rounded flex items-center justify-center">
-                                            <flux:icon.photo class="w-8 h-8 text-zinc-300" />
-                                        </div>
-                                    @endif
-                                </div>
+                    <div class="border rounded-md p-4">
 
-                                {{-- Product Details --}}
-                                <div class="flex-1">
-                                    <flux:heading size="sm">{{ $item->name }}</flux:heading>
-                                    <flux:text size="sm" class="text-zinc-500">{{ $item->quantity }} ×
-                                        {{ format_currency($item->unit_price) }}</flux:text>
-                                </div>
-
-                                {{-- Actions --}}
-                                <div class="shrink-0 flex flex-col items-end gap-2">
-                                    <flux:button size="sm" variant="primary" icon="shopping-cart">Buy Again
-                                    </flux:button>
-
-                                    <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate
-                                        class="text-xs!">
-                                        See
-                                        Status History
-                                    </flux:link>
-                                </div>
-                            </div>
+                        {{-- Status badge --}}
+                        <div class="mb-3">
+                            <flux:badge size="sm" :color="$order->status->color()">
+                                {{ $order->status->label() }}
+                            </flux:badge>
                         </div>
-                    @endforeach
+
+                        <div class="flex gap-4">
+
+                            {{-- Image --}}
+                            <div class="shrink-0">
+                                @if ($imagePath)
+                                    <a href="{{ route('products.show', $item->product) }}" wire:navigate>
+                                        <img src="{{ asset($imagePath) }}" alt="{{ $name }}"
+                                            class="w-20 h-20 object-contain rounded" />
+                                    </a>
+                                @else
+                                    <div class="w-20 h-20 bg-zinc-100 rounded flex items-center justify-center">
+                                        <flux:icon.photo class="w-8 h-8 text-zinc-300" />
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Details --}}
+                            <div class="flex-1">
+                                <flux:heading size="sm">{{ $name }}</flux:heading>
+                                @if ($sku)
+                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $sku }}
+                                    </flux:text>
+                                @endif
+                                <flux:text size="sm" class="text-zinc-500 mt-1">
+                                    {{ $item->quantity }} × {{ format_currency($item->unit_price_cents / 100) }}
+                                </flux:text>
+                                <flux:text size="sm" class="font-semibold mt-1">
+                                    {{ format_currency($item->total_cents / 100) }}
+                                </flux:text>
+                            </div>
+
+                            {{-- Actions --}}
+                            <div class="shrink-0 flex flex-col items-end gap-2">
+                                <flux:button size="sm" variant="primary" icon="shopping-cart"
+                                    class="cursor-pointer">
+                                    Buy Again
+                                </flux:button>
+
+                                <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate
+                                    class="text-xs!">
+                                    See Status History
+                                </flux:link>
+                            </div>
+
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- ── Order total breakdown ── --}}
+            <div class="mt-6 space-y-1.5 max-w-xs ml-auto">
+                <div class="flex justify-between text-sm">
+                    <flux:text>Subtotal</flux:text>
+                    <span>{{ format_currency($order->subtotal) }}</span>
+                </div>
+
+                @if ($order->discount > 0)
+                    <div class="flex justify-between text-sm text-green-600">
+                        <span>Discount</span>
+                        <span>− {{ format_currency($order->discount) }}</span>
+                    </div>
+                @endif
+
+                <div class="flex justify-between text-sm">
+                    <flux:text>Shipping</flux:text>
+                    <span>
+                        {{ $order->shipping == 0 ? 'Free' : format_currency($order->shipping) }}
+                    </span>
+                </div>
+
+                <div class="flex justify-between font-semibold border-t pt-2">
+                    <span>Total</span>
+                    <span>{{ format_currency($order->total) }}</span>
                 </div>
             </div>
 
-            {{-- Payment & Delivery Information --}}
-            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 divide-x">
-                {{-- Payment Information --}}
+            <flux:separator class="my-8" />
 
+            {{-- ── Payment & Delivery ── --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-0 md:divide-x">
+
+                {{-- Payment Information --}}
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Payment Information</flux:heading>
 
-                    <div class="space-y-4">
-                        <flux:text>Payment Method:</flux:text>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <flux:text class="text-zinc-500 text-sm">Method</flux:text>
+                            <flux:text class="text-sm font-medium">
+                                {{ match ($order->payment?->gateway) {
+                                    'mpesa' => 'M-Pesa',
+                                    'stripe' => 'Card',
+                                    'pesawise' => 'Pesawise',
+                                    'custom' => match ($order->payment?->meta['payment_method'] ?? null) {
+                                        'card' => 'Card',
+                                        'mpesa' => 'M-Pesa',
+                                        default => 'Custom',
+                                    },
+                                    default => ucfirst($order->payment?->gateway ?? '—'),
+                                } }}
+                            </flux:text>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <flux:text class="text-zinc-500 text-sm">Status</flux:text>
+                            <flux:badge size="sm" color="{{ $order->payment?->status->color() }}">
+                                {{ $order->payment?->status->label() }}
+                            </flux:badge>
+                        </div>
+
+                        @if ($order->payment?->paid_at)
+                            <div class="flex items-center gap-2">
+                                <flux:text class="text-zinc-500 text-sm">Paid on</flux:text>
+                                <flux:text class="text-sm">
+                                    {{ $order->payment->paid_at->format('M j, Y · g:i A') }}
+                                </flux:text>
+                            </div>
+                        @endif
+
+                        @if ($order->payment?->transaction_id)
+                            <div class="flex items-start gap-2">
+                                <flux:text class="text-zinc-500 text-sm shrink-0">Reference</flux:text>
+                                <flux:text class="text-sm font-mono break-all">
+                                    {{ $order->payment->transaction_id }}
+                                </flux:text>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
+                {{-- Delivery Information --}}
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Delivery Information</flux:heading>
 
-                    <div class="space-y-2">
+                    <div class="space-y-1">
                         {{-- Full name --}}
-                        <flux:text>
-                            {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: 'N/A' }}
+                        <flux:text class="font-medium">
+                            {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: $order->shipping_address['full_name'] ?? 'N/A' }}
                         </flux:text>
 
                         {{-- Phone --}}
-                        <flux:text>
-                            {{ $order->shipping_address['phone_number'] ?? 'N/A' }}
+                        <flux:text class="text-sm text-zinc-500">
+                            {{ format_phone($order->shipping_address['phone_number'] ?? '') }}
                         </flux:text>
 
-                        {{-- Street address --}}
-                        <flux:text>{{ $order->shipping_address['address'] ?? 'N/A' }}</flux:text>
+                        {{-- Address --}}
+                        <flux:text class="text-sm text-zinc-500">
+                            {{ $order->shipping_address['address'] ?? 'N/A' }}
+                        </flux:text>
 
-                        {{-- Area & County (from your Pesawise payload structure) --}}
-                        @if (!empty($order->shipping_address['area']['name']))
-                            <flux:text>{{ $order->shipping_address['area']['name'] }}</flux:text>
-                        @endif
-
-                        @if (!empty($order->shipping_address['county']['name']))
-                            <flux:text>{{ $order->shipping_address['county']['name'] }}</flux:text>
-                        @endif
-
+                        {{-- Area & County --}}
+                        <flux:text class="text-sm text-zinc-500">
+                            {{ implode(
+                                ', ',
+                                array_filter([$order->shipping_address['area'] ?? null, $order->shipping_address['county'] ?? null]),
+                            ) }}
+                        </flux:text>
                     </div>
 
+                    {{-- Shipping method from snapshot --}}
+                    @if ($order->shipping_snapshot['method_name'] ?? null)
+                        <flux:separator class="my-3" />
+                        <flux:text class="text-xs text-zinc-400 mb-1">Shipping method</flux:text>
+                        <flux:text class="text-sm font-medium">
+                            {{ $order->shipping_snapshot['method_name'] }}
+                        </flux:text>
+
+                        @if ($order->shipping_snapshot['delivery_window'] ?? null)
+                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                Est. {{ $order->shipping_snapshot['delivery_window'] }}
+                            </flux:text>
+                        @endif
+
+                        @if ($order->shipping_snapshot['station_name'] ?? null)
+                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                Pickup: {{ $order->shipping_snapshot['station_name'] }}
+                            </flux:text>
+                        @endif
+                    @endif
                 </div>
 
             </div>
 
             <flux:separator class="my-8" />
 
+            {{-- Footer actions --}}
             <div class="flex flex-col items-center gap-3">
-                <flux:text>Need help? <flux:link>Contact Support</flux:link>
+                <flux:text>
+                    Need help?
+                    <flux:link>Contact Support</flux:link>
                 </flux:text>
 
-                <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer">Download Receipt</flux:button>
+                <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer">
+                    Download Receipt
+                </flux:button>
             </div>
+
         </section>
     </flux:card>
 </div>

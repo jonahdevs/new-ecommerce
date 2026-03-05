@@ -23,7 +23,7 @@ new #[Title('Orders')] class extends Component {
             ->when($this->statusFilter !== 'all', function ($q) {
                 $q->where('status', $this->statusFilter);
             })
-            ->latest('placed_at')
+            ->latest()
             ->paginate(15);
     }
 

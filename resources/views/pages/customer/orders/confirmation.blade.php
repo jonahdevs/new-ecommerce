@@ -27,6 +27,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
         // Send confirmation email on first visit only
         $this->sendConfirmationEmailOnce();
+
+        $this->clearCartIfPaid();
     }
 
     //  Computed
@@ -166,6 +168,16 @@ new #[Layout('layouts.guest')] class extends Component {
         $method = $this->order->payment?->meta['payment_method'] ?? null;
         return $method === 'card' ? 'Card' : 'M-Pesa';
     }
+
+    private function clearCartIfPaid(): void
+    {
+        if ($this->order->payment?->status !== PaymentStatus::PAID->value) {
+            return;
+        }
+
+        app(\App\Services\CartService::class)->clear(\App\Models\User::find($this->order->user_id));
+        app(\App\Services\CheckoutSession::class)->clear();
+    }
 };
 ?>
 
@@ -188,7 +200,8 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
 
         {{-- The "Paper" Container --}}
-        <div class="bg-white border border-zinc-200 shadow-sm p-8 print:border-none print:shadow-none">
+        <div id="print-receipt"
+            class="bg-white border border-zinc-200 shadow-sm p-8 print:border-none print:shadow-none">
 
             {{-- Receipt Header --}}
             <div class="flex justify-between items-start mb-8">
@@ -308,3 +321,24 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </div>
 </div>
+
+
+<style global>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #print-receipt,
+        #print-receipt * {
+            visibility: visible;
+        }
+
+        #print-receipt {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+    }
+</style>

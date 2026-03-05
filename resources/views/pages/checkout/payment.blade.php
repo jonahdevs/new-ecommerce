@@ -153,7 +153,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     {{-- 3. Payment Method Section --}}
     <flux:card class="p-0 mb-4 overflow-hidden">
-        <div class="px-4 py-3 border-b bg-zinc-50/50 dark:bg-white/5">
+        <div class="px-4 py-2 border-b">
             <div class="flex items-center gap-2">
                 <flux:icon.check-circle variant="solid" @class([
                     'size-5',
@@ -247,7 +247,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
             {{-- Footer Action --}}
             <div class="p-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end bg-zinc-50/30">
-                <flux:button wire:click="confirm" variant="primary" class="cursor-pointer">
+                <flux:button wire:click="confirm" variant="primary" class="cursor-pointer" icon="check">
                     Confirm Payment Method
                 </flux:button>
             </div>

@@ -36,30 +36,34 @@ class CustomGateway implements PaymentGateway
             ]),
         ]);
 
-        return $this->resolveGateway()->initiate($order, $payment);
+        if ($method === 'card') {
+            return $this->stripe->initiate($order, $payment);
+        }
+
+        return PaymentResponse::redirect(
+            route('checkout.pay', ['order' => $order->reference])
+        );
     }
 
     public function verify(string $reference): PaymentStatus
     {
-        return $this->resolveGateway()->verify($reference);
+        // Read gateway from payment record — session may already be cleared
+        $payment = Payment::where('transaction_id', $reference)
+            ->orWhere('gateway_order_id', $reference)
+            ->first();
+
+        $method = $payment?->meta['payment_method'] ?? 'mpesa';
+
+        return match ($method) {
+            'card'  => $this->stripe->verify($reference),
+            'mpesa' => $this->mpesa->verify($reference),
+            default => $this->mpesa->verify($reference),
+        };
     }
 
     public function handleWebhook(Request $request): void
     {
         // Webhooks are handled by the individual gateway controllers directly,
         // not through CustomGateway. This method intentionally does nothing.
-    }
-
-    //  Private 
-
-    private function resolveGateway(): PaymentGateway
-    {
-        $method = app(CheckoutSession::class)->getPaymentMethod();
-
-        return match ($method) {
-            'card'  => $this->stripe,
-            'mpesa' => $this->mpesa,
-            default => $this->mpesa,
-        };
     }
 }

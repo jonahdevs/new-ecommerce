@@ -46,28 +46,33 @@ class MpesaGateway implements PaymentGateway
 
     //  Interface implementation
 
-    public function initiate(Order $order, Payment $payment): PaymentResponse
+    public function initiate(Order $order, Payment $payment, ?string $phone = null): PaymentResponse
     {
-        try {
-            $phone = $this->normalisePhone($this->resolvePhone($order));
-            $amount = (int) ceil($order->total_cents / 100); // M-Pesa needs whole KES
-            $timestamp = now()->format('YmdHis');
-            $password = base64_encode($this->shortcode . $this->passkey . $timestamp);
+        if (!$phone) {
+            return PaymentResponse::failed('M-Pesa phone number is required.');
+        }
 
-            $token = $this->getAccessToken();
+        try {
+            // Use provided phone or fall back to resolvePhone()
+            $phone     = $this->normalisePhone($phone);
+            $amount    = (int) ceil($order->total_cents / 100);
+            $timestamp = now()->format('YmdHis');
+            $password  = base64_encode($this->shortcode . $this->passkey . $timestamp);
+
+            $token    = $this->getAccessToken();
             $response = Http::withToken($token)
                 ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", [
                     'BusinessShortCode' => $this->shortcode,
-                    'Password' => $password,
-                    'Timestamp' => $timestamp,
-                    'TransactionType' => 'CustomerPayBillOnline',
-                    'Amount' => $amount,
-                    'PartyA' => $phone,
-                    'PartyB' => $this->shortcode,
-                    'PhoneNumber' => $phone,
-                    'CallBackURL' => $this->callbackUrl,
-                    'AccountReference' => $order->reference,
-                    'TransactionDesc' => "Order #{$order->reference}",
+                    'Password'          => $password,
+                    'Timestamp'         => $timestamp,
+                    'TransactionType'   => 'CustomerPayBillOnline',
+                    'Amount'            => $amount,
+                    'PartyA'            => $phone,
+                    'PartyB'            => $this->shortcode,
+                    'PhoneNumber'       => $phone,
+                    'CallBackURL'       => $this->callbackUrl,
+                    'AccountReference'  => $order->reference,
+                    'TransactionDesc'   => "Order #{$order->reference}",
                 ]);
 
             $data = $response->json();
@@ -82,18 +87,18 @@ class MpesaGateway implements PaymentGateway
 
             $payment->update([
                 'transaction_id' => $checkoutRequestId,
-                'status' => PaymentStatus::PROCESSING->value,
-                'meta' => [
+                'status'         => PaymentStatus::PROCESSING->value,
+                'meta'           => array_merge($payment->meta ?? [], [
                     'checkout_request_id' => $checkoutRequestId,
                     'merchant_request_id' => $data['MerchantRequestID'],
-                    'customer_message' => $data['CustomerMessage'],
-                    'phone' => $phone,
-                    'initiated_at' => now()->toISOString(),
-                ],
+                    'customer_message'    => $data['CustomerMessage'],
+                    'phone'               => $phone,
+                    'initiated_at'        => now()->toISOString(),
+                ]),
             ]);
 
             Log::info('M-Pesa STK push initiated', [
-                'order_id' => $order->id,
+                'order_id'            => $order->id,
                 'checkout_request_id' => $checkoutRequestId,
             ]);
 
@@ -101,7 +106,7 @@ class MpesaGateway implements PaymentGateway
         } catch (\Throwable $e) {
             Log::error('M-Pesa initiation failed', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
 
             return PaymentResponse::failed($e->getMessage());
@@ -254,10 +259,8 @@ class MpesaGateway implements PaymentGateway
         return '254' . $digits;
     }
 
-    private function resolvePhone(Order $order): string
+    public function initiateWithPhone(Order $order, Payment $payment, string $phone): PaymentResponse
     {
-        return $order->user?->phone_number
-            ?? $order->shipping_address['phone_number']
-            ?? '';
+        return $this->initiate($order, $payment, $phone);
     }
 }

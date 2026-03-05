@@ -48,7 +48,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
     }
 
-    // ── Computed ──────────────────────────────────────────────────────────────
+    // Computed
 
     #[Computed]
     public function address(): ?Address
@@ -95,7 +95,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         return $this->selectedOption;
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────────
+    //  Actions
 
     public function updatedSelectedMethod(): void
     {
@@ -103,9 +103,11 @@ new #[Layout('layouts.checkout')] class extends Component {
         if ($this->selectedMethod !== $this->pusOption?->methodCode) {
             $this->selectedStationId = null;
         }
+
+        $this->dispatch('shipping-updated')->to('order-summary');
     }
 
-    public function confirm(): mixed
+    public function confirm()
     {
         // Validate a method is selected
         if (!$this->selectedOption) {
@@ -142,7 +144,12 @@ new #[Layout('layouts.checkout')] class extends Component {
             'delivery_window' => $option->deliveryWindow(),
         ]);
 
-        return $this->redirectRoute('checkout.payment-methods', navigate: true);
+        $this->redirectRoute('checkout.payment-methods', navigate: true);
+    }
+
+    public function updatedSelectedStationId(): void
+    {
+        $this->dispatch('shipping-updated')->to('order-summary');
     }
 }; ?>
 
@@ -164,7 +171,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     <x-slot:heading>Shipping Method</x-slot:heading>
 
     {{-- Address card --}}
-    <div class="border rounded-sm bg-white mb-4">
+    <flux:card class="p-0 mb-4">
         <div class="px-4 py-2 border-b flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
@@ -190,10 +197,10 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
             @endif
         </div>
-    </div>
+    </flux:card>
 
     {{-- Shipping methods --}}
-    <div class="bg-white border rounded-sm mb-4">
+    <flux:card class="p-0 mb-4">
         <div class="px-4 py-2 border-b">
             <flux:heading level="3" class="font-medium!">Choose a shipping method</flux:heading>
         </div>
@@ -246,14 +253,14 @@ new #[Layout('layouts.checkout')] class extends Component {
                                 {{-- PUS station picker --}}
                                 @if ($option->isPus() && $isSelected && $option->pickupStations?->isNotEmpty())
                                     <div class="mt-3 pt-3 border-t border-zinc-200">
-                                        <flux:select wire:model.live="selectedStationId"
-                                            placeholder="Select a pickup station..." size="sm">
+                                        <flux:select wire:model.live="selectedStationId" size="sm">
+                                            {{-- Add an empty first option --}}
+                                            <flux:select.option value="">Choose a station...</flux:select.option>
+
                                             @foreach ($option->pickupStations as $station)
                                                 <flux:select.option :value="$station->id">
                                                     {{ $station->name }}
-                                                    @if ($station->county_id === $this->address?->county_id)
-                                                        (Nearby)
-                                                    @endif
+                                                    {{ $station->county_id === $this->address?->county_id ? '(Nearby)' : '' }}
                                                 </flux:select.option>
                                             @endforeach
                                         </flux:select>
@@ -275,16 +282,20 @@ new #[Layout('layouts.checkout')] class extends Component {
 
                 <div class="flex justify-end mt-5">
                     <flux:button wire:click="confirm" variant="primary" class="cursor-pointer"
-                        :disabled="! $this->selectedMethod">
+                        :disabled="! $this->selectedMethod" icon="check">
                         Confirm Shipping Method
-                        <x-slot name="iconTrailing">
-                            <flux:icon.chevron-right class="size-4 ms-2" />
-                        </x-slot>
                     </flux:button>
                 </div>
             @endif
         </div>
-    </div>
+    </flux:card>
+
+    <flux:card class="opacity-70 p-0  mb-4">
+        <div class="px-3 py-2 flex items-center gap-1">
+            <flux:icon.check-circle variant="solid" class="size-5 text-zinc-600" />
+            <flux:heading level="3">Payment Methods</flux:heading>
+        </div>
+    </flux:card>
 
     <flux:link :href="route('products')" wire:navigate class="text-xs">
         ← Continue shopping

@@ -44,7 +44,7 @@ class StripeGateway implements PaymentGateway
                 ]);
 
                 return PaymentResponse::redirect(
-                    route('checkout.card-payment', ['order' => $order->reference])
+                    route('checkout.pay', ['order' => $order->reference])
                 );
             }
 
@@ -64,10 +64,10 @@ class StripeGateway implements PaymentGateway
                 'gateway_order_id' => $intent->id,
                 'payment_url'      => $intent->client_secret,
                 'status'           => PaymentStatus::PROCESSING->value,
-                'meta'             => [
+                'meta'             => array_merge($payment->meta ?? [], [
                     'payment_intent_id' => $intent->id,
                     'initiated_at'      => now()->toISOString(),
-                ],
+                ]),
             ]);
 
             Log::info('Stripe PaymentIntent created', [
@@ -76,7 +76,7 @@ class StripeGateway implements PaymentGateway
             ]);
 
             return PaymentResponse::redirect(
-                route('checkout.card-payment', ['order' => $order->reference])
+                route('checkout.pay', ['order' => $order->reference])
             );
         } catch (\Throwable $e) {
             Log::error('Stripe initiation failed', [
@@ -141,13 +141,21 @@ class StripeGateway implements PaymentGateway
 
         $order = $payment->order;
 
+        $originalMethod = $payment->meta['payment_method'] ?? null;
+
+        $mergedMeta = array_merge($payment->meta ?? [], (array) $intent);
+
+        if ($originalMethod) {
+            $mergedMeta['payment_method'] = $originalMethod;
+        }
+
         // 1. Update payment record
         $payment->update([
             'status'         => PaymentStatus::PAID->value,
             'transaction_id' => $intent->id,
             'card_brand'     => $intent->payment_method_types[0] ?? null,
             'paid_at'        => now(),
-            'meta'           => array_merge($payment->meta ?? [], (array) $intent),
+            'meta'           =>  $mergedMeta,
         ]);
 
         if (!$order) return;
@@ -182,10 +190,19 @@ class StripeGateway implements PaymentGateway
 
         $order = $payment->order;
 
+        $originalMethod = $payment->meta['payment_method'] ?? null;
+
+        $mergedMeta = array_merge($payment->meta ?? [], (array) $intent);
+
+
+        if ($originalMethod) {
+            $mergedMeta['payment_method'] = $originalMethod;
+        }
+
         // 1. Update payment record
         $payment->update([
             'status' => PaymentStatus::FAILED->value,
-            'meta'   => array_merge($payment->meta ?? [], (array) $intent),
+            'meta'   => $mergedMeta,
         ]);
 
         if (!$order) return;

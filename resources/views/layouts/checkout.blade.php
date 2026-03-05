@@ -16,11 +16,9 @@
             </div>
 
             {{-- Order summary is always here, no need to repeat it --}}
-            @persist('checkout_order_summary')
-                <div class="w-xs sticky top-44">
-                    <livewire:order-summary />
-                </div>
-            @endpersist
+            <div class="w-100 sticky top-44">
+                <livewire:order-summary />
+            </div>
         </div>
     </div>
 
