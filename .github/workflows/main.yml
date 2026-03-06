@@ -56,14 +56,9 @@ jobs:
       - name: 🌐 Deploy Public Folder to Web Root
         uses: burnett01/rsync-deployments@6.0.0
         with:
-          switches: -avzr --delete --exclude='index.php' --exclude='.htaccess' --exclude='storage'
+          switches: -avzr --delete --exclude='index.php' --exclude='.htaccess' --exclude='storage' --exclude='build'
           path: ./public/
           remote_path: ${{ secrets.WEB_ROOT_DIR }}
-          remote_host: ${{ secrets.FTP_SERVER }}
-          remote_port: ${{ secrets.SSH_PORT }}
-          remote_user: ${{ secrets.FTP_USERNAME }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_key_pass: ${{ secrets.SSH_PASSPHRASE }}
 
       # Run post-deployment commands
       - name: ⚙️ Run Post-Deployment Commands
