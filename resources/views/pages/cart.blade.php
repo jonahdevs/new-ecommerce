@@ -362,11 +362,11 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                         </flux:button>
                                                     </flux:modal.close>
                                                     <flux:spacer />
-                                                    {{-- <flux:button type="button" variant="danger" icon="trash"
+                                                    <flux:button type="button" variant="danger" icon="trash"
                                                         class="cursor-pointer"
                                                         wire:click="removeItem({{ $item->id }})">
                                                         Remove Item
-                                                    </flux:button> --}}
+                                                    </flux:button>
                                                 </div>
                                             </div>
                                         </flux:modal>
