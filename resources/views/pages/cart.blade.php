@@ -330,10 +330,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                                         {{-- Remove --}}
                                         <flux:modal.trigger name="remove-item-{{ $item->id }}">
-                                            <flux:button variant="ghost" size="xs" icon="trash"
+                                            {{-- <flux:button variant="ghost" size="xs" icon="trash"
                                                 icon-variant="outline" class="cursor-pointer">
                                                 Remove
-                                            </flux:button>
+                                            </flux:button> --}}
                                         </flux:modal.trigger>
 
                                         <flux:modal name="remove-item-{{ $item->id }}" variant="floating"
