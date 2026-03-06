@@ -10,6 +10,10 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
     {
         $this->product = $product;
         $this->form->setProduct($product);
+
+        // Load attributes and variations into Base state
+        $this->loadProductAttributes($product);
+        $this->loadProductVariants($product);
     }
 
     protected function executeSave(): void

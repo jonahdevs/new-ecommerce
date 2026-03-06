@@ -3,14 +3,12 @@
 namespace App\Livewire\Forms\Admin;
 
 use App\Enums\ProductStatus;
-use App\Models\Brand;
-use App\Models\Category;
-use App\Models\Product;
+use App\Models\{Brand, Category, Product, Tag};
+;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 use Illuminate\Support\Str;
-use Spatie\Tags\Tag;
 
 class ProductForm extends Form
 {
@@ -168,8 +166,8 @@ class ProductForm extends Form
             // Images
             'image' => [
                 !is_null($this->product)
-                    ? 'required_without:existing_image'
-                    : 'required',
+                ? 'required_without:existing_image'
+                : 'required',
                 'nullable',
                 'image',
                 'max:2048'
@@ -501,47 +499,54 @@ class ProductForm extends Form
     private function productData(): array
     {
         return [
-            'name'                => $this->name,
-            'model_number'        => $this->model_number,
-            'slug'                => $this->slug ?: Str::slug($this->name),
-            'short_description'   => $this->short_description,
-            'description'         => $this->description,
-            'type'                => $this->type,
-            'price'               => $this->price,
-            'sale_price'          => $this->sale_price,
-            'cost_price'          => $this->cost_price,
-            'sku'                 => $this->sku,
-            'manage_stock'        => $this->manage_stock,
-            'stock_quantity'      => $this->stock_quantity,
-            'allow_backorder'     => $this->allow_backorder,
+            'name' => $this->name,
+            'model_number' => $this->model_number,
+            'slug' => $this->slug ?: Str::slug($this->name),
+            'short_description' => $this->short_description,
+            'description' => $this->description,
+            'type' => $this->type,
+            'price' => $this->price,
+            'sale_price' => $this->sale_price,
+            'cost_price' => $this->cost_price,
+            'sku' => $this->sku,
+            'manage_stock' => $this->manage_stock,
+            'stock_quantity' => $this->stock_quantity,
+            'allow_backorder' => $this->allow_backorder,
             'low_stock_threshold' => $this->low_stock_threshold,
-            'stock_status'        => $this->stock_status,
-            'sold_individually'   => $this->sold_individually,
-            'weight'              => $this->weight,
-            'length'              => $this->length,
-            'width'               => $this->width,
-            'height'              => $this->height,
-            'meta_title'          => $this->meta_title,
-            'meta_description'    => $this->meta_description,
-            'meta_keywords'       => $this->meta_keywords,
-            'canonical_url'       => $this->canonical_url,
-            'status'              => $this->status,
-            'published_at'        => $this->published_at,
-            'is_featured'         => $this->is_featured,
-            'brand_id'            => $this->brand_id ?: null,
+            'stock_status' => $this->stock_status,
+            'sold_individually' => $this->sold_individually,
+            'weight' => $this->weight,
+            'length' => $this->length,
+            'width' => $this->width,
+            'height' => $this->height,
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description,
+            'meta_keywords' => $this->meta_keywords,
+            'canonical_url' => $this->canonical_url,
+            'status' => $this->status,
+            'published_at' => $this->published_at,
+            'is_featured' => $this->is_featured,
+            'brand_id' => $this->brand_id ?: null,
         ];
     }
 
     /**
      * Sync all relationships
      */
+
     private function syncRelationships(Product $product): void
     {
         $product->categories()->sync($this->category_ids);
-        $product->syncTagsWithType(
-            Tag::whereIn('id', $this->tag_ids)->get(),
-            'badge'
-        );
+
+        //   detaches old, attaches new, no duplicates
+        if (!empty($this->tag_ids)) {
+            $tags = Tag::whereIn('id', $this->tag_ids)->get();
+            $product->syncTagsWithType($tags, 'badge');
+        } else {
+            // If no tags selected, remove all
+            $product->syncTagsWithType([], 'badge');
+        }
+
         $product->upsells()->sync($this->selectedUpsells);
         $product->crossSells()->sync($this->selectedCrossSells);
         $this->handleImageUpload($product);
@@ -625,7 +630,8 @@ class ProductForm extends Form
     {
         $normalizedName = trim($tagName);
 
-        if (empty($normalizedName)) return;
+        if (empty($normalizedName))
+            return;
 
         $tag = Tag::findOrCreate($normalizedName);
 

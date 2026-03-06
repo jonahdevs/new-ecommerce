@@ -217,42 +217,65 @@ new #[Title('Returns')] class extends Component {
         </div>
     </div>
 
-    {{-- Filters --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <flux:input wire:model.live.debounce.300ms="search" placeholder="Order ID, reference..." icon="magnifying-glass"
-            clearable class="col-span-2 md:col-span-1" />
-
-        <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
-            @foreach ($this->statuses as $status)
-                <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable>
-            @foreach ($this->methods as $method)
-                <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:select wire:model.live="filterZone" placeholder="All Zones" clearable>
-            @foreach ($this->zones as $zone)
-                <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
-            @endforeach
-        </flux:select>
-
-        <flux:input wire:model.live="filterDateFrom" type="date" placeholder="From date" />
-        <flux:input wire:model.live="filterDateTo" type="date" placeholder="To date" />
-
-        @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
-            <div class="flex items-end">
-                <flux:button variant="ghost" size="sm" wire:click="clearFilters" class="cursor-pointer">
-                    Clear filters
-                </flux:button>
-            </div>
-        @endif
-    </div>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+        {{-- Filters --}}
+        <div class="flex flex-col md:flex-row md:justify-between border-b px-5 py-2 gap-3">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Order ID, reference..."
+                icon="magnifying-glass" clearable class="col-span-2 md:col-span-1" class="max-w-md" />
+
+            <div class="flex items-center gap-2">
+                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
+                    @foreach ($this->statuses as $status)
+                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:dropdown>
+                    <flux:button icon="adjustments-horizontal" variant="ghost">
+                        Filters
+                        @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
+                            <span class="ml-2 w-2 h-2 rounded-full bg-indigo-500"></span>
+                        @endif
+                    </flux:button>
+
+                    <flux:menu class="min-w-72">
+                        <div class="p-4 space-y-4">
+                            <flux:heading size="sm">Advanced Filters</flux:heading>
+
+                            <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable>
+                                @foreach ($this->methods as $method)
+                                    <flux:select.option value="{{ $method->id }}">{{ $method->name }}
+                                    </flux:select.option>
+                                @endforeach
+                            </flux:select>
+
+                            <flux:select wire:model.live="filterZone" placeholder="All Zones" clearable>
+                                @foreach ($this->zones as $zone)
+                                    <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}
+                                    </flux:select.option>
+                                @endforeach
+                            </flux:select>
+
+                            <div class="space-y-2">
+                                <flux:label>Date Range</flux:label>
+                                <div class="flex items-center gap-2">
+                                    <flux:input wire:model.live="filterDateFrom" type="date" size="sm" />
+                                    <span class="text-zinc-400">-</span>
+                                    <flux:input wire:model.live="filterDateTo" type="date" size="sm" />
+                                </div>
+                            </div>
+
+                            <flux:menu.separator />
+                            <flux:button variant="ghost" size="sm" wire:click="clearFilters"
+                                class="cursor-pointer w-full">
+                                Clear filters
+                            </flux:button>
+                        </div>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
+        </div>
         <flux:table :paginate="$this->returns">
             <flux:table.columns>
                 <flux:table.column class="ps-4!">Order</flux:table.column>
@@ -428,7 +451,8 @@ new #[Title('Returns')] class extends Component {
                                     Mark as
                                     <strong>{{ \App\Enums\DeliveryOrderStatus::from($newStatus)->label() }}</strong>?
                                 </p>
-                                <flux:textarea wire:model="statusNote" placeholder="Optional note..." rows="2" />
+                                <flux:textarea wire:model="statusNote" placeholder="Optional note..."
+                                    rows="2" />
                                 <div class="flex gap-2">
                                     <flux:button variant="ghost" size="sm" wire:click="cancelStatusUpdate"
                                         class="cursor-pointer">
