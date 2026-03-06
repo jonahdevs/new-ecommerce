@@ -164,10 +164,9 @@ abstract class BaseProductComponent extends Component
         ];
     }
 
-    public function updatedSelectedExistingAttribute($attributeId): void
+    public function addExistingAttribute($attributeId): void
     {
-        if (!$attributeId)
-            return;
+        if (!$attributeId) return;
 
         $already = collect($this->selectedAttributes)
             ->pluck('attribute_id')
@@ -175,25 +174,22 @@ abstract class BaseProductComponent extends Component
 
         if ($already) {
             $this->dispatch('notify', variant: 'warning', message: 'Attribute already added.');
-            $this->selectedExistingAttribute = null;
             return;
         }
 
         $attribute = Attribute::find($attributeId);
-        if (!$attribute)
-            return;
+        if (!$attribute) return;
 
         $this->selectedAttributes[] = [
-            'attribute_id' => $attribute->id,
-            'name' => $attribute->name,
-            'is_new' => false,
-            'is_visible' => true,
+            'attribute_id'           => $attribute->id,
+            'name'                   => $attribute->name,
+            'is_new'                 => false,
+            'is_visible'             => true,
             'is_variation_attribute' => false,
-            'sort_order' => count($this->selectedAttributes),
-            'values' => [],
+            'sort_order'             => count($this->selectedAttributes),
+            'values'                 => [],
         ];
 
-        $this->selectedExistingAttribute = null;
         $this->syncAvailableAttributes();
     }
 
@@ -670,5 +666,41 @@ abstract class BaseProductComponent extends Component
         }
 
         return $result;
+    }
+
+    public function saveAttributes(): void
+    {
+        $productId = $this->form->getProductId();
+
+        if (!$productId) {
+            $this->dispatch('notify', variant: 'info', message: 'Attributes will be saved when you create the product.');
+            return;
+        }
+
+        // Validate each attribute has name and values
+        foreach ($this->selectedAttributes as $index => $attr) {
+            if (empty(trim($attr['name']))) {
+                $this->dispatch('notify', variant: 'warning', message: 'All attributes must have a name.');
+                return;
+            }
+
+            $hasValues = is_array($attr['values'])
+                ? !empty($attr['values'])
+                : !empty(trim($attr['values']));
+
+            if (!$hasValues) {
+                $this->dispatch('notify', variant: 'warning', message: "Attribute \"{$attr['name']}\" must have at least one value.");
+                return;
+            }
+        }
+
+        app(ProductAttributeService::class)->save(
+            Product::findOrFail($productId),
+            $this->selectedAttributes
+        );
+
+        $this->syncAvailableAttributes();
+
+        $this->dispatch('notify', variant: 'success', message: 'Attributes saved.');
     }
 }

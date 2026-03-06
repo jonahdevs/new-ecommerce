@@ -1,0 +1,92 @@
+name: 🚀 Deploy Laravel to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, mysql, zip
+
+      - name: 📦 Install Composer Dependencies
+        run: composer install --optimize-autoloader --no-dev --no-progress --no-interaction --prefer-dist
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+
+      - name: Install NPM Dependencies
+        run: npm install
+
+      - name: Build NPM Assets
+        run: npm run build
+
+      - name: 💾 Cache Laravel Configuration
+        run: |
+          php artisan optimize
+
+      # Deploy entire Laravel project to project folder (INCLUDING public/build now)
+      - name: 📂 Deploy Laravel Files
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avzr --delete --exclude='.git*' --exclude='.github' --exclude='node_modules' --exclude='.env' --exclude='.env.*' --exclude='public/hot' --exclude='public/storage' --exclude='public/.htaccess' --exclude='public/index.php' --exclude='public/assets/*' --exclude='storage/logs/*' --exclude='storage/framework/cache/data/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='tests' --exclude='phpunit.xml'
+          path: ./
+          remote_path: ${{ secrets.APP_ROOT_DIR }}
+          remote_host: ${{ secrets.FTP_SERVER }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.FTP_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          remote_key_pass: ${{ secrets.SSH_PASSPHRASE }}
+
+      # Deploy public folder to web root
+      - name: 🌐 Deploy Public Folder to Web Root
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avzr --delete --exclude='index.php' --exclude='.htaccess' --exclude='storage'
+          path: ./public/
+          remote_path: ${{ secrets.WEB_ROOT_DIR }}
+          remote_host: ${{ secrets.FTP_SERVER }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.FTP_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          remote_key_pass: ${{ secrets.SSH_PASSPHRASE }}
+
+      # Run post-deployment commands
+      - name: ⚙️ Run Post-Deployment Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            cd ${{ secrets.APP_ROOT_DIR }}
+
+            # Clear all caches
+            php artisan optimize:clear
+
+            # Rebuild caches for production
+            php artisan optimize
+
+            # Run migrations (only if there are new migrations)
+            php artisan migrate --force
+
+            # Create storage link if it doesn't exist
+            php artisan storage:link --force
+
+            echo "✅ Deployment completed successfully!"

@@ -83,6 +83,8 @@ new #[Title('Order Details')] class extends Component {
             'order_id' => $this->order->id,
             'shipping_method_id' => $snapshot['method_id'],
             'shipping_rate_id' => $snapshot['rate_id'],
+            'shipping_zone' => $snapshot['zone_id'],
+            'shipping_cost' => $snapshot['cost'],
             'pickup_station_id' => $snapshot['station_id'] ?? null,
             'status' => DeliveryOrderStatus::PENDING,
         ]);

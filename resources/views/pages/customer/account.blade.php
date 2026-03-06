@@ -122,7 +122,8 @@ new #[Layout('layouts.customer')] class extends Component {
                 <div class="px-4 py-2 border-b flex justify-between items-center">
                     <flux:heading class="font-medium text-zinc-600">Address Book</flux:heading>
 
-                    <flux:button icon="pencil" size="xs" class="cursor-pointer" href="#">
+                    <flux:button icon="pencil" size="xs" class="cursor-pointer"
+                        href="{{ route('customer.address-book.edit', $user->defaultAddress->id) }}">
                     </flux:button>
                 </div>
                 <div class="p-4 text-sm space-y-1">
