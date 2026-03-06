@@ -149,7 +149,7 @@ new #[Title('Order Details')] class extends Component {
                             @php
                                 $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—');
                                 $sku = $item->product_snapshot['sku'] ?? '—';
-                                $imagePath = $item->product_snapshot['image_path'] ?? $item->product?->image_path;
+                                $imagePath = $item->product_image_url ?? $item->product?->image_url;
                             @endphp
 
                             <flux:table.row :key="$item->id">

@@ -47,7 +47,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     @php
                         $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—');
                         $sku = $item->product_snapshot['sku'] ?? null;
-                        $imagePath = $item->product_snapshot['image_path'] ?? $item->product?->image_path;
+                        $imagePath = $item->product_image_url ?? $item->product?->image_url;
                     @endphp
 
                     <div class="border rounded-md p-4">

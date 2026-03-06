@@ -78,4 +78,11 @@ class OrderItem extends Model
             get: fn() => $this->discount_cents / 100,
         );
     }
+
+    protected function productImageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->product_snapshot['image_path'] ? asset('storage/' . $this->product_snapshot['image_path']) : null,
+        );
+    }
 }

@@ -286,7 +286,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         @foreach ($this->order->items as $item)
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
-                                    @php $img = $item->product_snapshot['image_path'] ?? $item->product?->image_path; @endphp
+                                    @php $img = $item->product_image_url ?? $item->product?->image_url; @endphp
                                     @if ($img)
                                         <img src="{{ asset($img) }}" alt="{{ $item->product_snapshot['name'] ?? '' }}"
                                             class="w-full h-full object-cover" />

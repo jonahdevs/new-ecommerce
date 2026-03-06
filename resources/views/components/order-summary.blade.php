@@ -108,7 +108,7 @@ new class extends Component {
             <div class="flex items-center gap-2.5 px-4 py-3">
                 <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
                     @if ($item->product?->image_path)
-                        <img src="{{ asset($item->product->image_path) }}" alt="{{ $item->product->name }}"
+                        <img src="{{ asset($item->product->image_url) }}" alt="{{ $item->product->name }}"
                             class="w-full h-full object-cover" />
                     @else
                         <flux:icon.photo class="w-full h-full p-1.5 text-zinc-300" />

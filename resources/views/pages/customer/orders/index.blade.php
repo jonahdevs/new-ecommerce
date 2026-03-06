@@ -87,7 +87,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                         <div class="flex -space-x-3 shrink-0">
                                             <div
                                                 class="w-12 h-12 rounded-md border bg-zinc-100 overflow-hidden shrink-0">
-                                                @php $img = $order->items->first()?->product_snapshot['image_path'] ?? $order->items->first()?->product?->image_path; @endphp
+                                                @php $img = $order->items->first()?->product_image_url ?? $order->items->first()?->product?->image_url; @endphp
                                                 @if ($img)
                                                     <img src="{{ asset($img) }}" alt="{{ $firstProductName }}"
                                                         class="w-full h-full object-cover" />
