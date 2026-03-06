@@ -38,7 +38,6 @@ jobs:
       - name: 💾 Pre-optimize Laravel
         run: |
           php artisan optimize:clear
-          php artisan optimize  # Builds config/route caches
 
             # Deploy app to ecommerce_files (exclude public entirely)
       - name: 📂 Deploy Laravel Files to App Dir
