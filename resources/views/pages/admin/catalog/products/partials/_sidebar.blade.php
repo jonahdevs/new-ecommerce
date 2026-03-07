@@ -56,12 +56,7 @@
 
     <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewBrand }">
         {{-- Brand Select --}}
-        <flux:select wire:model.live="form.brand_id" placeholder="-- Select Brand --">
-            <flux:select.option>No Brand</flux:select.option>
-            @foreach ($this->brands as $brand)
-                <flux:select.option :value="$brand->id">{{ $brand->name }}</flux:select.option>
-            @endforeach
-        </flux:select>
+        <x-my-choices-offline wire:model="form.brand_id" :options="$this->brands" single clearable searchable />
 
         {{-- Add New Brand Toggle --}}
         <flux:button @click="$wire.addNewBrand = !$wire.addNewBrand" type="button" icon="plus" variant="ghost"
@@ -93,7 +88,6 @@
     <div class="border-b px-3 py-2 flex items-center justify-between dark:border-zinc-600"
         :class="{ 'border-b ': expanded }">
         <flux:heading>Product Image</flux:heading>
-
         <flux:button icon="chevron-down" size="xs" variant="ghost"
             class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
             @click="expanded = !expanded" />
@@ -102,48 +96,54 @@
     <div class="p-5" x-show="expanded" x-cloak x-collapse>
         <input type="file" class="hidden" id="product-image-input" wire:model="form.image" />
 
-        @if ($form->image)
-            <div class="space-y-3">
-                <div @click="document.getElementById('product-image-input').click()"
-                    class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-green-400 cursor-pointer">
-                    <img src="{{ $form->image->temporaryUrl() }}" alt="Product Image preview"
-                        class="w-full h-full object-cover">
+        {{-- Loading indicator --}}
+        <flux:icon.loading wire:loading wire:target="form.image" />
 
-                    <div class="absolute top-2 right-2">
-                        <flux:badge color="green" size="sm">New</flux:badge>
+        {{-- Content — hidden while uploading --}}
+        <div wire:loading.remove wire:target="form.image">
+            @if ($form->image)
+                <div class="space-y-3">
+                    <div @click="document.getElementById('product-image-input').click()"
+                        class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden cursor-pointer">
+                        <img src="{{ $form->image->temporaryUrl() }}" alt="Product Image preview"
+                            class="w-full h-full object-cover">
+                        @if (!empty($form->product))
+                            <div class="absolute top-0 left-0">
+                                <flux:badge color="green" size="sm" variant="solid"
+                                    class="rounded-tl-md rounded-br-md rounded-none">New
+                                </flux:badge>
+                            </div>
+                        @endif
                     </div>
+                    <flux:text class="text-xs">Click the image to change</flux:text>
+                    <flux:link wire:click="$set('form.image', null)" class="text-sm text-red-500 cursor-pointer">
+                        Remove Image
+                    </flux:link>
                 </div>
-
-                <flux:text class="text-xs">Click the image to change</flux:text>
-                <flux:link wire:click="$set('form.image', null)" class="text-sm text-red-500 cursor-pointer">Remove
-                    Image
+            @elseif ($form->existing_image)
+                <div class="space-y-3">
+                    <div @click="document.getElementById('product-image-input').click()"
+                        class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200 cursor-pointer group">
+                        <img src="{{ Storage::url($form->existing_image) }}" alt="Current product image"
+                            class="w-full h-full object-cover">
+                        <div
+                            class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
+                            <flux:text class="opacity-0 group-hover:opacity-100 text-white font-semibold">
+                                Click to change
+                            </flux:text>
+                        </div>
+                    </div>
+                    <flux:text class="text-xs">Click the image to update</flux:text>
+                </div>
+            @else
+                <flux:link @click="document.getElementById('product-image-input').click()"
+                    class="text-sm text-sheffield-blue cursor-pointer">
+                    Set product image
                 </flux:link>
-            </div>
-        @elseif ($form->existing_image)
-            <div class="space-y-3">
-                <div @click="document.getElementById('product-image-input').click()"
-                    class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200 cursor-pointer group">
+            @endif
 
-                    <img src="{{ Storage::url($form->existing_image) }}" alt="Current product image"
-                        class="w-full h-full object-cover">
-
-                    <div
-                        class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
-                        <flux:text class="opacity-0 group-hover:opacity-100 text-white font-semibold">
-                            Click to change
-                        </flux:text>
-                    </div>
-                </div>
-
-                <flux:text class="text-xs">Click the image to update</flux:text>
-            </div>
-        @else
-            <flux:link @click="document.getElementById('product-image-input').click()"
-                class="text-sm text-sheffield-blue cursor-pointer">Set product image
-            </flux:link>
-        @endif
-
-        <flux:error name="form.image" />
+            <flux:error name="form.image" />
+        </div>
     </div>
 </flux:card>
 
@@ -151,7 +151,6 @@
     <div class="border-b px-3 py-2 flex items-center justify-between dark:border-zinc-600"
         :class="{ 'border-b ': expanded }">
         <flux:heading>Product Gallery</flux:heading>
-
         <flux:button icon="chevron-down" size="xs" variant="ghost"
             class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
             @click="expanded = !expanded" />
@@ -160,74 +159,79 @@
     <div x-show="expanded" x-cloak x-collapse class="p-5">
         <input type="file" class="hidden" id="product-gallery-input" wire:model="form.images" multiple />
 
-        @if (!empty($form->images) || !empty($form->existingImages))
-            <div class="grid grid-cols-3 gap-3 mb-3">
-                {{-- Display existing images from database --}}
-                @foreach ($form->existingImages as $index => $existingImage)
-                    <div class="relative group">
-                        <div
-                            class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200">
-                            <img src="{{ $existingImage->url }}" alt="Gallery image"
-                                class="w-full h-full object-cover">
+        {{-- Content — hidden while uploading --}}
+        <div>
+            @if (!empty($form->images) || !empty($form->existingImages))
+                <div class="grid grid-cols-3 gap-3 mb-3">
 
-                            {{-- Delete button overlay --}}
+                    {{-- Existing images --}}
+                    @foreach ($form->existingImages as $index => $existingImage)
+                        <div class="relative group">
                             <div
-                                class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
-                                <button type="button" wire:click="form.removeGalleryImage('{{ $existingImage }}')"
-                                    class="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2"
-                                    wire:confirm="Are you sure you want to remove this image?">
-                                    <flux:icon.trash variant="micro" class="size-4" />
-                                </button>
+                                class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200">
+                                <img src="{{ $existingImage->url }}" alt="Gallery image"
+                                    class="w-full h-full object-cover">
+                                <div
+                                    class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
+                                    <button type="button"
+                                        wire:click="form.removeGalleryImage('{{ $existingImage }}')"
+                                        wire:confirm="Are you sure you want to remove this image?"
+                                        class="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2">
+                                        <flux:icon.trash variant="micro" class="size-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
 
-                {{-- Display newly uploaded images (not yet saved) --}}
-                @foreach ($form->images as $index => $img)
-                    <div class="relative group">
-                        <div
-                            class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-green-400">
-                            <img src="{{ $img->temporaryUrl() }}" alt="New gallery image"
-                                class="w-full h-full object-cover">
+                    {{-- New images --}}
+                    @foreach ($form->images as $index => $img)
+                        <div class="relative group">
+                            <div class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden">
+                                <img src="{{ $img->temporaryUrl() }}" alt="New gallery image"
+                                    class="w-full h-full object-cover">
 
-                            {{-- Badge to show it's new --}}
-                            <div class="absolute top-2 right-2">
-                                <flux:badge color="green" size="sm">New</flux:badge>
-                            </div>
-
-                            {{-- Delete button overlay --}}
-                            <div
-                                class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
-                                <button type="button"
-                                    wire:click="$set('form.images', {{ json_encode(array_values(array_filter($form->images, fn($key) => $key !== $index, ARRAY_FILTER_USE_KEY))) }})"
-                                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 cursor-pointer">
-                                    <flux:icon.trash variant="micro" class="size-4" />
-                                </button>
+                                @if (!empty($form->product))
+                                    <div class="absolute top-0 left-0">
+                                        <flux:badge color="green" size="sm" variant="solid"
+                                            class="rounded-tl-md rounded-br-md rounded-none">New
+                                        </flux:badge>
+                                    </div>
+                                @endif
+                                <div
+                                    class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
+                                    <button type="button"
+                                        wire:click="$set('form.images', {{ json_encode(array_values(array_filter($form->images, fn($key) => $key !== $index, ARRAY_FILTER_USE_KEY))) }})"
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 cursor-pointer">
+                                        <flux:icon.trash variant="micro" class="size-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
 
-            <flux:text class="text-xs text-zinc-500 mb-3">
-                {{ count($form->existingImages) }} existing image(s), {{ count($form->images) }} new
-                image(s) to upload
-            </flux:text>
-        @endif
+                <flux:text class="text-xs text-zinc-500 mb-3">
+                    {{ count($form->existingImages) }} existing, {{ count($form->images) }} new to upload
+                </flux:text>
+            @endif
 
-        <flux:link @click="document.getElementById('product-gallery-input').click()"
-            class="text-sm text-sheffield-blue cursor-pointer">
-            {{ !empty($form->images) || !empty($form->existingImages) ? 'Add more images' : 'Set product gallery images' }}
-        </flux:link>
+            <flux:link @click="document.getElementById('product-gallery-input').click()"
+                class="text-sm text-sheffield-blue cursor-pointer">
+                {{ !empty($form->images) || !empty($form->existingImages) ? 'Add more images' : 'Set product gallery images' }}
+            </flux:link>
 
-        @if (!empty($form->imagesToDelete))
-            <flux:text class="text-xs text-red-500 mt-2">
-                {{ count($form->imagesToDelete) }} image(s) will be deleted when you save
-            </flux:text>
-        @endif
+            @if (!empty($form->imagesToDelete))
+                <flux:text class="text-xs text-red-500 mt-2">
+                    {{ count($form->imagesToDelete) }} image(s) will be deleted when you save
+                </flux:text>
+            @endif
 
-        <flux:error name="form.images" />
+            <flux:error name="form.images" />
+        </div>
+
+        {{-- Loading indicator --}}
+        <flux:icon.loading wire:loading wire:target="form.images" class="mt-3" />
     </div>
 </flux:card>
 
@@ -235,19 +239,31 @@
     <div class="border-b px-3 py-2 flex items-center justify-between dark:border-zinc-600"
         :class="{ 'border-b ': expanded }">
         <flux:heading>Product Categories</flux:heading>
-
         <flux:button icon="chevron-down" size="xs" variant="ghost"
             class="cursor-pointer transition-transform duration-300" x-bind:class="{ 'rotate-180': expanded }"
             @click="expanded = !expanded" />
     </div>
-    <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewCategory }">
-        <div class="p-2 max-h-96 overflow-y-auto border-2 dark:border-zinc-600"
+
+    <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewCategory }"
+        x-data="{ search: '' }">
+
+        {{-- Search --}}
+        <flux:input x-model="search" placeholder="Search categories..." icon="magnifying-glass" clearable
+            size="sm" />
+
+        {{-- Categories List --}}
+        <div class="max-h-64 overflow-y-auto border-2 dark:border-zinc-600 rounded-md"
             wire:key="categories-{{ md5(json_encode($form->category_ids)) }}">
-            <div class="space-y-2 ">
+            <div class="">
                 @foreach ($this->categories as $category)
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                        wire:key="cat-{{ $category['id'] }}"
+                        x-show="search === '' || '{{ strtolower($category['name']) }}'.includes(search.toLowerCase())">
+
                         @if ($category['depth'] > 0)
-                            <flux:icon.chevron-right variant="micro" class="text-zinc-400 ms-2" />
+                            <span class="shrink-0" style="padding-left: {{ $category['depth'] * 12 }}px">
+                                <flux:icon.chevron-right variant="micro" class="text-zinc-400 size-3" />
+                            </span>
                         @endif
 
                         <flux:checkbox wire:model.live="form.category_ids" :value="$category['id']"
@@ -257,21 +273,45 @@
             </div>
         </div>
 
+        {{-- No results — outside the list, checks all category names at once --}}
+        <div class="text-sm text-zinc-400 text-center py-2" x-show="search !== ''" x-data="{
+            get noResults() {
+                const names = @js(collect($this->categories)->pluck('name')->map(fn($n) => strtolower($n))->values()->toArray());
+                return !names.some(name => name.includes(search.toLowerCase()));
+            }
+        }">
+            <template x-if="noResults">
+                <span>No categories match "<span x-text="search"></span>"</span>
+            </template>
+        </div>
+
+        {{-- Selected count --}}
+        @if (!empty($form->category_ids))
+            <flux:text class="text-xs text-zinc-500">
+                {{ count($form->category_ids) }} categor{{ count($form->category_ids) === 1 ? 'y' : 'ies' }} selected
+            </flux:text>
+        @endif
+
+        {{-- Add New Category Toggle --}}
         <flux:button @click="$wire.addNewCategory = !$wire.addNewCategory" type="button" icon="plus"
-            variant="ghost" size="xs" class="underline cursor-pointer">Add
-            new category
+            variant="ghost" size="xs" class="underline cursor-pointer">
+            {{ $addNewCategory ? 'Cancel' : 'Add new category' }}
         </flux:button>
 
+        {{-- Add New Category Form --}}
         <div wire:show="addNewCategory" wire:cloak class="space-y-5">
             <flux:input wire:model="form.newCategoryName" placeholder="Enter category name" />
 
             <flux:select wire:model="form.newCategoryParentId" placeholder="-- Parent Category --">
                 @foreach ($this->allCategories as $category)
-                    <flux:select.option :value="$category->id">{{ $category->name }}</flux:select.option>
+                    <flux:select.option :value="$category->id">
+                        {{ $category->name }}
+                    </flux:select.option>
                 @endforeach
             </flux:select>
 
-            <flux:button type="button" wire:click="createCategory" size="sm">Add new category
+            <flux:button type="button" wire:click="createCategory" size="sm">
+                Add new category
             </flux:button>
         </div>
     </div>

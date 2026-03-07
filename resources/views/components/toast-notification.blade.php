@@ -46,9 +46,8 @@
             <div>
                 <!-- Info Notification  -->
                 <template x-if="notification.variant === 'info'">
-                    <div x-data="{ isVisible: false, timeout: null }" x-cloak x-show="isVisible"
-                        class="pointer-events-auto relative rounded-sm border border-sky-500 bg-white text-neutral-600 dark:bg-neutral-950 dark:text-neutral-300"
-                        role="alert" x-on:pause-auto-dismiss.window="clearTimeout(timeout)"
+                    <div x-data="{ isVisible: false, timeout: null }" x-cloak x-show="isVisible" role="alert"
+                        x-on:pause-auto-dismiss.window="clearTimeout(timeout)"
                         x-on:resume-auto-dismiss.window=" timeout = setTimeout(() => {(isVisible = false), removeNotification(notification.id) }, displayDuration)"
                         x-init="$nextTick(() => { isVisible = true }), (timeout = setTimeout(() => { isVisible = false, removeNotification(notification.id) }, displayDuration))" x-transition:enter="transition duration-300 ease-out"
                         x-transition:enter-end="translate-y-0" x-transition:enter-start="translate-y-8"

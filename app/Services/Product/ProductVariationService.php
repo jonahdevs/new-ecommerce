@@ -5,6 +5,7 @@ namespace App\Services\Product;
 use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductVariationService
@@ -37,7 +38,7 @@ class ProductVariationService
 
     private function saveVariant(Product $product, array $variant, int $index): void
     {
-        $data = [
+        $variantData = [
             'product_id'          => $product->id,
             'name'                => $variant['name'],
             'sku'                 => $variant['sku'] ?: $this->generateSku($product->id, $index),
@@ -59,17 +60,23 @@ class ProductVariationService
             'attributes'          => $variant['attributes'],
         ];
 
-        if (!empty($variant['id'])) {
-            // Update existing
-            $savedVariant = ProductVariant::find($variant['id']);
-            $savedVariant?->update($data);
-        } else {
-            // Create new
-            $savedVariant = ProductVariant::create($data);
+        // Handle image upload
+        if (!empty($variant['image'])) {
+            // Delete old image if exists
+            if (!empty($variant['image_path'])) {
+                Storage::disk('public')->delete($variant['image_path']);
+            }
+            $variantData['image_path'] = $variant['image']->store('products/variants', 'public');
         }
 
-        // Sync attribute values
-        if (!empty($variant['attribute_value_ids']) && $savedVariant) {
+        if (!empty($variant['id'])) {
+            $savedVariant = ProductVariant::find($variant['id']);
+            $savedVariant?->update($variantData);
+        } else {
+            $savedVariant = ProductVariant::create($variantData);
+        }
+
+        if (!empty($variant['attribute_value_ids'])) {
             $savedVariant->attributeValues()->sync($variant['attribute_value_ids']);
         }
     }

@@ -93,11 +93,8 @@
 
     {{-- Save Attributes Button --}}
     @if (!empty($selectedAttributes))
-        <div class="flex items-center justify-between pt-2 border-t dark:border-zinc-700">
-            <p class="text-sm text-zinc-500">
-                Changes will also be saved when you save the product.
-            </p>
-            <flux:button type="button" variant="primary" wire:click="saveAttributes" icon="check">
+        <div class="flex items-center justify-end pt-2 border-t dark:border-zinc-700">
+            <flux:button type="button" variant="primary" wire:click="saveAttributes" class="cursor-pointer">
                 Save Attributes
             </flux:button>
         </div>

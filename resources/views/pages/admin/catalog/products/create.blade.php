@@ -1,7 +1,6 @@
 <?php
 use Livewire\Attributes\Title;
 use App\Livewire\Admin\BaseProductComponent;
-use App\Models\Product;
 
 new #[Title('Create Product')] class extends BaseProductComponent {
     protected function executeSave(): void

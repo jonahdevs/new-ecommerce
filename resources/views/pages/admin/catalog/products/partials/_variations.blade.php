@@ -104,7 +104,7 @@
                                     wire:confirm="Remove this attribute?" class="text-red-500!" />
 
                                 <flux:button icon="chevron-down" size="xs" variant="ghost" type="button"
-                                    class="transition-transform duration-300" x-bind:class="{ 'rotate-180': open }"
+                                    class="transition-transform duration-300" x-bind:class="{ 'rotate-180': collapsed }"
                                     @click="collapsed = !collapsed" />
                             </div>
                         </div>
@@ -112,8 +112,74 @@
                         {{-- Variant Body --}}
                         <div x-cloak x-show="collapsed" x-collapse class="space-y-5 p-5">
 
-                            {{-- SKU --}}
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-5">
+                                {{-- Variant Image --}}
+                                <div class="space-y-2 flex flex-col">
+                                    <flux:label>Variation Image</flux:label>
+
+                                    <input type="file" class="hidden" id="variant-image-{{ $index }}"
+                                        wire:model="variantImages.{{ $index }}" accept="image/*" />
+
+                                    {{-- Loading --}}
+                                    <flux:skeleton wire:loading wire:target="variantImages.{{ $index }}"
+                                        class="w-24 h-24" animate="shimmer" />
+
+                                    <div wire:loading.remove wire:target="variantImages.{{ $index }}">
+                                        @if (!empty($variantImages[$index] ?? null))
+                                            {{-- New upload preview --}}
+                                            <div class="relative w-24 h-24 rounded-md overflow-hidden group cursor-pointer"
+                                                @click="document.getElementById('variant-image-{{ $index }}').click()">
+                                                <img src="{{ $variantImages[$index]->temporaryUrl() }}"
+                                                    class="w-full h-full object-cover" alt="Variant image">
+                                                <div
+                                                    class="absolute inset-0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                                                    <flux:icon.pencil
+                                                        class="opacity-0 group-hover:opacity-100 text-white size-4" />
+                                                </div>
+
+                                                @if (!empty($variant['id']))
+                                                    <div class="absolute top-0 left-0">
+                                                        <flux:badge color="green" size="sm" variant="solid"
+                                                            class="rounded-tl-md rounded-br-md rounded-none">New
+                                                        </flux:badge>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @elseif (!empty($variant['image_path']))
+                                            {{-- Existing saved image --}}
+                                            <div class="relative w-24 h-24 rounded-md overflow-hidden border-2 border-zinc-200 group cursor-pointer"
+                                                @click="document.getElementById('variant-image-{{ $index }}').click()">
+                                                <img src="{{ Storage::url($variant['image_path']) }}"
+                                                    class="w-full h-full object-cover" alt="Variant image">
+                                                <div
+                                                    class="absolute inset-0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                                                    <flux:icon.pencil
+                                                        class="opacity-0 group-hover:opacity-100 text-white size-4" />
+                                                </div>
+                                            </div>
+                                        @else
+                                            {{-- No image --}}
+                                            <div class="flex items-center gap-3">
+                                                <button type="button"
+                                                    @click="document.getElementById('variant-image-{{ $index }}').click()"
+                                                    class="w-24 h-24 rounded-md border-2 border-dashed border-zinc-300 dark:border-zinc-600 flex flex-col items-center justify-center gap-1 hover:border-sheffield-blue hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                                                    <flux:icon.photo class="size-6 text-zinc-400" />
+                                                    <span class="text-xs text-zinc-400">Add image</span>
+                                                </button>
+                                            </div>
+                                        @endif
+
+                                        {{-- Remove image link --}}
+                                        @if (!empty($variantImages[$index] ?? null) || !empty($variant['image_path']))
+                                            <flux:link wire:click="removeVariantImage({{ $index }})"
+                                                class="text-xs text-red-500 cursor-pointer mt-1 block">
+                                                Remove image
+                                            </flux:link>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- SKU --}}
                                 <flux:input wire:model="variants.{{ $index }}.sku" label="SKU"
                                     placeholder="Leave blank to auto-generate" />
                             </div>
@@ -131,8 +197,8 @@
                             <flux:input wire:model="variants.{{ $index }}.name" ::readonly="readonlyName"
                                 label="Variation Name">
                                 <x-slot name="iconTrailing">
-                                    <flux:button size="sm" variant="subtle" @click="readonlyName = !readonlyName"
-                                        icon="pencil" class="-mr-1" />
+                                    <flux:button size="sm" variant="subtle"
+                                        @click="readonlyName = !readonlyName" icon="pencil" class="-mr-1" />
                                 </x-slot>
                             </flux:input>
 
@@ -147,7 +213,8 @@
                             {{-- Stock --}}
                             @if ($variant['manage_stock'])
                                 <div class="grid grid-cols-2 gap-3">
-                                    <flux:input type="number" wire:model="variants.{{ $index }}.stock_quantity"
+                                    <flux:input type="number"
+                                        wire:model="variants.{{ $index }}.stock_quantity"
                                         label="Stock Quantity" min="0" />
                                     <flux:select label="Allow Backorders"
                                         wire:model="variants.{{ $index }}.allow_backorders">

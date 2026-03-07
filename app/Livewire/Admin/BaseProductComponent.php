@@ -13,7 +13,7 @@ use App\Services\Product\ProductAttributeService;
 use App\Services\Product\ProductVariationService;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
+use Livewire\Attributes\{Computed, Renderless};
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -42,6 +42,7 @@ abstract class BaseProductComponent extends Component
     public array $variants = [];
     public array $variantsToDelete = [];
     public array $availableAttributes = [];
+    public array $variantImages = [];
 
     // Bulk action inputs
     public ?float $bulkPrice = null;
@@ -72,6 +73,13 @@ abstract class BaseProductComponent extends Component
 
     protected function persistProduct(Product $product): void
     {
+        // Merge variant images into variants array before saving
+        foreach ($this->variantImages as $index => $image) {
+            if (!empty($image) && isset($this->variants[$index])) {
+                $this->variants[$index]['image'] = $image;
+            }
+        }
+
         app(ProductAttributeService::class)->save(
             $product,
             $this->selectedAttributes
@@ -92,25 +100,19 @@ abstract class BaseProductComponent extends Component
     {
         $this->selectedAttributes = $product
             ->attributes()
-            ->with('values')
+            ->withPivot(['is_visible', 'is_variation_attribute', 'sort_order', 'values'])
             ->get()
             ->map(fn($attr) => [
-                'attribute_id' => $attr->id,
-                'name' => $attr->name,
-                'is_new' => false,
-                'is_visible' => $attr->pivot->is_visible,
-                'is_variation_attribute' => $attr->pivot->is_variation_attribute,
-                'sort_order' => $attr->pivot->sort_order,
-                'values' => json_decode(
-                    $product->attributes()
-                        ->where('attributes.id', $attr->id)
-                        ->first()->pivot->values ?? '[]',
-                    true
-                ) ?? [],
+                'attribute_id'           => $attr->id,
+                'name'                   => $attr->name,
+                'is_new'                 => false,
+                'is_visible'             => (bool) $attr->pivot->is_visible,
+                'is_variation_attribute' => (bool) $attr->pivot->is_variation_attribute,
+                'sort_order'             => $attr->pivot->sort_order,
+                'values'                 => json_decode($attr->pivot->values ?? '[]', true) ?? [],
             ])
             ->toArray();
 
-        // Sync variation attributes to variations manager
         $this->syncAvailableAttributes();
     }
 
@@ -118,12 +120,17 @@ abstract class BaseProductComponent extends Component
     {
         $this->variants = $product
             ->variants()
-            ->with('attributeValues.attribute')
+            ->with([
+                'attributeValues:id,attribute_id,value',
+                'attributeValues.attribute:id,name'
+            ])
             ->get()
             ->map(fn($variant) => [
                 'id' => $variant->id,
                 'name' => $variant->name,
                 'sku' => $variant->sku,
+                'image_path' => $variant->image_path,
+                'image' => null,
                 'price' => $variant->price,
                 'sale_price' => $variant->sale_price,
                 'manage_stock' => $variant->manage_stock,
@@ -276,6 +283,8 @@ abstract class BaseProductComponent extends Component
                 'id' => null,
                 'name' => null,
                 'sku' => '',
+                'image'      => null,
+                'image_path' => null,
                 'price' => null,
                 'sale_price' => null,
                 'manage_stock' => true,
@@ -309,6 +318,8 @@ abstract class BaseProductComponent extends Component
             'id' => null,
             'name' => null,
             'sku' => '',
+            'image'    => null,
+            'image_path' => null,
             'price' => null,
             'sale_price' => null,
             'manage_stock' => true,
@@ -351,6 +362,13 @@ abstract class BaseProductComponent extends Component
 
         $this->variants = [];
         $this->dispatch('notify', variant: 'success', message: 'All variations removed. Save to apply.');
+    }
+
+    public function removeVariantImage(int $index): void
+    {
+        $this->variantImages[$index] = null;
+        $this->variants[$index]['image_path'] = null;
+        $this->variants[$index]['image'] = null;
     }
 
     // -----------------------------------------------
@@ -479,7 +497,7 @@ abstract class BaseProductComponent extends Component
     // Computed Properties
     // -----------------------------------------------
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function productAttributes()
     {
         return Attribute::where('is_active', true)->orderBy('sort_order')->get();
@@ -488,20 +506,24 @@ abstract class BaseProductComponent extends Component
     #[Computed]
     public function products()
     {
-        return Product::active()->orderBy('name')->get();
+        if ($this->activeTab !== 'linked-products') return collect();
+        return Product::active()->select('id', 'name')->orderBy('name')->get();
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function brands()
     {
-        return Brand::active()->ordered()->get();
+        return Brand::active()
+            ->ordered()
+            ->select('id', 'name')->get();
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function categories()
     {
         $categories = Category::active()
             ->ordered()
+            ->select('id', 'name', 'parent_id')
             ->with('children')
             ->whereNull('parent_id')
             ->get();
@@ -521,7 +543,7 @@ abstract class BaseProductComponent extends Component
         return $this->form->getSelectedTags();
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function mostUsedTags()
     {
         return Tag::withCount('products')
@@ -587,11 +609,13 @@ abstract class BaseProductComponent extends Component
     // Tag Methods
     // -----------------------------------------------
 
+    #[Renderless]
     public function addTags(): void
     {
         $this->form->addTags();
     }
 
+    #[Renderless]
     public function removeTag(int $tagId): void
     {
         $this->form->removeTag($tagId);
@@ -673,7 +697,7 @@ abstract class BaseProductComponent extends Component
         $productId = $this->form->getProductId();
 
         if (!$productId) {
-            $this->dispatch('notify', variant: 'info', message: 'Attributes will be saved when you create the product.');
+            $this->dispatch('notify', variant: 'info', message: 'Attributes Saved Successfully!');
             return;
         }
 
