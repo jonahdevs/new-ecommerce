@@ -22,10 +22,12 @@ jobs:
       - name: Create .env for build
         run: |
           cp .env.example .env
-          php artisan key:generate
 
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Generate app key
+        run: php artisan key:generate
 
       - name: Setup Node & build assets
         uses: actions/setup-node@v3
