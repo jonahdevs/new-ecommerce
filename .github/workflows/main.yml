@@ -1,96 +1,81 @@
-name: 🚀 Deploy Laravel to Production
+name: Deploy to Demo Server
 
 on:
   push:
     branches:
-      - main
       - master
-  workflow_dispatch: # Manual trigger
 
 jobs:
-  deploy:
-    name: Deploy to demo.ecommerce.sheffieldafrica.com
+  build-and-deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚚 Checkout Code
+      # ─── Checkout ───────────────────────────────────────────────────────────
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🐘 Setup PHP
+      # ─── PHP Setup ──────────────────────────────────────────────────────────
+      - name: Set up PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: mbstring, xml, ctype, json, bcmath, pdo, mysql, zip
+          extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, tokenizer, xml, curl, zip
+          coverage: none
 
-      - name: 📦 Install Composer Dependencies
-        run: composer install --optimize-autoloader --no-dev --no-progress --no-interaction --prefer-dist
+      # ─── Composer ───────────────────────────────────────────────────────────
+      - name: Install Composer dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-      # 🔥 FIX: Create required directories
-      - name: 🗂️ Setup Laravel Storage
-        run: |
-          mkdir -p storage/{framework/{cache/data,views,sessions},logs}
-          chmod -R 775 storage bootstrap/cache
-
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      # ─── Node / Assets ──────────────────────────────────────────────────────
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
+          cache: "npm"
 
-      - name: Install NPM Dependencies
-        run: npm ci --quiet
+      - name: Install NPM dependencies
+        run: npm ci
 
-      - name: Build NPM Assets
+      - name: Build assets
         run: npm run build
 
-      - name: 💾 Cache Laravel Configuration
-        run: |
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-
-      # Deploy ENTIRE Laravel project to /home/yourusername/demo-ecommerce/
-      - name: 📂 Deploy Laravel App Files
-        uses: burnett01/rsync-deployments@6.0.0
-        with:
-          switches: -avzr --delete --exclude='.git*' --exclude='.github' --exclude='node_modules' --exclude='.env*' --exclude='public/hot' --exclude='public/storage' --exclude='storage/logs/*' --exclude='storage/framework/cache/data/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='tests' --exclude='phpunit.xml'
-          path: ./
-          remote_path: /home/sheffieldafrica/demo-ecommerce/ # FULL Laravel project path
-          remote_host: ${{ secrets.FTP_SERVER }}
-          remote_port: ${{ secrets.SSH_PORT }}
-          remote_user: ${{ secrets.FTP_USERNAME }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_key_pass: ${{ secrets.SSH_PASSPHRASE }}
-
-      # Run post-deployment commands in the Laravel root
-      - name: ⚙️ Post-Deployment Commands
+      # ─── Deploy via SSH ─────────────────────────────────────────────────────
+      - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
+            set -e
+
             cd /home/sheffieldafrica/demo-ecommerce
 
-            # Generate app key if missing
-            php artisan key:generate --no-interaction --force || true
+            echo ">>> Pulling latest code..."
+            git pull origin master
 
-            # Clear all caches
-            php artisan optimize:clear
+            echo ">>> Installing Composer dependencies..."
+            composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-            # Rebuild production caches
+            echo ">>> Installing NPM dependencies and building assets..."
+            npm ci
+            npm run build
+
+            echo ">>> Caching Laravel config..."
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
+            php artisan event:cache
 
-            # Run migrations safely
-            php artisan migrate --force || echo "Migrations skipped"
+            echo ">>> Running migrations..."
+            php artisan migrate --force
 
-            # Storage link
-            php artisan storage:link --force || true
+            echo ">>> Restarting queue workers..."
+            php artisan queue:restart
 
-            # Set correct permissions
-            chmod -R 755 storage bootstrap/cache
+            echo ">>> Clearing stale cache..."
+            php artisan cache:clear
 
-            echo "✅ Deployment to demo.ecommerce.sheffieldafrica.com completed!"
+            echo "✅ Deployment complete!"
