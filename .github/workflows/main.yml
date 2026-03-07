@@ -25,10 +25,16 @@ jobs:
       - name: 📦 Install Composer Dependencies
         run: composer install --optimize-autoloader --no-dev --no-progress --no-interaction --prefer-dist
 
+      # 🔥 FIX: Create required directories
+      - name: 🗂️ Setup Laravel Storage
+        run: |
+          mkdir -p storage/{framework/{cache/data,views,sessions},logs}
+          chmod -R 775 storage bootstrap/cache
+
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Install NPM Dependencies
         run: npm ci --quiet
