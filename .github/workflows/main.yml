@@ -3,7 +3,8 @@ name: Deploy to Sheffield Demo
 on:
   push:
     branches:
-      - main # triggers on every push to main
+      - main
+      - master
 
 jobs:
   deploy:
