@@ -253,10 +253,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 icon="shopping-bag" class="w-full sm:w-auto">
                                 Start Shopping
                             </flux:button>
-                            {{-- <flux:button href="{{ route('home') }}" wire:navigate variant="ghost"
+                            <flux:button href="{{ route('home') }}" wire:navigate variant="ghost"
                                 class="w-full sm:w-auto">
                                 Back to Home
-                            </flux:button> --}}
+                            </flux:button>
                         </div>
                     </div>
                 @else
