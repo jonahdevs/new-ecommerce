@@ -22,3 +22,5 @@ yarn-error.log
 /.vscode
 /.zed
 *.zip
+/bootstrap/cache/*.php
+/storage/*.key

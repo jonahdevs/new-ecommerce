@@ -23,6 +23,12 @@ jobs:
           extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, tokenizer, xml, curl, zip
           coverage: none
 
+      # ─── Laravel Environment (CI only) ──────────────────────────────────────
+      - name: Create .env for CI
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
       # ─── Composer ───────────────────────────────────────────────────────────
       - name: Install Composer dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
