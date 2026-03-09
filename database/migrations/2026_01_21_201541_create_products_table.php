@@ -22,9 +22,9 @@ return new class extends Migration {
             $table->string('type');
 
             // General
-            $table->decimal('price', 10, 2);
-            $table->decimal('sale_price', 10, 2)->nullable(); // Discount price
-            $table->decimal('cost_price', 10, 2)->nullable(); // Your price
+            $table->decimal('price', 10, 2)->nullable();
+            $table->decimal('sale_price', 10, 2)->nullable();
+            $table->decimal('cost_price', 10, 2)->nullable();
 
             // Inventory
             $table->string('sku')->nullable();
@@ -42,10 +42,10 @@ return new class extends Migration {
             $table->boolean('sold_individually')->default(false);
 
             // Shipping
-            $table->decimal('weight', 8, 3)->nullable()->comment('Weight in kg');
-            $table->decimal('height', 8, 2)->nullable();
-            $table->decimal('width', 8, 2)->nullable();
-            $table->decimal('length', 8, 2)->nullable();
+            $table->decimal('weight', 8, 3)->nullable()->comment('kg');
+            $table->decimal('height', 8, 2)->nullable()->comment('centimeters');
+            $table->decimal('width', 8, 2)->nullable()->comment('centimeters');
+            $table->decimal('length', 8, 2)->nullable()->comment('centimeters');
 
             $table->text('description')->nullable();
 

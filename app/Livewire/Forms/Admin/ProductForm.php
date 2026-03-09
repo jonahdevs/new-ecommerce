@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Forms\Admin;
 
-use App\Enums\{CategoryStatus, ProductRelationshipType, ProductStatus, ProductVisibility};
+use App\Enums\{CategoryStatus, ProductRelationshipType, ProductStatus, ProductType, ProductVisibility};
 use App\Models\{Brand, Category, Product, Tag};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -140,10 +140,11 @@ class ProductForm extends Form
 
             // Inventory
             'sku' => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('products', 'sku')->ignore($productId),
+                Rule::when(
+                    $this->type !== 'grouped',
+                    ['required', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($productId)],
+                    ['nullable', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($productId)],
+                ),
             ],
 
             'manage_stock' => 'boolean',
