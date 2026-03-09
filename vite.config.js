@@ -12,13 +12,7 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
-    build: {
-        rollupOptions: {
-            output: {
-                manualChunks: undefined, // keeps everything in one bundle
-            }
-        }
-    },
+
     server: {
         cors: true,
         watch: {
