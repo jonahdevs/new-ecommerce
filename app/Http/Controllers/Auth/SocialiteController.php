@@ -26,11 +26,11 @@ class SocialiteController extends Controller
         // Find or create the user
         $user = User::updateOrCreate(
             [
-                'provider'    => $provider,
-                'provider_id' => $socialUser->getId(),
                 'email'          => $socialUser->getEmail(),
             ],
             [
+                'provider'    => $provider,
+                'provider_id' => $socialUser->getId(),
                 'name'           => $socialUser->getName(),
                 'provider_token' => $socialUser->token,
                 'email_verified_at' => now(), // trust OAuth provider's email
