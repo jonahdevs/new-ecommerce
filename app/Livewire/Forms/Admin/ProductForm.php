@@ -2,9 +2,8 @@
 
 namespace App\Livewire\Forms\Admin;
 
-use App\Enums\ProductStatus;
+use App\Enums\{CategoryStatus, ProductRelationshipType, ProductStatus, ProductVisibility};
 use App\Models\{Brand, Category, Product, Tag};
-;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
@@ -74,10 +73,10 @@ class ProductForm extends Form
 
     // Status Visibility
     public string $status = 'draft';
+    public string $visibility = 'public';
 
     public $published_at = null;
 
-    public bool $is_featured = false;
 
 
     // image properties
@@ -160,14 +159,14 @@ class ProductForm extends Form
 
             // Status
             'status' => ["required", Rule::enum(ProductStatus::class)],
+            'visibility' => ["required", Rule::enum(ProductVisibility::class)],
             'published_at' => 'required_if:status,scheduled|nullable|date',
-            'is_featured' => 'boolean',
 
             // Images
             'image' => [
                 !is_null($this->product)
-                ? 'required_without:existing_image'
-                : 'required',
+                    ? 'required_without:existing_image'
+                    : 'required',
                 'nullable',
                 'image',
                 'max:2048'
@@ -277,8 +276,8 @@ class ProductForm extends Form
 
         // Fill status
         $this->status = $product->status->value;
+        $this->visibility = $product->visibility->value;
         $this->published_at = $product->published_at;
-        $this->is_featured = $product->is_featured;
 
         // Fill categories
         $this->category_ids = $product->categories->pluck('id')->toArray();
@@ -386,9 +385,7 @@ class ProductForm extends Form
             'name' => $this->newCategoryName,
             'slug' => Str::slug($this->newCategoryName),
             'parent_id' => $this->newCategoryParentId,
-            'is_active' => true,
-            'is_featured' => false,
-            'show_in_navbar' => false,
+            'status' => CategoryStatus::ACTIVE,
             'sort_order' => 0,
         ]);
 
@@ -463,6 +460,8 @@ class ProductForm extends Form
     }
 
 
+
+
     /**
      * Store the product
      */
@@ -524,8 +523,8 @@ class ProductForm extends Form
             'meta_keywords' => $this->meta_keywords,
             'canonical_url' => $this->canonical_url,
             'status' => $this->status,
+            'visibility' => $this->visibility,
             'published_at' => $this->published_at,
-            'is_featured' => $this->is_featured,
             'brand_id' => $this->brand_id ?: null,
         ];
     }
@@ -538,17 +537,29 @@ class ProductForm extends Form
     {
         $product->categories()->sync($this->category_ids);
 
-        //   detaches old, attaches new, no duplicates
+        // Detach all existing badge tags first, then attach fresh
+        $product->detachTags($product->tagsWithType('badge'));
+
         if (!empty($this->tag_ids)) {
             $tags = Tag::whereIn('id', $this->tag_ids)->get();
-            $product->syncTagsWithType($tags, 'badge');
-        } else {
-            // If no tags selected, remove all
-            $product->syncTagsWithType([], 'badge');
+            $product->attachTags($tags, 'badge');
         }
 
-        $product->upsells()->sync($this->selectedUpsells);
-        $product->crossSells()->sync($this->selectedCrossSells);
+        $product->upsells()->sync(
+            collect($this->selectedUpsells)
+                ->mapWithKeys(fn($id, $index) => [
+                    $id => ['type' => ProductRelationshipType::UP_SELLS, 'sort_order' => $index]
+                ])
+                ->toArray()
+        );
+
+        $product->crossSells()->sync(
+            collect($this->selectedCrossSells)
+                ->mapWithKeys(fn($id, $index) => [
+                    $id => ['type' => ProductRelationshipType::CROSS_SELL, 'sort_order' => $index]
+                ])
+                ->toArray()
+        );
         $this->handleImageUpload($product);
     }
 

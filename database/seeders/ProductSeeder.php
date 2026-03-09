@@ -178,7 +178,7 @@ class ProductSeeder extends Seeder
         $relationshipData = [];
         foreach ($relatedProductIds as $index => $relatedProductId) {
             $relationshipData[$relatedProductId] = [
-                'relationship_type' => $relationshipType,
+                'type' => $relationshipType,
                 'sort_order' => $index,
             ];
         }

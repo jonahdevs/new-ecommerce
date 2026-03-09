@@ -42,7 +42,7 @@ return new class extends Migration {
             $table->boolean('sold_individually')->default(false);
 
             // Shipping
-            $table->decimal('weight', 8, 3)->nullable()->weight('Weight in kg');
+            $table->decimal('weight', 8, 3)->nullable()->comment('Weight in kg');
             $table->decimal('height', 8, 2)->nullable();
             $table->decimal('width', 8, 2)->nullable();
             $table->decimal('length', 8, 2)->nullable();
@@ -58,7 +58,7 @@ return new class extends Migration {
             // Status
             $table->string('status')->default('draft');
             $table->timestamp('published_at')->nullable();
-            $table->boolean('is_featured')->default(false);
+            $table->string('visibility')->default('public');
 
             $table->foreignId('brand_id')->nullable()->constrained()->nullOnDelete();
 
@@ -94,7 +94,6 @@ return new class extends Migration {
             // Indexes
             $table->index(['status', 'created_at']);   // default sort + newest
             $table->index(['status', 'price']);         // price filter + price sort
-            $table->index(['status', 'is_featured']);   // featured filter (replaces single is_featured)
             $table->index(['status', 'stock_quantity']); // in_stock filter
             $table->index(['status', 'sale_price']);    // on_sale filter
         });
@@ -177,10 +176,10 @@ return new class extends Migration {
             $table->enum('stock_status', ['in_stock', 'out_of_stock', 'backorder'])->default('in_stock');
 
             // Physical properties (can override parent)
-            $table->decimal('weight', 8, 2)->nullable();
-            $table->decimal('height', 8, 2)->nullable();
-            $table->decimal('width', 8, 2)->nullable();
-            $table->decimal('length', 8, 2)->nullable();
+            $table->decimal('weight', 8, 2)->nullable()->comment('kgs');
+            $table->decimal('height', 8, 2)->nullable()->comment('centimeters');
+            $table->decimal('width', 8, 2)->nullable()->comment('centimeters');
+            $table->decimal('length', 8, 2)->nullable()->comment('centimeters');
 
             // Primary variant image
             $table->string('image_path')->nullable();
@@ -302,7 +301,7 @@ return new class extends Migration {
         });
 
         // ===============================================
-        // PRODUCT Relationships
+        // PRODUCT RELATIONSHIPS
         // ===============================================
 
         Schema::create('product_relationships', function (Blueprint $table) {
@@ -310,21 +309,17 @@ return new class extends Migration {
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('related_product_id')->constrained('products')->cascadeOnDelete();
 
-            $table->enum('relationship_type', [
-                'upsell',         // Higher-end alternative
-                'cross_sell',     // Frequently bought together
-                'related',        // Related products (similar items)
-            ])->default('related');
+            $table->string('type');
 
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
             // Prevent duplicate relationships
-            $table->unique(['product_id', 'related_product_id', 'relationship_type'], 'product_relation_unique');
+            $table->unique(['product_id', 'related_product_id', 'type'], 'product_relation_unique');
 
             // Indexes for performance
-            $table->index(['product_id', 'relationship_type']);
-            $table->index(['related_product_id', 'relationship_type']);
+            $table->index(['product_id', 'type']);
+            $table->index(['related_product_id', 'type']);
         });
 
         // ===============================================

@@ -12,10 +12,9 @@
         {{-- Publication Status --}}
 
         <flux:select wire:model="form.status" label="Publication Status">
-            <flux:select.option value="draft">Draft</flux:select.option>
-            <flux:select.option value="scheduled">Scheduled</flux:select.option>
-            <flux:select.option value="published">Published</flux:select.option>
-            <flux:select.option value="archived">Archived</flux:select.option>
+            @foreach (\App\Enums\ProductStatus::cases() as $productStatus)
+                <flux:select.option :value="$productStatus->value">{{ $productStatus->label() }}</flux:select.option>
+            @endforeach
         </flux:select>
         @php
             $config1 = [
@@ -29,17 +28,12 @@
 
         <flux:separator />
 
-        {{-- Visibility Options --}}
-        <div class="pt-2 space-y-3 ">
-            <flux:field variant="inline">
-                <flux:checkbox wire:model="form.is_featured" />
-                <flux:label class="flex flex-col items-start">
-                    <p> Featured</p>
-                    <p class="text-xs text-zinc-500">Show in featured section</p>
-                </flux:label>
-                <flux:error name="terms" />
-            </flux:field>
-        </div>
+        <flux:select wire:model="form.visibility" label="Visibility">
+            @foreach (\App\Enums\ProductVisibility::cases() as $productVisibility)
+                <flux:select.option :value="$productVisibility->value">{{ $productVisibility->label() }}
+                </flux:select.option>
+            @endforeach
+        </flux:select>
     </div>
 </flux:card>
 
@@ -68,15 +62,13 @@
         <div wire:show="addNewBrand" wire:cloak class="space-y-5">
             <flux:input wire:model="form.newBrandName" label="Brand Name" placeholder="Enter brand name" />
 
-            <flux:input wire:model="form.newBrandWebsite" label="Website (Optional)" placeholder="https://example.com"
-                type="url" />
-
             <div class="flex gap-2">
-                <flux:button type="button" wire:click="createBrand" class="flex-1">
+                <flux:button type="button" wire:click="createBrand" class="w-1/2 cursor-pointer" size="sm">
                     Create Brand
                 </flux:button>
 
-                <flux:button type="button" wire:click="cancelBrandCreation" variant="ghost">
+                <flux:button type="button" wire:click="cancelBrandCreation" variant="ghost"
+                    class="w-1/2 cursor-pointer" size="sm">
                     Cancel
                 </flux:button>
             </div>
@@ -302,7 +294,8 @@
         <div wire:show="addNewCategory" wire:cloak class="space-y-5">
             <flux:input wire:model="form.newCategoryName" placeholder="Enter category name" />
 
-            <flux:select wire:model="form.newCategoryParentId" placeholder="-- Parent Category --">
+            <flux:select wire:model="form.newCategoryParentId">
+                <flux:select.option value="">-- Parent Category --</flux:select.option>
                 @foreach ($this->allCategories as $category)
                     <flux:select.option :value="$category->id">
                         {{ $category->name }}
@@ -310,9 +303,17 @@
                 @endforeach
             </flux:select>
 
-            <flux:button type="button" wire:click="createCategory" size="sm">
-                Add new category
-            </flux:button>
+
+            <div class="flex gap-2">
+                <flux:button type="button" wire:click="createCategory" class="w-1/2 cursor-pointer" size="sm">
+                    Add new category
+                </flux:button>
+
+                <flux:button type="button" wire:click="cancelCategoryCreation" variant="ghost"
+                    class="w-1/2 cursor-pointer" size="sm">
+                    Cancel
+                </flux:button>
+            </div>
         </div>
     </div>
 </flux:card>

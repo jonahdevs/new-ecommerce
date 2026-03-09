@@ -279,9 +279,15 @@ abstract class BaseProductComponent extends Component
             if (in_array($hash, $existingHashes))
                 continue;
 
+            $attributes = collect($combination)
+                ->mapWithKeys(fn($c) => [$c['attribute_name'] => $c['value']])
+                ->toArray();
+
+            $name = implode(' - ', array_values($attributes));
+
             $this->variants[] = [
                 'id' => null,
-                'name' => null,
+                'name' => $name,
                 'sku' => '',
                 'image'      => null,
                 'image_path' => null,
@@ -503,11 +509,23 @@ abstract class BaseProductComponent extends Component
         return Attribute::where('is_active', true)->orderBy('sort_order')->get();
     }
 
-    #[Computed]
+
+    #[Computed(persist: true)]
     public function products()
     {
-        if ($this->activeTab !== 'linked-products') return collect();
-        return Product::active()->select('id', 'name')->orderBy('name')->get();
+        $currentId = $this->form->getProductId();
+
+        return Product::active()
+            ->select('id', 'name', 'sku', 'image_path')
+            ->when($currentId, fn($q) => $q->where('id', '!=', $currentId))
+            ->orderBy('name')
+            ->get()
+            ->map(fn($product) => [
+                'id'        => $product->id,
+                'name'      => $product->name,
+                'sku'       => $product->sku,
+                'image_url' => $product->image_url
+            ]);
     }
 
     #[Computed(persist: true)]
@@ -647,6 +665,12 @@ abstract class BaseProductComponent extends Component
         $this->form->createCategory();
         $this->addNewCategory = false;
         unset($this->categories);
+    }
+
+    public function cancelCategoryCreation(): void
+    {
+        $this->form->resetCategoryForm();
+        $this->addNewCategory = false;
     }
 
     // -----------------------------------------------

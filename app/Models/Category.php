@@ -97,7 +97,7 @@ class Category extends Model
     #[Scope]
     protected function active(Builder $query)
     {
-        $query->where('status', CategoryStatus::Active);
+        $query->where('status', CategoryStatus::ACTIVE);
     }
 
     #[Scope]

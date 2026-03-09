@@ -48,7 +48,7 @@ class CategorySeeder extends Seeder
             'image_path'       => $data['image_path'] ?? null,
             'image_icon'       => $data['image_icon'] ?? null,
             'icon_svg'         => $data['icon_svg'] ?? null,
-            'status'           => CategoryStatus::Active,
+            'status'           => CategoryStatus::ACTIVE,
             'sort_order'       => $data['sort_order'] ?? 0,
             'meta_title'       => $data['meta_title'] ?? null,
             'meta_description' => $data['meta_description'] ?? null,

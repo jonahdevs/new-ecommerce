@@ -11,6 +11,8 @@ new #[Title('Products')] class extends Component {
     public string $search = '';
     public string $status = '';
     public string $category = '';
+    public string $sortBy = 'created_at';
+    public string $sortDirection = 'desc';
 
     public function updatingSearch(): void
     {
@@ -75,7 +77,7 @@ new #[Title('Products')] class extends Component {
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('sku', 'like', "%{$this->search}%"))
             ->when($this->status, fn($q) => $q->where('status', $this->status))
             ->when($this->category, fn($q) => $q->whereHas('categories', fn($q) => $q->where('categories.id', $this->category)))
-            ->latest()
+            ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(15);
     }
 
@@ -85,6 +87,17 @@ new #[Title('Products')] class extends Component {
         // Add logic here to clean up images from storage if necessary
         $product->delete();
         session()->flash('status', 'Product moved to trash.');
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
+        $this->resetPage();
     }
 }; ?>
 
@@ -194,10 +207,19 @@ new #[Title('Products')] class extends Component {
                 <flux:table.column class="ps-4! bg-zinc-50  dark:bg-zinc-800" sticky>
                     <span class="sr-only">Product Image</span>
                 </flux:table.column>
-                <flux:table.column>Product</flux:table.column>
+                <flux:table.column sortable :sorted="$this->sortBy === 'name'" :direction="!$this->sortDirection"
+                    wire:click="sort('name')">
+                    Product
+                </flux:table.column>
                 <flux:table.column>Category</flux:table.column>
-                <flux:table.column>Stock</flux:table.column>
-                <flux:table.column>Price</flux:table.column>
+                <flux:table.column sortable :sorted="$this->sortBy === 'name'" :direction="!$this->sortDirection"
+                    wire:click="sort('stock_quantity')">
+                    Stock
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$this->sortBy === 'name'" :direction="!$this->sortDirection"
+                    wire:click="sort('price')">
+                    Price
+                </flux:table.column>
                 <flux:table.column>Orders</flux:table.column>
                 <flux:table.column>Rating</flux:table.column>
                 <flux:table.column>Status</flux:table.column>

@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ─── Checkout ───────────────────────────────────────────────────────────
+      # Checkout
       - name: 🚚 Checkout code
         uses: actions/checkout@v4
 
-      # ─── PHP Setup ──────────────────────────────────────────────────────────
+      # PHP Setup
       - name: 🐘 Setup PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
@@ -23,7 +23,7 @@ jobs:
           extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, tokenizer, xml, curl, zip
           coverage: none
 
-      # ─── Laravel CI Environment ─────────────────────────────────────────────
+      # Laravel CI Environment
       - name: ⚙️ Prepare Laravel environment for CI
         run: |
           cp .env.example .env
@@ -31,14 +31,14 @@ jobs:
           mkdir -p storage/framework/{sessions,views,cache}
           mkdir -p storage/logs
 
-      # ─── Composer ───────────────────────────────────────────────────────────
+      # Composer
       - name: 📦 Install Composer dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
       - name: 🔑 Generate app key
         run: php artisan key:generate
 
-      # ─── Node / Assets ──────────────────────────────────────────────────────
+      # Node / Assets
       - name: 🟢 Setup Node 24
         uses: actions/setup-node@v4
         with:
@@ -51,7 +51,7 @@ jobs:
       - name: 🏗️ Build assets
         run: npm run build
 
-      # ─── Deploy via Rsync ────────────────────────────────────────────────────
+      # Deploy via Rsync
       - name: 📂 Sync files to server
         uses: burnett01/rsync-deployments@6.0.0
         with:
@@ -78,7 +78,7 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
           remote_key_pass: ${{ secrets.SSH_PASSPHRASE }}
 
-      # ─── Post-Deploy Commands ────────────────────────────────────────────────
+      # Post-Deploy Commands
       - name: ⚙️ Run post-deployment commands
         uses: appleboy/ssh-action@v1.0.3
         with:

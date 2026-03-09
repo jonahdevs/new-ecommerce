@@ -69,10 +69,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     }
 
     //  Actions
-
     public function clearCart(): void
     {
         app(CartService::class)->clear();
+        $this->dispatch('cart-updated');
         unset($this->cartItems, $this->cartSummary);
     }
 
@@ -82,6 +82,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             app(CartService::class)->removeItem($itemId);
             unset($this->cartItems, $this->cartSummary);
             Flux::modal('remove-item-' . $itemId)->close();
+            $this->dispatch('cart-updated');
             $this->dispatch('notify', variant: 'success', message: 'Item removed from cart');
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove item');
@@ -93,7 +94,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         try {
             app(CartService::class)->updateItemQuantity($itemId, $quantity);
             unset($this->cartItems, $this->cartSummary);
-            $this->dispatch('notify', variant: 'success', message: 'Cart updated');
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Cart list updated');
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart');
         }

@@ -23,7 +23,7 @@ class CategoryForm extends Form
     public string $description = '';
 
     // Status
-    public string $status = CategoryStatus::Draft->value;
+    public string $status = CategoryStatus::DRAFT->value;
 
     // Placements — array of section values e.g. ['navbar', 'homepage_featured']
     public array $placements = [];

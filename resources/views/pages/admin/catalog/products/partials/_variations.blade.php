@@ -198,7 +198,8 @@
                                 label="Variation Name">
                                 <x-slot name="iconTrailing">
                                     <flux:button size="sm" variant="subtle"
-                                        @click="readonlyName = !readonlyName" icon="pencil" class="-mr-1" />
+                                        @click="readonlyName = !readonlyName" icon="pencil" icon-variant="outline"
+                                        class="-mr-1 cursor-pointer" />
                                 </x-slot>
                             </flux:input>
 

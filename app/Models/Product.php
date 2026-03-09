@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ProductRelationshipType;
 use App\Enums\ProductStatus;
+use App\Enums\ProductVisibility;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Attribute as ProductAttribute;
@@ -50,7 +52,7 @@ class Product extends Model
         'canonical_url',
         'status',
         'published_at',
-        'is_featured',
+        'visibility',
         'brand_id',
         'image_path',
         'technical_specification',
@@ -86,7 +88,8 @@ class Product extends Model
             'expected_restock_date' => 'date',
             'requires_quotation' => 'boolean',
             'min_order_quantity' => 'decimal:2',
-            'status' => ProductStatus::class
+            'status' => ProductStatus::class,
+            'visibility' => ProductVisibility::class
         ];
     }
 
@@ -154,7 +157,7 @@ class Product extends Model
             'product_id',
             'related_product_id'
         )
-            ->wherePivot('relationship_type', 'upsell')
+            ->wherePivot('type', ProductRelationshipType::UP_SELLS)
             ->withPivot('sort_order')
             ->withTimestamps()
             ->orderByPivot('sort_order');
@@ -171,7 +174,7 @@ class Product extends Model
             'product_id',
             'related_product_id'
         )
-            ->wherePivot('relationship_type', 'cross_sell')
+            ->wherePivot('type', ProductRelationshipType::CROSS_SELL)
             ->withPivot('sort_order')
             ->withTimestamps()
             ->orderByPivot('sort_order');

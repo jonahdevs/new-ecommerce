@@ -13,6 +13,7 @@
                     <flux:select size="sm" class="w-fit" wire:model.live="form.type">
                         <flux:select.option value="simple">Simple</flux:select.option>
                         <flux:select.option value="variable">Variable Product</flux:select.option>
+                        <flux:select.option value="grouped">Grouped Product</flux:select.option>
                     </flux:select>
                 </div>
                 <flux:button icon="chevron-down" size="xs" variant="ghost"
