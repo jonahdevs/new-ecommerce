@@ -5,12 +5,12 @@ namespace App\Enums;
 enum DeliveryOrderStatus: string
 {
     case PENDING         = 'pending';
-    case PICKEDUP        = 'picked_up';
-    case INTRANSIT       = 'in_transit';
-    case OUTFORDELIVERY  = 'out_for_delivery';
+    case PICKED_UP        = 'picked_up';
+    case IN_TRANSIT       = 'in_transit';
+    case OUT_FOR_DELIVERY  = 'out_for_delivery';
     case DELIVERED       = 'delivered';
     case FAILED          = 'failed';
-    case ATSTATION       = 'at_station';       // PUS: arrived, awaiting collection
+    case AT_STATION       = 'at_station';       // PUS: arrived, awaiting collection
     case COLLECTED       = 'collected';        // PUS: customer collected
     case RETURNING       = 'returning';        // Failed — being returned to sender
     case RETURNED        = 'returned';         // Back with sender
@@ -20,12 +20,12 @@ enum DeliveryOrderStatus: string
     {
         return match ($this) {
             self::PENDING        => 'Pending',
-            self::PICKEDUP       => 'Picked Up',
-            self::INTRANSIT      => 'In Transit',
-            self::OUTFORDELIVERY => 'Out for Delivery',
+            self::PICKED_UP       => 'Picked Up',
+            self::IN_TRANSIT      => 'In Transit',
+            self::OUT_FOR_DELIVERY => 'Out for Delivery',
             self::DELIVERED      => 'Delivered',
             self::FAILED         => 'Failed',
-            self::ATSTATION      => 'At Station',
+            self::AT_STATION      => 'At Station',
             self::COLLECTED      => 'Collected',
             self::RETURNING      => 'Returning',
             self::RETURNED       => 'Returned',
@@ -52,12 +52,12 @@ enum DeliveryOrderStatus: string
     {
         return match ($this) {
             self::PENDING        => 'zinc',
-            self::PICKEDUP       => 'blue',
-            self::INTRANSIT      => 'blue',
-            self::OUTFORDELIVERY => 'purple',
+            self::PICKED_UP       => 'blue',
+            self::IN_TRANSIT      => 'blue',
+            self::OUT_FOR_DELIVERY => 'purple',
             self::DELIVERED      => 'green',
             self::FAILED         => 'red',
-            self::ATSTATION      => 'orange',
+            self::AT_STATION      => 'orange',
             self::COLLECTED      => 'green',
             self::RETURNING      => 'yellow',
             self::RETURNED       => 'zinc',

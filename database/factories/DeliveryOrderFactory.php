@@ -36,7 +36,7 @@ class DeliveryOrderFactory extends Factory
 {
     protected $model = DeliveryOrder::class;
 
-    // ── Default definition ────────────────────────────────────────────────────
+    //  Default definition ─
 
     public function definition(): array
     {
@@ -79,7 +79,7 @@ class DeliveryOrderFactory extends Factory
         ];
     }
 
-    // ── Pricing model states ──────────────────────────────────────────────────
+    //  Pricing model states ─
 
     /**
      * Flat rate delivery (standard / express).
@@ -181,7 +181,7 @@ class DeliveryOrderFactory extends Factory
 
             // Collection deadline only meaningful when at station
             $deadline = null;
-            if ($status === DeliveryOrderStatus::ATSTATION && $station) {
+            if ($status === DeliveryOrderStatus::AT_STATION && $station) {
                 $arrivedAt = $this->faker->dateTimeBetween('-6 days', 'now');
                 $deadline = (clone $arrivedAt)->modify("+{$station->holding_days} days");
             }
@@ -205,7 +205,7 @@ class DeliveryOrderFactory extends Factory
         });
     }
 
-    // ── Status states ─────────────────────────────────────────────────────────
+    //  Status states 
 
     public function pending(): static
     {
@@ -214,17 +214,17 @@ class DeliveryOrderFactory extends Factory
 
     public function pickedUp(): static
     {
-        return $this->state(['status' => DeliveryOrderStatus::PICKEDUP->value, 'delivered_at' => null]);
+        return $this->state(['status' => DeliveryOrderStatus::PICKED_UP->value, 'delivered_at' => null]);
     }
 
     public function inTransit(): static
     {
-        return $this->state(['status' => DeliveryOrderStatus::INTRANSIT->value, 'delivered_at' => null]);
+        return $this->state(['status' => DeliveryOrderStatus::IN_TRANSIT->value, 'delivered_at' => null]);
     }
 
     public function outForDelivery(): static
     {
-        return $this->state(['status' => DeliveryOrderStatus::OUTFORDELIVERY->value, 'delivered_at' => null]);
+        return $this->state(['status' => DeliveryOrderStatus::OUT_FOR_DELIVERY->value, 'delivered_at' => null]);
     }
 
     public function delivered(): static
@@ -250,7 +250,7 @@ class DeliveryOrderFactory extends Factory
                 : (clone $arrivedAt)->modify('+7 days');
 
             return [
-                'status' => DeliveryOrderStatus::ATSTATION->value,
+                'status' => DeliveryOrderStatus::AT_STATION->value,
                 'pickup_station_id' => $station?->id,
                 'collection_deadline_at' => $deadline->format('Y-m-d H:i:s'),
                 'delivered_at' => null,
@@ -284,7 +284,7 @@ class DeliveryOrderFactory extends Factory
         return $this->state(['status' => DeliveryOrderStatus::CANCELLED->value, 'delivered_at' => null]);
     }
 
-    // ── Other helpers ─────────────────────────────────────────────────────────
+    //  Other helpers 
 
     /**
      * Reverse logistics order (customer → seller).
@@ -305,7 +305,7 @@ class DeliveryOrderFactory extends Factory
             $deadline = (clone $arrivedAt)->modify('+7 days'); // already in the past
 
             return [
-                'status' => DeliveryOrderStatus::ATSTATION->value,
+                'status' => DeliveryOrderStatus::AT_STATION->value,
                 'pickup_station_id' => $station?->id,
                 'collection_deadline_at' => $deadline->format('Y-m-d H:i:s'),
                 'delivered_at' => null,
@@ -323,7 +323,7 @@ class DeliveryOrderFactory extends Factory
         ]);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    //  Private helpers 
 
     private function randomForwardStatus(): DeliveryOrderStatus
     {
@@ -331,10 +331,10 @@ class DeliveryOrderFactory extends Factory
         return $this->faker->randomElement([
             DeliveryOrderStatus::PENDING,
             DeliveryOrderStatus::PENDING,
-            DeliveryOrderStatus::PICKEDUP,
-            DeliveryOrderStatus::INTRANSIT,
-            DeliveryOrderStatus::INTRANSIT,
-            DeliveryOrderStatus::OUTFORDELIVERY,
+            DeliveryOrderStatus::PICKED_UP,
+            DeliveryOrderStatus::IN_TRANSIT,
+            DeliveryOrderStatus::IN_TRANSIT,
+            DeliveryOrderStatus::OUT_FOR_DELIVERY,
             DeliveryOrderStatus::DELIVERED,
             DeliveryOrderStatus::DELIVERED,
             DeliveryOrderStatus::DELIVERED,
@@ -348,10 +348,10 @@ class DeliveryOrderFactory extends Factory
     private function randomPusStatus(): DeliveryOrderStatus
     {
         return $this->faker->randomElement([
-            DeliveryOrderStatus::INTRANSIT,
-            DeliveryOrderStatus::ATSTATION,
-            DeliveryOrderStatus::ATSTATION,
-            DeliveryOrderStatus::ATSTATION,
+            DeliveryOrderStatus::IN_TRANSIT,
+            DeliveryOrderStatus::AT_STATION,
+            DeliveryOrderStatus::AT_STATION,
+            DeliveryOrderStatus::AT_STATION,
             DeliveryOrderStatus::COLLECTED,
             DeliveryOrderStatus::COLLECTED,
             DeliveryOrderStatus::RETURNING,
@@ -397,7 +397,7 @@ class DeliveryOrderFactory extends Factory
         return $this->faker->dateTimeBetween($createdAt, 'now')->format('Y-m-d H:i:s');
     }
 
-    // ── Cost breakdown builders ───────────────────────────────────────────────
+    //  Cost breakdown builders 
 
     private function flatBreakdown(?ShippingZone $zone, ?ShippingRate $rate, float $weight, float $cost): array
     {

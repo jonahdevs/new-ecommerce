@@ -11,7 +11,7 @@ class DeliveryOrderSeeder extends Seeder
     {
         $this->command->info('📦 Seeding delivery orders...');
 
-        // ── Forward deliveries — flat rate ────────────────────────────────────
+        //  Forward deliveries — flat rate 
 
         // Healthy pipeline spread
         DeliveryOrder::factory()->flat()->pending()->recentDays(3)->count(8)->create();
@@ -29,7 +29,7 @@ class DeliveryOrderSeeder extends Seeder
 
         $this->command->info('  ✓ Flat rate orders created');
 
-        // ── Forward deliveries — on-demand (distance) ─────────────────────────
+        //  Forward deliveries — on-demand (distance) 
 
         DeliveryOrder::factory()->distance()->pending()->recentDays(2)->count(3)->create();
         DeliveryOrder::factory()->distance()->inTransit()->recentDays(3)->count(4)->create();
@@ -38,7 +38,7 @@ class DeliveryOrderSeeder extends Seeder
 
         $this->command->info('  ✓ Distance (on-demand) orders created');
 
-        // ── PUS deliveries ────────────────────────────────────────────────────
+        //  PUS deliveries 
 
         // Active at station — normal (within holding window)
         DeliveryOrder::factory()->pus()->atStation()->recentDays(5)->count(8)->create();
@@ -54,7 +54,7 @@ class DeliveryOrderSeeder extends Seeder
 
         $this->command->info('  ✓ PUS orders created');
 
-        // ── Returns (reverse logistics) ───────────────────────────────────────
+        //  Returns (reverse logistics) 
 
         DeliveryOrder::factory()->flat()->return()->pending()->recentDays(5)->count(3)->create();
         DeliveryOrder::factory()->flat()->return()->inTransit()->recentDays(7)->count(4)->create();
@@ -63,7 +63,7 @@ class DeliveryOrderSeeder extends Seeder
 
         $this->command->info('  ✓ Return orders created');
 
-        // ── Summary ───────────────────────────────────────────────────────────
+        //  Summary 
 
         $total = DeliveryOrder::count();
         $forward = DeliveryOrder::where('is_return', false)->count();

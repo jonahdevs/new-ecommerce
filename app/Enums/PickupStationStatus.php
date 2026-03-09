@@ -7,16 +7,16 @@ enum PickupStationStatus: string
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
 
-    // Short-term closure (holiday, renovation, flooding).
-    // Parcels are not routed here until status returns to active.
-    case TEMPORARILYCLOSED = 'temporarily_closed';
+        // Short-term closure (holiday, renovation, flooding).
+        // Parcels are not routed here until status returns to active.
+    case TEMPORARILY_CLOSED = 'temporarily_closed';
 
     public function label(): string
     {
         return match ($this) {
             self::ACTIVE => 'Active',
             self::INACTIVE => 'Inactive',
-            self::TEMPORARILYCLOSED => 'Temporarily Closed',
+            self::TEMPORARILY_CLOSED => 'Temporarily Closed',
         };
     }
 
@@ -30,7 +30,7 @@ enum PickupStationStatus: string
         return match ($this) {
             self::ACTIVE => 'green',
             self::INACTIVE => 'zinc',
-            self::TEMPORARILYCLOSED => 'orange',
+            self::TEMPORARILY_CLOSED => 'orange',
         };
     }
 }

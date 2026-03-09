@@ -4,16 +4,16 @@ namespace App\Enums;
 
 enum CategorySection: string
 {
-    case Navbar = 'navbar';
-    case HomepageFeatured = 'homepage_featured';
-    case Footer = 'footer';
+    case NAVBAR = 'navbar';
+    case HOME_PAGE_FEATURED = 'homepage_featured';
+    case FOOTER = 'footer';
 
     public function label(): string
     {
         return match ($this) {
-            self::Navbar => 'Navigation Bar',
-            self::HomepageFeatured => 'Homepage Featured',
-            self::Footer => 'Footer',
+            self::NAVBAR => 'Navigation Bar',
+            self::HOME_PAGE_FEATURED => 'Homepage Featured',
+            self::FOOTER => 'Footer',
         };
     }
 }

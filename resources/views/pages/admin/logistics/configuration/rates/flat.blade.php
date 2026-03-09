@@ -103,7 +103,7 @@ new #[Title('Flat Rates')] class extends Component {
         return ['zones' => $zones, 'rows' => $rows];
     }
 
-    // ── Cell edit ────────────────────────────────────────────────────────────
+    //  Cell edit
 
     public function editCell(int $rateId): void
     {
@@ -131,7 +131,7 @@ new #[Title('Flat Rates')] class extends Component {
         }
     }
 
-    // ── Add weight tier ──────────────────────────────────────────────────────
+    //  Add weight tier
 
     public function openAddTier(): void
     {
@@ -162,7 +162,7 @@ new #[Title('Flat Rates')] class extends Component {
         }
     }
 
-    // ── Expire a rate directly ───────────────────────────────────────────────
+    // Expire a rate directly
 
     public function expireRate(int $rateId): void
     {

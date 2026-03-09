@@ -230,7 +230,7 @@ new #[Title('Vehicle Rates')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell align="end" class="pe-4!">
-                                @if ($status !== \App\Enums\VehicleRateStatus::Deprecated)
+                                @if ($status !== \App\Enums\VehicleRateStatus::DEPRECATED)
                                     <flux:button variant="ghost" size="sm" icon="pencil-square"
                                         icon-variant="outline" class="cursor-pointer text-sheffield-blue!"
                                         wire:click="edit({{ $rate->id }})" />

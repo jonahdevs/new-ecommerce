@@ -4,16 +4,16 @@ namespace App\Enums;
 
 enum AddonType: string
 {
-    case Pus           = 'pus';
-    case FuelSurcharge = 'fuel_surcharge';
-    case RemoteArea    = 'remote_area';
+    case PUS           = 'pus';
+    case FUEL_SURCHARGE = 'fuel_surcharge';
+    case REMOTE_AREA    = 'remote_area';
 
     public function label(): string
     {
         return match ($this) {
-            self::Pus           => 'Pickup Station Surcharge',
-            self::FuelSurcharge => 'Fuel Surcharge',
-            self::RemoteArea    => 'Remote Area Fee',
+            self::PUS           => 'Pickup Station Surcharge',
+            self::FUEL_SURCHARGE => 'Fuel Surcharge',
+            self::REMOTE_AREA    => 'Remote Area Fee',
         };
     }
 }

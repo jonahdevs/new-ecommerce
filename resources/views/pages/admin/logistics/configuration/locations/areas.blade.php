@@ -239,7 +239,7 @@ new #[Title('Areas & Towns')] class extends Component {
     </flux:card>
 
     {{-- Create / Edit Modal --}}
-    <flux:modal name="area-modal" class="md:w-[28rem] space-y-6">
+    <flux:modal name="area-modal" class="md:w-md space-y-6">
         <flux:heading size="lg">{{ $form->area ? 'Edit Area' : 'Add New Area' }}</flux:heading>
 
         <form wire:submit="save" class="space-y-4">

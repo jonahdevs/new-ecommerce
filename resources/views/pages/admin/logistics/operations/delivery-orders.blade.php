@@ -166,12 +166,12 @@ new #[Title('Delivery Orders')] class extends Component {
         $current = $this->viewingOrder->status instanceof DeliveryOrderStatus ? $this->viewingOrder->status : DeliveryOrderStatus::from($this->viewingOrder->status);
 
         return match ($current) {
-            DeliveryOrderStatus::PENDING => [DeliveryOrderStatus::PICKEDUP, DeliveryOrderStatus::CANCELLED],
-            DeliveryOrderStatus::PICKEDUP => [DeliveryOrderStatus::INTRANSIT],
-            DeliveryOrderStatus::INTRANSIT => [DeliveryOrderStatus::OUTFORDELIVERY, DeliveryOrderStatus::ATSTATION],
-            DeliveryOrderStatus::OUTFORDELIVERY => [DeliveryOrderStatus::DELIVERED, DeliveryOrderStatus::FAILED],
-            DeliveryOrderStatus::FAILED => [DeliveryOrderStatus::RETURNING, DeliveryOrderStatus::OUTFORDELIVERY],
-            DeliveryOrderStatus::ATSTATION => [DeliveryOrderStatus::COLLECTED, DeliveryOrderStatus::RETURNING],
+            DeliveryOrderStatus::PENDING => [DeliveryOrderStatus::PICKED_UP, DeliveryOrderStatus::CANCELLED],
+            DeliveryOrderStatus::PICKED_UP => [DeliveryOrderStatus::IN_TRANSIT],
+            DeliveryOrderStatus::IN_TRANSIT => [DeliveryOrderStatus::OUT_FOR_DELIVERY, DeliveryOrderStatus::AT_STATION],
+            DeliveryOrderStatus::OUT_FOR_DELIVERY => [DeliveryOrderStatus::DELIVERED, DeliveryOrderStatus::FAILED],
+            DeliveryOrderStatus::FAILED => [DeliveryOrderStatus::RETURNING, DeliveryOrderStatus::OUT_FOR_DELIVERY],
+            DeliveryOrderStatus::AT_STATION => [DeliveryOrderStatus::COLLECTED, DeliveryOrderStatus::RETURNING],
             DeliveryOrderStatus::RETURNING => [DeliveryOrderStatus::RETURNED],
             default => [],
         };

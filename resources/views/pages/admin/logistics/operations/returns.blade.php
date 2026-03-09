@@ -104,7 +104,7 @@ new #[Title('Returns')] class extends Component {
     public function statuses(): array
     {
         // Returns only cycle through relevant statuses
-        return [DeliveryOrderStatus::PENDING, DeliveryOrderStatus::PICKEDUP, DeliveryOrderStatus::INTRANSIT, DeliveryOrderStatus::RETURNING, DeliveryOrderStatus::RETURNED, DeliveryOrderStatus::CANCELLED];
+        return [DeliveryOrderStatus::PENDING, DeliveryOrderStatus::PICKED_UP, DeliveryOrderStatus::IN_TRANSIT, DeliveryOrderStatus::RETURNING, DeliveryOrderStatus::RETURNED, DeliveryOrderStatus::CANCELLED];
     }
 
     #[Computed]
@@ -130,9 +130,9 @@ new #[Title('Returns')] class extends Component {
 
         // Returns flow: pending → picked_up → in_transit → returning → returned
         return match ($current) {
-            DeliveryOrderStatus::PENDING => [DeliveryOrderStatus::PICKEDUP, DeliveryOrderStatus::CANCELLED],
-            DeliveryOrderStatus::PICKEDUP => [DeliveryOrderStatus::INTRANSIT],
-            DeliveryOrderStatus::INTRANSIT => [DeliveryOrderStatus::RETURNING],
+            DeliveryOrderStatus::PENDING => [DeliveryOrderStatus::PICKED_UP, DeliveryOrderStatus::CANCELLED],
+            DeliveryOrderStatus::PICKED_UP => [DeliveryOrderStatus::IN_TRANSIT],
+            DeliveryOrderStatus::IN_TRANSIT => [DeliveryOrderStatus::RETURNING],
             DeliveryOrderStatus::RETURNING => [DeliveryOrderStatus::RETURNED],
             default => [],
         };

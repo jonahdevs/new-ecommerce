@@ -85,7 +85,7 @@ class ShippingSeeder extends Seeder
         }
     }
 
-    // ── Provider ──────────────────────────────────────────────────────────────
+    //  Provider 
 
     private function createProvider(): LogisticsProvider
     {
@@ -102,7 +102,7 @@ class ShippingSeeder extends Seeder
         return $provider;
     }
 
-    // ── Zones ─────────────────────────────────────────────────────────────────
+    //  Zones 
 
     private function createShippingZones(): array
     {
@@ -131,7 +131,7 @@ class ShippingSeeder extends Seeder
         return $zones;
     }
 
-    // ── Methods ───────────────────────────────────────────────────────────────
+    //  Methods 
 
     private function createShippingMethods(LogisticsProvider $provider): array
     {
@@ -192,7 +192,7 @@ class ShippingSeeder extends Seeder
         return $methods;
     }
 
-    // ── Counties & Areas ──────────────────────────────────────────────────────
+    //  Counties & Areas 
 
     private function processCounties(array $counties, array $zones): void
     {
@@ -235,7 +235,7 @@ class ShippingSeeder extends Seeder
         $this->command->info("📊 {$countyCount} counties, {$areaCount} areas created");
     }
 
-    // ── Shipping Rates ────────────────────────────────────────────────────────
+    //  Shipping Rates 
 
     private function createShippingRates(array $zones, array $methods): void
     {
@@ -271,7 +271,7 @@ class ShippingSeeder extends Seeder
                 $stdPrice = $standardPrices[$regionKey][$i];
                 $stdDays = $standardDays[$regionKey][$i];
 
-                // ── Standard ──────────────────────────────────────────────
+                //  Standard 
                 ShippingRate::create([
                     'shipping_zone_id' => $zone->id,
                     'shipping_method_id' => $methods['standard']->id,
@@ -285,7 +285,7 @@ class ShippingSeeder extends Seeder
                 ]);
                 $totalRates++;
 
-                // ── Express — 30% more, roughly half the delivery time ───
+                //  Express — 30% more, roughly half the delivery time 
                 ShippingRate::create([
                     'shipping_zone_id' => $zone->id,
                     'shipping_method_id' => $methods['express']->id,
@@ -299,7 +299,7 @@ class ShippingSeeder extends Seeder
                 ]);
                 $totalRates++;
 
-                // ── Pickup Station — flat discount vs standard ────────────
+                //  Pickup Station — flat discount vs standard 
                 // Only makes sense where we have stations (Nairobi to start)
                 if ($regionKey === 'NAIROBI') {
                     ShippingRate::create([
@@ -323,7 +323,7 @@ class ShippingSeeder extends Seeder
         $this->command->info("📊 {$totalRates} shipping rates created");
     }
 
-    // ── Vehicle Rates ─────────────────────────────────────────────────────────
+    //  Vehicle Rates 
 
     private function createVehicleRates(array $methods): void
     {
@@ -403,7 +403,7 @@ class ShippingSeeder extends Seeder
         }
     }
 
-    // ── Rate Addons (PUS Surcharges) ──────────────────────────────────────────
+    //  Rate Addons (PUS Surcharges) 
 
     private function createRateAddons(array $zones, array $methods): void
     {
@@ -436,7 +436,7 @@ class ShippingSeeder extends Seeder
 
             ShippingRateAddon::create([
                 'shipping_rate_id' => $rate->id,
-                'addon_type' => AddonType::Pus->value,
+                'addon_type' => AddonType::PUS->value,
                 'label' => 'Pickup Station Surcharge',
                 'addon_amount' => $amount,
                 'pickup_station_id' => null, // applies to all stations
@@ -450,7 +450,7 @@ class ShippingSeeder extends Seeder
         $this->command->info("📊 {$addonCount} rate addons created");
     }
 
-    // ── Pickup Stations ───────────────────────────────────────────────────────
+    //  Pickup Stations 
 
     private function createPickupStations(LogisticsProvider $provider): void
     {
@@ -489,7 +489,7 @@ class ShippingSeeder extends Seeder
         }
     }
 
-    // ── Free Shipping Rules ───────────────────────────────────────────────────
+    //  Free Shipping Rules 
 
     private function createFreeShippingRules(array $zones, array $methods): void
     {

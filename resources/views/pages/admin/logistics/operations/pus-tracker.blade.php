@@ -27,7 +27,7 @@ new #[Title('PUS Tracker')] class extends Component {
     public function parcels()
     {
         return DeliveryOrder::with(['shippingMethod', 'shippingZone', 'pickupStation', 'logisticsProvider'])
-            ->where('status', DeliveryOrderStatus::ATSTATION->value)
+            ->where('status', DeliveryOrderStatus::AT_STATION->value)
             ->when($this->filterStation, fn($q) => $q->where('pickup_station_id', $this->filterStation))
             ->when($this->filterUrgency === 'overdue', fn($q) => $q->where('collection_deadline_at', '<', now()))
             ->when($this->filterUrgency === 'today', fn($q) => $q->whereDate('collection_deadline_at', today()))
@@ -56,7 +56,7 @@ new #[Title('PUS Tracker')] class extends Component {
     #[Computed]
     public function stats(): array
     {
-        $base = DeliveryOrder::where('status', DeliveryOrderStatus::ATSTATION->value);
+        $base = DeliveryOrder::where('status', DeliveryOrderStatus::AT_STATION->value);
 
         return [
             'total' => (clone $base)->count(),

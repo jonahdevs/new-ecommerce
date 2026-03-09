@@ -153,19 +153,26 @@ return new class extends Migration {
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
 
             // Variant identifiers
-            $table->string('sku')->unique();
             $table->string('name')->nullable(); // e.g., "Large - Red"
             $table->json('attributes')->nullable(); // Store attribute combinations
-            $table->string('barcode')->nullable(); // EAN, UPC, etc.
 
             // Pricing (can override parent product)
             $table->decimal('price', 10, 2)->nullable();
             $table->decimal('sale_price', 10, 2)->nullable();
             $table->decimal('cost_price', 10, 2)->nullable();
 
-            // Stock management
+            //  Inventory
+            $table->string('sku')->unique();
             $table->boolean('manage_stock')->default(true);
             $table->integer('stock_quantity')->default(0);
+            $table->boolean('allow_backorders')->nullable();
+
+
+            // Backorders
+            $table->integer('max_backorder_quantity')->nullable();
+            $table->date('expected_restock_date')->nullable();
+            $table->text('backorder_message')->nullable();
+
             $table->integer('low_stock_threshold')->nullable();
             $table->enum('stock_status', ['in_stock', 'out_of_stock', 'backorder'])->default('in_stock');
 
@@ -174,11 +181,6 @@ return new class extends Migration {
             $table->decimal('height', 8, 2)->nullable();
             $table->decimal('width', 8, 2)->nullable();
             $table->decimal('length', 8, 2)->nullable();
-
-            // Backorders
-            $table->boolean('allow_backorders')->nullable();
-            $table->integer('max_backorder_quantity')->nullable();
-            $table->date('expected_restock_date')->nullable();
 
             // Primary variant image
             $table->string('image_path')->nullable();
