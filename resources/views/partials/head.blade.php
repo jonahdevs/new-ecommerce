@@ -27,5 +27,9 @@
 {{-- Stripe JS --}}
 <script src="https://js.stripe.com/v3/"></script>
 
+{{-- Swiper js --}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance

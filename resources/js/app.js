@@ -5,14 +5,5 @@
  */
 
 import './echo';
-import Swiper from 'swiper';
-import { Navigation, Pagination, Scrollbar, Grid, Thumbs, FreeMode, Autoplay } from 'swiper/modules';
-import 'swiper/css/bundle';
 
-// Register modules globally so they're available in Alpine components
-Swiper.use([Navigation, Pagination, Scrollbar, Grid, Thumbs, FreeMode, Autoplay]);
-
-document.addEventListener('livewire:init', () => {
-    window.Swiper = Swiper;
-});
 
