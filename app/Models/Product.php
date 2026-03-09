@@ -181,6 +181,23 @@ class Product extends Model
     }
 
     /**
+     * Get grouped products 
+     */
+    public function groupedProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'product_relationships',
+            'product_id',
+            'related_product_id'
+        )
+            ->wherePivot('type', ProductRelationshipType::GROUPED)
+            ->withPivot('sort_order', 'quantity')
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
+    }
+
+    /**
      * Get all reviews for the product
      */
     public function reviews(): HasMany

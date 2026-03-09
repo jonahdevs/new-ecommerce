@@ -334,7 +334,7 @@
             <flux:button type="button" wire:click="addTags" class="cursor-pointer">Add</flux:button>
         </flux:input.group>
 
-        <flux:text>Seperate tags with commas</flux:text>
+        <flux:text>Separate tags with commas</flux:text>
 
         {{-- Selected Tags Display --}}
         @if ($this->selectedTags->isNotEmpty())

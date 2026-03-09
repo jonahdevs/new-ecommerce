@@ -53,6 +53,13 @@ abstract class BaseProductComponent extends Component
     public ?float $bulkWidth = null;
     public ?float $bulkHeight = null;
 
+
+    // -----------------------------------------------
+    // Grouped Products State
+    // -----------------------------------------------
+    public array $groupedProducts = [];
+    public ?int $selectedGroupedProduct = null;
+
     // -----------------------------------------------
     // Save — clean and simple
     // -----------------------------------------------
@@ -80,16 +87,18 @@ abstract class BaseProductComponent extends Component
             }
         }
 
-        app(ProductAttributeService::class)->save(
-            $product,
-            $this->selectedAttributes
-        );
+        if ($product->type !== 'grouped') {
+            app(ProductAttributeService::class)->save(
+                $product,
+                $this->selectedAttributes
+            );
 
-        app(ProductVariationService::class)->save(
-            $product,
-            $this->variants,
-            $this->variantsToDelete
-        );
+            app(ProductVariationService::class)->save(
+                $product,
+                $this->variants,
+                $this->variantsToDelete
+            );
+        }
     }
 
     // -----------------------------------------------
@@ -455,6 +464,23 @@ abstract class BaseProductComponent extends Component
     {
         $productId = $this->form->getProductId();
 
+        if ($value === 'grouped' && in_array($this->activeTab, [
+            'general',
+            'inventory',
+            'shipping',
+            'attributes',
+            'variations'
+        ])) {
+            $this->activeTab = 'linked-products';
+        }
+
+        // Switching away from grouped — clear grouped products
+        if ($value !== 'grouped') {
+            $this->groupedProducts = [];
+            $this->selectedGroupedProduct = null;
+        }
+
+        // Switching away from variable — deactivate variants
         if (
             $value === 'simple' && $productId &&
             app(ProductVariationService::class)->hasActiveVariants($productId)
@@ -605,8 +631,9 @@ abstract class BaseProductComponent extends Component
     public function hasLinkedProductsErrors(): bool
     {
         return $this->getErrorBag()->hasAny([
-            'form.selectedUpsells',
-            'form.selectedCrossSells',
+            'form.selected_upsells',
+            'form.selected_cross_sells',
+            'form.grouped_products',
         ]);
     }
 
@@ -626,17 +653,16 @@ abstract class BaseProductComponent extends Component
     // -----------------------------------------------
     // Tag Methods
     // -----------------------------------------------
-
-    #[Renderless]
     public function addTags(): void
     {
         $this->form->addTags();
+        unset($this->selectedTags);
     }
 
-    #[Renderless]
     public function removeTag(int $tagId): void
     {
         $this->form->removeTag($tagId);
+        unset($this->selectedTags);
     }
 
     // -----------------------------------------------
@@ -750,5 +776,64 @@ abstract class BaseProductComponent extends Component
         $this->syncAvailableAttributes();
 
         $this->dispatch('notify', variant: 'success', message: 'Attributes saved.');
+    }
+
+    // -----------------------------------------------
+    // Grouped Products Methods
+    // -----------------------------------------------
+
+    public function addGroupedProduct(int $productId): void
+    {
+        if (!$productId) return;
+
+        $already = collect($this->groupedProducts)
+            ->pluck('id')
+            ->contains($productId);
+
+        if ($already) {
+            $this->dispatch('notify', variant: 'warning', message: 'Product already in kit.');
+            return;
+        }
+
+        $product = Product::find($productId);
+        if (!$product) return;
+
+        $this->groupedProducts[] = [
+            'id'       => $product->id,
+            'name'     => $product->name,
+            'sku'      => $product->sku,
+            'price'    => $product->price,
+            'quantity' => 1,
+        ];
+
+        $this->selectedGroupedProduct = null;
+        $this->dispatch('notify', variant: 'success', message: "\"{$product->name}\" added to kit.");
+    }
+
+    public function removeGroupedProduct(int $index): void
+    {
+        array_splice($this->groupedProducts, $index, 1);
+        $this->groupedProducts = array_values($this->groupedProducts);
+    }
+
+    public function getGroupedTotal(): float
+    {
+        return collect($this->groupedProducts)
+            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+    }
+
+    protected function loadGroupedProducts(Product $product): void
+    {
+        $this->groupedProducts = $product
+            ->groupedProducts()
+            ->get()
+            ->map(fn($p) => [
+                'id'       => $p->id,
+                'name'     => $p->name,
+                'sku'      => $p->sku,
+                'price'    => $p->price,
+                'quantity' => $p->pivot->quantity,
+            ])
+            ->toArray();
     }
 }

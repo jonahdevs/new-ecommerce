@@ -109,9 +109,10 @@ class ProductForm extends Form
     public string $newBrandName = '';
     public ?string $newBrandWebsite = null;
 
-    public array $selectedUpsells = [];
+    public array $selected_upsells = [];
 
-    public array $selectedCrossSells = [];
+    public array $selected_cross_sells = [];
+    public array $grouped_products = [];
 
     /**
      * Validation rules
@@ -127,21 +128,41 @@ class ProductForm extends Form
             'slug' => 'nullable|string|max:255|unique:products,slug,' . $productId,
             'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
-            'type' => 'required|in:simple,variable',
+            'type' => ['required', Rule::enum(ProductType::class)],
 
             // Pricing
-            'price' => 'required|numeric|min:0',
+            'price' => [
+                Rule::when($this->type !== 'grouped', ['required', 'numeric', 'min:0']),
+                Rule::when($this->type === 'grouped', ['nullable', 'numeric', 'min:0']),
+            ],
             'sale_price' => 'nullable|numeric|min:0|lt:price',
             'cost_price' => 'nullable|numeric|min:0',
 
             // Inventory
-            'sku' => 'required|string|max:100|unique:products,sku,' . $productId,
+            'sku' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('products', 'sku')->ignore($productId),
+            ],
 
             'manage_stock' => 'boolean',
-            'stock_quantity' => 'required_if:manage_stock,true|integer|min:0',
+            'stock_quantity' => [
+                Rule::when(
+                    $this->type !== 'grouped' && $this->manage_stock,
+                    ['required', 'integer', 'min:0'],
+                    ['nullable', 'integer', 'min:0']
+                ),
+            ],
             'allow_backorder' => 'required_if:manage_stock,true|in:no,notify,yes',
             'low_stock_threshold' => 'nullable|integer|min:0',
-            'stock_status' => 'required_without:manage_stock|in:in_stock,out_of_stock,backorder',
+            'stock_status' => [
+                Rule::when(
+                    $this->type !== 'grouped',
+                    ['required_without:manage_stock', 'in:in_stock,out_of_stock,backorder'],
+                    ['nullable']
+                ),
+            ],
 
             'sold_individually' => 'boolean',
 
@@ -179,10 +200,12 @@ class ProductForm extends Form
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'exists:tags,id',
             'brand_id' => 'nullable|exists:brands,id',
-            'selectedUpsells' => 'nullable|array',
-            'selectedUpsells.*' => 'exists:products,id',
-            'selectedCrossSells' => 'nullable|array',
-            'selectedCrossSells.*' => 'exists:products,id',
+            'selected_upsells' => 'nullable|array',
+            'selected_upsells.*' => 'exists:products,id',
+            'selected_cross_sells' => 'nullable|array',
+            'selected_cross_sells.*' => 'exists:products,id',
+            'grouped_products' => 'nullable|array',
+            'grouped_products.*' => 'exists:products,id',
         ];
     }
 
@@ -288,8 +311,14 @@ class ProductForm extends Form
         // Fill brand
         $this->brand_id = $product->brand_id;
 
-        $this->selectedUpsells = $product->upsells()->pluck('related_product_id')->toArray();
-        $this->selectedCrossSells = $product->crossSells()->pluck('related_product_id')->toArray();
+        $this->selected_upsells = $product->upsells->pluck('id')->toArray();
+        $this->selected_cross_sells = $product->crossSells->pluck('id')->toArray();
+        $this->grouped_products = $product->groupedProducts
+            ->map(fn($p) => [
+                'id'       => $p->id,
+                'quantity' => $p->pivot->quantity,
+            ])
+            ->toArray();
 
         // Fill existing images
         $this->existing_image = $product->image_path;
@@ -504,20 +533,20 @@ class ProductForm extends Form
             'short_description' => $this->short_description,
             'description' => $this->description,
             'type' => $this->type,
-            'price' => $this->price,
+            'price' => $this->type === 'grouped' ? null : $this->price,
             'sale_price' => $this->sale_price,
             'cost_price' => $this->cost_price,
             'sku' => $this->sku,
-            'manage_stock' => $this->manage_stock,
-            'stock_quantity' => $this->stock_quantity,
+            'manage_stock' => $this->type === 'grouped' ? false : $this->manage_stock,
+            'stock_quantity' => $this->type === 'grouped' ? 0 : $this->stock_quantity,
             'allow_backorder' => $this->allow_backorder,
             'low_stock_threshold' => $this->low_stock_threshold,
-            'stock_status' => $this->stock_status,
+            'stock_status' => $this->type === 'grouped' ? 'in_stock' : $this->stock_status,
             'sold_individually' => $this->sold_individually,
-            'weight' => $this->weight,
-            'length' => $this->length,
-            'width' => $this->width,
-            'height' => $this->height,
+            'weight' => $this->type === 'grouped' ? null : $this->weight,
+            'length' => $this->type === 'grouped' ? null : $this->length,
+            'width' => $this->type === 'grouped' ? null : $this->width,
+            'height' => $this->type === 'grouped' ? null : $this->height,
             'meta_title' => $this->meta_title,
             'meta_description' => $this->meta_description,
             'meta_keywords' => $this->meta_keywords,
@@ -537,16 +566,14 @@ class ProductForm extends Form
     {
         $product->categories()->sync($this->category_ids);
 
-        // Detach all existing badge tags first, then attach fresh
         $product->detachTags($product->tagsWithType('badge'));
-
         if (!empty($this->tag_ids)) {
             $tags = Tag::whereIn('id', $this->tag_ids)->get();
             $product->attachTags($tags, 'badge');
         }
 
         $product->upsells()->sync(
-            collect($this->selectedUpsells)
+            collect($this->selected_upsells)
                 ->mapWithKeys(fn($id, $index) => [
                     $id => ['type' => ProductRelationshipType::UP_SELLS, 'sort_order' => $index]
                 ])
@@ -554,12 +581,26 @@ class ProductForm extends Form
         );
 
         $product->crossSells()->sync(
-            collect($this->selectedCrossSells)
+            collect($this->selected_cross_sells)
                 ->mapWithKeys(fn($id, $index) => [
                     $id => ['type' => ProductRelationshipType::CROSS_SELL, 'sort_order' => $index]
                 ])
                 ->toArray()
         );
+
+        // ✅ Sync grouped products with quantity
+        $product->groupedProducts()->sync(
+            collect($this->grouped_products)
+                ->mapWithKeys(fn($item, $index) => [
+                    $item['id'] => [
+                        'type'       => ProductRelationshipType::GROUPED->value,
+                        'quantity'   => $item['quantity'] ?? 1,
+                        'sort_order' => $index,
+                    ]
+                ])
+                ->toArray()
+        );
+
         $this->handleImageUpload($product);
     }
 

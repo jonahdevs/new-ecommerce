@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->string('short_description', 500)->nullable();
 
-            $table->enum('type', ['simple', 'variable'])->default('simple');
+            $table->string('type');
 
             // General
             $table->decimal('price', 10, 2);
@@ -310,6 +310,7 @@ return new class extends Migration {
             $table->foreignId('related_product_id')->constrained('products')->cascadeOnDelete();
 
             $table->string('type');
+            $table->integer('quantity')->default(1);
 
             $table->integer('sort_order')->default(0);
             $table->timestamps();

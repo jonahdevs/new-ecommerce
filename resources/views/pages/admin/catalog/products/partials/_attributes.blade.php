@@ -34,7 +34,7 @@
             {{-- Header --}}
             <div class="flex items-center gap-4 px-4 py-2" :class="{ 'border-b dark:border-zinc-700': open }">
 
-                <flux:heading size="sm">
+                <flux:heading>
                     {{ $attr['name'] ? ucfirst($attr['name']) : 'New Attribute' }}
                 </flux:heading>
 

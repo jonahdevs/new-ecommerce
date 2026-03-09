@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProductType;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -235,6 +236,7 @@ class ProductSeeder extends Seeder
             'name' => $productData['name'],
             'slug' => Str::slug(implode(' ', $slugParts)),
             'sku' => $productData['sku'] ?? null,
+            'type' => ProductType::SIMPLE,
             'model_number' => $productData['model_number'] ?? null,
             // 'stock_quantity' => $productData['quantity'] ?? 0,
             'stock_quantity' => 100,

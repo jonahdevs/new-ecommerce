@@ -39,6 +39,10 @@ class SocialiteController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->intended(route('dashboard'));
+        if ($user->is_staff) {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
+        return redirect()->intended(route('home'));
     }
 }

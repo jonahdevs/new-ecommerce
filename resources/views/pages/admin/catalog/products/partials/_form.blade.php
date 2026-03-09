@@ -11,9 +11,9 @@
                 <div class="flex items-center gap-3">
                     <flux:heading>Product Data</flux:heading>
                     <flux:select size="sm" class="w-fit" wire:model.live="form.type">
-                        <flux:select.option value="simple">Simple</flux:select.option>
-                        <flux:select.option value="variable">Variable Product</flux:select.option>
-                        <flux:select.option value="grouped">Grouped Product</flux:select.option>
+                        @foreach (App\Enums\ProductType::cases() as $type)
+                            <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
+                        @endforeach
                     </flux:select>
                 </div>
                 <flux:button icon="chevron-down" size="xs" variant="ghost"
@@ -27,9 +27,11 @@
                 <div
                     class="col-span-1 bg-zinc-100 dark:bg-zinc-900/90 border-r dark:border-zinc-600 flex flex-col divide-y dark:divide-zinc-600 overflow-hidden rounded-bl-xl">
 
-                    <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
+                    {{-- General — hidden for grouped --}}
+                    <flux:button wire:cloak wire:show="form.type !== 'grouped'"
+                        class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'general' }"
-                        icon="truck" icon-variant="outline" @click="$wire.activeTab = 'general'">
+                        icon="banknotes" icon-variant="outline" @click="$wire.activeTab = 'general'">
                         General
                         @if ($this->hasGeneralErrors())
                             <x-slot name="iconTrailing">
@@ -38,7 +40,9 @@
                         @endif
                     </flux:button>
 
-                    <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
+                    {{-- Inventory — hidden for grouped --}}
+                    <flux:button wire:cloak wire:show="form.type !== 'grouped'"
+                        class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'inventory' }"
                         icon="archive-box" icon-variant="outline" @click="$wire.activeTab = 'inventory'">
                         Inventory
@@ -49,7 +53,9 @@
                         @endif
                     </flux:button>
 
-                    <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
+                    {{-- Shipping — hidden for grouped --}}
+                    <flux:button wire:cloak wire:show="form.type !== 'grouped'"
+                        class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'shipping' }"
                         icon="truck" icon-variant="outline" @click="$wire.activeTab = 'shipping'">
                         Shipping
@@ -60,6 +66,7 @@
                         @endif
                     </flux:button>
 
+                    {{-- Linked Products — always visible --}}
                     <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'linked-products' }"
                         icon="link" icon-variant="outline" @click="$wire.activeTab = 'linked-products'">
@@ -71,7 +78,9 @@
                         @endif
                     </flux:button>
 
-                    <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
+                    {{-- Attributes — hidden for grouped --}}
+                    <flux:button wire:cloak wire:show="form.type !== 'grouped'"
+                        class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'attributes' }"
                         icon="tag" icon-variant="outline" @click="$wire.activeTab = 'attributes'">
                         Attributes
@@ -82,6 +91,7 @@
                         @endif
                     </flux:button>
 
+                    {{-- Variations — only for variable --}}
                     <flux:button wire:cloak wire:show="form.type === 'variable'"
                         class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'variations' }"
@@ -94,6 +104,7 @@
                         @endif
                     </flux:button>
 
+                    {{-- Advanced — always visible --}}
                     <flux:button class="w-full rounded-none! cursor-pointer justify-start!" variant="ghost"
                         x-bind:class="{ 'bg-zinc-200! dark:bg-zinc-800!': $wire.activeTab === 'advanced' }"
                         icon="cog" icon-variant="outline" @click="$wire.activeTab = 'advanced'">

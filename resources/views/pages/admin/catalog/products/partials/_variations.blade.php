@@ -92,7 +92,7 @@
                         {{-- Variant Header --}}
                         <div class="flex items-center justify-between px-4 py-2"
                             :class="{ 'border-b pb-1 mb-3': collapsed }">
-                            <flux:heading size="lg">
+                            <flux:heading>
                                 {{ !empty($variant['attributes'])
                                     ? implode(' - ', array_values($variant['attributes']))
                                     : 'Manual Variation #' . ($index + 1) }}

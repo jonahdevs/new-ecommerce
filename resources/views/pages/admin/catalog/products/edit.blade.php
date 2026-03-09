@@ -14,6 +14,7 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
         // Load attributes and variations into Base state
         $this->loadProductAttributes($product);
         $this->loadProductVariants($product);
+        $this->loadGroupedProducts($product);
     }
 
     protected function executeSave(): void
