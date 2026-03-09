@@ -28,10 +28,10 @@ class SocialiteController extends Controller
             [
                 'provider'    => $provider,
                 'provider_id' => $socialUser->getId(),
+                'email'          => $socialUser->getEmail(),
             ],
             [
                 'name'           => $socialUser->getName(),
-                'email'          => $socialUser->getEmail(),
                 'provider_token' => $socialUser->token,
                 'email_verified_at' => now(), // trust OAuth provider's email
             ]
