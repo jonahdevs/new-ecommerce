@@ -21,6 +21,12 @@ return new class extends Migration {
 
             $table->string('type');
 
+            $table->boolean('is_virtual')->default(false);
+            $table->boolean('is_downloadable')->default(false);
+
+            $table->integer('download_limit')->nullable();
+            $table->integer('download_expiry')->nullable();
+
             // General
             $table->decimal('price', 10, 2)->nullable();
             $table->decimal('sale_price', 10, 2)->nullable();
@@ -74,6 +80,14 @@ return new class extends Migration {
             $table->string('warranty_information')->nullable();
             $table->string('return_policy')->nullable();
 
+            $table->text('purchase_note')->nullable();
+            $table->integer('sort_order')->default(0);
+            $table->boolean('reviews_enabled')->default(true);
+
+            // Quotation Settings
+            $table->boolean('requires_quotation')->default(false);
+            $table->decimal('min_order_quantity', 10, 2)->nullable();
+            $table->text('quotation_notes')->nullable();
 
             // Analytics
             $table->integer('views_count')->default(0);
@@ -81,13 +95,7 @@ return new class extends Migration {
             $table->decimal('average_rating', 3, 2)->nullable();
             $table->integer('reviews_count')->default(0);
 
-            // Quotation Settings
-            $table->boolean('requires_quotation')->default(false);
-            $table->decimal('min_order_quantity', 10, 2)->nullable();
-            $table->text('quotation_notes')->nullable();
-
             // Foreign Keys
-
             $table->timestamps();
             $table->softDeletes();
 
@@ -220,33 +228,23 @@ return new class extends Migration {
         // PRODUCT DOCUMENTS TABLE
         // ===============================================
 
-        Schema::create('product_documents', function (Blueprint $table) {
+        Schema::create('product_downloads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
 
-            $table->string('title');
-            $table->string('file_path');
-            $table->string('file_name');
-            $table->string('file_type', 50); // pdf, doc, xls, etc.
-            $table->unsignedBigInteger('file_size'); // in bytes
-            $table->enum('document_type', [
-                'datasheet',
-                'manual',
-                'warranty',
-                'certification',
-                'brochure',
-                'specification',
-                'other',
-            ])->default('other');
-            $table->text('description')->nullable();
-            $table->boolean('is_public')->default(true);
-            $table->integer('download_count')->default(0);
-            $table->integer('sort_order')->default(0);
+            $table->string('name');          // e.g. "User Manual", "Software Installer"
+            $table->string('file_path');     // stored file path
+            $table->string('file_name');     // original file name
+            $table->string('file_type', 50)->nullable(); // pdf, zip, exe etc.
+            $table->unsignedBigInteger('file_size')->nullable(); // bytes
 
+            $table->integer('download_limit')->nullable(); // null = unlimited
+            $table->integer('download_expiry')->nullable(); // days after purchase, null = never
+
+            $table->integer('sort_order')->default(0);
             $table->timestamps();
 
-            $table->index(['product_id', 'document_type']);
-            $table->index(['product_id', 'is_public']);
+            $table->index('product_id');
         });
 
         // ===============================================
@@ -353,7 +351,7 @@ return new class extends Migration {
         Schema::dropIfExists('product_variant_attribute_values');
         Schema::dropIfExists('product_attribute_values');
         Schema::dropIfExists('product_attributes');
-        Schema::dropIfExists('product_documents');
+        Schema::dropIfExists('product_downloads');
         Schema::dropIfExists('product_images');
         Schema::dropIfExists('product_variants');
         Schema::dropIfExists('attribute_values');

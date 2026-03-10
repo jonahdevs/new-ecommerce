@@ -114,6 +114,19 @@ class ProductForm extends Form
     public array $selected_cross_sells = [];
     public array $grouped_products = [];
 
+    // Virtual & Downloadable
+    public bool $is_virtual = false;
+    public bool $is_downloadable = false;
+
+    // Download settings
+    public int $download_limit = 0;   // 0 = unlimited
+    public int $download_expiry = 0;  // 0 = never expires
+    public array $downloads = [];     // uploaded files
+
+    public ?string $purchase_note = null;
+    public int $sort_order = 0;
+    public bool $reviews_enabled = true;
+
     /**
      * Validation rules
      */
@@ -135,7 +148,16 @@ class ProductForm extends Form
                 Rule::when($this->type !== 'grouped', ['required', 'numeric', 'min:0']),
                 Rule::when($this->type === 'grouped', ['nullable', 'numeric', 'min:0']),
             ],
-            'sale_price' => 'nullable|numeric|min:0|lt:price',
+            'sale_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                Rule::when(
+                    !empty($this->price),
+                    ['lt:price']
+                ),
+            ],
+
             'cost_price' => 'nullable|numeric|min:0',
 
             // Inventory
@@ -147,19 +169,31 @@ class ProductForm extends Form
                 ),
             ],
 
-            'manage_stock' => 'boolean',
+            'manage_stock' => [
+                Rule::when(
+                    $this->is_virtual || $this->type === 'grouped',
+                    ['nullable'],
+                    ['boolean']
+                ),
+            ],
             'stock_quantity' => [
                 Rule::when(
-                    $this->type !== 'grouped' && $this->manage_stock,
+                    $this->type !== 'grouped' && !$this->is_virtual && $this->manage_stock,
                     ['required', 'integer', 'min:0'],
                     ['nullable', 'integer', 'min:0']
                 ),
             ],
-            'allow_backorder' => 'required_if:manage_stock,true|in:no,notify,yes',
+            'allow_backorder' => [
+                Rule::when(
+                    $this->type !== 'grouped' && !$this->is_virtual && $this->manage_stock,
+                    ['required', 'in:no,notify,yes'],
+                    ['nullable']
+                ),
+            ],
             'low_stock_threshold' => 'nullable|integer|min:0',
             'stock_status' => [
                 Rule::when(
-                    $this->type !== 'grouped',
+                    $this->type !== 'grouped' && !$this->is_virtual,
                     ['required_without:manage_stock', 'in:in_stock,out_of_stock,backorder'],
                     ['nullable']
                 ),
@@ -205,8 +239,27 @@ class ProductForm extends Form
             'selected_upsells.*' => 'exists:products,id',
             'selected_cross_sells' => 'nullable|array',
             'selected_cross_sells.*' => 'exists:products,id',
-            'grouped_products' => 'nullable|array',
-            'grouped_products.*' => 'exists:products,id',
+            'grouped_products'    => 'nullable|array',
+            'grouped_products.*.id' => 'required|exists:products,id',
+            'grouped_products.*.quantity' => 'required|integer|min:1',
+
+            'is_virtual'      => 'boolean',
+            'is_downloadable' => 'boolean',
+
+            // Download rules — only when downloadable
+            'download_limit'  => 'nullable|integer|min:0',
+            'download_expiry' => 'nullable|integer|min:0',
+            'downloads'         => 'nullable|array',
+            'downloads.*.name'  => 'nullable|string|max:255',
+            'downloads.*.file'  => [
+                'nullable',
+                'file',
+                'max:102400', // 100MB
+                'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,jpg,jpeg,png,gif,mp4,mp3',
+            ],
+            'purchase_note'   => 'nullable|string|max:1000',
+            'sort_order'      => 'nullable|integer|min:0',
+            'reviews_enabled' => 'boolean',
         ];
     }
 
@@ -228,6 +281,9 @@ class ProductForm extends Form
             'published_at.required_if' => 'Published date is required for scheduled products.',
             'image.image' => 'The file must be an image.',
             'image.max' => 'Image size must not exceed 2MB.',
+            'downloads.*.file.mimes' => 'Only PDF, Office documents, images, zip, and media files are allowed.',
+            'downloads.*.file.max'   => 'Download file must not exceed 100MB.',
+            'downloads.*.name.max'   => 'Download file name must not exceed 255 characters.',
         ];
     }
 
@@ -317,6 +373,9 @@ class ProductForm extends Form
         $this->grouped_products = $product->groupedProducts
             ->map(fn($p) => [
                 'id'       => $p->id,
+                'name'     => $p->name,
+                'sku'      => $p->sku,
+                'price'    => $p->price,
                 'quantity' => $p->pivot->quantity,
             ])
             ->toArray();
@@ -324,6 +383,15 @@ class ProductForm extends Form
         // Fill existing images
         $this->existing_image = $product->image_path;
         $this->existingImages = $product->images ?? [];
+
+        $this->is_virtual      = $product->is_virtual;
+        $this->is_downloadable = $product->is_downloadable;
+
+        $this->download_limit  = $product->download_limit ?? 0;
+        $this->download_expiry = $product->download_expiry ?? 0;
+        $this->purchase_note   = $product->purchase_note;
+        $this->sort_order      = $product->sort_order;
+        $this->reviews_enabled = $product->reviews_enabled;
     }
 
     /**
@@ -497,8 +565,6 @@ class ProductForm extends Form
      */
     public function store(): Product
     {
-        // Validate the form
-        $this->validate();
 
         $product = Product::create(array_merge(
             $this->productData(),
@@ -515,10 +581,7 @@ class ProductForm extends Form
      */
     public function update(): void
     {
-        $this->validate();
-
         $this->product->update($this->productData());
-
         $this->syncRelationships($this->product);
     }
 
@@ -538,16 +601,16 @@ class ProductForm extends Form
             'sale_price' => $this->sale_price,
             'cost_price' => $this->cost_price,
             'sku' => $this->sku,
-            'manage_stock' => $this->type === 'grouped' ? false : $this->manage_stock,
-            'stock_quantity' => $this->type === 'grouped' ? 0 : $this->stock_quantity,
+            'manage_stock' => $this->hasStock() ? $this->manage_stock : false,
+            'stock_quantity' => $this->hasStock() ? $this->stock_quantity : 0,
             'allow_backorder' => $this->allow_backorder,
             'low_stock_threshold' => $this->low_stock_threshold,
-            'stock_status' => $this->type === 'grouped' ? 'in_stock' : $this->stock_status,
+            'stock_status'   => $this->hasStock() ? $this->stock_status : 'in_stock',
             'sold_individually' => $this->sold_individually,
-            'weight' => $this->type === 'grouped' ? null : $this->weight,
-            'length' => $this->type === 'grouped' ? null : $this->length,
-            'width' => $this->type === 'grouped' ? null : $this->width,
-            'height' => $this->type === 'grouped' ? null : $this->height,
+            'weight' => $this->isPhysical() ? $this->weight : null,
+            'length' => $this->isPhysical() ? $this->length : null,
+            'width' => $this->isPhysical() ? $this->width : null,
+            'height' => $this->isPhysical() ? $this->height : null,
             'meta_title' => $this->meta_title,
             'meta_description' => $this->meta_description,
             'meta_keywords' => $this->meta_keywords,
@@ -556,6 +619,13 @@ class ProductForm extends Form
             'visibility' => $this->visibility,
             'published_at' => $this->published_at,
             'brand_id' => $this->brand_id ?: null,
+            'is_virtual'      => $this->is_virtual,
+            'is_downloadable' => $this->is_downloadable,
+            'download_limit'  => $this->is_downloadable ? $this->download_limit : null,
+            'download_expiry' => $this->is_downloadable ? $this->download_expiry : null,
+            'purchase_note'   => $this->purchase_note,
+            'sort_order'      => $this->sort_order,
+            'reviews_enabled' => $this->reviews_enabled,
         ];
     }
 
@@ -567,29 +637,40 @@ class ProductForm extends Form
     {
         $product->categories()->sync($this->category_ids);
 
+        // Tags
         $product->detachTags($product->tagsWithType('badge'));
         if (!empty($this->tag_ids)) {
             $tags = Tag::whereIn('id', $this->tag_ids)->get();
             $product->attachTags($tags, 'badge');
         }
 
+        // Upsells
         $product->upsells()->sync(
             collect($this->selected_upsells)
                 ->mapWithKeys(fn($id, $index) => [
-                    $id => ['type' => ProductRelationshipType::UP_SELLS, 'sort_order' => $index]
+                    $id => [
+                        'type'       => ProductRelationshipType::UP_SELLS->value,
+                        'sort_order' => $index,
+                        'quantity'   => 1,
+                    ]
                 ])
                 ->toArray()
         );
 
+        // Cross-sells
         $product->crossSells()->sync(
             collect($this->selected_cross_sells)
                 ->mapWithKeys(fn($id, $index) => [
-                    $id => ['type' => ProductRelationshipType::CROSS_SELL, 'sort_order' => $index]
+                    $id => [
+                        'type'       => ProductRelationshipType::CROSS_SELL->value,
+                        'sort_order' => $index,
+                        'quantity'   => 1,
+                    ]
                 ])
                 ->toArray()
         );
 
-        // ✅ Sync grouped products with quantity
+        //  Grouped products with quantity
         $product->groupedProducts()->sync(
             collect($this->grouped_products)
                 ->mapWithKeys(fn($item, $index) => [
@@ -610,70 +691,40 @@ class ProductForm extends Form
      */
     private function handleImageUpload(Product $product): void
     {
-        // Handle main product image
+        // Main image
         if ($this->image) {
-            // Delete old image if exists
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            if ($product->image_path) {                              // ← was $product->image
+                Storage::disk('public')->delete($product->image_path);
             }
 
-            // Store new image
             $imagePath = $this->image->store('products', 'public');
-
             $product->update(['image_path' => $imagePath]);
         }
 
-        // Handle gallery images
+        // Gallery images
         if (!empty($this->images)) {
-            $existingImages = $product->images ?? [];
+            $existingImages = $product->images ?? [];               // JSON column — array of strings
 
             foreach ($this->images as $image) {
-                $imagePath = $image->store('products/gallery', 'public');
-                $existingImages[] = $imagePath;
+                $existingImages[] = $image->store('products/gallery', 'public');
             }
 
             $product->update(['images' => $existingImages]);
         }
 
-        // Handle image deletions
+        // Deletions
         if (!empty($this->imagesToDelete)) {
             foreach ($this->imagesToDelete as $imagePath) {
                 Storage::disk('public')->delete($imagePath);
             }
 
             $existingImages = $product->images ?? [];
-            $remainingImages = array_diff($existingImages, $this->imagesToDelete);
+            $product->update([
+                'images' => array_values(array_diff($existingImages, $this->imagesToDelete))
+            ]);
 
-            $product->update(['images' => array_values($remainingImages)]);
-
-            // Clear the deletion queue
             $this->imagesToDelete = [];
         }
-    }
-
-    /**
-     * Mark a gallery image for deletion
-     */
-    public function removeGalleryImage(string $imagePath): void
-    {
-        if (!in_array($imagePath, $this->imagesToDelete)) {
-            $this->imagesToDelete[] = $imagePath;
-        }
-
-        // Remove from existing images display
-        $this->existingImages = array_filter(
-            $this->existingImages,
-            fn($path) => $path !== $imagePath
-        );
-    }
-
-    /**
-     * Remove a newly uploaded image before saving
-     */
-    public function removeNewImage(int $index): void
-    {
-        unset($this->images[$index]);
-        $this->images = array_values($this->images);
     }
 
     /**
@@ -686,7 +737,7 @@ class ProductForm extends Form
         if (empty($normalizedName))
             return;
 
-        $tag = Tag::findOrCreate($normalizedName);
+        $tag = Tag::findOrCreate($normalizedName, 'badge');
 
         if (!in_array($tag->id, $this->tag_ids)) {
             $this->tag_ids[] = $tag->id;
@@ -699,5 +750,16 @@ class ProductForm extends Form
     public function getProductId(): ?int
     {
         return $this->product?->id;
+    }
+
+    private function isPhysical(): bool
+    {
+        return $this->type !== 'grouped'
+            && !$this->is_virtual;
+    }
+
+    private function hasStock(): bool
+    {
+        return $this->type !== 'grouped' && !$this->is_virtual;
     }
 }

@@ -12,11 +12,24 @@ class StripeWebhookController extends Controller
 {
     public function __invoke(Request $request, StripeGateway $gateway): Response
     {
+        // Fix 1 — correct gateway label
         Log::info('Webhook received', [
-            'gateway' => 'mpesa', // or pesawise/stripe
-            'ip' => $request->ip(),
+            'gateway' => 'stripe',
+            'ip'      => $request->ip(),
         ]);
-        $gateway->handleWebhook($request);
+
+        // Fix 2 — catch unexpected exceptions
+        // abort(400) from signature failure is intentional and still propagates
+        try {
+            $gateway->handleWebhook($request);
+        } catch (\Throwable $e) {
+            Log::error('Stripe webhook handler threw exception', [
+                'error' => $e->getMessage(),
+                'ip'    => $request->ip(),
+            ]);
+
+            return response('Server Error', 500);
+        }
 
         return response('OK', 200);
     }

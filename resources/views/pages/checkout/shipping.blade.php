@@ -282,7 +282,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
                 <div class="flex justify-end mt-5">
                     <flux:button wire:click="confirm" variant="primary" class="cursor-pointer"
-                        :disabled="! $this->selectedMethod" icon="check">
+                        :disabled="! $this->selectedMethod">
                         Confirm Shipping Method
                     </flux:button>
                 </div>

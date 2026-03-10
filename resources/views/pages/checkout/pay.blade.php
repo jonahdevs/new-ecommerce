@@ -423,13 +423,16 @@ new #[Layout('layouts.guest')] class extends Component {
             loading: false,
             ready: false,
             errorMessage: '',
+            _clientSecret: '',
+            _returnUrl: '',
+            _redirecting: false, // tracks redirect so finally block doesn't reset loading
 
             init() {
                 const publicKey = @js($this->publicKey);
                 const clientSecret = @js($this->clientSecret);
                 const returnUrl = @js($this->returnUrl);
 
-                console.log(returnUrl);
+                // Fix 2 — removed console.log(returnUrl)
 
                 if (!publicKey || !clientSecret) {
                     this.errorMessage = 'Payment configuration error. Please contact support.';
@@ -452,7 +455,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     },
                     invalid: {
                         color: '#ef4444',
-                        iconColor: '#ef4444'
+                        iconColor: '#ef4444',
                     },
                 };
 
@@ -471,10 +474,16 @@ new #[Layout('layouts.guest')] class extends Component {
                 this.cardExpiry.mount('#stripe-card-expiry');
                 this.cardCvc.mount('#stripe-card-cvc');
 
-                this.cardNumber.on('ready', () => {
-                    this.ready = true;
+                // Fix 1 — ready only when ALL 3 fields are mounted
+                let readyCount = 0;
+                [this.cardNumber, this.cardExpiry, this.cardCvc].forEach(el => {
+                    el.on('ready', () => {
+                        readyCount++;
+                        if (readyCount === 3) this.ready = true;
+                    });
                 });
 
+                // Show inline validation errors as customer types
                 [this.cardNumber, this.cardExpiry, this.cardCvc].forEach(el => {
                     el.on('change', (e) => {
                         this.errorMessage = e.error ? e.error.message : '';
@@ -491,33 +500,62 @@ new #[Layout('layouts.guest')] class extends Component {
                 this.loading = true;
                 this.errorMessage = '';
 
-                const {
-                    paymentIntent,
-                    error
-                } = await this.stripe.confirmCardPayment(
-                    this._clientSecret, {
-                        payment_method: {
-                            card: this.cardNumber,
-                            billing_details: {
-                                name: this.cardholderName || undefined
+                // Fix 4 — try/finally guarantees loading resets
+                try {
+                    const {
+                        paymentIntent,
+                        error
+                    } = await this.stripe.confirmCardPayment(
+                        this._clientSecret, {
+                            payment_method: {
+                                card: this.cardNumber,
+                                billing_details: {
+                                    name: this.cardholderName || undefined,
+                                },
                             },
-                        },
-                        return_url: this._returnUrl,
+                            return_url: this._returnUrl,
+                        }
+                    );
+
+                    // Stripe.js returned a hard error (network, invalid card number, etc.)
+                    if (error) {
+                        this.errorMessage = error.message;
+                        return;
                     }
-                );
 
-                if (error) {
-                    this.errorMessage = error.message;
-                    this.loading = false;
-                    return;
+                    // Fix 3 — handle every possible status explicitly
+                    if (paymentIntent) {
+                        switch (paymentIntent.status) {
+                            case 'succeeded':
+                                // Keep loading spinner active during redirect
+                                this._redirecting = true;
+                                window.location.href = this._returnUrl;
+                                return;
+
+                            case 'requires_action':
+                                // Stripe.js showed 3DS popup — customer dismissed or failed
+                                this.errorMessage = 'Authentication was not completed. Please try again.';
+                                break;
+
+                            case 'requires_payment_method':
+                                // Card declined — ask customer to try another
+                                this.errorMessage = 'Your card was declined. Please try a different card.';
+                                break;
+
+                            default:
+                                this.errorMessage = 'Something went wrong. Please try again.';
+                        }
+                    }
+
+                } catch (e) {
+                    // Unexpected JS error — network failure, Stripe.js not loaded, etc.
+                    this.errorMessage = 'An unexpected error occurred. Please try again.';
+                } finally {
+                    // Reset loading unless we're in the middle of a redirect
+                    if (!this._redirecting) {
+                        this.loading = false;
+                    }
                 }
-
-                if (paymentIntent && paymentIntent.status === 'succeeded') {
-                    window.location.href = this._returnUrl;
-                    return;
-                }
-
-                this.loading = false;
             },
         }));
 

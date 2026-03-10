@@ -247,7 +247,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
             {{-- Footer Action --}}
             <div class="p-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end bg-zinc-50/30">
-                <flux:button wire:click="confirm" variant="primary" class="cursor-pointer" icon="check">
+                <flux:button wire:click="confirm" variant="primary" class="cursor-pointer">
                     Confirm Payment Method
                 </flux:button>
             </div>

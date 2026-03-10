@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ProductRelationshipType;
 use App\Enums\ProductStatus;
+use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -67,29 +68,43 @@ class Product extends Model
         'requires_quotation',
         'min_order_quantity',
         'quotation_notes',
+
+        'sold_individually',
+        'is_virtual',
+        'is_downloadable',
+        'download_limit',
+        'download_expiry',
+
+        'purchase_note',
+        'sort_order',
+        'reviews_enabled',
     ];
 
     protected function casts(): array
     {
         return [
             'technical_specification' => 'array',
-            'meta_keywords' => 'array',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
-            'manage_stock' => 'boolean',
-            'weight' => 'decimal:2',
-            'height' => 'decimal:2',
-            'width' => 'decimal:2',
-            'length' => 'decimal:2',
-            'price' => 'decimal:2',
-            'sale_price' => 'decimal:2',
-            'cost_price' => 'decimal:2',
-            'average_rating' => 'decimal:2',
-            'expected_restock_date' => 'date',
-            'requires_quotation' => 'boolean',
-            'min_order_quantity' => 'decimal:2',
-            'status' => ProductStatus::class,
-            'visibility' => ProductVisibility::class
+            'meta_keywords'           => 'array',
+            'manage_stock'            => 'boolean',
+            'sold_individually'       => 'boolean',
+            'is_virtual'              => 'boolean',
+            'is_downloadable'         => 'boolean',
+            'requires_quotation'      => 'boolean',
+            'weight'                  => 'decimal:2',
+            'height'                  => 'decimal:2',
+            'width'                   => 'decimal:2',
+            'length'                  => 'decimal:2',
+            'price'                   => 'decimal:2',
+            'sale_price'              => 'decimal:2',
+            'cost_price'              => 'decimal:2',
+            'average_rating'          => 'decimal:2',
+            'min_order_quantity'      => 'decimal:2',
+            'expected_restock_date'   => 'date',
+            'published_at'            => 'datetime',
+            'status'                  => ProductStatus::class,
+            'visibility'              => ProductVisibility::class,
+            'reviews_enabled' => 'boolean',
+            'sort_order'      => 'integer',
         ];
     }
 
@@ -158,7 +173,7 @@ class Product extends Model
             'related_product_id'
         )
             ->wherePivot('type', ProductRelationshipType::UP_SELLS)
-            ->withPivot('sort_order')
+            ->withPivot('sort_order', 'quantity')
             ->withTimestamps()
             ->orderByPivot('sort_order');
     }
@@ -175,7 +190,7 @@ class Product extends Model
             'related_product_id'
         )
             ->wherePivot('type', ProductRelationshipType::CROSS_SELL)
-            ->withPivot('sort_order')
+            ->withPivot('sort_order', 'quantity')
             ->withTimestamps()
             ->orderByPivot('sort_order');
     }
@@ -221,6 +236,14 @@ class Product extends Model
             ->withTimestamps();
     }
 
+    /**
+     * Get all downloadable files for the product
+     */
+    public function downloads(): HasMany
+    {
+        return $this->hasMany(ProductDownload::class)->orderBy('sort_order');
+    }
+
     // ===============================================
     // SCOPES
     // ===============================================
@@ -229,11 +252,13 @@ class Product extends Model
      * Scope a query to only include active products.
      */
     #[Scope]
-    protected function active(Builder $query)
+    protected function active(Builder $query): void
     {
-        $query->where('status', 'published')
+        $query->where('status', ProductStatus::PUBLISHED)
             ->where(function ($q) {
-                $q->where('price', '>', 0)
+                $q->where('type', ProductType::GROUPED)
+                    ->orWhere('is_virtual', true)
+                    ->orWhere('price', '>', 0)
                     ->orWhere('sale_price', '>', 0);
             });
     }
@@ -288,18 +313,22 @@ class Product extends Model
     }
 
     // ===============================================
-    // METHODS
+    // HELPER METHODS
     // ===============================================
 
     public function hasDiscount(): bool
     {
-        return $this->sale_price && $this->sale_price < $this->price;
+        return !is_null($this->sale_price)
+            && !is_null($this->price)
+            && $this->sale_price < $this->price;
     }
 
-    public function discountPercentage()
+    public function discountPercentage(): ?string
     {
         if ($this->hasDiscount()) {
-            return Number::percentage(round((($this->price - $this->sale_price) / $this->price) * 100, 2));
+            return Number::percentage(
+                round((($this->price - $this->sale_price) / $this->price) * 100, 2)
+            );
         }
         return null;
     }
@@ -310,5 +339,27 @@ class Product extends Model
             ->wherePivot('is_primary', true)
             ->first()
             ?? $this->categories()->first();
+    }
+
+    public function isGrouped(): bool
+    {
+        return $this->type === 'grouped';
+    }
+
+    public function isVirtual(): bool
+    {
+        return (bool) $this->is_virtual;
+    }
+
+    public function isDownloadable(): bool
+    {
+        return (bool) $this->is_downloadable;
+    }
+
+    public function isPhysical(): bool
+    {
+        return !$this->isVirtual()
+            && !$this->isDownloadable()
+            && !$this->isGrouped();
     }
 }

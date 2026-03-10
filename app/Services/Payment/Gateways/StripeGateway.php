@@ -28,24 +28,33 @@ class StripeGateway implements PaymentGateway
         $secretKey = $settings->stripe_secret_key ?: config('services.stripe.secret_key');
 
         $this->stripe        = new StripeClient($secretKey);
-        $this->webhookSecret = $settings->stripe_webhook_secret ?? '';
-    }
 
-    //  Interface implementation 
+        // Fix 1 — fail loudly if webhook secret not configured
+        $this->webhookSecret = $settings->stripe_webhook_secret
+            ?: config('services.stripe.webhook_secret')
+            ?: '';
+    }
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
     {
         try {
-            // reuse existing intent if valid
             if ($payment->gateway_order_id && $payment->payment_url) {
-                Log::info('Reusing existing Stripe PaymentIntent', [
-                    'order_id'  => $order->id,
-                    'intent_id' => $payment->gateway_order_id,
-                ]);
+                if ($payment->status === PaymentStatus::FAILED->value) {
+                    Log::info('Previous Stripe PaymentIntent failed, creating new one', [
+                        'order_id'     => $order->id,
+                        'old_intent'   => $payment->gateway_order_id,
+                    ]);
+                } else {
+                    // Still processing — safe to reuse
+                    Log::info('Reusing existing Stripe PaymentIntent', [
+                        'order_id'  => $order->id,
+                        'intent_id' => $payment->gateway_order_id,
+                    ]);
 
-                return PaymentResponse::redirect(
-                    route('checkout.pay', ['order' => $order->reference])
-                );
+                    return PaymentResponse::redirect(
+                        route('checkout.pay', ['order' => $order->reference])
+                    );
+                }
             }
 
             $intent = $this->stripe->paymentIntents->create([
@@ -59,7 +68,6 @@ class StripeGateway implements PaymentGateway
                 'receipt_email' => $order->user?->email,
             ]);
 
-            // Store client_secret in payment_url — card payment page reads it
             $payment->update([
                 'gateway_order_id' => $intent->id,
                 'payment_url'      => $intent->client_secret,
@@ -67,6 +75,8 @@ class StripeGateway implements PaymentGateway
                 'meta'             => array_merge($payment->meta ?? [], [
                     'payment_intent_id' => $intent->id,
                     'initiated_at'      => now()->toISOString(),
+                    'retry_count'       => ($payment->meta['retry_count'] ?? 0) + 1,
+                    'previous_intent'   => $payment->gateway_order_id,
                 ]),
             ]);
 
@@ -103,7 +113,10 @@ class StripeGateway implements PaymentGateway
                 default                    => PaymentStatusVO::failed($intent->status),
             };
         } catch (\Throwable $e) {
-            Log::error('Stripe verify failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+            Log::error('Stripe verify failed', [
+                'reference' => $reference,
+                'error'     => $e->getMessage(),
+            ]);
             return PaymentStatusVO::failed($e->getMessage());
         }
     }
@@ -123,44 +136,48 @@ class StripeGateway implements PaymentGateway
             abort(400);
         }
 
+        // Fix 2 — handle requires_action for 3DS cards
         match ($event->type) {
-            'payment_intent.succeeded'      => $this->handleSucceeded($event->data->object),
-            'payment_intent.payment_failed' => $this->handleFailed($event->data->object),
-            'payment_intent.canceled'       => $this->handleCancelled($event->data->object),
-            default                         => null,
+            'payment_intent.succeeded'       => $this->handleSucceeded($event->data->object),
+            'payment_intent.payment_failed'  => $this->handleFailed($event->data->object),
+            'payment_intent.canceled'        => $this->handleCancelled($event->data->object),
+            'payment_intent.requires_action' => $this->handleRequiresAction($event->data->object),
+            default                          => null,
         };
     }
-
-    //  Webhook event handlers 
 
     private function handleSucceeded(object $intent): void
     {
         $payment = Payment::where('gateway_order_id', $intent->id)->first();
-
         if (!$payment) return;
 
-        $order = $payment->order;
+        // Fix 3 — idempotency guard
+        if ($payment->status === PaymentStatus::PAID->value) {
+            Log::info('Stripe webhook already processed, skipping', [
+                'intent_id' => $intent->id,
+            ]);
+            return;
+        }
 
+        $order = $payment->order;
         $originalMethod = $payment->meta['payment_method'] ?? null;
 
-        $mergedMeta = array_merge($payment->meta ?? [], (array) $intent);
-
+        // Fix 7 — use toArray() not (array) cast
+        $mergedMeta = array_merge($payment->meta ?? [], $intent->toArray());
         if ($originalMethod) {
             $mergedMeta['payment_method'] = $originalMethod;
         }
 
-        // 1. Update payment record
         $payment->update([
             'status'         => PaymentStatus::PAID->value,
             'transaction_id' => $intent->id,
             'card_brand'     => $intent->payment_method_types[0] ?? null,
             'paid_at'        => now(),
-            'meta'           =>  $mergedMeta,
+            'meta'           => $mergedMeta,
         ]);
 
         if (!$order) return;
 
-        // 2. Transition order status — records history automatically
         $order->transitionTo(
             OrdersStatus::CONFIRMED,
             notes: 'Payment confirmed via Stripe webhook',
@@ -168,12 +185,7 @@ class StripeGateway implements PaymentGateway
         );
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
 
-        // 3. Clear cart — payment is confirmed
-        app(CartService::class)->clear(
-            User::find($order->user_id)
-        );
-
-        // 4. Clear checkout session
+        app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
 
         Log::info('Stripe payment confirmed', [
@@ -185,21 +197,25 @@ class StripeGateway implements PaymentGateway
     private function handleFailed(object $intent): void
     {
         $payment = Payment::where('gateway_order_id', $intent->id)->first();
-
         if (!$payment) return;
 
-        $order = $payment->order;
+        // Fix 4 — idempotency guard
+        if ($payment->status === PaymentStatus::FAILED->value) {
+            Log::info('Stripe failure webhook already processed, skipping', [
+                'intent_id' => $intent->id,
+            ]);
+            return;
+        }
 
+        $order = $payment->order;
         $originalMethod = $payment->meta['payment_method'] ?? null;
 
-        $mergedMeta = array_merge($payment->meta ?? [], (array) $intent);
-
-
+        // Fix 7 — use toArray()
+        $mergedMeta = array_merge($payment->meta ?? [], $intent->toArray());
         if ($originalMethod) {
             $mergedMeta['payment_method'] = $originalMethod;
         }
 
-        // 1. Update payment record
         $payment->update([
             'status' => PaymentStatus::FAILED->value,
             'meta'   => $mergedMeta,
@@ -207,7 +223,7 @@ class StripeGateway implements PaymentGateway
 
         if (!$order) return;
 
-        // 2. Transition order status
+        // Note: keeping as CANCELLED for now — see next file for retry discussion
         $order->transitionTo(
             OrdersStatus::CANCELLED,
             notes: 'Payment failed via Stripe webhook',
@@ -215,7 +231,6 @@ class StripeGateway implements PaymentGateway
         );
         $order->update(['payment_status' => PaymentStatus::FAILED->value]);
 
-        // 3. Restore stock
         $this->restoreStock($order);
 
         Log::info('Stripe payment failed', [
@@ -227,20 +242,25 @@ class StripeGateway implements PaymentGateway
     private function handleCancelled(object $intent): void
     {
         $payment = Payment::where('gateway_order_id', $intent->id)->first();
-
         if (!$payment) return;
+
+        // Fix 5 — idempotency guard
+        if ($payment->status === PaymentStatus::CANCELLED->value) {
+            Log::info('Stripe cancellation webhook already processed, skipping', [
+                'intent_id' => $intent->id,
+            ]);
+            return;
+        }
 
         $order = $payment->order;
 
-        // 1. Update payment record
         $payment->update([
             'status' => PaymentStatus::CANCELLED->value,
-            'meta'   => array_merge($payment->meta ?? [], (array) $intent),
+            'meta'   => array_merge($payment->meta ?? [], $intent->toArray()), // Fix 7
         ]);
 
         if (!$order) return;
 
-        // 2. Transition order status
         $order->transitionTo(
             OrdersStatus::CANCELLED,
             notes: 'Payment cancelled via Stripe webhook',
@@ -248,7 +268,6 @@ class StripeGateway implements PaymentGateway
         );
         $order->update(['payment_status' => PaymentStatus::CANCELLED->value]);
 
-        // 3. Restore stock
         $this->restoreStock($order);
 
         Log::info('Stripe payment cancelled', [
@@ -257,7 +276,34 @@ class StripeGateway implements PaymentGateway
         ]);
     }
 
-    //  Private helpers 
+    // Fix 6 — new method for 3DS
+    private function handleRequiresAction(object $intent): void
+    {
+        $payment = Payment::where('gateway_order_id', $intent->id)->first();
+        if (!$payment) return;
+
+        // Already resolved — skip
+        if (in_array($payment->status, [
+            PaymentStatus::PAID->value,
+            PaymentStatus::FAILED->value,
+            PaymentStatus::CANCELLED->value,
+        ])) return;
+
+        $payment->update([
+            'status' => PaymentStatus::PROCESSING->value,
+            'meta'   => array_merge($payment->meta ?? [], [
+                'requires_action' => true,
+                'action_type'     => $intent->next_action?->type ?? 'unknown',
+                'updated_at'      => now()->toISOString(),
+            ]),
+        ]);
+
+        Log::info('Stripe payment requires customer action (3DS)', [
+            'order_id'    => $payment->order_id,
+            'intent_id'   => $intent->id,
+            'action_type' => $intent->next_action?->type ?? 'unknown',
+        ]);
+    }
 
     private function restoreStock(Order $order): void
     {

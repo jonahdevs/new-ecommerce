@@ -15,6 +15,7 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
         $this->loadProductAttributes($product);
         $this->loadProductVariants($product);
         $this->loadGroupedProducts($product);
+        $this->loadProductDownloads($product);
     }
 
     protected function executeSave(): void

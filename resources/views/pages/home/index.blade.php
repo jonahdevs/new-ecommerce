@@ -43,8 +43,6 @@ new #[Layout('layouts.guest')] class extends Component {
             ->limit(24)
             ->get();
 
-        \Log::info('products: ' . json_encode($products, JSON_PRETTY_PRINT));
-
         return $products;
     }
 };

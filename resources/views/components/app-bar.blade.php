@@ -237,5 +237,4 @@ new class extends Component {
             @endforeach
         </section>
     </nav>
-
 </div>
