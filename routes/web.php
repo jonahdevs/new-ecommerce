@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\Orders\OrderReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::home.index')->name('home');
@@ -40,7 +41,10 @@ Route::prefix('payment')->name('payment.')->group(function () {
 });
 
 // Webhooks — CSRF exempt, verified by gateway signatures
-Route::prefix('webhooks')->name('payment.webhook.')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+Route::prefix('webhooks')->name('payment.webhooks.')->withoutMiddleware([
+    \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+    \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
+])->group(function () {
     Route::post('/pesawise', App\Http\Controllers\Webhooks\PesawiseWebhookController::class)->name('pesawise');
     Route::post('/mpesa', App\Http\Controllers\Webhooks\MpesaWebhookController::class)->name('mpesa');
     Route::post('/stripe', App\Http\Controllers\Webhooks\StripeWebhookController::class)->name('stripe');
@@ -54,6 +58,7 @@ Route::middleware(['auth', 'customer', 'verified'])->name('customer')->group(fun
     Route::livewire('orders/{order}/confirmation', 'pages::customer.orders.confirmation')->name('.orders.confirmation');
     Route::livewire('orders/{order}/tracking', 'pages::customer.orders.tracking')->name('.orders.tracking');
     Route::livewire('orders/{order}', 'pages::customer.orders.show')->name('.orders.show');
+    Route::get('/orders/{order}/receipt', OrderReceiptController::class)->name('customer.orders.receipt');
 
     Route::prefix('address-book')->name('.address-book')->group(function () {
         Route::livewire('/', 'pages::customer.address-book.index')->name('.index');

@@ -4,6 +4,7 @@ namespace App\Services\Payment\Gateways;
 
 use App\Enums\OrdersStatus;
 use App\Enums\PaymentStatus;
+use App\Events\PaymentConfirmed;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -183,10 +184,13 @@ class StripeGateway implements PaymentGateway
             notes: 'Payment confirmed via Stripe webhook',
             changedByType: 'system'
         );
+
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
 
         app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
+
+        PaymentConfirmed::dispatch($order->fresh(['payment']));
 
         Log::info('Stripe payment confirmed', [
             'order_id'  => $order->id,

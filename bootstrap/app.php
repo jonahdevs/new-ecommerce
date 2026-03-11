@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Use custom CSRF middleware to exclude payment callbacks
         $middleware->validateCsrfTokens(except: [
-            'webhook/*',
+            '/webhooks/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

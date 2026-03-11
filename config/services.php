@@ -67,6 +67,7 @@ return [
     'stripe' => [
         'secret_key' => env('STRIPE_SECRET'),
         'publishable_key' => env('STRIPE_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET')
     ],
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

@@ -12,6 +12,12 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
     {
         $this->order = $order->load(['items.product', 'payment'])->loadCount('items');
     }
+
+    #[Computed]
+    public function isPaid(): bool
+    {
+        return $this->order->payment?->status === PaymentStatus::PAID->value;
+    }
 };
 ?>
 
@@ -251,9 +257,12 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     <flux:link>Contact Support</flux:link>
                 </flux:text>
 
-                <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer">
-                    Download Receipt
-                </flux:button>
+                @if ($this->isPaid)
+                    <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer" tag="a"
+                        href="{{ route('customer.orders.receipt', $order) }}">
+                        Download Receipt
+                    </flux:button>
+                @endif
             </div>
 
         </section>

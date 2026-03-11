@@ -122,10 +122,9 @@ select:focus[data-flux-control] {
     @apply text-white/50 text-xs uppercase tracking-widest;
 }
 
-[data-flux-navlist-item] {
+[data-flux-sidebar] [data-flux-navlist-item] {
     @apply text-white/75;
 }
-
 
 [data-flux-sidebar-item]:hover {
     @apply bg-sheffield-blue-light text-white;

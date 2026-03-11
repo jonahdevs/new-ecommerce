@@ -212,7 +212,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 </div>
                 <div class="text-right">
                     <img src="{{ asset('logo.png') }}" alt="{{ config('site.site.name') }} Logo"
-                        class="h-8 sm:h-10 lg:h-12 w-auto transition-transform duration-300 hover:scale-105" />
+                        class="h-8 sm:h-10 lg:h-12" />
                 </div>
             </div>
 
@@ -224,8 +224,8 @@ new #[Layout('layouts.guest')] class extends Component {
                 </div>
                 <div class="flex justify-between text-sm text-zinc-600">
                     <span>Status:</span>
-                    <flux:badge color="{{ $this->isPaid ? 'green' : 'amber' }}" size="sm">
-                        {{ ucfirst($order->payment_status) }}</flux:badge>
+                    <flux:badge :color="$order->payment_status->color()" size="sm">
+                        {{ $order->payment_status->label() }}</flux:badge>
                 </div>
             </div>
 

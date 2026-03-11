@@ -432,8 +432,6 @@ new #[Layout('layouts.guest')] class extends Component {
                 const clientSecret = @js($this->clientSecret);
                 const returnUrl = @js($this->returnUrl);
 
-                // Fix 2 — removed console.log(returnUrl)
-
                 if (!publicKey || !clientSecret) {
                     this.errorMessage = 'Payment configuration error. Please contact support.';
                     return;
@@ -500,7 +498,6 @@ new #[Layout('layouts.guest')] class extends Component {
                 this.loading = true;
                 this.errorMessage = '';
 
-                // Fix 4 — try/finally guarantees loading resets
                 try {
                     const {
                         paymentIntent,
