@@ -81,6 +81,8 @@ class StripeGateway implements PaymentGateway
                 ]),
             ]);
 
+            $order->update(['payment_status' => PaymentStatus::PROCESSING->value]);
+
             Log::info('Stripe PaymentIntent created', [
                 'order_id'  => $order->id,
                 'intent_id' => $intent->id,

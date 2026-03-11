@@ -54,7 +54,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center p-4 relative">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.information-circle class="text-sky-500" />
                             </div>
@@ -68,7 +68,7 @@
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! top-1 right-1 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -87,7 +87,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center p-4 relative">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.check-circle class="text-green-500" />
                             </div>
@@ -101,7 +101,7 @@
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! top-1 right-1 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 bg-white rounded-full border shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -120,7 +120,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center p-4 relative">
+                        <flux:card class="flex items-center  px-3 py-2.5 relative shadow-xl">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.exclamation-circle class="text-amber-500" />
                             </div>
@@ -134,7 +134,7 @@
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! top-1 right-1 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -153,7 +153,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center p-4 relative">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.x-circle class="text-red-500" />
                             </div>
@@ -168,7 +168,7 @@
 
                             <button type="button"
                                 x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! top-1 right-1 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
