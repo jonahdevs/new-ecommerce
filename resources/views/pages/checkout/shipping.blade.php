@@ -144,7 +144,7 @@ new #[Layout('layouts.checkout')] class extends Component {
             'delivery_window' => $option->deliveryWindow(),
         ]);
 
-        $this->redirectRoute('checkout.payment-methods', navigate: true);
+        $this->redirectRoute('checkout.summary', navigate: true);
     }
 
     public function updatedSelectedStationId(): void

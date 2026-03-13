@@ -20,7 +20,11 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         // Restore previously chosen method if returning to this page
-        $this->paymentMethod = app(CheckoutSession::class)->getPaymentMethod();
+        if ($checkoutSession->hasPaymentMethod()) {
+            $this->paymentMethod = $checkoutSession->getPaymentMethod();
+        } else {
+            $checkoutSession->setPaymentMethod($this->paymentMethod); // writes 'mpesa' default
+        }
     }
 
     //  Computed

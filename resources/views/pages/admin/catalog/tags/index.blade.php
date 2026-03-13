@@ -51,7 +51,7 @@ new #[Title('Tags')] class extends Component {
             <flux:heading size="xl" class="mb-1">Tags</flux:heading>
             <flux:subheading>Organize and categorize your products with tags.</flux:subheading>
         </div>
-        <flux:button href="{{ route('admin.tags.create') }}" variant="primary" icon="plus-circle" wire:navigate>
+        <flux:button href="{{ route('admin.catalog.tags.create') }}" variant="primary" icon="plus-circle" wire:navigate>
             Create Tag
         </flux:button>
     </div>
@@ -146,7 +146,7 @@ new #[Title('Tags')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                href="{{ route('admin.tags.edit', $tag) }}" wire:navigate />
+                                href="{{ route('admin.catalog.tags.edit', $tag) }}" wire:navigate />
 
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 class="text-red-500!"

@@ -165,12 +165,7 @@ new class extends Component {
         <flux:button wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder"
             class="w-full group cursor-pointer" variant="primary"
             :disabled="!$this->summary['shipping_selected'] || $isProcessing">
-            {{-- Fix: use wire:loading for reactive button text instead of server-rendered $isProcessing --}}
-            <span wire:loading.remove wire:target="completeOrder">Place Order</span>
-            <span wire:loading wire:target="completeOrder" class="flex items-center gap-2">
-                <flux:icon.arrow-path class="size-4 animate-spin" />
-                Processing...
-            </span>
+            Place Order
 
             <x-slot name="iconTrailing">
                 <flux:icon.chevron-right class="size-4 ms-3 group-hover:translate-x-1 transition-transform"

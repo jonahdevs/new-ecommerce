@@ -141,7 +141,7 @@ new #[Title('Products')] class extends Component {
         $copy->categories()->sync($categoryData);
 
         $this->dispatch('notify', variant: 'success', message: 'Product duplicated as draft.');
-        $this->redirectRoute('admin.products.edit', $copy, navigate: true);
+        $this->redirectRoute('admin.catalog.products.edit', $copy, navigate: true);
     }
 
     public function setStatus(int $id, string $status): void
@@ -261,7 +261,8 @@ new #[Title('Products')] class extends Component {
                 Manage your product catalog, inventory, and availability.
             </flux:subheading>
         </div>
-        <flux:button href="{{ route('admin.products.create') }}" variant="primary" icon="plus-circle" wire:navigate>
+        <flux:button href="{{ route('admin.catalog.products.create') }}" variant="primary" icon="plus-circle"
+            wire:navigate>
             Create Product
         </flux:button>
     </div>
@@ -539,7 +540,7 @@ new #[Title('Products')] class extends Component {
 
                         {{-- Product name + SKU --}}
                         <flux:table.cell>
-                            <a href="{{ route('admin.products.edit', $product) }}" wire:navigate
+                            <a href="{{ route('admin.catalog.products.edit', $product) }}" wire:navigate
                                 class="font-semibold text-zinc-800 dark:text-white hover:text-sheffield-red transition-colors line-clamp-1">
                                 {{ $product->name }}
                             </a>
@@ -614,7 +615,7 @@ new #[Title('Products')] class extends Component {
 
                                     {{-- Edit --}}
                                     <flux:menu.item icon="pencil-square"
-                                        href="{{ route('admin.products.edit', $product) }}" wire:navigate>
+                                        href="{{ route('admin.catalog.products.edit', $product) }}" wire:navigate>
                                         Edit
                                     </flux:menu.item>
 

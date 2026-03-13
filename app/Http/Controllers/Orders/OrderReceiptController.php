@@ -18,7 +18,7 @@ class OrderReceiptController extends Controller
 
         // Only downloadable if paid
         abort_if(
-            $order->payment?->status !== PaymentStatus::PAID->value,
+            $order->payment?->status?->value !== PaymentStatus::PAID->value,
             403,
             'Receipt only available for paid orders.'
         );

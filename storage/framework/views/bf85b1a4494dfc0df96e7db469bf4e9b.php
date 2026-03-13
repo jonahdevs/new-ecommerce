@@ -1,1 +1,0 @@
-    <span <?php echo e($attributes->class("loading")); ?>></span><?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\storage\framework\views/60a717fc98dc74752ddc3cfd94159005.blade.php ENDPATH**/ ?>

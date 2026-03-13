@@ -21,28 +21,29 @@
 
             {{-- Catalog Management --}}
             <flux:navlist.group heading="Catalog" class="grid">
-                <flux:navlist.item icon="cube" wire:navigate :href="route('admin.products.index')" wire:navigate
-                    :current="request()->routeIs('admin.products.*')">
+                <flux:navlist.item icon="cube" wire:navigate :href="route('admin.catalog.products.index')"
+                    wire:navigate :current="request()->routeIs('admin.catalog.products.*')">
                     Products
                 </flux:navlist.item>
 
-                <flux:navlist.item icon="folder" wire:navigate :href="route('admin.categories.index')"
-                    :current="request()->routeIs('admin.categories.*')">
+                <flux:navlist.item icon="folder" wire:navigate :href="route('admin.catalog.categories.index')"
+                    :current="request()->routeIs('admin.catalog.categories.*')">
                     Categories
                 </flux:navlist.item>
 
-                <flux:navlist.item icon="adjustments-horizontal" wire:navigate :href="route('admin.attributes.index')"
-                    :current="request()->routeIs('admin.attributes.*')">
+                <flux:navlist.item icon="adjustments-horizontal" wire:navigate
+                    :href="route('admin.catalog.attributes.index')"
+                    :current="request()->routeIs('admin.catalog.attributes.*')">
                     Attributes
                 </flux:navlist.item>
 
-                <flux:navlist.item icon="building-office" wire:navigate :href="route('admin.brands.index')"
-                    :current="request()->routeIs('admin.brands.*')">
+                <flux:navlist.item icon="building-office" wire:navigate :href="route('admin.catalog.brands.index')"
+                    :current="request()->routeIs('admin.catalog.brands.*')">
                     Brands
                 </flux:navlist.item>
 
-                <flux:navlist.item icon="tag" wire:navigate :href="route('admin.tags.index')"
-                    :current="request()->routeIs('admin.tags.*')">
+                <flux:navlist.item icon="tag" wire:navigate :href="route('admin.catalog.tags.index')"
+                    :current="request()->routeIs('admin.catalog.tags.*')">
                     Tags
                 </flux:navlist.item>
             </flux:navlist.group>
@@ -73,65 +74,65 @@
                 <flux:navlist.group heading="Configuration" expandable expanded="false" class="grid">
 
                     <flux:navlist.item icon="building-office" wire:navigate
-                        :href="route('admin.logistics.configurations.providers')"
-                        :current="request()->routeIs('admin.logistics.configurations.providers')">
+                        :href="route('admin.logistics.configuration.providers')"
+                        :current="request()->routeIs('admin.logistics.configuration.providers')">
                         Providers
                     </flux:navlist.item>
 
                     <flux:navlist.item icon="map" wire:navigate
-                        :href="route('admin.logistics.configurations.zones')"
-                        :current="request()->routeIs('admin.logistics.configurations.zones')">
+                        :href="route('admin.logistics.configuration.zones')"
+                        :current="request()->routeIs('admin.logistics.configuration.zones')">
                         Zones
                     </flux:navlist.item>
 
                     <flux:navlist.group heading="Locations" expandable expanded="false" class="grid">
                         <flux:navlist.item icon="building-office-2" wire:navigate
-                            :href="route('admin.logistics.configurations.locations.counties')"
-                            :current="request()->routeIs('admin.logistics.configurations.locations.counties')">
+                            :href="route('admin.logistics.configuration.locations.counties')"
+                            :current="request()->routeIs('admin.logistics.configuration.locations.counties')">
                             Counties
                         </flux:navlist.item>
                         <flux:navlist.item icon="map-pin" wire:navigate
-                            :href="route('admin.logistics.configurations.locations.areas')"
-                            :current="request()->routeIs('admin.logistics.configurations.locations.areas')">
+                            :href="route('admin.logistics.configuration.locations.areas')"
+                            :current="request()->routeIs('admin.logistics.configuration.locations.areas')">
                             Areas
                         </flux:navlist.item>
                     </flux:navlist.group>
 
                     <flux:navlist.item icon="truck" wire:navigate
-                        :href="route('admin.logistics.configurations.methods')"
-                        :current="request()->routeIs('admin.logistics.configurations.methods')">
+                        :href="route('admin.logistics.configuration.methods')"
+                        :current="request()->routeIs('admin.logistics.configuration.methods')">
                         Methods
                     </flux:navlist.item>
 
                     <flux:navlist.group heading="Rates" expandable expanded="false" class="grid">
                         <flux:navlist.item icon="table-cells" wire:navigate
-                            :href="route('admin.logistics.configurations.rates.flat')"
-                            :current="request()->routeIs('admin.logistics.configurations.rates.flat')">
+                            :href="route('admin.logistics.configuration.rates.flat')"
+                            :current="request()->routeIs('admin.logistics.configuration.rates.flat')">
                             Flat Rates
                         </flux:navlist.item>
 
                         <flux:navlist.item icon="calculator" wire:navigate
-                            :href="route('admin.logistics.configurations.rates.vehicle')"
-                            :current="request()->routeIs('admin.logistics.configurations.rates.vehicle')">
+                            :href="route('admin.logistics.configuration.rates.vehicle')"
+                            :current="request()->routeIs('admin.logistics.configuration.rates.vehicle')">
                             Vehicle Rates
                         </flux:navlist.item>
 
                         <flux:navlist.item icon="plus-circle" wire:navigate
-                            :href="route('admin.logistics.configurations.rates.addons')"
-                            :current="request()->routeIs('admin.logistics.configurations.rates.addons')">
+                            :href="route('admin.logistics.configuration.rates.addons')"
+                            :current="request()->routeIs('admin.logistics.configuration.rates.addons')">
                             Rate Addons
                         </flux:navlist.item>
                     </flux:navlist.group>
 
                     <flux:navlist.item icon="building-storefront" wire:navigate
-                        :href="route('admin.logistics.configurations.pickup-stations')"
-                        :current="request()->routeIs('admin.logistics.configurations.pickup-stations')">
+                        :href="route('admin.logistics.configuration.pickup-stations')"
+                        :current="request()->routeIs('admin.logistics.configuration.pickup-stations')">
                         Pickup Stations
                     </flux:navlist.item>
 
                     <flux:navlist.item icon="gift" wire:navigate
-                        :href="route('admin.logistics.configurations.free-shipping-rules')"
-                        :current="request()->routeIs('admin.logistics.configurations.free-shipping-rules')">
+                        :href="route('admin.logistics.configuration.free-shipping-rules')"
+                        :current="request()->routeIs('admin.logistics.configuration.free-shipping-rules')">
                         Free Shipping Rules
                     </flux:navlist.item>
                 </flux:navlist.group>
@@ -175,12 +176,12 @@
 
 
             <flux:navlist.group heading="Access & Control" class="grid">
-                <flux:navlist.item icon="shield" wire:navigate :href="route('admin.roles.index')" wire:navigate
-                    :current="request()->routeIs('admin.roles*')">Roles
+                <flux:navlist.item icon="shield" wire:navigate :href="route('admin.access-control.roles.index')"
+                    wire:navigate :current="request()->routeIs('admin.access-control.roles*')">Roles
                 </flux:navlist.item>
 
-                <flux:navlist.item icon="key" wire:navigate :href="route('admin.permissions.index')"
-                    :current="request()->routeIs('admin.permissions*')">
+                <flux:navlist.item icon="key" wire:navigate :href="route('admin.access-control.permissions')"
+                    :current="request()->routeIs('admin.access-control.permissions*')">
                     Permissions
                 </flux:navlist.item>
             </flux:navlist.group>

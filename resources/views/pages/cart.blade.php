@@ -141,7 +141,7 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
             return;
         }
 
-        $this->redirect(route('checkout.shipping'), navigate: true);
+        $this->redirect(route('checkout.summary'), navigate: true);
     }
 
     public function render()

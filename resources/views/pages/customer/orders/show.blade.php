@@ -4,6 +4,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
+use App\Services\CartService;
 
 new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Component {
     public Order $order;
@@ -16,7 +17,18 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
     #[Computed]
     public function isPaid(): bool
     {
-        return $this->order->payment?->status === PaymentStatus::PAID->value;
+        return $this->order->payment?->status?->value === PaymentStatus::PAID->value;
+    }
+
+    public function buyAgain(int $productId): void
+    {
+        try {
+            app(CartService::class)->addItem($productId, 1);
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Item added to cart.');
+        } catch (\RuntimeException $e) {
+            $this->dispatch('notify', variant: 'danger', message: $e->getMessage());
+        }
     }
 };
 ?>
@@ -98,9 +110,15 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                             {{-- Actions --}}
                             <div class="shrink-0 flex flex-col items-end gap-2">
+                                @php
+                                    $inStock = ($item->product?->stock_quantity ?? 0) > 0;
+                                @endphp
+
                                 <flux:button size="sm" variant="primary" icon="shopping-cart"
-                                    class="cursor-pointer">
-                                    Buy Again
+                                    class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
+                                    wire:loading.attr="disabled" wire:target="buyAgain({{ $item->product_id }})"
+                                    :disabled="!$inStock">
+                                    {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
                                 </flux:button>
 
                                 <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate

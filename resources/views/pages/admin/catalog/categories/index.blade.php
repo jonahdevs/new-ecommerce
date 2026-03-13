@@ -194,7 +194,7 @@ new #[Title('Categories')] class extends Component {
             <flux:subheading>Manage your product categories and storefront placements.</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus-circle" :href="route('admin.categories.create')" wire:navigate>
+        <flux:button variant="primary" icon="plus-circle" :href="route('admin.catalog.categories.create')" wire:navigate>
             Create Category
         </flux:button>
     </div>
@@ -319,7 +319,7 @@ new #[Title('Categories')] class extends Component {
 
                             <flux:table.cell align="end" class="pe-4!">
                                 <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                    :href="route('admin.categories.edit', $category->id)" wire:navigate
+                                    :href="route('admin.catalog.categories.edit', $category->id)" wire:navigate
                                     icon-variant="outline" class="cursor-pointer " title="Edit" />
 
                                 <flux:button variant="ghost" size="sm" icon="trash"
@@ -435,8 +435,8 @@ new #[Title('Categories')] class extends Component {
 
                                 {{-- Edit shortcut --}}
                                 <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                    :href="route('admin.categories.edit', $placement->category_id)" wire:navigate
-                                    icon-variant="outline"
+                                    :href="route('admin.catalog.categories.edit', $placement->category_id)"
+                                    wire:navigate icon-variant="outline"
                                     class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-sheffield-blue! dark:text-sheffield-blue-light!"
                                     title="Edit category" />
 

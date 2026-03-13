@@ -231,87 +231,184 @@ new #[Title('Order Details')] class extends Component {
 
             {{-- Order Timeline --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b">
+                <div class="px-5 py-3 border-b flex items-center justify-between">
                     <flux:heading>Order Timeline</flux:heading>
+                    <flux:badge :color="$order->status->color()" variant="solid" size="sm">
+                        {{ $order->status->label() }}
+                    </flux:badge>
                 </div>
 
                 <div class="p-5">
-                    {{-- Single vertical line behind all steps --}}
+                    @php
+                        // Main linear path
+                        $mainPath = [
+                            OrdersStatus::PENDING,
+                            OrdersStatus::CONFIRMED,
+                            OrdersStatus::PROCESSING,
+                            OrdersStatus::SHIPPED,
+                            OrdersStatus::DELIVERED,
+                        ];
+
+                        $isCancelled = $order->status === OrdersStatus::CANCELLED;
+                        $isReturned = $order->status === OrdersStatus::RETURNED;
+                        $isTerminal = $isCancelled || $isReturned;
+
+                        // Histories keyed by to_status for quick lookup
+                        $histories = $order->statusHistories->keyBy('to_status');
+
+                        // How far along the main path did we get before terminal state?
+                        $lastMainReached = null;
+                        foreach ($mainPath as $s) {
+                            if ($histories->has($s->value)) {
+                                $lastMainReached = $s;
+                            }
+                        }
+                    @endphp
+
                     <div class="relative">
-                        <div class="absolute left-4 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700 z-0"></div>
+                        {{-- Main path --}}
+                        @foreach ($mainPath as $index => $step)
+                            @php
+                                $history = $histories->get($step->value);
+                                $reached = (bool) $history;
+                                $isLast = $index === count($mainPath) - 1;
+                                $next = $mainPath[$index + 1] ?? null;
+                                $nextReached = $next && $histories->has($next->value);
 
-                        <div class="space-y-0">
-                            @foreach ($timelineStatuses as $index => $step)
-                                @php
-                                    $history = $order->statusHistories->firstWhere('to_status', $step);
-                                    $reached = (bool) $history;
-                                    $isLast = $index === count($timelineStatuses) - 1;
-                                    $nextStep = $timelineStatuses[$index + 1] ?? null;
-                                    $nextReached = $nextStep
-                                        ? (bool) $order->statusHistories->firstWhere('to_status', $nextStep)
-                                        : false;
-                                    $stepIcon = match ($step) {
-                                        'pending' => 'document-check',
-                                        'confirmed' => 'check-circle',
-                                        'processing' => 'arrow-path',
-                                        'shipped' => 'truck',
-                                        'delivered' => 'archive-box',
-                                        default => 'clock',
-                                    };
-                                    $label = match ($step) {
-                                        'pending' => 'Order Placed',
-                                        'confirmed' => 'Payment Confirmed',
-                                        'processing' => 'Order Processing',
-                                        'shipped' => 'Order Shipped',
-                                        'delivered' => 'Order Delivered',
-                                        default => ucfirst($step),
-                                    };
-                                @endphp
+                                // If order went terminal, dim steps after the branch point
+                                $dimmed = $isTerminal && !$reached;
+                            @endphp
 
-                                <div class="relative flex gap-4 {{ $isLast ? 'pb-0' : 'pb-8' }}">
+                            <div class="relative flex gap-4 {{ $isLast && !$isTerminal ? 'pb-0' : 'pb-6' }}">
 
-                                    {{-- Dot --}}
-                                    <div class="relative shrink-0 flex flex-col items-center ">
-                                        <div
-                                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-                                        {{ $reached ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' }}">
-                                            <flux:icon name="{{ $stepIcon }}" class="size-4" />
-                                        </div>
-
-                                        @if (!$isLast)
-                                            <div
-                                                class="absolute left-1/2 -translate-x-1/2 w-px h-full  transition-colors {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}">
-                                            </div>
-                                        @endif
+                                {{-- Connector line --}}
+                                @if (!$isLast)
+                                    <div
+                                        class="absolute left-4 top-8 bottom-0 w-px
+                            {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}
+                            z-0">
                                     </div>
+                                @endif
 
-                                    {{-- Content --}}
-                                    <div class="flex-1 flex items-start justify-between gap-4 pt-1">
-                                        <div>
-                                            <flux:text class="{{ $reached ? 'font-medium' : 'text-zinc-400' }}">
-                                                {{ $label }}
-                                            </flux:text>
-                                            @if ($history?->notes)
-                                                <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                                    {{ $history->notes }}
-                                                </flux:text>
-                                            @endif
-                                        </div>
-
-                                        @if ($history)
-                                            <div class="text-right shrink-0">
-                                                <flux:text class="text-sm">
-                                                    {{ $history->created_at->format('M d, Y') }}
-                                                </flux:text>
-                                                <flux:text class="text-xs text-zinc-400 italic mt-0.5">
-                                                    {{ $history->changedBy?->name ?? 'System' }}
-                                                </flux:text>
-                                            </div>
-                                        @endif
-                                    </div>
+                                {{-- Step dot --}}
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                        {{ $reached
+                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                            : ($dimmed
+                                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600'
+                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400') }}">
+                                    <flux:icon name="{{ $step->icon() }}" class="size-4" />
                                 </div>
-                            @endforeach
-                        </div>
+
+                                {{-- Content --}}
+                                <div class="flex-1 flex items-start justify-between gap-4 pt-1 min-w-0">
+                                    <div class="min-w-0">
+                                        <flux:text
+                                            class="text-sm {{ $reached ? 'font-medium text-zinc-900 dark:text-white' : ($dimmed ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-400') }}">
+                                            {{ $step->label() }}
+                                        </flux:text>
+                                        @if ($history?->notes)
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                                                {{ $history->notes }}
+                                            </flux:text>
+                                        @endif
+                                        @if ($history?->changed_by_type === 'system')
+                                            <flux:text class="text-xs text-zinc-300 dark:text-zinc-600 mt-0.5 italic">
+                                                Automatic
+                                            </flux:text>
+                                        @endif
+                                    </div>
+
+                                    @if ($history)
+                                        <div class="text-right shrink-0">
+                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                {{ $history->created_at->format('M d, Y') }}
+                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                                {{ $history->created_at->format('g:i A') }}
+                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
+                                                {{ $history->changedBy?->name ?? 'System' }}
+                                            </flux:text>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+
+                        {{-- Branch: Cancelled --}}
+                        @if ($isCancelled)
+                            @php $cancelHistory = $histories->get('cancelled'); @endphp
+                            <div class="relative flex gap-4 pt-2">
+                                {{-- Branch connector from last reached main step --}}
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
+                                    <flux:icon name="{{ OrdersStatus::CANCELLED->icon() }}" class="size-4" />
+                                </div>
+                                <div class="flex-1 flex items-start justify-between gap-4 pt-1">
+                                    <div>
+                                        <flux:text class="text-sm font-medium text-rose-600 dark:text-rose-400">
+                                            Order Cancelled
+                                        </flux:text>
+                                        @if ($cancelHistory?->notes)
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                                {{ $cancelHistory->notes }}
+                                            </flux:text>
+                                        @endif
+                                    </div>
+                                    @if ($cancelHistory)
+                                        <div class="text-right shrink-0">
+                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                {{ $cancelHistory->created_at->format('M d, Y') }}
+                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                                {{ $cancelHistory->created_at->format('g:i A') }}
+                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
+                                                {{ $cancelHistory->changedBy?->name ?? 'System' }}
+                                            </flux:text>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Branch: Returned --}}
+                        @if ($isReturned)
+                            @php $returnHistory = $histories->get('returned'); @endphp
+                            <div class="relative flex gap-4 pt-2">
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
+                                    <flux:icon name="{{ OrdersStatus::RETURNED->icon() }}" class="size-4" />
+                                </div>
+                                <div class="flex-1 flex items-start justify-between gap-4 pt-1">
+                                    <div>
+                                        <flux:text class="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                            Order Returned
+                                        </flux:text>
+                                        @if ($returnHistory?->notes)
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                                {{ $returnHistory->notes }}
+                                            </flux:text>
+                                        @endif
+                                    </div>
+                                    @if ($returnHistory)
+                                        <div class="text-right shrink-0">
+                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                {{ $returnHistory->created_at->format('M d, Y') }}
+                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                                {{ $returnHistory->created_at->format('g:i A') }}
+                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
+                                                {{ $returnHistory->changedBy?->name ?? 'System' }}
+                                            </flux:text>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </flux:card>

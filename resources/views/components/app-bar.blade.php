@@ -141,16 +141,10 @@ new class extends Component {
                     <flux:dropdown position="bottom" align="end" hover>
                         @auth
                             @if (auth()->user()->avatar)
-                                {{-- Mobile: avatar only, no name --}}
-                                <flux:profile circle avatar="{{ auth()->user()->avatar }}" class="lg:hidden" />
-                                {{-- Desktop: avatar + name --}}
                                 <flux:profile circle avatar="{{ auth()->user()->avatar }}"
-                                    name="{{ auth()->user()->name }}" class="hidden lg:flex" />
+                                    name="{{ auth()->user()->name }}" />
                             @else
-                                {{-- Mobile: initials only --}}
-                                <flux:profile circle class="lg:hidden" />
-                                {{-- Desktop: initials + name --}}
-                                <flux:profile circle name="{{ auth()->user()->name }}" class="hidden lg:flex" />
+                                <flux:profile circle name="{{ auth()->user()->name }}" />
                             @endif
                         @else
                             <button type="button"
