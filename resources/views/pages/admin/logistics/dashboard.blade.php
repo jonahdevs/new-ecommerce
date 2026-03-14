@@ -12,7 +12,7 @@ new #[Title('Logistics Overview')] class extends Component {
     {
         $base = DeliveryOrder::query();
 
-        $activeStatuses = [DeliveryOrderStatus::PENDING->value, DeliveryOrderStatus::PICKEDUP->value, DeliveryOrderStatus::INTRANSIT->value, DeliveryOrderStatus::OUTFORDELIVERY->value];
+        $activeStatuses = [DeliveryOrderStatus::PENDING->value, DeliveryOrderStatus::PICKED_UP->value, DeliveryOrderStatus::IN_TRANSIT->value, DeliveryOrderStatus::OUT_FOR_DELIVERY->value];
 
         // Current month window
         $monthStart = now()->startOfMonth();
@@ -27,7 +27,7 @@ new #[Title('Logistics Overview')] class extends Component {
 
         return [
             'active' => DeliveryOrder::whereIn('status', $activeStatuses)->where('is_return', false)->count(),
-            'at_station' => DeliveryOrder::where('status', DeliveryOrderStatus::ATSTATION->value)->count(),
+            'at_station' => DeliveryOrder::where('status', DeliveryOrderStatus::AT_STATION->value)->count(),
             'needs_attention' => DeliveryOrder::whereIn('status', [DeliveryOrderStatus::FAILED->value, DeliveryOrderStatus::RETURNING->value])->count(),
             'delivered_today' => DeliveryOrder::whereDate('delivered_at', today())
                 ->whereIn('status', [DeliveryOrderStatus::DELIVERED->value, DeliveryOrderStatus::COLLECTED->value])
@@ -63,7 +63,7 @@ new #[Title('Logistics Overview')] class extends Component {
     public function pusAlerts()
     {
         return DeliveryOrder::with(['pickupStation'])
-            ->where('status', DeliveryOrderStatus::ATSTATION->value)
+            ->where('status', DeliveryOrderStatus::AT_STATION->value)
             ->where(fn($q) => $q->where('collection_deadline_at', '<', now()->addDays(2)))
             ->orderBy('collection_deadline_at')
             ->take(6)
@@ -497,17 +497,17 @@ new #[Title('Logistics Overview')] class extends Component {
                                 'icon' => 'building-storefront',
                             ],
                             [
-                                'route' => 'admin.logistics.configurations.rates.flat',
+                                'route' => 'admin.logistics.configuration.rates.flat',
                                 'label' => 'Flat Rates',
                                 'icon' => 'table-cells',
                             ],
                             [
-                                'route' => 'admin.logistics.configurations.pickup-stations',
+                                'route' => 'admin.logistics.configuration.pickup-stations',
                                 'label' => 'Stations',
                                 'icon' => 'map-pin',
                             ],
                             [
-                                'route' => 'admin.logistics.configurations.providers',
+                                'route' => 'admin.logistics.configuration.providers',
                                 'label' => 'Providers',
                                 'icon' => 'building-office-2',
                             ],

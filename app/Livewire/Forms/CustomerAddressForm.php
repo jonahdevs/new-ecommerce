@@ -15,8 +15,8 @@ class CustomerAddressForm extends Form
     public string $last_name = '';
     public string $phone_number = '';
     public ?string $alternative_phone_number = null;
-    public $county_id = '';
-    public $area_id = '';
+    public ?string $county_id = null;
+    public ?string $area_id = null;
     public string $address_text = '';
     public ?string $additional_information = null;
     public bool $is_default = false;

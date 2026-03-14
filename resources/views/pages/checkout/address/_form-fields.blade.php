@@ -27,17 +27,30 @@
         </flux:field>
 
         {{-- County --}}
-        <flux:select wire:model.live="form.county_id" placeholder="Select County..." :label="__('Region/County')">
-            @foreach ($this->counties as $county)
-                <flux:select.option :value="$county->id">
-                    {{ $county->name }}
+        <flux:select wire:model.live="form.county_id" placeholder="Select County..." :label="__('Region / County')">
+            {{-- Explicit null placeholder option --}}
+            <flux:select.option value="" selected hidden>
+                Select County...
+            </flux:select.option>
+            @foreach ($this->counties as $zoneName => $zoneCounties)
+                <flux:select.option disabled value="">
+                    -- {{ $zoneName }} --
                 </flux:select.option>
+
+                @foreach ($zoneCounties as $county)
+                    <flux:select.option :value="$county->id">
+                        {{ $county->name }}
+                    </flux:select.option>
+                @endforeach
             @endforeach
+
         </flux:select>
 
         {{-- Area --}}
-        <flux:select wire:model="form.area_id" :label="__('City/Area')"
-            :placeholder="$form->county_id ? 'Select Area' : 'Select a county first'">
+        <flux:select wire:model="form.area_id" :label="__('City/Area')">
+            <flux:select.option value="" selected hidden>
+                {{ $form->county_id ? 'Select Area' : 'Select a county first' }}
+            </flux:select.option>
             @foreach ($this->areas as $area)
                 <flux:select.option :value="$area->id">
                     {{ $area->name }}

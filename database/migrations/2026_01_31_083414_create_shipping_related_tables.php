@@ -75,6 +75,7 @@ return new class extends Migration {
 
             // Cast: ShippingZoneStatus
             $table->string('status')->default('active');
+            $table->boolean('is_delivery_available')->default(false);
 
             $table->timestamps();
 

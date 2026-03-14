@@ -40,13 +40,22 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
         {{-- Timeline --}}
         <div class="p-6">
             @php
-                $mainPath = [
-                    OrdersStatus::PENDING,
-                    OrdersStatus::CONFIRMED,
-                    OrdersStatus::PROCESSING,
-                    OrdersStatus::SHIPPED,
-                    OrdersStatus::DELIVERED,
-                ];
+                $mainPath =
+                    ($order->shipping_snapshot['method_type'] ?? '') === 'quote'
+                        ? [
+                            OrdersStatus::PENDING_QUOTE,
+                            OrdersStatus::CONFIRMED,
+                            OrdersStatus::PROCESSING,
+                            OrdersStatus::SHIPPED,
+                            OrdersStatus::DELIVERED,
+                        ]
+                        : [
+                            OrdersStatus::PENDING,
+                            OrdersStatus::CONFIRMED,
+                            OrdersStatus::PROCESSING,
+                            OrdersStatus::SHIPPED,
+                            OrdersStatus::DELIVERED,
+                        ];
 
                 $isCancelled = $order->status === OrdersStatus::CANCELLED;
                 $isReturned = $order->status === OrdersStatus::RETURNED;

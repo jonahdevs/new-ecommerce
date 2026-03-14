@@ -42,8 +42,7 @@ class ShippingCalculator
     public function __construct(
         private readonly FlatRateEngine $flatEngine,
         private readonly PusEngine $pusEngine,
-    ) {
-    }
+    ) {}
 
     //  Main calculation
 
@@ -81,6 +80,10 @@ class ShippingCalculator
         $options = collect();
 
         foreach ($methods as $method) {
+            if (!$zone->is_delivery_available && $method->type === 'flat') {
+                continue;
+            }
+
             $option = match ($method->type) {
                 'flat' => $this->flatEngine->calculate(
                     method: $method,
@@ -100,6 +103,11 @@ class ShippingCalculator
             if ($option) {
                 $options->push($option);
             }
+        }
+
+        // Inject virtual quote option for zones where delivery is not available
+        if (!$zone->is_delivery_available) {
+            $options->push($this->buildQuoteOption($zone));
         }
 
         // 4. Sort: free first, then by cost, then by speed
@@ -208,5 +216,26 @@ class ShippingCalculator
         float $orderAmount = 0,
     ): ?ShippingOption {
         return $this->calculate($countyId, $areaId, $weightKg, $orderAmount)->first();
+    }
+
+    private function buildQuoteOption(ShippingZone $zone): ShippingOption
+    {
+        return new ShippingOption(
+            methodId: 0,
+            methodName: 'Request a Delivery Quote',
+            methodCode: 'quote',
+            methodType: 'quote',
+            cost: 0.0,
+            weightLabel: '',
+            estimatedDaysMin: 0,
+            estimatedDaysMax: 0,
+            costBreakdown: [
+                'model' => 'quote',
+                'zone'  => $zone->name,
+                'note'  => 'Delivery cost to be confirmed by our team',
+            ],
+            shippingZoneId: $zone->id,
+            isVirtualQuote: true,
+        );
     }
 }

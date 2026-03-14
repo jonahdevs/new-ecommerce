@@ -46,6 +46,7 @@ class OrderSummaryService
             'discount' => $discount,
             'shipping_cost' => $shippingCost,
             'shipping_method' => $shippingMethod,
+            'shipping_method_type' => $this->checkoutSession->getShipping()['method_type'] ?? null,
             'shipping_window' => $shippingWindow,
             'station_name' => $stationName,
             'total' => max(0, $subtotal - $discount + $shippingCost),

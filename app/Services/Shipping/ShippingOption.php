@@ -26,8 +26,8 @@ class ShippingOption
         public readonly ?int $shippingRateId = null,
         public readonly ?int $shippingZoneId = null,
         public readonly ?Collection $pickupStations = null, // PUS only
-    ) {
-    }
+        public readonly bool $isVirtualQuote = false,
+    ) {}
 
     //  Display helpers
 
@@ -49,6 +49,10 @@ class ShippingOption
      */
     public function formattedCost(): string
     {
+        if ($this->isQuoteRequest()) {
+            return 'TBD'; // not free — to be determined
+        }
+
         return $this->cost === 0.0
             ? 'Free'
             : 'KES ' . number_format($this->cost, 0);
@@ -56,12 +60,21 @@ class ShippingOption
 
     public function isFree(): bool
     {
+        if ($this->isQuoteRequest()) {
+            return false; // quote is never free
+        }
+
         return $this->cost === 0.0;
     }
 
     public function isPus(): bool
     {
         return $this->methodType === 'pus';
+    }
+
+    public function isQuoteRequest(): bool
+    {
+        return $this->methodType === 'quote';
     }
 
     /**

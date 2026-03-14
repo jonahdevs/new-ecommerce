@@ -112,12 +112,14 @@ class ShippingSeeder extends Seeder
                 'code' => 'nairobi',
                 'description' => 'All delivery locations within Nairobi County including CBD and surrounding metropolitan areas.',
                 'status' => ShippingZoneStatus::ACTIVE->value,
+                'is_delivery_available' => true,
             ],
             'UPCOUNTRY' => [
                 'name' => 'Upcountry',
                 'code' => 'upcountry',
                 'description' => 'All delivery locations outside Nairobi County including major towns and counties across Kenya.',
                 'status' => ShippingZoneStatus::ACTIVE->value,
+                'is_delivery_available' => false,
             ],
         ];
 
@@ -301,14 +303,14 @@ class ShippingSeeder extends Seeder
 
                 //  Pickup Station — flat discount vs standard 
                 // Only makes sense where we have stations (Nairobi to start)
-                if ($regionKey === 'NAIROBI') {
+                if (in_array($regionKey, ['NAIROBI', 'UPCOUNTRY'])) {
                     ShippingRate::create([
                         'shipping_zone_id' => $zone->id,
                         'shipping_method_id' => $methods['pickup']->id,
                         'min_weight' => $tier['min'],
                         'max_weight' => $tier['max'],
                         'weight_label' => $tier['label'],
-                        'price' => (int) round($stdPrice * 0.75), // 25% cheaper
+                        'price' => 0,
                         'estimated_days_min' => $stdDays[0] + 1,
                         'estimated_days_max' => $stdDays[1] + 1,
                         'status' => ShippingRateStatus::ACTIVE->value,

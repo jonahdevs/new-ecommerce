@@ -14,6 +14,7 @@ class ShippingZoneForm extends Form
     public string $code = '';
     public string $description = '';
     public string $status = 'active';
+    public bool $is_delivery_available = false;
 
     public function rules(): array
     {
@@ -48,6 +49,7 @@ class ShippingZoneForm extends Form
         $this->status      = $zone->status instanceof ShippingZoneStatus
             ? $zone->status->value
             : $zone->status;
+        $this->is_delivery_available = $zone->is_delivery_available;
     }
 
     public function store(): void
@@ -59,6 +61,7 @@ class ShippingZoneForm extends Form
             'code'        => $this->code ?: null,
             'description' => $this->description ?: null,
             'status'      => $this->status,
+            'is_delivery_available'  => $this->is_delivery_available,
         ]);
     }
 
@@ -71,6 +74,7 @@ class ShippingZoneForm extends Form
             'code'        => $this->code ?: null,
             'description' => $this->description ?: null,
             'status'      => $this->status,
+            'is_delivery_available'  => $this->is_delivery_available,
         ]);
     }
 }

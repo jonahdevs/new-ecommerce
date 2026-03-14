@@ -34,6 +34,8 @@ new #[Layout('layouts.checkout')] class extends Component {
 
         $this->addressId = $sessionAddressId && $user->addresses()->where('id', $sessionAddressId)->exists() ? $sessionAddressId : $user->addresses()->where('is_default', true)->value('id') ?? $user->addresses()->oldest()->value('id');
 
+        app(CheckoutSession::class)->setAddressId($this->addressId);
+
         // Guard: address exists but has no shipping zone resolved
         if (!$this->address?->shipping_zone_id) {
             $this->dispatch('notify', variant: 'danger', message: 'Your address is missing location details. Please update it.');
@@ -121,10 +123,28 @@ new #[Layout('layouts.checkout')] class extends Component {
             return null;
         }
 
-        // Build the option to store — use station-specific option if PUS
+        // Quote request — store and redirect to quote confirmation page
+        if ($this->selectedOption->isQuoteRequest()) {
+            app(CheckoutSession::class)->setShipping([
+                'method_id' => 0,
+                'method_name' => $this->selectedOption->methodName,
+                'method_code' => 'quote',
+                'method_type' => 'quote',
+                'cost' => 0,
+                'zone_id' => $this->selectedOption->shippingZoneId,
+                'rate_id' => null,
+                'station_id' => null,
+                'station_name' => null,
+                'cost_breakdown' => $this->selectedOption->costBreakdown,
+                'delivery_window' => null,
+            ]);
+
+            return $this->redirectRoute('checkout.summary', navigate: true);
+        }
+
+        // Normal flow — build the option to store
         $option = $this->selectedOption->isPus() ? $this->currentPusOption : $this->selectedOption;
 
-        // Store to session via CheckoutSession
         $stationName = null;
         if ($this->selectedStationId) {
             $stationName = $option->pickupStations?->firstWhere('id', $this->selectedStationId)?->name;

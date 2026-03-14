@@ -11,12 +11,15 @@ enum OrdersStatus: string
     case DELIVERED = 'delivered';
     case CANCELLED = 'cancelled';
     case RETURNED = 'returned';
+    case PENDING_QUOTE = 'pending_quote';
 
     public function label(): string
     {
-        return ucfirst($this->value);
+        return match ($this) {
+            self::PENDING_QUOTE => 'Pending Quote',
+            default => ucfirst($this->value),
+        };
     }
-
     public function color(): string
     {
         return match ($this) {
@@ -27,6 +30,7 @@ enum OrdersStatus: string
             self::DELIVERED => 'emerald',
             self::CANCELLED => 'rose',
             self::RETURNED => 'orange',
+            self::PENDING_QUOTE => 'yellow',
         };
     }
 
@@ -40,6 +44,7 @@ enum OrdersStatus: string
             self::DELIVERED => 'package-check',
             self::CANCELLED => 'x-circle',
             self::RETURNED => 'rotate-ccw',
+            self::PENDING_QUOTE => 'tag',
         };
     }
 
@@ -58,6 +63,7 @@ enum OrdersStatus: string
             self::DELIVERED  => [self::RETURNED],
             self::CANCELLED  => [],
             self::RETURNED   => [],
+            self::PENDING_QUOTE => [self::CONFIRMED, self::CANCELLED],
         };
     }
 }

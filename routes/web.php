@@ -108,6 +108,13 @@ Route::middleware(['auth', 'customer', 'cart_not_empty'])
         });
     });
 
+Route::middleware(['auth', 'customer'])
+    ->prefix('checkout')
+    ->name('checkout.')
+    ->group(function () {
+        Route::livewire('/quote-success/{reference}', 'pages::checkout.quote-success')->name('quote-success');
+    });
+
 // ============================================================================
 // CUSTOMER PORTAL — Authenticated, verified customers
 // ============================================================================

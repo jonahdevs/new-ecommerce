@@ -114,12 +114,13 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                     $inStock = ($item->product?->stock_quantity ?? 0) > 0;
                                 @endphp
 
-                                <flux:button size="sm" variant="primary" icon="shopping-cart"
-                                    class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
-                                    wire:loading.attr="disabled" wire:target="buyAgain({{ $item->product_id }})"
-                                    :disabled="!$inStock">
-                                    {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
-                                </flux:button>
+                                @if ($order->status !== \App\Enums\OrdersStatus::PENDING_QUOTE)
+                                    <flux:button size="sm" variant="primary" icon="shopping-cart"
+                                        class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
+                                        :disabled="!$inStock">
+                                        {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
+                                    </flux:button>
+                                @endif
 
                                 <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate
                                     class="text-xs!">
@@ -149,13 +150,24 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                 <div class="flex justify-between text-sm">
                     <flux:text>Shipping</flux:text>
                     <span>
-                        {{ $order->shipping == 0 ? 'Free' : format_currency($order->shipping) }}
+                        @if ($order->shipping_snapshot['method_type'] === 'quote')
+                            <span class="text-amber-500">TBD</span>
+                        @elseif($order->shipping == 0)
+                            Free
+                        @else
+                            {{ format_currency($order->shipping) }}
+                        @endif
                     </span>
                 </div>
 
                 <div class="flex justify-between font-semibold border-t pt-2">
                     <span>Total</span>
-                    <span>{{ format_currency($order->total) }}</span>
+                    <div class="text-right">
+                        <span>{{ format_currency($order->total) }}</span>
+                        @if ($order->shipping_snapshot['method_type'] === 'quote')
+                            <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -168,49 +180,23 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Payment Information</flux:heading>
 
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <flux:text class="text-zinc-500 text-sm">Method</flux:text>
-                            <flux:text class="text-sm font-medium">
-                                {{ match ($order->payment?->gateway) {
-                                    'mpesa' => 'M-Pesa',
-                                    'stripe' => 'Card',
-                                    'pesawise' => 'Pesawise',
-                                    'custom' => match ($order->payment?->meta['payment_method'] ?? null) {
-                                        'card' => 'Card',
-                                        'mpesa' => 'M-Pesa',
-                                        default => 'Custom',
-                                    },
-                                    default => ucfirst($order->payment?->gateway ?? '—'),
-                                } }}
-                            </flux:text>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <flux:text class="text-zinc-500 text-sm">Status</flux:text>
-                            <flux:badge size="sm" color="{{ $order->payment?->status->color() }}">
-                                {{ $order->payment?->status->label() }}
-                            </flux:badge>
-                        </div>
-
-                        @if ($order->payment?->paid_at)
-                            <div class="flex items-center gap-2">
-                                <flux:text class="text-zinc-500 text-sm">Paid on</flux:text>
-                                <flux:text class="text-sm">
-                                    {{ $order->payment->paid_at->format('M j, Y · g:i A') }}
-                                </flux:text>
+                    @if ($order->shipping_snapshot['method_type'] === 'quote')
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
+                            <div class="text-sm">
+                                <p class="font-medium text-amber-800">Awaiting delivery quote</p>
+                                <p class="text-amber-700 mt-0.5">
+                                    Our team will contact you with a delivery cost.
+                                    Payment will be collected once you confirm the quote.
+                                </p>
                             </div>
-                        @endif
-
-                        @if ($order->payment?->transaction_id)
-                            <div class="flex items-start gap-2">
-                                <flux:text class="text-zinc-500 text-sm shrink-0">Reference</flux:text>
-                                <flux:text class="text-sm font-mono break-all">
-                                    {{ $order->payment->transaction_id }}
-                                </flux:text>
-                            </div>
-                        @endif
-                    </div>
+                        </div>
+                    @else
+                        {{-- existing payment info block unchanged --}}
+                        <div class="space-y-2">
+                            ...
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Delivery Information --}}

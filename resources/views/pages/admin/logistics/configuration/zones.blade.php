@@ -149,6 +149,7 @@ new #[Title('Shipping Zones')] class extends Component {
                 <flux:table.column>Code</flux:table.column>
                 <flux:table.column>Counties</flux:table.column>
                 <flux:table.column>Description</flux:table.column>
+                <flux:table.column>Delivery Available</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
             </flux:table.columns>
@@ -175,6 +176,14 @@ new #[Title('Shipping Zones')] class extends Component {
                             <span class="text-sm text-zinc-500 max-w-xs truncate block">
                                 {{ $zone->description ?? '—' }}
                             </span>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            @if ($zone->is_delivery_available)
+                                <flux:badge color="green" variant="flat" size="sm">Yes</flux:badge>
+                            @else
+                                <flux:badge color="zinc" variant="flat" size="sm">No</flux:badge>
+                            @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -238,6 +247,15 @@ new #[Title('Shipping Zones')] class extends Component {
 
             <flux:textarea wire:model="form.description" label="Description (Optional)"
                 placeholder="What areas does this zone cover?" rows="2" />
+
+            <flux:field variant="inline">
+                <flux:checkbox wire:model="form.is_delivery_available" />
+                <flux:label>Delivery Available</flux:label>
+                <flux:description>
+                    Enable for zones where customers can place a direct order.
+                    Disable for zones that require a delivery quote.
+                </flux:description>
+            </flux:field>
 
             <div class="flex">
                 <flux:spacer />

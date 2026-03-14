@@ -21,7 +21,7 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->orders()
-            ->whereIn('status', ['pending', 'processing', 'shipped', 'delivered', 'confirmed'])
+            ->whereIn('status', ['pending', 'processing', 'shipped', 'delivered', 'confirmed', 'pending_quote'])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
             ->latest()

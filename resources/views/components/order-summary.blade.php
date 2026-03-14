@@ -4,6 +4,11 @@ use App\Services\OrderSummaryService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use Livewire\Attributes\{Computed, On};
 use Livewire\Component;
+use App\Services\CartService;
+use App\Services\CheckoutSession;
+use App\Models\Order;
+use App\Enums\OrdersStatus;
+use App\Enums\PaymentStatus;
 
 new class extends Component {
     public bool $isProcessing = false;
@@ -25,6 +30,10 @@ new class extends Component {
         $this->isProcessing = true;
 
         try {
+            if (app(\App\Services\CheckoutSession::class)->getShipping()['method_type'] ?? '' === 'quote') {
+                return $this->processQuoteRequest();
+            }
+
             $response = app(\App\Services\CheckoutService::class)->initiateCheckout();
 
             return $this->handlePaymentResponse($response);
@@ -77,6 +86,129 @@ new class extends Component {
     public function refreshSummary(): void
     {
         unset($this->summary);
+    }
+
+    private function processQuoteRequest(): mixed
+    {
+        $session = app(\App\Services\CheckoutSession::class);
+        $cart = app(\App\Services\CartService::class);
+        $shipping = $session->getShipping();
+
+        $addressId = $session->getAddressId();
+        $address = \App\Models\Address::with(['county', 'area', 'shippingZone'])->find($addressId);
+
+        if (!$address || !$shipping) {
+            $this->isProcessing = false;
+            $this->dispatch('notify', variant: 'danger', message: 'Session expired. Please start checkout again.');
+            $this->redirectRoute('checkout.shipping', navigate: true);
+            return null;
+        }
+
+        $cartInstance = $cart->getCart();
+        $cartItems = $cartInstance->items()->with('product.brand')->get();
+        $cartSummary = $cart->summary($cartInstance);
+
+        $subtotalCents = (int) round($cartSummary['subtotal'] * 100);
+        $discountCents = (int) round($cartSummary['discount'] * 100);
+
+        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($address, $cartItems, $cart, $cartInstance, $subtotalCents, $discountCents, $shipping) {
+            // Generate unique reference — same as CheckoutService
+            do {
+                $reference = 'ORD-' . strtoupper(\Illuminate\Support\Str::random(8));
+            } while (\App\Models\Order::where('reference', $reference)->exists());
+
+            $order = \App\Models\Order::create([
+                'user_id' => auth()->id(),
+                'reference' => $reference,
+                'status' => \App\Enums\OrdersStatus::PENDING_QUOTE,
+                'payment_status' => \App\Enums\PaymentStatus::PENDING,
+                'currency' => 'KES',
+                'subtotal_cents' => $subtotalCents,
+                'discount_cents' => $discountCents,
+                'shipping_cents' => 0, // TBD — confirmed by admin
+                'tax_cents' => 0,
+                'total_cents' => max(0, $subtotalCents - $discountCents),
+                'shipping_address' => [
+                    'first_name' => $address->first_name,
+                    'last_name' => $address->last_name,
+                    'full_name' => $address->full_name,
+                    'phone_number' => $address->phone_number,
+                    'address' => $address->address,
+                    'area' => $address->area?->name,
+                    'county' => $address->county?->name,
+                    'zone' => $address->shippingZone?->name,
+                ],
+                'billing_address' => [
+                    'first_name' => $address->first_name,
+                    'last_name' => $address->last_name,
+                    'full_name' => $address->full_name,
+                    'phone_number' => $address->phone_number,
+                    'address' => $address->address,
+                    'area' => $address->area?->name,
+                    'county' => $address->county?->name,
+                    'zone' => $address->shippingZone?->name,
+                ],
+                'shipping_snapshot' => [
+                    'method_id' => 0,
+                    'method_name' => 'Request a Delivery Quote',
+                    'method_code' => 'quote',
+                    'method_type' => 'quote',
+                    'zone_id' => $shipping['zone_id'],
+                    'rate_id' => null,
+                    'station_id' => null,
+                    'station_name' => null,
+                    'cost' => 0,
+                    'cost_breakdown' => $shipping['cost_breakdown'],
+                    'delivery_window' => null,
+                    'weight_kg' => $cart->getWeight($cartInstance),
+                ],
+                'expires_at' => null, // no payment expiry for quotes
+            ]);
+
+            $order->statusHistories()->create([
+                'from_status' => null,
+                'to_status' => \App\Enums\OrdersStatus::PENDING_QUOTE->value,
+                'changed_by_user_id' => auth()->id(),
+                'changed_by_type' => 'user',
+                'notes' => 'Quote request submitted by customer.',
+            ]);
+
+            // Items — same structure as CheckoutService
+            // NOTE: stock is NOT decremented — order isn't confirmed yet
+            foreach ($cartItems as $item) {
+                $order->items()->create([
+                    'product_id' => $item->product_id,
+                    'product_variant_id' => $item->variant_id,
+                    'quantity' => $item->quantity,
+                    'unit_price_cents' => (int) round($item->product->final_price * 100),
+                    'unit_tax_cents' => 0,
+                    'discount_cents' => (int) round(($item->product->price - $item->product->final_price) * 100 * $item->quantity),
+                    'total_cents' => (int) round($item->product->final_price * 100 * $item->quantity),
+                    'product_snapshot' => [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                        'sku' => $item->product->sku,
+                        'slug' => $item->product->slug,
+                        'image_path' => $item->product->image_path,
+                        'price' => $item->product->price,
+                        'sale_price' => $item->product->sale_price,
+                        'final_price' => $item->product->final_price,
+                        'weight_kg' => $item->product->weight ?? 0.5,
+                        'brand' => $item->product->brand?->name,
+                    ],
+                ]);
+            }
+
+            return $order;
+        });
+
+        $cart->clear();
+        $session->clear();
+        $this->isProcessing = false;
+
+        $this->redirectRoute('checkout.quote-success', parameters: ['reference' => $order->reference], navigate: true);
+
+        return null;
     }
 };
 ?>
@@ -146,6 +278,8 @@ new class extends Component {
                     Select
                     <flux:icon.arrow-long-right class="size-3.5 inline-block ms-0.5" />
                 </flux:link>
+            @elseif ($this->summary['shipping_method_type'] === 'quote')
+                <span class="text-amber-500 font-medium">TBD</span>
             @elseif ($this->summary['shipping_cost'] == 0)
                 <span class="text-green-600 font-medium">Free</span>
             @else
@@ -165,8 +299,7 @@ new class extends Component {
         <flux:button wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder"
             class="w-full group cursor-pointer" variant="primary"
             :disabled="!$this->summary['shipping_selected'] || $isProcessing">
-            Place Order
-
+            {{ $this->summary['shipping_method_type'] === 'quote' ? 'Send Quote Request' : 'Place Order' }}
             <x-slot name="iconTrailing">
                 <flux:icon.chevron-right class="size-4 ms-3 group-hover:translate-x-1 transition-transform"
                     wire:loading.class="hidden" wire:target="completeOrder" />

@@ -5,24 +5,29 @@ use Livewire\Attributes\{Layout, Computed};
 
 new #[Layout('layouts.checkout')] class extends Component {
     public ?int $selectedAddress = null;
+    public bool $autoSelected = false;
 
     public function mount()
     {
         $user = auth()->user();
 
         if ($user->addresses()->doesntExist()) {
-            return redirect()->route('checkout.addresses.create');
+            return $this->redirectRoute('checkout.addresses.create', navigate: true);
         }
 
+        $addresses = $user->addresses()->orderByDesc('is_default')->oldest()->get();
+
+        // Only one address — auto-select and skip this page
+        if ($addresses->count() === 1) {
+            $address = $addresses->first();
+            $this->autoSelected = true;
+        }
+
+        // Multiple addresses — resolve which one to pre-select
         $sessionAddress = session('checkout_address_id');
 
-        if ($sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists()) {
-            $this->selectedAddress = $sessionAddress;
-        } else {
-            $this->selectedAddress = $user->defaultAddress?->id ?? $user->addresses()->first()->id;
-        }
+        $this->selectedAddress = $sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists() ? $sessionAddress : $user->defaultAddress?->id ?? $addresses->first()->id;
     }
-
     #[Computed]
     public function addresses()
     {
@@ -108,12 +113,6 @@ new #[Layout('layouts.checkout')] class extends Component {
                                     @if ($address->is_default)
                                         <flux:badge color="green" size="sm">Default</flux:badge>
                                     @endif
-                                    @if ($isSelected)
-                                        <flux:badge color="blue" size="sm">
-                                            <flux:icon.check class="size-3 me-1 inline-block" />
-                                            Selected
-                                        </flux:badge>
-                                    @endif
                                 </div>
                             </div>
 
@@ -139,15 +138,17 @@ new #[Layout('layouts.checkout')] class extends Component {
             </div>
 
             {{-- Confirm Button --}}
-            <div class="flex items-center justify-end gap-3 border-t pt-4">
-                <flux:button variant="ghost" :href="route('checkout.summary')" wire:navigate>
-                    Cancel
-                </flux:button>
-                <flux:button variant="primary" wire:click="selectAddress" :disabled="!$selectedAddress" icon="check"
-                    class="cursor-pointer">
-                    Confirm Address
-                </flux:button>
-            </div>
+            @if (!$autoSelected)
+                <div class="flex items-center justify-end gap-3 border-t pt-4">
+                    <flux:button variant="ghost" :href="route('checkout.summary')" wire:navigate>
+                        Cancel
+                    </flux:button>
+                    <flux:button variant="primary" wire:click="selectAddress" :disabled="!$selectedAddress"
+                        class="cursor-pointer">
+                        Confirm Address
+                    </flux:button>
+                </div>
+            @endif
         </div>
     </flux:card>
 

@@ -79,11 +79,16 @@ new #[Title('Order Details')] class extends Component {
             throw new \RuntimeException('Cannot process order — shipping snapshot is missing.');
         }
 
+        // Quote orders have no real shipping method yet
+        if (($snapshot['method_type'] ?? '') === 'quote') {
+            throw new \RuntimeException('Cannot process order — delivery quote not yet confirmed.');
+        }
+
         DeliveryOrder::create([
             'order_id' => $this->order->id,
             'shipping_method_id' => $snapshot['method_id'],
             'shipping_rate_id' => $snapshot['rate_id'],
-            'shipping_zone' => $snapshot['zone_id'],
+            'shipping_zone_id' => $snapshot['zone_id'],
             'shipping_cost' => $snapshot['cost'],
             'pickup_station_id' => $snapshot['station_id'] ?? null,
             'status' => DeliveryOrderStatus::PENDING,
@@ -216,13 +221,25 @@ new #[Title('Order Details')] class extends Component {
                             <div class="flex justify-between text-sm">
                                 <flux:text>Shipping</flux:text>
                                 <flux:text class="font-medium text-green-600">
-                                    {{ $order->shipping == 0 ? 'Free' : format_currency($order->shipping) }}
+                                    @if (($order->shipping_snapshot['method_type'] ?? '') === 'quote')
+                                        <span class="text-amber-500">TBD</span>
+                                    @elseif($order->shipping == 0)
+                                        Free
+                                    @else
+                                        {{ format_currency($order->shipping) }}
+                                    @endif
                                 </flux:text>
                             </div>
                             <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
                                 <flux:heading size="lg">Total Amount</flux:heading>
-                                <flux:heading size="lg" class="text-zinc-900 dark:text-white font-bold">
-                                    {{ format_currency($order->total) }}</flux:heading>
+                                <div class="text-right">
+                                    <flux:heading size="lg" class="text-zinc-900 dark:text-white font-bold">
+                                        {{ format_currency($order->total) }}
+                                    </flux:heading>
+                                    @if (($order->shipping_snapshot['method_type'] ?? '') === 'quote')
+                                        <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -241,13 +258,22 @@ new #[Title('Order Details')] class extends Component {
                 <div class="p-5">
                     @php
                         // Main linear path
-                        $mainPath = [
-                            OrdersStatus::PENDING,
-                            OrdersStatus::CONFIRMED,
-                            OrdersStatus::PROCESSING,
-                            OrdersStatus::SHIPPED,
-                            OrdersStatus::DELIVERED,
-                        ];
+                        $mainPath =
+                            ($order->shipping_snapshot['method_type'] ?? '') === 'quote'
+                                ? [
+                                    OrdersStatus::PENDING_QUOTE,
+                                    OrdersStatus::CONFIRMED,
+                                    OrdersStatus::PROCESSING,
+                                    OrdersStatus::SHIPPED,
+                                    OrdersStatus::DELIVERED,
+                                ]
+                                : [
+                                    OrdersStatus::PENDING,
+                                    OrdersStatus::CONFIRMED,
+                                    OrdersStatus::PROCESSING,
+                                    OrdersStatus::SHIPPED,
+                                    OrdersStatus::DELIVERED,
+                                ];
 
                         $isCancelled = $order->status === OrdersStatus::CANCELLED;
                         $isReturned = $order->status === OrdersStatus::RETURNED;
@@ -466,23 +492,36 @@ new #[Title('Order Details')] class extends Component {
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b flex justify-between items-center">
                     <flux:heading>Payment</flux:heading>
-
-                    <flux:badge :color="$order->payment?->status?->color()" size="sm">
-                        {{ $order->payment?->status?->label() }}
-                    </flux:badge>
+                    @if (($order->shipping_snapshot['method_type'] ?? '') !== 'quote')
+                        <flux:badge :color="$order->payment?->status?->color()" size="sm">
+                            {{ $order->payment?->status?->label() }}
+                        </flux:badge>
+                    @endif
                 </div>
                 <div class="p-5 text-sm space-y-2 text-zinc-500">
-
-                    <div class="flex justify-between">
-                        <flux:text>Method</flux:text>
-                        <flux:text class="font-medium uppercase">{{ $order->payment?->gateway ?? 'N/A' }}</flux:text>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <flux:text>Transaction ID</flux:text>
-                        <flux:text class="font-mono text-[10px]">{{ $order->payment?->transaction_id ?? '—' }}
-                        </flux:text>
-                    </div>
+                    @if (($order->shipping_snapshot['method_type'] ?? '') === 'quote')
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
+                            <div class="text-sm">
+                                <p class="font-medium text-amber-800">Awaiting quote confirmation</p>
+                                <p class="text-amber-700 mt-0.5 text-xs">
+                                    Contact the customer with delivery cost.
+                                    Confirm to proceed to payment.
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="flex justify-between">
+                            <flux:text>Method</flux:text>
+                            <flux:text class="font-medium uppercase">{{ $order->payment?->gateway ?? 'N/A' }}
+                            </flux:text>
+                        </div>
+                        <div class="flex justify-between">
+                            <flux:text>Transaction ID</flux:text>
+                            <flux:text class="font-mono text-[10px]">{{ $order->payment?->transaction_id ?? '—' }}
+                            </flux:text>
+                        </div>
+                    @endif
                 </div>
             </flux:card>
         </div>
@@ -497,6 +536,18 @@ new #[Title('Order Details')] class extends Component {
                     Update the status for order #{{ $order->reference }}
                 </flux:subheading>
             </div>
+
+            @if (
+                ($order->shipping_snapshot['method_type'] ?? '') === 'quote' &&
+                    $order->status === \App\Enums\OrdersStatus::PENDING_QUOTE)
+                <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                    <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
+                    <p class="text-amber-800">
+                        Confirming this order means you have agreed on a delivery cost
+                        with the customer. Use the note field to record the agreed amount.
+                    </p>
+                </div>
+            @endif
 
             <form wire:submit="updateStatus" class="space-y-4">
                 <flux:select wire:model="status" label="Status">

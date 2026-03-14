@@ -28,7 +28,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         // If custom gateway and no payment method chosen yet, go to payment page
-        if (app(PaymentService::class)->isCustom() && !$checkoutSession->hasPaymentMethod()) {
+        if (app(PaymentService::class)->isCustom() && !$checkoutSession->hasPaymentMethod() && $checkoutSession->getShipping()['method_type'] !== 'quote') {
             $this->redirectRoute('checkout.payment-methods', navigate: true);
             return;
         }
@@ -70,6 +70,20 @@ new #[Layout('layouts.checkout')] class extends Component {
     </x-slot:breadcrumbs>
 
     <x-slot:heading>Checkout Summary</x-slot:heading>
+
+    {{-- Quote notice banner — only shown when customer selected quote --}}
+    @if ($this->shipping && $this->shipping['method_type'] === 'quote')
+        <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
+            <div class="text-sm">
+                <p class="font-medium text-amber-800">Delivery outside Nairobi</p>
+                <p class="text-amber-700 mt-0.5">
+                    No payment is taken today. Our team will contact you
+                    with a delivery cost before your order is confirmed.
+                </p>
+            </div>
+        </div>
+    @endif
 
     {{-- Address --}}
     <flux:card class="mb-4 p-0">
@@ -122,7 +136,13 @@ new #[Layout('layouts.checkout')] class extends Component {
                         </flux:text>
                     </div>
                     <span class="font-semibold text-sm">
-                        {{ $this->shipping['cost'] == 0 ? 'Free' : format_currency($this->shipping['cost']) }}
+                        @if ($this->shipping['method_type'] === 'quote')
+                            <span class="text-amber-500 font-medium text-sm">TBD</span>
+                        @elseif($this->shipping['cost'] == 0)
+                            <span class="text-green-600 font-medium text-sm">Free</span>
+                        @else
+                            {{ format_currency($this->shipping['cost']) }}
+                        @endif
                     </span>
                 </div>
             @endif
@@ -130,27 +150,29 @@ new #[Layout('layouts.checkout')] class extends Component {
     </flux:card>
 
     {{-- Payment method --}}
-    <flux:card class="p-0 mb-4">
-        <div class="px-4 py-2 border-b flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-                <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
-                <flux:heading level="3" class="font-medium!">Payment Method</flux:heading>
+    @if (!$this->shipping || $this->shipping['method_type'] !== 'quote')
+        <flux:card class="p-0 mb-4">
+            <div class="px-4 py-2 border-b flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                    <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
+                    <flux:heading level="3" class="font-medium!">Payment Method</flux:heading>
+                </div>
+                <flux:link :href="route('checkout.payment-methods')" wire:navigate class="text-xs!">
+                    Change <flux:icon.chevron-right class="size-3.5 ms-1 inline-block" />
+                </flux:link>
             </div>
-            <flux:link :href="route('checkout.payment-methods')" wire:navigate class="text-xs!">
-                Change <flux:icon.chevron-right class="size-3.5 ms-1 inline-block" />
-            </flux:link>
-        </div>
-        <div class="px-4 py-4">
-            <flux:heading>
-                {{ app(\App\Services\CheckoutSession::class)->getPaymentMethod() === 'card' ? 'Card' : 'M-Pesa' }}
-            </flux:heading>
-            <flux:text class="text-sm text-zinc-500 mt-1">
-                {{ app(\App\Services\CheckoutSession::class)->getPaymentMethod() === 'card'
-                    ? 'Visa, Mastercard, Amex'
-                    : 'STK push to your phone' }}
-            </flux:text>
-        </div>
-    </flux:card>
+            <div class="px-4 py-4">
+                <flux:heading>
+                    {{ app(\App\Services\CheckoutSession::class)->getPaymentMethod() === 'card' ? 'Card' : 'M-Pesa' }}
+                </flux:heading>
+                <flux:text class="text-sm text-zinc-500 mt-1">
+                    {{ app(\App\Services\CheckoutSession::class)->getPaymentMethod() === 'card'
+                        ? 'Visa, Mastercard, Amex'
+                        : 'STK push to your phone' }}
+                </flux:text>
+            </div>
+        </flux:card>
+    @endif
 
     <flux:link :href="route('shop.index')" wire:navigate class="text-xs">
         ← Continue shopping

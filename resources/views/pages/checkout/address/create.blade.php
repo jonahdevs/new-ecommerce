@@ -14,7 +14,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     #[Computed]
     public function counties()
     {
-        return County::orderBy('name')->get();
+        return County::with('shippingZone')->orderBy('name')->get()->groupBy(fn($county) => $county->shippingZone->is_delivery_available ? ' Available for Delivery' : ' Request a Quote')->sortKeysUsing(fn($a, $b) => str_contains($a, 'Available') ? -1 : 1);
     }
 
     #[Computed]
@@ -35,7 +35,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     public function updatedFormCountyId()
     {
-        $this->form->area_id = '';
+        $this->form->area_id = null;
     }
 
     public function save()
