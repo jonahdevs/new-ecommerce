@@ -80,4 +80,7 @@ return [
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
         'redirect' => env('FACEBOOK_REDIRECT_URL'),
     ],
+    'quotation' => [
+        'admin_email' => env('QUOTATION_ADMIN_EMAIL', config('mail.from.address')),
+    ],
 ];

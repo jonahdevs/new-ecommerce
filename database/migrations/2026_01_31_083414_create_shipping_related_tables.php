@@ -415,17 +415,8 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
 
-            $table->foreignId('shipping_zone_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-
-            $table->foreignId('shipping_method_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
+            $table->foreignId('shipping_zone_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('shipping_method_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
 
             $table->decimal('min_order_amount', 10, 2);
             $table->decimal('max_weight', 8, 2)->nullable();
@@ -457,32 +448,22 @@ return new class extends Migration {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('user_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
 
             $table->string('first_name');
             $table->string('last_name');
             $table->string('phone_number');
             $table->string('alternative_phone_number')->nullable();
 
-            $table->foreignId('county_id')
-                ->constrained()
-                ->restrictOnDelete();
+            $table->foreignId('county_id')->constrained()->restrictOnDelete();
 
-            $table->foreignId('area_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
+            $table->foreignId('area_id')->nullable()->constrained()->nullOnDelete();
 
             $table->text('address');
             $table->text('additional_information')->nullable();
 
             // Resolved at save time from area override or county zone.
-            $table->foreignId('shipping_zone_id')
-                ->constrained()
-                ->restrictOnDelete();
+            $table->foreignId('shipping_zone_id')->constrained()->restrictOnDelete();
 
             $table->boolean('is_default')->default(false);
 
@@ -554,39 +535,18 @@ return new class extends Migration {
             $table->id();
 
             // Update to ->constrained('orders') when your orders table exists
-            $table->unsignedBigInteger('order_id');
-
-            $table->foreignId('logistics_provider_id')
-                ->nullable()
-                ->constrained('logistics_providers')
-                ->restrictOnDelete();
-
-            $table->foreignId('shipping_method_id')
-                ->constrained('shipping_methods')
-                ->restrictOnDelete();
-
-            $table->foreignId('shipping_zone_id')
-                ->constrained('shipping_zones')
-                ->restrictOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('logistics_provider_id')->nullable()->constrained('logistics_providers')->restrictOnDelete();
+            $table->foreignId('shipping_method_id')->constrained('shipping_methods')->restrictOnDelete();
+            $table->foreignId('shipping_zone_id')->constrained('shipping_zones')->restrictOnDelete();
 
             // -- Rate references (one will be set depending on method type) --
             // These are nullable by design: cost_breakdown JSON is the source
             // of truth. These FKs exist for querying and reporting.
 
-            $table->foreignId('shipping_rate_id')      // flat + pus
-                ->nullable()
-                ->constrained('shipping_rates')
-                ->nullOnDelete();
-
-            $table->foreignId('vehicle_rate_id')       // distance / on-demand
-                ->nullable()
-                ->constrained('vehicle_rates')
-                ->nullOnDelete();
-
-            $table->foreignId('pickup_station_id')     // pus
-                ->nullable()
-                ->constrained('pickup_stations')
-                ->nullOnDelete();
+            $table->foreignId('shipping_rate_id')->nullable()->constrained('shipping_rates')->nullOnDelete();  // flat + pus
+            $table->foreignId('vehicle_rate_id')->nullable()->constrained('vehicle_rates')->nullOnDelete(); // distance / on-demand
+            $table->foreignId('pickup_station_id')->nullable()->constrained('pickup_stations')->nullOnDelete(); // pus
 
             // Actual distance from Google Maps (on-demand only)
             $table->decimal('distance_km', 8, 2)->nullable();
@@ -637,10 +597,7 @@ return new class extends Migration {
         // ================================================================
 
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('preferred_shipping_method_id')
-                ->nullable()
-                ->constrained('shipping_methods')
-                ->nullOnDelete();
+            $table->foreignId('preferred_shipping_method_id')->nullable()->constrained('shipping_methods')->nullOnDelete();
         });
     }
 

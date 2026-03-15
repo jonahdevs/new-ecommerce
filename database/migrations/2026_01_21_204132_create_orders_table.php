@@ -14,6 +14,29 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reference')->unique();
+
+            // document type
+            $table->string('document_type')->default('sale_order')->comment('sale_order | quotation');
+
+            // delivery -> admin prices shipping only
+            // product -> admin prices line items + shipping
+            $table->string('quotation_type')->nullable()->comment('delivery | product - null for sales_order documents');
+
+            // FK to orders.id - set on the converted sales order
+            // Pointing back to the original quotation
+            // Enables full document chain tracing SO -> QTN
+            $table->string('parent_quotation_id')->nullable()->constrained('orders')->nullOnDelete();
+
+            // Set when transitionTo(QUOTE_SENT) fires
+            // Used to compute "sent X days ago" and to check whether expires_at has been breached for the QUOTE_EXPIRED transition
+            $table->timestamp('quoted_at')->nullable()->comment('Set when admin sends the priced quotation to customer');
+
+            // Path to the generated tax invoice PDF (set after payment confirmed)
+            $table->string('invoice_path')->nullable()->comment('Relative path to tax invoice PDF in storage/app/');
+
+            // Path to the generated quotation PDF (set when quote is sent)
+            $table->string('quotation_pdf_path')->nullable()->comment('Relative path to quotation PDF in storage/app/');
+
             $table->string('status')->default('pending');
             $table->string('payment_status')->default('pending');
             $table->string('currency', 3)->default('KES');
@@ -30,6 +53,10 @@ return new class extends Migration {
 
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
+
+            $table->index(['document_type', 'status'], 'idx_orders_doc_type_status');
+            $table->index(['quotation_type', 'status'], 'idx_orders_quote_type_status');
+            $table->index('parent_quotation_id', 'idx_orders_parent_quotation');
         });
 
         Schema::create('order_items', function (Blueprint $table) {

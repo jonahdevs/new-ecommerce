@@ -12,11 +12,22 @@ new #[Title('Order Details')] class extends Component {
     public string $status = '';
     public string $note = '';
 
-    public array $timelineStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
-
     public function mount(Order $order): void
     {
-        $this->order = $order->load(['payment', 'user', 'statusHistories.changedBy', 'items.product']);
+        // Guard: this page is for sales orders only.
+        // Quotations have their own dedicated show page with different actions.
+        if ($order->isQuotation()) {
+            $this->redirectRoute('admin.orders.quotations.show', $order, navigate: true);
+            return;
+        }
+
+        $this->order = $order->load([
+            'payment',
+            'user',
+            'statusHistories.changedBy',
+            'items.product',
+            'parentQuotation', // loaded to show "converted from quote" notice
+        ]);
 
         $allowed = $order->status->allowedTransitions();
         $this->status = !empty($allowed) ? $allowed[0]->value : '';
@@ -49,6 +60,9 @@ new #[Title('Order Details')] class extends Component {
 
         try {
             DB::transaction(function () use ($newStatus) {
+                // Create the delivery order when transitioning to PROCESSING.
+                // The guard inside createDeliveryOrder() ensures this only fires
+                // on sales orders — quotations are already redirected away in mount().
                 if ($newStatus === OrdersStatus::PROCESSING) {
                     $this->createDeliveryOrder();
                 }
@@ -73,15 +87,17 @@ new #[Title('Order Details')] class extends Component {
 
     private function createDeliveryOrder(): void
     {
+        // Guard: delivery orders must only be created for sales_order documents.
+        // This should never be reached since mount() redirects quotations away,
+        // but this acts as a safety net against any future code paths.
+        if (!$this->order->isSalesOrder()) {
+            throw new \LogicException('Cannot create a delivery order for a quotation.');
+        }
+
         $snapshot = $this->order->shipping_snapshot;
 
         if (!$snapshot) {
             throw new \RuntimeException('Cannot process order — shipping snapshot is missing.');
-        }
-
-        // Quote orders have no real shipping method yet
-        if (($snapshot['method_type'] ?? '') === 'quote') {
-            throw new \RuntimeException('Cannot process order — delivery quote not yet confirmed.');
         }
 
         DeliveryOrder::create([
@@ -98,23 +114,30 @@ new #[Title('Order Details')] class extends Component {
 ?>
 
 <div>
-    {{-- Header Section --}}
+    {{-- ================================================================== --}}
+    {{-- PAGE HEADER                                                         --}}
+    {{-- ================================================================== --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <flux:breadcrumbs class="mb-2">
                 <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" wire:navigate
                     icon-variant="outline" />
-                <flux:breadcrumbs.item :href="route('admin.orders.index')" wire:navigate>Orders</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item :href="route('admin.orders.index')" wire:navigate>
+                    Orders
+                </flux:breadcrumbs.item>
                 <flux:breadcrumbs.item>#{{ $order->reference }}</flux:breadcrumbs.item>
             </flux:breadcrumbs>
+
             <div class="flex items-center gap-3">
-                <flux:heading size="xl" class="font-bold tracking-tight">Order #{{ $order->reference }}
+                <flux:heading size="xl" class="font-bold tracking-tight">
+                    Order #{{ $order->reference }}
                 </flux:heading>
                 <flux:badge :color="$order->status->color()" variant="solid" size="sm"
                     class="uppercase text-[10px] tracking-widest font-bold">
                     {{ $order->status->label() }}
                 </flux:badge>
             </div>
+
             <flux:text class="mt-1 flex items-center gap-2">
                 <flux:icon name="calendar" class="size-4 text-zinc-400" />
                 Placed on {{ $order->created_at->format('M d, Y') }} at {{ $order->created_at->format('g:i A') }}
@@ -131,16 +154,41 @@ new #[Title('Order Details')] class extends Component {
         </div>
     </div>
 
+    {{-- ================================================================== --}}
+    {{-- CONVERTED FROM QUOTATION NOTICE                                     --}}
+    {{-- Shown when this sales order was converted from a quotation.         --}}
+    {{-- Gives admin a direct link back to the originating quotation.        --}}
+    {{-- ================================================================== --}}
+    @if ($order->wasConverted() && $order->parentQuotation)
+        <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-5">
+            <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
+            <flux:text class="text-sm text-blue-800">
+                This order was converted from quotation
+                <flux:link :href="route('admin.orders.quotations.show', $order->parentQuotation)" wire:navigate
+                    class="font-medium">
+                    {{ $order->parentQuotation->reference }}
+                </flux:link>
+            </flux:text>
+        </div>
+    @endif
+
+    {{-- ================================================================== --}}
+    {{-- MAIN LAYOUT                                                         --}}
+    {{-- ================================================================== --}}
     <div class="grid grid-cols-4 gap-5 mt-6">
 
-        {{-- ── Left: Main content ── --}}
+        {{-- ── Left: Main content (3 cols) ── --}}
         <div class="col-span-3 space-y-5">
-            {{-- Products --}}
+
+            {{-- ============================================================ --}}
+            {{-- ITEMS & INVENTORY                                             --}}
+            {{-- ============================================================ --}}
             <flux:card class="p-0">
                 <div class="px-6 py-2 border-b flex justify-between items-center">
                     <flux:heading level="3" class="font-semibold">Items & Inventory</flux:heading>
                     <flux:badge variant="outline">{{ $order->items->sum('quantity') }} Items</flux:badge>
                 </div>
+
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column class="ps-6!">Product</flux:table.column>
@@ -199,7 +247,6 @@ new #[Title('Order Details')] class extends Component {
                                     {{ format_currency($item->total_cents / 100) }}
                                 </flux:table.cell>
                             </flux:table.row>
-
                         @empty
                             <flux:table.row>
                                 <flux:table.cell colspan="6" class="text-center py-8">
@@ -210,7 +257,7 @@ new #[Title('Order Details')] class extends Component {
                     </flux:table.rows>
                 </flux:table>
 
-                {{-- Totals Mini-Panel --}}
+                {{-- Totals panel --}}
                 <div class="bg-zinc-50/50 dark:bg-white/2 border-t border-zinc-100 dark:border-zinc-800 p-6">
                     <div class="flex flex-col items-end space-y-2">
                         <div class="w-full max-w-xs space-y-2">
@@ -218,12 +265,18 @@ new #[Title('Order Details')] class extends Component {
                                 <flux:text>Subtotal</flux:text>
                                 <flux:text class="font-medium">{{ format_currency($order->subtotal) }}</flux:text>
                             </div>
+                            @if ($order->discount > 0)
+                                <div class="flex justify-between text-sm">
+                                    <flux:text>Discount</flux:text>
+                                    <flux:text class="font-medium text-green-600">
+                                        − {{ format_currency($order->discount) }}
+                                    </flux:text>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-sm">
                                 <flux:text>Shipping</flux:text>
                                 <flux:text class="font-medium text-green-600">
-                                    @if (($order->shipping_snapshot['method_type'] ?? '') === 'quote')
-                                        <span class="text-amber-500">TBD</span>
-                                    @elseif($order->shipping == 0)
+                                    @if ($order->shipping == 0)
                                         Free
                                     @else
                                         {{ format_currency($order->shipping) }}
@@ -232,21 +285,20 @@ new #[Title('Order Details')] class extends Component {
                             </div>
                             <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
                                 <flux:heading size="lg">Total Amount</flux:heading>
-                                <div class="text-right">
-                                    <flux:heading size="lg" class="text-zinc-900 dark:text-white font-bold">
-                                        {{ format_currency($order->total) }}
-                                    </flux:heading>
-                                    @if (($order->shipping_snapshot['method_type'] ?? '') === 'quote')
-                                        <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
-                                    @endif
-                                </div>
+                                <flux:heading size="lg" class="text-zinc-900 dark:text-white font-bold">
+                                    {{ format_currency($order->total) }}
+                                </flux:heading>
                             </div>
                         </div>
                     </div>
                 </div>
             </flux:card>
 
-            {{-- Order Timeline --}}
+            {{-- ============================================================ --}}
+            {{-- ORDER TIMELINE                                                --}}
+            {{-- Sales orders only — always uses the standard 5-step path.    --}}
+            {{-- Quotation timeline lives on admin.orders.quotations.show.    --}}
+            {{-- ============================================================ --}}
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b flex items-center justify-between">
                     <flux:heading>Order Timeline</flux:heading>
@@ -257,23 +309,16 @@ new #[Title('Order Details')] class extends Component {
 
                 <div class="p-5">
                     @php
-                        // Main linear path
-                        $mainPath =
-                            ($order->shipping_snapshot['method_type'] ?? '') === 'quote'
-                                ? [
-                                    OrdersStatus::PENDING_QUOTE,
-                                    OrdersStatus::CONFIRMED,
-                                    OrdersStatus::PROCESSING,
-                                    OrdersStatus::SHIPPED,
-                                    OrdersStatus::DELIVERED,
-                                ]
-                                : [
-                                    OrdersStatus::PENDING,
-                                    OrdersStatus::CONFIRMED,
-                                    OrdersStatus::PROCESSING,
-                                    OrdersStatus::SHIPPED,
-                                    OrdersStatus::DELIVERED,
-                                ];
+                        // Standard sales order path — always 5 steps.
+                        // The PENDING_QUOTE branch has been removed since quotations
+                        // are redirected to their own show page in mount().
+                        $mainPath = [
+                            OrdersStatus::PENDING,
+                            OrdersStatus::CONFIRMED,
+                            OrdersStatus::PROCESSING,
+                            OrdersStatus::SHIPPED,
+                            OrdersStatus::DELIVERED,
+                        ];
 
                         $isCancelled = $order->status === OrdersStatus::CANCELLED;
                         $isReturned = $order->status === OrdersStatus::RETURNED;
@@ -281,17 +326,10 @@ new #[Title('Order Details')] class extends Component {
 
                         // Histories keyed by to_status for quick lookup
                         $histories = $order->statusHistories->keyBy('to_status');
-
-                        // How far along the main path did we get before terminal state?
-                        $lastMainReached = null;
-                        foreach ($mainPath as $s) {
-                            if ($histories->has($s->value)) {
-                                $lastMainReached = $s;
-                            }
-                        }
                     @endphp
 
                     <div class="relative">
+
                         {{-- Main path --}}
                         @foreach ($mainPath as $index => $step)
                             @php
@@ -300,8 +338,6 @@ new #[Title('Order Details')] class extends Component {
                                 $isLast = $index === count($mainPath) - 1;
                                 $next = $mainPath[$index + 1] ?? null;
                                 $nextReached = $next && $histories->has($next->value);
-
-                                // If order went terminal, dim steps after the branch point
                                 $dimmed = $isTerminal && !$reached;
                             @endphp
 
@@ -310,20 +346,19 @@ new #[Title('Order Details')] class extends Component {
                                 {{-- Connector line --}}
                                 @if (!$isLast)
                                     <div
-                                        class="absolute left-4 top-8 bottom-0 w-px
-                            {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}
-                            z-0">
+                                        class="absolute left-4 top-8 bottom-0 w-px z-0
+                                        {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}">
                                     </div>
                                 @endif
 
                                 {{-- Step dot --}}
                                 <div
                                     class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
-                        {{ $reached
-                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                            : ($dimmed
-                                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600'
-                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400') }}">
+                                    {{ $reached
+                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                                        : ($dimmed
+                                            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600'
+                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400') }}">
                                     <flux:icon name="{{ $step->icon() }}" class="size-4" />
                                 </div>
 
@@ -331,7 +366,12 @@ new #[Title('Order Details')] class extends Component {
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1 min-w-0">
                                     <div class="min-w-0">
                                         <flux:text
-                                            class="text-sm {{ $reached ? 'font-medium text-zinc-900 dark:text-white' : ($dimmed ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-400') }}">
+                                            class="text-sm
+                                            {{ $reached
+                                                ? 'font-medium text-zinc-900 dark:text-white'
+                                                : ($dimmed
+                                                    ? 'text-zinc-300 dark:text-zinc-600'
+                                                    : 'text-zinc-400') }}">
                                             {{ $step->label() }}
                                         </flux:text>
                                         @if ($history?->notes)
@@ -367,9 +407,9 @@ new #[Title('Order Details')] class extends Component {
                         @if ($isCancelled)
                             @php $cancelHistory = $histories->get('cancelled'); @endphp
                             <div class="relative flex gap-4 pt-2">
-                                {{-- Branch connector from last reached main step --}}
                                 <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                                    bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
                                     <flux:icon name="{{ OrdersStatus::CANCELLED->icon() }}" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
@@ -405,7 +445,8 @@ new #[Title('Order Details')] class extends Component {
                             @php $returnHistory = $histories->get('returned'); @endphp
                             <div class="relative flex gap-4 pt-2">
                                 <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                                    bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
                                     <flux:icon name="{{ OrdersStatus::RETURNED->icon() }}" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
@@ -435,13 +476,14 @@ new #[Title('Order Details')] class extends Component {
                                 </div>
                             </div>
                         @endif
+
                     </div>
                 </div>
             </flux:card>
 
         </div>
 
-        {{-- ── Right: Sidebar ── --}}
+        {{-- ── Right: Sidebar (1 col) ── --}}
         <div class="col-span-1 space-y-5">
 
             {{-- Customer Details --}}
@@ -469,10 +511,10 @@ new #[Title('Order Details')] class extends Component {
 
                     <div class="flex items-start gap-3">
                         <flux:icon name="phone" class="size-4 mt-0.5 text-zinc-400" />
-                        <flux:text size="sm">{{ format_phone($order->user?->phone_number) ?? 'No phone' }}
+                        <flux:text size="sm">
+                            {{ format_phone($order->user?->phone_number) ?? 'No phone' }}
                         </flux:text>
                     </div>
-
 
                     <div class="flex items-start gap-3">
                         <flux:icon name="map-pin" class="size-4 mt-0.5 text-zinc-400" />
@@ -489,65 +531,58 @@ new #[Title('Order Details')] class extends Component {
             </flux:card>
 
             {{-- Payment Information --}}
+            {{-- Sales orders always have a payment record — no quote checks needed. --}}
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b flex justify-between items-center">
                     <flux:heading>Payment</flux:heading>
-                    @if (($order->shipping_snapshot['method_type'] ?? '') !== 'quote')
-                        <flux:badge :color="$order->payment?->status?->color()" size="sm">
-                            {{ $order->payment?->status?->label() }}
-                        </flux:badge>
-                    @endif
+                    <flux:badge :color="$order->payment?->status?->color()" size="sm">
+                        {{ $order->payment?->status?->label() ?? 'No payment' }}
+                    </flux:badge>
                 </div>
                 <div class="p-5 text-sm space-y-2 text-zinc-500">
-                    @if (($order->shipping_snapshot['method_type'] ?? '') === 'quote')
-                        <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
-                            <div class="text-sm">
-                                <p class="font-medium text-amber-800">Awaiting quote confirmation</p>
-                                <p class="text-amber-700 mt-0.5 text-xs">
-                                    Contact the customer with delivery cost.
-                                    Confirm to proceed to payment.
-                                </p>
-                            </div>
-                        </div>
-                    @else
+                    <div class="flex justify-between">
+                        <flux:text>Method</flux:text>
+                        <flux:text class="font-medium uppercase">
+                            {{ $order->payment?->gateway ?? 'N/A' }}
+                        </flux:text>
+                    </div>
+                    <div class="flex justify-between">
+                        <flux:text>Amount</flux:text>
+                        <flux:text class="font-medium">
+                            {{ format_currency(($order->payment?->amount_cents ?? 0) / 100) }}
+                        </flux:text>
+                    </div>
+                    <div class="flex justify-between">
+                        <flux:text>Transaction ID</flux:text>
+                        <flux:text class="font-mono text-[10px]">
+                            {{ $order->payment?->transaction_id ?? '—' }}
+                        </flux:text>
+                    </div>
+                    @if ($order->payment?->paid_at)
                         <div class="flex justify-between">
-                            <flux:text>Method</flux:text>
-                            <flux:text class="font-medium uppercase">{{ $order->payment?->gateway ?? 'N/A' }}
-                            </flux:text>
-                        </div>
-                        <div class="flex justify-between">
-                            <flux:text>Transaction ID</flux:text>
-                            <flux:text class="font-mono text-[10px]">{{ $order->payment?->transaction_id ?? '—' }}
+                            <flux:text>Paid at</flux:text>
+                            <flux:text class="font-medium">
+                                {{ $order->payment->paid_at->format('M d, Y g:i A') }}
                             </flux:text>
                         </div>
                     @endif
                 </div>
             </flux:card>
+
         </div>
     </div>
 
-    {{-- Edit Order Modal --}}
+    {{-- ================================================================== --}}
+    {{-- MODAL: Manage Status                                                --}}
+    {{-- ================================================================== --}}
     <flux:modal name="edit-order" class="w-full max-w-md">
         <div class="space-y-4">
             <div>
-                <flux:heading size="lg">Edit Order</flux:heading>
+                <flux:heading size="lg">Update Order Status</flux:heading>
                 <flux:subheading>
                     Update the status for order #{{ $order->reference }}
                 </flux:subheading>
             </div>
-
-            @if (
-                ($order->shipping_snapshot['method_type'] ?? '') === 'quote' &&
-                    $order->status === \App\Enums\OrdersStatus::PENDING_QUOTE)
-                <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                    <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
-                    <p class="text-amber-800">
-                        Confirming this order means you have agreed on a delivery cost
-                        with the customer. Use the note field to record the agreed amount.
-                    </p>
-                </div>
-            @endif
 
             <form wire:submit="updateStatus" class="space-y-4">
                 <flux:select wire:model="status" label="Status">

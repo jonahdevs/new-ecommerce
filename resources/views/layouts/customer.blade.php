@@ -75,6 +75,15 @@
                             <flux:navlist.item :href="route('customer.orders.index')" icon="package" wire:navigate
                                 :current="request()->routeIs('customer.orders.*')">Orders</flux:navlist.item>
 
+                            <flux:navlist.item :href="route('customer.quotations.index')" icon="tag" wire:navigate
+                                :current="request()->routeIs('customer.quotations.*')"
+                                :badge="auth()->user()->orders()
+                                                                        ->where('document_type', 'quotation')
+                                                                        ->where('status', 'quote_sent')
+                                                                        ->count() ?: null">
+                                Quotations
+                            </flux:navlist.item>
+
                             <flux:navlist.item href="#" icon="envelope" badge="12">
                                 Inbox
                             </flux:navlist.item>

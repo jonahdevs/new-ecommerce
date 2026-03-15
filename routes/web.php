@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Orders\OrderReceiptController;
+use App\Http\Controllers\Orders\QuotationPdfController;
 use App\Http\Controllers\Payment\CallbackController;
 use App\Http\Controllers\Webhooks\PesawiseWebhookController;
 use App\Http\Controllers\Webhooks\MpesaWebhookController;
@@ -133,6 +134,12 @@ Route::middleware(['auth', 'customer', 'verified'])
             Route::get('/{order}/receipt', OrderReceiptController::class)->name('receipt');
         });
 
+        Route::prefix('quotations')->name('quotations.')->group(function () {
+            Route::livewire('/', 'pages::customer.quotations.index')->name('index');
+            Route::livewire('/{order}', 'pages::customer.quotations.show')->name('show');
+            Route::get('/{order}/pdf', QuotationPdfController::class)->name('pdf');
+        });
+
         // Address Book
         Route::prefix('address-book')->name('address-book.')->group(function () {
             Route::livewire('/', 'pages::customer.address-book.index')->name('index');
@@ -154,11 +161,13 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Sales
         // --------------------------------------------------------------------
-
+    
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::livewire('/', 'pages::admin.sales.orders.index')->name('index');
             Route::livewire('/{order}', 'pages::admin.sales.orders.show')->name('show');
+            Route::livewire('/quotations/{order}', 'pages::admin.sales.quotations.show')->name('quotations.show');
         });
+
 
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::livewire('/', 'pages::admin.sales.payments.index')->name('index');
@@ -168,7 +177,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Catalog
         // --------------------------------------------------------------------
-
+    
         Route::prefix('catalog')->name('catalog.')->group(function () {
 
             Route::prefix('categories')->name('categories.')->group(function () {
@@ -204,7 +213,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Logistics
         // --------------------------------------------------------------------
-
+    
         Route::prefix('logistics')->name('logistics.')->group(function () {
             Route::livewire('/overview', 'pages::admin.logistics.dashboard')->name('overview');
 
@@ -237,7 +246,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Engagement
         // --------------------------------------------------------------------
-
+    
         Route::prefix('customers')->name('customers.')->group(function () {
             Route::livewire('/', 'pages::admin.engagement.customers.index')->name('index');
             Route::livewire('/create', 'pages::admin.engagement.customers.create')->name('create');
@@ -253,7 +262,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Access Control
         // --------------------------------------------------------------------
-
+    
         Route::prefix('access-control')->name('access-control.')->group(function () {
             Route::prefix('roles')->name('roles.')->group(function () {
                 Route::livewire('/', 'pages::admin.access-control.roles.index')->name('index');

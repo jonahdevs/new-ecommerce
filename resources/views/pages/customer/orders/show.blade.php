@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\PaymentStatus;
+use App\Enums\{OrdersStatus, PaymentStatus};
 use App\Models\Order;
 use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
@@ -11,7 +11,26 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
     public function mount(Order $order): void
     {
-        $this->order = $order->load(['items.product', 'payment'])->loadCount('items');
+        // Guard: this page is for sales orders only.
+        // Quotations have their own dedicated page.
+        if ($order->isQuotation()) {
+            $this->redirectRoute('customer.quotations.show', $order, navigate: true);
+            return;
+        }
+
+        // Guard: order must belong to the authenticated customer
+        if ($order->user_id !== auth()->id()) {
+            $this->redirectRoute('customer.orders.index', navigate: true);
+            return;
+        }
+
+        $this->order = $order
+            ->load([
+                'items.product',
+                'payment',
+                'parentQuotation', // loaded to show "converted from quote" notice
+            ])
+            ->loadCount('items');
     }
 
     #[Computed]
@@ -45,6 +64,23 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
         <section class="p-5">
 
+            {{-- ============================================================ --}}
+            {{-- CONVERTED FROM QUOTATION NOTICE                               --}}
+            {{-- Shown when this sales order originated from a quotation.      --}}
+            {{-- ============================================================ --}}
+            @if ($order->wasConverted() && $order->parentQuotation)
+                <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-5">
+                    <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
+                    <flux:text class="text-sm text-blue-800 flex-1">
+                        This order was created from quotation
+                        <flux:link :href="route('customer.quotations.show', $order->parentQuotation)" wire:navigate
+                            class="font-medium">
+                            {{ $order->parentQuotation->reference }}
+                        </flux:link>
+                    </flux:text>
+                </div>
+            @endif
+
             {{-- Order meta --}}
             <div class="space-y-1">
                 <flux:heading>Order n° {{ $order->reference }}</flux:heading>
@@ -66,6 +102,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                         $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—');
                         $sku = $item->product_snapshot['sku'] ?? null;
                         $imagePath = $item->product_image_url ?? $item->product?->image_url;
+                        $inStock = ($item->product?->stock_quantity ?? 0) > 0;
                     @endphp
 
                     <div class="border rounded-md p-4">
@@ -110,17 +147,14 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                             {{-- Actions --}}
                             <div class="shrink-0 flex flex-col items-end gap-2">
-                                @php
-                                    $inStock = ($item->product?->stock_quantity ?? 0) > 0;
-                                @endphp
-
-                                @if ($order->status !== \App\Enums\OrdersStatus::PENDING_QUOTE)
-                                    <flux:button size="sm" variant="primary" icon="shopping-cart"
-                                        class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
-                                        :disabled="!$inStock">
-                                        {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
-                                    </flux:button>
-                                @endif
+                                {{-- Buy Again — available on all sales orders regardless of status.
+                                     The PENDING_QUOTE check has been removed — sales orders never
+                                     have that status. Quotations are redirected away in mount(). --}}
+                                <flux:button size="sm" variant="primary" icon="shopping-cart"
+                                    class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
+                                    :disabled="!$inStock">
+                                    {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
+                                </flux:button>
 
                                 <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate
                                     class="text-xs!">
@@ -150,10 +184,8 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                 <div class="flex justify-between text-sm">
                     <flux:text>Shipping</flux:text>
                     <span>
-                        @if ($order->shipping_snapshot['method_type'] === 'quote')
-                            <span class="text-amber-500">TBD</span>
-                        @elseif($order->shipping == 0)
-                            Free
+                        @if ($order->shipping == 0)
+                            <span class="text-green-600">Free</span>
                         @else
                             {{ format_currency($order->shipping) }}
                         @endif
@@ -162,12 +194,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                 <div class="flex justify-between font-semibold border-t pt-2">
                     <span>Total</span>
-                    <div class="text-right">
-                        <span>{{ format_currency($order->total) }}</span>
-                        @if ($order->shipping_snapshot['method_type'] === 'quote')
-                            <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
-                        @endif
-                    </div>
+                    <span>{{ format_currency($order->total) }}</span>
                 </div>
             </div>
 
@@ -176,50 +203,126 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
             {{-- ── Payment & Delivery ── --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-0 md:divide-x">
 
-                {{-- Payment Information --}}
+                {{-- ============================================================ --}}
+                {{-- PAYMENT INFORMATION                                           --}}
+                {{-- Sales orders always have a payment record.                   --}}
+                {{-- The quote check has been removed — quotations are            --}}
+                {{-- redirected away in mount().                                  --}}
+                {{-- ============================================================ --}}
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Payment Information</flux:heading>
 
-                    @if ($order->shipping_snapshot['method_type'] === 'quote')
-                        <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
-                            <div class="text-sm">
-                                <p class="font-medium text-amber-800">Awaiting delivery quote</p>
-                                <p class="text-amber-700 mt-0.5">
-                                    Our team will contact you with a delivery cost.
-                                    Payment will be collected once you confirm the quote.
-                                </p>
+                    @if ($order->payment)
+                        <div class="space-y-3">
+
+                            {{-- Payment status badge --}}
+                            <div class="flex items-center justify-between">
+                                <flux:text class="text-sm text-zinc-500">Status</flux:text>
+                                <flux:badge size="sm" :color="$order->payment->status->color()">
+                                    {{ $order->payment->status->label() }}
+                                </flux:badge>
                             </div>
+
+                            {{-- Gateway --}}
+                            <div class="flex items-center justify-between">
+                                <flux:text class="text-sm text-zinc-500">Method</flux:text>
+                                <flux:text class="text-sm font-medium uppercase">
+                                    {{ $order->payment->gateway ?? '—' }}
+                                </flux:text>
+                            </div>
+
+                            {{-- Amount --}}
+                            <div class="flex items-center justify-between">
+                                <flux:text class="text-sm text-zinc-500">Amount</flux:text>
+                                <flux:text class="text-sm font-medium">
+                                    {{ format_currency(($order->payment->amount_cents ?? 0) / 100) }}
+                                    {{ $order->currency }}
+                                </flux:text>
+                            </div>
+
+                            {{-- Transaction ID — shown once paid --}}
+                            @if ($order->payment->transaction_id)
+                                <div class="flex items-center justify-between gap-4">
+                                    <flux:text class="text-sm text-zinc-500 shrink-0">Transaction</flux:text>
+                                    <flux:text class="text-xs font-mono text-zinc-600 truncate text-right">
+                                        {{ $order->payment->transaction_id }}
+                                    </flux:text>
+                                </div>
+                            @endif
+
+                            {{-- Paid at timestamp --}}
+                            @if ($order->payment->paid_at)
+                                <div class="flex items-center justify-between">
+                                    <flux:text class="text-sm text-zinc-500">Paid on</flux:text>
+                                    <flux:text class="text-sm font-medium">
+                                        {{ $order->payment->paid_at->format('M j, Y') }}
+                                        <span class="text-zinc-400 font-normal">
+                                            {{ $order->payment->paid_at->format('g:i A') }}
+                                        </span>
+                                    </flux:text>
+                                </div>
+                            @endif
+
+                            {{-- Card details if applicable --}}
+                            @if ($order->payment->card_brand && $order->payment->card_last4)
+                                <div class="flex items-center justify-between">
+                                    <flux:text class="text-sm text-zinc-500">Card</flux:text>
+                                    <flux:text class="text-sm font-medium">
+                                        {{ ucfirst($order->payment->card_brand) }}
+                                        ending {{ $order->payment->card_last4 }}
+                                    </flux:text>
+                                </div>
+                            @endif
+
                         </div>
+
+                        {{-- Pending payment notice --}}
+                        @if (
+                            $order->payment->status->value === PaymentStatus::PENDING->value ||
+                                $order->payment->status->value === PaymentStatus::PROCESSING->value)
+                            <div class="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-amber-500" />
+                                <flux:text class="text-xs text-amber-700">
+                                    Payment is being processed. Your order will be confirmed shortly.
+                                </flux:text>
+                            </div>
+                        @endif
+
+                        {{-- Failed payment notice --}}
+                        @if ($order->payment->status->value === PaymentStatus::FAILED->value)
+                            <div class="mt-3 flex items-start gap-2 p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                                <flux:icon.x-circle class="size-4 shrink-0 mt-0.5 text-rose-500" />
+                                <flux:text class="text-xs text-rose-700">
+                                    Payment was not completed. Please contact support if you believe
+                                    this is an error.
+                                </flux:text>
+                            </div>
+                        @endif
                     @else
-                        {{-- existing payment info block unchanged --}}
-                        <div class="space-y-2">
-                            ...
+                        {{-- No payment record yet --}}
+                        <div class="flex items-start gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
+                            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-zinc-400" />
+                            <flux:text class="text-sm text-zinc-500">
+                                No payment information available yet.
+                            </flux:text>
                         </div>
                     @endif
                 </div>
 
-                {{-- Delivery Information --}}
+                {{-- Delivery Information — unchanged from original --}}
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Delivery Information</flux:heading>
 
                     <div class="space-y-1">
-                        {{-- Full name --}}
                         <flux:text class="font-medium">
                             {{ trim(($order->shipping_address['first_name'] ?? '') . ' ' . ($order->shipping_address['last_name'] ?? '')) ?: $order->shipping_address['full_name'] ?? 'N/A' }}
                         </flux:text>
-
-                        {{-- Phone --}}
                         <flux:text class="text-sm text-zinc-500">
                             {{ format_phone($order->shipping_address['phone_number'] ?? '') }}
                         </flux:text>
-
-                        {{-- Address --}}
                         <flux:text class="text-sm text-zinc-500">
                             {{ $order->shipping_address['address'] ?? 'N/A' }}
                         </flux:text>
-
-                        {{-- Area & County --}}
                         <flux:text class="text-sm text-zinc-500">
                             {{ implode(
                                 ', ',
@@ -228,20 +331,17 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                         </flux:text>
                     </div>
 
-                    {{-- Shipping method from snapshot --}}
                     @if ($order->shipping_snapshot['method_name'] ?? null)
                         <flux:separator class="my-3" />
                         <flux:text class="text-xs text-zinc-400 mb-1">Shipping method</flux:text>
                         <flux:text class="text-sm font-medium">
                             {{ $order->shipping_snapshot['method_name'] }}
                         </flux:text>
-
                         @if ($order->shipping_snapshot['delivery_window'] ?? null)
                             <flux:text class="text-xs text-zinc-400 mt-0.5">
                                 Est. {{ $order->shipping_snapshot['delivery_window'] }}
                             </flux:text>
                         @endif
-
                         @if ($order->shipping_snapshot['station_name'] ?? null)
                             <flux:text class="text-xs text-zinc-400 mt-0.5">
                                 Pickup: {{ $order->shipping_snapshot['station_name'] }}
@@ -264,7 +364,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                 @if ($this->isPaid)
                     <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer" tag="a"
                         href="{{ route('customer.orders.receipt', $order) }}">
-                        Download Receipt
+                        Download Invoice
                     </flux:button>
                 @endif
             </div>

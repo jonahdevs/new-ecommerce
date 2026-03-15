@@ -9,11 +9,24 @@ new #[Layout('layouts.customer')] class extends Component {
 
     public string $selectedTab = 'ongoing';
 
+    // =========================================================================
+    //  COMPUTED — ORDER EXISTENCE CHECK
+    //  Checks sales orders only — quotations live on their own page.
+    // =========================================================================
+
     #[Computed]
     public function hasOrders(): bool
     {
-        return auth()->user()->orders()->exists();
+        return auth()->user()->orders()->where('document_type', 'sales_order')->exists();
     }
+
+    // =========================================================================
+    //  COMPUTED — ONGOING ORDERS
+    //
+    //  Sales orders only (document_type = sales_order).
+    //  Quotation statuses (pending_quote, quote_sent, etc.) are intentionally
+    //  excluded — they belong on the /quotations page.
+    // =========================================================================
 
     #[Computed]
     public function ongoingOrders()
@@ -21,12 +34,18 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->orders()
-            ->whereIn('status', ['pending', 'processing', 'shipped', 'delivered', 'confirmed', 'pending_quote'])
+            ->where('document_type', 'sales_order')
+            ->whereIn('status', ['pending', 'confirmed', 'processing', 'shipped', 'delivered'])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
             ->latest()
             ->paginate(5);
     }
+
+    // =========================================================================
+    //  COMPUTED — CANCELLED / RETURNED ORDERS
+    //  Sales orders only — cancelled quotations live on the quotations page.
+    // =========================================================================
 
     #[Computed]
     public function cancelledOrders()
@@ -34,6 +53,7 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->orders()
+            ->where('document_type', 'sales_order')
             ->whereIn('status', ['cancelled', 'returned'])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
@@ -46,8 +66,15 @@ new #[Layout('layouts.customer')] class extends Component {
 <div>
     <flux:card class="p-0 rounded-md">
         {{-- Page Header --}}
-        <div class="px-4 py-3 border-b">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
             <flux:heading size="lg" level="1">My Orders</flux:heading>
+            {{-- Quick link to quotations page --}}
+            <flux:link :href="route('customer.quotations.index')" wire:navigate class="text-xs flex items-center gap-1">
+                <flux:icon.tag class="size-3.5 inline-block me-2" />
+                <span>
+                    My Quotations
+                </span>
+            </flux:link>
         </div>
 
         <div class="px-4 py-4">
@@ -72,10 +99,10 @@ new #[Layout('layouts.customer')] class extends Component {
                         <div class="space-y-3">
                             @forelse ($this->ongoingOrders as $order)
                                 @php
-                                    $firstName = $order->items->first();
+                                    $firstItem = $order->items->first();
                                     $firstProductName =
-                                        $firstName?->product_snapshot['name'] ??
-                                        ($firstName?->product?->name ?? 'Product');
+                                        $firstItem?->product_snapshot['name'] ??
+                                        ($firstItem?->product?->name ?? 'Product');
                                     $extraCount = $order->items_count - 1;
                                 @endphp
 
@@ -83,11 +110,15 @@ new #[Layout('layouts.customer')] class extends Component {
                                     class="border rounded-md p-4 hover:bg-zinc-50 transition-colors">
                                     <div class="flex items-center justify-between gap-4">
 
-                                        {{-- Stacked Images --}}
+                                        {{-- Product image --}}
                                         <div class="flex -space-x-3 shrink-0">
                                             <div
                                                 class="w-12 h-12 rounded-md border bg-zinc-100 overflow-hidden shrink-0">
-                                                @php $img = $order->items->first()?->product_image_url ?? $order->items->first()?->product?->image_url; @endphp
+                                                @php
+                                                    $img =
+                                                        $order->items->first()?->product_image_url ??
+                                                        $order->items->first()?->product?->image_url;
+                                                @endphp
                                                 @if ($img)
                                                     <img src="{{ asset($img) }}" alt="{{ $firstProductName }}"
                                                         class="w-full h-full object-cover" />
@@ -97,7 +128,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                             </div>
                                         </div>
 
-                                        {{-- Order Info --}}
+                                        {{-- Order info --}}
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-zinc-800 truncate">
                                                 {{ $firstProductName }}
@@ -111,7 +142,8 @@ new #[Layout('layouts.customer')] class extends Component {
                                                 </flux:text>
                                                 <span class="text-zinc-200">·</span>
                                                 <flux:text class="text-xs text-zinc-400">
-                                                    {{ $order->created_at->format('M j, Y') }}</flux:text>
+                                                    {{ $order->created_at->format('M j, Y') }}
+                                                </flux:text>
                                                 <flux:badge size="sm" :color="$order->status->color()">
                                                     {{ $order->status->label() }}
                                                 </flux:badge>
@@ -152,10 +184,10 @@ new #[Layout('layouts.customer')] class extends Component {
                         <div class="space-y-3">
                             @forelse ($this->cancelledOrders as $order)
                                 @php
-                                    $firstName = $order->items->first();
+                                    $firstItem = $order->items->first();
                                     $firstProductName =
-                                        $firstName?->product_snapshot['name'] ??
-                                        ($firstName?->product?->name ?? 'Product');
+                                        $firstItem?->product_snapshot['name'] ??
+                                        ($firstItem?->product?->name ?? 'Product');
                                     $extraCount = $order->items_count - 1;
                                 @endphp
 
@@ -163,7 +195,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                     class="border rounded-md p-4 hover:bg-zinc-50 transition-colors">
                                     <div class="flex items-center justify-between gap-4">
 
-                                        {{-- Stacked Images --}}
+                                        {{-- Stacked images --}}
                                         <div class="flex -space-x-3 shrink-0">
                                             @foreach ($order->items->take(3) as $item)
                                                 @php $img = $item->product_snapshot['image_path'] ?? $item->product?->image_path; @endphp
@@ -180,7 +212,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                             @endforeach
                                         </div>
 
-                                        {{-- Order Info --}}
+                                        {{-- Order info --}}
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-zinc-500 truncate">
                                                 {{ $firstProductName }}
@@ -194,7 +226,8 @@ new #[Layout('layouts.customer')] class extends Component {
                                                 </flux:text>
                                                 <span class="text-zinc-200">·</span>
                                                 <flux:text class="text-xs text-zinc-400">
-                                                    {{ $order->created_at->format('M j, Y') }}</flux:text>
+                                                    {{ $order->created_at->format('M j, Y') }}
+                                                </flux:text>
                                                 <flux:badge size="sm" :color="$order->status->color()">
                                                     {{ $order->status->label() }}
                                                 </flux:badge>

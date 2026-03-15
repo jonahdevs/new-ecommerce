@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
+use App\Services\DocumentService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
@@ -54,25 +55,25 @@ class MpesaGateway implements PaymentGateway
 
         try {
             // Use provided phone or fall back to resolvePhone()
-            $phone     = $this->normalisePhone($phone);
-            $amount    = (int) ceil($order->total_cents / 100);
+            $phone = $this->normalisePhone($phone);
+            $amount = (int) ceil($order->total_cents / 100);
             $timestamp = now()->format('YmdHis');
-            $password  = base64_encode($this->shortcode . $this->passkey . $timestamp);
+            $password = base64_encode($this->shortcode . $this->passkey . $timestamp);
 
-            $token    = $this->getAccessToken();
+            $token = $this->getAccessToken();
             $response = Http::withToken($token)
                 ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", [
                     'BusinessShortCode' => $this->shortcode,
-                    'Password'          => $password,
-                    'Timestamp'         => $timestamp,
-                    'TransactionType'   => 'CustomerPayBillOnline',
-                    'Amount'            => $amount,
-                    'PartyA'            => $phone,
-                    'PartyB'            => $this->shortcode,
-                    'PhoneNumber'       => $phone,
-                    'CallBackURL'       => $this->callbackUrl,
-                    'AccountReference'  => $order->reference,
-                    'TransactionDesc'   => "Order #{$order->reference}",
+                    'Password' => $password,
+                    'Timestamp' => $timestamp,
+                    'TransactionType' => 'CustomerPayBillOnline',
+                    'Amount' => $amount,
+                    'PartyA' => $phone,
+                    'PartyB' => $this->shortcode,
+                    'PhoneNumber' => $phone,
+                    'CallBackURL' => $this->callbackUrl,
+                    'AccountReference' => $order->reference,
+                    'TransactionDesc' => "Order #{$order->reference}",
                 ]);
 
             $data = $response->json();
@@ -87,18 +88,18 @@ class MpesaGateway implements PaymentGateway
 
             $payment->update([
                 'transaction_id' => $checkoutRequestId,
-                'status'         => PaymentStatus::PROCESSING->value,
-                'meta'           => array_merge($payment->meta ?? [], [
+                'status' => PaymentStatus::PROCESSING->value,
+                'meta' => array_merge($payment->meta ?? [], [
                     'checkout_request_id' => $checkoutRequestId,
                     'merchant_request_id' => $data['MerchantRequestID'],
-                    'customer_message'    => $data['CustomerMessage'],
-                    'phone'               => $phone,
-                    'initiated_at'        => now()->toISOString(),
+                    'customer_message' => $data['CustomerMessage'],
+                    'phone' => $phone,
+                    'initiated_at' => now()->toISOString(),
                 ]),
             ]);
 
             Log::info('M-Pesa STK push initiated', [
-                'order_id'            => $order->id,
+                'order_id' => $order->id,
                 'checkout_request_id' => $checkoutRequestId,
             ]);
 
@@ -106,7 +107,7 @@ class MpesaGateway implements PaymentGateway
         } catch (\Throwable $e) {
             Log::error('M-Pesa initiation failed', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return PaymentResponse::failed($e->getMessage());
@@ -185,6 +186,9 @@ class MpesaGateway implements PaymentGateway
             changedByType: 'system'
         );
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
+
+        // Generate and store the tax invoice
+        app(DocumentService::class)->generateInvoice($order);
 
         // 3. Clear cart — payment is confirmed
         app(CartService::class)->clear(

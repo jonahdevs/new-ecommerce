@@ -10,7 +10,23 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
 
     public function mount(Order $order): void
     {
-        $this->order = $order->load(['statusHistories.changedBy']);
+        // Guard: tracking is only for sales orders.
+        // Quotations have their own dedicated page with a different timeline.
+        if ($order->isQuotation()) {
+            $this->redirectRoute('customer.quotations.show', $order, navigate: true);
+            return;
+        }
+
+        // Guard: order must belong to the authenticated customer
+        if ($order->user_id !== auth()->id()) {
+            $this->redirectRoute('customer.orders.index', navigate: true);
+            return;
+        }
+
+        $this->order = $order->load([
+            'statusHistories.changedBy',
+            'parentQuotation', // loaded so we can show "converted from quote" notice
+        ]);
     }
 };
 ?>
@@ -35,27 +51,37 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
             <flux:text class="text-sm text-zinc-500 mt-0.5">
                 Placed on {{ $order->created_at->format('M j, Y') }}
             </flux:text>
+
+            {{-- Show quotation origin when this sales order was converted from a quote.
+                 Gives the customer a clear link back to the original quotation document. --}}
+            @if ($order->wasConverted() && $order->parentQuotation)
+                <div class="flex items-center gap-2 mt-2">
+                    <flux:icon.tag class="size-3.5 text-zinc-400" />
+                    <flux:text class="text-xs text-zinc-400">
+                        Converted from quotation
+                        <flux:link :href="route('customer.quotations.show', $order->parentQuotation)" wire:navigate
+                            class="text-xs!">
+                            {{ $order->parentQuotation->reference }}
+                        </flux:link>
+                    </flux:text>
+                </div>
+            @endif
         </div>
 
         {{-- Timeline --}}
         <div class="p-6">
             @php
-                $mainPath =
-                    ($order->shipping_snapshot['method_type'] ?? '') === 'quote'
-                        ? [
-                            OrdersStatus::PENDING_QUOTE,
-                            OrdersStatus::CONFIRMED,
-                            OrdersStatus::PROCESSING,
-                            OrdersStatus::SHIPPED,
-                            OrdersStatus::DELIVERED,
-                        ]
-                        : [
-                            OrdersStatus::PENDING,
-                            OrdersStatus::CONFIRMED,
-                            OrdersStatus::PROCESSING,
-                            OrdersStatus::SHIPPED,
-                            OrdersStatus::DELIVERED,
-                        ];
+                // Standard sales order path — always the same regardless of
+                // how the order was created (direct checkout or converted from quote).
+                // The PENDING_QUOTE path has been removed — quotations have their
+                // own timeline on the customer.quotations.show page.
+                $mainPath = [
+                    OrdersStatus::PENDING,
+                    OrdersStatus::CONFIRMED,
+                    OrdersStatus::PROCESSING,
+                    OrdersStatus::SHIPPED,
+                    OrdersStatus::DELIVERED,
+                ];
 
                 $isCancelled = $order->status === OrdersStatus::CANCELLED;
                 $isReturned = $order->status === OrdersStatus::RETURNED;
@@ -63,9 +89,13 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
 
                 $histories = $order->statusHistories->keyBy('to_status');
 
-                // Customer-friendly labels and descriptions
+                // Customer-friendly labels and descriptions for each step.
+                // These are intentionally plain and reassuring — no technical jargon.
                 $stepMeta = [
-                    'pending' => ['label' => 'Order Placed', 'desc' => 'Your order has been placed successfully.'],
+                    'pending' => [
+                        'label' => 'Order Placed',
+                        'desc' => 'Your order has been placed successfully.',
+                    ],
                     'confirmed' => [
                         'label' => 'Payment Confirmed',
                         'desc' => 'Your payment was received and your order is confirmed.',
@@ -74,12 +104,20 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                         'label' => 'Being Prepared',
                         'desc' => 'Your items are being packed and getting ready.',
                     ],
-                    'shipped' => ['label' => 'Out for Delivery', 'desc' => 'Your order is on its way to you.'],
-                    'delivered' => ['label' => 'Delivered', 'desc' => 'Your order was delivered. Enjoy your purchase!'],
+                    'shipped' => [
+                        'label' => 'Out for Delivery',
+                        'desc' => 'Your order is on its way to you.',
+                    ],
+                    'delivered' => [
+                        'label' => 'Delivered',
+                        'desc' => 'Your order was delivered. Enjoy your purchase!',
+                    ],
                 ];
             @endphp
 
             <div class="relative">
+
+                {{-- Main path --}}
                 @foreach ($mainPath as $index => $step)
                     @php
                         $history = $histories->get($step->value);
@@ -127,6 +165,8 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                                 ? 'text-zinc-300 dark:text-zinc-600'
                                                 : 'text-zinc-400') }}">
                                         {{ $meta['label'] }}
+
+                                        {{-- Pulsing "Current" indicator --}}
                                         @if ($isCurrent)
                                             <span
                                                 class="ml-2 inline-flex items-center gap-1 text-xs font-normal text-zinc-500">
@@ -147,7 +187,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                         {{ $history ? $meta['desc'] : ($dimmed ? '—' : 'Pending') }}
                                     </flux:text>
 
-                                    {{-- Custom notes from admin --}}
+                                    {{-- Admin notes shown as a subtle callout --}}
                                     @if ($history?->notes)
                                         <div
                                             class="mt-1.5 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md">
@@ -158,7 +198,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                     @endif
                                 </div>
 
-                                {{-- Date/time --}}
+                                {{-- Date / time --}}
                                 @if ($history)
                                     <div class="text-right shrink-0">
                                         <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
@@ -179,7 +219,8 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                     @php $cancelHistory = $histories->get('cancelled'); @endphp
                     <div class="relative flex gap-5 pt-2">
                         <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 dark:bg-rose-950 text-rose-500 dark:text-rose-400">
+                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                            bg-rose-100 dark:bg-rose-950 text-rose-500 dark:text-rose-400">
                             <flux:icon name="{{ OrdersStatus::CANCELLED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
@@ -220,7 +261,8 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                     @php $returnHistory = $histories->get('returned'); @endphp
                     <div class="relative flex gap-5 pt-2">
                         <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-orange-100 dark:bg-orange-950 text-orange-500 dark:text-orange-400">
+                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                            bg-orange-100 dark:bg-orange-950 text-orange-500 dark:text-orange-400">
                             <flux:icon name="{{ OrdersStatus::RETURNED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
@@ -255,6 +297,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                         </div>
                     </div>
                 @endif
+
             </div>
         </div>
 

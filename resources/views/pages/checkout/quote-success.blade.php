@@ -21,7 +21,6 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         $this->dispatch('cart-updated');
-
         $this->reference = $reference;
     }
 };
@@ -41,7 +40,7 @@ new #[Layout('layouts.guest')] class extends Component {
         <flux:heading size="xl" class="mb-2">Quote Request Sent!</flux:heading>
 
         <flux:text class="text-zinc-500 text-sm mb-1">
-            Your order reference is:
+            Your quotation reference is:
         </flux:text>
         <p class="font-mono font-semibold text-zinc-800 text-sm mb-5">
             {{ $reference }}
@@ -56,7 +55,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <span class="text-xs font-bold text-amber-600">1</span>
                 </div>
                 <p class="text-sm text-zinc-600">
-                    Our team reviews your order and calculates the delivery cost to your location.
+                    Our team reviews your request and prepares a priced quotation.
                 </p>
             </div>
 
@@ -65,7 +64,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <span class="text-xs font-bold text-amber-600">2</span>
                 </div>
                 <p class="text-sm text-zinc-600">
-                    We contact you via phone or email with the delivery quote.
+                    You'll receive an email with the priced quote and a link to review it.
                 </p>
             </div>
 
@@ -74,15 +73,17 @@ new #[Layout('layouts.guest')] class extends Component {
                     <span class="text-xs font-bold text-amber-600">3</span>
                 </div>
                 <p class="text-sm text-zinc-600">
-                    Once you confirm, payment is taken and your order is processed.
+                    Accept the quotation to proceed to payment, or reject it if it doesn't work for you.
                 </p>
             </div>
         </div>
 
         {{-- Actions --}}
         <div class="flex items-center justify-center gap-3">
-            <flux:button :href="route('customer.orders.index')" wire:navigate variant="primary" class="cursor-pointer">
-                View My Orders
+            {{-- Links to quotations page — not orders page --}}
+            <flux:button :href="route('customer.quotations.index')" wire:navigate variant="primary"
+                class="cursor-pointer">
+                View My Quotations
             </flux:button>
 
             <flux:button :href="route('shop.index')" wire:navigate variant="ghost" class="cursor-pointer">

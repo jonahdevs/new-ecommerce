@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
+use App\Services\DocumentService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
@@ -37,7 +38,7 @@ class PesawiseGateway implements PaymentGateway
         $this->apiUrl = config('services.pesawise.api_url', 'https://api.pesawise.xyz/api');
     }
 
-    //  Interface implementation 
+    //  Interface implementation
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
     {
@@ -139,7 +140,7 @@ class PesawiseGateway implements PaymentGateway
         };
     }
 
-    //  Private helpers 
+    //  Private helpers
 
     private function buildPayload(Order $order): array
     {
@@ -223,6 +224,9 @@ class PesawiseGateway implements PaymentGateway
             changedByType: 'system'
         );
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
+
+        // Generate and store the tax invoice
+        app(DocumentService::class)->generateInvoice($order);
 
         // 3. Clear cart — payment is confirmed, cart no longer needed
         app(CartService::class)->clear(
