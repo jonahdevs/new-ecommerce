@@ -206,7 +206,7 @@ new #[Title('Product Attributes')] class extends Component {
                                 </div>
 
                                 <flux:link class="text-xs! text-sheffield-blue"
-                                    href="{{ route('admin.attributes.values', $attribute) }}" wire:navigate>
+                                    href="{{ route('admin.catalog.attributes.values', $attribute) }}" wire:navigate>
                                     Configure values
                                 </flux:link>
                             </flux:table.cell>

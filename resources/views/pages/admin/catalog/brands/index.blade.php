@@ -55,7 +55,7 @@ new #[Title('Brands')] class extends Component {
             <flux:subheading>Manage product brands and manufacturers</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus-circle" :href="route('admin.brands.create')" wire:navigate>
+        <flux:button variant="primary" icon="plus-circle" :href="route('admin.catalog.brands.create')" wire:navigate>
             Create Brand
         </flux:button>
     </div>
@@ -128,7 +128,7 @@ new #[Title('Brands')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                :href="route('admin.brands.edit', $brand->id)" wire:navigate
+                                :href="route('admin.catalog.brands.edit', $brand->id)" wire:navigate
                                 class="cursor-pointer text-sheffield-blue!" />
 
                             <flux:button variant="ghost" size="sm" icon="trash" color="red"
@@ -173,3 +173,4 @@ new #[Title('Brands')] class extends Component {
         padding-bottom: 1rem;
     }
 </style>
+f

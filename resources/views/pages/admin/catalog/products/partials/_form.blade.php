@@ -1,6 +1,32 @@
 <form wire:submit="save" class="mt-6 lg:grid lg:grid-cols-12 lg:gap-5 " id="product-form">
     {{-- Sidebar --}}
     <div class="lg:col-span-8 xl:col-span-9 lg:col-start-1 space-y-5">
+        {{-- Unsaved changes guard --}}
+        <div x-data="{ dirty: false }" x-init="$wire.watch('isDirty', (value) => {
+            dirty = value;
+        });
+        
+        $wire.on('product-saved', () => {
+            dirty = false;
+        });
+        
+        const handleNavigate = (e) => {
+            if (e.detail.history) return;
+            if (!dirty) return;
+        
+            if (!confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                e.preventDefault();
+            } else {
+                dirty = false;
+            }
+        };
+        
+        document.addEventListener('livewire:navigate', handleNavigate);
+        
+        $cleanup(() => {
+            document.removeEventListener('livewire:navigate', handleNavigate);
+        });">
+        </div>
 
         {{-- Basic Information --}}
         @include('pages.admin.catalog.products.partials._basic-information')
@@ -290,15 +316,12 @@
                     </div>
 
                     {{-- ── Tab Content ── --}}
-                    <div class="md:col-span-10 lg:col-span-9 p-5">
+                    <div class="md:col-span-10 lg:col-span-9">
                         @include('pages.admin.catalog.products.partials._general')
                         @include('pages.admin.catalog.products.partials._inventory')
                         @include('pages.admin.catalog.products.partials._shipping')
                         @include('pages.admin.catalog.products.partials._linked-products')
 
-                        <div wire:cloak wire:show="activeTab == 'downloads'">
-                            @include('pages.admin.catalog.products.partials._downloads')
-                        </div>
 
                         <div wire:cloak wire:show="activeTab == 'attributes'">
                             @include('pages.admin.catalog.products.partials._attributes')
@@ -320,9 +343,6 @@
                     @include('pages.admin.catalog.products.partials._shipping')
                     @include('pages.admin.catalog.products.partials._linked-products')
 
-                    <div wire:cloak wire:show="activeTab == 'downloads'">
-                        @include('pages.admin.catalog.products.partials._downloads')
-                    </div>
 
                     <div wire:cloak wire:show="activeTab == 'attributes'">
                         @include('pages.admin.catalog.products.partials._attributes')
@@ -378,6 +398,78 @@
         <div class="flex gap-3 justify-end">
             <flux:button wire:click="cancelTypeChange" variant="ghost">Keep as Variable</flux:button>
             <flux:button wire:click="confirmTypeChange" variant="primary">Yes, Switch to Simple</flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- Type Change Modal --}}
+    <flux:modal wire:model="showTypeChangeModal" class="max-w-md space-y-5">
+        <div>
+            <flux:heading size="lg">Change Product Type?</flux:heading>
+            <flux:subheading class="mt-1">
+                This product has active variations. Switching to Simple will deactivate all of them.
+                Your data will be preserved and can be restored by switching back to Variable.
+            </flux:subheading>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+            <div class="flex items-start gap-2">
+                <flux:icon.exclamation-triangle class="size-5 shrink-0 mt-0.5 text-amber-500" />
+                <div>
+                    <p class="font-semibold">What will happen:</p>
+                    <ul class="mt-1 space-y-1 list-disc list-inside">
+                        <li>All variations will be <strong>deactivated</strong> (not deleted)</li>
+                        <li>Product will use <strong>base price & stock</strong></li>
+                        <li>Switch back to Variable anytime to <strong>restore variations</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+            <flux:button wire:click="cancelTypeChange" variant="ghost">Keep as Variable</flux:button>
+            <flux:button wire:click="confirmTypeChange" variant="primary">Yes, Switch to Simple</flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- Bulk Pricing Modal --}}
+    <flux:modal name="bulk-pricing" class="max-w-sm space-y-5">
+        <flux:heading>Set Prices for All Variations</flux:heading>
+        <flux:input wire:model.defer="bulkPrice" label="Regular Price (KES)" type="number" step="0.01"
+            placeholder="Leave blank to skip" />
+        <flux:input wire:model.defer="bulkSalePrice" label="Sale Price (KES)" type="number" step="0.01"
+            placeholder="Leave blank to skip" />
+        <div class="flex gap-3 justify-end">
+            <flux:button @click="$flux.modal('bulk-pricing').close()">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="applyBulkPricing">Apply</flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- Bulk Stock Modal --}}
+    <flux:modal name="bulk-stock" class="max-w-sm space-y-5">
+        <flux:heading>Set Stock Quantity for All Variations</flux:heading>
+        <flux:input wire:model.defer="bulkStockQuantity" label="Stock Quantity" type="number" min="0" />
+        <div class="flex gap-3 justify-end">
+            <flux:button @click="$flux.modal('bulk-stock').close()">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="applyBulkStock">Apply</flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- Bulk Dimensions Modal --}}
+    <flux:modal name="bulk-dimensions" class="max-w-sm space-y-5">
+        <flux:heading>Set Dimensions & Weight for All Variations</flux:heading>
+        <flux:input wire:model.defer="bulkWeight" label="Weight (kg)" type="number" step="0.01"
+            placeholder="Leave blank to skip" />
+        <flux:field>
+            <flux:label>Dimensions (L x W x H)</flux:label>
+            <flux:input.group>
+                <flux:input wire:model.defer="bulkLength" placeholder="Length" />
+                <flux:input wire:model.defer="bulkWidth" placeholder="Width" />
+                <flux:input wire:model.defer="bulkHeight" placeholder="Height" />
+            </flux:input.group>
+        </flux:field>
+        <div class="flex gap-3 justify-end">
+            <flux:button @click="$flux.modal('bulk-dimensions').close()">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="applyBulkDimensions">Apply</flux:button>
         </div>
     </flux:modal>
 

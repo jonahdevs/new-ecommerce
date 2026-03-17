@@ -10,12 +10,11 @@
 
     <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5">
         <!-- Meta title -->
-        <flux:input wire:model="form.meta_title" :label="__('Meta Title')" wire:model="form.meta_title"
-            placeholder="SEO title for this product" />
+        <flux:input wire:model="form.meta_title" :label="__('Meta Title')" placeholder="SEO title for this product" />
 
         <!-- Meta description -->
-        <flux:textarea wire:model="form.meta_description" :label="__('Meta Description')"
-            wire:model="form.meta_description" rows="3" placeholder="SEO description for this product" />
+        <flux:textarea wire:model="form.meta_description" :label="__('Meta Description')" rows="3"
+            placeholder="SEO description for this product" />
 
         <!-- Meta keywords -->
         <flux:input wire:model="form.meta_keywords" :label="__('Meta Keywords')"
@@ -31,5 +30,4 @@
             <flux:error name="form.canonical_url" />
         </flux:field>
     </div>
-
 </flux:card>

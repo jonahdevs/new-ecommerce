@@ -37,7 +37,7 @@ new class extends Component {
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate>
         </flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('admin.brands.index')" wire:navigate>Brands</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.catalog.brands.index')" wire:navigate>Brands</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Edit</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
@@ -47,7 +47,7 @@ new class extends Component {
         @include('pages.admin.catalog.brands._form-fields')
 
         <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-800">
-            <flux:button variant="ghost" href="{{ route('admin.brands.index') }}" class="cursor-pointer">
+            <flux:button variant="ghost" href="{{ route('admin.catalog.brands.index') }}" class="cursor-pointer">
                 Discard Changes
             </flux:button>
             <flux:button type="submit" variant="primary" class="cursor-pointer">

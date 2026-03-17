@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-4 p-5">
     <div class="text-sm text-zinc-500">
         Add descriptive pieces of information that customers can use to search for this product,
         such as "Material" or "Color".
@@ -10,14 +10,21 @@
             Add New
         </flux:button>
 
-        <flux:select wire:change="addExistingAttribute($event.target.value)" class="max-w-fit">
-            <flux:select.option value="">Add existing...</flux:select.option>
-            @foreach ($this->productAttributes as $attr)
-                <flux:select.option :value="$attr->id">
-                    {{ ucfirst($attr->name) }}
-                </flux:select.option>
-            @endforeach
-        </flux:select>
+        <div x-data>
+            <flux:select x-ref="attrSelect"
+                @change="
+            $wire.addExistingAttribute($event.target.value)
+                .then(() => { $refs.attrSelect.value = '' })
+        "
+                class="max-w-fit">
+                <flux:select.option value="">Add existing...</flux:select.option>
+                @foreach ($this->productAttributes as $attr)
+                    <flux:select.option :value="$attr->id">
+                        {{ ucfirst($attr->name) }}
+                    </flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
 
         @if (!empty($selectedAttributes))
             <div class="ms-auto flex items-center gap-2 text-sm text-zinc-500">

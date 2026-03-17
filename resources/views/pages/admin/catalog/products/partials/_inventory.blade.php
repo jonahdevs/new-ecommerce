@@ -1,5 +1,17 @@
 {{-- Inventory --}}
-<div wire:cloak wire:show="activeTab == 'inventory'" class="space-y-5">
+<div wire:cloak wire:show="activeTab == 'inventory'" class="space-y-5 p-5">
+
+    {{-- Virtual product notice --}}
+    <div wire:show="form.is_virtual" wire:cloak>
+        <flux:callout variant="warning" icon="information-circle">
+            <flux:callout.heading>Virtual product</flux:callout.heading>
+            <flux:callout.text>
+                Stock management does not apply to virtual products.
+                These fields will be ignored on save.
+            </flux:callout.text>
+        </flux:callout>
+    </div>
+
 
     {{-- SKU — always visible --}}
     <flux:field>
@@ -9,8 +21,6 @@
         @endif
         <flux:error name="form.sku" />
     </flux:field>
-
-
 
 
     {{-- Manage Stock --}}

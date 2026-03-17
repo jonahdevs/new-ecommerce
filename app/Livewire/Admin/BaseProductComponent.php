@@ -12,79 +12,191 @@ use App\Models\Tag;
 use App\Services\Product\ProductAttributeService;
 use App\Services\Product\ProductDownloadService;
 use App\Services\Product\ProductVariationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
+/**
+ * BaseProductComponent
+ *
+ * Abstract base class for the Create and Edit product Livewire components.
+ * Owns all shared state, validation, and persistence logic for product management.
+ * Concrete implementations (Create / Edit) only need to implement executeSave().
+ */
 abstract class BaseProductComponent extends Component
 {
     use WithFileUploads;
 
-    // ===================================================
+    // =========================================================================
     // CORE STATE
-    // ===================================================
+    // =========================================================================
 
+    /** The Livewire form object holding all product field values and rules. */
     public ProductForm $form;
+
+    /** Tracks whether the admin has unsaved changes — used for the beforeunload guard. */
+    public bool $isDirty = false;
+
+    /** The currently active tab in the Product Data card. */
     public string $activeTab = 'general';
+
+    /** Controls visibility of the inline "Add new category" form. */
     public bool $addNewCategory = false;
+
+    /** Controls visibility of the inline "Add new brand" form. */
     public bool $addNewBrand = false;
+
+    /** Controls visibility of the type-change confirmation modal. */
     public bool $showTypeChangeModal = false;
+
+    /** Holds the pending product type during a type-change confirmation flow. */
     public string $pendingProductType = '';
 
-    // ===================================================
+    // =========================================================================
     // ATTRIBUTES STATE
-    // ===================================================
+    // =========================================================================
 
+    /**
+     * The list of attributes currently added to this product.
+     * Each entry: [attribute_id, name, is_new, is_visible, is_variation_attribute, sort_order, values]
+     */
     public array $selectedAttributes = [];
+
+    /** Holds the selected value from the "Add existing attribute" dropdown before it is added. */
     public ?int $selectedExistingAttribute = null;
 
-    // ===================================================
+    // =========================================================================
     // VARIATIONS STATE
-    // ===================================================
+    // =========================================================================
 
+    /**
+     * The full list of variants for this product.
+     * Each entry maps to a ProductVariant row including pricing, stock,
+     * shipping, attributes, image, downloads, and flags.
+     */
     public array $variants = [];
+
+    /** IDs of variants queued for deletion on next save. */
     public array $variantsToDelete = [];
+
+    /**
+     * Subset of selectedAttributes where is_variation_attribute = true.
+     * Drives the Generate Variations and Default Variation UI.
+     */
     public array $availableAttributes = [];
+
+    /**
+     * Temporary file upload holders for variant images, keyed by variant index.
+     * Merged into variants[] before persistProduct() runs.
+     */
     public array $variantImages = [];
 
-    public ?float $bulkPrice = null;
-    public ?float $bulkSalePrice = null;
-    public ?int $bulkStockQuantity = null;
-    public ?float $bulkWeight = null;
-    public ?float $bulkLength = null;
-    public ?float $bulkWidth = null;
-    public ?float $bulkHeight = null;
+    /**
+     * Holds the selected attribute values for the "Default Variation" dropdowns.
+     * E.g. ['Color' => 'Red', 'Size' => 'Large']
+     * When all attributes are selected, applyDefaultVariantSelection() fires.
+     */
+    public array $defaultVariantAttributes = [];
 
-    // ===================================================
+    // Bulk action staging fields — these are UI-only and do not map to saved data
+    public ?float $bulkPrice         = null;
+    public ?float $bulkSalePrice     = null;
+    public ?int   $bulkStockQuantity = null;
+    public ?float $bulkWeight        = null;
+    public ?float $bulkLength        = null;
+    public ?float $bulkWidth         = null;
+    public ?float $bulkHeight        = null;
+
+    // =========================================================================
     // GROUPED PRODUCTS STATE
-    // ===================================================
+    // =========================================================================
 
+    /**
+     * Grouped products currently in the kit.
+     * Each entry: [id, name, sku, price, quantity]
+     */
     public array $groupedProducts = [];
+
+    /** Staging area for the grouped product multi-select before "Add" is clicked. */
     public array $selectedGroupedProducts = [];
 
-    // ===================================================
-    // ACCESSORIES STATE                      
-    // ===================================================
+    // =========================================================================
+    // ACCESSORIES STATE
+    // =========================================================================
 
+    /**
+     * Accessories currently linked to this product.
+     * Each entry: [id, name, sku, price, quantity]
+     */
     public array $accessories = [];
+
+    /** Staging area for the accessories multi-select before "Add" is clicked. */
     public array $selectedAccessories = [];
 
-    // ===================================================
+    // =========================================================================
     // DOWNLOADS STATE
-    // ===================================================
+    // =========================================================================
 
+    /** IDs of product-level download records queued for deletion on next save. */
     public array $downloadsToDelete = [];
 
-    // ===================================================
-    // SAVE
-    // ===================================================
+    // =========================================================================
+    // DIRTY TRACKING
+    // =========================================================================
 
+    /**
+     * Fires on every Livewire property update.
+     * Marks isDirty = true for any data-bearing property change,
+     * ignoring UI-only properties that don't represent unsaved data.
+     */
+    public function updated(string $property): void
+    {
+        $uiOnlyProperties = [
+            'activeTab',
+            'addNewCategory',
+            'addNewBrand',
+            'showTypeChangeModal',
+            'pendingProductType',
+            'selectedExistingAttribute',
+            'selectedGroupedProducts',
+            'selectedAccessories',
+            'defaultVariantAttributes',
+            'bulkPrice',
+            'bulkSalePrice',
+            'bulkStockQuantity',
+            'bulkWeight',
+            'bulkLength',
+            'bulkWidth',
+            'bulkHeight',
+            'isDirty',
+        ];
+
+        $root = explode('.', $property)[0];
+
+        if (!in_array($root, $uiOnlyProperties)) {
+            $this->isDirty = true;
+        }
+    }
+
+    // =========================================================================
+    // SAVE PIPELINE
+    // =========================================================================
+
+    /**
+     * Main save entry point.
+     * Runs validation in sequence, then hands off to the concrete executeSave().
+     * Any ValidationException is re-thrown so Livewire can surface field errors.
+     */
     public function save(): void
     {
         try {
             $this->form->validate();
+            $this->validateVariantImages();
+            $this->validateDownloads();
+            $this->validateVariants();
         } catch (ValidationException $e) {
             $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields.');
             throw $e;
@@ -93,100 +205,209 @@ abstract class BaseProductComponent extends Component
         $this->executeSave();
     }
 
+    /**
+     * Implemented by Create and Edit to define what happens after validation passes.
+     * Typically calls form->store() or form->update() then persistProduct().
+     */
     abstract protected function executeSave(): void;
 
+    /**
+     * Persists all product-related data that lives outside ProductForm:
+     * attributes, variations (with variant downloads), and product-level downloads.
+     * Wrapped in a DB transaction so a partial failure rolls back everything.
+     */
     protected function persistProduct(Product $product): void
     {
-        // Merge variant images before saving
+        DB::transaction(function () use ($product) {
+            // Merge any newly uploaded variant images into the variants array
+            foreach ($this->variantImages as $index => $image) {
+                if (!empty($image) && isset($this->variants[$index])) {
+                    $this->variants[$index]['image'] = $image;
+                }
+            }
+
+            // Sync component-level arrays back to the form before saving
+            // so ProductForm::syncRelationships() has the current state
+            $this->form->grouped_products = collect($this->groupedProducts)
+                ->map(fn($item) => [
+                    'id'       => $item['id'],
+                    'quantity' => $item['quantity'] ?? 1,
+                ])
+                ->toArray();
+
+            $this->form->accessories = collect($this->accessories)
+                ->map(fn($item) => [
+                    'id'       => $item['id'],
+                    'quantity' => $item['quantity'] ?? 1,
+                ])
+                ->toArray();
+
+            // Attributes and variations are not relevant for grouped products
+            if ($product->type !== 'grouped') {
+                app(ProductAttributeService::class)->save(
+                    $product,
+                    $this->selectedAttributes
+                );
+
+                app(ProductVariationService::class)->save(
+                    $product,
+                    $this->variants,
+                    $this->variantsToDelete
+                );
+            }
+
+            // Product-level downloads (variant_id = null) are synced separately
+            if ($this->form->is_downloadable) {
+                app(ProductDownloadService::class)->sync(
+                    product: $product,
+                    downloads: $this->form->downloads,
+                    downloadsToDelete: $this->downloadsToDelete,
+                    variantId: null,
+                );
+            }
+        });
+    }
+
+    // =========================================================================
+    // VALIDATION HELPERS
+    // =========================================================================
+
+    /**
+     * Validates any uploaded variant images against file type and size rules.
+     * Runs before executeSave() so invalid files are caught early.
+     */
+    protected function validateVariantImages(): void
+    {
+        $rules = [];
+
         foreach ($this->variantImages as $index => $image) {
-            if (!empty($image) && isset($this->variants[$index])) {
-                $this->variants[$index]['image'] = $image;
+            if (!empty($image)) {
+                $rules["variantImages.{$index}"] = [
+                    'nullable',
+                    'image',
+                    'max:2048',
+                    'mimes:jpg,jpeg,png,gif,webp',
+                ];
             }
         }
 
-        // Sync grouped products to form before saving
-        $this->form->grouped_products = collect($this->groupedProducts)
-            ->map(fn($item) => [
-                'id'       => $item['id'],
-                'quantity' => $item['quantity'] ?? 1,
-            ])
-            ->toArray();
-
-        // Sync accessories to form before saving  ← ADD THIS
-        $this->form->accessories = collect($this->accessories)
-            ->map(fn($item) => [
-                'id'       => $item['id'],
-                'quantity' => $item['quantity'] ?? 1,
-            ])
-            ->toArray();
-
-        // Save attributes and variations for non-grouped products
-        if ($product->type !== 'grouped') {
-            app(ProductAttributeService::class)->save(
-                $product,
-                $this->selectedAttributes
-            );
-
-            app(ProductVariationService::class)->save(
-                $product,
-                $this->variants,
-                $this->variantsToDelete
-            );
-        }
-
-        // Save downloads for downloadable products
-        if ($this->form->is_downloadable) {
-            app(ProductDownloadService::class)->sync(
-                $product,
-                $this->form->downloads,
-                $this->downloadsToDelete
-            );
+        if (!empty($rules)) {
+            $this->validate($rules, [], [
+                'variantImages.*' => 'variant image',
+            ]);
         }
     }
 
-    // ===================================================
-    // TYPE SWITCHING
-    // ===================================================
+    /**
+     * Ensures every download row has either a newly uploaded file
+     * or an existing saved file path.
+     * Prevents saving an empty download record that produces a broken link.
+     */
+    protected function validateDownloads(): void
+    {
+        if (!$this->form->is_downloadable) {
+            return;
+        }
 
+        foreach ($this->form->downloads as $index => $download) {
+            $hasNewFile      = !empty($download['file']);
+            $hasExistingFile = !empty($download['file_path']);
+
+            if (!$hasNewFile && !$hasExistingFile) {
+                $validator = validator([], []);
+                $validator->errors()->add(
+                    "form.downloads.{$index}.file",
+                    'Each download entry must have a file.'
+                );
+                throw new ValidationException($validator);
+            }
+        }
+    }
+
+    /**
+     * Validates active variant pricing for variable products:
+     * - Every active variant must have a regular price.
+     * - Sale price must be less than regular price when set.
+     */
+    protected function validateVariants(): void
+    {
+        if ($this->form->type !== 'variable') {
+            return;
+        }
+
+        foreach ($this->variants as $index => $variant) {
+            // Skip inactive variants — they are not shown in the store
+            if (empty($variant['is_active'])) {
+                continue;
+            }
+
+            if (is_null($variant['price']) || $variant['price'] === '') {
+                $validator = validator([], []);
+                $validator->errors()->add(
+                    "variants.{$index}.price",
+                    'Variation "' . ($variant['name'] ?? '#' . ($index + 1)) . '" must have a price.'
+                );
+                throw new ValidationException($validator);
+            }
+
+            if (!empty($variant['sale_price']) && $variant['sale_price'] >= $variant['price']) {
+                $validator = validator([], []);
+                $validator->errors()->add(
+                    "variants.{$index}.sale_price",
+                    'Sale price for "' . ($variant['name'] ?? '#' . ($index + 1)) . '" must be less than regular price.'
+                );
+                throw new ValidationException($validator);
+            }
+        }
+    }
+
+    // =========================================================================
+    // PRODUCT TYPE SWITCHING
+    // =========================================================================
+
+    /**
+     * Fires when form.type changes.
+     * Handles state cleanup, tab redirection, and the type-change confirmation
+     * modal when switching away from variable while active variants exist.
+     */
     public function updatedFormType(string $value): void
     {
         $productId = $this->form->getProductId();
 
-        // Reset virtual/downloadable when switching to grouped
         if ($value === 'grouped') {
-            $this->form->is_virtual = false;
+            // Grouped products cannot be virtual or downloadable
+            $this->form->is_virtual      = false;
             $this->form->is_downloadable = false;
+
+            // Clear attribute/variation state — irrelevant for grouped
+            $this->selectedAttributes        = [];
+            $this->availableAttributes       = [];
+            $this->selectedExistingAttribute = null;
+
+            // Redirect away from tabs that don't apply to grouped products
+            if (in_array($this->activeTab, ['general', 'inventory', 'shipping', 'variations', 'downloads'])) {
+                $this->activeTab = 'linked-products';
+            }
         }
 
-        // Redirect away from hidden tabs when switching to grouped
-        if ($value === 'grouped' && in_array($this->activeTab, [
-            'general',
-            'inventory',
-            'shipping',
-            'variations',
-            'downloads'
-        ])) {
-            $this->activeTab = 'linked-products';
-        }
-
-        // Clear grouped state when switching away from grouped
         if ($value !== 'grouped') {
-            $this->groupedProducts = [];
+            // Clear grouped state when switching to any non-grouped type
+            $this->groupedProducts         = [];
             $this->selectedGroupedProducts = [];
         }
 
-        // Switching to simple — deactivate variants if any exist
+        // Switching to simple while active variants exist requires confirmation
         if (
             $value === 'simple' && $productId &&
             app(ProductVariationService::class)->hasActiveVariants($productId)
         ) {
-            $this->pendingProductType = $value;
-            $this->form->type = 'variable';
+            $this->pendingProductType  = $value;
+            $this->form->type          = 'variable'; // Hold at variable until confirmed
             $this->showTypeChangeModal = true;
             return;
         }
 
-        // Switching back to variable — reactivate variants
+        // Switching back to variable reactivates all deactivated variants
         if ($value === 'variable' && $productId) {
             app(ProductVariationService::class)->reactivateAll($productId);
             foreach ($this->variants as $index => $variant) {
@@ -196,22 +417,21 @@ abstract class BaseProductComponent extends Component
         }
     }
 
+    /**
+     * Fires when form.is_virtual changes.
+     * Redirects away from the Shipping tab when virtual is enabled —
+     * shipping is irrelevant for virtual products.
+     */
     public function updatedFormIsVirtual(bool $value): void
     {
-        // Redirect away from shipping when virtual is checked
         if ($value && $this->activeTab === 'shipping') {
             $this->activeTab = 'general';
         }
     }
 
-    public function updatedFormIsDownloadable(bool $value): void
-    {
-        // Redirect away from downloads when downloadable is unchecked
-        if (!$value && $this->activeTab === 'downloads') {
-            $this->activeTab = 'general';
-        }
-    }
-
+    /**
+     * Confirmed type change: deactivates all variants and switches to Simple.
+     */
     public function confirmTypeChange(): void
     {
         $productId = $this->form->getProductId();
@@ -224,23 +444,82 @@ abstract class BaseProductComponent extends Component
             $this->variants[$index]['is_active'] = false;
         }
 
-        $this->form->type = $this->pendingProductType;
-        $this->pendingProductType = '';
+        $this->form->type          = $this->pendingProductType;
+        $this->pendingProductType  = '';
         $this->showTypeChangeModal = false;
+
         $this->dispatch('notify', variant: 'warning', message: 'Switched to Simple. All variations deactivated.');
     }
 
+    /**
+     * Cancelled type change: reverts form.type back to variable.
+     */
     public function cancelTypeChange(): void
     {
-        $this->form->type = 'variable';
-        $this->pendingProductType = '';
+        $this->form->type          = 'variable';
+        $this->pendingProductType  = '';
         $this->showTypeChangeModal = false;
     }
 
-    // ===================================================
-    // ATTRIBUTES
-    // ===================================================
+    // =========================================================================
+    // DEFAULT VARIATION SELECTION
+    // =========================================================================
 
+    /**
+     * Fires when any defaultVariantAttributes dropdown changes.
+     * Delegates to applyDefaultVariantSelection() which matches the combination.
+     */
+    public function updatedDefaultVariantAttributes(): void
+    {
+        $this->applyDefaultVariantSelection();
+    }
+
+    /**
+     * Finds the variant matching the current defaultVariantAttributes selection
+     * and sets it as the default, clearing is_default on all others.
+     * Requires all variation attributes to have a selected value before running.
+     */
+    private function applyDefaultVariantSelection(): void
+    {
+        // Wait until every attribute has a value selected
+        if (count($this->defaultVariantAttributes) !== count($this->availableAttributes)) {
+            return;
+        }
+
+        $matched = null;
+
+        foreach ($this->variants as $index => $variant) {
+            $isMatch = true;
+
+            foreach ($this->defaultVariantAttributes as $attrName => $attrValue) {
+                if (($variant['attributes'][$attrName] ?? null) !== $attrValue) {
+                    $isMatch = false;
+                    break;
+                }
+            }
+
+            $this->variants[$index]['is_default'] = $isMatch;
+
+            if ($isMatch) {
+                $matched = $index;
+            }
+        }
+
+        if ($matched !== null) {
+            $this->dispatch('notify', variant: 'success', message: 'Default variation updated.');
+        } else {
+            $this->dispatch('notify', variant: 'warning', message: 'No variation matches this combination.');
+        }
+    }
+
+    // =========================================================================
+    // ATTRIBUTES
+    // =========================================================================
+
+    /**
+     * Loads the product's existing attributes into selectedAttributes state
+     * and rebuilds availableAttributes (variation-only subset).
+     */
     protected function loadProductAttributes(Product $product): void
     {
         $this->selectedAttributes = $product
@@ -261,6 +540,7 @@ abstract class BaseProductComponent extends Component
         $this->syncAvailableAttributes();
     }
 
+    /** Appends a blank new attribute row to the attributes list. */
     public function addNewAttribute(): void
     {
         $this->selectedAttributes[] = [
@@ -274,6 +554,10 @@ abstract class BaseProductComponent extends Component
         ];
     }
 
+    /**
+     * Adds an existing global attribute to the product's attribute list.
+     * Prevents duplicates and dispatches a warning if already added.
+     */
     public function addExistingAttribute($attributeId): void
     {
         if (!$attributeId) return;
@@ -303,6 +587,7 @@ abstract class BaseProductComponent extends Component
         $this->syncAvailableAttributes();
     }
 
+    /** Removes an attribute row by index and re-indexes the array. */
     public function removeSelectedAttribute(int $index): void
     {
         array_splice($this->selectedAttributes, $index, 1);
@@ -310,21 +595,31 @@ abstract class BaseProductComponent extends Component
         $this->syncAvailableAttributes();
     }
 
+    /**
+     * Called by Livewire when selectedAttributes changes.
+     * Busts the productAttributeValueOptions computed cache
+     * and re-syncs availableAttributes.
+     */
     public function updatedSelectedAttributes(): void
     {
+        unset($this->productAttributeValueOptions);
         $this->syncAvailableAttributes();
     }
 
+    /**
+     * Returns pre-loaded attribute values for a given attribute ID.
+     * Reads from the productAttributeValueOptions computed property
+     * to avoid N+1 queries in Blade loops.
+     */
     public function getProductAttributeValues(int $attributeId): array
     {
-        return AttributeValue::where('attribute_id', $attributeId)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get()
-            ->map(fn($v) => ['id' => $v->id, 'name' => $v->label ?: $v->value])
-            ->toArray();
+        return $this->productAttributeValueOptions[$attributeId] ?? [];
     }
 
+    /**
+     * Saves the current selectedAttributes to the DB via ProductAttributeService.
+     * Validates that all attributes have a name and at least one value before saving.
+     */
     public function saveAttributes(): void
     {
         $productId = $this->form->getProductId();
@@ -359,6 +654,11 @@ abstract class BaseProductComponent extends Component
         $this->dispatch('notify', variant: 'success', message: 'Attributes saved.');
     }
 
+    /**
+     * Rebuilds availableAttributes as the subset of selectedAttributes
+     * where is_variation_attribute = true.
+     * Called whenever selectedAttributes changes.
+     */
     private function syncAvailableAttributes(): void
     {
         $this->availableAttributes = collect($this->selectedAttributes)
@@ -367,10 +667,15 @@ abstract class BaseProductComponent extends Component
             ->toArray();
     }
 
-    // ===================================================
-    // VARIATIONS
-    // ===================================================
+    // =========================================================================
+    // VARIATIONS — LOADING
+    // =========================================================================
 
+    /**
+     * Loads all active variants for the product into the variants state array.
+     * Includes attribute values, images, and per-variant downloads.
+     * Also pre-selects defaultVariantAttributes from the default variant.
+     */
     protected function loadProductVariants(Product $product): void
     {
         $this->variants = $product
@@ -378,6 +683,7 @@ abstract class BaseProductComponent extends Component
             ->with([
                 'attributeValues:id,attribute_id,value',
                 'attributeValues.attribute:id,name',
+                'downloads',
             ])
             ->get()
             ->map(fn($variant) => [
@@ -385,13 +691,13 @@ abstract class BaseProductComponent extends Component
                 'name'                => $variant->name,
                 'sku'                 => $variant->sku,
                 'image_path'          => $variant->image_path,
-                'image'               => null,
+                'image'               => null, // Staging field for new uploads
                 'price'               => $variant->price,
                 'sale_price'          => $variant->sale_price,
                 'manage_stock'        => $variant->manage_stock,
                 'stock_quantity'      => $variant->stock_quantity,
                 'stock_status'        => $variant->stock_status,
-                'allow_backorders'    => $variant->allow_backorders,
+                'allow_backorders'    => $variant->allow_backorders ? '1' : '',
                 'low_stock_threshold' => $variant->low_stock_threshold,
                 'weight'              => $variant->weight,
                 'length'              => $variant->length,
@@ -404,11 +710,42 @@ abstract class BaseProductComponent extends Component
                     ->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])
                     ->toArray(),
                 'attribute_value_ids' => $variant->attributeValues->pluck('id')->toArray(),
-                'attribute_hash'      => md5(implode('-', $variant->attributeValues->pluck('id')->sort()->toArray())),
+                'attribute_hash'      => md5(
+                    implode('-', $variant->attributeValues->pluck('id')->sort()->toArray())
+                ),
+                // Per-variant download files (variant_id = this variant's ID)
+                'downloads'           => $variant->downloads->map(fn($d) => [
+                    'id'                  => $d->id,
+                    'name'                => $d->name,
+                    'file'                => null,
+                    'file_path'           => $d->file_path,
+                    'file_name'           => $d->file_name,
+                    'file_type'           => $d->file_type,
+                    'file_size'           => $d->file_size,
+                    'formatted_file_size' => $d->formatted_file_size,
+                ])->toArray(),
+                'downloads_to_delete' => [],
             ])
             ->toArray();
+
+        // Pre-populate the Default Variation dropdowns from the saved default variant
+        $defaultVariant = collect($this->variants)->firstWhere('is_default', true)
+            ?? collect($this->variants)->first();
+
+        if ($defaultVariant) {
+            $this->defaultVariantAttributes = $defaultVariant['attributes'];
+        }
     }
 
+    // =========================================================================
+    // VARIATIONS — GENERATION
+    // =========================================================================
+
+    /**
+     * Generates all missing variant combinations from the current variation attributes.
+     * Uses a Cartesian product of attribute values and skips existing hashes.
+     * New variants are appended to the variants array without affecting existing ones.
+     */
     public function generateVariations(): void
     {
         $variationAttributes = collect($this->availableAttributes)
@@ -441,79 +778,66 @@ abstract class BaseProductComponent extends Component
             return;
         }
 
-        $combinations = $this->cartesian($attributeValueGroups);
+        $combinations   = $this->cartesian($attributeValueGroups);
         $existingHashes = collect($this->variants)->pluck('attribute_hash')->toArray();
-        $newCount = 0;
+        $newCount       = 0;
 
         foreach ($combinations as $combination) {
             $valueIds = collect($combination)->pluck('value_id')->sort()->toArray();
-            $hash = md5(implode('-', $valueIds));
+            $hash     = md5(implode('-', $valueIds));
 
+            // Skip combinations that already exist
             if (in_array($hash, $existingHashes)) continue;
 
             $attributes = collect($combination)
                 ->mapWithKeys(fn($c) => [$c['attribute_name'] => $c['value']])
                 ->toArray();
 
-            $this->variants[] = [
-                'id'                  => null,
-                'name'                => implode(' - ', array_values($attributes)),
-                'sku'                 => '',
-                'image'               => null,
-                'image_path'          => null,
-                'price'               => null,
-                'sale_price'          => null,
-                'manage_stock'        => true,
-                'stock_quantity'      => 0,
-                'stock_status'        => 'in_stock',
-                'allow_backorders'    => false,
-                'low_stock_threshold' => null,
-                'weight'              => null,
-                'length'              => null,
-                'width'               => null,
-                'height'              => null,
-                'description'         => null,
-                'is_active'           => true,
-                'is_default'          => false,
-                'attributes'          => $attributes,
-                'attribute_value_ids' => $valueIds,
-                'attribute_hash'      => $hash,
-            ];
-
+            $this->variants[] = $this->blankVariantTemplate($attributes, $valueIds, $hash);
             $newCount++;
         }
 
         $this->dispatch('notify', variant: 'success', message: "{$newCount} new variation(s) generated.");
     }
 
-    public function addVariant(): void
+    /**
+     * Re-runs generateVariations() to add any missing combinations
+     * without affecting existing variants.
+     * Dispatches an info notice if nothing new was added.
+     */
+    public function regenerateVariations(): void
     {
-        $this->variants[] = [
-            'id'                  => null,
-            'name'                => null,
-            'sku'                 => '',
-            'image'               => null,
-            'image_path'          => null,
-            'price'               => null,
-            'sale_price'          => null,
-            'manage_stock'        => true,
-            'stock_quantity'      => 0,
-            'stock_status'        => 'in_stock',
-            'allow_backorders'    => false,
-            'low_stock_threshold' => null,
-            'weight'              => null,
-            'length'              => null,
-            'width'               => null,
-            'height'              => null,
-            'description'         => null,
-            'is_active'           => true,
-            'is_default'          => false,
-            'attributes'          => [],
-            'attribute_value_ids' => [],
-            'attribute_hash'      => Str::uuid(),
-        ];
+        $before = count($this->variants);
+        $this->generateVariations();
+        $after  = count($this->variants);
+
+        if ($after === $before) {
+            $this->dispatch('notify', variant: 'info', message: 'All variation combinations already exist. Nothing to add.');
+        }
     }
 
+    // =========================================================================
+    // VARIATIONS — CRUD
+    // =========================================================================
+
+    /**
+     * Appends a blank manually-added variant row to the variants array.
+     * Uses a manual_ prefixed hash to distinguish from generated variants
+     * and prevent false duplicate detection in generateVariations().
+     */
+    public function addVariant(): void
+    {
+        $this->variants[] = $this->blankVariantTemplate(
+            attributes: [],
+            valueIds: [],
+            hash: 'manual_' . uniqid('', true)
+        );
+    }
+
+    /**
+     * Removes a variant by index.
+     * If the variant has an ID (already saved), queues it for deletion on save.
+     */
     public function removeVariant(int $index): void
     {
         $variant = $this->variants[$index];
@@ -526,6 +850,10 @@ abstract class BaseProductComponent extends Component
         $this->variants = array_values($this->variants);
     }
 
+    /**
+     * Queues all variants for deletion and clears the variants array.
+     * Deletions are applied to the DB on next save.
+     */
     public function clearAllVariants(): void
     {
         foreach ($this->variants as $variant) {
@@ -538,17 +866,19 @@ abstract class BaseProductComponent extends Component
         $this->dispatch('notify', variant: 'success', message: 'All variations removed. Save to apply.');
     }
 
+    /** Clears the variant image upload for a given index and nulls its stored path. */
     public function removeVariantImage(int $index): void
     {
-        $this->variantImages[$index] = null;
+        $this->variantImages[$index]          = null;
         $this->variants[$index]['image_path'] = null;
-        $this->variants[$index]['image'] = null;
+        $this->variants[$index]['image']      = null;
     }
 
-    // -----------------------------------------------
-    // Bulk Actions
-    // -----------------------------------------------
+    // =========================================================================
+    // VARIATIONS — BULK ACTIONS
+    // =========================================================================
 
+    /** Toggles is_active on all variants simultaneously. */
     public function toggleAllVariantsActive(): void
     {
         foreach ($this->variants as $index => $variant) {
@@ -556,6 +886,7 @@ abstract class BaseProductComponent extends Component
         }
     }
 
+    /** Toggles manage_stock on all variants simultaneously. */
     public function toggleAllVariantsManageStock(): void
     {
         foreach ($this->variants as $index => $variant) {
@@ -563,6 +894,7 @@ abstract class BaseProductComponent extends Component
         }
     }
 
+    /** Sets stock_status to the given value on all variants. */
     public function setAllVariantsStockStatus(string $status): void
     {
         foreach ($this->variants as $index => $variant) {
@@ -570,20 +902,30 @@ abstract class BaseProductComponent extends Component
         }
     }
 
+    /**
+     * Applies bulkPrice and/or bulkSalePrice to all variants,
+     * then clears the bulk staging fields.
+     */
     public function applyBulkPricing(): void
     {
         foreach ($this->variants as $index => $variant) {
-            if ($this->bulkPrice !== null)
+            if ($this->bulkPrice !== null) {
                 $this->variants[$index]['price'] = $this->bulkPrice;
-            if ($this->bulkSalePrice !== null)
+            }
+            if ($this->bulkSalePrice !== null) {
                 $this->variants[$index]['sale_price'] = $this->bulkSalePrice;
+            }
         }
 
-        $this->bulkPrice = $this->bulkSalePrice = null;
+        $this->bulkPrice     = null;
+        $this->bulkSalePrice = null;
         $this->dispatch('notify', variant: 'success', message: 'Pricing applied to all variations.');
-        $this->dispatch('close-modal', name: 'bulk-pricing');
     }
 
+    /**
+     * Applies bulkStockQuantity to all variants,
+     * then clears the bulk staging field.
+     */
     public function applyBulkStock(): void
     {
         foreach ($this->variants as $index => $variant) {
@@ -594,31 +936,69 @@ abstract class BaseProductComponent extends Component
 
         $this->bulkStockQuantity = null;
         $this->dispatch('notify', variant: 'success', message: 'Stock applied to all variations.');
-        $this->dispatch('close-modal', name: 'bulk-stock');
     }
 
+    /**
+     * Applies bulk weight and dimensions to all variants,
+     * then clears the bulk staging fields.
+     */
     public function applyBulkDimensions(): void
     {
         foreach ($this->variants as $index => $variant) {
-            if ($this->bulkWeight !== null)
-                $this->variants[$index]['weight'] = $this->bulkWeight;
-            if ($this->bulkLength !== null)
-                $this->variants[$index]['length'] = $this->bulkLength;
-            if ($this->bulkWidth !== null)
-                $this->variants[$index]['width'] = $this->bulkWidth;
-            if ($this->bulkHeight !== null)
-                $this->variants[$index]['height'] = $this->bulkHeight;
+            if ($this->bulkWeight !== null) $this->variants[$index]['weight'] = $this->bulkWeight;
+            if ($this->bulkLength !== null) $this->variants[$index]['length'] = $this->bulkLength;
+            if ($this->bulkWidth  !== null) $this->variants[$index]['width']  = $this->bulkWidth;
+            if ($this->bulkHeight !== null) $this->variants[$index]['height'] = $this->bulkHeight;
         }
 
         $this->bulkWeight = $this->bulkLength = $this->bulkWidth = $this->bulkHeight = null;
         $this->dispatch('notify', variant: 'success', message: 'Dimensions applied to all variations.');
-        $this->dispatch('close-modal', name: 'bulk-dimensions');
     }
 
-    // ===================================================
-    // GROUPED PRODUCTS
-    // ===================================================
+    // =========================================================================
+    // VARIATIONS — DOWNLOADS
+    // =========================================================================
 
+    /** Appends a blank download row to a specific variant's downloads array. */
+    public function addVariantDownloadFile(int $variantIndex): void
+    {
+        $this->variants[$variantIndex]['downloads'][] = [
+            'id'        => null,
+            'name'      => '',
+            'file'      => null,
+            'file_path' => null,
+            'file_name' => null,
+            'file_type' => null,
+            'file_size' => null,
+        ];
+    }
+
+    /**
+     * Removes a download row from a specific variant.
+     * If the row has a saved ID, queues it for deletion in downloads_to_delete.
+     */
+    public function removeVariantDownloadFile(int $variantIndex, int $downloadIndex): void
+    {
+        $download = $this->variants[$variantIndex]['downloads'][$downloadIndex];
+
+        if (!empty($download['id'])) {
+            $this->variants[$variantIndex]['downloads_to_delete'][] = $download['id'];
+        }
+
+        array_splice($this->variants[$variantIndex]['downloads'], $downloadIndex, 1);
+        $this->variants[$variantIndex]['downloads'] = array_values(
+            $this->variants[$variantIndex]['downloads']
+        );
+    }
+
+    // =========================================================================
+    // GROUPED PRODUCTS
+    // =========================================================================
+
+    /**
+     * Loads grouped products (kit items) for the product into component state.
+     * Reads from the groupedProducts() relationship with pivot quantity.
+     */
     protected function loadGroupedProducts(Product $product): void
     {
         $this->groupedProducts = $product
@@ -634,10 +1014,63 @@ abstract class BaseProductComponent extends Component
             ->toArray();
     }
 
-    // ============================================================ 
-    //  loadAccessories
-    // ============================================================ 
+    /**
+     * Adds the selected products from the staging array to the kit.
+     * Prevents duplicates and notifies on success.
+     */
+    public function addGroupedProducts(): void
+    {
+        if (empty($this->selectedGroupedProducts)) return;
 
+        $existingIds = collect($this->groupedProducts)->pluck('id')->toArray();
+        $newIds      = array_filter(
+            $this->selectedGroupedProducts,
+            fn($id) => !in_array($id, $existingIds)
+        );
+
+        if (empty($newIds)) {
+            $this->dispatch('notify', variant: 'warning', message: 'Selected products are already in the kit.');
+            return;
+        }
+
+        $products = Product::whereIn('id', $newIds)->select('id', 'name', 'sku', 'price')->get();
+
+        foreach ($products as $product) {
+            $this->groupedProducts[] = [
+                'id'       => $product->id,
+                'name'     => $product->name,
+                'sku'      => $product->sku,
+                'price'    => $product->price,
+                'quantity' => 1,
+            ];
+        }
+
+        $this->selectedGroupedProducts = [];
+        $this->dispatch('notify', variant: 'success', message: count($products) . ' product(s) added to kit.');
+    }
+
+    /** Removes a grouped product from the kit by index. */
+    public function removeGroupedProduct(int $index): void
+    {
+        array_splice($this->groupedProducts, $index, 1);
+        $this->groupedProducts = array_values($this->groupedProducts);
+    }
+
+    /** Calculates the total price of all items in the grouped product kit. */
+    public function getGroupedTotal(): float
+    {
+        return collect($this->groupedProducts)
+            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+    }
+
+    // =========================================================================
+    // ACCESSORIES
+    // =========================================================================
+
+    /**
+     * Loads accessories linked to the product into component state.
+     * Reads from the accessories() relationship with pivot quantity.
+     */
     protected function loadAccessories(Product $product): void
     {
         $this->accessories = $product
@@ -653,54 +1086,16 @@ abstract class BaseProductComponent extends Component
             ->toArray();
     }
 
-    public function addGroupedProducts(): void
-    {
-        if (empty($this->selectedGroupedProducts)) return;
-
-        $existingIds = collect($this->groupedProducts)->pluck('id')->toArray();
-
-        $newIds = array_filter(
-            $this->selectedGroupedProducts,
-            fn($id) => !in_array($id, $existingIds)
-        );
-
-        if (empty($newIds)) {
-            $this->dispatch('notify', variant: 'warning', message: 'Selected products are already in the kit.');
-            return;
-        }
-
-        $products = Product::whereIn('id', $newIds)
-            ->select('id', 'name', 'sku', 'price')
-            ->get();
-
-        foreach ($products as $product) {
-            $this->groupedProducts[] = [
-                'id'       => $product->id,
-                'name'     => $product->name,
-                'sku'      => $product->sku,
-                'price'    => $product->price,
-                'quantity' => 1,
-            ];
-        }
-
-        $added = count($products);
-        $this->selectedGroupedProducts = [];
-        $this->dispatch('notify', variant: 'success', message: "{$added} product(s) added to kit.");
-    }
-
-    public function removeGroupedProduct(int $index): void
-    {
-        array_splice($this->groupedProducts, $index, 1);
-        $this->groupedProducts = array_values($this->groupedProducts);
-    }
-
+    /**
+     * Adds the selected accessories from the staging array.
+     * Prevents duplicates and notifies on success.
+     */
     public function addAccessories(): void
     {
         if (empty($this->selectedAccessories)) return;
 
         $existingIds = collect($this->accessories)->pluck('id')->toArray();
-
-        $newIds = array_filter(
+        $newIds      = array_filter(
             $this->selectedAccessories,
             fn($id) => !in_array($id, $existingIds)
         );
@@ -710,9 +1105,7 @@ abstract class BaseProductComponent extends Component
             return;
         }
 
-        $products = Product::whereIn('id', $newIds)
-            ->select('id', 'name', 'sku', 'price')
-            ->get();
+        $products = Product::whereIn('id', $newIds)->select('id', 'name', 'sku', 'price')->get();
 
         foreach ($products as $product) {
             $this->accessories[] = [
@@ -724,31 +1117,30 @@ abstract class BaseProductComponent extends Component
             ];
         }
 
-        $added = count($products);
         $this->selectedAccessories = [];
-        $this->dispatch('notify', variant: 'success', message: "{$added} accessory(s) added.");
+        $this->dispatch('notify', variant: 'success', message: count($products) . ' accessory(s) added.');
     }
 
+    /** Removes an accessory by index. */
     public function removeAccessory(int $index): void
     {
         array_splice($this->accessories, $index, 1);
         $this->accessories = array_values($this->accessories);
     }
 
+    // =========================================================================
+    // PRODUCT-LEVEL DOWNLOADS
+    // =========================================================================
 
-    public function getGroupedTotal(): float
-    {
-        return collect($this->groupedProducts)
-            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 1));
-    }
-
-    // ===================================================
-    // DOWNLOADS
-    // ===================================================
-
+    /**
+     * Loads product-level download files (variant_id = null) into form state.
+     * Variant-level downloads are loaded separately in loadProductVariants().
+     */
     protected function loadProductDownloads(Product $product): void
     {
-        $this->form->downloads = $product->downloads
+        $this->form->downloads = $product->downloads()
+            ->whereNull('variant_id')
+            ->get()
             ->map(fn($download) => [
                 'id'                  => $download->id,
                 'name'                => $download->name,
@@ -762,6 +1154,7 @@ abstract class BaseProductComponent extends Component
             ->toArray();
     }
 
+    /** Appends a blank download row to the product-level downloads list. */
     public function addDownloadFile(): void
     {
         $this->form->downloads[] = [
@@ -775,6 +1168,10 @@ abstract class BaseProductComponent extends Component
         ];
     }
 
+    /**
+     * Removes a product-level download row by index.
+     * If the row has a saved ID, queues it for deletion.
+     */
     public function removeDownloadFile(int $index): void
     {
         if (!empty($this->form->downloads[$index]['id'])) {
@@ -785,55 +1182,67 @@ abstract class BaseProductComponent extends Component
         $this->form->downloads = array_values($this->form->downloads);
     }
 
+    /** Clears the uploaded file from a download row without removing the row itself. */
     public function clearDownloadFile(int $index): void
     {
         $this->form->downloads[$index]['file'] = null;
     }
 
-    // ===================================================
+    // =========================================================================
     // IMAGES
-    // ===================================================
+    // =========================================================================
 
-    public function removeGalleryImage(string $imagePath): void
+    /**
+     * Marks an existing gallery image for deletion on next save
+     * and removes it from the existingImages display list immediately.
+     */
+    public function removeGalleryImage(int $imageId): void
     {
-        if (!in_array($imagePath, $this->form->imagesToDelete)) {
-            $this->form->imagesToDelete[] = $imagePath;
+        if (!in_array($imageId, $this->form->imagesToDelete)) {
+            $this->form->imagesToDelete[] = $imageId;
         }
 
         $this->form->existingImages = array_values(
             array_filter(
                 $this->form->existingImages,
-                fn($path) => $path !== $imagePath
+                fn($img) => $img['id'] !== $imageId
             )
         );
     }
 
+    /**
+     * Removes a newly uploaded gallery image that has not yet been saved.
+     * Operates on the form->images staging array.
+     */
     public function removeNewImage(int $index): void
     {
         unset($this->form->images[$index]);
         $this->form->images = array_values($this->form->images);
     }
 
-    // ===================================================
+    // =========================================================================
     // TAGS
-    // ===================================================
+    // =========================================================================
 
+    /** Parses form->newTagInput and adds each tag to the selection. */
     public function addTags(): void
     {
         $this->form->addTags();
         unset($this->selectedTags);
     }
 
+    /** Removes a tag from the selection by ID. */
     public function removeTag(int $tagId): void
     {
         $this->form->removeTag($tagId);
         unset($this->selectedTags);
     }
 
-    // ===================================================
+    // =========================================================================
     // CATEGORIES
-    // ===================================================
+    // =========================================================================
 
+    /** Creates a new category and adds it to the selection, then resets the form. */
     public function createCategory(): void
     {
         $this->form->createCategory();
@@ -841,16 +1250,18 @@ abstract class BaseProductComponent extends Component
         unset($this->categories);
     }
 
+    /** Cancels category creation and resets the inline form fields. */
     public function cancelCategoryCreation(): void
     {
         $this->form->resetCategoryForm();
         $this->addNewCategory = false;
     }
 
-    // ===================================================
+    // =========================================================================
     // BRANDS
-    // ===================================================
+    // =========================================================================
 
+    /** Creates a new brand and selects it, then resets the form. */
     public function createBrand(): void
     {
         $this->form->createBrand();
@@ -858,16 +1269,18 @@ abstract class BaseProductComponent extends Component
         unset($this->brands);
     }
 
+    /** Cancels brand creation and resets the inline form fields. */
     public function cancelBrandCreation(): void
     {
         $this->form->resetBrandForm();
         $this->addNewBrand = false;
     }
 
-    // ===================================================
+    // =========================================================================
     // TAB ERROR INDICATORS
-    // ===================================================
+    // =========================================================================
 
+    /** Returns true if any General tab field has a validation error. */
     public function hasGeneralErrors(): bool
     {
         return $this->getErrorBag()->hasAny([
@@ -881,6 +1294,7 @@ abstract class BaseProductComponent extends Component
         ]);
     }
 
+    /** Returns true if any Inventory tab field has a validation error. */
     public function hasInventoryErrors(): bool
     {
         return $this->getErrorBag()->hasAny([
@@ -894,6 +1308,7 @@ abstract class BaseProductComponent extends Component
         ]);
     }
 
+    /** Returns true if any Shipping tab field has a validation error. */
     public function hasShippingErrors(): bool
     {
         return $this->getErrorBag()->hasAny([
@@ -904,6 +1319,7 @@ abstract class BaseProductComponent extends Component
         ]);
     }
 
+    /** Returns true if any Linked Products tab field has a validation error. */
     public function hasLinkedProductsErrors(): bool
     {
         return $this->getErrorBag()->hasAny([
@@ -914,25 +1330,50 @@ abstract class BaseProductComponent extends Component
         ]);
     }
 
+    /** Returns true if any Attributes tab field has a validation error. */
     public function hasAttributesErrors(): bool
     {
-        return false;
+        return $this->getErrorBag()->hasAny([
+            'selectedAttributes',
+            'selectedAttributes.*',
+            'selectedAttributes.*.name',
+            'selectedAttributes.*.values',
+        ]);
     }
 
+    /** Returns true if any Variations tab field has a validation error. */
     public function hasVariationsErrors(): bool
     {
-        return false;
+        return $this->getErrorBag()->hasAny([
+            'variants',
+            'variants.*',
+            'variants.*.price',
+            'variants.*.sku',
+            'variants.*.stock_quantity',
+        ]);
     }
 
+    /** Returns true if any Advanced tab field has a validation error. */
     public function hasAdvancedErrors(): bool
     {
-        return false;
+        return $this->getErrorBag()->hasAny([
+            'form.sort_order',
+            'form.reviews_enabled',
+            'form.purchase_note',
+            'form.requires_quotation',
+            'form.min_order_quantity',
+            'form.quotation_notes',
+        ]);
     }
 
-    // ===================================================
+    // =========================================================================
     // COMPUTED PROPERTIES
-    // ===================================================
+    // =========================================================================
 
+    /**
+     * All active global attributes, ordered by sort_order.
+     * Persisted across requests since attributes rarely change mid-session.
+     */
     #[Computed(persist: true)]
     public function productAttributes()
     {
@@ -941,7 +1382,12 @@ abstract class BaseProductComponent extends Component
             ->get();
     }
 
-    #[Computed(persist: true)]
+    /**
+     * All active products except the current one, for use in
+     * upsell/cross-sell/accessory/grouped selectors.
+     * Not persisted — product list can change during the session.
+     */
+    #[Computed]
     public function products()
     {
         $currentId = $this->form->getProductId();
@@ -959,12 +1405,20 @@ abstract class BaseProductComponent extends Component
             ]);
     }
 
+    /**
+     * All active brands for the brand selector.
+     * Persisted — busted explicitly after createBrand().
+     */
     #[Computed(persist: true)]
     public function brands()
     {
         return Brand::active()->ordered()->select('id', 'name')->get();
     }
 
+    /**
+     * Flattened category tree for the category checkbox list.
+     * Persisted — busted explicitly after createCategory().
+     */
     #[Computed(persist: true)]
     public function categories()
     {
@@ -978,19 +1432,25 @@ abstract class BaseProductComponent extends Component
         return $this->flattenCategories($categories);
     }
 
+    /** All active categories (unflattened) for the parent category selector. */
     #[Computed]
     public function allCategories()
     {
         return Category::active()->orderBy('name')->get();
     }
 
+    /** The currently selected tags as a Tag collection, for display in the tag badges. */
     #[Computed]
     public function selectedTags()
     {
         return $this->form->getSelectedTags();
     }
 
-    #[Computed(persist: true)]
+    /**
+     * Top 20 most-used tags for the "most used tags" quick-pick.
+     * Not persisted — tag counts change as products are created.
+     */
+    #[Computed]
     public function mostUsedTags()
     {
         return Tag::withCount('products')
@@ -999,11 +1459,102 @@ abstract class BaseProductComponent extends Component
             ->get();
     }
 
-    // ===================================================
-    // HELPERS
-    // ===================================================
+    /**
+     * All attribute values for the currently selected attributes,
+     * grouped by attribute_id to avoid N+1 queries in Blade loops.
+     * Busted when selectedAttributes changes via updatedSelectedAttributes().
+     */
+    #[Computed]
+    public function productAttributeValueOptions(): array
+    {
+        $ids = collect($this->selectedAttributes)
+            ->pluck('attribute_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
 
-    protected function flattenCategories($categories, $depth = 0): array
+        if (empty($ids)) return [];
+
+        return AttributeValue::whereIn('attribute_id', $ids)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->groupBy('attribute_id')
+            ->map(fn($values) => $values->map(fn($v) => [
+                'id'   => $v->id,
+                'name' => $v->label ?: $v->value,
+            ])->toArray())
+            ->toArray();
+    }
+
+    /**
+     * Count of active variants that are missing a regular price.
+     * Used to drive the "X variations do not have a price" alert banner.
+     */
+    #[Computed]
+    public function unpricedVariantsCount(): int
+    {
+        return collect($this->variants)
+            ->filter(fn($v) => $v['is_active'] && (is_null($v['price']) || $v['price'] === ''))
+            ->count();
+    }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
+
+    /**
+     * Returns a blank variant array template with sensible defaults.
+     * Used by both addVariant() and generateVariations() to ensure
+     * all variant rows have a consistent structure including downloads.
+     *
+     * @param array  $attributes Key-value map of attribute name => value
+     * @param array  $valueIds   Attribute value IDs for hash and sync
+     * @param string $hash       Unique hash — md5 of sorted value IDs for generated,
+     *                           manual_ prefixed uniqid for manually added variants
+     */
+    private function blankVariantTemplate(array $attributes, array $valueIds, string $hash): array
+    {
+        return [
+            'id'                  => null,
+            'name'                => empty($attributes)
+                ? null
+                : implode(' - ', array_values($attributes)),
+            'sku'                 => null,
+            'image'               => null,
+            'image_path'          => null,
+            'price'               => null,
+            'sale_price'          => null,
+            'manage_stock'        => true,
+            'stock_quantity'      => 0,
+            'stock_status'        => 'in_stock',
+            'allow_backorders'    => null,
+            'low_stock_threshold' => null,
+            'weight'              => null,
+            'length'              => null,
+            'width'               => null,
+            'height'              => null,
+            'description'         => null,
+            'is_active'           => true,
+            'is_default'          => false,
+            'attributes'          => $attributes,
+            'attribute_value_ids' => $valueIds,
+            'attribute_hash'      => $hash,
+            'downloads'           => [],
+            'downloads_to_delete' => [],
+        ];
+    }
+
+    /**
+     * Recursively flattens a nested category tree into a flat array
+     * with a depth indicator for use in indented checkbox lists.
+     *
+     * @param  \Illuminate\Support\Collection $categories Root-level categories with loaded children
+     * @param  int                            $depth      Current nesting depth (0 = root)
+     * @return array                          Flat array of [id, name, depth]
+     */
+    protected function flattenCategories($categories, int $depth = 0): array
     {
         $result = [];
 
@@ -1025,6 +1576,15 @@ abstract class BaseProductComponent extends Component
         return $result;
     }
 
+    /**
+     * Computes the Cartesian product of multiple arrays.
+     * Used by generateVariations() to produce all attribute value combinations.
+     *
+     * Example: [[S, M], [Red, Blue]] → [[S,Red], [S,Blue], [M,Red], [M,Blue]]
+     *
+     * @param  array $arrays Array of arrays to combine
+     * @return array         All possible combinations
+     */
     private function cartesian(array $arrays): array
     {
         $result = [[]];

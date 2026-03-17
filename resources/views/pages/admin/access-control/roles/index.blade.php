@@ -162,7 +162,8 @@ new #[Title('Roles')] class extends Component {
 
                     {{-- Footer --}}
                     <div class="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-600">
-                        <flux:link :href="route('admin.roles.edit', $role->id)" wire:navigate class="text-sm">
+                        <flux:link :href="route('admin.access-control.roles.edit', $role->id)" wire:navigate
+                            class="text-sm">
                             Edit Role
                         </flux:link>
 
@@ -211,7 +212,7 @@ new #[Title('Roles')] class extends Component {
                     </flux:select>
 
                     <flux:button icon="plus-circle" variant="primary" size="sm" class="cursor-pointer"
-                        :href="route('admin.users.create')" wire:navigate>
+                        :href="route('admin.access-control.users.create')" wire:navigate>
                         Add User
                     </flux:button>
                 </div>
@@ -292,7 +293,8 @@ new #[Title('Roles')] class extends Component {
 
                             <flux:table.cell class="pe-4! flex items-center justify-end gap-1">
                                 <flux:button icon="pencil-square" variant="ghost" size="sm" tooltip="Edit"
-                                    :href="route('admin.users.edit', $user)" class="cursor-pointer" wire:navigate />
+                                    :href="route('admin.access-control.users.edit', $user)" class="cursor-pointer"
+                                    wire:navigate />
 
                                 <flux:button icon="trash" icon-variant="outline" variant="ghost" tooltip="Delete"
                                     size="sm" class="text-red-500! cursor-pointer" />

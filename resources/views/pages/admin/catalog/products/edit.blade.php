@@ -2,16 +2,18 @@
 use Livewire\Attributes\Title;
 use App\Livewire\Admin\BaseProductComponent;
 use App\Models\Product;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 new #[Title('Edit Product')] class extends BaseProductComponent {
     public Product $product;
 
     public function mount(Product $product): void
     {
+        $this->authorize('update', $product);
+
         $this->product = $product;
         $this->form->setProduct($product);
-
-        // Load attributes and variations into Base state
         $this->loadProductAttributes($product);
         $this->loadProductVariants($product);
         $this->loadGroupedProducts($product);
@@ -21,10 +23,18 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
 
     protected function executeSave(): void
     {
+        $this->authorize('update', $this->product);
+
         try {
-            $this->form->update();
-            $this->persistProduct($this->product);
+            DB::transaction(function () {
+                $this->form->update();
+                $this->persistProduct($this->product);
+            });
+
             $this->dispatch('notify', variant: 'success', message: 'Product updated successfully!');
+            $this->dispatch('product-saved');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $th) {
             \Log::error('Product update failed', ['exception' => $th]);
             $this->dispatch('notify', variant: 'danger', message: 'Failed to update product.');
@@ -36,8 +46,11 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
 <div>
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item :href="route('admin.products.index')" wire:navigate>Products</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Edit</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.catalog.products.index')" wire:navigate>Products
+        </flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>
+            {{ Str::limit($product->name, 40) }}
+        </flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
     <div class="flex items-center justify-between">

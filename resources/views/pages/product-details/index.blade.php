@@ -9,11 +9,13 @@ use App\Services\ShippingCalculatorService;
 use App\Models\Product;
 use App\Models\Area;
 use App\Models\County;
+use App\Models\AttributeValue;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 use App\Models\ReviewHelpfulness;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 new #[Layout('layouts.guest')] class extends Component {
     public Product $product;
@@ -35,7 +37,11 @@ new #[Layout('layouts.guest')] class extends Component {
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
 
-    public function mount(Product $product, WishlistService $wishlist, CompareService $compareService, CartService $cartService)
+    // Variant state
+    public array $selectedAttributeValues = [];
+    public ?int $selectedVariantId = null;
+
+    public function mount(Product $product, WishlistService $wishlist, CompareService $compareService, CartService $cartService): void
     {
         $productService = app(ProductService::class);
         $productService->recordView($product);
@@ -43,6 +49,22 @@ new #[Layout('layouts.guest')] class extends Component {
 
         $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active(), 'accessories' => fn($q) => $q->active()]);
         $product->loadAvg('reviews', 'rating');
+
+        // Load variant data for variable products
+        if ($product->type === 'variable') {
+            $product->load([
+                'variants' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+                'variants.attributeValues.attribute',
+                'attributes' => fn($q) => $q->wherePivot('is_variation_attribute', true),
+            ]);
+
+            $defaultVariant = $product->variants->firstWhere('is_default', true) ?? $product->variants->first();
+
+            if ($defaultVariant) {
+                $this->selectedVariantId = $defaultVariant->id;
+                $this->selectedAttributeValues = $defaultVariant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
+            }
+        }
 
         $this->product = $product;
 
@@ -61,6 +83,113 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->initializeLocation();
     }
 
+    // -----------------------------------------------------------------------
+    // Variant computed properties
+    // -----------------------------------------------------------------------
+
+    #[Computed]
+    public function selectedVariant(): ?object
+    {
+        if ($this->product->type !== 'variable' || !$this->selectedVariantId) {
+            return null;
+        }
+
+        return $this->product->variants->firstWhere('id', $this->selectedVariantId);
+    }
+
+    #[Computed]
+    public function variationAttributes(): array
+    {
+        if ($this->product->type !== 'variable') {
+            return [];
+        }
+
+        // Collect all value IDs across all variation attributes in one query
+        $allValueIds = $this->product->attributes->flatMap(fn($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
+
+        $allValues = AttributeValue::whereIn('id', $allValueIds)->get()->keyBy('id');
+
+        return $this->product->attributes
+            ->map(
+                fn($attr) => [
+                    'name' => $attr->name,
+                    'values' => collect(json_decode($attr->pivot->values ?? '[]', true) ?? [])
+                        ->map(fn($id) => $allValues->get($id))
+                        ->filter()
+                        ->map(
+                            fn($v) => [
+                                'id' => $v->id,
+                                'value' => $v->value,
+                                'label' => $v->label ?: $v->value,
+                            ],
+                        )
+                        ->toArray(),
+                ],
+            )
+            ->toArray();
+    }
+
+    #[Computed]
+    public function selectedVariantValueIds(): array
+    {
+        return $this->selectedVariant?->attributeValues->pluck('id')->toArray() ?? [];
+    }
+
+    // -----------------------------------------------------------------------
+    // Variant selection
+    // -----------------------------------------------------------------------
+
+    public function selectAttributeValue(string $attributeName, string $value): void
+    {
+        $this->selectedAttributeValues[$attributeName] = $value;
+
+        // Try to find a matching active variant
+        $matched = $this->product->variants->filter(fn($variant) => $variant->is_active)->first(function ($variant) {
+            $variantAttrs = $variant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
+
+            foreach ($this->selectedAttributeValues as $attrName => $attrValue) {
+                if (($variantAttrs[$attrName] ?? null) !== $attrValue) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        $this->selectedVariantId = $matched?->id;
+
+        // Reset cart state when variant changes
+        $this->cartQuantity = 1;
+        $this->inCart = false;
+        $this->cartItemId = null;
+
+        // Check if this variant is already in cart
+        if ($matched) {
+            $cartService = app(CartService::class);
+            $this->inCart = $cartService->has($matched->id, isVariant: true);
+
+            if ($this->inCart) {
+                $cartItem = $cartService->getCartItem($matched->id, isVariant: true);
+                if ($cartItem) {
+                    $this->cartItemId = $cartItem->id;
+                    $this->cartQuantity = $cartItem->quantity;
+                }
+            }
+
+            // Dispatch variant image swap event if variant has an image
+            if ($matched->image_path) {
+                $this->dispatch('variant-image-selected', url: Storage::url($matched->image_path));
+            }
+        }
+
+        // Bust computed caches
+        unset($this->selectedVariant, $this->selectedVariantValueIds);
+    }
+
+    // -----------------------------------------------------------------------
+    // Location
+    // -----------------------------------------------------------------------
+
     protected function initializeLocation(): void
     {
         $user = auth()->user();
@@ -75,6 +204,43 @@ new #[Layout('layouts.guest')] class extends Component {
         $nairobi = County::where('name', 'Nairobi')->first();
         $this->selectedCounty = $nairobi?->id;
         $this->selectedArea = null;
+    }
+
+    public function updatedSelectedCounty(): void
+    {
+        $this->selectedArea = null;
+        unset($this->areas);
+    }
+
+    #[Computed(persist: true)]
+    public function counties()
+    {
+        return County::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function areas()
+    {
+        if (!$this->selectedCounty) {
+            return collect();
+        }
+        return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function primaryCategory()
+    {
+        return $this->product->primaryCategory();
+    }
+
+    #[Computed]
+    public function estimatedShipping()
+    {
+        if (!$this->selectedCounty) {
+            return null;
+        }
+
+        return app(ShippingCalculatorService::class)->calculateForProduct(product: $this->product, quantity: $this->cartQuantity, user: auth()->user(), countyId: $this->selectedCounty, areaId: $this->selectedArea, variantId: $this->selectedVariantId);
     }
 
     // -----------------------------------------------------------------------
@@ -121,13 +287,23 @@ new #[Layout('layouts.guest')] class extends Component {
     public function addToCart(CartService $cartService): void
     {
         try {
-            $cartService->addItem($this->product->id, $this->cartQuantity);
+            $variantId = $this->selectedVariantId;
+
+            if ($this->product->type === 'variable' && !$variantId) {
+                $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
+                return;
+            }
+
+            $cartService->addItem(productId: $this->product->id, quantity: $this->cartQuantity, variantId: $variantId);
+
             $this->inCart = true;
-            $cartItem = $cartService->getCartItem($this->product->id);
+            $cartItem = $cartService->getCartItem($variantId ?? $this->product->id, isVariant: $variantId !== null);
+
             if ($cartItem) {
                 $this->cartItemId = $cartItem->id;
                 $this->cartQuantity = $cartItem->quantity;
             }
+
             $this->dispatch('cart-updated');
             $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
         } catch (\Throwable $th) {
@@ -139,13 +315,17 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         try {
             $newQuantity = $this->cartQuantity + 1;
-            if ($newQuantity > $this->product->stock_quantity) {
+            $maxStock = $this->selectedVariant ? $this->selectedVariant->stock_quantity : $this->product->stock_quantity;
+
+            if ($newQuantity > $maxStock) {
                 $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
                 return;
             }
+
             if ($this->inCart && $this->cartItemId !== null) {
                 $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
             }
+
             $this->cartQuantity = $newQuantity;
             $this->dispatch('cart-updated');
         } catch (\Throwable $th) {
@@ -157,13 +337,16 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         try {
             $newQuantity = $this->cartQuantity - 1;
+
             if ($newQuantity < 1) {
                 $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
                 return;
             }
+
             if ($this->inCart && $this->cartItemId !== null) {
                 $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
             }
+
             $this->cartQuantity = $newQuantity;
             $this->dispatch('cart-updated');
         } catch (\Throwable $th) {
@@ -187,10 +370,6 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Add All Accessories to Cart
-    // -----------------------------------------------------------------------
-
     public function addAllAccessoriesToCart(CartService $cartService): void
     {
         try {
@@ -201,8 +380,7 @@ new #[Layout('layouts.guest')] class extends Component {
             }
 
             foreach ($accessories as $accessory) {
-                $recommendedQty = $accessory->pivot->quantity ?? 1;
-                $cartService->addItem($accessory->id, $recommendedQty);
+                $cartService->addItem($accessory->id, $accessory->pivot->quantity ?? 1);
             }
 
             $this->dispatch('cart-updated');
@@ -210,46 +388,6 @@ new #[Layout('layouts.guest')] class extends Component {
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add accessories to cart');
         }
-    }
-
-    // -----------------------------------------------------------------------
-    // Location / Shipping
-    // -----------------------------------------------------------------------
-
-    public function updatedSelectedCounty(): void
-    {
-        $this->selectedArea = null;
-        unset($this->areas);
-    }
-
-    #[Computed(persist: true)]
-    public function counties()
-    {
-        return County::orderBy('name')->get();
-    }
-
-    #[Computed]
-    public function areas()
-    {
-        if (!$this->selectedCounty) {
-            return collect();
-        }
-        return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get();
-    }
-
-    #[Computed]
-    public function primaryCategory()
-    {
-        return $this->product->primaryCategory();
-    }
-
-    #[Computed]
-    public function estimatedShipping()
-    {
-        if (!$this->selectedCounty) {
-            return null;
-        }
-        return app(ShippingCalculatorService::class)->calculateForProduct(product: $this->product, quantity: $this->cartQuantity, user: auth()->user(), countyId: $this->selectedCounty, areaId: $this->selectedArea, variantId: null);
     }
 
     // -----------------------------------------------------------------------
@@ -328,23 +466,16 @@ new #[Layout('layouts.guest')] class extends Component {
     </div>
 
     <div class="container mx-auto px-4 py-4">
-
-        {{-- Hero: Product images + details + delivery sidebar --}}
         <div class="grid lg:grid-cols-4 gap-5">
             @include('pages.product-details.partials._hero')
             @include('pages.product-details.partials._delivery-sidebar')
         </div>
 
-        {{-- Accessories --}}
         @include('pages.product-details.partials._accessories')
-
-        {{-- Tabs: Description / Specification / Reviews --}}
         @include('pages.product-details.partials._tabs')
 
-        {{-- Recommendations --}}
         <livewire:product-recommendations type="similar" :context="['product' => $product]" />
         <livewire:product-recommendations type="recently_viewed" />
-
     </div>
 </div>
 

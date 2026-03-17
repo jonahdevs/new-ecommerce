@@ -12,38 +12,41 @@ class ProductDownloadService
     /**
      * Save all downloads for a product
      */
-    public function save(Product $product, array $downloads): void
+    public function save(Product $product, array $downloads, ?int $variantId = null): void
     {
         foreach ($downloads as $index => $download) {
             if (!empty($download['id'])) {
                 $this->updateDownload($download);
             } else {
-                $this->createDownload($product, $download, $index);
+                $this->createDownload($product, $download, $index, $variantId);
             }
         }
     }
 
+
     /**
      * Create a new download record
      */
-    private function createDownload(Product $product, array $download, int $index): void
-    {
-        // Skip if no file uploaded
+    private function createDownload(
+        Product $product,
+        array $download,
+        int $index,
+        ?int $variantId = null
+    ): void {
         if (empty($download['file'])) return;
 
-        $file = $download['file'];
+        $file     = $download['file'];
         $filePath = $this->storeFile($file);
 
         ProductDownload::create([
-            'product_id'      => $product->id,
-            'name'            => $download['name'] ?: $file->getClientOriginalName(),
-            'file_path'       => $filePath,
-            'file_name'       => $file->getClientOriginalName(),
-            'file_type'       => $file->getClientOriginalExtension(),
-            'file_size'       => $file->getSize(),
-            'download_limit'  => $download['download_limit'] ?? null,
-            'download_expiry' => $download['download_expiry'] ?? null,
-            'sort_order'      => $index,
+            'product_id' => $product->id,
+            'variant_id' => $variantId,  // ← add this
+            'name'       => $download['name'] ?: $file->getClientOriginalName(),
+            'file_path'  => $filePath,
+            'file_name'  => $file->getClientOriginalName(),
+            'file_type'  => $file->getClientOriginalExtension(),
+            'file_size'  => $file->getSize(),
+            'sort_order' => $index,
         ]);
     }
 
@@ -60,20 +63,22 @@ class ProductDownloadService
             'sort_order' => $download['sort_order'] ?? $record->sort_order,
         ];
 
-        // Handle file replacement
         if (!empty($download['file'])) {
-            // Delete old file
-            $this->deleteFile($record->file_path);
+            $file    = $download['file'];
+            $newPath = $this->storeFile($file);
 
-            $file = $download['file'];
-            $filePath = $this->storeFile($file);
-
-            $updateData = array_merge($updateData, [
-                'file_path' => $filePath,
-                'file_name' => $file->getClientOriginalName(),
-                'file_type' => $file->getClientOriginalExtension(),
-                'file_size' => $file->getSize(),
-            ]);
+            if ($newPath) {
+                $oldPath = $record->file_path;
+                $updateData = array_merge($updateData, [
+                    'file_path' => $newPath,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientOriginalExtension(),
+                    'file_size' => $file->getSize(),
+                ]);
+                $record->update($updateData);
+                $this->deleteFile($oldPath);
+                return;
+            }
         }
 
         $record->update($updateData);
@@ -93,7 +98,7 @@ class ProductDownloadService
      */
     public function deleteAll(Product $product): void
     {
-        $product->downloads->each(function ($download) {
+        $product->downloads()->get()->each(function ($download) {
             $this->deleteFile($download->file_path);
         });
 
@@ -103,9 +108,12 @@ class ProductDownloadService
     /**
      * Sync downloads — handle new, updated, and deleted
      */
-    public function sync(Product $product, array $downloads, array $downloadsToDelete = []): void
-    {
-        // Delete removed downloads
+    public function sync(
+        Product $product,
+        array $downloads,
+        array $downloadsToDelete = [],
+        ?int $variantId = null
+    ): void {
         if (!empty($downloadsToDelete)) {
             $records = ProductDownload::whereIn('id', $downloadsToDelete)->get();
             foreach ($records as $record) {
@@ -113,8 +121,7 @@ class ProductDownloadService
             }
         }
 
-        // Save remaining
-        $this->save($product, $downloads);
+        $this->save($product, $downloads, $variantId);
     }
 
     /**
@@ -124,11 +131,13 @@ class ProductDownloadService
     {
         $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
 
-        return $file->storeAs(
-            'downloads',
-            $filename,
-            'private'
-        );
+        $path = $file->storeAs('downloads', $filename, 'private');
+
+        if (!$path) {
+            throw new \RuntimeException("Failed to store download file: {$filename}");
+        }
+
+        return $path;
     }
 
     /**

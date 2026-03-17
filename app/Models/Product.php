@@ -29,6 +29,10 @@ class Product extends Model
         'slug',
         'short_description',
         'type',
+        'is_virtual',
+        'is_downloadable',
+        'download_limit',
+        'download_expiry',
         'price',
         'sale_price',
         'cost_price',
@@ -57,27 +61,21 @@ class Product extends Model
         'brand_id',
         'image_path',
         'technical_specification',
-        'estimated_delivery_time',
-        'shipping_information',
-        'warranty_information',
-        'return_policy',
-        'views_count',
-        'sales_count',
-        'average_rating',
-        'reviews_count',
-        'requires_quotation',
-        'min_order_quantity',
-        'quotation_notes',
-
-        'sold_individually',
-        'is_virtual',
-        'is_downloadable',
-        'download_limit',
-        'download_expiry',
 
         'purchase_note',
         'sort_order',
         'reviews_enabled',
+
+        'requires_quotation',
+        'min_order_quantity',
+        'quotation_notes',
+
+        'views_count',
+        'sales_count',
+        'average_rating',
+        'reviews_count',
+
+        'sold_individually',
     ];
 
     protected function casts(): array

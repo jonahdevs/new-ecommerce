@@ -10,7 +10,7 @@
 
     <div x-show="expanded" x-cloak x-collapse class="p-5">
         <flux:field>
-            <x-my-markdown wire:model="form.description" />
+            <x-my-markdown wire:model="form.description" editor-mode="wysiwyg" />
             <flux:error name="form.description" />
         </flux:field>
     </div>

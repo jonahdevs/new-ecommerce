@@ -12,22 +12,39 @@ class ProductVariationService
 {
     public function save(Product $product, array $variants, array $variantsToDelete = []): void
     {
-        // Handle deletions first
         $this->deleteRemovedVariants($variantsToDelete);
 
-        // Save each variant
         foreach ($variants as $index => $variant) {
-            $this->saveVariant($product, $variant, $index);
+            $savedVariant = $this->saveVariant($product, $variant, $index);
+
+            // Sync variant downloads if product is downloadable
+            if ($product->is_downloadable && $savedVariant) {
+                app(ProductDownloadService::class)->sync(
+                    product: $product,
+                    downloads: $variant['downloads'] ?? [],
+                    downloadsToDelete: $variant['downloads_to_delete'] ?? [],
+                    variantId: $savedVariant->id,
+                );
+            }
         }
     }
 
     // -----------------------------------------------
-    // Delete removed variants
+    // Delete removed variants + their images
     // -----------------------------------------------
 
     private function deleteRemovedVariants(array $variantsToDelete): void
     {
         if (empty($variantsToDelete)) return;
+
+        // Clean up images from disk before deleting records
+        ProductVariant::whereIn('id', $variantsToDelete)
+            ->get(['id', 'image_path'])
+            ->each(function (ProductVariant $variant) {
+                if ($variant->image_path) {
+                    Storage::disk('public')->delete($variant->image_path);
+                }
+            });
 
         ProductVariant::whereIn('id', $variantsToDelete)->delete();
     }
@@ -36,37 +53,44 @@ class ProductVariationService
     // Save individual variant
     // -----------------------------------------------
 
-    private function saveVariant(Product $product, array $variant, int $index): void
+    private function saveVariant(Product $product, array $variant, int $index): ?ProductVariant
     {
         $variantData = [
             'product_id'          => $product->id,
             'name'                => $variant['name'],
-            'sku'                 => $variant['sku'] ?: $this->generateSku($product->id, $index),
+            'sku' => !empty($variant['sku']) ? $variant['sku'] : null,
             'price'               => $variant['price'],
             'sale_price'          => $variant['sale_price'],
-            'manage_stock'        => $variant['manage_stock'],
+            'manage_stock'        => (bool) $variant['manage_stock'],
             'stock_quantity'      => $variant['stock_quantity'],
             'stock_status'        => $variant['stock_status'],
-            'allow_backorders'    => $variant['allow_backorders'],
+            'allow_backorders'    => $variant['allow_backorders'] === '1'
+                ? true
+                : ($variant['allow_backorders'] === ''
+                    ? null
+                    : (bool) $variant['allow_backorders']),
             'low_stock_threshold' => $variant['low_stock_threshold'],
             'weight'              => $variant['weight'],
             'length'              => $variant['length'],
             'width'               => $variant['width'],
             'height'              => $variant['height'],
             'description'         => $variant['description'],
-            'is_active'           => $variant['is_active'],
-            'is_default'          => $variant['is_default'],
+            'is_active'           => (bool) $variant['is_active'],
+            'is_default'          => (bool) $variant['is_default'],
             'sort_order'          => $index,
             'attributes'          => $variant['attributes'],
         ];
 
-        // Handle image upload
+        // Handle image — store first, delete old only on success
         if (!empty($variant['image'])) {
-            // Delete old image if exists
-            if (!empty($variant['image_path'])) {
-                Storage::disk('public')->delete($variant['image_path']);
+            $newPath = $variant['image']->store('products/variants', 'public');
+
+            if ($newPath) {
+                if (!empty($variant['image_path'])) {
+                    Storage::disk('public')->delete($variant['image_path']);
+                }
+                $variantData['image_path'] = $newPath;
             }
-            $variantData['image_path'] = $variant['image']->store('products/variants', 'public');
         }
 
         if (!empty($variant['id'])) {
@@ -76,9 +100,22 @@ class ProductVariationService
             $savedVariant = ProductVariant::create($variantData);
         }
 
-        if (!empty($variant['attribute_value_ids'])) {
+        if ($savedVariant && !empty($variant['attribute_value_ids'])) {
             $savedVariant->attributeValues()->sync($variant['attribute_value_ids']);
         }
+
+        if (!empty($variant['id'])) {
+            $savedVariant = ProductVariant::find($variant['id']);
+            $savedVariant?->update($variantData);
+        } else {
+            $savedVariant = ProductVariant::create($variantData);
+        }
+
+        if ($savedVariant && !empty($variant['attribute_value_ids'])) {
+            $savedVariant->attributeValues()->sync($variant['attribute_value_ids']);
+        }
+
+        return $savedVariant ?? null;
     }
 
     // -----------------------------------------------
@@ -108,8 +145,20 @@ class ProductVariationService
     // Helpers
     // -----------------------------------------------
 
-    private function generateSku(int $productId, int $index): string
+    private function generateSku(Product $product): string
     {
-        return strtoupper('VAR-' . $productId . '-' . ($index + 1) . '-' . Str::random(4));
+        $base = strtoupper(
+            ($product->sku ?: 'VAR') . '-' . Str::random(6)
+        );
+
+        // Ensure uniqueness against DB
+        $sku     = $base;
+        $counter = 1;
+
+        while (ProductVariant::where('sku', $sku)->exists()) {
+            $sku = $base . '-' . $counter++;
+        }
+
+        return $sku;
     }
 }

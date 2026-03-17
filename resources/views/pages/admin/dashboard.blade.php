@@ -11,6 +11,7 @@ use Livewire\Attributes\{Computed, Title};
 use Livewire\Component;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 new #[Title('Dashboard')] class extends Component {
     public string $preset = 'today';

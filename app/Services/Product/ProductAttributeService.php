@@ -39,15 +39,21 @@ class ProductAttributeService
 
     private function resolveAttribute(array $attr): ?Attribute
     {
-        // Existing global attribute
         if (!empty($attr['attribute_id'])) {
             return Attribute::find($attr['attribute_id']);
         }
 
-        // New attribute being created inline
         if (!empty($attr['name'])) {
+            $baseSlug = Str::slug($attr['name']);
+            $slug     = $baseSlug;
+            $counter  = 1;
+
+            while (Attribute::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter++;
+            }
+
             return Attribute::firstOrCreate(
-                ['slug' => Str::slug($attr['name'])],
+                ['slug' => $slug],
                 ['name' => $attr['name'], 'is_active' => true]
             );
         }
@@ -80,15 +86,26 @@ class ProductAttributeService
             $val = trim($val);
             if (empty($val)) continue;
 
+            $baseSlug = Str::slug($val);
+            $slug     = $baseSlug;
+            $counter  = 1;
+
+            while (AttributeValue::where('attribute_id', $attribute->id)
+                ->where('slug', $slug)
+                ->exists()
+            ) {
+                $slug = $baseSlug . '-' . $counter++;
+            }
+
             $attrValue = AttributeValue::firstOrCreate(
                 [
                     'attribute_id' => $attribute->id,
-                    'slug'         => Str::slug($val),
+                    'slug'         => $slug,
                 ],
                 [
-                    'value'  => $val,
-                    'label'  => $val,
-                    'slug'   => Str::slug($val),
+                    'value' => $val,
+                    'label' => $val,
+                    'slug'  => $slug,
                 ]
             );
 
@@ -104,15 +121,16 @@ class ProductAttributeService
 
     private function syncProductAttributeValues(Product $product, Attribute $attribute, array $valueIds): void
     {
-        // Remove old values for this attribute
-        $product->attributeValues()
-            ->wherePivotIn(
-                'attribute_value_id',
-                AttributeValue::where('attribute_id', $attribute->id)->pluck('id')
-            )
-            ->detach();
+        // Get only the IDs currently attached to this product for this attribute
+        $existingIds = $product->attributeValues()
+            ->where('attribute_id', $attribute->id)
+            ->pluck('attribute_values.id')
+            ->toArray();
 
-        // Attach new values
+        if (!empty($existingIds)) {
+            $product->attributeValues()->detach($existingIds);
+        }
+
         if (!empty($valueIds)) {
             $product->attributeValues()->attach($valueIds);
         }

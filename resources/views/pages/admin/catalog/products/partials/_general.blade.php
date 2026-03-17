@@ -1,5 +1,5 @@
 {{-- General --}}
-<div wire:cloak wire:show="activeTab == 'general' && form.type !== 'grouped'" class="space-y-5">
+<div wire:cloak wire:show="activeTab == 'general' && form.type !== 'grouped'" class="space-y-5 p-5">
 
     <div class="space-y-5">
 

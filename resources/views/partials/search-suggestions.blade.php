@@ -65,7 +65,7 @@
 
         <div class="px-3 pb-1 flex flex-wrap gap-2">
             @foreach ($suggestions['categories'] as $category)
-                <a href="{{ route('products', ['category' => $category['slug']]) }}?search={{ urlencode($search) }}"
+                <a href="{{ route('shop.index', ['category' => $category['slug']]) }}?search={{ urlencode($search) }}"
                     wire:navigate @if ($mobileOpen) wire:click="closeMobile" @endif
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
                         bg-brand-secondary/10 text-brand-secondary

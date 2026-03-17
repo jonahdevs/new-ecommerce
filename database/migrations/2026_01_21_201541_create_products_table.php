@@ -74,11 +74,6 @@ return new class extends Migration {
             // properties
             $table->json('technical_specification')->nullable();
 
-            //  Shipping & Policies
-            $table->string('estimated_delivery_time')->nullable();
-            $table->string('shipping_information')->nullable();
-            $table->string('warranty_information')->nullable();
-            $table->string('return_policy')->nullable();
 
             $table->text('purchase_note')->nullable();
             $table->integer('sort_order')->default(0);
@@ -169,11 +164,10 @@ return new class extends Migration {
             $table->decimal('cost_price', 10, 2)->nullable();
 
             //  Inventory
-            $table->string('sku')->unique();
+            $table->string('sku')->nullable()->unique();
             $table->boolean('manage_stock')->default(true);
             $table->integer('stock_quantity')->default(0);
             $table->boolean('allow_backorders')->nullable();
-
 
             // Backorders
             $table->integer('max_backorder_quantity')->nullable();
@@ -231,6 +225,7 @@ return new class extends Migration {
         Schema::create('product_downloads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
 
             $table->string('name');          // e.g. "User Manual", "Software Installer"
             $table->string('file_path');     // stored file path
@@ -343,9 +338,6 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('recently_viewed_products');
-        Schema::dropIfExists('product_related');
-        Schema::dropIfExists('product_cross_sells');
-        Schema::dropIfExists('product_upsells');
         Schema::dropIfExists('product_relationships');
         Schema::dropIfExists('product_variant_attribute_values');
         Schema::dropIfExists('product_attribute_values');

@@ -11,6 +11,7 @@ class ProductDownload extends Model
 {
     protected $fillable = [
         'product_id',
+        'variant_id',
         'name',
         'file_path',
         'file_name',
@@ -38,6 +39,11 @@ class ProductDownload extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
     // ===============================================

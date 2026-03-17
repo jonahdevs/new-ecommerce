@@ -94,4 +94,9 @@ class ProductVariant extends Model
     {
         return $this->morphMany(InventoryReservation::class, 'reservable');
     }
+
+    public function downloads(): HasMany
+    {
+        return $this->hasMany(ProductDownload::class, 'variant_id')->orderBy('sort_order');
+    }
 }

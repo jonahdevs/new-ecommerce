@@ -25,7 +25,7 @@ new class extends Component {
         try {
             $this->form->store();
             $this->dispatch('notify', variant: 'success', message: 'Category created successfully!');
-            $this->redirectRoute('admin.categories.index', navigate: true);
+            $this->redirectRoute('admin.catalog.categories.index', navigate: true);
         } catch (ValidationException $e) {
             $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
             throw $e;
@@ -45,7 +45,8 @@ new class extends Component {
 <div>
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item :href="route('admin.categories.index')" wire:navigate>Categories</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.catalog.categories.index')" wire:navigate>Categories
+        </flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Create</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
@@ -55,7 +56,7 @@ new class extends Component {
         @include('pages.admin.catalog.categories._form-fields')
 
         <flux:card class="bg-zinc-50 flex justify-end gap-3">
-            <flux:button type="button" variant="ghost" :href="route('admin.categories.index')" wire:navigate
+            <flux:button type="button" variant="ghost" :href="route('admin.catalog.categories.index')" wire:navigate
                 class="cursor-pointer">
                 Cancel
             </flux:button>

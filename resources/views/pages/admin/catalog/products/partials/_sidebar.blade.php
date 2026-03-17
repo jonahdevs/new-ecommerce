@@ -161,12 +161,11 @@
                         <div class="relative group">
                             <div
                                 class="relative mx-auto w-full aspect-square rounded-sm overflow-hidden border-2 border-zinc-200">
-                                <img src="{{ $existingImage->url }}" alt="Gallery image"
+                                <img src="{{ $existingImage['url'] }}" alt="{{ $existingImage['alt'] }}"
                                     class="w-full h-full object-cover">
                                 <div
                                     class="absolute inset-0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
-                                    <button type="button"
-                                        wire:click="form.removeGalleryImage('{{ $existingImage }}')"
+                                    <button type="button" wire:click="removeGalleryImage({{ $existingImage['id'] }})"
                                         wire:confirm="Are you sure you want to remove this image?"
                                         class="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full p-2">
                                         <flux:icon.trash variant="micro" class="size-4" />
@@ -244,11 +243,10 @@
             size="sm" />
 
         {{-- Categories List --}}
-        <div class="max-h-64 overflow-y-auto border-2 dark:border-zinc-600 rounded-md"
-            wire:key="categories-{{ md5(json_encode($form->category_ids)) }}">
+        <div class="max-h-64 overflow-y-auto border-2 dark:border-zinc-600 rounded-md" wire:key="categories-list">
             <div class="">
                 @foreach ($this->categories as $category)
-                    <div class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                    <div class="flex items-center justify-between gap-2 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                         wire:key="cat-{{ $category['id'] }}"
                         x-show="search === '' || '{{ strtolower($category['name']) }}'.includes(search.toLowerCase())">
 
@@ -260,6 +258,13 @@
 
                         <flux:checkbox wire:model.live="form.category_ids" :value="$category['id']"
                             :label="$category['name']" />
+
+                        @if (in_array($category['id'], $form->category_ids))
+                            <button type="button" wire:click="$set('form.primaryCategoryId', {{ $category['id'] }})"
+                                class="text-xs shrink-0 transition-colors cursor-pointer {{ $form->primaryCategoryId === $category['id'] ? 'text-sheffield-blue font-medium' : 'text-zinc-400 hover:text-sheffield-blue' }}">
+                                {{ $form->primaryCategoryId === $category['id'] ? 'Primary' : 'Set primary' }}
+                            </button>
+                        @endif
                     </div>
                 @endforeach
             </div>

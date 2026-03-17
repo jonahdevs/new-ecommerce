@@ -1,5 +1,5 @@
 {{-- Linked Products --}}
-<div wire:cloak wire:show="activeTab == 'linked-products'" class="space-y-5">
+<div wire:cloak wire:show="activeTab == 'linked-products'" class="space-y-5 p-5">
 
     {{-- ================================================ --}}
     {{-- GROUPED PRODUCTS                                 --}}
