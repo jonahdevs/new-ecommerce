@@ -2,7 +2,6 @@
 
 use App\Services\CartService;
 use App\Services\WishlistService;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use App\Models\Product;
 
@@ -35,7 +34,6 @@ new class extends Component {
     {
         try {
             $cartService->addItem($this->product->id, $this->cartQuantity);
-
             $this->dispatch('cart-updated');
             $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
         } catch (\Throwable $th) {
@@ -48,7 +46,6 @@ new class extends Component {
         try {
             $added = $wishlistService->toggle($this->product->id);
             $this->wishlisted = $added;
-
             $this->dispatch('wishlist-updated');
             $this->dispatch('notify', variant: 'success', message: $added ? 'Added to wishlist' : 'Removed from wishlist');
         } catch (\Throwable $th) {
@@ -58,14 +55,14 @@ new class extends Component {
 };
 ?>
 
-<div class="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+<flux:card class="p-0 flex flex-col overflow-hidden">
 
     {{-- Image + details row --}}
-    <div class="grid grid-cols-[100px_1fr]">
+    <div class="grid grid-cols-[100px_1fr] flex-1">
 
         {{-- Image --}}
-        <a wire:navigate href="{{ route('products.show', $product) }}" target="_blank"
-            class="bg-zinc-50 aspect-square flex items-center justify-center overflow-hidden">
+        <a wire:navigate href="{{ route('products.show', $product) }}"
+            class="bg-zinc-50 flex items-center justify-center overflow-hidden">
             @if ($product->image_url)
                 <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                     class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -75,22 +72,16 @@ new class extends Component {
         </a>
 
         {{-- Details --}}
-        <div class="p-3 flex flex-col gap-1.5">
+        <div class="p-3 flex flex-col min-w-0">
 
-            {{-- Name + SKU --}}
-            <div class="flex items-start justify-between gap-2">
-                <a wire:navigate href="{{ route('products.show', $product) }}" target="_blank"
-                    class="text-sm font-medium text-zinc-800 leading-snug line-clamp-2 hover:text-brand-secondary transition-colors">
-                    {{ $product->name }}
-                </a>
-                <span
-                    class="text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">
-                    {{ $product->sku }}
-                </span>
-            </div>
+            {{-- Name --}}
+            <a wire:navigate href="{{ route('products.show', $product) }}"
+                class="text-sm font-medium text-zinc-800 leading-snug line-clamp-2 hover:text-brand-secondary transition-colors mn-1.5">
+                {{ $product->name }}
+            </a>
 
             {{-- Price --}}
-            <div class="flex items-baseline gap-2">
+            <div class="flex items-baseline gap-2 mb-1.5">
                 <span class="text-base font-semibold text-brand-secondary">
                     {{ $product->formatted_final_price }}
                 </span>
@@ -101,16 +92,38 @@ new class extends Component {
                 @endif
             </div>
 
-            {{-- Recommended qty badge — only shown when qty > 1 --}}
-            @if ($recommendedQuantity > 1)
-                <div
-                    class="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 w-fit">
-                    <flux:icon.information-circle class="w-3 h-3 text-amber-700 shrink-0" />
-                    <span class="text-[11px] text-amber-800 font-medium">
-                        Recommended qty: {{ $recommendedQuantity }} for this product
-                    </span>
-                </div>
+            {{-- Stock status --}}
+            @php
+                $inStock = $product->manage_stock
+                    ? $product->stock_quantity > 0
+                    : $product->stock_status === 'in_stock';
+
+                $isBackorder =
+                    $product->stock_status === 'backorder' ||
+                    (!$product->manage_stock && $product->stock_status === 'backorder');
+            @endphp
+
+            @if ($inStock)
+                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-green-700 w-fit">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                    In stock
+                </span>
+            @elseif ($isBackorder)
+                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 w-fit">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                    Backorder
+                </span>
+            @else
+                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 w-fit">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-400 inline-block"></span>
+                    Out of stock
+                </span>
             @endif
+
+            {{-- Recommended qty --}}
+            <span wire:cloak wire:show="recommendedQuantity > 0" class="text-[11px] text-zinc-400">
+                Recommended qty: {{ $recommendedQuantity }}
+            </span>
 
         </div>
     </div>
@@ -121,47 +134,34 @@ new class extends Component {
         {{-- Qty stepper --}}
         <div class="flex items-center border border-zinc-300 rounded-md overflow-hidden">
             <button wire:click="decreaseQuantity"
-                class="w-7.5 h-7.5 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors text-base leading-none cursor-pointer"
+                class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors cursor-pointer"
                 aria-label="Decrease quantity">−</button>
 
-            <span class="w-8 text-center text-sm font-medium text-zinc-800">
+            <span class="w-7 text-center text-sm font-medium text-zinc-800 border-x border-zinc-200">
                 {{ $cartQuantity }}
             </span>
 
             <button wire:click="increaseQuantity"
-                class="w-7.5 h-7.5 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors text-base leading-none cursor-pointer"
+                class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors cursor-pointer"
                 aria-label="Increase quantity">+</button>
         </div>
 
         {{-- Add to cart --}}
-        <button wire:click="addToCart" wire:loading.attr="disabled" wire:target="addToCart"
-            class="flex-1 h-7.5 bg-brand-secondary hover:bg-brand-secondary/90 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60 cursor-pointer">
-            <flux:icon.shopping-cart class="w-3.5 h-3.5" wire:loading.remove wire:target="addToCart" />
-            <flux:icon.loading class="w-3.5 h-3.5" wire:loading wire:target="addToCart" />
-            <span wire:loading.remove wire:target="addToCart">Add to cart</span>
-            <span wire:loading wire:target="addToCart">Adding...</span>
-        </button>
-
-        {{-- Quick view / go to product --}}
-        <a wire:navigate href="{{ route('products.show', $product) }}" target="_blank"
-            class="w-7.5 h-7.5 flex items-center justify-center border border-zinc-300 rounded-md hover:bg-zinc-100 transition-colors"
-            title="View product">
-            <flux:icon.arrow-top-right-on-square class="w-3.5 h-3.5 text-zinc-500" />
-        </a>
+        <flux:button wire:click="addToCart" wire:loading.attr="disabled" wire:target="addToCart" size="sm"
+            icon-variant="outline" icon="shopping-cart" class="cursor-pointer">
+            Add to Cart
+        </flux:button>
 
         {{-- Wishlist --}}
-        <button wire:click.stop="toggleWishlist" title="{{ $wishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}"
-            @class([
-                'w-[30px] h-7.5 flex items-center justify-center border rounded-md transition-colors cursor-pointer',
-                'border-red-400 hover:bg-red-50' => $wishlisted,
-                'border-zinc-300 hover:bg-zinc-100' => !$wishlisted,
-            ])>
-            @if ($wishlisted)
-                <flux:icon.heart class="w-3.5 h-3.5 text-red-500" variant="solid" />
-            @else
-                <flux:icon.heart class="w-3.5 h-3.5 text-zinc-500" />
-            @endif
-        </button>
+        <flux:button wire:click.stop="toggleWishlist" size="sm"
+            title="{{ $wishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}" class="cursor-pointer ml-auto">
+            <x-slot name="icon">
+                <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}" @class(['size-4', 'text-red-500' => $wishlisted]) />
+            </x-slot>
+        </flux:button>
 
+        {{-- View product --}}
+        <flux:button size="sm" wire:navigate href="{{ route('products.show', $product) }}" title="View product"
+            icon="arrow-top-right-on-square" class="cursor-pointer" />
     </div>
-</div>
+</flux:card>

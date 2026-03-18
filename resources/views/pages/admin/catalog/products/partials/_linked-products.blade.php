@@ -181,12 +181,13 @@
                         <div class="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 items-center"
                             wire:key="accessory-desktop-{{ $index }}">
                             <div class="col-span-6">
-                                <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $item['name'] }}
-                                </p>
+                                <a href="{{ route('admin.catalog.products.edit', $item['id']) }}" wire:navigate
+                                    class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $item['name'] }}
+                                </a>
                                 <p class="text-xs text-zinc-400 mt-0.5">{{ $item['sku'] }}</p>
                             </div>
                             <div class="col-span-3 flex justify-center">
-                                <flux:input type="number" min="1"
+                                <flux:input type="number" min="0"
                                     wire:model="accessories.{{ $index }}.quantity"
                                     class="text-center w-20!" />
                             </div>
@@ -219,7 +220,7 @@
                             <div class="flex items-center justify-between gap-4">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs text-zinc-500">Recommended Qty</span>
-                                    <flux:input type="number" min="1"
+                                    <flux:input type="number" min="0"
                                         wire:model="accessories.{{ $index }}.quantity"
                                         class="text-center w-20" />
                                 </div>

@@ -183,7 +183,8 @@ new class extends Component {
             {{-- Quick action buttons --}}
             <div
                 class="absolute top-2 right-2 flex flex-col gap-2 translate-x-20 group-hover:translate-x-0 transition-transform duration-300">
-                <flux:button wire:click.stop="toggleWishlist" icon="heart" title="Wishlist" size="sm"
+                <flux:button wire:click.stop="toggleWishlist" icon="heart"
+                    title="{{ $wishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}" size="sm"
                     class="cursor-pointer">
                     <x-slot name="icon">
                         <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
@@ -203,7 +204,6 @@ new class extends Component {
 
                 <flux:button wire:click="addToCart" icon="shopping-cart" size="sm" icon-variant="outline"
                     title="Add to Cart" class="cursor-pointer">
-
                 </flux:button>
             </div>
         </div>

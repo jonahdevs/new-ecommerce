@@ -578,7 +578,7 @@ class ProductForm extends Form
 
             'accessories' => 'nullable|array',
             'accessories.*.id' => 'required|exists:products,id',
-            'accessories.*.quantity' => 'required|integer|min:1',
+            'accessories.*.quantity' => 'required|integer|min:0',
 
             'grouped_products' => 'nullable|array',
             'grouped_products.*.id' => 'required|exists:products,id',
@@ -1146,26 +1146,34 @@ class ProductForm extends Form
                 ->toArray()
         );
 
-        // Accessories — synced from component state via persistProduct() before this runs
+        // Accessories — use component state if populated
+        // sync([]) wiping existing accessories when Livewire drops state from snapshot
         $product->accessories()->sync(
             collect($this->accessories)
                 ->mapWithKeys(fn($item, $index) => [
                     $item['id'] => [
-                        'type' => ProductRelationshipType::ACCESSORY->value,
-                        'quantity' => $item['quantity'] ?? 1,
+                        'type'       => ProductRelationshipType::ACCESSORY->value,
+                        'quantity'   => $item['quantity'] ?? 1,
                         'sort_order' => $index,
                     ]
                 ])
                 ->toArray()
         );
 
-        // Grouped products — synced from component state via persistProduct() before this runs
+        // Grouped products — same guard as accessories above
+        $groupedToSync = !empty($this->grouped_products)
+            ? collect($this->grouped_products)
+            : $product->groupedProducts()->get()->map(fn($p) => [
+                'id'       => $p->id,
+                'quantity' => $p->pivot->quantity ?? 1,
+            ]);
+
         $product->groupedProducts()->sync(
-            collect($this->grouped_products)
+            collect($groupedToSync)
                 ->mapWithKeys(fn($item, $index) => [
                     $item['id'] => [
-                        'type' => ProductRelationshipType::GROUPED->value,
-                        'quantity' => $item['quantity'] ?? 1,
+                        'type'       => ProductRelationshipType::GROUPED->value,
+                        'quantity'   => $item['quantity'] ?? 1,
                         'sort_order' => $index,
                     ]
                 ])

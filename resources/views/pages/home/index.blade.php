@@ -113,7 +113,7 @@ new #[Layout('layouts.guest')] class extends Component {
         }">
 
             {{-- Carousel — slightly inset with a shadow ring so it floats --}}
-            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-2xl ring-1 ring-white/10"
+            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-lg ring-1 ring-white/10"
                 id="heroSwiper">
                 <div class="swiper-wrapper">
                     @foreach ($this->heroBanners as $banner)
@@ -307,13 +307,6 @@ new #[Layout('layouts.guest')] class extends Component {
 
         </div>
     </div>
-
-    {{-- <section class="container mx-auto px-4 mt-6">
-        <a href="#" class="block overflow-hidden rounded-sm">
-            <img src="{{ asset('images/home/CLEARANCE-SALE.jpg') }}" alt="banner"
-                class="w-full h-auto object-cover object-center rounded-sm">
-        </a>
-    </section> --}}
 
     @island(name: 'products', defer: true)
         @placeholder

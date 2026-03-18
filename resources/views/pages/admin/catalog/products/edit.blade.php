@@ -27,8 +27,8 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
 
         try {
             DB::transaction(function () {
-                $this->form->update();
                 $this->persistProduct($this->product);
+                $this->form->update();
             });
 
             $this->dispatch('notify', variant: 'success', message: 'Product updated successfully!');

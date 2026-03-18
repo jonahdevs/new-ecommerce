@@ -688,47 +688,45 @@ abstract class BaseProductComponent extends Component
             ])
             ->get()
             ->map(fn($variant) => [
-                'id' => $variant->id,
-                'name' => $variant->name,
-                'sku' => $variant->sku,
-                'image_path' => $variant->image_path,
-                'image' => null, // Staging field for new uploads
-                'price' => $variant->price,
-                'sale_price' => $variant->sale_price,
-                'manage_stock' => $variant->manage_stock,
-                'stock_quantity' => $variant->stock_quantity,
-                'stock_status' => $variant->stock_status,
-                'allow_backorders' => $variant->allow_backorders ? '1' : '',
+                'id'                     => $variant->id,
+                'attribute_hash'         => $variant->attribute_hash,   // ← ADD THIS
+                'name'                   => $variant->name,
+                'sku'                    => $variant->sku,
+                'image_path'             => $variant->image_path,
+                'image'                  => null,
+                'price'                  => $variant->price,
+                'sale_price'             => $variant->sale_price,
+                'manage_stock'           => $variant->manage_stock,
+                'stock_quantity'         => $variant->stock_quantity,
+                'stock_status'           => $variant->stock_status,
+                'allow_backorders'       => $variant->allow_backorders ? '1' : '',
                 'max_backorder_quantity' => $variant->max_backorder_quantity,
-                'expected_restock_date' => $variant->expected_restock_date?->format('Y-m-d'),
-                'backorder_message' => $variant->backorder_message,
-                'low_stock_threshold' => $variant->low_stock_threshold,
-                'weight' => $variant->weight,
-                'length' => $variant->length,
-                'width' => $variant->width,
-                'height' => $variant->height,
-                'description' => $variant->description,
-                'is_active' => $variant->is_active,
-                'is_default' => $variant->is_default,
-                'attributes' => $variant->attributeValues
+                'expected_restock_date'  => $variant->expected_restock_date?->format('Y-m-d'),
+                'backorder_message'      => $variant->backorder_message,
+                'low_stock_threshold'    => $variant->low_stock_threshold,
+                'weight'                 => $variant->weight,
+                'length'                 => $variant->length,
+                'width'                  => $variant->width,
+                'height'                 => $variant->height,
+                'description'            => $variant->description,
+                'is_active'              => $variant->is_active,
+                'is_default'             => $variant->is_default,
+                'attributes'             => $variant->attributeValues
                     ->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])
                     ->toArray(),
-                'attribute_value_ids' => $variant->attributeValues->pluck('id')->toArray(),
-                'attribute_hash' => md5(
-                    implode('-', $variant->attributeValues->pluck('id')->sort()->toArray())
-                ),
-                // Per-variant download files (variant_id = this variant's ID)
-                'downloads' => $variant->downloads->map(fn($d) => [
-                    'id' => $d->id,
-                    'name' => $d->name,
-                    'file' => null,
-                    'file_path' => $d->file_path,
-                    'file_name' => $d->file_name,
-                    'file_type' => $d->file_type,
-                    'file_size' => $d->file_size,
+                'attribute_value_ids'    => $variant->attributeValues->pluck('id')->toArray(),
+                'attribute_hash'         => $variant->attribute_hash,
+                'downloads'              => $variant->downloads->map(fn($d) => [
+                    'id'                  => $d->id,
+                    'name'                => $d->name,
+                    'file'                => null,
+                    'file_path'           => $d->file_path,
+                    'file_name'           => $d->file_name,
+                    'file_type'           => $d->file_type,
+                    'file_size'           => $d->file_size,
                     'formatted_file_size' => $d->formatted_file_size,
                 ])->toArray(),
-                'downloads_to_delete' => [],
+                'downloads_to_delete'    => [],
             ])
             ->toArray();
 

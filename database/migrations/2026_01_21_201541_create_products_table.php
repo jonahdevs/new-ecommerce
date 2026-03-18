@@ -156,6 +156,7 @@ return new class extends Migration {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->string('attribute_hash', 32)->nullable();
 
             // Variant identifiers
             $table->string('name')->nullable(); // e.g., "Large - Red"

@@ -23,15 +23,17 @@
             Specification
         </flux:button>
 
-        {{-- Reviews --}}
-        <flux:button x-cloak x-show="$wire.selectedTab == 'reviews'" @click="$wire.selectedTab = 'reviews'"
-            variant="primary" class="rounded-none cursor-pointer">
-            Reviews
-        </flux:button>
-        <flux:button x-show="$wire.selectedTab !== 'reviews'" @click="$wire.selectedTab = 'reviews'"
-            class="rounded-none cursor-pointer">
-            Reviews
-        </flux:button>
+        @if ($this->product->reviews_enabled)
+            {{-- Reviews --}}
+            <flux:button x-cloak x-show="$wire.selectedTab == 'reviews'" @click="$wire.selectedTab = 'reviews'"
+                variant="primary" class="rounded-none cursor-pointer">
+                Reviews
+            </flux:button>
+            <flux:button x-show="$wire.selectedTab !== 'reviews'" @click="$wire.selectedTab = 'reviews'"
+                class="rounded-none cursor-pointer">
+                Reviews
+            </flux:button>
+        @endif
 
     </div>
 

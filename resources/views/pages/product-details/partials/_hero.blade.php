@@ -20,7 +20,7 @@
                     slidesPerView: 4,
                     freeMode: true,
                     watchSlidesProgress: true,
-                    loop: false,
+                    loop: true,
                     breakpoints: {
                         640: { slidesPerView: 5 },
                         768: { slidesPerView: 6 },
@@ -29,7 +29,7 @@
         
                 this.mainSwiper = new Swiper('#mainSwiper', {
                     spaceBetween: 10,
-                    loop: false,
+                    loop: true,
                     navigation: {
                         nextEl: '.swiper-button-next',
                         prevEl: '.swiper-button-prev',
@@ -72,8 +72,25 @@
                             </div>
                         @endforeach
                     </div>
-                    <div class="swiper-button-prev"></div>
-                    <div class="swiper-button-next"></div>
+                    <button type="button" @click="mainSwiper?.slidePrev()"
+                        class="absolute top-1/2 left-1 -translate-y-1/2 z-30
+                   w-7 h-7 rounded-full flex items-center justify-center
+                   bg-black/20 hover:bg-black/40 backdrop-blur-sm
+                   border border-white/20 hover:border-white/40
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                        <flux:icon.chevron-left class="size-3.5 text-white" />
+                        <span class="sr-only">Previous</span>
+                    </button>
+
+                    <button type="button" @click="mainSwiper?.slideNext()"
+                        class="absolute top-1/2 right-1 -translate-y-1/2 z-30
+                   w-7 h-7 rounded-full flex items-center justify-center
+                   bg-black/20 hover:bg-black/40 backdrop-blur-sm
+                   border border-white/20 hover:border-white/40
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                        <flux:icon.chevron-right class="size-3.5 text-white" />
+                        <span class="sr-only">Next</span>
+                    </button>
                 </div>
             </div>
 
@@ -85,16 +102,10 @@
                             <div class="swiper-slide cursor-pointer">
                                 <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
                                     :class="activeIndex === {{ $index }} ?
-                                        'border-sheffield-blue' :
+                                        'border-brand-secondary' :
                                         'border-zinc-200 hover:border-zinc-300'">
                                     <img src="{{ $slide['url'] }}" alt="{{ $slide['alt'] }}"
                                         class="w-full h-full object-contain" />
-                                    {{-- Variant indicator dot --}}
-                                    @if (!is_null($slide['variantId']))
-                                        <div
-                                            class="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-sheffield-blue opacity-70">
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
                         @endforeach
@@ -119,34 +130,35 @@
             @if ($product->brand)
                 <div class="flex items-center gap-2">
                     <span class="text-zinc-500 text-sm">Brand:</span>
-                    <span class="text-sheffield-blue font-medium text-sm">{{ $product->brand->name }}</span>
+                    <span class="text-brand-secondary font-medium text-sm">{{ $product->brand->name }}</span>
                 </div>
             @endif
-
-            <div class="flex items-center gap-2">
-                @php $avgRating = $product->reviews_avg_rating ?? 0; @endphp
-                <div class="flex items-center gap-0.5">
-                    @for ($i = 0; $i < 5; $i++)
-                        @if ($avgRating >= $i + 1)
-                            <flux:icon.star variant="solid" class="w-4 h-4 text-yellow-400" />
-                        @elseif ($avgRating > $i)
-                            <div class="relative w-4 h-4">
-                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                                <div class="absolute inset-0 overflow-hidden w-1/2">
-                                    <flux:icon.star variant="solid" class="w-4 h-4 text-yellow-400" />
+            @island('reviews')
+                <div class="flex items-center gap-2">
+                    @php $avgRating = $product->reviews_avg_rating ?? 0; @endphp
+                    <div class="flex items-center gap-0.5">
+                        @for ($i = 0; $i < 5; $i++)
+                            @if ($avgRating >= $i + 1)
+                                <flux:icon.star variant="solid" class="w-4 h-4 text-yellow-400" />
+                            @elseif ($avgRating > $i)
+                                <div class="relative w-4 h-4">
+                                    <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
+                                    <div class="absolute inset-0 overflow-hidden w-1/2">
+                                        <flux:icon.star variant="solid" class="w-4 h-4 text-yellow-400" />
+                                    </div>
                                 </div>
-                            </div>
-                        @else
-                            <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                        @endif
-                    @endfor
+                            @else
+                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
+                            @endif
+                        @endfor
+                    </div>
+                    <span class="text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
+                    <a href="{{ route('products.reviews', $product) }}" wire:navigate
+                        class="text-sm text-brand-secondary hover:underline">
+                        {{ $this->reviewStats['total'] }} reviews
+                    </a>
                 </div>
-                <span class="text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
-                <a href="{{ route('products.reviews', $product) }}" wire:navigate
-                    class="text-sm text-sheffield-blue hover:underline">
-                    {{ $this->reviewStats['total'] }} reviews
-                </a>
-            </div>
+            @endisland
         </div>
 
         {{-- SKU --}}
@@ -187,7 +199,7 @@
                                         wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
                                         @class([
                                             'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
-                                            'border-sheffield-blue bg-sheffield-blue/5 text-sheffield-blue font-medium' => $isSelected,
+                                            'border-brand-secondary bg-brand-secondary/5 text-brand-secondary font-medium' => $isSelected,
                                             'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' => !$isSelected,
                                         ])>
                                         {{ $value['label'] }}
@@ -234,6 +246,8 @@
             </div>
         @endif
 
+        <p>Accessories count {{ $this->accessories->count() }}</p>
+
         {{-- ── SHIPPING ESTIMATE ── --}}
         @if (!$product->is_virtual)
             <div wire:cloak class="text-sm text-zinc-500 flex items-center gap-2">
@@ -268,7 +282,7 @@
             @if ($price)
                 @if ($hasDiscount)
                     <div class="flex items-center flex-wrap gap-2">
-                        <span class="text-2xl font-bold text-sheffield-blue">
+                        <span class="text-2xl font-bold text-brand-secondary">
                             {{ format_currency($salePrice) }}
                         </span>
                         <span class="text-base text-zinc-400 line-through">
@@ -279,7 +293,7 @@
                         </flux:badge>
                     </div>
                 @else
-                    <span class="text-2xl font-bold text-sheffield-blue">
+                    <span class="text-2xl font-bold text-brand-secondary">
                         {{ format_currency($price) }}
                     </span>
                 @endif
@@ -349,8 +363,8 @@
                         title="Decrease" />
                     <flux:input readonly value="{{ $cartQuantity }}"
                         class="max-w-9! text-center! outline-none! border-none! ring-0!" />
-                    <flux:button icon="plus" wire:click="increaseCartQuantity" class="cursor-pointer text-zinc-500!"
-                        title="Increase" />
+                    <flux:button icon="plus" wire:click="increaseCartQuantity"
+                        class="cursor-pointer text-zinc-500!" title="Increase" />
                     @if ($inCart)
                         <flux:button icon="trash" icon-variant="outline" wire:click="removeFromCart"
                             class="cursor-pointer text-red-500!" title="Remove" />
@@ -386,11 +400,33 @@
 
             {{-- Compare --}}
             <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
-                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-sheffield-blue!' => $inCompare]) />
+                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-brand-secondary!' => $inCompare]) />
 
             {{-- Share --}}
             <flux:button icon="share" icon-variant="outline" title="Share" class="cursor-pointer" />
         </div>
+
+        {{-- ── ACCESSORIES NUDGE ── --}}
+        @if ($this->accessories->count() > 0)
+            <flux:callout icon="wrench-screwdriver" color="blue" inline>
+                <flux:callout.heading>
+                    {{ $this->accessories->count() }} {{ Str::plural('accessory', $this->accessories->count()) }}
+                    available
+                </flux:callout.heading>
+
+                <flux:callout.text>
+                    This product has compatible accessories you may need.
+                </flux:callout.text>
+
+                <x-slot name="actions">
+                    <flux:button variant="ghost" size="sm" icon:trailing="arrow-long-down"
+                        class="cursor-pointer"
+                        onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' })">
+                        View accessories
+                    </flux:button>
+                </x-slot>
+            </flux:callout>
+        @endif
 
         {{-- Purchase note for downloadable --}}
         @if ($product->is_downloadable && $product->purchase_note)

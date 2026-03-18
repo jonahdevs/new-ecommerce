@@ -31,6 +31,7 @@ new #[Layout('layouts.guest')] class extends Component {
     public $selectedArea = '';
 
     // ── UI state ──────────────────────────────────────────────────────────
+    public string $accessoriesTab = 'accessories';
     public string $selectedTab = 'description';
     public int $reviewsToShow = 5;
 
@@ -673,7 +674,48 @@ new #[Layout('layouts.guest')] class extends Component {
             @include('pages.product-details.partials._delivery-sidebar')
         </div>
 
-        @include('pages.product-details.partials._accessories')
+        @if ($this->accessories->count() > 0)
+            <flux:card class="pb-6 relative pt-10 px-6 mt-10">
+
+                {{-- Tab Buttons --}}
+                <div class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
+
+                    {{-- Accessories --}}
+                    <flux:button x-show="$wire.accessoriesTab == 'accessories'"
+                        @click="$wire.accessoriesTab = 'accessories'" variant="primary"
+                        class="rounded-none cursor-pointer">
+                        Accessories
+
+                        @if ($this->accessories->count() > 0)
+                            <flux:badge size="sm" class="ml-1">{{ $this->accessories->count() }}</flux:badge>
+                        @endif
+                    </flux:button>
+
+                    <flux:button x-cloak x-show="$wire.accessoriesTab !== 'accessories'"
+                        @click="$wire.accessoriesTab = 'accessories'" class="rounded-none cursor-pointer">
+                        Accessories
+
+                        @if ($this->accessories->count() > 0)
+                            <flux:badge size="sm" class="ml-1">{{ $this->accessories->count() }}</flux:badge>
+                        @endif
+                    </flux:button>
+
+                    {{-- Spare Parts --}}
+                    {{-- <flux:button x-cloak x-show="$wire.accessoriesTab == 'spare'" @click="$wire.accessoriesTab = 'spare'"
+                    variant="primary" class="rounded-none cursor-pointer">
+                    Spare
+                </flux:button>
+                <flux:button x-show="$wire.accessoriesTab !== 'spare'" @click="$wire.accessoriesTab = 'spare'"
+                    class="rounded-none cursor-pointer">
+                    Spare
+                </flux:button> --}}
+                </div>
+
+                {{-- Tab Content --}}
+                @include('pages.product-details.partials._accessories')
+            </flux:card>
+        @endif
+
         @include('pages.product-details.partials._tabs')
 
         <livewire:product-recommendations type="similar" :context="['product' => $product]" />
