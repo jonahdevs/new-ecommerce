@@ -21,28 +21,44 @@ use Illuminate\Support\Facades\Storage;
 new #[Layout('layouts.guest')] class extends Component {
     public Product $product;
 
-    // ── Status flags ──────────────────────────────────────────────────────
+    // ── Status flags
     public bool $wishlisted = false;
     public bool $inCompare = false;
     public bool $inCart = false;
 
-    // ── Location state ────────────────────────────────────────────────────
+    // ── Location state
     public $selectedCounty = '';
     public $selectedArea = '';
 
-    // ── UI state ──────────────────────────────────────────────────────────
+    // ── UI state
     public string $accessoriesTab = 'accessories';
     public string $selectedTab = 'description';
     public int $reviewsToShow = 5;
 
-    // ── Cart state ────────────────────────────────────────────────────────
+    // ── Cart state ──
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
 
-    // ── Variant state ─────────────────────────────────────────────────────
+    // ── Variant state ─
     // selectedAttributeValues: ['Color' => 'Red', 'Size' => 'Large']
     public array $selectedAttributeValues = [];
     public ?int $selectedVariantId = null;
+
+    // IDs of checked inline add-on accessories
+    public array $selectedAddOns = [];
+
+    /**
+     * Per add-on quantity overrides, keyed by product ID.
+     * Falls back to pivot->quantity when not set.
+     * e.g. [5 => 2, 8 => 1]
+     */
+    public array $addOnQuantities = [];
+
+    /** IDs of selected grouped items — all pre-selected by default */
+    public array $selectedGroupedItems = [];
+
+    // Grouped products
+    public array $groupedQuantities = [];
 
     // =========================================================================
     // MOUNT
@@ -55,12 +71,19 @@ new #[Layout('layouts.guest')] class extends Component {
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active(), 'accessories' => fn($q) => $q->active()]);
+        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active(), 'accessories' => fn($q) => $q->active()->withPivot('sort_order', 'quantity', 'show_in_hero')]);
+
+        if ($product->type->value === 'grouped') {
+            $product->load([
+                'groupedProducts' => fn($q) => $q->active()->withPivot('sort_order', 'quantity'),
+            ]);
+        }
+
         $product->loadAvg('reviews', 'rating');
 
         // Variable product — load all variants (active AND inactive/out-of-stock)
         // so we can show greyed-out out-of-stock buttons on the storefront
-        if ($product->type === 'variable') {
+        if ($product->type->value === 'variable') {
             $product->load([
                 // Load ALL variants, not just active — we filter display in the view
                 'variants' => fn($q) => $q->orderBy('sort_order'),
@@ -80,12 +103,25 @@ new #[Layout('layouts.guest')] class extends Component {
 
         $this->product = $product;
 
+        // Grouped product — load items and pre-select all
+        if ($product->type->value === 'grouped') {
+            $product->load([
+                'groupedProducts' => fn($q) => $q->active()->withPivot('sort_order', 'quantity'),
+            ]);
+
+            // Pre-select all items and set default quantities from pivot
+            foreach ($product->groupedProducts as $item) {
+                $this->selectedGroupedItems[] = $item->id;
+                $this->groupedQuantities[$item->id] = $item->pivot->quantity ?? 1;
+            }
+        }
+
         // Cart state
         $this->wishlisted = $wishlist->has($this->product->id);
         $this->inCompare = $compareService->has($this->product->id);
 
         // Check cart state — for variable products check by variant ID
-        if ($product->type === 'variable' && $this->selectedVariantId) {
+        if ($product->type->value === 'variable' && $this->selectedVariantId) {
             $this->inCart = $cartService->has($this->product->id, $this->selectedVariantId);
             if ($this->inCart) {
                 $cartItem = $cartService->getCartItem($this->product->id, $this->selectedVariantId);
@@ -108,6 +144,22 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->initializeLocation();
     }
 
+    // Grouped products
+    #[Computed]
+    public function groupedProducts()
+    {
+        return $this->product->groupedProducts()->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+    }
+
+    #[Computed]
+    public function groupedTotal(): float
+    {
+        return $this->groupedProducts->filter(fn($item) => in_array($item->id, $this->selectedGroupedItems))->sum(function ($item) {
+            $qty = $this->groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
+            return ($item->final_price ?? 0) * $qty;
+        });
+    }
+
     // =========================================================================
     // VARIANT COMPUTED PROPERTIES
     // =========================================================================
@@ -118,7 +170,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedVariant(): ?ProductVariant
     {
-        if ($this->product->type !== 'variable' || !$this->selectedVariantId) {
+        if ($this->product->type->value !== 'variable' || !$this->selectedVariantId) {
             return null;
         }
 
@@ -136,7 +188,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function variationAttributes(): array
     {
-        if ($this->product->type !== 'variable') {
+        if ($this->product->type->value !== 'variable') {
             return [];
         }
 
@@ -244,7 +296,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function simpleProductState(): string
     {
-        if ($this->product->type === 'variable') {
+        if ($this->product->type->value === 'variable') {
             return 'none';
         }
 
@@ -352,7 +404,7 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // 2. Variant images — skip any path already seen
-        if ($this->product->type === 'variable') {
+        if ($this->product->type->value === 'variable') {
             foreach ($this->product->variants->where('is_active', true)->sortBy('sort_order') as $variant) {
                 if ($variant->image_path && !in_array($variant->image_path, $seenPaths, true)) {
                     $seenPaths[] = $variant->image_path;
@@ -483,13 +535,13 @@ new #[Layout('layouts.guest')] class extends Component {
             $variantId = $this->selectedVariantId;
 
             // Variable product requires a variant selection
-            if ($this->product->type === 'variable' && !$variantId) {
+            if ($this->product->type->value === 'variable' && !$variantId) {
                 $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
                 return;
             }
 
             // Block if out of stock (backorder is allowed through)
-            $state = $this->product->type === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
+            $state = $this->product->type->value === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
 
             if ($state === 'out_of_stock') {
                 $this->dispatch('notify', variant: 'warning', message: 'This product is currently out of stock.');
@@ -559,6 +611,18 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
+    public function increaseGroupedQuantity(int $productId): void
+    {
+        $current = $this->groupedQuantities[$productId] ?? 1;
+        $this->groupedQuantities[$productId] = $current + 1;
+    }
+
+    public function decreaseGroupedQuantity(int $productId): void
+    {
+        $current = $this->groupedQuantities[$productId] ?? 1;
+        $this->groupedQuantities[$productId] = max(1, $current - 1);
+    }
+
     public function removeFromCart(CartService $cartService): void
     {
         try {
@@ -591,6 +655,44 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->dispatch('notify', variant: 'success', message: 'All accessories added to cart!');
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add accessories to cart');
+        }
+    }
+
+    public function addFullKitToCart(CartService $cartService): void
+    {
+        try {
+            foreach ($this->groupedProducts as $item) {
+                $qty = $this->groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
+                $cartService->addItem(productId: $item->id, quantity: $qty);
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Full kit added to cart!');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add kit to cart');
+        }
+    }
+
+    public function addSelectedGroupedToCart(CartService $cartService): void
+    {
+        try {
+            if (empty($this->selectedGroupedItems)) {
+                $this->dispatch('notify', variant: 'warning', message: 'No items selected.');
+                return;
+            }
+
+            foreach ($this->selectedGroupedItems as $productId) {
+                $item = $this->groupedProducts->firstWhere('id', $productId);
+                if ($item) {
+                    $qty = $this->groupedQuantities[$productId] ?? ($item->pivot->quantity ?? 1);
+                    $cartService->addItem(productId: $item->id, quantity: $qty);
+                }
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: count($this->selectedGroupedItems) . ' item(s) added to cart.');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add items to cart');
         }
     }
 
@@ -638,7 +740,86 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function accessories()
     {
-        return $this->product->accessories;
+        return $this->product->accessories()->active()->withPivot('sort_order', 'quantity', 'show_in_hero')->orderByPivot('sort_order')->get();
+    }
+
+    #[Computed]
+    public function inHeroAccessories()
+    {
+        return $this->product->accessories->filter(fn($a) => (bool) $a->pivot->show_in_hero)->values();
+    }
+
+    #[Computed]
+    public function selectedAddOnsTotal(): float
+    {
+        return $this->inHeroAccessories->filter(fn($a) => in_array($a->id, $this->selectedAddOns))->sum(function ($a) {
+            $qty = $this->addOnQuantities[$a->id] ?? ($a->pivot->quantity ?? 1);
+            return ($a->final_price ?? ($a->price ?? 0)) * $qty;
+        });
+    }
+
+    // ── Add-on quantity methods
+
+    public function increaseAddOnQuantity(int $addOnId): void
+    {
+        $current = $this->addOnQuantities[$addOnId] ?? ($this->inHeroAccessories->firstWhere('id', $addOnId)?->pivot->quantity ?? 1);
+
+        $this->addOnQuantities[$addOnId] = $current + 1;
+    }
+
+    public function decreaseAddOnQuantity(int $addOnId): void
+    {
+        $current = $this->addOnQuantities[$addOnId] ?? ($this->inHeroAccessories->firstWhere('id', $addOnId)?->pivot->quantity ?? 1);
+
+        $this->addOnQuantities[$addOnId] = max(1, $current - 1);
+    }
+
+    // ── addToCartWithAddOns
+
+    public function addToCartWithAddOns(CartService $cartService): void
+    {
+        try {
+            $variantId = $this->selectedVariantId;
+
+            if ($this->product->type->value === 'variable' && !$variantId) {
+                $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
+                return;
+            }
+
+            $state = $this->product->type->value === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
+
+            if ($state === 'out_of_stock') {
+                $this->dispatch('notify', variant: 'warning', message: 'This product is currently out of stock.');
+                return;
+            }
+
+            // Add main product
+            $cartService->addItem(productId: $this->product->id, quantity: $this->cartQuantity, variantId: $variantId);
+
+            // Add each selected add-on using its individual quantity
+            foreach ($this->selectedAddOns as $addOnId) {
+                $addOn = $this->inHeroAccessories->firstWhere('id', $addOnId);
+                if ($addOn) {
+                    $qty = $this->addOnQuantities[$addOnId] ?? ($addOn->pivot->quantity ?? 1);
+                    $cartService->addItem(productId: $addOn->id, quantity: $qty);
+                }
+            }
+
+            $this->inCart = true;
+            $cartItem = $cartService->getCartItem($this->product->id, $variantId);
+            if ($cartItem) {
+                $this->cartItemId = $cartItem->id;
+                $this->cartQuantity = $cartItem->quantity;
+            }
+
+            $addOnCount = count($this->selectedAddOns);
+            $message = $addOnCount > 0 ? "Added to cart with {$addOnCount} add-on(s)" : 'Added to cart successfully';
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', variant: 'success', message: $message);
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
+        }
     }
 
     #[Computed]
@@ -670,7 +851,11 @@ new #[Layout('layouts.guest')] class extends Component {
 
     <div class="container mx-auto px-4 py-4">
         <div class="grid lg:grid-cols-4 gap-5">
-            @include('pages.product-details.partials._hero')
+            @if ($product->type->value === 'grouped')
+                @include('pages.product-details.partials._grouped-hero')
+            @else
+                @include('pages.product-details.partials._hero')
+            @endif
             @include('pages.product-details.partials._delivery-sidebar')
         </div>
 

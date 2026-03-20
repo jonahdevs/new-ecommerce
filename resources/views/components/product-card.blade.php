@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProductType;
 use App\Services\WishlistService;
 use App\Services\CompareService;
 use App\Services\CartService;
@@ -15,26 +16,32 @@ new class extends Component {
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
 
-    public function mount(WishlistService $wishlist, CompareService $compareService, CartService $cartService)
+    public function mount(WishlistService $wishlist, CompareService $compareService, CartService $cartService): void
     {
-        $this->wishlisted = $wishlist->has($this->product?->id);
+        $this->wishlisted = $wishlist->has($this->product->id);
         $this->inCompare = $compareService->has($this->product->id);
         $this->inCart = $cartService->has($this->product->id);
+
+        if ($this->inCart) {
+            $cartItem = $cartService->getCartItem($this->product->id);
+            if ($cartItem) {
+                $this->cartItemId = $cartItem->id;
+                $this->cartQuantity = $cartItem->quantity;
+            }
+        }
     }
 
-    public function goToProduct()
+    public function goToProduct(): void
     {
-        return $this->redirect(route('products.show', $this->product), navigate: true);
+        $this->redirect(route('products.show', $this->product), navigate: true);
     }
 
-    public function toggleWishlist(WishlistService $wishlistService)
+    public function toggleWishlist(WishlistService $wishlistService): void
     {
         try {
-            $added = $wishlistService->toggle($this->product?->id);
+            $added = $wishlistService->toggle($this->product->id);
             $this->wishlisted = $added;
-
             $this->dispatch('wishlist-updated');
-
             $this->dispatch('notify', variant: 'success', message: $added ? 'Added to wishlist' : 'Removed from wishlist');
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
@@ -46,19 +53,28 @@ new class extends Component {
         try {
             $added = $compareService->toggle($this->product->id);
             $this->inCompare = $added;
-
-            // Dispatch events
             $this->dispatch('compare-updated');
-
             $this->dispatch('notify', variant: 'success', message: $added ? 'Added to comparison' : 'Removed from comparison');
-        } catch (\Exception $e) {
-            $this->dispatch('notify', variant: 'danger', message: $e->getMessage() ?: 'Unable to update comparison');
-        } finally {
-            $this->loading = false;
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update comparison');
         }
     }
 
-    public function addToCart(CartService $cartService)
+    /**
+     * Quick cart action — only works for simple products.
+     * Variable, grouped and quotation products redirect to the product page.
+     */
+    public function quickAddToCart(CartService $cartService): void
+    {
+        if (in_array($this->product->type, [ProductType::VARIABLE, ProductType::GROUPED]) || $this->product->requires_quotation) {
+            $this->goToProduct();
+            return;
+        }
+
+        $this->addToCart($cartService);
+    }
+
+    public function addToCart(CartService $cartService): void
     {
         try {
             $cartService->addItem($this->product->id, $this->cartQuantity);
@@ -77,75 +93,56 @@ new class extends Component {
         }
     }
 
-    public function increaseCartQuantity(CartService $cartService)
+    public function increaseCartQuantity(CartService $cartService): void
     {
         try {
-            if ($this->inCart && $this->cartItemId) {
-                // Product is in cart - update cart quantity
-                $newQuantity = $this->cartQuantity + 1;
+            $newQuantity = $this->cartQuantity + 1;
 
-                if ($newQuantity > $this->product->stock_quantity) {
-                    $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
-                    return;
-                }
-
-                $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
-                $this->cartQuantity = $newQuantity;
-
-                $this->dispatch('cart-updated');
-            } else {
-                // Product not in cart - just increase local quantity
-                if ($this->cartQuantity < $this->product->stock_quantity) {
-                    $this->cartQuantity++;
-                } else {
-                    $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
-                }
+            if ($this->product->manage_stock && $newQuantity > $this->product->stock_quantity) {
+                $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
+                return;
             }
+
+            if ($this->inCart && $this->cartItemId) {
+                $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
+                $this->dispatch('cart-updated');
+            }
+
+            $this->cartQuantity = $newQuantity;
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update quantity');
         }
     }
 
-    public function decreaseCartQuantity(CartService $cartService)
+    public function decreaseCartQuantity(CartService $cartService): void
     {
         try {
-            if ($this->inCart && $this->cartItemId) {
-                // Product is in cart - update cart quantity
-                $newQuantity = $this->cartQuantity - 1;
+            $newQuantity = $this->cartQuantity - 1;
 
-                if ($newQuantity < 1) {
-                    $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
-                    return;
-                }
-
-                $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
-                $this->cartQuantity = $newQuantity;
-
-                $this->dispatch('cart-updated');
-            } else {
-                // Product not in cart - just decrease local quantity
-                if ($this->cartQuantity > 1) {
-                    $this->cartQuantity--;
-                } else {
-                    $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
-                }
+            if ($newQuantity < 1) {
+                $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
+                return;
             }
+
+            if ($this->inCart && $this->cartItemId) {
+                $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
+                $this->dispatch('cart-updated');
+            }
+
+            $this->cartQuantity = $newQuantity;
         } catch (\Throwable $th) {
             $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update quantity');
         }
     }
 
-    public function removeFromCart(CartService $cartService)
+    public function removeFromCart(CartService $cartService): void
     {
         try {
             if ($this->cartItemId) {
                 $cartService->removeItem($this->cartItemId);
-
-                // Reset state
                 $this->inCart = false;
                 $this->cartItemId = null;
                 $this->cartQuantity = 1;
-
                 $this->dispatch('cart-updated');
                 $this->dispatch('notify', variant: 'success', message: 'Removed from cart');
             }
@@ -155,16 +152,19 @@ new class extends Component {
     }
 };
 ?>
+
 <flux:card
     {{ $attributes->class(['p-0 overflow-hidden h-full hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group']) }}>
     <div class="h-full flex flex-col">
+
+        {{-- ── IMAGE ── --}}
         <div class="relative">
             <a href="{{ route('products.show', $product) }}" wire:navigate wire:click.stop class="block">
                 <figure
                     class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-50 flex items-center justify-center">
                     @if ($product->image_url)
                         <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
-                            class="w-full h-full object-contain hover:scale-105 transition-transform duration-300 "
+                            class="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                             loading="lazy">
                     @else
                         <flux:icon.photo class="w-16 h-16 text-zinc-400 stroke-1" />
@@ -172,20 +172,37 @@ new class extends Component {
                 </figure>
             </a>
 
-            {{-- discount badge --}}
-            @if ($product->hasDiscount())
+            {{-- Discount badge — simple products only --}}
+            @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                 <span
                     class="absolute left-0 top-2 rounded-e-full bg-red-400 px-2 py-1 text-xs font-medium text-white tracking-wide">
                     -{{ $product->discountPercentage() }}
                 </span>
             @endif
 
+            {{-- Type badge — variable / grouped / quotation --}}
+            @if ($product->type === ProductType::VARIABLE)
+                <span
+                    class="absolute left-0 top-2 rounded-e-full bg-sheffield-blue px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    Options
+                </span>
+            @elseif ($product->type === ProductType::GROUPED)
+                <span
+                    class="absolute left-0 top-2 rounded-e-full bg-zinc-700 px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    Kit
+                </span>
+            @elseif ($product->requires_quotation)
+                <span
+                    class="absolute left-0 top-2 rounded-e-full bg-amber-500 px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    Quote
+                </span>
+            @endif
+
             {{-- Quick action buttons --}}
             <div
                 class="absolute top-2 right-2 flex flex-col gap-2 translate-x-20 group-hover:translate-x-0 transition-transform duration-300">
-                <flux:button wire:click.stop="toggleWishlist" icon="heart"
-                    title="{{ $wishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}" size="sm"
-                    class="cursor-pointer">
+                <flux:button wire:click.stop="toggleWishlist" size="sm" class="cursor-pointer"
+                    title="{{ $wishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}">
                     <x-slot name="icon">
                         <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
                             @class(['size-4', 'text-red-500' => $wishlisted]) />
@@ -194,252 +211,226 @@ new class extends Component {
 
                 <flux:modal.trigger name="quick-view-product-{{ $product->id }}">
                     <flux:button icon="eye" size="sm" icon-variant="outline" title="Quick View"
-                        class="cursor-pointer">
-                    </flux:button>
+                        class="cursor-pointer" />
                 </flux:modal.trigger>
 
-                <flux:button wire:click.stop="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}" size="sm"
-                    icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-red-500!' => $inCompare])>
-                </flux:button>
+                <flux:button wire:click.stop="toggleCompare" size="sm" icon-variant="outline"
+                    icon="{{ $inCompare ? 'x-mark' : 'scale' }}" title="Compare" @class(['cursor-pointer', 'text-sheffield-blue!' => $inCompare]) />
 
-                <flux:button wire:click="addToCart" icon="shopping-cart" size="sm" icon-variant="outline"
-                    title="Add to Cart" class="cursor-pointer">
-                </flux:button>
+                @if ($product->requires_quotation)
+                    <flux:button wire:click="goToProduct" icon="document-text" size="sm" icon-variant="outline"
+                        title="Request Quote" class="cursor-pointer" />
+                @else
+                    <flux:button wire:click.stop="quickAddToCart" icon="shopping-cart" size="sm"
+                        icon-variant="outline"
+                        title="{{ in_array($product->type, [ProductType::VARIABLE, ProductType::GROUPED]) ? 'View Options' : 'Add to Cart' }}"
+                        class="cursor-pointer" />
+                @endif
             </div>
         </div>
 
+        {{-- ── DETAILS ── --}}
         <div class="p-4 flex flex-col gap-1 h-full">
+
             {{-- Brand --}}
             @if ($product->brand)
-                <p class="text-zinc-400 text-xs uppercase tracking-wide">{{ $product->brand?->name }}</p>
+                <p class="text-zinc-400 text-xs uppercase tracking-wide">{{ $product->brand->name }}</p>
             @endif
 
-            {{-- Product Name --}}
+            {{-- Name --}}
             <a href="{{ route('products.show', $product) }}" wire:click.prevent="goToProduct"
                 class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-sheffield-blue">
                 {{ $product->name }}
             </a>
 
-            {{-- Star Rating - Always show 5 stars --}}
-            <div class="flex items-center gap-1">
-                <div class="flex gap-0.5">
-                    @for ($i = 1; $i <= 5; $i++)
-                        @if ($product->reviews_avg_rating && $i <= floor($product->reviews_avg_rating))
-                            {{-- Full star --}}
-                            <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        @elseif ($product->reviews_avg_rating && $i - 0.5 <= $product->reviews_avg_rating)
-                            {{-- Half star --}}
-                            <div class="relative w-4 h-4">
-                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                                <div class="absolute inset-0 overflow-hidden" style="width: 50%;">
-                                    <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                </div>
-                            </div>
-                        @else
-                            {{-- Empty star --}}
-                            <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                        @endif
-                    @endfor
-                </div>
-                @if ($product->reviews_avg_rating)
-                    <span class="text-xs text-zinc-500">{{ number_format($product->reviews_avg_rating, 1) }}</span>
-                @endif
-            </div>
+            {{-- Star rating --}}
+            <x-star-rating :rating="$product->reviews_avg_rating ?? 0" />
 
+            {{-- Price --}}
             <div class="pt-2 mt-auto">
-                @if ($product->hasDiscount())
-                    <div class="flex items-center flex-wrap gap-x-2">
-                        <p class="font-semibold text-sheffield-blue">{{ $product->formatted_final_price }}</p>
-                        <p class="text-sm text-zinc-500 line-through">{{ $product->formatted_price }}</p>
+                @if ($product->requires_quotation)
+                    <a href="{{ route('products.show', $product) }}" wire:navigate
+                        class="text-sm font-medium text-amber-600 hover:underline">
+                        Request a quote
+                    </a>
+                @elseif ($product->display_price)
+                    <div class="flex items-baseline gap-1 flex-wrap">
+                        @if ($product->has_price_prefix)
+                            <span class="text-xs text-zinc-400">{{ $product->display_price_prefix }}</span>
+                        @endif
+                        <span class="font-semibold text-sheffield-blue">{{ $product->display_price }}</span>
+                        @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
+                            <span class="text-xs text-zinc-400 line-through">{{ $product->formatted_price }}</span>
+                        @endif
                     </div>
                 @else
-                    <p class="font-semibold text-sheffield-blue">{{ $product->formatted_final_price }}</p>
+                    <span class="text-sm text-zinc-400">Price unavailable</span>
                 @endif
             </div>
         </div>
     </div>
 
+    {{-- ── QUICK VIEW MODAL ── --}}
     <flux:modal variant="floating" name="quick-view-product-{{ $product->id }}" class="w-full max-w-2xl rounded-xs!"
         overlay-class="bg-black backdrop-blur-lg">
+        <div class="grid grid-cols-3">
 
-        <div class="grid grid-cols-3 ">
-            <div class="col-span-1">
-                <div class="w-full" x-data="{
-                    mainSwiper: null,
-                    thumbSwiper: null,
-                    activeIndex: 0,
-                    isBeginning: true,
-                    isEnd: false,
-                
-                    init() {
-                        this.thumbSwiper = new Swiper(this.$refs.thumbSwiper, {
+            {{-- Images --}}
+            <div class="col-span-1" x-data="{
+                mainSwiper: null,
+                thumbSwiper: null,
+                activeIndex: 0,
+                init() {
+                    const thumbEl = this.$refs.thumbSwiper;
+
+                    if (thumbEl && thumbEl.querySelectorAll('.swiper-slide').length > 1) {
+                        this.thumbSwiper = new Swiper(thumbEl, {
                             spaceBetween: 10,
                             slidesPerView: 4,
                             freeMode: true,
                             watchSlidesProgress: true,
-                            loop: true,
-                            breakpoints: {
-                                640: {
-                                    slidesPerView: 5,
-                                },
-                                768: {
-                                    slidesPerView: 6,
-                                },
-                            },
-                            on: {
-                                slideChange: (swiper) => {
-                                    this.isBeginning = swiper.isBeginning;
-                                    this.isEnd = swiper.isEnd;
-                                },
-                            },
+                            loop: false,
                         });
-                
-                        // Initialize main slider
-                        this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
-                            spaceBetween: 10,
-                            loop: true,
-                            navigation: {
-                                nextEl: '.swiper-button-next',
-                                prevEl: '.swiper-button-prev',
-                            },
-                            thumbs: {
-                                swiper: this.thumbSwiper,
-                            },
-                            on: {
-                                slideChange: (swiper) => {
-                                    this.activeIndex = swiper.realIndex;
-                
-                                    // Ensure the active thumbnail is visible
-                                    this.thumbSwiper.slideTo(swiper.realIndex);
-                                },
-                            },
-                        });
-                
-                        // Set initial state
-                        this.isBeginning = this.thumbSwiper.isBeginning;
-                        this.isEnd = this.thumbSwiper.isEnd;
-                    },
-                }">
-                    {{-- Main Slider --}}
-                    <div class="mb-4">
-                        <div class="swiper mainSwiper border border-2 rounded-sm  overflow-hidden px-2"
-                            x-ref="mainSwiper">
-                            <div class="swiper-wrapper ">
-                                @foreach ($product->images as $image)
-                                    <div class="swiper-slide">
-                                        <div class="aspect-square flex items-center justify-center">
-                                            <img src="{{ $image->url }}"
-                                                alt="{{ $image->alt_text ?? $product->name }}"
-                                                class="w-full h-full object-contain" />
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
+                    }
 
-                    {{-- Thumbnail Slider --}}
-                    <div class="relative">
-                        <div class="swiper thumbSwiper px-12" x-ref="thumbSwiper">
-                            <div class="swiper-wrapper">
-                                @foreach ($product->images as $image)
-                                    <div class="swiper-slide cursor-pointer">
-                                        <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                            :class="activeIndex === {{ $loop->index }} ? 'border-sheffield-blue' :
-                                                'border-zinc-200 hover:border-zinc-300'">
-                                            <img src="{{ $image->url }}"
-                                                alt="{{ $image->alt_text ?? $product->name }}"
-                                                class="w-full h-full object-cover" />
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-span-2 pl-6">
-                <a href="{{ route('products.show', $product) }}" wire:navigate
-                    class="text-xl font-bold mt-2 mb-1 hover:text-sheffield-blue hover:underline transition-colors duration-300">{{ $product->name }}</a>
-
-                {{-- Star Rating - Always show 5 stars --}}
-                <div class="flex items-center gap-1 mb-2">
-                    <div class="flex gap-0.5">
-                        @for ($i = 1; $i <= 5; $i++)
-                            @if ($product->reviews_avg_rating && $i <= floor($product->reviews_avg_rating))
-                                {{-- Full star --}}
-                                <flux:icon.star variant="solid" class="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            @elseif ($product->reviews_avg_rating && $i - 0.5 <= $product->reviews_avg_rating)
-                                {{-- Half star --}}
-                                <div class="relative w-4 h-4">
-                                    <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
-                                    <div class="absolute inset-0 overflow-hidden" style="width: 50%;">
-                                        <flux:icon.star variant="solid"
-                                            class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
+                        spaceBetween: 10,
+                        loop: false,
+                        thumbs: { swiper: this.thumbSwiper ?? null },
+                        on: {
+                            slideChange: (swiper) => {
+                                this.activeIndex = swiper.realIndex;
+                            },
+                        },
+                    });
+                },
+            }">
+                {{-- Main --}}
+                <div class="mb-4">
+                    <div class="swiper border-2 rounded-sm overflow-hidden px-2" x-ref="mainSwiper">
+                        <div class="swiper-wrapper">
+                            @if ($product->image_url)
+                                <div class="swiper-slide">
+                                    <div class="aspect-square flex items-center justify-center">
+                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
+                                            class="w-full h-full object-contain" />
                                     </div>
                                 </div>
-                            @else
-                                {{-- Empty star --}}
-                                <flux:icon.star variant="solid" class="w-4 h-4 text-zinc-300" />
                             @endif
-                        @endfor
+                            @foreach ($product->images as $image)
+                                <div class="swiper-slide">
+                                    <div class="aspect-square flex items-center justify-center">
+                                        <img src="{{ Storage::url($image->image_path) }}"
+                                            alt="{{ $image->alt_text ?? $product->name }}"
+                                            class="w-full h-full object-contain" />
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    @if ($product->reviews_avg_rating)
-                        <span
-                            class="text-xs text-zinc-500">{{ number_format($product->reviews_avg_rating, 1) }}</span>
-                    @endif
                 </div>
+
+                {{-- Thumbnails --}}
+                @if ($product->images->count() > 0)
+                    <div class="swiper px-8" x-ref="thumbSwiper">
+                        <div class="swiper-wrapper">
+                            @if ($product->image_url)
+                                <div class="swiper-slide cursor-pointer">
+                                    <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
+                                        :class="activeIndex === 0 ? 'border-sheffield-blue' : 'border-zinc-200'">
+                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
+                                            class="w-full h-full object-contain" />
+                                    </div>
+                                </div>
+                            @endif
+                            @foreach ($product->images as $index => $image)
+                                <div class="swiper-slide cursor-pointer">
+                                    <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
+                                        :class="activeIndex === {{ $index + ($product->image_url ? 1 : 0) }} ?
+                                            'border-sheffield-blue' : 'border-zinc-200'">
+                                        <img src="{{ Storage::url($image->image_path) }}"
+                                            alt="{{ $image->alt_text ?? $product->name }}"
+                                            class="w-full h-full object-contain" />
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Details --}}
+            <div class="col-span-2 pl-6">
+                <a href="{{ route('products.show', $product) }}" wire:navigate
+                    class="text-xl font-bold mt-2 mb-1 hover:text-sheffield-blue hover:underline transition-colors">
+                    {{ $product->name }}
+                </a>
+
+                <x-star-rating :rating="$product->reviews_avg_rating ?? 0" class="mb-2 mt-1" />
 
                 <div class="my-4 text-zinc-500 text-sm line-clamp-3">{!! $product->short_description !!}</div>
 
-                @if ($product->hasDiscount())
-                    <div class="flex items-center flex-wrap gap-x-2">
-                        <p class="text-lg font-semibold text-sheffield-blue">
-                            {{ $product->formatted_final_price }}
-                        </p>
-                        <p class=" text-zinc-500 line-through">{{ $product->formatted_sale_price }}</p>
-
-                        <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}
-                        </flux:badge>
-                    </div>
-                @else
-                    <p class="font-semibold text-lg text-sheffield-blue">{{ $product->formatted_final_price }}
-                    </p>
-                @endif
-
-                @island
-                    <div class="mt-3 flex items-center gap-4">
-                        <flux:button.group>
-                            <flux:button icon="minus" class="cursor-pointer text-zinc-500!" title="Decrease Quantity"
-                                wire:click="decreaseCartQuantity"></flux:button>
-
-                            <flux:input readonly value="{{ $cartQuantity }}"
-                                class="max-w-9! outline-none! border-none! ring-0 focus:outline-none! focus:border-none!"
-                                style="outline: none; padding-left: 0 !important; padding-right: 0 !important; text-align: center !important;" />
-
-                            <flux:button icon="plus" class="cursor-pointer text-zinc-500!" title="Increase Quantity"
-                                wire:click="increaseCartQuantity"></flux:button>
-
-                            @if ($inCart)
-                                <flux:button icon="trash" class="cursor-pointer text-red-500!"
-                                    wire:click="removeFromCart" title="Remove Item from Cart">
-                                </flux:button>
-                            @endif
-                        </flux:button.group>
-
-                        @if (!$inCart)
-                            <flux:button wire:click="addToCart" class="uppercase" variant="primary">
-                                Add to Cart
-                            </flux:button>
+                {{-- Price --}}
+                @if ($product->requires_quotation)
+                    <a href="{{ route('products.show', $product) }}" wire:navigate
+                        class="text-sm font-medium text-amber-600 hover:underline">
+                        Request a quote →
+                    </a>
+                @elseif ($product->display_price)
+                    <div class="flex items-baseline gap-1 flex-wrap">
+                        @if ($product->has_price_prefix)
+                            <span class="text-sm text-zinc-400">{{ $product->display_price_prefix }}</span>
+                        @endif
+                        <span class="text-lg font-semibold text-sheffield-blue">{{ $product->display_price }}</span>
+                        @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
+                            <span class="text-sm text-zinc-400 line-through">{{ $product->formatted_price }}</span>
+                            <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}
+                            </flux:badge>
                         @endif
                     </div>
-                @endisland
+                @endif
+
+                {{-- Cart actions --}}
+                @if (!$product->requires_quotation && $product->type === ProductType::SIMPLE)
+                    @island
+                        <div class="mt-3 flex items-center gap-4">
+                            <flux:button.group>
+                                <flux:button icon="minus" class="cursor-pointer text-zinc-500!"
+                                    wire:click="decreaseCartQuantity" title="Decrease" />
+                                <flux:input readonly value="{{ $cartQuantity }}"
+                                    class="max-w-9! outline-none! border-none! ring-0! text-center!" />
+                                <flux:button icon="plus" class="cursor-pointer text-zinc-500!"
+                                    wire:click="increaseCartQuantity" title="Increase" />
+                                @if ($inCart)
+                                    <flux:button icon="trash" class="cursor-pointer text-red-500!"
+                                        wire:click="removeFromCart" title="Remove" />
+                                @endif
+                            </flux:button.group>
+
+                            @if (!$inCart)
+                                <flux:button wire:click="addToCart" variant="primary" class="uppercase cursor-pointer">
+                                    Add to Cart
+                                </flux:button>
+                            @endif
+                        </div>
+                    @endisland
+                @elseif (in_array($product->type, [ProductType::VARIABLE, ProductType::GROUPED]))
+                    <div class="mt-3">
+                        <flux:button wire:click="goToProduct" variant="primary" class="uppercase cursor-pointer">
+                            View Options
+                        </flux:button>
+                    </div>
+                @elseif ($product->requires_quotation)
+                    <div class="mt-3">
+                        <flux:button wire:click="goToProduct" variant="primary" class="uppercase cursor-pointer">
+                            Request Quote
+                        </flux:button>
+                    </div>
+                @endif
             </div>
         </div>
     </flux:modal>
 </flux:card>
-
 
 <style>
     flux-modal::backdrop,

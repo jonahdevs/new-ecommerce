@@ -104,6 +104,7 @@ class Product extends Model
             'published_at' => 'datetime',
             'status' => ProductStatus::class,
             'visibility' => ProductVisibility::class,
+            'type' => ProductType::class,
             'reviews_enabled' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -208,7 +209,7 @@ class Product extends Model
             'related_product_id'
         )
             ->wherePivot('type', ProductRelationshipType::ACCESSORY)
-            ->withPivot('sort_order', 'quantity')
+            ->withPivot('sort_order', 'quantity', 'show_in_hero')
             ->withTimestamps()
             ->orderByPivot('sort_order');
     }
@@ -312,7 +313,9 @@ class Product extends Model
     protected function formattedFinalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => format_currency($this->final_price)
+            get: fn() => $this->final_price !== null
+            ? format_currency($this->final_price)
+            : null,
         );
     }
 
@@ -330,9 +333,129 @@ class Product extends Model
         );
     }
 
+    /**
+     * Display price - type awarev price string for product cards and listings
+     *
+     * Simple/Virtual/Downloadable: formatted final price (sale price if active)
+     * Variable: "Kit from KES X" - lowest active variant final price
+     * Grouped: "Kit from KES X" - sum of all children x pivot quantities
+     * Requires quotation: null - card should show "Request Quote" instead
+     */
+    protected function displayPrice(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->requires_quotation) {
+                    return null;
+                }
+
+                // Guard against null type — fall back to simple behaviour
+                if (!$this->type) {
+                    return $this->formatted_final_price;
+                }
+
+                return match ($this->type->value) {
+                    'variable' => $this->variableDisplayPrice(),
+                    'grouped' => $this->groupedDisplayPrice(),
+                    default => $this->formatted_final_price,
+                };
+            }
+        );
+    }
+
+    /**
+     * Display price prefix - show before the price in smaller muted text.
+     * null for simple products, "from" for variable, "kit from" for grouped.
+     */
+    protected function displayPricePrefix(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->requires_quotation) {
+                    return null;
+                }
+
+                if (!$this->type) {
+                    return null;
+                }
+
+                return match ($this->type->value) {
+                    'variable', 'grouped' => 'from',
+                    default => null,
+                };
+            }
+        );
+    }
+
+    /**
+     * Whether the display price has a "from" type prefix
+     * Used to conditionally style the price in cards
+     */
+    protected function hasPricePrefix(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => !is_null($this->display_price_prefix)
+        );
+    }
+
     // ===============================================
     // HELPER METHODS
     // ===============================================
+
+    /**
+     * Calculates the variable product display price.
+     * Returns "From KES x" using the lowest active variant final price.
+     * Return null if no active price variants exists.
+     */
+    private function variableDisplayPrice(): ?string
+    {
+        // Use already-loaded variants if available - avoids extra query
+        $variants = $this->relationLoaded('variants')
+            ? $this->variants
+            : $this->variants()->where('is_active', true)->whereNotNull('price')->get();
+
+
+        $minPrice = $variants
+            ->where('is_active', true)
+            ->whereNotNull('price')
+            ->min(
+                fn($v) => $v->sale_price && $v->sale_price < $v->price
+                ? $v->sale_price
+                : $v->price
+            );
+
+        return $minPrice !== null ? format_currency($minPrice) : null;
+    }
+
+
+    /**
+     * Calculates the grouped product display price.
+     * Returns "Kit from KES X" — sum of all children × pivot quantities.
+     * Returns null if no grouped products are loaded or priced.
+     */
+    private function groupedDisplayPrice(): ?string
+    {
+        // Use already-loaded groupedProducts if available — avoids extra query
+        $items = $this->relationLoaded('groupedProducts')
+            ? $this->groupedProducts
+            : $this->groupedProducts()->with([])->get();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        $total = $items->sum(function ($item) {
+            $price = $item->sale_price && $item->sale_price < $item->price
+                ? $item->sale_price
+                : ($item->price ?? 0);
+
+            $qty = $item->pivot->quantity ?? 1;
+
+            return $price * $qty;
+        });
+
+        return $total > 0 ? format_currency($total) : null;
+    }
 
     public function hasDiscount(): bool
     {
@@ -361,7 +484,7 @@ class Product extends Model
 
     public function isGrouped(): bool
     {
-        return $this->type === 'grouped';
+        return $this->type === ProductType::GROUPED;
     }
 
     public function isVirtual(): bool

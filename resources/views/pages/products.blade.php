@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Brand;
-use App\Models\Category;
 use App\Models\Product;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,22 +14,13 @@ use Illuminate\Support\Facades\DB;
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
     use WithPagination;
 
-    #[Url(as: 'category')]
-    public $categorySlug = null;
+    #[Url(as: 'search')]
+    public string $search = '';
 
     #[Url(as: 'brand')]
-    public $selectedBrandsString = '';
+    public string $selectedBrandsString = '';
+    public array $selectedBrands = [];
 
-    public $selectedBrands = [];
-
-    /*
-     * FIX: Price URL pollution
-     * Do NOT put #[Url] on minPrice/maxPrice directly.
-     * Instead we use separate URL-bound properties that only get
-     * written when the user explicitly applies a price filter.
-     * On initial load these are null — we never push the
-     * priceRange defaults into the URL.
-     */
     #[Url(as: 'min_price')]
     public $minPriceUrl = null;
 
@@ -45,18 +35,18 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public $minRating = null;
 
     #[Url(as: 'sort')]
-    public $sortBy = '';
+    public string $sortBy = '';
 
     #[Url(as: 'in_stock')]
-    public $inStock = false;
+    public bool $inStock = false;
 
     #[Url(as: 'featured')]
-    public $featured = false;
+    public bool $featured = false;
 
     #[Url(as: 'on_sale')]
-    public $onSale = false;
+    public bool $onSale = false;
 
-    public $brandSearch = '';
+    public string $brandSearch = '';
     public bool $showMobileFilters = false;
 
     public function mount(): void
@@ -66,12 +56,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         }
 
         $range = $this->priceRange;
-
-        // If URL has explicit price params, use those
-        // Otherwise use priceRange defaults but DO NOT write to URL
         $this->minPrice = $this->minPriceUrl ?? ($range->min_price ?? 0);
         $this->maxPrice = $this->maxPriceUrl ?? ($range->max_price ?? 1000000);
     }
+
+    // =========================================================================
+    // COMPUTED
+    // =========================================================================
 
     #[Computed(persist: true)]
     public function priceRange()
@@ -83,24 +74,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public function brands()
     {
         return Brand::active()->orderBy('name')->get();
-    }
-
-    #[Computed(persist: true)]
-    public function selectedCategory()
-    {
-        if (!$this->categorySlug) {
-            return null;
-        }
-        return Category::where('slug', $this->categorySlug)->first();
-    }
-
-    #[Computed(persist: true)]
-    public function categories()
-    {
-        if ($this->selectedCategory) {
-            return Category::active()->where('parent_id', $this->selectedCategory->id)->get();
-        }
-        return Category::active()->whereNull('parent_id')->get();
     }
 
     #[Computed]
@@ -116,24 +89,31 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public function products()
     {
         $query = Product::query()
-            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
-            ->with(['brand:id,name,slug', 'images' => fn($q) => $q->limit(1)])
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            ])
             ->withAvg('reviews', 'rating')
             ->active();
 
-        $query->when($this->categorySlug, function (Builder $q) {
-            $cat = $this->selectedCategory;
-            if ($cat) {
-                $ids = array_merge([$cat->id], $cat->children()->pluck('id')->toArray());
-                $q->whereHas('categories', fn(Builder $q2) => $q2->whereIn('categories.id', $ids));
-            }
+        $query->when(!empty($this->search), function (Builder $q) {
+            $term = $this->search;
+            $q->where(function (Builder $q2) use ($term) {
+                $q2->where('name', 'like', "%{$term}%")
+                    ->orWhere('sku', 'like', "%{$term}%")
+                    ->orWhere('short_description', 'like', "%{$term}%");
+            });
         });
 
         $query->when(!empty($this->selectedBrands), function (Builder $q) {
             $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands));
         });
 
-        // Use internal price values (not URL-bound ones)
         $query->when($this->minPrice !== null, fn(Builder $q) => $q->where('price', '>=', $this->minPrice));
         $query->when($this->maxPrice !== null, fn(Builder $q) => $q->where('price', '<=', $this->maxPrice));
 
@@ -162,25 +142,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function hasActiveFilters(): bool
     {
-        $range = $this->priceRange;
-        return $this->categorySlug || !empty($this->selectedBrands) || $this->minPriceUrl != null || $this->maxPriceUrl != null || $this->minRating || $this->inStock || $this->featured || $this->onSale;
+        return !empty($this->search) || !empty($this->selectedBrands) || $this->minPriceUrl !== null || $this->maxPriceUrl !== null || $this->minRating || $this->inStock || $this->featured || $this->onSale;
     }
 
-    public function selectCategory($slug): void
-    {
-        $this->categorySlug = $slug;
-        unset($this->selectedCategory, $this->categories);
-        $this->resetPage();
-    }
+    // =========================================================================
+    // ACTIONS
+    // =========================================================================
 
-    public function clearCategory(): void
-    {
-        $this->categorySlug = null;
-        unset($this->selectedCategory, $this->categories);
-        $this->resetPage();
-    }
-
-    public function toggleBrand($slug): void
+    public function toggleBrand(string $slug): void
     {
         if (in_array($slug, $this->selectedBrands)) {
             $this->selectedBrands = array_values(array_diff($this->selectedBrands, [$slug]));
@@ -191,7 +160,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $this->resetPage();
     }
 
-    public function clearBrand($slug): void
+    public function clearBrand(string $slug): void
     {
         $this->selectedBrands = array_values(array_diff($this->selectedBrands, [$slug]));
         $this->selectedBrandsString = !empty($this->selectedBrands) ? implode(',', $this->selectedBrands) : '';
@@ -200,7 +169,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
     public function applyPriceFilter(): void
     {
-        // Only NOW do we write to URL-bound properties
         $this->minPriceUrl = $this->minPrice;
         $this->maxPriceUrl = $this->maxPrice;
         $this->resetPage();
@@ -216,11 +184,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $this->resetPage();
     }
 
-    public function setRating($rating): void
+    public function setRating(int $rating): void
     {
         $this->minRating = $rating;
         $this->resetPage();
     }
+
     public function clearRating(): void
     {
         $this->minRating = null;
@@ -229,8 +198,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
     public function clearAllFilters(): void
     {
-        $this->reset(['categorySlug', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'featured', 'onSale', 'minPriceUrl', 'maxPriceUrl']);
-        unset($this->selectedCategory, $this->categories);
+        $this->reset(['search', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'featured', 'onSale', 'minPriceUrl', 'maxPriceUrl']);
         $this->clearPriceFilter();
         $this->resetPage();
     }
@@ -255,6 +223,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     {
         $this->resetPage();
     }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
 };
 ?>
 
@@ -263,8 +235,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         <div class="bg-zinc-100">
             <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
                 <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                <flux:skeleton animate="shimmer" class="w-3 h-4" />
                 <flux:skeleton animate="shimmer" class="w-14 h-4" />
             </div>
         </div>
@@ -277,62 +247,29 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 <flux:skeleton animate="shimmer" class="w-20 h-6" />
                             </div>
                             <div class="divide-y">
-                                <div class="p-4">
-                                    <flux:skeleton animate="shimmer" class="w-24 h-5 mb-3" />
-                                    <div class="space-y-2">
-                                        @for ($i = 0; $i < 5; $i++)
-                                            <flux:skeleton animate="shimmer" class="w-full h-8" />
-                                        @endfor
-                                    </div>
-                                </div>
-                                <div class="p-4">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <flux:skeleton animate="shimmer" class="w-28 h-5" />
-                                        <flux:skeleton animate="shimmer" class="w-16 h-4" />
-                                    </div>
-                                    <div class="space-y-4">
-                                        <flux:skeleton animate="shimmer" class="w-full h-2 rounded-full" />
-                                        <div class="flex items-center gap-2">
-                                            <flux:skeleton animate="shimmer" class="w-full h-9" />
-                                            <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                                            <flux:skeleton animate="shimmer" class="w-full h-9" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="p-4">
-                                    <flux:skeleton animate="shimmer" class="w-20 h-5 mb-3" />
-                                    <div class="space-y-2">
-                                        @for ($i = 0; $i < 4; $i++)
-                                            <flux:skeleton animate="shimmer" class="w-full h-6" />
-                                        @endfor
-                                    </div>
-                                </div>
-                                <div class="p-4">
-                                    <flux:skeleton animate="shimmer" class="w-16 h-5 mb-3" />
-                                    <flux:skeleton animate="shimmer" class="w-full h-8 mb-3" />
-                                    <div class="space-y-2">
-                                        @for ($i = 0; $i < 6; $i++)
+                                @for ($i = 0; $i < 4; $i++)
+                                    <div class="p-4 space-y-2">
+                                        <flux:skeleton animate="shimmer" class="w-24 h-5 mb-3" />
+                                        @for ($j = 0; $j < 4; $j++)
                                             <flux:skeleton animate="shimmer" class="w-full h-7" />
                                         @endfor
                                     </div>
-                                </div>
+                                @endfor
                             </div>
                         </div>
                     </div>
                 </aside>
                 <div class="flex-1 @container/main">
-                    <div class="mb-6">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="space-y-2">
-                                <flux:skeleton animate="shimmer" class="w-48 h-8" />
-                                <flux:skeleton animate="shimmer" class="w-40 h-5" />
-                            </div>
-                            <flux:skeleton animate="shimmer" class="w-32 h-8" />
+                    <div class="mb-6 flex items-center justify-between">
+                        <div class="space-y-2">
+                            <flux:skeleton animate="shimmer" class="w-48 h-8" />
+                            <flux:skeleton animate="shimmer" class="w-40 h-5" />
                         </div>
+                        <flux:skeleton animate="shimmer" class="w-32 h-8" />
                     </div>
                     <div
                         class="grid grid-cols-1 @sm/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3">
-                        @for ($i = 1; $i < 20; $i++)
+                        @for ($i = 0; $i < 20; $i++)
                             <x-product-card-placeholder />
                         @endfor
                     </div>
@@ -349,20 +286,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />Home
             </flux:breadcrumbs.item>
-            @if ($this->selectedCategory)
-                <flux:breadcrumbs.item :href="route('shop.index')" wire:navigate>Products</flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>{{ $this->selectedCategory->name }}</flux:breadcrumbs.item>
-            @else
-                <flux:breadcrumbs.item>Products</flux:breadcrumbs.item>
-            @endif
+            <flux:breadcrumbs.item>Products</flux:breadcrumbs.item>
         </flux:breadcrumbs>
     </div>
 
     <div class="container mx-auto px-4 py-4">
 
-        {{-- ================================================================
-             MOBILE: Filter bar + drawer trigger
-             ================================================================ --}}
+        {{-- Mobile: filter toggle + sort --}}
         <div class="lg:hidden flex items-center justify-between mb-4 gap-3">
             <button wire:click="$set('showMobileFilters', true)" type="button"
                 class="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
@@ -372,7 +302,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </svg>
                 Filters
                 @if ($this->hasActiveFilters)
-                    <span class="w-2 h-2 rounded-full bg-brand-primary"></span>
+                    <span class="w-2 h-2 rounded-full bg-sheffield-blue"></span>
                 @endif
             </button>
 
@@ -388,10 +318,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             </flux:select>
         </div>
 
-        {{-- ================================================================
-             MOBILE: Filter drawer (slides in from left)
-             Uses x-teleport to escape stacking context
-             ================================================================ --}}
+        {{-- Mobile filter drawer --}}
         <template x-teleport="body">
             <div x-show="$wire.showMobileFilters" x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
@@ -399,24 +326,20 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 x-transition:leave-end="opacity-0" class="fixed inset-0 z-[200] flex lg:hidden"
                 @keydown.escape.window="$wire.showMobileFilters = false">
 
-                {{-- Backdrop --}}
-                <div class="absolute inset-0 bg-black/40" @click="$wire.showMobileFilters = false">
-                </div>
+                <div class="absolute inset-0 bg-black/40" @click="$wire.showMobileFilters = false"></div>
 
-                {{-- Drawer --}}
                 <div x-show="$wire.showMobileFilters" x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
                     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
                     x-transition:leave-end="-translate-x-full"
                     class="relative w-80 max-w-[85vw] bg-white h-full overflow-y-auto flex flex-col shadow-xl">
 
-                    {{-- Drawer header --}}
                     <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
                         <h2 class="font-semibold text-zinc-900">Filters</h2>
                         <div class="flex items-center gap-3">
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-brand-primary hover:underline font-medium">
+                                    class="text-xs text-sheffield-blue hover:underline font-medium">
                                     Clear all
                                 </button>
                             @endif
@@ -430,15 +353,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         </div>
                     </div>
 
-                    {{-- Drawer filter content (shared partial) --}}
                     <div class="flex-1 divide-y">
                         @include('partials.product-filters')
                     </div>
 
-                    {{-- Drawer footer --}}
                     <div class="sticky bottom-0 bg-white border-t px-4 py-3">
                         <button wire:click="$set('showMobileFilters', false)" type="button"
-                            class="w-full py-2.5 bg-brand-primary text-brand-primary-content font-medium rounded-md text-sm hover:bg-brand-primary-dark transition-colors">
+                            class="w-full py-2.5 bg-sheffield-blue text-white font-medium rounded-md text-sm">
                             View {{ $this->products->total() }} Results
                         </button>
                     </div>
@@ -448,9 +369,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         <div class="flex gap-6">
 
-            {{-- ================================================================
-                 DESKTOP: Left sidebar
-                 ================================================================ --}}
+            {{-- Desktop sidebar --}}
             <aside class="hidden lg:block w-64 shrink-0">
                 <div class="sticky top-44">
                     <div class="bg-white rounded-sm border">
@@ -458,7 +377,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             <h2 class="font-medium text-lg">Filters</h2>
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-brand-primary hover:underline font-medium">
+                                    class="text-xs text-sheffield-blue hover:underline font-medium">
                                     Clear all
                                 </button>
                             @endif
@@ -470,17 +389,18 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </div>
             </aside>
 
-            {{-- ================================================================
-                 Product section
-                 ================================================================ --}}
+            {{-- Product section --}}
             <section class="flex-1 @container/main min-w-0">
 
-                {{-- Page header --}}
                 <div class="mb-4">
                     <div class="hidden lg:flex items-center justify-between mb-2">
                         <div>
                             <h1 class="text-2xl lg:text-3xl font-bold text-zinc-900">
-                                {{ $this->selectedCategory?->name ?? 'Products' }}
+                                @if (!empty($search))
+                                    Results for "{{ $search }}"
+                                @else
+                                    Products
+                                @endif
                             </h1>
                             <p class="text-sm text-zinc-600 mt-1">
                                 @if ($this->products->total() > 0)
@@ -489,7 +409,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                     @if ($this->hasActiveFilters)
                                         <span class="text-zinc-400 mx-1">•</span>
                                         <button wire:click="clearAllFilters"
-                                            class="text-brand-primary hover:underline">
+                                            class="text-sheffield-blue hover:underline">
                                             Clear all filters
                                         </button>
                                     @endif
@@ -510,7 +430,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         </flux:select>
                     </div>
 
-                    {{-- Mobile: product count --}}
                     <p class="lg:hidden text-sm text-zinc-500 mb-3">
                         <span class="font-medium text-zinc-900">{{ number_format($this->products->total()) }}</span>
                         {{ Str::plural('product', $this->products->total()) }} found
@@ -519,10 +438,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     {{-- Active filter pills --}}
                     @if ($this->hasActiveFilters)
                         <div class="flex flex-wrap gap-2">
-                            @if ($this->selectedCategory)
+                            @if (!empty($search))
                                 <flux:badge color="zinc" size="sm">
-                                    {{ $this->selectedCategory->name }}
-                                    <button wire:click="clearCategory"
+                                    "{{ $search }}"
+                                    <button wire:click="$set('search', '')"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
@@ -613,14 +532,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 We couldn't find any products matching your criteria. Try adjusting your filters or
                                 search terms.
                             </p>
-                            <flux:button href="{{ route('shop.index') }}" variant="primary" wire:navigate>
+                            <flux:button wire:click="clearAllFilters" variant="primary">
                                 Clear Filters
                             </flux:button>
                         </section>
                     @endforelse
                 </div>
 
-                {{-- Pagination --}}
                 @if ($this->products->hasPages())
                     <div class="mt-8">
                         {{ $this->products->links() }}

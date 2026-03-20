@@ -578,7 +578,7 @@ class ProductForm extends Form
 
             'accessories' => 'nullable|array',
             'accessories.*.id' => 'required|exists:products,id',
-            'accessories.*.quantity' => 'required|integer|min:0',
+            'accessories.*.quantity' => 'required|integer|min:1',
 
             'grouped_products' => 'nullable|array',
             'grouped_products.*.id' => 'required|exists:products,id',
@@ -720,7 +720,7 @@ class ProductForm extends Form
         $this->slug = $product->slug;
         $this->short_description = $product->short_description;
         $this->description = $product->description;
-        $this->type = $product->type ?? 'simple';
+        $this->type = $product->type->value ?? ProductType::SIMPLE->value;
 
         // Pricing
         $this->price = $product->price;
@@ -1152,8 +1152,9 @@ class ProductForm extends Form
             collect($this->accessories)
                 ->mapWithKeys(fn($item, $index) => [
                     $item['id'] => [
-                        'type'       => ProductRelationshipType::ACCESSORY->value,
-                        'quantity'   => $item['quantity'] ?? 1,
+                        'type' => ProductRelationshipType::ACCESSORY->value,
+                        'quantity' => $item['quantity'] ?? 1,
+                        'show_in_hero' => $item['show_in_hero'] ?? false,
                         'sort_order' => $index,
                     ]
                 ])
@@ -1164,7 +1165,7 @@ class ProductForm extends Form
         $groupedToSync = !empty($this->grouped_products)
             ? collect($this->grouped_products)
             : $product->groupedProducts()->get()->map(fn($p) => [
-                'id'       => $p->id,
+                'id' => $p->id,
                 'quantity' => $p->pivot->quantity ?? 1,
             ]);
 
@@ -1172,8 +1173,8 @@ class ProductForm extends Form
             collect($groupedToSync)
                 ->mapWithKeys(fn($item, $index) => [
                     $item['id'] => [
-                        'type'       => ProductRelationshipType::GROUPED->value,
-                        'quantity'   => $item['quantity'] ?? 1,
+                        'type' => ProductRelationshipType::GROUPED->value,
+                        'quantity' => $item['quantity'] ?? 1,
                         'sort_order' => $index,
                     ]
                 ])

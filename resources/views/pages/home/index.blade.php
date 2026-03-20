@@ -22,9 +22,16 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function newArrivals()
     {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            ])
             ->withAvg('reviews', 'rating')
-            ->with('brand:id,name')
             ->active()
             ->newArrivals()
             ->inRandomOrder()
@@ -35,9 +42,16 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function products()
     {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            ])
             ->withAvg('reviews', 'rating')
-            ->with('brand:id,name')
             ->active()
             ->inRandomOrder()
             ->limit(24)
@@ -62,7 +76,7 @@ new #[Layout('layouts.guest')] class extends Component {
             autoplayDelay: 5000,
             progressCircumference: 2 * Math.PI * 18,
             progressOffset: 0,
-        
+
             init() {
                 this.swiper = new Swiper('#heroSwiper', {
                     loop: true,

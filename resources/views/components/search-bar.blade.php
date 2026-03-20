@@ -26,34 +26,33 @@ new class extends Component {
     {
         $term = $this->search;
 
+        // Products — name, slug, image and category only — no price
         $products = Product::active()
             ->where(function (Builder $q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
-                    ->orWhere('short_description', 'like', "%{$term}%")
-                    ->orWhere('sku', 'like', "%{$term}%");
+                    ->orWhere('sku', 'like', "%{$term}%")
+                    ->orWhere('short_description', 'like', "%{$term}%");
             })
-            ->with(['categories:id,name,slug', 'brand:id,name'])
-            ->limit(8)
-            ->get(['id', 'name', 'slug', 'image_path', 'price', 'sale_price']);
+            ->with(['categories:id,name,slug'])
+            ->limit(5)
+            ->get(['id', 'name', 'slug', 'image_path']);
 
+        // Categories — only those with at least one active product
         $categories = Category::query()
             ->active()
             ->where('name', 'like', "%{$term}%")
             ->withCount('activeProducts')
             ->having('active_products_count', '>=', 1)
-            ->limit(4)
+            ->limit(3)
             ->get(['id', 'name', 'slug']);
 
         $this->suggestions = [
             'products' => $products
                 ->map(
                     fn($p) => [
-                        'id' => $p->id,
                         'name' => $p->name,
                         'slug' => $p->slug,
                         'image' => $p->image_url,
-                        'price' => $p->formatted_final_price,
-                        'has_discount' => $p->hasDiscount(),
                         'category' => $p->categories->first()?->name,
                         'category_slug' => $p->categories->first()?->slug,
                     ],
@@ -88,9 +87,8 @@ new class extends Component {
 ?>
 
 <div class="w-full">
-    {{-- =====================================================================
-         DESKTOP: inline search bar (lg+)
-         ===================================================================== --}}
+
+    {{-- ── DESKTOP ── --}}
     <div class="hidden lg:block w-full max-w-xl relative">
         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search products..."
             class="w-full" autocomplete="off" clearable
@@ -98,16 +96,13 @@ new class extends Component {
             @keydown.escape="$wire.showSuggestions = false"
             @keydown.enter="window.location.href = '{{ route('shop.index') }}?search=' + encodeURIComponent($wire.search)" />
 
-        {{-- Desktop suggestions dropdown --}}
         <div wire:show="showSuggestions" @click.outside="$wire.showSuggestions = false"
-            class="absolute z-50 w-full bg-white rounded-sm shadow-lg border border-zinc-200 top-full mt-1 max-h-[28rem] overflow-y-auto">
+            class="absolute z-50 w-full bg-white rounded-lg shadow-lg border border-zinc-200 top-full mt-1 max-h-[30rem] overflow-y-auto">
             @include('partials.search-suggestions')
         </div>
     </div>
 
-    {{-- =====================================================================
-         MOBILE: search icon trigger
-         ===================================================================== --}}
+    {{-- ── MOBILE TRIGGER ── --}}
     <button wire:click="openMobile" type="button"
         class="lg:hidden flex items-center justify-center w-9 h-9 rounded-md text-zinc-700 hover:bg-zinc-100 transition-colors"
         aria-label="Open search">
@@ -117,19 +112,8 @@ new class extends Component {
         </svg>
     </button>
 
-    {{-- =====================================================================
-         MOBILE: full-screen overlay
-         
-         WHY x-teleport="body":
-         The sticky header wrapper in guest.blade.php has z-50, which creates
-         a new stacking context. Any child element — no matter how high its
-         z-index — cannot escape that context. The overlay would always render
-         BEHIND or clipped by the sticky header.
-
-         x-teleport moves the overlay's DOM node to <body> at render time,
-         placing it completely outside the stacking context. z-[200] then
-         works correctly and the overlay covers everything.
-         ===================================================================== --}}
+    {{-- ── MOBILE OVERLAY ── --}}
+    {{-- x-teleport escapes the sticky header stacking context --}}
     <template x-teleport="body">
         <div x-show="$wire.mobileOpen" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
@@ -137,8 +121,8 @@ new class extends Component {
             x-transition:leave-end="opacity-0 -translate-y-2" class="fixed inset-0 z-[200] bg-white flex flex-col"
             @keydown.escape.window="$wire.closeMobile()">
 
-            {{-- Search header --}}
-            <div class="flex items-center gap-3 px-4 py-3 border-b border-zinc-200 bg-white shrink-0">
+            {{-- Header --}}
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-zinc-200 shrink-0">
                 <button wire:click="closeMobile" type="button"
                     class="shrink-0 text-zinc-600 hover:text-zinc-900 transition-colors" aria-label="Close search">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +139,7 @@ new class extends Component {
                     " />
             </div>
 
-            {{-- Suggestions / empty state --}}
+            {{-- Results --}}
             <div class="flex-1 overflow-y-auto">
                 @if ($showSuggestions)
                     @include('partials.search-suggestions')
@@ -165,11 +149,12 @@ new class extends Component {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <p class="text-sm">Type at least 2 characters to search products and categories.</p>
+                        <p class="text-sm">Type at least 2 characters to search.</p>
                     </div>
                 @endif
             </div>
 
         </div>
     </template>
+
 </div>

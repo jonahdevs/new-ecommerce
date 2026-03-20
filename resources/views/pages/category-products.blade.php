@@ -33,6 +33,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Url(as: 'max_price')]
     public $maxPriceUrl = null;
 
+    #[Url(as: 'search')]
+    public string $search = '';
+
     // Internal working values — NOT bound to URL
     public $minPrice = null;
     public $maxPrice = null;
@@ -145,9 +148,17 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $catIds = array_merge([$rootCat->id], $rootCat->children()->pluck('id')->toArray());
 
         $query = Product::query()
-            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
-            ->with(['brand:id,name,slug', 'images' => fn($q) => $q->limit(1)])
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            ])
             ->withAvg('reviews', 'rating')
+            ->active()
             ->active()
             ->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds));
 
@@ -164,6 +175,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         $query->when($this->inStock, fn(Builder $q) => $q->where('stock_quantity', '>', 0));
         $query->when($this->onSale, fn(Builder $q) => $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price')));
+
+        $query->when(!empty($this->search), function (Builder $q) {
+            $term = $this->search;
+            $q->where(function (Builder $q2) use ($term) {
+                $q2->where('name', 'like', "%{$term}%")
+                    ->orWhere('sku', 'like', "%{$term}%")
+                    ->orWhere('short_description', 'like', "%{$term}%");
+            });
+        });
 
         match ($this->sortBy) {
             'name_asc' => $query->orderBy('name', 'asc'),
@@ -182,7 +202,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function hasActiveFilters(): bool
     {
-        return $this->subCategorySlug || !empty($this->selectedBrands) || $this->minPriceUrl !== null || $this->maxPriceUrl !== null || $this->minRating || $this->inStock || $this->onSale;
+        return $this->subCategorySlug || !empty($this->selectedBrands) || $this->minPriceUrl !== null || $this->maxPriceUrl !== null || $this->minRating || $this->inStock || $this->onSale || !empty($this->search);
     }
 
     // -----------------------------------------------------------------------
@@ -252,7 +272,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
     public function clearAllFilters(): void
     {
-        $this->reset(['subCategorySlug', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'onSale', 'minPriceUrl', 'maxPriceUrl']);
+        $this->reset(['subCategorySlug', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'onSale', 'minPriceUrl', 'maxPriceUrl', 'search']);
         unset($this->activeSubCategory);
         $this->clearPriceFilter();
         $this->resetPage();
@@ -262,14 +282,22 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     {
         $this->resetPage();
     }
+
     public function updatedInStock(): void
     {
         $this->resetPage();
     }
+
     public function updatedOnSale(): void
     {
         $this->resetPage();
     }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedMinRating(): void
     {
         $this->resetPage();
@@ -521,7 +549,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             {{-- Only show h1 here if there's no hero banner --}}
                             @if (!$category->image_url && !$category->description)
                                 <h1 class="text-2xl lg:text-3xl font-bold text-zinc-900">
-                                    {{ $this->activeSubCategory?->name ?? $category->name }}
+                                    @if (!empty($search))
+                                        Results for "{{ $search }}" in
+                                        {{ $this->activeSubCategory?->name ?? $category->name }}
+                                    @else
+                                        {{ $this->activeSubCategory?->name ?? $category->name }}
+                                    @endif
                                 </h1>
                             @endif
                             <p class="text-sm text-zinc-600 mt-1">
@@ -564,6 +597,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 <flux:badge color="zinc" size="sm">
                                     {{ $this->activeSubCategory->name }}
                                     <button wire:click="clearSubCategory"
+                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
+                                        <flux:icon.x-mark class="w-3 h-3" />
+                                    </button>
+                                </flux:badge>
+                            @endif
+                            @if (!empty($search))
+                                <flux:badge color="zinc" size="sm">
+                                    "{{ $search }}"
+                                    <button wire:click="$set('search', '')"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
