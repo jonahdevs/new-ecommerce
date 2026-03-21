@@ -28,9 +28,16 @@ class ProductService
     protected function crossSells(Product $product, int $limit): \Illuminate\Support\Collection
     {
         $crossSells = $product->crossSells()
-            ->select(['products.id', 'products.name', 'products.slug', 'products.brand_id', 'products.price', 'products.sale_price', 'products.image_path', 'products.short_description'])
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            ])
             ->withAvg('reviews', 'rating')
-            ->with(['brand:id,name'])
             ->active()
             ->orderByPivot('sort_order')
             ->limit($limit)
@@ -56,9 +63,16 @@ class ProductService
     protected function upSells(Product $product, int $limit): \Illuminate\Support\Collection
     {
         $upSells = $product->upsells()
-            ->select(['products.id', 'products.name', 'products.slug', 'products.brand_id', 'products.price', 'products.sale_price', 'products.image_path', 'products.short_description'])
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            ])
             ->withAvg('reviews', 'rating')
-            ->with(['brand:id,name'])
             ->active()
             ->orderByPivot('sort_order')
             ->limit($limit)
@@ -87,9 +101,16 @@ class ProductService
         if ($product->categories->isNotEmpty()) {
             $categoryIds = $product->categories->pluck('id')->toArray();
 
-            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+            $categoryProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
                 ->withAvg('reviews', 'rating')
-                ->with(['brand:id,name'])
                 ->whereHas('categories', fn($q) => $q->whereIn('categories.id', $categoryIds))
                 ->where('id', '!=', $product->id)
                 ->active()
@@ -102,9 +123,16 @@ class ProductService
 
         // 2. Same brand
         if ($relatedProducts->count() < $limit && $product->brand_id) {
-            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+            $brandProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
                 ->withAvg('reviews', 'rating')
-                ->with(['brand:id,name'])
                 ->where('brand_id', $product->brand_id)
                 ->where('id', '!=', $product->id)
                 ->whereNotIn('id', $relatedProducts->pluck('id'))
@@ -145,9 +173,16 @@ class ProductService
 
         // 4. Any active products as last resort
         if ($relatedProducts->count() < $limit) {
-            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description'])
+            $anyProducts = Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
                 ->withAvg('reviews', 'rating')
-                ->with(['brand:id,name'])
                 ->where('id', '!=', $product->id)
                 ->whereNotIn('id', $relatedProducts->pluck('id'))
                 ->active()

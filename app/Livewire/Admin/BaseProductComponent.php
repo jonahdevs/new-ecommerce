@@ -238,7 +238,6 @@ abstract class BaseProductComponent extends Component
                 ->map(fn($item) => [
                     'id' => $item['id'],
                     'quantity' => $item['quantity'] ?? 1,
-                    'show_in_hero' => $item['show_in_hero'] ?? false,
                 ])
                 ->toArray();
 
@@ -1092,7 +1091,6 @@ abstract class BaseProductComponent extends Component
                 'sku' => $p->sku,
                 'price' => $p->price,
                 'quantity' => $p->pivot->quantity,
-                'show_in_hero' => (bool) $p->pivot->show_in_hero,
             ])
             ->toArray();
     }
@@ -1126,7 +1124,6 @@ abstract class BaseProductComponent extends Component
                 'sku' => $product->sku,
                 'price' => $product->price,
                 'quantity' => 1,
-                'show_in_hero' => false,
             ];
         }
 

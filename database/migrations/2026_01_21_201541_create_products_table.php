@@ -308,7 +308,6 @@ return new class extends Migration {
 
             $table->string('type');
             $table->integer('quantity')->default(1);
-            $table->boolean('show_in_hero')->default(false);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 

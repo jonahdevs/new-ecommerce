@@ -20,6 +20,7 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
             ->items()
             ->with([
                 'product' => fn($q) => $q->with('crossSells'),
+                'variant' => fn($q) => $q->with(['attributeValues:id,attribute_id,value,label', 'attributeValues.attribute:id,name']),
             ])
             ->get();
     }
@@ -285,22 +286,33 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                 @else
                     <section class="space-y-2">
                         @foreach ($this->cartItems as $item)
-                            {{--
-                                FIX: Extract wishlist check to a local variable — previously
-                                in_array($item->product->id, $this->wishlistProductIds) was
-                                called 3 times per item (footer button + modal button x2).
-                                Now resolved once per loop iteration.
-                            --}}
-                            @php $wishlisted = in_array($item->product->id, $this->wishlistProductIds); @endphp
+                            @php
+                                $wishlisted = in_array($item->product->id, $this->wishlistProductIds);
+                                $variant = $item->variant;
+
+                                // Use variant price/image when available, fall back to product
+                                $unitPrice = $variant?->final_price ?? $item->product->final_price;
+                                $lineTotal = $unitPrice * $item->quantity;
+                                $sku = $variant?->sku ?? $item->product->sku;
+                                $imageUrl = $variant?->image_path
+                                    ? Storage::url($variant->image_path)
+                                    : $item->product->image_url;
+
+                                // Variant attribute pills e.g. ['Color' => 'Red', 'Size' => 'Large']
+                                $variantAttrs = $variant
+                                    ? $variant->attributeValues->mapWithKeys(
+                                        fn($av) => [$av->attribute->name => $av->label ?: $av->value],
+                                    )
+                                    : collect();
+                            @endphp
 
                             <flux:card wire:key="cart-item-{{ $item->id }}" class="p-0 overflow-hidden">
                                 <div class="flex items-start gap-3 p-3 py-4">
 
-                                    {{-- Image --}}
+                                    {{-- Image — variant image if available --}}
                                     <div class="shrink-0 w-20 h-20 rounded border bg-zinc-50 overflow-hidden">
-                                        @if ($item->product->image_path)
-                                            <img class="object-contain w-full h-full"
-                                                src="{{ $item->product->image_url }}"
+                                        @if ($imageUrl)
+                                            <img class="object-contain w-full h-full" src="{{ $imageUrl }}"
                                                 alt="{{ $item->product->name }}" />
                                         @else
                                             <flux:icon.photo class="w-full h-full p-2 text-zinc-200 stroke-1" />
@@ -310,53 +322,73 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                     {{-- Details --}}
                                     <div class="flex-1 min-w-0">
                                         <a href="{{ route('products.show', $item->product) }}" wire:navigate
-                                            class="font-medium hover:underline truncate block">
+                                            class="font-medium hover:underline truncate block text-sm">
                                             {{ $item->product->name }}
                                         </a>
-                                        <flux:text class="text-xs text-zinc-400">
-                                            SKU: {{ $item->product->sku }}
-                                        </flux:text>
 
-                                        {{-- Quantity --}}
+                                        {{-- Variant attribute pills --}}
+                                        @if ($variantAttrs->isNotEmpty())
+                                            <div class="flex flex-wrap gap-1 mt-1.5">
+                                                @foreach ($variantAttrs as $attrName => $attrValue)
+                                                    <span
+                                                        class="inline-flex items-center text-[11px] bg-zinc-100 dark:bg-zinc-800
+                                border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5
+                                text-zinc-600 dark:text-zinc-400">
+                                                        {{ $attrName }}: {{ $attrValue }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
+                                        {{-- SKU --}}
+                                        @if ($sku)
+                                            <p class="text-xs text-zinc-400 mt-1">SKU: {{ $sku }}</p>
+                                        @endif
+
+                                        {{-- Quantity stepper --}}
                                         <flux:input.group class="mt-2">
                                             <flux:button icon="minus" size="xs"
                                                 class="cursor-pointer text-zinc-500!"
-                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">
-                                            </flux:button>
+                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})" />
                                             <flux:input value="{{ $item->quantity }}" disabled
                                                 class="max-w-8! outline-none! border-none! ring-0 text-center!"
                                                 size="xs" />
                                             <flux:button icon="plus" size="xs"
                                                 class="cursor-pointer text-zinc-500!"
-                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">
-                                            </flux:button>
+                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})" />
                                         </flux:input.group>
                                     </div>
 
-                                    {{-- Price --}}
+                                    {{-- Unit price --}}
                                     <div class="text-right shrink-0">
-                                        @if ($item->product->hasDiscount())
+                                        @php
+                                            $regularPrice = $variant?->price ?? $item->product->price;
+                                            $salePrice = $variant?->sale_price ?? $item->product->sale_price;
+                                            $hasDiscount = $salePrice && $salePrice < $regularPrice;
+                                        @endphp
+
+                                        @if ($hasDiscount)
                                             <p class="font-semibold text-sheffield-blue">
-                                                {{ $item->product->formatted_final_price }}
+                                                {{ format_currency($salePrice) }}
                                             </p>
-                                            <div class="flex items-center gap-1 justify-end flex-wrap">
-                                                <p class="text-sm text-zinc-400 line-through">
-                                                    {{ $item->product->formatted_price }}
-                                                </p>
-                                                <flux:badge color="amber" size="sm">
-                                                    -{{ $item->product->discountPercentage() }}
-                                                </flux:badge>
-                                            </div>
+                                            <p class="text-xs text-zinc-400 line-through">
+                                                {{ format_currency($regularPrice) }}
+                                            </p>
                                         @else
                                             <p class="font-semibold text-sheffield-blue">
-                                                {{ $item->product->formatted_final_price }}
+                                                {{ format_currency($unitPrice) }}
                                             </p>
+                                        @endif
+
+                                        @if ($item->quantity > 1)
+                                            <p class="text-[11px] text-zinc-400 mt-0.5">per unit</p>
                                         @endif
                                     </div>
                                 </div>
 
-                                {{-- Footer Actions --}}
-                                <div class="bg-zinc-50 px-3 py-2 flex items-center border-t border-zinc-100">
+                                {{-- Footer actions --}}
+                                <div
+                                    class="bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 flex items-center border-t border-zinc-100 dark:border-zinc-700">
                                     <div class="flex items-center gap-4">
 
                                         {{-- Remove --}}
@@ -373,7 +405,12 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                                 <div>
                                                     <flux:heading size="lg">Remove from Cart</flux:heading>
                                                     <flux:text class="mt-2">
-                                                        Do you really want to remove this item from cart?
+                                                        Do you really want to remove
+                                                        <strong>{{ $item->product->name }}</strong>
+                                                        @if ($variantAttrs->isNotEmpty())
+                                                            ({{ $variantAttrs->map(fn($v, $k) => "$k: $v")->implode(', ') }})
+                                                        @endif
+                                                        from your cart?
                                                     </flux:text>
                                                 </div>
                                                 <div class="flex gap-2">
@@ -406,15 +443,15 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                                 <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
                                                     @class(['size-4', 'text-red-500' => $wishlisted]) />
                                             </x-slot>
-                                            {{ $wishlisted ? 'Wishlisted' : 'Add to Wishlist' }}
+                                            {{ $wishlisted ? 'Wishlisted' : 'Save for later' }}
                                         </flux:button>
                                     </div>
 
-                                    {{-- Line Total --}}
+                                    {{-- Line total --}}
                                     <div class="ms-auto flex items-center gap-1">
-                                        <p class="text-zinc-600 text-xs font-medium">Total:</p>
-                                        <span class="font-medium text-sm">
-                                            {{ format_currency($item->product->finalPrice * $item->quantity) }}
+                                        <p class="text-zinc-500 text-xs">Total:</p>
+                                        <span class="font-medium text-sm text-zinc-800 dark:text-zinc-100">
+                                            {{ format_currency($lineTotal) }}
                                         </span>
                                     </div>
                                 </div>

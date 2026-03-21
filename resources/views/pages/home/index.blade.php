@@ -76,7 +76,7 @@ new #[Layout('layouts.guest')] class extends Component {
             autoplayDelay: 5000,
             progressCircumference: 2 * Math.PI * 18,
             progressOffset: 0,
-
+        
             init() {
                 this.swiper = new Swiper('#heroSwiper', {
                     loop: true,
@@ -127,7 +127,7 @@ new #[Layout('layouts.guest')] class extends Component {
         }">
 
             {{-- Carousel — slightly inset with a shadow ring so it floats --}}
-            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-lg ring-1 ring-white/10"
+            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-md ring-1 ring-white/10"
                 id="heroSwiper">
                 <div class="swiper-wrapper">
                     @foreach ($this->heroBanners as $banner)
@@ -192,6 +192,9 @@ new #[Layout('layouts.guest')] class extends Component {
             <div class="pb-8"></div>
         </div>
     </div>
+
+
+
 
     {{-- Feature strips — sits directly below, no  needed --}}
     <section class="border-y border-zinc-200 bg-white">

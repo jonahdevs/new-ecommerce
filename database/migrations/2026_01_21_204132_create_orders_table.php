@@ -5,9 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('orders', function (Blueprint $table) {
@@ -15,26 +12,14 @@ return new class extends Migration {
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reference')->unique();
 
-            // document type
             $table->string('document_type')->default('sale_order')->comment('sale_order | quotation');
+            $table->string('quotation_type')->nullable()->comment('delivery | product - null for sale_order documents');
 
-            // delivery -> admin prices shipping only
-            // product -> admin prices line items + shipping
-            $table->string('quotation_type')->nullable()->comment('delivery | product - null for sales_order documents');
-
-            // FK to orders.id - set on the converted sales order
-            // Pointing back to the original quotation
-            // Enables full document chain tracing SO -> QTN
             $table->string('parent_quotation_id')->nullable()->constrained('orders')->nullOnDelete();
 
-            // Set when transitionTo(QUOTE_SENT) fires
-            // Used to compute "sent X days ago" and to check whether expires_at has been breached for the QUOTE_EXPIRED transition
             $table->timestamp('quoted_at')->nullable()->comment('Set when admin sends the priced quotation to customer');
 
-            // Path to the generated tax invoice PDF (set after payment confirmed)
             $table->string('invoice_path')->nullable()->comment('Relative path to tax invoice PDF in storage/app/');
-
-            // Path to the generated quotation PDF (set when quote is sent)
             $table->string('quotation_pdf_path')->nullable()->comment('Relative path to quotation PDF in storage/app/');
 
             $table->string('status')->default('pending');
@@ -50,6 +35,19 @@ return new class extends Migration {
             $table->json('shipping_address')->nullable();
             $table->json('billing_address')->nullable();
             $table->json('shipping_snapshot')->nullable();
+
+            // Guest contact info — populated when user_id is null (guest quotation)
+            // Stores: name, email, phone
+            // On registration, QuotationService::attachGuestQuotes() matches
+            // by email and sets user_id on orphaned quotations
+            $table->json('guest_info')->nullable()->comment('Guest contact details for unauthenticated quotations');
+
+            // Quotation notes — customer-supplied message on submission
+            $table->text('customer_notes')->nullable()->comment('Free-text notes from customer at quote submission');
+
+            // Preferred delivery info — county + area supplied at submission
+            $table->string('preferred_county')->nullable();
+            $table->string('preferred_area')->nullable();
 
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
@@ -87,7 +85,6 @@ return new class extends Migration {
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            // Indexes for performance
             $table->index('order_id');
             $table->index('created_at');
             $table->index('to_status');
@@ -95,9 +92,6 @@ return new class extends Migration {
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('order_status_history');

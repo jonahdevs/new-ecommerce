@@ -36,6 +36,7 @@ Route::prefix('products')->name('products.')->group(function () {
 
 Route::livewire('/wishlist', 'pages::wishlist')->name('wishlist');
 Route::livewire('/cart', 'pages::cart')->name('cart');
+Route::livewire('/quote', 'pages::quote')->name('quote');
 
 // ----------------------------------------------------------------------------
 // Social Auth

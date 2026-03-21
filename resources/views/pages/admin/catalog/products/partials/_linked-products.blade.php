@@ -172,7 +172,6 @@
                     class="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 text-xs font-medium text-zinc-500 uppercase tracking-wide border-b dark:border-zinc-700">
                     <div class="col-span-5">Product</div>
                     <div class="col-span-2 text-center">Recommended Qty</div>
-                    <div class="col-span-2 text-center">Show in hero</div>
                     <div class="col-span-2 text-right">Unit Price</div>
                     <div class="col-span-1"></div>
                 </div>
@@ -198,13 +197,6 @@
                                     class="text-center w-20!" />
                             </div>
 
-                            {{-- Show in hero toggle --}}
-                            <div class="col-span-2 flex flex-col items-center gap-1">
-                                <flux:checkbox wire:model="accessories.{{ $index }}.show_in_hero" />
-                                @if (!empty($item['show_in_hero']))
-                                    <span class="text-[10px] text-sheffield-blue font-medium">Inline</span>
-                                @endif
-                            </div>
 
                             {{-- Unit Price --}}
                             <div class="col-span-2 text-right text-sm text-zinc-500 dark:text-zinc-400">
@@ -245,11 +237,6 @@
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400">
                                     KES {{ number_format($item['price'] ?? 0, 2) }}
                                 </p>
-                            </div>
-                            {{-- Show in hero --}}
-                            <div class="flex items-center gap-2">
-                                <flux:checkbox wire:model="accessories.{{ $index }}.show_in_hero" />
-                                <span class="text-xs text-zinc-500">Show as inline add-on in hero</span>
                             </div>
                         </div>
                     @endforeach

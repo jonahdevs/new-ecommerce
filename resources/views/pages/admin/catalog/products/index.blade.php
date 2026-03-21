@@ -614,19 +614,19 @@ new #[Title('Products')] class extends Component {
                                 <flux:menu>
 
                                     {{-- Edit --}}
-                                    <flux:menu.item icon="pencil-square"
+                                    <flux:menu.item icon="pencil-square" icon-variant="outline"
                                         href="{{ route('admin.catalog.products.edit', $product) }}" wire:navigate>
                                         Edit
                                     </flux:menu.item>
 
                                     {{-- View on store --}}
-                                    <flux:menu.item icon="arrow-top-right-on-square"
+                                    <flux:menu.item icon="arrow-top-right-on-square" icon-variant="outline"
                                         href="{{ route('products.show', $product->slug) }}" target="_blank">
                                         View on Store
                                     </flux:menu.item>
 
                                     {{-- Duplicate --}}
-                                    <flux:menu.item icon="document-duplicate"
+                                    <flux:menu.item icon="document-duplicate" icon-variant="outline"
                                         wire:click="duplicate({{ $product->id }})">
                                         Duplicate
                                     </flux:menu.item>
@@ -638,7 +638,8 @@ new #[Title('Products')] class extends Component {
                                         @foreach ($this->statuses as $s)
                                             <flux:menu.item
                                                 wire:click="setStatus({{ $product->id }}, '{{ $s->value }}')"
-                                                :icon="$product->status === $s ? 'check' : $s->icon()">
+                                                :icon="$product->status === $s ? 'check' : $s->icon()"
+                                                icon-variant="outline">
                                                 {{ $s->label() }}
                                             </flux:menu.item>
                                         @endforeach
@@ -647,7 +648,7 @@ new #[Title('Products')] class extends Component {
                                     <flux:menu.separator />
 
                                     {{-- Trash --}}
-                                    <flux:menu.item icon="trash" variant="danger"
+                                    <flux:menu.item icon="trash" variant="danger" icon-variant="outline"
                                         wire:click="trash({{ $product->id }})"
                                         wire:confirm="Move '{{ addslashes($product->name) }}' to trash?">
                                         Move to Trash

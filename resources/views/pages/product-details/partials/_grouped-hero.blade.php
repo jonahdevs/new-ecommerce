@@ -10,7 +10,7 @@
             activeIndex: 0,
             init() {
                 const thumbEl = document.getElementById('groupedThumbSwiper');
-
+        
                 if (thumbEl) {
                     this.thumbSwiper = new Swiper('#groupedThumbSwiper', {
                         spaceBetween: 10,
@@ -24,7 +24,7 @@
                         },
                     });
                 }
-
+        
                 this.mainSwiper = new Swiper('#groupedMainSwiper', {
                     spaceBetween: 10,
                     loop: false,
@@ -39,7 +39,7 @@
                         },
                     },
                 });
-
+        
                 this.$nextTick(() => {
                     if (thumbEl) thumbEl.classList.remove('opacity-0');
                     document.getElementById('groupedMainSwiper').classList.remove('opacity-0');
@@ -153,63 +153,68 @@
                     <div class="col-span-3 text-center">Quantity</div>
                     <div class="col-span-4 text-right">Price</div>
                 </div>
+                <div class="max-h-64 overflow-y-auto">
 
-                {{-- Rows --}}
-                @foreach ($this->groupedProducts as $item)
-                    @php
-                        $itemPrice = $item->final_price ?? ($item->price ?? 0);
-                        $itemQty = $groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
-                        $isSelected = in_array($item->id, $selectedGroupedItems);
-                    @endphp
 
-                    <div wire:key="grouped-{{ $item->id }}"
-                        wire:click="$toggle('selectedGroupedItems', {{ $item->id }})"
-                        class="grid grid-cols-12 gap-2 px-3 py-2.5 items-center cursor-pointer transition-colors duration-150
+                    {{-- Rows --}}
+                    @foreach ($this->groupedProducts as $item)
+                        @php
+                            $itemPrice = $item->final_price ?? ($item->price ?? 0);
+                            $itemQty = $groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
+                            $isSelected = in_array($item->id, $selectedGroupedItems);
+                        @endphp
+
+                        <div wire:key="grouped-{{ $item->id }}"
+                            wire:click="$toggle('selectedGroupedItems', {{ $item->id }})"
+                            class="grid grid-cols-12 gap-2 px-3 py-2.5 items-center cursor-pointer transition-colors duration-150
                             {{ !$loop->last ? 'border-b border-zinc-200 dark:border-zinc-700' : '' }}
                             {{ $isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50' }}">
 
-                        {{-- Checkbox + Name --}}
-                        <div class="col-span-5 flex items-center gap-2 min-w-0">
-                            <flux:checkbox wire:model.live="selectedGroupedItems" value="{{ $item->id }}"
-                                wire:click.stop />
-                            <a href="{{ route('products.show', $item) }}" wire:navigate wire:click.stop
-                                class="text-sm font-medium text-sheffield-blue hover:underline truncate">
-                                {{ $item->name }}
-                            </a>
-                        </div>
+                            {{-- Checkbox + Name --}}
+                            <div class="col-span-5 flex items-center gap-2 min-w-0">
+                                <flux:checkbox wire:model.live="selectedGroupedItems" value="{{ $item->id }}"
+                                    wire:click.stop />
+                                <a href="{{ route('products.show', $item) }}" wire:navigate wire:click.stop
+                                    class="text-sm font-medium text-sheffield-blue hover:underline truncate">
+                                    {{ $item->name }}
+                                </a>
+                            </div>
 
-                        {{-- Quantity stepper --}}
-                        <div class="col-span-3 flex justify-center" wire:click.stop>
-                            <div
-                                class="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-md overflow-hidden">
-                                <button type="button" wire:click.stop="decreaseGroupedQuantity({{ $item->id }})"
-                                    class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
-                                    −
-                                </button>
-                                <span
-                                    class="w-7 h-6 flex items-center justify-center text-xs font-medium text-zinc-800 dark:text-zinc-100
+                            {{-- Quantity stepper --}}
+                            <div class="col-span-3 flex justify-center" wire:click.stop>
+                                <div
+                                    class="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-md overflow-hidden">
+                                    <button type="button"
+                                        wire:click.stop="decreaseGroupedQuantity({{ $item->id }})"
+                                        class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
+                                        −
+                                    </button>
+                                    <span
+                                        class="w-7 h-6 flex items-center justify-center text-xs font-medium text-zinc-800 dark:text-zinc-100
                                     border-l border-r border-zinc-200 dark:border-zinc-700">
-                                    {{ $itemQty }}
-                                </span>
-                                <button type="button" wire:click.stop="increaseGroupedQuantity({{ $item->id }})"
-                                    class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
-                                    +
-                                </button>
+                                        {{ $itemQty }}
+                                    </span>
+                                    <button type="button"
+                                        wire:click.stop="increaseGroupedQuantity({{ $item->id }})"
+                                        class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Price --}}
+                            <div class="col-span-4 text-right">
+                                @if ($isSelected)
+                                    <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                                        {{ $itemPrice > 0 ? format_currency($itemPrice * $itemQty) : '—' }}
+                                    </span>
+                                @else
+                                    <span class="text-sm text-zinc-400 dark:text-zinc-600">—</span>
+                                @endif
                             </div>
                         </div>
-
-                        {{-- Price --}}
-                        <div class="col-span-4 text-right">
-                            @if ($isSelected)
-                                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                    {{ $itemPrice > 0 ? format_currency($itemPrice * $itemQty) : '—' }}
-                                </span>
-                            @else
-                                <span class="text-sm text-zinc-400 dark:text-zinc-600">—</span>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
 
                 {{-- Kit total --}}
                 <div

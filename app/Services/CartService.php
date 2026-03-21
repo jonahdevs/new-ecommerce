@@ -269,18 +269,18 @@ class CartService
      */
     public function summary(Cart $cart)
     {
-
         $subtotal = $cart->items->reduce(function ($carry, $item) {
-            return $carry + ($item->product->final_price * $item->quantity);
+            // Use variant price if available, fall back to product price
+            $price = $item->variant?->final_price ?? $item->product->final_price;
+            return $carry + ($price * $item->quantity);
         }, 0);
 
         $discount = $cart->items->reduce(function ($carry, $item) {
+            $regularPrice = $item->variant?->price ?? $item->product->price;
+            $salePrice    = $item->variant?->sale_price ?? $item->product->sale_price;
 
-            $price = $item->product->price;
-            $sale = $item->product->sale_price;
-
-            if ($sale && $sale < $price) {
-                return $carry + (($price - $sale) * $item->quantity);
+            if ($salePrice && $salePrice < $regularPrice) {
+                return $carry + (($regularPrice - $salePrice) * $item->quantity);
             }
 
             return $carry;

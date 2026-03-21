@@ -209,7 +209,7 @@ class Product extends Model
             'related_product_id'
         )
             ->wherePivot('type', ProductRelationshipType::ACCESSORY)
-            ->withPivot('sort_order', 'quantity', 'show_in_hero')
+            ->withPivot('sort_order', 'quantity')
             ->withTimestamps()
             ->orderByPivot('sort_order');
     }
@@ -314,8 +314,8 @@ class Product extends Model
     {
         return Attribute::make(
             get: fn() => $this->final_price !== null
-            ? format_currency($this->final_price)
-            : null,
+                ? format_currency($this->final_price)
+                : null,
         );
     }
 
@@ -420,8 +420,8 @@ class Product extends Model
             ->whereNotNull('price')
             ->min(
                 fn($v) => $v->sale_price && $v->sale_price < $v->price
-                ? $v->sale_price
-                : $v->price
+                    ? $v->sale_price
+                    : $v->price
             );
 
         return $minPrice !== null ? format_currency($minPrice) : null;

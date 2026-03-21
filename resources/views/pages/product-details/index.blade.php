@@ -17,6 +17,7 @@ use Livewire\Attributes\Computed;
 use App\Models\ReviewHelpfulness;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\QuoteBasketService;
 
 new #[Layout('layouts.guest')] class extends Component {
     public Product $product;
@@ -39,20 +40,12 @@ new #[Layout('layouts.guest')] class extends Component {
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
 
+    public bool $inQuoteBasket = false;
+
     // ── Variant state ─
     // selectedAttributeValues: ['Color' => 'Red', 'Size' => 'Large']
     public array $selectedAttributeValues = [];
     public ?int $selectedVariantId = null;
-
-    // IDs of checked inline add-on accessories
-    public array $selectedAddOns = [];
-
-    /**
-     * Per add-on quantity overrides, keyed by product ID.
-     * Falls back to pivot->quantity when not set.
-     * e.g. [5 => 2, 8 => 1]
-     */
-    public array $addOnQuantities = [];
 
     /** IDs of selected grouped items — all pre-selected by default */
     public array $selectedGroupedItems = [];
@@ -71,7 +64,7 @@ new #[Layout('layouts.guest')] class extends Component {
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active(), 'accessories' => fn($q) => $q->active()->withPivot('sort_order', 'quantity', 'show_in_hero')]);
+        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active(), 'accessories' => fn($q) => $q->active()->withPivot('sort_order', 'quantity')]);
 
         if ($product->type->value === 'grouped') {
             $product->load([
@@ -119,6 +112,8 @@ new #[Layout('layouts.guest')] class extends Component {
         // Cart state
         $this->wishlisted = $wishlist->has($this->product->id);
         $this->inCompare = $compareService->has($this->product->id);
+
+        $this->inQuoteBasket = app(QuoteBasketService::class)->has($product->id, $this->selectedVariantId);
 
         // Check cart state — for variable products check by variant ID
         if ($product->type->value === 'variable' && $this->selectedVariantId) {
@@ -740,86 +735,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function accessories()
     {
-        return $this->product->accessories()->active()->withPivot('sort_order', 'quantity', 'show_in_hero')->orderByPivot('sort_order')->get();
-    }
-
-    #[Computed]
-    public function inHeroAccessories()
-    {
-        return $this->product->accessories->filter(fn($a) => (bool) $a->pivot->show_in_hero)->values();
-    }
-
-    #[Computed]
-    public function selectedAddOnsTotal(): float
-    {
-        return $this->inHeroAccessories->filter(fn($a) => in_array($a->id, $this->selectedAddOns))->sum(function ($a) {
-            $qty = $this->addOnQuantities[$a->id] ?? ($a->pivot->quantity ?? 1);
-            return ($a->final_price ?? ($a->price ?? 0)) * $qty;
-        });
-    }
-
-    // ── Add-on quantity methods
-
-    public function increaseAddOnQuantity(int $addOnId): void
-    {
-        $current = $this->addOnQuantities[$addOnId] ?? ($this->inHeroAccessories->firstWhere('id', $addOnId)?->pivot->quantity ?? 1);
-
-        $this->addOnQuantities[$addOnId] = $current + 1;
-    }
-
-    public function decreaseAddOnQuantity(int $addOnId): void
-    {
-        $current = $this->addOnQuantities[$addOnId] ?? ($this->inHeroAccessories->firstWhere('id', $addOnId)?->pivot->quantity ?? 1);
-
-        $this->addOnQuantities[$addOnId] = max(1, $current - 1);
-    }
-
-    // ── addToCartWithAddOns
-
-    public function addToCartWithAddOns(CartService $cartService): void
-    {
-        try {
-            $variantId = $this->selectedVariantId;
-
-            if ($this->product->type->value === 'variable' && !$variantId) {
-                $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
-                return;
-            }
-
-            $state = $this->product->type->value === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
-
-            if ($state === 'out_of_stock') {
-                $this->dispatch('notify', variant: 'warning', message: 'This product is currently out of stock.');
-                return;
-            }
-
-            // Add main product
-            $cartService->addItem(productId: $this->product->id, quantity: $this->cartQuantity, variantId: $variantId);
-
-            // Add each selected add-on using its individual quantity
-            foreach ($this->selectedAddOns as $addOnId) {
-                $addOn = $this->inHeroAccessories->firstWhere('id', $addOnId);
-                if ($addOn) {
-                    $qty = $this->addOnQuantities[$addOnId] ?? ($addOn->pivot->quantity ?? 1);
-                    $cartService->addItem(productId: $addOn->id, quantity: $qty);
-                }
-            }
-
-            $this->inCart = true;
-            $cartItem = $cartService->getCartItem($this->product->id, $variantId);
-            if ($cartItem) {
-                $this->cartItemId = $cartItem->id;
-                $this->cartQuantity = $cartItem->quantity;
-            }
-
-            $addOnCount = count($this->selectedAddOns);
-            $message = $addOnCount > 0 ? "Added to cart with {$addOnCount} add-on(s)" : 'Added to cart successfully';
-
-            $this->dispatch('cart-updated');
-            $this->dispatch('notify', variant: 'success', message: $message);
-        } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
-        }
+        return $this->product->accessories()->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
     #[Computed]
@@ -831,6 +747,19 @@ new #[Layout('layouts.guest')] class extends Component {
     public function render()
     {
         return $this->view()->title($this->product->name . ' | ' . config('app.name'));
+    }
+
+    public function addToQuoteBasket(QuoteBasketService $quoteBasket): void
+    {
+        try {
+            $quoteBasket->add(productId: $this->product->id, quantity: $this->cartQuantity, variantId: $this->selectedVariantId);
+
+            $this->inQuoteBasket = true;
+            $this->dispatch('quote-basket-updated');
+            $this->dispatch('notify', variant: 'success', message: 'Added to quote basket');
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to quote basket');
+        }
     }
 };
 ?>

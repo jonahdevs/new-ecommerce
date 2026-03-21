@@ -16,18 +16,31 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return auth()
                 ->user()
                 ->wishlistProducts()
-                ->select(['products.id', 'products.name', 'products.slug', 'products.brand_id', 'products.price', 'products.sale_price', 'products.image_path'])
+                ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
                 ->withAvg('reviews', 'rating')
-                ->with('brand:id,name')
                 ->active()
                 ->get();
         } else {
             $wishlistIds = request()->session()->get('wishlist', []);
 
-            return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path'])
+            return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
                 ->withAvg('reviews', 'rating')
-                ->with('brand:id,name')
-                ->active()
                 ->whereIn('id', $wishlistIds)
                 ->get();
         }

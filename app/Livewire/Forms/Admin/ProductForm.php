@@ -1154,7 +1154,6 @@ class ProductForm extends Form
                     $item['id'] => [
                         'type' => ProductRelationshipType::ACCESSORY->value,
                         'quantity' => $item['quantity'] ?? 1,
-                        'show_in_hero' => $item['show_in_hero'] ?? false,
                         'sort_order' => $index,
                     ]
                 ])

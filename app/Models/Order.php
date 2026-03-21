@@ -31,6 +31,10 @@ class Order extends Model
         'billing_address',
         'shipping_snapshot',
         'expires_at',
+        'guest_info',
+        'customer_notes',
+        'preferred_county',
+        'preferred_area',
     ];
 
     protected function casts(): array
@@ -43,6 +47,7 @@ class Order extends Model
             'quoted_at' => 'datetime',
             'status' => OrdersStatus::class,
             'payment_status' => PaymentStatus::class,
+            'guest_info'               => 'array',
         ];
     }
 
@@ -325,5 +330,19 @@ class Order extends Model
             'changed_by_type' => auth()->check() ? 'user' : $changedByType,
             'notes' => $notes,
         ]);
+    }
+    public function customerName(): string
+    {
+        return $this->user?->name ?? $this->guest_info['name'] ?? 'Guest';
+    }
+
+    public function customerEmail(): string
+    {
+        return $this->user?->email ?? $this->guest_info['email'] ?? '';
+    }
+
+    public function customerPhone(): string
+    {
+        return $this->user?->phone ?? $this->guest_info['phone'] ?? '';
     }
 }

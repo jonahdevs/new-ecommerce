@@ -23,32 +23,7 @@
                 });
             },
         }">
-            {{-- Header --}}
-            <div class="flex items-center justify-end gap-2 mb-4">
 
-                {{-- Prev --}}
-                <button id="accessories-prev"
-                    class="w-8 h-8 flex items-center justify-center border border-zinc-300 rounded-md transition-colors hover:bg-zinc-100 cursor-pointer"
-                    aria-label="Previous">
-                    <flux:icon.chevron-left class="w-4 h-4 text-zinc-600" />
-                </button>
-
-                {{-- Next --}}
-                <button id="accessories-next"
-                    class="w-8 h-8 flex items-center justify-center border border-zinc-300 rounded-md transition-colors hover:bg-zinc-100 cursor-pointer"
-                    aria-label="Next">
-                    <flux:icon.chevron-right class="w-4 h-4 text-zinc-600" />
-                </button>
-
-                <div class="w-px h-5 bg-zinc-200 mx-1"></div>
-
-                {{-- Add all --}}
-                <flux:button wire:click="addAllAccessoriesToCart" wire:loading.attr="disabled"
-                    wire:target="addAllAccessoriesToCart" size="sm" variant="filled" icon="shopping-cart"
-                    class="cursor-pointer">
-                    Add all
-                </flux:button>
-            </div>
 
             {{-- Swiper --}}
             <div class="swiper" id="accessoriesSwiper">
@@ -61,13 +36,39 @@
                 </div>
             </div>
 
-            {{-- Pagination dots — only shown when more than 4 accessories --}}
-            @if ($this->accessories->count() > 4)
-                <div id="accessories-pagination" class="flex justify-center gap-1.5 mt-4"></div>
-            @endif
+            {{-- Footer --}}
+            <div class="flex items-center justify-between mt-4">
+                {{-- Pagination dots — only shown when more than 4 accessories --}}
+                @if ($this->accessories->count() > 4)
+                    <div id="accessories-pagination" class=" space-x-1.5 "></div>
+                @endif
 
+                <div class="flex items-center justify-end gap-2 ms-auto">
+                    {{-- Prev --}}
+                    <button id="accessories-prev"
+                        class="w-8 h-8 flex items-center justify-center border border-zinc-300 rounded-md transition-colors hover:bg-zinc-100 cursor-pointer"
+                        aria-label="Previous">
+                        <flux:icon.chevron-left class="w-4 h-4 text-zinc-600" />
+                    </button>
+
+                    {{-- Next --}}
+                    <button id="accessories-next"
+                        class="w-8 h-8 flex items-center justify-center border border-zinc-300 rounded-md transition-colors hover:bg-zinc-100 cursor-pointer"
+                        aria-label="Next">
+                        <flux:icon.chevron-right class="w-4 h-4 text-zinc-600" />
+                    </button>
+
+                    <div class="w-px h-5 bg-zinc-200 mx-1"></div>
+
+                    {{-- Add all --}}
+                    <flux:button wire:click="addAllAccessoriesToCart" wire:loading.attr="disabled"
+                        wire:target="addAllAccessoriesToCart" size="sm" variant="filled" icon="shopping-bag"
+                        icon-variant="outline" class="cursor-pointer">
+                        Add all
+                    </flux:button>
+                </div>
+            </div>
         </div>
-
     </div>
 @endif
 

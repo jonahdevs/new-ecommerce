@@ -1,3 +1,7 @@
+@php
+    use App\Enums\ProductType;
+@endphp
+
 <flux:card class="lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10">
 
     @php
@@ -13,7 +17,7 @@
             mainSwiper: null,
             thumbSwiper: null,
             activeIndex: 0,
-
+        
             init() {
                 this.thumbSwiper = new Swiper('#thumbSwiper', {
                     spaceBetween: 10,
@@ -26,7 +30,7 @@
                         768: { slidesPerView: 6 },
                     },
                 });
-
+        
                 this.mainSwiper = new Swiper('#mainSwiper', {
                     spaceBetween: 10,
                     loop: true,
@@ -41,17 +45,17 @@
                         },
                     },
                 });
-
+        
                 this.$nextTick(() => {
                     document.getElementById('thumbSwiper').classList.remove('opacity-0');
                     document.getElementById('mainSwiper').classList.remove('opacity-0');
                 });
-
+        
                 {{-- Variant slide switch — smooth slideTo() instead of src swapping --}}
                 window.addEventListener('variant-image-selected', (e) => {
                     const index = e.detail.index ?? 0;
                     if (!this.mainSwiper) return;
-
+        
                     this.mainSwiper.slideTo(index);
                     this.thumbSwiper?.slideTo(index);
                     this.activeIndex = index;
@@ -351,88 +355,7 @@
 
         <flux:separator />
 
-        {{-- ── INLINE ADD-ONS ── --}}
-        @if ($this->inHeroAccessories->isNotEmpty())
-            {{-- Has inline accessories — show table, no callout --}}
-            <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
-
-                {{-- Header --}}
-                <div
-                    class="flex items-center justify-between px-3.5 py-2.5 border-b border-zinc-200 dark:border-zinc-700">
-                    <span class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                        Required accessories
-                    </span>
-                    <a href="#accessories"
-                        onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' }); return false;"
-                        class="text-xs text-sheffield-blue hover:underline flex items-center gap-1">
-                        View all accessories
-                        <flux:icon.chevron-down class="size-3" />
-                    </a>
-                </div>
-
-                {{-- Rows --}}
-                @foreach ($this->inHeroAccessories as $addOn)
-                    @php
-                        $isChecked = in_array($addOn->id, $selectedAddOns);
-                        $addOnPrice = $addOn->final_price ?? ($addOn->price ?? 0);
-                    @endphp
-
-                    <div wire:key="addon-{{ $addOn->id }}"
-                        class="flex items-center gap-3 px-3.5 py-2.5 transition-colors duration-150 cursor-pointer
-                    {{ !$loop->last ? 'border-b border-zinc-200 dark:border-zinc-700' : '' }}
-                    {{ $isChecked ? 'bg-blue-50 dark:bg-blue-950/20' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50' }}"
-                        wire:click="$toggle('selectedAddOns', {{ $addOn->id }})">
-
-                        {{-- Checkbox --}}
-                        <flux:checkbox wire:model.live="selectedAddOns" value="{{ $addOn->id }}"
-                            wire:click.stop />
-
-                        {{-- Name — links to product page --}}
-                        <a href="{{ route('products.show', $addOn) }}" wire:navigate wire:click.stop
-                            class="flex-1 min-w-0 text-sm font-medium text-sheffield-blue hover:underline truncate">
-                            {{ $addOn->name }}
-                        </a>
-
-                        {{-- Quantity stepper --}}
-                        <div class="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-md overflow-hidden shrink-0"
-                            wire:click.stop>
-                            <button type="button" wire:click.stop="decreaseAddOnQuantity({{ $addOn->id }})"
-                                class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
-                                −
-                            </button>
-                            <span
-                                class="w-6 h-6 flex items-center justify-center text-xs font-medium text-zinc-800 dark:text-zinc-100
-                        border-l border-r border-zinc-200 dark:border-zinc-700">
-                                {{ $addOnQuantities[$addOn->id] ?? ($addOn->pivot->quantity ?? 1) }}
-                            </span>
-                            <button type="button" wire:click.stop="increaseAddOnQuantity({{ $addOn->id }})"
-                                class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
-                                +
-                            </button>
-                        </div>
-
-                        {{-- Price — updates with quantity --}}
-                        <span class="text-sm font-medium text-sheffield-blue shrink-0 min-w-[80px] text-right">
-                            {{ format_currency($addOnPrice * ($addOnQuantities[$addOn->id] ?? ($addOn->pivot->quantity ?? 1))) }}
-                        </span>
-
-                    </div>
-                @endforeach
-
-                {{-- Add-ons total — only when at least one checked --}}
-                @if (!empty($selectedAddOns))
-                    <div
-                        class="flex items-center justify-between px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700">
-                        <span class="text-xs text-zinc-500 dark:text-zinc-400">Add-ons total</span>
-                        <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                            + {{ format_currency($this->selectedAddOnsTotal) }}
-                        </span>
-                    </div>
-                @endif
-
-            </div>
-        @elseif ($this->accessories->count() > 0)
-            {{-- No inline accessories but product has accessories below — show callout --}}
+        @if ($this->accessories->count() > 0)
             <a href="#accessories"
                 onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' }); return false;"
                 class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-sheffield-blue rounded-r-md no-underline group">
@@ -441,52 +364,74 @@
                     {{ $this->accessories->count() }}
                     {{ Str::plural('accessory', $this->accessories->count()) }} available for this product
                 </span>
-                <span class="text-xs text-sheffield-blue ml-auto group-hover:translate-y-0.5 transition-transform">
-                    View ↓
+                <span
+                    class="text-xs text-sheffield-blue ml-auto group-hover:translate-y-0.5 transition-transform flex items-center gap-2">
+                    View
+                    <flux:icon.arrow-long-down class="size-4" />
                 </span>
             </a>
-
         @endif
 
-        {{-- ── CART ACTIONS ── --}}
+        {{--  CART ACTIONS  --}}
         <div class="flex items-center gap-2 flex-wrap">
 
-            {{-- Quantity stepper — hidden when out of stock --}}
-            @if ($state !== 'out_of_stock' && $state !== 'none')
-                <flux:button.group>
-                    <flux:button icon="minus" wire:click="decreaseCartQuantity"
-                        class="cursor-pointer text-zinc-500!" title="Decrease" />
-                    <flux:input readonly value="{{ $cartQuantity }}"
-                        class="max-w-9! text-center! outline-none! border-none! ring-0!" />
-                    <flux:button icon="plus" wire:click="increaseCartQuantity"
-                        class="cursor-pointer text-zinc-500!" title="Increase" />
-                    @if ($inCart)
-                        <flux:button icon="trash" icon-variant="outline" wire:click="removeFromCart"
-                            class="cursor-pointer text-red-500!" title="Remove" />
-                    @endif
-                </flux:button.group>
-            @endif
+            @if ($product->requires_quotation)
+                {{-- Quotation products — no cart, quote only --}}
+                <flux:button wire:click="addToQuoteBasket" variant="primary" class="uppercase cursor-pointer"
+                    wire:loading.attr="disabled" wire:target="addToQuoteBasket">
+                    <x-slot name="icon">
+                        <flux:icon.document-text class="size-4" />
+                    </x-slot>
+                    Add to Quote
+                </flux:button>
 
-            {{-- Primary action button --}}
-            @if ($product->type->value === 'variable' && !$selectedVariantId)
-                <flux:button variant="primary" class="uppercase cursor-pointer" disabled>
-                    Select Options
-                </flux:button>
-            @elseif ($state === 'out_of_stock')
-                <flux:button class="uppercase cursor-not-allowed" disabled>
-                    Out of Stock
-                </flux:button>
-            @elseif ($state === 'backorder' && !$inCart)
-                <flux:button wire:click="addToCartWithAddOns"
-                    class="uppercase cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!"
-                    wire:loading.attr="disabled" wire:target="addToCartWithAddOns">
-                    Pre-order
-                </flux:button>
-            @elseif (!$inCart)
-                <flux:button wire:click="addToCartWithAddOns" variant="primary" class="uppercase cursor-pointer"
-                    wire:loading.attr="disabled" wire:target="addToCartWithAddOns">
-                    Add to Cart
-                </flux:button>
+                @if ($inQuoteBasket)
+                    <a href="{{ route('quote') }}" wire:navigate>
+                        <flux:button icon="arrow-right" icon-variant="outline" class="cursor-pointer">
+                            View Quote Basket
+                        </flux:button>
+                    </a>
+                @endif
+            @else
+                {{-- Quantity stepper — hidden when out of stock --}}
+                @if ($state !== 'out_of_stock' && $state !== 'none')
+                    <flux:button.group>
+                        <flux:button icon="minus" wire:click="decreaseCartQuantity"
+                            class="cursor-pointer text-zinc-500!" title="Decrease" />
+                        <flux:input readonly value="{{ $cartQuantity }}"
+                            class="max-w-9! text-center! outline-none! border-none! ring-0!" />
+                        <flux:button icon="plus" wire:click="increaseCartQuantity"
+                            class="cursor-pointer text-zinc-500!" title="Increase" />
+                        @if ($inCart)
+                            <flux:button icon="trash" icon-variant="outline" wire:click="removeFromCart"
+                                class="cursor-pointer text-red-500!" title="Remove" />
+                        @endif
+                    </flux:button.group>
+                @endif
+
+
+                {{-- Primary action --}}
+                @if ($product->type === ProductType::VARIABLE && !$selectedVariantId)
+                    <flux:button variant="primary" class="uppercase cursor-pointer" disabled>
+                        Select Options
+                    </flux:button>
+                @elseif ($state === 'out_of_stock')
+                    <flux:button class="uppercase cursor-not-allowed" disabled>
+                        Out of Stock
+                    </flux:button>
+                @elseif ($state === 'backorder' && !$inCart)
+                    <flux:button wire:click="addToCart"
+                        class="uppercase cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!"
+                        wire:loading.attr="disabled" wire:target="addToCart">
+                        Pre-order
+                    </flux:button>
+                @elseif (!$inCart)
+                    <flux:button wire:click="addToCart" variant="primary" class="uppercase cursor-pointer"
+                        wire:loading.attr="disabled" wire:target="addToCart">
+                        Add to Cart
+                    </flux:button>
+                @endif
+
             @endif
 
             {{-- Wishlist --}}
@@ -500,29 +445,9 @@
 
             {{-- Share --}}
             <flux:button icon="share" icon-variant="outline" title="Share" class="cursor-pointer" />
+
         </div>
 
-        {{-- ── ACCESSORIES NUDGE ── --}}
-        @if ($this->accessories->count() > 0 && !$this->inHeroAccessories->isNotEmpty())
-            <flux:callout icon="wrench-screwdriver" color="blue" inline>
-                <flux:callout.heading>
-                    {{ $this->accessories->count() }} {{ Str::plural('accessory', $this->accessories->count()) }}
-                    available
-                </flux:callout.heading>
-
-                <flux:callout.text>
-                    This product has compatible accessories you may need.
-                </flux:callout.text>
-
-                <x-slot name="actions">
-                    <flux:button variant="ghost" size="sm" icon:trailing="arrow-long-down"
-                        class="cursor-pointer"
-                        onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' })">
-                        View accessories
-                    </flux:button>
-                </x-slot>
-            </flux:callout>
-        @endif
 
         {{-- Purchase note for downloadable --}}
         @if ($product->is_downloadable && $product->purchase_note)

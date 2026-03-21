@@ -5,17 +5,20 @@ use Livewire\Component;
 use App\Models\Category;
 use Livewire\Attributes\{Computed, On};
 use App\Enums\CategorySection;
+use App\Services\QuoteBasketService;
 
 new class extends Component {
     public int $cartCount = 0;
     public int $compareCount = 0;
     public int $wishlistCount = 0;
+    public int $quoteCount = 0;
 
     public function mount(WishlistService $wishlist, CompareService $compareService, CartService $cartService)
     {
         $this->cartCount = $cartService->getCount();
         $this->wishlistCount = $wishlist->getCount();
         $this->compareCount = $compareService->getCount();
+        $this->quoteCount = app(QuoteBasketService::class)->count();
     }
 
     #[Computed(persist: true)]
@@ -40,6 +43,12 @@ new class extends Component {
     public function updateCompareCount(CompareService $compareService): void
     {
         $this->compareCount = $compareService->getCount();
+    }
+
+    #[On('quote-basket-updated')]
+    public function refreshQuoteCount(): void
+    {
+        $this->quoteCount = app(QuoteBasketService::class)->count();
     }
 };
 ?>
@@ -176,6 +185,25 @@ new class extends Component {
                             <flux:navmenu.item :href="route('customer.orders.index')" wire:navigate icon="package"
                                 icon-variant="outline">
                                 Orders
+                            </flux:navmenu.item>
+
+                            @auth
+                                <flux:navmenu.item :href="route('customer.quotations.index')" wire:navigate
+                                    icon="clipboard-document-list" icon-variant="outline">
+                                    My Quotations
+                                </flux:navmenu.item>
+                            @endauth
+                            <flux:navmenu.item :href="route('quote')" wire:navigate icon="document-text"
+                                icon-variant="outline">
+                                <span class="flex items-center gap-2">
+                                    Quote Basket
+                                    @if ($quoteCount > 0)
+                                        <span
+                                            class="bg-amber-500 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                                            {{ $quoteCount }}
+                                        </span>
+                                    @endif
+                                </span>
                             </flux:navmenu.item>
                             <flux:navmenu.item :href="route('wishlist')" wire:navigate icon="heart"
                                 icon-variant="outline">
