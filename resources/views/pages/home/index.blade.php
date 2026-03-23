@@ -68,7 +68,6 @@ new #[Layout('layouts.guest')] class extends Component {
     <div class="relative overflow-hidden bg-cover bg-center bg-fixed"
         style="background-image: url('{{ asset('images/home/hero-bg.jpg') }}');">
 
-
         {{-- Hero section --}}
         <div class="container mx-auto px-4 py-8 relative z-10" x-data="{
             swiper: null,
@@ -192,8 +191,6 @@ new #[Layout('layouts.guest')] class extends Component {
             <div class="pb-8"></div>
         </div>
     </div>
-
-
 
 
     {{-- Feature strips — sits directly below, no  needed --}}

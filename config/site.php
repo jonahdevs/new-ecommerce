@@ -7,16 +7,8 @@ return [
             'alt' => 'Coffee Machines',
         ],
         [
-            'image' => '/images/home/MEAT-PREP.jpg',
-            'alt' => 'Meat Preparation',
-        ],
-        [
             'image' => '/images/home/REFRIGERATION-SOLUTIONS.jpg',
             'alt' => 'Refrigeration Solutions',
-        ],
-        [
-            'image' => '/images/home/RATIONAL.jpg',
-            'alt' => 'Rational iCombi Pro Series',
         ],
         [
             'image' => '/images/home/ADD TO YOUR TOPLINE.jpg',
