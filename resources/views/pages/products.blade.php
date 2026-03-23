@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Brand;
-use App\Models\Product;
+use App\Models\{Product, Category};
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Defer;
@@ -143,6 +143,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public function hasActiveFilters(): bool
     {
         return !empty($this->search) || !empty($this->selectedBrands) || $this->minPriceUrl !== null || $this->maxPriceUrl !== null || $this->minRating || $this->inStock || $this->featured || $this->onSale;
+    }
+
+    #[Computed(persist: true)]
+    public function categories()
+    {
+        return Category::active()->whereNull('parent_id')->orderBy('name')->get();
     }
 
     // =========================================================================

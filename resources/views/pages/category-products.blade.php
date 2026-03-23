@@ -351,7 +351,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                     <div
                         class="grid grid-cols-1 @sm/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3">
-                        @for ($i = 0; $i < 12; $i++)
+                        @for ($i = 0; $i < 15; $i++)
                             <x-product-card-placeholder />
                         @endfor
                     </div>

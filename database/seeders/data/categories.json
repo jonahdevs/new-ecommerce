@@ -161,7 +161,7 @@
         ]
     },
     {
-        "name": "GN Containers",
+        "name": "GN Containers & Lids",
         "image_path": null,
         "image_icon": "categories/gn_containers_lids_icon.png",
         "description": "Gastronorm containers in a full range of standard sizes and materials, compatible with commercial ovens, bain-maries, and refrigeration units for versatile food storage and service.",
@@ -254,6 +254,38 @@
         "image_icon": "categories/kitchen_small_icon.png",
         "description": "Essential small kitchen tools and utensils including pots, pans, chopping boards, knives, and preparation accessories for everyday use in professional culinary environments.",
         "sort_order": 25,
+        "placements": []
+    },
+    {
+        "name": "Coffee Machines",
+        "image_path": "categories/coffee_machine.jpg",
+        "image_icon": "categories/coffee_machine_icon.png",
+        "description": "Professional espresso machines, automatic coffee makers, grinders, and accessories from leading brands including Rancilio, Simonelli, Kalerm, and Dr. Coffee — built for cafes, restaurants, hotels, and commercial kitchens across East Africa.",
+        "sort_order": 26,
+        "placements": []
+    },
+    {
+        "name": "Ice Cube Machines",
+        "image_path": null,
+        "image_icon": "categories/ice_cube_machines_icon.png",
+        "description": "Commercial ice cube machines from trusted brands including Brema and Iberna — engineered for consistent, high-volume ice production in bars, restaurants, hotels, and food service operations across East Africa.",
+        "sort_order": 27,
+        "placements": []
+    },
+    {
+        "name": "Ice Cream Machines",
+        "image_path": null,
+        "image_icon": "categories/ice_cream_machines_icon.png",
+        "description": "Professional soft serve and gelato machines from leading brands including Pasmo and Carpigiani — designed for cafes, dessert shops, hotels, and high-end hospitality venues across East Africa.",
+        "sort_order": 28,
+        "placements": []
+    },
+    {
+        "name": "Dishwashers",
+        "image_path": "categories/dishwashers.jpg",
+        "image_icon": "categories/dishwashers_icon.png",
+        "description": "Commercial dishwashers, glass washers, and warewashing accessories from trusted brands including Comenda, Hattons, and Kayalar — built for restaurants, hotels, bars, and high-volume food service operations across East Africa.",
+        "sort_order": 29,
         "placements": []
     }
 ]

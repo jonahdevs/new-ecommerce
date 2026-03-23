@@ -1,38 +1,48 @@
 {{-- ==========================================================================
      Product Filters Partial
-     Included by: products page (desktop sidebar + mobile drawer)
-     All old tokens replaced with brand-* tokens.
      ========================================================================== --}}
 
-{{-- Category filter — only rendered if the component has a selectedCategory property --}}
-@if (isset($this->selectedCategory))
+{{-- Categories — Shop page: navigates to category route --}}
+@if (isset($this->categories) && $this->categories->isNotEmpty())
     <div class="p-4">
-        <h3 class="font-medium mb-3">Category</h3>
-        <div class="max-h-64 overflow-y-auto">
-            @if ($this->selectedCategory)
-                <div class="font-medium text-sm text-brand-secondary bg-brand-secondary/10 p-2 rounded mb-3">
-                    {{ $this->selectedCategory->name }}
-                </div>
-                @if ($this->categories->isNotEmpty())
-                    <div class="text-xs text-zinc-500 px-2 mb-2 font-medium">Subcategories:</div>
-                    @foreach ($this->categories as $category)
-                        <button type="button"
-                            class="flex items-center gap-2 cursor-pointer hover:bg-zinc-50 p-2 rounded w-full text-left"
-                            wire:click="selectCategory('{{ $category->slug }}')">
-                            <flux:icon.chevron-right variant="micro" />
-                            <span class="text-sm text-zinc-700">{{ $category->name }}</span>
-                        </button>
-                    @endforeach
-                @endif
-            @else
-                @foreach ($this->categories as $category)
-                    <button type="button"
-                        class="text-sm capitalize px-2 py-2 hover:bg-zinc-100 rounded block w-full text-left"
-                        wire:click="selectCategory('{{ $category->slug }}')">
-                        {{ $category->name }}
-                    </button>
-                @endforeach
-            @endif
+        <flux:heading size="sm" class="mb-3">Categories</flux:heading>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @foreach ($this->categories as $category)
+                <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
+                    class="flex items-center gap-2 px-2 py-2 rounded text-sm text-zinc-700 hover:bg-zinc-50 w-full">
+                    <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
+                    {{ $category->name }}
+                </a>
+            @endforeach
+        </div>
+    </div>
+@endif
+
+{{-- Categories — Category page: subcategory drill-down --}}
+@if (isset($this->subCategories) && $this->subCategories->isNotEmpty())
+    <div class="p-4">
+        <flux:heading size="sm" class="mb-3">Subcategories</flux:heading>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            <button type="button" wire:click="clearSubCategory" @class([
+                'flex items-center gap-2 px-2 py-2 rounded text-sm w-full text-left',
+                'text-brand-secondary font-medium bg-brand-secondary/10' => !$subCategorySlug,
+                'text-zinc-700 hover:bg-zinc-50' => $subCategorySlug,
+            ])>
+                <flux:icon.squares-2x2 variant="micro" class="text-zinc-400" />
+                All
+            </button>
+            @foreach ($this->subCategories as $sub)
+                <button type="button" wire:click="selectSubCategory('{{ $sub->slug }}')"
+                    @class([
+                        'flex items-center gap-2 px-2 py-2 rounded text-sm w-full text-left',
+                        'text-brand-secondary font-medium bg-brand-secondary/10' =>
+                            $subCategorySlug === $sub->slug,
+                        'text-zinc-700 hover:bg-zinc-50' => $subCategorySlug !== $sub->slug,
+                    ])>
+                    <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
+                    {{ $sub->name }}
+                </button>
+            @endforeach
         </div>
     </div>
 @endif
@@ -65,7 +75,7 @@
     }
 }">
     <div class="flex items-center justify-between mb-3">
-        <h3 class="font-medium">Price (KES)</h3>
+        <flux:heading size="sm">Price (KES)</flux:heading>
         <div class="flex items-center gap-2">
             <button @click="reset" x-show="localMin != absoluteMin || localMax != absoluteMax" x-transition
                 class="text-zinc-500 text-xs hover:text-zinc-700 cursor-pointer font-medium" type="button">
@@ -117,7 +127,6 @@
     </div>
 </div>
 
-{{-- Slider thumb color — inline style since Tailwind can't generate arbitrary CSS var values --}}
 <style>
     input[type="range"]::-webkit-slider-thumb {
         background-color: var(--brand-secondary) !important;
@@ -130,7 +139,7 @@
 
 {{-- Rating filter --}}
 <div class="p-4">
-    <h3 class="font-medium mb-3">Rating</h3>
+    <flux:heading size="sm" class="mb-3">Rating</flux:heading>
     <div class="space-y-2">
         <flux:radio.group wire:model.live="minRating">
             @for ($rating = 4; $rating >= 1; $rating--)
@@ -151,7 +160,7 @@
 
 {{-- Brand filter --}}
 <div class="p-4">
-    <h3 class="font-medium mb-3">Brand</h3>
+    <flux:heading size="sm" class="mb-3">Brand</flux:heading>
     <div class="mb-3">
         <flux:input icon="magnifying-glass" placeholder="Search brands..." size="sm"
             wire:model.live.debounce.300ms="brandSearch" clearable />
@@ -165,20 +174,19 @@
                 <flux:label class="font-normal cursor-pointer">{{ $brand->name }}</flux:label>
             </flux:field>
         @empty
-            <p class="text-sm text-zinc-500 px-2 py-2">No brands found</p>
+            <flux:text size="sm" class="px-2 py-2 text-zinc-500">No brands found</flux:text>
         @endforelse
     </div>
 </div>
 
 {{-- More filters --}}
 <div class="p-4">
-    <h3 class="font-medium mb-3">More Filters</h3>
+    <flux:heading size="sm" class="mb-3">More Filters</flux:heading>
     <div class="space-y-2">
         <flux:field class="flex! items-center!">
             <flux:checkbox wire:model.live="inStock" />
             <flux:label class="ms-2 font-normal">In Stock</flux:label>
         </flux:field>
-        {{-- Featured filter — only rendered if the component has a featured property --}}
         @if (isset($this->featured))
             <flux:field class="flex! items-center! mt-2">
                 <flux:checkbox wire:model.live="featured" />
