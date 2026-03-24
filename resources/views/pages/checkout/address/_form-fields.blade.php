@@ -315,25 +315,46 @@
             }
 
             // ── Boot ──────────────────────────────────────────────────────────────
-            // ── Boot ──────────────────────────────────────────────────────────────
             $wire.call('getMapState').then(state => {
                 if (state?.countyName) {
-                    // County already selected (edit mode or back navigation) — use that
+                    // County already selected (edit mode) — use that
                     applyMapState(state);
                 } else {
-                    // No county selected — try to center on user's GPS position
+                    // No county selected — center + pin on GPS
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             (position) => {
-                                map.setView([position.coords.latitude, position.coords.longitude], 13);
+                                const lat = position.coords.latitude;
+                                const lng = position.coords.longitude;
+                                map.setView([lat, lng], 15);
+                                placePin(lat, lng);
+                                syncToWire(lat, lng);
+
+                                clearTimeout(nominatimTimer);
+                                nominatimTimer = setTimeout(async () => {
+                                    const returnedValues = await reverseGeocode(lat, lng);
+                                    const state = await $wire.call('getMapState');
+                                    const selectedCounty = normalise(state?.countyName ??
+                                        '');
+
+                                    if (returnedValues.length > 0 && selectedCounty) {
+                                        const matched = returnedValues.some(val => {
+                                            const n = normalise(val);
+                                            return n === selectedCounty || n
+                                                .includes(selectedCounty) ||
+                                                selectedCounty.includes(n);
+                                        });
+                                        showWarning(!matched);
+                                    }
+                                }, 800);
                             },
                             () => {
-                                // Permission denied or unavailable — fall back to Kenya center
+                                // GPS denied — fall back to Kenya center, no pin
                                 map.setView(KENYA_CENTER, KENYA_ZOOM);
                             }, {
-                                enableHighAccuracy: false,
+                                enableHighAccuracy: true,
                                 timeout: 5000,
-                                maximumAge: 60000
+                                maximumAge: 0
                             }
                         );
                     } else {
