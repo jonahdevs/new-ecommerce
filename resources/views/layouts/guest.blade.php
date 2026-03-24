@@ -3,6 +3,12 @@
 
 <head>
     @include('partials.head')
+
+    <style>
+        :root {
+            color-scheme: light only;
+        }
+    </style>
 </head>
 
 <body class="bg-zinc-50 text-zinc-700 font-sans min-h-screen">
