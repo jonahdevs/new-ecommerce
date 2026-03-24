@@ -48,7 +48,7 @@
     },
     {
         "name": "Juice Processors",
-        "image_path": "categories/juice_processors.jpeg",
+        "image_path": "categories/juice_processors.png",
         "image_icon": "categories/juice_processors_icon.png",
         "description": "Commercial juicing and juice processing equipment including extractors, squeezers, and dispensers for restaurants, juice bars, and catering operations.",
         "sort_order": 5,
@@ -72,7 +72,7 @@
     },
     {
         "name": "Cold Displays",
-        "image_path": "categories/cold_display.jpg",
+        "image_path": "categories/cold_displays.png",
         "image_icon": "categories/cold_display_icon.png",
         "description": "Open and closed refrigerated display units ideal for showcasing chilled products such as beverages, dairy, salads, and deli items in retail and foodservice environments.",
         "sort_order": 7,
@@ -96,7 +96,7 @@
     },
     {
         "name": "Ice Cream Displays",
-        "image_path": null,
+        "image_path": "categories/ice_cream_displays.png",
         "image_icon": "categories/ice_cream_display_icon.png",
         "description": "Specialised freezer display units for gelato, sorbet, and ice cream, maintaining precise low temperatures while providing excellent product visibility and easy access.",
         "sort_order": 9,
@@ -108,7 +108,7 @@
     },
     {
         "name": "Warm Displays",
-        "image_path": null,
+        "image_path": "categories/warm_display.png",
         "image_icon": "categories/warm_display_icon.png",
         "description": "Heated display units that keep hot food items at safe serving temperatures, perfect for displaying pies, rotisserie items, and prepared hot foods in retail or foodservice settings.",
         "sort_order": 10,
@@ -118,7 +118,7 @@
     },
     {
         "name": "Ovens",
-        "image_path": "categories/ovens.jpg",
+        "image_path": "categories/ovens.png",
         "image_icon": "categories/ovens_icon.png",
         "description": "A comprehensive range of commercial ovens including convection, combi-steam, deck, and pizza ovens built for precision cooking and high-volume output in professional kitchens.",
         "sort_order": 11,
@@ -140,7 +140,7 @@
     },
     {
         "name": "Buffet & Servery",
-        "image_path": "categories/buffet_servery.jpg",
+        "image_path": "categories/buffet_servery_02.png",
         "image_icon": "categories/buffet_servery_icon.png",
         "description": "Buffet and servery solutions including bain-maries, food warmers, sneeze guards, and serving counters tailored for hotels, canteens, events, and self-service environments.",
         "sort_order": 13,
@@ -162,7 +162,7 @@
     },
     {
         "name": "GN Containers & Lids",
-        "image_path": null,
+        "image_path": "categories/gn_containers_lids.png",
         "image_icon": "categories/gn_containers_lids_icon.png",
         "description": "Gastronorm containers in a full range of standard sizes and materials, compatible with commercial ovens, bain-maries, and refrigeration units for versatile food storage and service.",
         "sort_order": 15,
@@ -170,7 +170,7 @@
     },
     {
         "name": "Fast Food",
-        "image_path": null,
+        "image_path": "categories/fast_food.png",
         "image_icon": "categories/fast_food_icon.png",
         "description": "Dedicated fast food equipment including grills, toasters, heat lamps, and holding units engineered for quick-service restaurants and high-throughput food operations.",
         "sort_order": 16,
@@ -202,7 +202,7 @@
     },
     {
         "name": "Food Transport",
-        "image_path": null,
+        "image_path": "categories/food_transport.png",
         "image_icon": "categories/food_transport_icon.png",
         "description": "Insulated food transport containers, trolleys, and delivery systems designed to maintain safe food temperatures during transit for catering, healthcare, and events.",
         "sort_order": 19,
@@ -210,7 +210,7 @@
     },
     {
         "name": "Hygiene",
-        "image_path": null,
+        "image_path": "categories/hygiene.png",
         "image_icon": "categories/hygiene_icon.png",
         "description": "Commercial hygiene equipment and consumables including hand wash stations, sanitiser dispensers, and cleaning systems to uphold health and safety standards in food environments.",
         "sort_order": 20,
@@ -218,7 +218,7 @@
     },
     {
         "name": "Rational Tablets",
-        "image_path": null,
+        "image_path": "categories/rational_tablets.png",
         "image_icon": "categories/rational_tablets_icon.png",
         "description": "Genuine Rational cleaning tablets formulated for use with Rational combi ovens, ensuring thorough and efficient automated cleaning cycles and prolonged appliance performance.",
         "sort_order": 21,
@@ -226,7 +226,7 @@
     },
     {
         "name": "Rational Accessories",
-        "image_path": null,
+        "image_path": "categories/rational_accessories.png",
         "image_icon": "categories/rational_accessories_icon.png",
         "description": "Official Rational accessories including trays, racks, and gastronorm supports designed to expand the functionality and versatility of Rational combi-steam ovens.",
         "sort_order": 22,
@@ -234,7 +234,7 @@
     },
     {
         "name": "Cleaning Solutions",
-        "image_path": null,
+        "image_path": "categories/cleaning_solutions.png",
         "image_icon": "categories/cleaning_solutions_icon.png",
         "description": "Professional-grade cleaning solutions and detergents for commercial kitchen equipment, surfaces, and utensils, meeting food-safe and industry hygiene compliance standards.",
         "sort_order": 23,
@@ -250,7 +250,7 @@
     },
     {
         "name": "Kitchen Smalls",
-        "image_path": null,
+        "image_path": "categories/kitchen_smalls.png",
         "image_icon": "categories/kitchen_small_icon.png",
         "description": "Essential small kitchen tools and utensils including pots, pans, chopping boards, knives, and preparation accessories for everyday use in professional culinary environments.",
         "sort_order": 25,
@@ -274,7 +274,7 @@
     },
     {
         "name": "Ice Cream Machines",
-        "image_path": null,
+        "image_path": "categories/ice_cream_machines.png",
         "image_icon": "categories/ice_cream_machines_icon.png",
         "description": "Professional soft serve and gelato machines from leading brands including Pasmo and Carpigiani — designed for cafes, dessert shops, hotels, and high-end hospitality venues across East Africa.",
         "sort_order": 28,
@@ -286,6 +286,14 @@
         "image_icon": "categories/dishwashers_icon.png",
         "description": "Commercial dishwashers, glass washers, and warewashing accessories from trusted brands including Comenda, Hattons, and Kayalar — built for restaurants, hotels, bars, and high-volume food service operations across East Africa.",
         "sort_order": 29,
+        "placements": []
+    },
+    {
+        "name": "Burners",
+        "image_path": "categories/burners.png",
+        "image_icon": "categories/burners_icon.png",
+        "description": "Commercial gas and electric burners from trusted brands — built for restaurants, hotels, catering operations, and high-volume food service environments across East Africa.",
+        "sort_order": 30,
         "placements": []
     }
 ]

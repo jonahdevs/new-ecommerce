@@ -11,12 +11,12 @@
             <div class="group relative" :key="'category-' . $category->id">
                 <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate class="block">
                     <div @class([
-                        'relative aspect-4/3 overflow-hidden rounded-md bg-zinc-50 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-hover:border-blue-100',
+                        'relative aspect-4/3 overflow-hidden rounded-md bg-zinc-50 transition-all duration-300 group-hover:shadow-md',
                         'border border-zinc-200' => !$category->image_url,
                     ])>
                         @if ($category->image_url)
                             <img src="{{ $category->image_url }}" alt="{{ $category->name }}" loading="lazy"
-                                class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
+                                class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105">
                         @else
                             <div class="flex items-center justify-center h-full">
                                 <flux:icon.photo class="text-zinc-300 h-10 w-10 stroke-1" />

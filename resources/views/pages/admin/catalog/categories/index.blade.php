@@ -269,13 +269,15 @@ new #[Title('Categories')] class extends Component {
                         <flux:table.row :key="$category->id">
 
                             <flux:table.cell class="flex items-center gap-3 ps-4!">
-                                <div
-                                    class="shrink-0 w-9 h-9 rounded border dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
-                                    @if ($category->image_icon)
-                                        <img src="{{ asset('storage/' . $category->image_icon) }}"
-                                            class="w-full h-full object-contain p-0.5 dark:invert" />
+                                <div class="shrink-0 w-9 h-9 overflow-hidden">
+                                    @if ($category->image_path)
+                                        <img src="{{ $category->image_url }}"
+                                            class="w-full h-full object-cover rounded" />
                                     @else
-                                        <flux:icon.folder variant="micro" class="text-zinc-400" />
+                                        <div
+                                            class="w-full h-full rounded border dark:border-zinc-600 bg-zinc-50 flex items-center justify-center dark:bg-zinc-800">
+                                            <flux:icon.folder variant="micro" class="text-zinc-400" />
+                                        </div>
                                     @endif
                                 </div>
                                 <div>
