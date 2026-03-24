@@ -5,6 +5,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 use App\Models\County;
 use App\Models\Area;
+use App\Models\CountyBoundary;
 use App\Livewire\Forms\CustomerAddressForm;
 use Illuminate\Validation\ValidationException;
 
@@ -33,9 +34,35 @@ new #[Layout('layouts.checkout')] class extends Component {
         return auth()->user()->addresses()->where('is_default', true)->exists();
     }
 
+    #[Computed]
+    public function mapState(): array
+    {
+        $county = $this->form->county_id ? County::with('boundary')->find($this->form->county_id) : null;
+
+        $area = $this->form->area_id ? Area::find($this->form->area_id) : null;
+
+        return [
+            'pin' => [
+                'lat' => $this->form->latitude,
+                'lng' => $this->form->longitude,
+            ],
+            'center' => [
+                'lat' => $area?->lat_center ?? ($county?->lat_center ?? -1.2921),
+                'lng' => $area?->lng_center ?? ($county?->lng_center ?? 36.8219),
+            ],
+            'countyName' => $county?->name,
+            'boundaryGeojson' => $county?->boundary?->geojson ?? null,
+        ];
+    }
+
     public function updatedFormCountyId()
     {
         $this->form->area_id = null;
+    }
+
+    public function updatedFormAreaId(): void
+    {
+        // Triggers mapState recompute — JS picks it up via $wire
     }
 
     public function save()

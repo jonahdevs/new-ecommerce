@@ -426,12 +426,6 @@ new class extends Component {
             </x-slot>
         </flux:button>
 
-        @if (!$this->summary['shipping_selected'])
-            <p class="text-xs text-center text-amber-500 mt-2">
-                Select a shipping method to continue
-            </p>
-        @endif
-
         <div class="mt-2 flex items-center justify-center gap-1 text-xs text-zinc-400">
             <flux:icon.lock-closed class="size-3" />
             <span>Secure checkout</span>

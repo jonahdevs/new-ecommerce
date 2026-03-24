@@ -93,11 +93,11 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('code')->unique()->nullable();
-            $table->foreignId('shipping_zone_id')
-                ->constrained('shipping_zones')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
+            $table->foreignId('shipping_zone_id')->constrained('shipping_zones')->cascadeOnUpdate()->restrictOnDelete();
+            $table->decimal('lat_center', 10, 7)->nullable();
+            $table->decimal('lng_center', 10, 7)->nullable();
             $table->timestamps();
+
 
             $table->index('shipping_zone_id');
         });
@@ -112,17 +112,13 @@ return new class extends Migration {
         Schema::create('areas', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('county_id')
-                ->constrained()
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
+            $table->foreignId('county_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
 
             // If set, this area uses a different zone than its parent county.
-            $table->foreignId('shipping_zone_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
+            $table->foreignId('shipping_zone_id')->nullable()->constrained()->cascadeOnUpdate()->restrictOnDelete();
+
+            $table->decimal('lat_center', 10, 7)->nullable();
+            $table->decimal('lng_center', 10, 7)->nullable();
 
             $table->timestamps();
 
@@ -464,8 +460,11 @@ return new class extends Migration {
 
             // Resolved at save time from area override or county zone.
             $table->foreignId('shipping_zone_id')->constrained()->restrictOnDelete();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
 
             $table->boolean('is_default')->default(false);
+
 
             $table->timestamps();
 
@@ -592,6 +591,27 @@ return new class extends Migration {
             $table->index('provider_reference');
         });
 
+        Schema::create('county_boundaries', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('county_id')->unique()->constrained('counties')->cascadeOnUpdate()->cascadeOnDelete(); // one boundary row per county
+
+            // Full GeoJSON Feature or Geometry object for the county polygon.
+            // Source: Kenya National Bureau of Statistics public dataset.
+            $table->json('geojson');
+
+            // Bounding box — precomputed from geojson for fast map viewport fitting.
+            // Avoids parsing the full polygon just to zoom the map to the county.
+            $table->decimal('bbox_min_lat', 10, 7)->nullable();
+            $table->decimal('bbox_max_lat', 10, 7)->nullable();
+            $table->decimal('bbox_min_lng', 10, 7)->nullable();
+            $table->decimal('bbox_max_lng', 10, 7)->nullable();
+
+            $table->timestamps();
+
+            $table->index('county_id');
+        });
+
         // ================================================================
         //  Add preferred shipping method to users
         // ================================================================
@@ -611,6 +631,7 @@ return new class extends Migration {
             $table->dropColumn('preferred_shipping_method_id');
         });
 
+        Schema::dropIfExists('county_boundaries');
         Schema::dropIfExists('delivery_orders');
         Schema::dropIfExists('addresses');
         Schema::dropIfExists('free_shipping_rules');

@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             // ReviewSeeder::class,
             ShippingSeeder::class,
+            CountyCoordinatesSeeder::class,
             DeliveryOrderSeeder::class,
         ]);
     }

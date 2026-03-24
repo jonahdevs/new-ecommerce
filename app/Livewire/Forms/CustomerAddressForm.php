@@ -21,6 +21,9 @@ class CustomerAddressForm extends Form
     public ?string $additional_information = null;
     public bool $is_default = false;
 
+    public ?float $latitude = null;
+    public ?float $longitude = null;
+
     //  Validation ─
 
     public function rules(): array
@@ -35,6 +38,8 @@ class CustomerAddressForm extends Form
             'address_text' => ['required', 'string', 'max:500'],
             'additional_information' => ['nullable', 'string', 'max:1000'],
             'is_default' => ['boolean'],
+            'latitude'  => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
 
@@ -64,6 +69,8 @@ class CustomerAddressForm extends Form
         $this->address_text = $address->address;
         $this->additional_information = $address->additional_information;
         $this->is_default = $address->is_default;
+        $this->latitude  = $address->latitude  ? (float) $address->latitude  : null;
+        $this->longitude = $address->longitude ? (float) $address->longitude : null;
     }
 
     //  Persist
@@ -87,6 +94,8 @@ class CustomerAddressForm extends Form
             'additional_information' => $this->additional_information,
             'shipping_zone_id' => $this->resolveShippingZone(),
             'is_default' => $makeDefault,
+            'latitude'  => $this->latitude,
+            'longitude' => $this->longitude,
         ]);
 
         if ($makeDefault) {
@@ -120,6 +129,8 @@ class CustomerAddressForm extends Form
             'additional_information' => $this->additional_information,
             'shipping_zone_id' => $this->resolveShippingZone(),
             'is_default' => $keepDefault,
+            'latitude'  => $this->latitude,
+            'longitude' => $this->longitude,
         ]);
 
         if ($keepDefault) {
