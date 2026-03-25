@@ -6,6 +6,7 @@ use App\Services\CompareService;
 use App\Services\CartService;
 use App\Models\Product;
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 
 new class extends Component {
     public Product $product;
@@ -150,6 +151,64 @@ new class extends Component {
             $this->dispatch('notify', title: 'Remove Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove product from cart');
         }
     }
+
+    #[Computed]
+    public function imageSlides(): array
+    {
+        $slides = [];
+        $seenPaths = [];
+
+        // 1. Main product image
+        if ($this->product->image_path) {
+            $seenPaths[] = $this->product->image_path;
+            $slides[] = [
+                'url' => $this->product->image_url,
+                'alt' => $this->product->name,
+            ];
+        }
+
+        // 2. Gallery images — skip anything already seen
+        foreach ($this->product->images as $image) {
+            if (!in_array($image->image_path, $seenPaths, true)) {
+                $seenPaths[] = $image->image_path;
+                $slides[] = [
+                    'url' => Storage::url($image->image_path),
+                    'alt' => $image->alt_text ?? $this->product->name,
+                ];
+            }
+        }
+
+        return $slides;
+    }
+
+    #[Computed]
+    public function imageSlides(): array
+    {
+        $slides = [];
+        $seenPaths = [];
+
+        // 1. Main product image
+        if ($this->product->image_path) {
+            $seenPaths[] = $this->product->image_path;
+            $slides[] = [
+                'url' => $this->product->image_url,
+                'alt' => $this->product->name,
+            ];
+        }
+
+        // 2. Gallery images — skip anything already seen
+        foreach ($this->product->images as $image) {
+            if (!in_array($image->image_path, $seenPaths, true)) {
+                $seenPaths[] = $image->image_path;
+                $slides[] = [
+                    'url' => Storage::url($image->image_path),
+                    'alt' => $image->alt_text ?? $this->product->name,
+                ];
+            }
+        }
+
+        return $slides;
+    }
 };
 ?>
 
@@ -183,7 +242,7 @@ new class extends Component {
             {{-- Type badge — variable / grouped / quotation --}}
             @if ($product->type === ProductType::VARIABLE)
                 <span
-                    class="absolute left-0 top-2 rounded-e-full bg-sheffield-blue px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    class="absolute left-0 top-2 rounded-e-full bg-brand-secondary px-2 py-1 text-xs font-medium text-white tracking-wide">
                     Options
                 </span>
             @elseif ($product->type === ProductType::GROUPED)
@@ -215,7 +274,7 @@ new class extends Component {
                 </flux:modal.trigger>
 
                 <flux:button wire:click.stop="toggleCompare" size="sm" icon-variant="outline"
-                    icon="{{ $inCompare ? 'x-mark' : 'scale' }}" title="Compare" @class(['cursor-pointer', 'text-sheffield-blue!' => $inCompare]) />
+                    icon="{{ $inCompare ? 'x-mark' : 'scale' }}" title="Compare" @class(['cursor-pointer', 'text-brand-secondary!' => $inCompare]) />
 
                 @if ($product->requires_quotation)
                     <flux:button wire:click="goToProduct" icon="document-text" size="sm" icon-variant="outline"
@@ -239,7 +298,7 @@ new class extends Component {
 
             {{-- Name --}}
             <a href="{{ route('products.show', $product) }}" wire:click.prevent="goToProduct"
-                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-sheffield-blue">
+                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-brand-secondary">
                 {{ $product->name }}
             </a>
 
@@ -258,7 +317,7 @@ new class extends Component {
                         @if ($product->has_price_prefix)
                             <span class="text-xs text-zinc-400">{{ $product->display_price_prefix }}</span>
                         @endif
-                        <span class="font-semibold text-sheffield-blue">{{ $product->display_price }}</span>
+                        <span class="font-semibold text-brand-secondary">{{ $product->display_price }}</span>
                         @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                             <span class="text-xs text-zinc-400 line-through">{{ $product->formatted_price }}</span>
                         @endif
@@ -283,73 +342,46 @@ new class extends Component {
                 init() {
                     const thumbEl = this.$refs.thumbSwiper;
             
-                    if (thumbEl && thumbEl.querySelectorAll('.swiper-slide').length > 1) {
+                    if (thumbEl && {{ count($this->imageSlides) }} > 1) {
                         this.thumbSwiper = new Swiper(thumbEl, {
                             spaceBetween: 10,
                             slidesPerView: 4,
                             freeMode: true,
                             watchSlidesProgress: true,
-                            loop: false,
                         });
                     }
             
                     this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
                         spaceBetween: 10,
-                        loop: false,
                         thumbs: { swiper: this.thumbSwiper ?? null },
-                        on: {
-                            slideChange: (swiper) => {
-                                this.activeIndex = swiper.realIndex;
-                            },
-                        },
+                        on: { slideChange: (s) => { this.activeIndex = s.realIndex; } },
                     });
                 },
             }">
                 {{-- Main --}}
-                <div class="mb-4">
-                    <div class="swiper border-2 rounded-sm overflow-hidden px-2" x-ref="mainSwiper">
-                        <div class="swiper-wrapper">
-                            @if ($product->image_url)
-                                <div class="swiper-slide">
-                                    <div class="aspect-square flex items-center justify-center">
-                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
-                                            class="w-full h-full object-contain" />
-                                    </div>
+                <div class="swiper border-2 rounded-sm overflow-hidden px-2" x-ref="mainSwiper">
+                    <div class="swiper-wrapper">
+                        @foreach ($this->imageSlides as $slide)
+                            <div class="swiper-slide">
+                                <div class="aspect-square flex items-center justify-center">
+                                    <img src="{{ $slide['url'] }}" alt="{{ $slide['alt'] }}"
+                                        class="w-full h-full object-contain" />
                                 </div>
-                            @endif
-                            @foreach ($product->images as $image)
-                                <div class="swiper-slide">
-                                    <div class="aspect-square flex items-center justify-center">
-                                        <img src="{{ Storage::url($image->image_path) }}"
-                                            alt="{{ $image->alt_text ?? $product->name }}"
-                                            class="w-full h-full object-contain" />
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
 
-                {{-- Thumbnails --}}
-                @if ($product->images->count() > 0)
-                    <div class="swiper px-8" x-ref="thumbSwiper">
+                {{-- Thumbnails — only when there's more than one slide --}}
+                @if (count($this->imageSlides) > 1)
+                    <div class="swiper px-8 mt-4" x-ref="thumbSwiper">
                         <div class="swiper-wrapper">
-                            @if ($product->image_url)
+                            @foreach ($this->imageSlides as $index => $slide)
                                 <div class="swiper-slide cursor-pointer">
                                     <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                        :class="activeIndex === 0 ? 'border-sheffield-blue' : 'border-zinc-200'">
-                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
-                                            class="w-full h-full object-contain" />
-                                    </div>
-                                </div>
-                            @endif
-                            @foreach ($product->images as $index => $image)
-                                <div class="swiper-slide cursor-pointer">
-                                    <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                        :class="activeIndex === {{ $index + ($product->image_url ? 1 : 0) }} ?
-                                            'border-sheffield-blue' : 'border-zinc-200'">
-                                        <img src="{{ Storage::url($image->image_path) }}"
-                                            alt="{{ $image->alt_text ?? $product->name }}"
+                                        :class="activeIndex === {{ $index }} ? 'border-brand-secondary' :
+                                            'border-zinc-200'">
+                                        <img src="{{ $slide['url'] }}" alt="{{ $slide['alt'] }}"
                                             class="w-full h-full object-contain" />
                                     </div>
                                 </div>
@@ -362,7 +394,7 @@ new class extends Component {
             {{-- Details --}}
             <div class="col-span-2 pl-6">
                 <a href="{{ route('products.show', $product) }}" wire:navigate
-                    class="text-xl font-bold mt-2 mb-1 hover:text-sheffield-blue hover:underline transition-colors">
+                    class="text-xl font-bold mt-2 mb-1 hover:text-brand-secondary hover:underline transition-colors">
                     {{ $product->name }}
                 </a>
 
@@ -381,7 +413,7 @@ new class extends Component {
                         @if ($product->has_price_prefix)
                             <span class="text-sm text-zinc-400">{{ $product->display_price_prefix }}</span>
                         @endif
-                        <span class="text-lg font-semibold text-sheffield-blue">{{ $product->display_price }}</span>
+                        <span class="text-lg font-semibold text-brand-secondary">{{ $product->display_price }}</span>
                         @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                             <span class="text-sm text-zinc-400 line-through">{{ $product->formatted_price }}</span>
                             <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}

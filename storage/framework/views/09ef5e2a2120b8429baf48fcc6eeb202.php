@@ -13,11 +13,12 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
 }
 ?>
 
-        <?php if (isset($__placeholder)) { ob_start(); } if (isset($__placeholder)): ?>
-            <div class="mt-6">
-                <div class="py-4">
-                    <h2 class="font-semibold text-xl text-zinc-800">Top Categories</h2>
-                </div>
+        <div class="container mx-auto px-4 mt-6">
+            <div class="pb-6">
+                <h2 class="font-bold text-lg md:text-2xl text-zinc-900 leading-tight">Top Categories</h2>
+                <p class="text-zinc-500 text-xs md:text-sm mt-2">Discover our most popular shopping categories</p>
+            </div>
+            <?php if (isset($__placeholder)) { ob_start(); } if (isset($__placeholder)): ?>
                 <div
                     class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php for($i = 0; $i < 14; $i++): ?>
@@ -27,7 +28,7 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
                         </div>
                     <?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
-            </div>
-        <?php endif; if (isset($__placeholder)) { echo ob_get_clean(); return; } ?>
-        <?php echo $__env->make('pages.home.top-categories', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+            <?php endif; if (isset($__placeholder)) { echo ob_get_clean(); return; } ?>
+            <?php echo $__env->make('pages.home.top-categories', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+        </div>
     <?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\storage\framework/views/livewire/islands/29759eee-1.blade.php ENDPATH**/ ?>

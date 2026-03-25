@@ -69,7 +69,7 @@ new #[Layout('layouts.guest')] class extends Component {
         style="background-image: url('{{ asset('images/home/hero-bg.jpg') }}');">
 
         {{-- Hero section --}}
-        <div class="container mx-auto px-4 py-8 relative z-10" x-data="{
+        <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8 relative" x-data="{
             swiper: null,
             isPaused: false,
             autoplayDelay: 5000,
@@ -126,7 +126,7 @@ new #[Layout('layouts.guest')] class extends Component {
         }">
 
             {{-- Carousel — slightly inset with a shadow ring so it floats --}}
-            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-md ring-1 ring-white/10"
+            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-md"
                 id="heroSwiper">
                 <div class="swiper-wrapper">
                     @foreach ($this->heroBanners as $banner)
@@ -186,9 +186,6 @@ new #[Layout('layouts.guest')] class extends Component {
                     </span>
                 </button>
             </div>
-
-            {{-- Bottom breathing room --}}
-            <div class="pb-8"></div>
         </div>
     </div>
 
@@ -257,11 +254,12 @@ new #[Layout('layouts.guest')] class extends Component {
     </section>
 
     @island('top-categories')
-        @placeholder
-            <div class="mt-6">
-                <div class="py-4">
-                    <h2 class="font-semibold text-xl text-zinc-800">Top Categories</h2>
-                </div>
+        <div class="container mx-auto px-4 mt-6">
+            <div class="pb-6">
+                <h2 class="font-bold text-lg md:text-2xl text-zinc-900 leading-tight">Top Categories</h2>
+                <p class="text-zinc-500 text-xs md:text-sm mt-2">Discover our most popular shopping categories</p>
+            </div>
+            @placeholder
                 <div
                     class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
                     @for ($i = 0; $i < 14; $i++)
@@ -271,9 +269,9 @@ new #[Layout('layouts.guest')] class extends Component {
                         </div>
                     @endfor
                 </div>
-            </div>
-        @endplaceholder
-        @include('pages.home.top-categories')
+            @endplaceholder
+            @include('pages.home.top-categories')
+        </div>
     @endisland
 
     <section class="container mx-auto px-4 mt-6">

@@ -5,6 +5,7 @@ use App\Services\CompareService;
 use App\Services\CartService;
 use App\Models\Product;
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 ?>
 
 <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
@@ -69,7 +70,7 @@ use Livewire\Component;
             
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->type === ProductType::VARIABLE): ?>
                 <span
-                    class="absolute left-0 top-2 rounded-e-full bg-sheffield-blue px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    class="absolute left-0 top-2 rounded-e-full bg-brand-secondary px-2 py-1 text-xs font-medium text-white tracking-wide">
                     Options
                 </span>
             <?php elseif($product->type === ProductType::GROUPED): ?>
@@ -181,14 +182,14 @@ use Livewire\Component;
 
                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click.stop' => 'toggleCompare','size' => 'sm','iconVariant' => 'outline','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','title' => 'Compare','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-sheffield-blue!' => $inCompare])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click.stop' => 'toggleCompare','size' => 'sm','iconVariant' => 'outline','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','title' => 'Compare','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-brand-secondary!' => $inCompare])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click.stop' => 'toggleCompare','size' => 'sm','icon-variant' => 'outline','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','title' => 'Compare','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-sheffield-blue!' => $inCompare]))]); ?>
+<?php $component->withAttributes(['wire:click.stop' => 'toggleCompare','size' => 'sm','icon-variant' => 'outline','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','title' => 'Compare','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-brand-secondary!' => $inCompare]))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -262,7 +263,7 @@ use Livewire\Component;
 
             
             <a href="<?php echo e(route('products.show', $product)); ?>" wire:click.prevent="goToProduct"
-                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-sheffield-blue">
+                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-brand-secondary">
                 <?php echo e($product->name); ?>
 
             </a>
@@ -303,7 +304,7 @@ use Livewire\Component;
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->has_price_prefix): ?>
                             <span class="text-xs text-zinc-400"><?php echo e($product->display_price_prefix); ?></span>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <span class="font-semibold text-sheffield-blue"><?php echo e($product->display_price); ?></span>
+                        <span class="font-semibold text-brand-secondary"><?php echo e($product->display_price); ?></span>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->type === ProductType::SIMPLE && $product->hasDiscount()): ?>
                             <span class="text-xs text-zinc-400 line-through"><?php echo e($product->formatted_price); ?></span>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -338,73 +339,50 @@ use Livewire\Component;
                 init() {
                     const thumbEl = this.$refs.thumbSwiper;
             
+<<<<<<< HEAD
                     if (thumbEl && thumbEl.querySelectorAll('.swiper-slide').length > 1) {
+=======
+                    if (thumbEl && <?php echo e(count($this->imageSlides)); ?> > 1) {
+>>>>>>> db139389d0a3c1ee627e3f675ec4baeeb8b118de
                         this.thumbSwiper = new Swiper(thumbEl, {
                             spaceBetween: 10,
                             slidesPerView: 4,
                             freeMode: true,
                             watchSlidesProgress: true,
-                            loop: false,
                         });
                     }
             
                     this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
                         spaceBetween: 10,
-                        loop: false,
                         thumbs: { swiper: this.thumbSwiper ?? null },
-                        on: {
-                            slideChange: (swiper) => {
-                                this.activeIndex = swiper.realIndex;
-                            },
-                        },
+                        on: { slideChange: (s) => { this.activeIndex = s.realIndex; } },
                     });
                 },
             }">
                 
-                <div class="mb-4">
-                    <div class="swiper border-2 rounded-sm overflow-hidden px-2" x-ref="mainSwiper">
-                        <div class="swiper-wrapper">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->image_url): ?>
-                                <div class="swiper-slide">
-                                    <div class="aspect-square flex items-center justify-center">
-                                        <img src="<?php echo e($product->image_url); ?>" alt="<?php echo e($product->name); ?>"
-                                            class="w-full h-full object-contain" />
-                                    </div>
+                <div class="swiper border-2 rounded-sm overflow-hidden px-2" x-ref="mainSwiper">
+                    <div class="swiper-wrapper">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                            <div class="swiper-slide">
+                                <div class="aspect-square flex items-center justify-center">
+                                    <img src="<?php echo e($slide['url']); ?>" alt="<?php echo e($slide['alt']); ?>"
+                                        class="w-full h-full object-contain" />
                                 </div>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $product->images; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $image): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
-                                <div class="swiper-slide">
-                                    <div class="aspect-square flex items-center justify-center">
-                                        <img src="<?php echo e(Storage::url($image->image_path)); ?>"
-                                            alt="<?php echo e($image->alt_text ?? $product->name); ?>"
-                                            class="w-full h-full object-contain" />
-                                    </div>
-                                </div>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        </div>
+                            </div>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                     </div>
                 </div>
 
                 
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->images->count() > 0): ?>
-                    <div class="swiper px-8" x-ref="thumbSwiper">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($this->imageSlides) > 1): ?>
+                    <div class="swiper px-8 mt-4" x-ref="thumbSwiper">
                         <div class="swiper-wrapper">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->image_url): ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
                                 <div class="swiper-slide cursor-pointer">
                                     <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                        :class="activeIndex === 0 ? 'border-sheffield-blue' : 'border-zinc-200'">
-                                        <img src="<?php echo e($product->image_url); ?>" alt="<?php echo e($product->name); ?>"
-                                            class="w-full h-full object-contain" />
-                                    </div>
-                                </div>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $product->images; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $image): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
-                                <div class="swiper-slide cursor-pointer">
-                                    <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                        :class="activeIndex === <?php echo e($index + ($product->image_url ? 1 : 0)); ?> ?
-                                            'border-sheffield-blue' : 'border-zinc-200'">
-                                        <img src="<?php echo e(Storage::url($image->image_path)); ?>"
-                                            alt="<?php echo e($image->alt_text ?? $product->name); ?>"
+                                        :class="activeIndex === <?php echo e($index); ?> ? 'border-brand-secondary' :
+                                            'border-zinc-200'">
+                                        <img src="<?php echo e($slide['url']); ?>" alt="<?php echo e($slide['alt']); ?>"
                                             class="w-full h-full object-contain" />
                                     </div>
                                 </div>
@@ -417,7 +395,7 @@ use Livewire\Component;
             
             <div class="col-span-2 pl-6">
                 <a href="<?php echo e(route('products.show', $product)); ?>" wire:navigate
-                    class="text-xl font-bold mt-2 mb-1 hover:text-sheffield-blue hover:underline transition-colors">
+                    class="text-xl font-bold mt-2 mb-1 hover:text-brand-secondary hover:underline transition-colors">
                     <?php echo e($product->name); ?>
 
                 </a>
@@ -458,7 +436,7 @@ use Livewire\Component;
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->has_price_prefix): ?>
                             <span class="text-sm text-zinc-400"><?php echo e($product->display_price_prefix); ?></span>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <span class="text-lg font-semibold text-sheffield-blue"><?php echo e($product->display_price); ?></span>
+                        <span class="text-lg font-semibold text-brand-secondary"><?php echo e($product->display_price); ?></span>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->type === ProductType::SIMPLE && $product->hasDiscount()): ?>
                             <span class="text-sm text-zinc-400 line-through"><?php echo e($product->formatted_price); ?></span>
                             <?php if (isset($component)) { $__componentOriginal4cc377eda9b63b796b6668ee7832d023 = $component; } ?>

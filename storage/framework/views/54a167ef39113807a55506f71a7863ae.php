@@ -15,7 +15,7 @@ use App\Enums\CategorySection;
         style="background-image: url('<?php echo e(asset('images/home/hero-bg.jpg')); ?>');">
 
         
-        <div class="container mx-auto px-4 py-8 relative z-10" x-data="{
+        <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8 relative" x-data="{
             swiper: null,
             isPaused: false,
             autoplayDelay: 5000,
@@ -72,7 +72,7 @@ use App\Enums\CategorySection;
         }">
 
             
-            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-md ring-1 ring-white/10"
+            <div class="swiper opacity-0 transition-opacity duration-500 rounded-md overflow-hidden shadow-md"
                 id="heroSwiper">
                 <div class="swiper-wrapper">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->heroBanners; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $banner): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
@@ -174,9 +174,6 @@ use App\Enums\CategorySection;
                     </span>
                 </button>
             </div>
-
-            
-            <div class="pb-8"></div>
         </div>
     </div>
 
