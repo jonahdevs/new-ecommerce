@@ -5,7 +5,7 @@
     @include('partials.head')
 </head>
 
-<body class="min-h-screen bg-white dark:bg-zinc-800">
+<body class="min-h-screen bg-white dark:bg-zinc-800 app-layout">
     <flux:sidebar sticky stashable class="border-e border-zinc-200 ">
         <flux:sidebar.header>
             <img src="{{ asset('logo-inverse.png') }}" alt="" class="w-40 h-auto mx-auto">

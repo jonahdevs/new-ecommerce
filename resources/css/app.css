@@ -27,8 +27,7 @@
 /* ============================================================
    2. DARK MODE VARIANT — declared once
    ============================================================ */
-@custom-variant dark (&:where(.dark, .dark *));
-@variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.app-layout, .app-layout *));
 
 /* ============================================================
    3. DESIGN TOKENS
@@ -102,6 +101,18 @@
         --color-surface: var(--color-slate-900);
         --color-surface-alt: var(--color-slate-800);
     }
+
+    .app-layout.dark {
+        --color-accent: var(--brand-primary);
+        --color-accent-content: var(--brand-primary);
+        --color-accent-foreground: var(--brand-primary-content);
+
+        --color-input-ring: var(--color-slate-400);
+        --color-input-ring-offset: var(--color-slate-900);
+
+        --color-surface: var(--color-slate-900);
+        --color-surface-alt: var(--color-slate-800);
+    }
 }
 
 /* ============================================================
@@ -136,23 +147,6 @@
 
     --color-input-ring: #64748b; /* slate-500 — neutral, never red */
     --color-input-ring-offset: #ffffff;
-}
-
-/*
- * Admin layout scope — add class="admin-layout" to your
- * admin layout's root <body> or wrapper element.
- * This switches Flux component accents from primary → secondary.
- */
-.admin-layout {
-    --color-accent: var(--brand-secondary);
-    --color-accent-content: var(--brand-secondary);
-    --color-accent-foreground: var(--brand-secondary-content);
-}
-
-.dark {
-    --color-accent: #ffffff;
-    --color-accent-content: #ffffff;
-    --color-accent-foreground: var(--brand-secondary-dark);
 }
 
 /* ============================================================

@@ -16,24 +16,25 @@
  |
  */
 
+/* ============================================================
+   LIGHT MODE (default)
+   ============================================================ */
 :root {
     /* ── Primary ────────────────────────────────────────────
-     * The dominant brand color.
-     * Sheffield: Red  |  Your next client: swap these 4 lines
+     * Sheffield: Red  |
      * ─────────────────────────────────────────────────────── */
     --brand-primary: #c02434;
     --brand-primary-light: #d02e3a;
     --brand-primary-dark: #931e2d;
-    --brand-primary-content: #ffffff; /* text color ON primary bg */
+    --brand-primary-content: #ffffff;
 
     /* ── Secondary ──────────────────────────────────────────
-     * Supporting color — admin panel, info badges, links.
-     * Sheffield: Blue  |  Your next client: swap these 4 lines
+     * Sheffield: Blue  |
      * ─────────────────────────────────────────────────────── */
     --brand-secondary: #304296;
     --brand-secondary-light: #3652bf;
     --brand-secondary-dark: #2d3c7b;
-    --brand-secondary-content: #ffffff; /* text color ON secondary bg */
+    --brand-secondary-content: #ffffff;
 
     /* ── Footer ─────────────────────────────────────────────
      * Dark neutral footer. Change if client wants a colored footer.
@@ -42,4 +43,21 @@
     --brand-footer-text: #cbd5e1; /* slate-300 */
     --brand-footer-muted: #64748b; /* slate-500 */
     --brand-footer-border: #334155; /* slate-700 */
+}
+
+/* ============================================================
+   DARK MODE — scoped to .app-layout.dark only
+   ============================================================ */
+.app-layout.dark {
+    /* ── Primary (lightened for dark surfaces) ───────────── */
+    --brand-primary: #e0404f;
+    --brand-primary-light: #e85060;
+    --brand-primary-dark: #c02434;
+    --brand-primary-content: #ffffff;
+
+    /* ── Secondary (lightened for dark surfaces) ─────────── */
+    --brand-secondary: #4a5db8;
+    --brand-secondary-light: #5a6ec8;
+    --brand-secondary-dark: #304296;
+    --brand-secondary-content: #ffffff;
 }
