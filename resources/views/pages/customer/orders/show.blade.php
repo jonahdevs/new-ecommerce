@@ -114,54 +114,56 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                             </flux:badge>
                         </div>
 
-                        <div class="flex gap-4">
+                        <div class="flex flex-col sm:flex-row gap-4">
 
                             {{-- Image --}}
                             <div class="shrink-0">
                                 @if ($imagePath)
                                     <a href="{{ route('products.show', $item->product) }}" wire:navigate>
                                         <img src="{{ asset($imagePath) }}" alt="{{ $name }}"
-                                            class="w-20 h-20 object-contain rounded" />
+                                            class="w-full sm:w-20 sm:h-20 h-48 object-contain rounded" />
                                     </a>
                                 @else
-                                    <div class="w-20 h-20 bg-zinc-100 rounded flex items-center justify-center">
+                                    <div
+                                        class="w-full sm:w-20 sm:h-20 h-48 bg-zinc-100 rounded flex items-center justify-center">
                                         <flux:icon.photo class="w-8 h-8 text-zinc-300" />
                                     </div>
                                 @endif
                             </div>
 
-                            {{-- Details --}}
-                            <div class="flex-1">
-                                <flux:heading size="sm">{{ $name }}</flux:heading>
-                                @if ($sku)
-                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $sku }}
+                            {{-- Details + Actions --}}
+                            <div class="flex flex-1 gap-4 justify-between">
+
+                                {{-- Details --}}
+                                <div class="flex-1">
+                                    <flux:heading size="sm">{{ $name }}</flux:heading>
+                                    @if ($sku)
+                                        <flux:text size="sm" class="text-zinc-400">SKU: {{ $sku }}
+                                        </flux:text>
+                                    @endif
+                                    <flux:text size="sm" class="text-zinc-500 mt-1">
+                                        {{ $item->quantity }} × {{ format_currency($item->unit_price_cents / 100) }}
                                     </flux:text>
-                                @endif
-                                <flux:text size="sm" class="text-zinc-500 mt-1">
-                                    {{ $item->quantity }} × {{ format_currency($item->unit_price_cents / 100) }}
-                                </flux:text>
-                                <flux:text size="sm" class="font-semibold mt-1">
-                                    {{ format_currency($item->total_cents / 100) }}
-                                </flux:text>
+                                    <flux:text size="sm" class="font-semibold mt-1">
+                                        {{ format_currency($item->total_cents / 100) }}
+                                    </flux:text>
+                                </div>
+
+                                {{-- Actions --}}
+                                <div class="shrink-0 flex flex-col items-end gap-2">
+                                    <flux:button size="sm" variant="primary" icon="shopping-cart"
+                                        class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
+                                        :disabled="!$inStock">
+                                        {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
+                                    </flux:button>
+
+                                    <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate
+                                        class="text-xs!">
+                                        See Status History
+                                    </flux:link>
+                                </div>
+
                             </div>
-
-                            {{-- Actions --}}
-                            <div class="shrink-0 flex flex-col items-end gap-2">
-                                {{-- Buy Again — available on all sales orders regardless of status.
-                                     The PENDING_QUOTE check has been removed — sales orders never
-                                     have that status. Quotations are redirected away in mount(). --}}
-                                <flux:button size="sm" variant="primary" icon="shopping-cart"
-                                    class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
-                                    :disabled="!$inStock">
-                                    {{ $inStock ? 'Buy Again' : 'Out of Stock' }}
-                                </flux:button>
-
-                                <flux:link href="{{ route('customer.orders.tracking', $order) }}" wire:navigate
-                                    class="text-xs!">
-                                    See Status History
-                                </flux:link>
-                            </div>
-
                         </div>
                     </div>
                 @endforeach

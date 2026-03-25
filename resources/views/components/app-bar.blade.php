@@ -154,10 +154,18 @@ new class extends Component {
                     <flux:dropdown position="bottom" align="end" hover>
                         @auth
                             @if (auth()->user()->avatar)
-                                <flux:profile circle avatar="{{ auth()->user()->avatar }}"
-                                    name="{{ auth()->user()->name }}" />
+                                <flux:profile circle avatar="{{ auth()->user()->avatar }}" :chevron="false"
+                                    class="md:hidden" />
                             @else
-                                <flux:profile circle name="{{ auth()->user()->name }}" />
+                                <flux:profile circle avatar:name="{{ auth()->user()->name }}" :chevron="false"
+                                    class="md:hidden" />
+                            @endif
+
+                            @if (auth()->user()->avatar)
+                                <flux:profile circle avatar="{{ auth()->user()->avatar }}"
+                                    name="{{ auth()->user()->name }}" class="hidden md:flex" />
+                            @else
+                                <flux:profile circle name="{{ auth()->user()->name }}" class="hidden md:flex" />
                             @endif
                         @else
                             <button type="button"

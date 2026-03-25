@@ -108,35 +108,42 @@ new #[Layout('layouts.customer')] class extends Component {
 
                                 <div wire:key="ongoing-{{ $order->id }}"
                                     class="border rounded-md p-4 hover:bg-zinc-50 transition-colors">
-                                    <div class="flex items-center justify-between gap-4">
+
+                                    <div class="flex items-start gap-4">
 
                                         {{-- Product image --}}
-                                        <div class="flex -space-x-3 shrink-0">
-                                            <div
-                                                class="w-12 h-12 rounded-md border bg-zinc-100 overflow-hidden shrink-0">
-                                                @php
-                                                    $img =
-                                                        $order->items->first()?->product_image_url ??
-                                                        $order->items->first()?->product?->image_url;
-                                                @endphp
-                                                @if ($img)
-                                                    <img src="{{ asset($img) }}" alt="{{ $firstProductName }}"
-                                                        class="w-full h-full object-cover" />
-                                                @else
-                                                    <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
-                                                @endif
-                                            </div>
+                                        <div class="w-12 h-12 rounded-md border bg-zinc-100 overflow-hidden shrink-0">
+                                            @php
+                                                $img =
+                                                    $order->items->first()?->product_image_url ??
+                                                    $order->items->first()?->product?->image_url;
+                                            @endphp
+                                            @if ($img)
+                                                <img src="{{ asset($img) }}" alt="{{ $firstProductName }}"
+                                                    class="w-full h-full object-cover" />
+                                            @else
+                                                <flux:icon.photo class="w-full h-full p-2 text-zinc-300" />
+                                            @endif
                                         </div>
 
-                                        {{-- Order info --}}
+                                        {{-- Order info + action --}}
                                         <div class="flex-1 min-w-0">
-                                            <p class="text-sm font-medium text-zinc-800 truncate">
-                                                {{ $firstProductName }}
-                                                @if ($extraCount > 0)
-                                                    <span class="text-zinc-400 font-normal">+ {{ $extraCount }}
-                                                        more</span>
-                                                @endif
-                                            </p>
+                                            <div class="flex items-start justify-between gap-2">
+                                                <p class="text-sm font-medium text-zinc-800 truncate">
+                                                    {{ $firstProductName }}
+                                                    @if ($extraCount > 0)
+                                                        <span class="text-zinc-400 font-normal">+ {{ $extraCount }}
+                                                            more</span>
+                                                    @endif
+                                                </p>
+
+                                                {{-- Action — stays top-right always --}}
+                                                <flux:button :href="route('customer.orders.show', $order)" wire:navigate
+                                                    variant="ghost" size="sm" class="shrink-0">
+                                                    See details
+                                                </flux:button>
+                                            </div>
+
                                             <div class="flex items-center gap-2 mt-1 flex-wrap">
                                                 <flux:text class="text-xs text-zinc-400">{{ $order->reference }}
                                                 </flux:text>
@@ -150,11 +157,6 @@ new #[Layout('layouts.customer')] class extends Component {
                                             </div>
                                         </div>
 
-                                        {{-- Action --}}
-                                        <flux:button :href="route('customer.orders.show', $order)" wire:navigate
-                                            variant="ghost" size="sm" class="shrink-0">
-                                            See details
-                                        </flux:button>
                                     </div>
                                 </div>
                             @empty
@@ -190,10 +192,10 @@ new #[Layout('layouts.customer')] class extends Component {
                                         ($firstItem?->product?->name ?? 'Product');
                                     $extraCount = $order->items_count - 1;
                                 @endphp
-
                                 <div wire:key="cancelled-{{ $order->id }}"
                                     class="border rounded-md p-4 hover:bg-zinc-50 transition-colors">
-                                    <div class="flex items-center justify-between gap-4">
+
+                                    <div class="flex items-start gap-4">
 
                                         {{-- Stacked images --}}
                                         <div class="flex -space-x-3 shrink-0">
@@ -212,15 +214,23 @@ new #[Layout('layouts.customer')] class extends Component {
                                             @endforeach
                                         </div>
 
-                                        {{-- Order info --}}
+                                        {{-- Order info + action --}}
                                         <div class="flex-1 min-w-0">
-                                            <p class="text-sm font-medium text-zinc-500 truncate">
-                                                {{ $firstProductName }}
-                                                @if ($extraCount > 0)
-                                                    <span class="text-zinc-400 font-normal">+ {{ $extraCount }}
-                                                        more</span>
-                                                @endif
-                                            </p>
+                                            <div class="flex items-start justify-between gap-2">
+                                                <p class="text-sm font-medium text-zinc-500 truncate">
+                                                    {{ $firstProductName }}
+                                                    @if ($extraCount > 0)
+                                                        <span class="text-zinc-400 font-normal">+ {{ $extraCount }}
+                                                            more</span>
+                                                    @endif
+                                                </p>
+
+                                                <flux:button :href="route('customer.orders.show', $order)" wire:navigate
+                                                    variant="ghost" size="sm" class="shrink-0">
+                                                    See details
+                                                </flux:button>
+                                            </div>
+
                                             <div class="flex items-center gap-2 mt-1 flex-wrap">
                                                 <flux:text class="text-xs text-zinc-400">{{ $order->reference }}
                                                 </flux:text>
@@ -234,11 +244,6 @@ new #[Layout('layouts.customer')] class extends Component {
                                             </div>
                                         </div>
 
-                                        {{-- Action --}}
-                                        <flux:button :href="route('customer.orders.show', $order)" wire:navigate
-                                            variant="ghost" size="sm" class="shrink-0">
-                                            See details
-                                        </flux:button>
                                     </div>
                                 </div>
                             @empty
