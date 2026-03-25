@@ -4,6 +4,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 @import "tailwindcss";
 @import "../../vendor/livewire/flux/dist/flux.css";
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+
 
 /*
  |--------------------------------------------------------------------------
@@ -23,6 +27,7 @@
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 @source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
+@source "../views/components/rich-editor.blade.php";
 
 /* ============================================================
    2. DARK MODE VARIANT — declared once
@@ -330,4 +335,14 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
 .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+
+/* TipTap placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+    color: #9ca3af;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
 }

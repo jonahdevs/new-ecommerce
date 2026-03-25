@@ -24,6 +24,8 @@
             <flux:label>{{ __('Short Description') }}</flux:label>
             <x-my-markdown wire:model="form.short_description" />
             <flux:error name="form.short_description" />
+
+
         </flux:field>
     </div>
 </flux:card>

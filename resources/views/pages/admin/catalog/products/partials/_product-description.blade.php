@@ -9,9 +9,7 @@
     </div>
 
     <div x-show="expanded" x-cloak x-collapse class="p-5">
-        <flux:field>
-            <x-my-markdown wire:model="form.description" editor-mode="wysiwyg" />
-            <flux:error name="form.description" />
-        </flux:field>
+        <x-rich-editor model="form.description" placeholder="Describe the product features, specifications..." />
+        <flux:error name="form.description" />
     </div>
 </flux:card>

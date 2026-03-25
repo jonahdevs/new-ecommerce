@@ -5,5 +5,10 @@
  */
 
 import './echo';
+import richEditor from './rich-editor';
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('richEditor', richEditor);
+});
 
 
