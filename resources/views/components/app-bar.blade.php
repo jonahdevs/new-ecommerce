@@ -151,7 +151,7 @@ new class extends Component {
                     </a>
 
                     {{-- Account Dropdown --}}
-                    <flux:dropdown position="bottom" align="end" hover>
+                    <flux:dropdown position="bottom" align="end" hover class="ms-2">
                         @auth
                             @auth
                                 <button type="button" class="flex items-center gap-2 cursor-pointer">

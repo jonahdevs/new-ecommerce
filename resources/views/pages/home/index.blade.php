@@ -61,10 +61,7 @@ new #[Layout('layouts.guest')] class extends Component {
 ?>
 
 <div>
-
-    {{-- ============================================================ --}}
-    {{-- Hero Background Wrapper — top of page → feature strips       --}}
-    {{-- ============================================================ --}}
+    {{-- Hero Background Wrapper       --}}
     <div class="relative overflow-hidden bg-cover bg-center bg-fixed"
         style="background-image: url('{{ asset('images/home/hero-bg.jpg') }}');">
 
@@ -189,8 +186,7 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </div>
 
-
-    {{-- Feature strips — sits directly below, no  needed --}}
+    {{-- Feature strips  --}}
     <section class="border-y border-zinc-200 bg-white">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-zinc-100">
@@ -253,12 +249,12 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </section>
 
-    @island('top-categories')
-        <div class="container mx-auto px-4 mt-6">
-            <div class="pb-6">
-                <h2 class="font-bold text-lg md:text-2xl text-zinc-900 leading-tight">Top Categories</h2>
-                <p class="text-zinc-500 text-xs md:text-sm mt-2">Discover our most popular shopping categories</p>
-            </div>
+    <div class="container mx-auto px-4 mt-5 md:mt-7">
+        <div class="pb-6">
+            <h2 class="font-bold text-lg md:text-2xl text-zinc-900 leading-tight">Top Categories</h2>
+            <p class="text-zinc-500 text-xs md:text-sm mt-2">Discover our most popular shopping categories</p>
+        </div>
+        @island('top-categories')
             @placeholder
                 <div
                     class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
@@ -271,17 +267,16 @@ new #[Layout('layouts.guest')] class extends Component {
                 </div>
             @endplaceholder
             @include('pages.home.top-categories')
-        </div>
-    @endisland
+        @endisland
+    </div>
 
-    <section class="container mx-auto px-4 mt-6">
+    <section class="container mx-auto px-4 mt-5 md:mt-7">
         <img src="{{ asset('images/home/THIN BANNER.png') }}" alt="banner" class="w-full h-auto">
     </section>
 
     {{-- New Arrivals --}}
-    <div class="container mx-auto px-4 mt-8">
-        <div class="bg-brand-primary rounded-md overflow-hidden grid grid-cols-1 lg:grid-cols-6">
-
+    <div class="container mx-auto px-0 sm:px-4 mt-5 md:mt-7">
+        <div class="bg-brand-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 lg:grid-cols-6">
             {{-- Left Panel --}}
             <div
                 class="lg:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 lg:py-8
@@ -320,25 +315,29 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </div>
 
-    @island(name: 'products', defer: true)
-        @placeholder
-            <div class="container mx-auto px-4 mt-8">
-                <div class="flex items-center gap-3 py-4">
-                    <h2 class="font-semibold text-xl text-zinc-900">You May Also Like</h2>
-                    <div class="h-px flex-1 bg-zinc-100"></div>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-6">
-                    @for ($i = 0; $i < 12; $i++)
-                        <x-product-card-placeholder />
-                    @endfor
-                </div>
-            </div>
-        @endplaceholder
-        @include('pages.home.products')
-    @endisland
+    <div class="container mx-auto max-sm:px-0 px-4 mt-5 md:mt-7">
+        <flux:card class="p-4 max-sm:rounded-none">
+            <section class="flex items-center justify-between pb-4 ">
+                <h2 class="font-semibold text-xl text-zinc-800">You May Also Like</h2>
+
+                <flux:link :href="route('shop.index')">View all</flux:link>
+            </section>
+            @island(name: 'products', defer: true)
+                @placeholder
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-6">
+                        @for ($i = 0; $i < 12; $i++)
+                            <x-product-card-placeholder />
+                        @endfor
+                    </div>
+                @endplaceholder
+                @include('pages.home.products')
+            @endisland
+
+        </flux:card>
+    </div>
 
     {{-- Locations Section --}}
-    <section class="container @container/locations mx-auto px-4 mt-6 mb-12">
+    <section class="container @container/locations mx-auto px-4 mt-5 md:mt-7 mb-12">
 
         <div class="pb-6">
             <h2 class="text-2xl font-bold text-zinc-900 leading-tight">Our Locations</h2>
