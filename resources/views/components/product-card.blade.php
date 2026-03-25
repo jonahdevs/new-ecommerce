@@ -42,9 +42,9 @@ new class extends Component {
             $added = $wishlistService->toggle($this->product->id);
             $this->wishlisted = $added;
             $this->dispatch('wishlist-updated');
-            $this->dispatch('notify', variant: 'success', message: $added ? 'Added to wishlist' : 'Removed from wishlist');
+            $this->dispatch('notify', variant: 'success', title: $added ? 'Wishlist Updated' : 'Wishlist Updated', message: $added ? 'Product added to your wishlist' : 'Product removed from your wishlist');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
+            $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
         }
     }
 
@@ -54,9 +54,9 @@ new class extends Component {
             $added = $compareService->toggle($this->product->id);
             $this->inCompare = $added;
             $this->dispatch('compare-updated');
-            $this->dispatch('notify', variant: 'success', message: $added ? 'Added to comparison' : 'Removed from comparison');
+            $this->dispatch('notify', title: $added ? 'Comparison Updated' : 'Comparison Updated', variant: 'success', message: $added ? 'Product added to comparison list' : 'Product removed from comparison list');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update comparison');
+            $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update comparison');
         }
     }
 
@@ -87,9 +87,9 @@ new class extends Component {
             }
 
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Product added to your cart');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add product to cart');
         }
     }
 
@@ -99,7 +99,7 @@ new class extends Component {
             $newQuantity = $this->cartQuantity + 1;
 
             if ($this->product->manage_stock && $newQuantity > $this->product->stock_quantity) {
-                $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
+                // $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
                 return;
             }
 
@@ -110,7 +110,7 @@ new class extends Component {
 
             $this->cartQuantity = $newQuantity;
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update quantity');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
     }
 
@@ -120,7 +120,7 @@ new class extends Component {
             $newQuantity = $this->cartQuantity - 1;
 
             if ($newQuantity < 1) {
-                $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
+                // $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
                 return;
             }
 
@@ -131,7 +131,7 @@ new class extends Component {
 
             $this->cartQuantity = $newQuantity;
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update quantity');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
     }
 
@@ -144,10 +144,10 @@ new class extends Component {
                 $this->cartItemId = null;
                 $this->cartQuantity = 1;
                 $this->dispatch('cart-updated');
-                $this->dispatch('notify', variant: 'success', message: 'Removed from cart');
+                $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Product removed from your cart');
             }
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove from cart');
+            $this->dispatch('notify', title: 'Remove Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove product from cart');
         }
     }
 };
@@ -282,7 +282,7 @@ new class extends Component {
                 activeIndex: 0,
                 init() {
                     const thumbEl = this.$refs.thumbSwiper;
-
+            
                     if (thumbEl && thumbEl.querySelectorAll('.swiper-slide').length > 1) {
                         this.thumbSwiper = new Swiper(thumbEl, {
                             spaceBetween: 10,
@@ -292,7 +292,7 @@ new class extends Component {
                             loop: false,
                         });
                     }
-
+            
                     this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
                         spaceBetween: 10,
                         loop: false,

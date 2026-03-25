@@ -28,6 +28,7 @@
    2. DARK MODE VARIANT — declared once
    ============================================================ */
 @custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
    3. DESIGN TOKENS
@@ -328,5 +329,3 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
 [data-flux-sidebar]:hover::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.25);
 }
-
-@variant dark (&:where(.dark, .dark *));
