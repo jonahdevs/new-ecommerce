@@ -304,6 +304,17 @@ new class extends Component {
         $this->dispatch('notify', variant: 'danger', message: $errorMessage);
     }
 
+    public function removeItem(int $cartItemId): void
+    {
+        try {
+            app(CartService::class)->removeItem($cartItemId);
+            unset($this->cartItems);
+            $this->dispatch('cart-updated');
+        } catch (\Exception $e) {
+            $this->dispatch('notify', variant: 'danger', message: 'Could not remove item. Please try again.');
+        }
+    }
+
     // ================================================
     // Events
     // ================================================
@@ -331,7 +342,7 @@ new class extends Component {
             <div class="flex items-center gap-2.5 px-4 py-3">
                 <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
                     @if ($item->product?->image_path)
-                        <img src="{{ asset($item->product->image_url) }}" alt="{{ $item->product->name }}"
+                        <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}"
                             class="w-full h-full object-cover" />
                     @else
                         <flux:icon.photo class="w-full h-full p-1.5 text-zinc-300" />
@@ -340,7 +351,6 @@ new class extends Component {
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-medium truncate">{{ $item->product->name }}</p>
                     <p class="text-xs text-zinc-400">× {{ $item->quantity }}</p>
-                    {{-- Badge shown when this item is driving the Path C quotation --}}
                     @if ($item->product->requires_quotation)
                         <span
                             class="inline-block text-[10px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5">
@@ -348,9 +358,15 @@ new class extends Component {
                         </span>
                     @endif
                 </div>
-                <span class="text-xs font-semibold shrink-0">
-                    {{ format_currency($item->product->final_price * $item->quantity) }}
-                </span>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-semibold">
+                        {{ format_currency($item->product->final_price * $item->quantity) }}
+                    </span>
+                    <button wire:click="removeItem({{ $item->id }})" wire:confirm="Remove this item from your cart?"
+                        class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer" title="Remove item">
+                        <flux:icon.x-mark class="size-3.5" />
+                    </button>
+                </div>
             </div>
         @endforeach
     </div>

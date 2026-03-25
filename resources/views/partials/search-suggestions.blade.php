@@ -16,8 +16,8 @@
             <a href="{{ route('shop.category', ['category' => $category['slug']]) }}" wire:navigate
                 @if ($mobileOpen) wire:click="closeMobile" @endif
                 class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
-                    bg-zinc-100 text-zinc-600 hover:bg-sheffield-blue hover:text-white
-                    border border-zinc-200 hover:border-sheffield-blue transition-colors duration-150">
+                    bg-zinc-100 text-zinc-600 hover:bg-brand-secondary hover:text-white
+                    border border-zinc-200 hover:border-brand-secondary transition-colors duration-150">
                 <flux:icon.squares-2x2 class="w-3 h-3" />
                 {{ $category['name'] }}
                 <span class="opacity-60">({{ $category['products_count'] }})</span>
@@ -48,7 +48,7 @@
                 {{-- Name + category --}}
                 <div class="flex-1 min-w-0">
                     <p
-                        class="text-sm font-medium text-zinc-800 truncate group-hover:text-sheffield-blue transition-colors">
+                        class="text-sm font-medium text-zinc-800 truncate group-hover:text-brand-secondary transition-colors">
                         {{ $product['name'] }}
                     </p>
                     @if ($product['category'])
@@ -59,7 +59,7 @@
                 </div>
 
                 <flux:icon.chevron-right
-                    class="size-4 text-zinc-300 group-hover:text-sheffield-blue group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
+                    class="size-4 text-zinc-300 group-hover:text-brand-secondary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
             </a>
         @endforeach
     </div>
@@ -70,7 +70,7 @@
     <div class="border-t border-zinc-100 px-4 py-2.5">
         <a href="{{ route('shop.index') }}?search={{ urlencode($search) }}" wire:navigate
             @if ($mobileOpen) wire:click="closeMobile" @endif
-            class="flex items-center justify-between text-xs font-medium text-sheffield-blue hover:underline">
+            class="flex items-center justify-between text-xs font-medium text-brand-secondary hover:underline">
             <span>See all results for "{{ $search }}"</span>
             <flux:icon.arrow-right class="w-3.5 h-3.5" />
         </a>
@@ -84,7 +84,7 @@
         <p class="text-sm font-medium text-zinc-500">No results for "{{ $search }}"</p>
         <p class="text-xs text-zinc-400 mt-1">Try a different keyword or browse all products</p>
         <a href="{{ route('shop.index') }}" wire:navigate
-            class="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-sheffield-blue hover:underline">
+            class="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-brand-secondary hover:underline">
             Browse all products
             <flux:icon.arrow-right class="w-3.5 h-3.5" />
         </a>

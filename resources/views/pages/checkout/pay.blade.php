@@ -136,19 +136,8 @@ new #[Layout('layouts.guest')] class extends Component {
             <div class="lg:col-span-3 space-y-3">
 
                 {{-- ── Card option ── --}}
-                {{--
-                    wire:ignore prevents Livewire from morphing this card's DOM when
-                    paymentMethod changes. Without it, Alpine reinitialises stripePayment
-                    on every Livewire re-render and Stripe tries to re-mount onto elements
-                    it already owns — causing the "Payment configuration error".
 
-                    The active border is driven by Alpine (:class) instead of Blade @class
-                    so it stays reactive without needing a Livewire re-render.
-                --}}
-                <div wire:ignore x-data="stripePayment"
-                    :class="$wire.paymentMethod === 'card' ?
-                        'rounded-lg border border-zinc-800 overflow-hidden transition-colors' :
-                        'rounded-lg border border-zinc-200 overflow-hidden transition-colors'">
+                <flux:card wire:ignore x-data="stripePayment" class="p-0 overflow-hidden">
                     {{-- Radio header --}}
                     <label class="flex items-center gap-3 px-4 py-3.5 cursor-pointer bg-white"
                         @click="$wire.set('paymentMethod', 'card')">
@@ -176,12 +165,9 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         {{-- Cardholder name --}}
                         <div class="mt-4 mb-4">
-                            <label class="block text-sm font-medium text-zinc-700 mb-1.5">
-                                Cardholder Name
-                            </label>
-                            <input x-model="cardholderName" type="text" placeholder="Name on card"
-                                autocomplete="cc-name"
-                                class="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-800 focus:border-zinc-800 transition-colors" />
+
+                            <flux:input label="Cardholder Name" x-model="cardholderName" type="text"
+                                placeholder="Name on card" autocomplete="cc-name" />
                         </div>
 
                         {{-- Card number --}}
@@ -189,6 +175,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             <label class="block text-sm font-medium text-zinc-700 mb-1.5">
                                 Card Number
                             </label>
+
                             <div id="stripe-card-number"
                                 class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
                             </div>
@@ -216,7 +203,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         {{-- Pay button --}}
                         <button @click="submitPayment()" :disabled="loading || !ready"
-                            class="w-full flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-700 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-md transition-colors text-sm">
+                            class="w-full flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary-light disabled:bg-brand-primary-dark/50 disabled:cursor-not-allowed text-brand-primary-content font-semibold py-3 px-4 rounded-md transition-colors text-sm">
                             <span x-show="!loading">
                                 Pay {{ format_currency($this->order->total) }}
                             </span>
@@ -236,13 +223,10 @@ new #[Layout('layouts.guest')] class extends Component {
                             <span>Payments secured by Stripe. We never store your card details.</span>
                         </div>
                     </div>
-                </div>
+                </flux:card>
 
                 {{-- ── M-Pesa option ── --}}
-                <flux:card @class([
-                    'p-0 overflow-hidden transition-colors',
-                    'border-zinc-800' => $paymentMethod === 'mpesa',
-                ])>
+                <flux:card class="p-0 overflow-hidden">
                     {{-- Radio header --}}
                     <label class="flex items-center gap-3 px-4 py-3.5 cursor-pointer"
                         wire:click="$set('paymentMethod', 'mpesa')">
@@ -273,7 +257,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             :disabled="$isProcessing" variant="primary" class="w-full cursor-pointer"
                             icon="device-phone-mobile">
                             <span wire:loading.remove wire:target="initiateMpesa">
-                                Pay {{ format_currency($this->order->total) }} via M-Pesa
+                                Pay {{ format_currency($this->order->total) }}
                             </span>
                             <span wire:loading wire:target="initiateMpesa" class="flex items-center gap-2">
                                 <flux:icon.arrow-path class="size-4 animate-spin" />

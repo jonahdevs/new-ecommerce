@@ -719,16 +719,18 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
     <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
-            <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
-                Home
-            </flux:breadcrumbs.item>
-            <flux:breadcrumbs.item href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}">
-                {{ $this->primaryCategory->name }}
-            </flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
+        <div class="container mx-auto py-2.5 px-4 overflow-x-auto scrollbar-none">
+            <flux:breadcrumbs class="flex-nowrap whitespace-nowrap min-w-max">
+                <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
+                    <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
+                    Home
+                </flux:breadcrumbs.item>
+                <flux:breadcrumbs.item href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}">
+                    {{ $this->primaryCategory->name }}
+                </flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
     </div>
 
     <div class="container mx-auto px-4 py-4">

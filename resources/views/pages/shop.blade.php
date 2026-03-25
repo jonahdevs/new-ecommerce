@@ -308,7 +308,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </svg>
                 Filters
                 @if ($this->hasActiveFilters)
-                    <span class="w-2 h-2 rounded-full bg-sheffield-blue"></span>
+                    <span class="w-2 h-2 rounded-full bg-brand-secondary"></span>
                 @endif
             </button>
 
@@ -338,14 +338,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
                     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
                     x-transition:leave-end="-translate-x-full"
-                    class="relative w-80 max-w-[85vw] bg-white h-full overflow-y-auto flex flex-col shadow-xl">
+                    class="relative w-64 md:w-80 max-w-[85vw] bg-white h-full overflow-y-auto flex flex-col shadow-xl">
 
                     <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
                         <h2 class="font-semibold text-zinc-900">Filters</h2>
                         <div class="flex items-center gap-3">
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-sheffield-blue hover:underline font-medium">
+                                    class="text-xs text-brand-secondary hover:underline font-medium">
                                     Clear all
                                 </button>
                             @endif
@@ -365,7 +365,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                     <div class="sticky bottom-0 bg-white border-t px-4 py-3">
                         <button wire:click="$set('showMobileFilters', false)" type="button"
-                            class="w-full py-2.5 bg-sheffield-blue text-white font-medium rounded-md text-sm">
+                            class="w-full py-2.5 bg-brand-secondary text-white font-medium rounded-md text-sm cursor-pointer">
                             View {{ $this->products->total() }} Results
                         </button>
                     </div>
@@ -383,7 +383,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             <h2 class="font-medium text-lg">Filters</h2>
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-sheffield-blue hover:underline font-medium">
+                                    class="text-xs text-brand-secondary hover:underline font-medium cursor-pointer">
                                     Clear all
                                 </button>
                             @endif
@@ -415,7 +415,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                     @if ($this->hasActiveFilters)
                                         <span class="text-zinc-400 mx-1">•</span>
                                         <button wire:click="clearAllFilters"
-                                            class="text-sheffield-blue hover:underline">
+                                            class="text-brand-secondary hover:underline">
                                             Clear all filters
                                         </button>
                                     @endif

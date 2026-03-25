@@ -418,7 +418,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <div class="container mx-auto px-4 py-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
                 <button wire:click="clearSubCategory" type="button" @class([
                     'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border',
-                    'bg-sheffield-blue text-white border-sheffield-blue' => !$subCategorySlug,
+                    'bg-brand-secondary text-white border-brand-secondary' => !$subCategorySlug,
                     'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400' => $subCategorySlug,
                 ])>
                     All
@@ -428,7 +428,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     <button wire:click="selectSubCategory('{{ $sub->slug }}')" type="button"
                         @class([
                             'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border whitespace-nowrap',
-                            'bg-sheffield-blue text-white border-sheffield-blue' =>
+                            'bg-brand-secondary text-white border-brand-secondary' =>
                                 $subCategorySlug === $sub->slug,
                             'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400' =>
                                 $subCategorySlug !== $sub->slug,
@@ -452,7 +452,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </svg>
                 Filters
                 @if ($this->hasActiveFilters)
-                    <span class="w-2 h-2 rounded-full bg-sheffield-blue"></span>
+                    <span class="w-2 h-2 rounded-full bg-brand-secondary"></span>
                 @endif
             </button>
 
@@ -489,7 +489,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         <div class="flex items-center gap-3">
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-sheffield-blue hover:underline font-medium">
+                                    class="text-xs text-brand-secondary hover:underline font-medium">
                                     Clear all
                                 </button>
                             @endif
@@ -509,7 +509,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                     <div class="sticky bottom-0 bg-white border-t px-4 py-3">
                         <button wire:click="$set('showMobileFilters', false)" type="button"
-                            class="w-full py-2.5 bg-sheffield-blue text-white font-medium rounded-md text-sm">
+                            class="w-full py-2.5 bg-brand-secondary text-white font-medium rounded-md text-sm">
                             View {{ $this->products->total() }} Results
                         </button>
                     </div>
@@ -527,7 +527,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             <h2 class="font-medium text-lg">Filters</h2>
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-sheffield-blue hover:underline font-medium">
+                                    class="text-xs text-brand-secondary hover:underline font-medium">
                                     Clear all
                                 </button>
                             @endif
@@ -564,7 +564,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                     @if ($this->hasActiveFilters)
                                         <span class="text-zinc-400 mx-1">•</span>
                                         <button wire:click="clearAllFilters"
-                                            class="text-sheffield-blue hover:underline">
+                                            class="text-brand-secondary hover:underline">
                                             Clear all filters
                                         </button>
                                     @endif

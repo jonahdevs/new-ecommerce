@@ -64,7 +64,7 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-sky-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
@@ -97,7 +97,7 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-green-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
@@ -130,7 +130,7 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-amber-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
@@ -163,7 +163,7 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-red-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-500" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button"

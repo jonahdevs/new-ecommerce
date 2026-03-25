@@ -129,7 +129,7 @@
                 </div>
             @else
                 <flux:link @click="document.getElementById('product-image-input').click()"
-                    class="text-sm text-sheffield-blue cursor-pointer">
+                    class="text-sm text-brand-secondary cursor-pointer">
                     Set product image
                 </flux:link>
             @endif
@@ -208,7 +208,7 @@
             @endif
 
             <flux:link @click="document.getElementById('product-gallery-input').click()"
-                class="text-sm text-sheffield-blue cursor-pointer">
+                class="text-sm text-brand-secondary cursor-pointer">
                 {{ !empty($form->images) || !empty($form->existingImages) ? 'Add more images' : 'Set product gallery images' }}
             </flux:link>
 
@@ -261,7 +261,7 @@
 
                         @if (in_array($category['id'], $form->category_ids))
                             <button type="button" wire:click="$set('form.primaryCategoryId', {{ $category['id'] }})"
-                                class="text-xs shrink-0 transition-colors cursor-pointer {{ $form->primaryCategoryId === $category['id'] ? 'text-sheffield-blue font-medium' : 'text-zinc-400 hover:text-sheffield-blue' }}">
+                                class="text-xs shrink-0 transition-colors cursor-pointer {{ $form->primaryCategoryId === $category['id'] ? 'text-brand-secondary font-medium' : 'text-zinc-400 hover:text-brand-secondary' }}">
                                 {{ $form->primaryCategoryId === $category['id'] ? 'Primary' : 'Set primary' }}
                             </button>
                         @endif

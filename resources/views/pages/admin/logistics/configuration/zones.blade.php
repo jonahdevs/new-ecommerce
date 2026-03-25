@@ -195,7 +195,7 @@ new #[Title('Shipping Zones')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-sheffield-blue!" wire:click="edit({{ $zone->id }})" />
+                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $zone->id }})" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
                                 wire:click="confirmDelete({{ $zone->id }})" />

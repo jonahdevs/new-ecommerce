@@ -329,3 +329,11 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
 [data-flux-sidebar]:hover::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.25);
 }
+
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

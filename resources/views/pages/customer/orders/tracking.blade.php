@@ -39,9 +39,6 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
             <flux:button size="xs" icon="arrow-long-left" variant="ghost" class="cursor-pointer"
                 :href="route('customer.orders.show', $order)" wire:navigate />
             <flux:heading size="lg">Order Tracking</flux:heading>
-            <flux:badge :color="$order->status->color()" variant="solid" size="sm" class="ml-auto">
-                {{ $order->status->label() }}
-            </flux:badge>
         </div>
 
         {{-- Order reference --}}
@@ -136,7 +133,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                         @if (!$isLast)
                             <div
                                 class="absolute left-4 top-8 bottom-0 w-0.5 z-0
-                                {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}">
+                                {{ $nextReached ? 'bg-green-500' : 'bg-zinc-200 dark:bg-zinc-700' }}">
                             </div>
                         @endif
 
@@ -144,7 +141,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                         <div
                             class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
                             {{ $reached
-                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                                ? 'bg-green-500 dark:bg-white text-white'
                                 : ($isCurrent
                                     ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 ring-4 ring-zinc-200 dark:ring-zinc-700'
                                     : ($dimmed
@@ -186,16 +183,6 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                         {{ $reached || $isCurrent ? 'text-zinc-500' : 'text-zinc-300 dark:text-zinc-600' }}">
                                         {{ $history ? $meta['desc'] : ($dimmed ? '—' : 'Pending') }}
                                     </flux:text>
-
-                                    {{-- Admin notes shown as a subtle callout --}}
-                                    @if ($history?->notes)
-                                        <div
-                                            class="mt-1.5 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md">
-                                            <flux:text class="text-xs text-zinc-500 italic">
-                                                "{{ $history->notes }}"
-                                            </flux:text>
-                                        </div>
-                                    @endif
                                 </div>
 
                                 {{-- Date / time --}}
@@ -232,14 +219,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                     <flux:text class="text-xs text-zinc-500 mt-0.5">
                                         This order has been cancelled.
                                     </flux:text>
-                                    @if ($cancelHistory?->notes)
-                                        <div
-                                            class="mt-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md">
-                                            <flux:text class="text-xs text-rose-600 dark:text-rose-400 italic">
-                                                "{{ $cancelHistory->notes }}"
-                                            </flux:text>
-                                        </div>
-                                    @endif
+
                                 </div>
                                 @if ($cancelHistory)
                                     <div class="text-right shrink-0">
@@ -274,14 +254,6 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                     <flux:text class="text-xs text-zinc-500 mt-0.5">
                                         This order has been returned.
                                     </flux:text>
-                                    @if ($returnHistory?->notes)
-                                        <div
-                                            class="mt-1.5 px-3 py-1.5 bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800 rounded-md">
-                                            <flux:text class="text-xs text-orange-600 dark:text-orange-400 italic">
-                                                "{{ $returnHistory->notes }}"
-                                            </flux:text>
-                                        </div>
-                                    @endif
                                 </div>
                                 @if ($returnHistory)
                                     <div class="text-right shrink-0">

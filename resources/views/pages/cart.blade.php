@@ -28,7 +28,6 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
     #[Computed]
     public function cartSummary(): array
     {
-        // FIX: reuse the same cart instance rather than calling getCart() twice
         $cartService = app(CartService::class);
         return $cartService->summary($cartService->getCart());
     }
@@ -72,9 +71,6 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
     // Event Listeners
     // -----------------------------------------------------------------------
 
-    // FIX: #[On] does not work on #[Computed] properties — it must be on a
-    // regular method. This listener busts the computed cache when any other
-    // component (e.g. product show page) dispatches 'cart-updated'.
     #[On('cart-updated')]
     public function refreshCart(): void
     {
@@ -99,15 +95,14 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
             unset($this->cartItems, $this->cartSummary);
             Flux::modal('remove-item-' . $itemId)->close();
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', variant: 'success', message: 'Item removed from cart');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Item removed from your cart');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove item');
+            $this->dispatch('notify', title: 'Remove Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove item from cart');
         }
     }
 
     public function updateQuantity(int $itemId, int $quantity): void
     {
-        // FIX: guard against quantity 0 — decrementing on a qty-1 item
         // should trigger the remove modal, not pass 0 to the service
         if ($quantity < 1) {
             Flux::modal('remove-item-' . $itemId)->show();
@@ -119,7 +114,7 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
             unset($this->cartItems, $this->cartSummary);
             $this->dispatch('cart-updated');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
     }
 
@@ -127,11 +122,11 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
     {
         try {
             app(WishlistService::class)->toggle($productId);
-            unset($this->wishlistProductIds); // FIX: was missing in some call paths
+            unset($this->wishlistProductIds);
             $this->dispatch('wishlist-updated');
-            $this->dispatch('notify', variant: 'success', message: 'Wishlist updated');
+            $this->dispatch('notify', title: 'Wishlist Updated', variant: 'success', message: 'Your wishlist has been updated');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
+            $this->dispatch('notify', title: 'Wishlist Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
         }
     }
 
@@ -368,14 +363,14 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                         @endphp
 
                                         @if ($hasDiscount)
-                                            <p class="font-semibold text-sheffield-blue">
+                                            <p class="font-semibold text-brand-secondary">
                                                 {{ format_currency($salePrice) }}
                                             </p>
                                             <p class="text-xs text-zinc-400 line-through">
                                                 {{ format_currency($regularPrice) }}
                                             </p>
                                         @else
-                                            <p class="font-semibold text-sheffield-blue">
+                                            <p class="font-semibold text-brand-secondary">
                                                 {{ format_currency($unitPrice) }}
                                             </p>
                                         @endif
@@ -389,18 +384,20 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                 {{-- Footer actions --}}
                                 <div
                                     class="bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 flex items-center border-t border-zinc-100 dark:border-zinc-700">
-                                    <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-1 sm:gap-2 md:gap-4">
 
                                         {{-- Remove --}}
                                         <flux:modal.trigger name="remove-item-{{ $item->id }}">
                                             <flux:button variant="ghost" size="xs" icon="trash"
                                                 icon-variant="outline" class="cursor-pointer">
-                                                Remove
+                                                <span class="max-md:hidden">
+                                                    Remove
+                                                </span>
                                             </flux:button>
                                         </flux:modal.trigger>
 
                                         <flux:modal name="remove-item-{{ $item->id }}" variant="floating"
-                                            class="min-w-88 rounded-xs!">
+                                            class="w-[92%] md:min-w-88 rounded-xs!">
                                             <div class="space-y-6">
                                                 <div>
                                                     <flux:heading size="lg">Remove from Cart</flux:heading>
@@ -413,7 +410,7 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                                         from your cart?
                                                     </flux:text>
                                                 </div>
-                                                <div class="flex gap-2">
+                                                <div class="flex flex-wrap gap-2">
                                                     <flux:modal.close>
                                                         <flux:button
                                                             wire:click="toggleWishlist({{ $item->product->id }})"
@@ -443,7 +440,9 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
                                                 <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
                                                     @class(['size-4', 'text-red-500' => $wishlisted]) />
                                             </x-slot>
-                                            {{ $wishlisted ? 'Wishlisted' : 'Save for later' }}
+                                            <span class="max-md:hidden">
+                                                {{ $wishlisted ? 'Wishlisted' : 'Save for later' }}
+                                            </span>
                                         </flux:button>
                                     </div>
 
@@ -495,12 +494,7 @@ new #[Title('Cart')] #[Defer] #[Layout('layouts.guest')] class extends Component
             @endif
         </div>
 
-        {{--
-            FIX: Removed redundant #[Defer] + @island combination.
-            Since the component itself is #[Defer], @island within it adds
-            no benefit — the whole component is already lazy. Use @island
-            only when you need lazy sections inside a non-deferred component.
-        --}}
+
         @if ($this->cartItems->isNotEmpty())
             <livewire:product-recommendations type="cart_related" />
         @endif

@@ -273,7 +273,7 @@ new #[Title('Flat Rates')] class extends Component {
                                 <td class="px-4 py-3 text-right">
                                     @if ($cell)
                                         <button wire:click="editCell({{ $cell->id }})"
-                                            class="group/cell inline-flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100 hover:text-sheffield-blue transition-colors cursor-pointer">
+                                            class="group/cell inline-flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100 hover:text-brand-secondary transition-colors cursor-pointer">
                                             KES {{ number_format($cell->price, 0) }}
                                             <flux:icon.pencil-square
                                                 class="w-3.5 h-3.5 opacity-0 group-hover/cell:opacity-60 transition-opacity" />

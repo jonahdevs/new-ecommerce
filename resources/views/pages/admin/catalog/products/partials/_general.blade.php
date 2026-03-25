@@ -89,7 +89,7 @@
                             {{-- Actions --}}
                             <div class="col-span-3 flex items-center justify-center gap-2">
                                 <label
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-600 dark:text-zinc-300 hover:border-sheffield-blue hover:text-sheffield-blue cursor-pointer transition-colors">
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-600 dark:text-zinc-300 hover:border-brand-secondary hover:text-brand-secondary cursor-pointer transition-colors">
                                     <flux:icon.arrow-up-tray class="size-3.5" />
                                     {{ !empty($download['file']) || !empty($download['file_path']) ? 'Replace' : 'Choose File' }}
                                     <input type="file" class="hidden"

@@ -205,7 +205,7 @@ new #[Title('Categories')] class extends Component {
         {{-- All tab --}}
         <button type="button" wire:click="selectTab('all')" @class([
             'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer',
-            'border-sheffield-blue text-sheffield-blue' => $tab === 'all',
+            'border-brand-secondary text-brand-secondary' => $tab === 'all',
             'border-transparent text-zinc-500 hover:text-zinc-800' => $tab !== 'all',
         ])>
             All Categories
@@ -215,7 +215,7 @@ new #[Title('Categories')] class extends Component {
         @foreach (\App\Enums\CategorySection::cases() as $section)
             <button type="button" wire:click="selectTab('{{ $section->value }}')" @class([
                 'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer',
-                'border-sheffield-blue text-sheffield-blue' => $tab === $section->value,
+                'border-brand-secondary text-brand-secondary' => $tab === $section->value,
                 'border-transparent text-zinc-500 hover:text-zinc-800' =>
                     $tab !== $section->value,
             ])>
@@ -223,7 +223,7 @@ new #[Title('Categories')] class extends Component {
                 @if (!empty($this->sectionCounts[$section->value]))
                     <span @class([
                         'text-xs px-1.5 py-0.5 rounded-full font-normal',
-                        'bg-sheffield-blue text-white' => $tab === $section->value,
+                        'bg-brand-secondary text-white' => $tab === $section->value,
                         'bg-zinc-200 text-zinc-600' => $tab !== $section->value,
                     ])>{{ $this->sectionCounts[$section->value] }}</span>
                 @endif
@@ -439,7 +439,7 @@ new #[Title('Categories')] class extends Component {
                                 <flux:button variant="ghost" size="sm" icon="pencil-square"
                                     :href="route('admin.catalog.categories.edit', $placement->category_id)"
                                     wire:navigate icon-variant="outline"
-                                    class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-sheffield-blue! dark:text-sheffield-blue-light!"
+                                    class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-brand-secondary! dark:text-brand-secondary-light!"
                                     title="Edit category" />
 
                                 {{-- Remove from section --}}

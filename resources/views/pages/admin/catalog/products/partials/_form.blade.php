@@ -84,7 +84,7 @@
                         <button wire:cloak wire:show="form.type !== 'grouped'" type="button"
                             @click="$wire.activeTab = 'general'"
                             :class="$wire.activeTab === 'general' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.banknotes class="size-3.5" variant="outline" />
@@ -97,7 +97,7 @@
                         {{-- Inventory --}}
                         <button type="button" @click="$wire.activeTab = 'inventory'"
                             :class="$wire.activeTab === 'inventory' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.archive-box class="size-3.5" variant="outline" />
@@ -111,7 +111,7 @@
                         <button wire:cloak wire:show="form.type !== 'grouped' && !form.is_virtual" type="button"
                             @click="$wire.activeTab = 'shipping'"
                             :class="$wire.activeTab === 'shipping' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.truck class="size-3.5" variant="outline" />
@@ -124,7 +124,7 @@
                         {{-- Linked Products --}}
                         <button type="button" @click="$wire.activeTab = 'linked-products'"
                             :class="$wire.activeTab === 'linked-products' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.link class="size-3.5" variant="outline" />
@@ -137,7 +137,7 @@
                         {{-- Attributes --}}
                         <button type="button" @click="$wire.activeTab = 'attributes'"
                             :class="$wire.activeTab === 'attributes' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.tag class="size-3.5" variant="outline" />
@@ -151,7 +151,7 @@
                         <button wire:cloak wire:show="form.type === 'variable'" type="button"
                             @click="$wire.activeTab = 'variations'"
                             :class="$wire.activeTab === 'variations' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.squares-2x2 class="size-3.5" variant="outline" />
@@ -164,7 +164,7 @@
                         {{-- Advanced --}}
                         <button type="button" @click="$wire.activeTab = 'advanced'"
                             :class="$wire.activeTab === 'advanced' ?
-                                'bg-white dark:bg-zinc-800 text-sheffield-blue shadow-sm border border-zinc-200 dark:border-zinc-600' :
+                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
                                 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
                             <flux:icon.cog class="size-3.5" variant="outline" />
@@ -189,7 +189,7 @@
                         <button wire:cloak wire:show="form.type !== 'grouped'" type="button"
                             @click="$wire.activeTab = 'general'"
                             :class="$wire.activeTab === 'general' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
 
@@ -212,7 +212,7 @@
                         {{-- Inventory --}}
                         <button type="button" @click="$wire.activeTab = 'inventory'"
                             :class="$wire.activeTab === 'inventory' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
                             <flux:icon.archive-box class="size-4 shrink-0" variant="outline" />
@@ -230,7 +230,7 @@
                         <button wire:cloak wire:show="form.type !== 'grouped' && !form.is_virtual" type="button"
                             @click="$wire.activeTab = 'shipping'"
                             :class="$wire.activeTab === 'shipping' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
                             <flux:icon.truck class="size-4 shrink-0" variant="outline" />
@@ -247,7 +247,7 @@
                         {{-- Linked Products --}}
                         <button type="button" @click="$wire.activeTab = 'linked-products'"
                             :class="$wire.activeTab === 'linked-products' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
                             <flux:icon.link class="size-4 shrink-0" variant="outline" />
@@ -264,7 +264,7 @@
                         {{-- Attributes --}}
                         <button type="button" @click="$wire.activeTab = 'attributes'"
                             :class="$wire.activeTab === 'attributes' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
                             <flux:icon.tag class="size-4 shrink-0" variant="outline" />
@@ -282,7 +282,7 @@
                         <button wire:cloak wire:show="form.type === 'variable'" type="button"
                             @click="$wire.activeTab = 'variations'"
                             :class="$wire.activeTab === 'variations' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
                             <flux:icon.squares-2x2 class="size-4 shrink-0" variant="outline" />
@@ -299,7 +299,7 @@
                         {{-- Advanced --}}
                         <button type="button" @click="$wire.activeTab = 'advanced'"
                             :class="$wire.activeTab === 'advanced' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-sheffield-blue' :
+                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
                                 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
                             class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
                             <flux:icon.cog class="size-4 shrink-0" variant="outline" />

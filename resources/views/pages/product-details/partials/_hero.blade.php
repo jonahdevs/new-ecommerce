@@ -327,14 +327,14 @@
         @if ($this->accessories->count() > 0)
             <a href="#accessories"
                 onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' }); return false;"
-                class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-sheffield-blue rounded-r-md no-underline group">
-                <flux:icon.wrench-screwdriver class="size-3.5 text-sheffield-blue shrink-0" variant="outline" />
+                class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-brand-secondary rounded-r-md no-underline group">
+                <flux:icon.wrench-screwdriver class="size-3.5 text-brand-secondary shrink-0" variant="outline" />
                 <span class="text-sm text-blue-900 dark:text-blue-200">
                     {{ $this->accessories->count() }}
                     {{ Str::plural('accessory', $this->accessories->count()) }} available for this product
                 </span>
                 <span
-                    class="text-xs text-sheffield-blue ml-auto group-hover:translate-y-0.5 transition-transform flex items-center gap-2">
+                    class="text-xs text-brand-secondary ml-auto group-hover:translate-y-0.5 transition-transform flex items-center gap-2">
                     View
                     <flux:icon.arrow-long-down class="size-4" />
                 </span>

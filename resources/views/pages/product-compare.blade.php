@@ -27,11 +27,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             // Dispatch events
             $this->dispatch('compare-updated');
 
-            $this->dispatch('notify', variant: 'success', message: $added ? 'Added to comparison' : 'Removed from comparison');
+            $this->dispatch('notify', title: $added ? 'Comparison Updated' : 'Comparison Updated', variant: 'success', message: $added ? 'Product added to comparison list' : 'Product removed from comparison list');
         } catch (\Exception $e) {
-            $this->dispatch('notify', variant: 'danger', message: $e->getMessage() ?: 'Unable to update comparison');
-        } finally {
-            $this->loading = false;
+            $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update comparison');
         }
     }
 
@@ -49,9 +47,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             }
 
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Product added to your cart');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add product to cart');
         }
     }
 };
@@ -221,7 +219,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                                             <!-- Product Name -->
                                             <a href="{{ route('products.show', $product) }}" wire:navigate
-                                                class="block font-medium text-zinc-900 dark:text-white hover:text-sheffield-blue hover:underline">
+                                                class="block font-medium text-zinc-900 dark:text-white hover:text-brand-secondary hover:underline">
                                                 {{ $product->name }}
                                             </a>
                                         </div>
@@ -280,13 +278,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         <div class="pt-2 mt-auto">
                                             @if ($product->hasDiscount())
                                                 <div class="flex items-center justify-center flex-wrap gap-x-2">
-                                                    <p class="font-semibold text-sheffield-blue">
+                                                    <p class="font-semibold text-brand-secondary">
                                                         {{ $product->formatted_final_price }}</p>
                                                     <p class="text-sm text-zinc-500 line-through">
                                                         {{ $product->formatted_price }}</p>
                                                 </div>
                                             @else
-                                                <p class="font-semibold text-sheffield-blue">
+                                                <p class="font-semibold text-brand-secondary">
                                                     {{ $product->formatted_final_price }}</p>
                                             @endif
                                         </div>
@@ -439,9 +437,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         Remove</td>
                                     @foreach ($this->products as $product)
                                         <td class="p-4 text-center border-l dark:border-zinc-700">
-
                                             <flux:button wire:click="removeProduct({{ $product->id }})" icon="trash"
-                                                size="sm" variant="ghost" class="text-red-500! cursor-pointer">
+                                                icon-variant="outline" size="sm" variant="ghost"
+                                                class="text-red-500! cursor-pointer">
                                             </flux:button>
                                         </td>
                                     @endforeach

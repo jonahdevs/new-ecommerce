@@ -82,17 +82,14 @@ new #[Layout('layouts.checkout')] class extends Component {
     {
         try {
             $this->form->update();
-            $this->dispatch('notify', variant: 'success', message: 'Address updated successfully');
+
+            $this->dispatch('notify', title: 'Address Updated', variant: 'success', message: 'Your delivery address has been updated successfully');
+
             return $this->redirectRoute('checkout.summary', navigate: true);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {
-            logger()->error('Failed to update address', [
-                'user_id' => auth()->id(),
-                'address_id' => $this->address->id,
-                'error' => $th->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage());
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update address');
         }
     }
 };

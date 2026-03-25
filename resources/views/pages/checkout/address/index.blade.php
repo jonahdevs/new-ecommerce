@@ -40,12 +40,15 @@ new #[Layout('layouts.checkout')] class extends Component {
 
         if (!$user->addresses()->where('id', $this->selectedAddress)->exists()) {
             $this->addError('selectedAddress', 'Invalid address selected.');
+
+            $this->dispatch('notify', title: 'Invalid Selection', variant: 'warning', message: 'Please select a valid delivery address');
+
             return;
         }
 
         session(['checkout_address_id' => $this->selectedAddress]);
 
-        $this->dispatch('notify', variant: 'success', message: 'Address selected for delivery.');
+        $this->dispatch('notify', title: 'Address Selected', variant: 'success', message: 'Delivery address has been selected successfully');
 
         $this->redirectRoute('checkout.summary', navigate: true);
     }

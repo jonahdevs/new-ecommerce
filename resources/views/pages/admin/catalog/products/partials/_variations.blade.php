@@ -233,7 +233,7 @@
                                                 <div class="flex items-center gap-3">
                                                     <button type="button"
                                                         @click="document.getElementById('variant-image-{{ $index }}').click()"
-                                                        class="w-24 h-24 rounded-md border-2 border-dashed border-zinc-300 dark:border-zinc-600 flex flex-col items-center justify-center gap-1 hover:border-sheffield-blue hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                                                        class="w-24 h-24 rounded-md border-2 border-dashed border-zinc-300 dark:border-zinc-600 flex flex-col items-center justify-center gap-1 hover:border-brand-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer">
                                                         <flux:icon.photo class="size-6 text-zinc-400" />
                                                         <span class="text-xs text-zinc-400">Add image</span>
                                                     </button>
@@ -435,7 +435,7 @@
                                                             <div
                                                                 class="col-span-3 flex items-center justify-center gap-2">
                                                                 <label
-                                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-600 dark:text-zinc-300 hover:border-sheffield-blue hover:text-sheffield-blue cursor-pointer transition-colors">
+                                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-600 dark:text-zinc-300 hover:border-brand-secondary hover:text-brand-secondary cursor-pointer transition-colors">
                                                                     <flux:icon.arrow-up-tray class="size-3.5" />
                                                                     {{ !empty($download['file']) || !empty($download['file_path']) ? 'Replace' : 'Choose File' }}
                                                                     <input type="file" class="hidden"

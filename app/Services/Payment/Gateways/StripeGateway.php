@@ -179,6 +179,7 @@ class StripeGateway implements PaymentGateway
             'card_brand' => $intent->payment_method_types[0] ?? null,
             'paid_at' => now(),
             'meta' => $mergedMeta,
+            'gateway' => 'card'
         ]);
 
         if (!$order)

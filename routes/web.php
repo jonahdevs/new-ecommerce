@@ -92,7 +92,6 @@ Route::middleware(['auth', 'customer'])
     ->name('checkout.')
     ->group(function () {
         Route::livewire('/pay/{order}', 'pages::checkout.pay')->name('pay');
-        Route::livewire('/card-payment/{order}', 'pages::checkout.card-payment')->name('card-payment');
     });
 
 // Checkout flow — auth + customer + must have items in cart
@@ -102,7 +101,7 @@ Route::middleware(['auth', 'customer', 'cart_not_empty'])
     ->group(function () {
         Route::livewire('/shipping', 'pages::checkout.shipping')->name('shipping');
         Route::livewire('/summary', 'pages::checkout.summary')->name('summary');
-        Route::livewire('/payment-methods', 'pages::checkout.payment')->name('payment-methods');
+        Route::livewire('/payment-methods', 'pages::checkout.payment-methods')->name('payment-methods');
 
         Route::prefix('addresses')->name('addresses.')->group(function () {
             Route::livewire('/', 'pages::checkout.address.index')->name('index');

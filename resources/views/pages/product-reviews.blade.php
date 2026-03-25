@@ -219,7 +219,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <div class="lg:col-span-1">
                 <flux:card class="lg:sticky lg:top-44 space-y-6">
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-sheffield-blue">
+                        <div class="text-3xl font-bold text-brand-secondary">
                             {{ $this->reviewStats['average'] }}
                         </div>
 
@@ -268,11 +268,11 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 </div>
 
                                 <div class="w-full bg-zinc-200 rounded-full h-2.5">
-                                    <div class="h-2.5 rounded-full transition-all duration-300 {{ $filterRating === $rating ? 'bg-orange-400' : 'bg-sheffield-blue group-hover:bg-sheffield-blue/70' }}"
+                                    <div class="h-2.5 rounded-full transition-all duration-300 {{ $filterRating === $rating ? 'bg-orange-400' : 'bg-brand-secondary group-hover:bg-brand-secondary/70' }}"
                                         style="width: {{ $data['percentage'] }}%"></div>
                                 </div>
 
-                                <span class="text-sm font-semibold text-sheffield-blue min-w-11.25 text-right">
+                                <span class="text-sm font-semibold text-brand-secondary min-w-11.25 text-right">
                                     {{ $data['percentage'] }}%
                                 </span>
                             </button>

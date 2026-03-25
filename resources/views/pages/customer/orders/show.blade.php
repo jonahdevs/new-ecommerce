@@ -44,9 +44,9 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
         try {
             app(CartService::class)->addItem($productId, 1);
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', variant: 'success', message: 'Item added to cart.');
-        } catch (\RuntimeException $e) {
-            $this->dispatch('notify', variant: 'danger', message: $e->getMessage());
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Item added to your cart');
+        } catch (\RuntimeException $th) {
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add item to cart');
         }
     }
 };
@@ -239,16 +239,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                     {{ $order->currency }}
                                 </flux:text>
                             </div>
-
-                            {{-- Transaction ID — shown once paid --}}
-                            @if ($order->payment->transaction_id)
-                                <div class="flex items-center justify-between gap-4">
-                                    <flux:text class="text-sm text-zinc-500 shrink-0">Transaction</flux:text>
-                                    <flux:text class="text-xs font-mono text-zinc-600 truncate text-right">
-                                        {{ $order->payment->transaction_id }}
-                                    </flux:text>
-                                </div>
-                            @endif
 
                             {{-- Paid at timestamp --}}
                             @if ($order->payment->paid_at)

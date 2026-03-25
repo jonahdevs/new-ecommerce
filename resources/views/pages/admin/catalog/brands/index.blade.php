@@ -129,7 +129,7 @@ new #[Title('Brands')] class extends Component {
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square"
                                 :href="route('admin.catalog.brands.edit', $brand->id)" wire:navigate
-                                class="cursor-pointer text-sheffield-blue!" />
+                                class="cursor-pointer text-brand-secondary!" />
 
                             <flux:button variant="ghost" size="sm" icon="trash" color="red"
                                 wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')"

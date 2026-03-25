@@ -16,7 +16,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return auth()
                 ->user()
                 ->wishlistProducts()
-                ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+                ->select(['products.id', 'products.name', 'products.slug', 'products.brand_id', 'products.price', 'products.sale_price', 'products.image_path', 'products.short_description', 'products.type', 'products.requires_quotation', 'products.reviews_enabled'])
                 ->with([
                     'brand:id,name,slug',
                     'images' => fn($q) => $q->limit(1),
@@ -31,7 +31,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         } else {
             $wishlistIds = request()->session()->get('wishlist', []);
 
-            return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            return Product::select(['products.id', 'products.name', 'products.slug', 'products.brand_id', 'products.price', 'products.sale_price', 'products.image_path', 'products.short_description', 'products.type', 'products.requires_quotation', 'products.reviews_enabled'])
                 ->with([
                     'brand:id,name,slug',
                     'images' => fn($q) => $q->limit(1),

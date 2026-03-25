@@ -156,7 +156,8 @@ new #[Layout('layouts.customer')] class extends Component {
                         offers.
                     </flux:text>
 
-                    <flux:link href="#" wire:navigate class="text-sheffield-blue hover:underline ">Edit newsletter
+                    <flux:link href="#" wire:navigate class="text-brand-secondary hover:underline ">Edit
+                        newsletter
                         preference
                     </flux:link>
                 </div>

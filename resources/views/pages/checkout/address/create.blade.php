@@ -74,17 +74,14 @@ new #[Layout('layouts.checkout')] class extends Component {
     {
         try {
             $this->form->store();
-            $this->dispatch('notify', variant: 'success', message: 'Address saved successfully');
+
+            $this->dispatch('notify', title: 'Address Saved', variant: 'success', message: 'Your delivery address has been saved successfully');
 
             return $this->redirectRoute('checkout.summary', navigate: true);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {
-            logger()->error('Failed to save address', [
-                'user_id' => auth()->id(),
-                'error' => $th->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage());
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to save address');
         }
     }
 };

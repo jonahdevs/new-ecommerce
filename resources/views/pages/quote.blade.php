@@ -292,7 +292,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                         {{-- Info note --}}
                         <div
                             class="flex gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-100 dark:border-blue-900">
-                            <flux:icon.information-circle class="size-5 text-sheffield-blue shrink-0 mt-0.5" />
+                            <flux:icon.information-circle class="size-5 text-brand-secondary shrink-0 mt-0.5" />
                             <p class="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
                                 Our team will review your request and contact you within 1 business day with a formal
                                 quote.
@@ -356,7 +356,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 <div class="flex-1 min-w-0">
                                     <a href="{{ route('products.show', $product) }}" wire:navigate
                                         class="text-sm font-medium text-zinc-800 dark:text-zinc-100
-                                            hover:text-sheffield-blue hover:underline block truncate">
+                                            hover:text-brand-secondary hover:underline block truncate">
                                         {{ $product->name }}
                                     </a>
 
