@@ -21,7 +21,7 @@ Route::livewire('/', 'pages::home.index')->name('home');
 // ----------------------------------------------------------------------------
 
 Route::prefix('shop')->name('shop.')->group(function () {
-    Route::livewire('/', 'pages::products')->name('index');
+    Route::livewire('/', 'pages::shop')->name('index');
     Route::livewire('/category/{category:slug}', 'pages::category-products')->name('category');
 });
 

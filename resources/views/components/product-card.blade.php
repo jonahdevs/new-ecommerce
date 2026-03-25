@@ -180,40 +180,11 @@ new class extends Component {
 
         return $slides;
     }
-
-    #[Computed]
-    public function imageSlides(): array
-    {
-        $slides = [];
-        $seenPaths = [];
-
-        // 1. Main product image
-        if ($this->product->image_path) {
-            $seenPaths[] = $this->product->image_path;
-            $slides[] = [
-                'url' => $this->product->image_url,
-                'alt' => $this->product->name,
-            ];
-        }
-
-        // 2. Gallery images — skip anything already seen
-        foreach ($this->product->images as $image) {
-            if (!in_array($image->image_path, $seenPaths, true)) {
-                $seenPaths[] = $image->image_path;
-                $slides[] = [
-                    'url' => Storage::url($image->image_path),
-                    'alt' => $image->alt_text ?? $this->product->name,
-                ];
-            }
-        }
-
-        return $slides;
-    }
 };
 ?>
 
 <flux:card
-    {{ $attributes->class(['p-0 overflow-hidden h-full hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group']) }}>
+    {{ $attributes->class(['p-0 overflow-hidden h-full hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group ']) }}>
     <div class="h-full flex flex-col">
 
         {{-- ── IMAGE ── --}}
@@ -330,9 +301,10 @@ new class extends Component {
     </div>
 
     {{-- ── QUICK VIEW MODAL ── --}}
-    <flux:modal variant="floating" name="quick-view-product-{{ $product->id }}" class="w-full max-w-2xl rounded-xs!"
-        overlay-class="bg-black backdrop-blur-lg">
-        <div class="grid grid-cols-3">
+    <flux:modal variant="floating" name="quick-view-product-{{ $product->id }}"
+        class="w-[90%] md:w-full max-w-2xl rounded-xs!" overlay-class="bg-black backdrop-blur-lg">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 pt-7">
 
             {{-- Images --}}
             <div class="col-span-1" x-data="{
@@ -372,7 +344,7 @@ new class extends Component {
                     </div>
                 </div>
 
-                {{-- Thumbnails — only when there's more than one slide --}}
+                {{-- Thumbnails --}}
                 @if (count($this->imageSlides) > 1)
                     <div class="swiper px-8 mt-4" x-ref="thumbSwiper">
                         <div class="swiper-wrapper">
@@ -392,7 +364,7 @@ new class extends Component {
             </div>
 
             {{-- Details --}}
-            <div class="col-span-2 pl-6">
+            <div class="col-span-1 md:col-span-2 pt-5 md:pt-0 md:pl-6">
                 <a href="{{ route('products.show', $product) }}" wire:navigate
                     class="text-xl font-bold mt-2 mb-1 hover:text-brand-secondary hover:underline transition-colors">
                     {{ $product->name }}
@@ -425,7 +397,7 @@ new class extends Component {
                 {{-- Cart actions --}}
                 @if (!$product->requires_quotation && $product->type === ProductType::SIMPLE)
                     @island
-                        <div class="mt-3 flex items-center gap-4">
+                        <div class="mt-3 flex items-center gap-4 flex-wrap">
                             <flux:button.group>
                                 <flux:button icon="minus" class="cursor-pointer text-zinc-500!"
                                     wire:click="decreaseCartQuantity" title="Decrease" />

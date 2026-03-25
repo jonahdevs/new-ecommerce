@@ -134,7 +134,7 @@
         </section>
     </div>
 
-    <div class="sticky top-0 left-0 z-50 w-full">
+    <div class="sticky top-0 left-0 z-100 w-full">
         
         <?php app("livewire")->forceAssetInjection(); ?><div x-persist="<?php echo e('app-bar'); ?>">
             <?php
