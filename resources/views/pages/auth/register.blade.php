@@ -5,11 +5,40 @@
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
+
+
+        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6 mt-4">
+            @csrf
+            <!-- Name -->
+            <flux:input name="name" :label="__('Name')" :value="old('name')" type="text" required autofocus
+                autocomplete="name" :placeholder="__('Full name')" />
+
+            <!-- Email Address -->
+            <flux:input name="email" :label="__('Email address')" :value="old('email')" type="email" required
+                autocomplete="email" placeholder="email@example.com" />
+
+            <!-- Password -->
+            <flux:input name="password" :label="__('Password')" type="password" required autocomplete="new-password"
+                :placeholder="__('Password')" viewable />
+
+            <!-- Confirm Password -->
+            <flux:input name="password_confirmation" :label="__('Confirm password')" type="password" required
+                autocomplete="new-password" :placeholder="__('Confirm password')" viewable />
+
+            <div class="flex items-center justify-end">
+                <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
+                    {{ __('Create account') }}
+                </flux:button>
+            </div>
+        </form>
+
+        <flux:separator text="or continue with email" />
+
         <div class="grid grid-cols-2 gap-3">
             <flux:button class="w-full cursor-pointer" :href="route('socialite.redirect', 'google')">
                 <x-slot name="icon">
-                    <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        class="shrink-0">
+                    <svg width="25" height="24" viewBox="0 0 25 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg" class="shrink-0">
                         <path
                             d="M23.06 12.25C23.06 11.47 22.99 10.72 22.86 10H12.5V14.26H18.42C18.16 15.63 17.38 16.79 16.21 17.57V20.34H19.78C21.86 18.42 23.06 15.6 23.06 12.25Z"
                             fill="#4285F4" />
@@ -37,33 +66,6 @@
                 Facebook
             </flux:button>
         </div>
-
-        <flux:separator text="or continue with email" />
-
-        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6 mt-4">
-            @csrf
-            <!-- Name -->
-            <flux:input name="name" :label="__('Name')" :value="old('name')" type="text" required autofocus
-                autocomplete="name" :placeholder="__('Full name')" />
-
-            <!-- Email Address -->
-            <flux:input name="email" :label="__('Email address')" :value="old('email')" type="email" required
-                autocomplete="email" placeholder="email@example.com" />
-
-            <!-- Password -->
-            <flux:input name="password" :label="__('Password')" type="password" required autocomplete="new-password"
-                :placeholder="__('Password')" viewable />
-
-            <!-- Confirm Password -->
-            <flux:input name="password_confirmation" :label="__('Confirm password')" type="password" required
-                autocomplete="new-password" :placeholder="__('Confirm password')" viewable />
-
-            <div class="flex items-center justify-end">
-                <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
-                    {{ __('Create account') }}
-                </flux:button>
-            </div>
-        </form>
 
         <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
             <span>{{ __('Already have an account?') }}</span>

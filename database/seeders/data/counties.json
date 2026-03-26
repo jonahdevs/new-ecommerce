@@ -4,7 +4,7 @@
             "id": 1,
             "name": "Mombasa",
             "number": "001",
-            "region": "UPCOUNTRY",
+            "region": "COAST",
             "main_towns": [
                 "Mombasa CBD",
                 "Nyali",
@@ -12,246 +12,398 @@
                 "Likoni",
                 "Changamwe",
                 "Kisauni",
-                "Port Reitz"
+                "Port Reitz",
+                "Mikindani",
+                "Mtongwe",
+                "Shimanzi",
+                "Ganjoni",
+                "Tudor",
+                "Mkomani",
+                "Kongowea",
+                "Kadzandani"
             ]
         },
         {
             "id": 2,
             "name": "Kwale",
             "number": "002",
-            "region": "UPCOUNTRY",
+            "region": "COAST",
             "main_towns": [
                 "Kwale",
                 "Ukunda",
                 "Msambweni",
                 "Kinango",
-                "Diani"
+                "Diani",
+                "Shimba Hills",
+                "Lungalunga",
+                "Shimoni",
+                "Matuga",
+                "Gombato",
+                "Ramisi",
+                "Tiwi"
             ]
         },
         {
             "id": 3,
             "name": "Kilifi",
             "number": "003",
-            "region": "UPCOUNTRY",
+            "region": "COAST",
             "main_towns": [
-                "Kilifi",
+                "Kilifi Town",
                 "Malindi",
                 "Watamu",
                 "Mtwapa",
-                "Mariakani"
+                "Mariakani",
+                "Kaloleni",
+                "Rabai",
+                "Adu",
+                "Ganze",
+                "Bamba",
+                "Sokoke",
+                "Magarini",
+                "Garashi",
+                "Takaungu"
             ]
         },
         {
             "id": 4,
             "name": "Tana River",
             "number": "004",
-            "region": "UPCOUNTRY",
+            "region": "COAST",
             "main_towns": [
                 "Hola",
                 "Garsen",
-                "Bura"
+                "Bura",
+                "Madogo",
+                "Ngao",
+                "Kipini",
+                "Wenje",
+                "Bangale",
+                "Galole"
             ]
         },
         {
             "id": 5,
             "name": "Lamu",
             "number": "005",
-            "region": "UPCOUNTRY",
+            "region": "COAST",
             "main_towns": [
                 "Lamu Town",
                 "Mpeketoni",
-                "Witu"
+                "Witu",
+                "Mokowe",
+                "Hindi",
+                "Kiunga",
+                "Faza",
+                "Shella",
+                "Mambrui"
             ]
         },
         {
             "id": 6,
             "name": "Taita Taveta",
             "number": "006",
-            "region": "UPCOUNTRY",
+            "region": "COAST",
             "main_towns": [
                 "Voi",
                 "Wundanyi",
                 "Mwatate",
-                "Taveta"
+                "Taveta",
+                "Moshi",
+                "Kaloleni",
+                "Mbuyuni",
+                "Mackinnon Road",
+                "Bura East",
+                "Kasigau"
             ]
         },
         {
             "id": 7,
             "name": "Garissa",
             "number": "007",
-            "region": "UPCOUNTRY",
+            "region": "NORTH EASTERN",
             "main_towns": [
                 "Garissa Town",
                 "Dadaab",
-                "Modogashe"
+                "Modogashe",
+                "Masalani",
+                "Hulugho",
+                "Ijara",
+                "Sangailu",
+                "Balambala",
+                "Dertu",
+                "Fafi"
             ]
         },
         {
             "id": 8,
             "name": "Wajir",
             "number": "008",
-            "region": "UPCOUNTRY",
+            "region": "NORTH EASTERN",
             "main_towns": [
                 "Wajir Town",
                 "Habaswein",
-                "Buna"
+                "Buna",
+                "Eldas",
+                "Griftu",
+                "Tarbaj",
+                "Kutulo",
+                "Leheley",
+                "Danaba"
             ]
         },
         {
             "id": 9,
             "name": "Mandera",
             "number": "009",
-            "region": "UPCOUNTRY",
+            "region": "NORTH EASTERN",
             "main_towns": [
                 "Mandera Town",
                 "Elwak",
-                "Rhamu"
+                "Rhamu",
+                "Takaba",
+                "Banissa",
+                "Lafey",
+                "Kotulo",
+                "Malkamari",
+                "Liboi"
             ]
         },
         {
             "id": 10,
             "name": "Marsabit",
             "number": "010",
-            "region": "UPCOUNTRY",
+            "region": "NORTH EASTERN",
             "main_towns": [
                 "Marsabit Town",
                 "Moyale",
-                "Laisamis"
+                "Laisamis",
+                "Loiyangalani",
+                "North Horr",
+                "Sololo",
+                "Turbi",
+                "Maikona",
+                "Kargi",
+                "Illeret"
             ]
         },
         {
             "id": 11,
             "name": "Isiolo",
             "number": "011",
-            "region": "UPCOUNTRY",
+            "region": "NORTH EASTERN",
             "main_towns": [
                 "Isiolo Town",
                 "Garbatulla",
-                "Merti"
+                "Merti",
+                "Kula Mawe",
+                "Modogashe",
+                "Oldonyiro",
+                "Ngare Mara",
+                "Cherab"
             ]
         },
         {
             "id": 12,
             "name": "Meru",
             "number": "012",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Meru Town",
                 "Maua",
                 "Mikinduri",
-                "Nkubu"
+                "Nkubu",
+                "Timau",
+                "Githongo",
+                "Muthara",
+                "Laare",
+                "Mitunguu",
+                "Ruiri",
+                "Kieni",
+                "Mwimbi",
+                "Igoji",
+                "Kibirichia",
+                "Chuka"
             ]
         },
         {
             "id": 13,
             "name": "Tharaka Nithi",
             "number": "013",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Chuka",
                 "Kathwana",
-                "Marimanti"
+                "Marimanti",
+                "Gatunga",
+                "Mukothima",
+                "Ishiara",
+                "Kibangaini",
+                "Nthara",
+                "Magumoni"
             ]
         },
         {
             "id": 14,
             "name": "Embu",
             "number": "014",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Embu Town",
                 "Siakago",
-                "Runyenjes"
+                "Runyenjes",
+                "Manyatta",
+                "Kiritiri",
+                "Ena",
+                "Ishiara",
+                "Kevote",
+                "Nembure",
+                "Gachoka"
             ]
         },
         {
             "id": 15,
             "name": "Kitui",
             "number": "015",
-            "region": "UPCOUNTRY",
+            "region": "EASTERN",
             "main_towns": [
                 "Kitui Town",
                 "Mwingi",
-                "Mutomo"
+                "Mutomo",
+                "Kabati",
+                "Matinyani",
+                "Kyuso",
+                "Migwani",
+                "Katse",
+                "Ikanga",
+                "Tseikuru",
+                "Zombe",
+                "Ngomeni"
             ]
         },
         {
             "id": 16,
             "name": "Machakos",
             "number": "016",
-            "region": "UPCOUNTRY",
+            "region": "EASTERN",
             "main_towns": [
                 "Machakos Town",
                 "Athi River",
                 "Kangundo",
                 "Mlolongo",
-                "Tala"
+                "Tala",
+                "Wamunyu",
+                "Matuu",
+                "Masii",
+                "Katangi",
+                "Mwala",
+                "Kathiani",
+                "Mumbuni",
+                "Mavoko",
+                "Syokimau"
             ]
         },
         {
             "id": 17,
             "name": "Makueni",
             "number": "017",
-            "region": "UPCOUNTRY",
+            "region": "EASTERN",
             "main_towns": [
                 "Wote",
                 "Makindu",
                 "Emali",
-                "Sultan Hamud"
+                "Sultan Hamud",
+                "Kibwezi",
+                "Mtito Andei",
+                "Kathonzweni",
+                "Kilungu",
+                "Nunguni",
+                "Kalawa",
+                "Kikumbulyu"
             ]
         },
         {
             "id": 18,
             "name": "Nyandarua",
             "number": "018",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Ol Kalou",
                 "Nyahururu",
-                "Engineer"
+                "Engineer",
+                "Njabini",
+                "Ndaragwa",
+                "Kipipiri",
+                "Mirangine",
+                "Shamata",
+                "Gathaiti",
+                "Magumu"
             ]
         },
         {
             "id": 19,
             "name": "Nyeri",
             "number": "019",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Nyeri Town",
                 "Karatina",
                 "Othaya",
-                "Mukurweini"
+                "Mukurweini",
+                "Tetu",
+                "Kigumo",
+                "Mahiga",
+                "Mweiga",
+                "Chaka",
+                "Naro Moru",
+                "Narumoru",
+                "Kiganjo",
+                "Ruring'u"
             ]
         },
         {
             "id": 20,
             "name": "Kirinyaga",
             "number": "020",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Kerugoya",
                 "Kutus",
                 "Sagana",
-                "Baricho"
+                "Baricho",
+                "Kagio",
+                "Wanguru",
+                "Kimunye",
+                "Kianyaga",
+                "Ngariama",
+                "Mutithi"
             ]
         },
         {
             "id": 21,
             "name": "Murang'a",
             "number": "021",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Murang'a Town",
                 "Kenol",
                 "Kangema",
-                "Kandara"
+                "Kandara",
+                "Maragua",
+                "Kigumo",
+                "Kabati",
+                "Makuyu",
+                "Gikindu",
+                "Kiriaini",
+                "Kiharu",
+                "Gaichanjiru"
             ]
         },
         {
             "id": 22,
             "name": "Kiambu",
             "number": "022",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Thika",
                 "Kikuyu",
@@ -261,287 +413,490 @@
                 "Juja",
                 "Karuri",
                 "Githunguri",
-                "Gatundu"
+                "Gatundu",
+                "Kabete",
+                "Wangige",
+                "Ndenderu",
+                "Ting'ang'a",
+                "Kimbo",
+                "Giathieri",
+                "Lari",
+                "Kijabe",
+                "Uplands",
+                "Tigoni"
             ]
         },
         {
             "id": 23,
             "name": "Turkana",
             "number": "023",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Lodwar",
                 "Kakuma",
-                "Lokichoggio"
+                "Lokichoggio",
+                "Kalokol",
+                "Lokichar",
+                "Kalobeyei",
+                "Lodwar",
+                "Turkwel",
+                "Katilu",
+                "Lokitaung",
+                "Nachola"
             ]
         },
         {
             "id": 24,
             "name": "West Pokot",
             "number": "024",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Kapenguria",
                 "Makutano",
-                "Chepareria"
+                "Chepareria",
+                "Ortum",
+                "Sigor",
+                "Alale",
+                "Kacheliba",
+                "Sebit",
+                "Sook",
+                "Kongelai"
             ]
         },
         {
             "id": 25,
             "name": "Samburu",
             "number": "025",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Maralal",
                 "Baragoi",
-                "Wamba"
+                "Wamba",
+                "Archer's Post",
+                "Loosuk",
+                "Suguta Marmar",
+                "Kisima",
+                "Poro",
+                "Tuum"
             ]
         },
         {
             "id": 26,
             "name": "Trans Nzoia",
             "number": "026",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Kitale",
                 "Endebess",
-                "Kwanza"
+                "Kwanza",
+                "Kiminini",
+                "Saboti",
+                "Matisi",
+                "Bidii",
+                "Cherangany",
+                "Sirende",
+                "Waitaluk"
             ]
         },
         {
             "id": 27,
             "name": "Uasin Gishu",
             "number": "027",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Eldoret",
                 "Burnt Forest",
                 "Turbo",
-                "Ziwa"
+                "Ziwa",
+                "Moiben",
+                "Huruma",
+                "Langas",
+                "Racecourse",
+                "Pioneer",
+                "Kapsoya",
+                "Cheptiret",
+                "Ainabkoi",
+                "Soy"
             ]
         },
         {
             "id": 28,
             "name": "Elgeyo Marakwet",
             "number": "028",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Iten",
                 "Kapcherop",
-                "Chesoi"
+                "Chesoi",
+                "Tambach",
+                "Keiyo",
+                "Arror",
+                "Lelan",
+                "Cheptebo",
+                "Rimoi",
+                "Tot"
             ]
         },
         {
             "id": 29,
             "name": "Nandi",
             "number": "029",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Kapsabet",
                 "Mosoriot",
-                "Nandi Hills"
+                "Nandi Hills",
+                "Kobujoi",
+                "Kabiyet",
+                "Chepterwai",
+                "Ndalat",
+                "Timboroa",
+                "Songhor",
+                "Chemundu"
             ]
         },
         {
             "id": 30,
             "name": "Baringo",
             "number": "030",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Kabarnet",
                 "Marigat",
-                "Eldama Ravine"
+                "Eldama Ravine",
+                "Mogotio",
+                "Ravine",
+                "Kabartonjo",
+                "Nginyang",
+                "Loruk",
+                "Bartabwa",
+                "Tenges"
             ]
         },
         {
             "id": 31,
             "name": "Laikipia",
             "number": "031",
-            "region": "UPCOUNTRY",
+            "region": "CENTRAL",
             "main_towns": [
                 "Nanyuki",
                 "Nyahururu",
-                "Rumuruti"
+                "Rumuruti",
+                "Doldol",
+                "Kinamba",
+                "Mukogodo",
+                "Marmanet",
+                "Sipili",
+                "Ol Moran",
+                "Segera"
             ]
         },
         {
             "id": 32,
             "name": "Nakuru",
             "number": "032",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Nakuru Town",
                 "Naivasha",
                 "Gilgil",
                 "Molo",
                 "Njoro",
-                "Rongai"
+                "Rongai",
+                "Subukia",
+                "Bahati",
+                "Lanet",
+                "Flamingo",
+                "Free Area",
+                "Kaptembwo",
+                "Kalimoni",
+                "Kampi ya Moto",
+                "Ol Kalou Junction",
+                "Elementaita",
+                "Maai Mahiu"
             ]
         },
         {
             "id": 33,
             "name": "Narok",
             "number": "033",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Narok Town",
                 "Kilgoris",
-                "Loita"
+                "Loita",
+                "Sekenani",
+                "Ololulunga",
+                "Melelo",
+                "Suswa",
+                "Lemek",
+                "Mara",
+                "Aitong",
+                "Keekonyokie"
             ]
         },
         {
             "id": 34,
             "name": "Kajiado",
             "number": "034",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Kajiado Town",
                 "Ngong",
                 "Kiserian",
                 "Ongata Rongai",
                 "Kitengela",
-                "Namanga"
+                "Namanga",
+                "Loitokitok",
+                "Mashuru",
+                "Ilbisil",
+                "Magadi",
+                "Imaroro",
+                "Duka Moja",
+                "Kimana",
+                "Bissil"
             ]
         },
         {
             "id": 35,
             "name": "Kericho",
             "number": "035",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Kericho Town",
                 "Litein",
                 "Londiani",
-                "Kipkelion"
+                "Kipkelion",
+                "Kapkatet",
+                "Roret",
+                "Chepkoilel",
+                "Sigowet",
+                "Soin",
+                "Fort Ternan",
+                "Chemamul"
             ]
         },
         {
             "id": 36,
             "name": "Bomet",
             "number": "036",
-            "region": "UPCOUNTRY",
+            "region": "RIFT VALLEY",
             "main_towns": [
                 "Bomet Town",
                 "Sotik",
-                "Longisa"
+                "Longisa",
+                "Mulot",
+                "Kimulot",
+                "Sigor",
+                "Siongiroi",
+                "Merigi",
+                "Chesoen",
+                "Tenwek"
             ]
         },
         {
             "id": 37,
             "name": "Kakamega",
             "number": "037",
-            "region": "UPCOUNTRY",
+            "region": "WESTERN",
             "main_towns": [
                 "Kakamega Town",
                 "Mumias",
                 "Butere",
                 "Malava",
-                "Lurambi"
+                "Lurambi",
+                "Shinyalu",
+                "Ikolomani",
+                "Lugari",
+                "Navakholo",
+                "Khwisero",
+                "Matungu",
+                "Likuyani",
+                "Bulimbo",
+                "Shianda"
             ]
         },
         {
             "id": 38,
             "name": "Vihiga",
             "number": "038",
-            "region": "UPCOUNTRY",
+            "region": "WESTERN",
             "main_towns": [
                 "Mbale",
                 "Hamisi",
-                "Chavakali"
+                "Chavakali",
+                "Vihiga Town",
+                "Luanda",
+                "Majengo",
+                "Emuhaya",
+                "Sabatia",
+                "Mudete",
+                "Tiriki",
+                "Lyaduywa"
             ]
         },
         {
             "id": 39,
             "name": "Bungoma",
             "number": "039",
-            "region": "UPCOUNTRY",
+            "region": "WESTERN",
             "main_towns": [
                 "Bungoma Town",
                 "Webuye",
                 "Kimilili",
-                "Chwele"
+                "Chwele",
+                "Malakisi",
+                "Tongaren",
+                "Musikoma",
+                "Sirisia",
+                "Bumula",
+                "Kabuchai",
+                "Kanduyi",
+                "Kibingei",
+                "Mt. Elgon",
+                "Cheptais"
             ]
         },
         {
             "id": 40,
             "name": "Busia",
             "number": "040",
-            "region": "UPCOUNTRY",
+            "region": "WESTERN",
             "main_towns": [
                 "Busia Town",
                 "Malaba",
-                "Bumala"
+                "Bumala",
+                "Nambale",
+                "Funyula",
+                "Butula",
+                "Matayos",
+                "Alupe",
+                "Port Victoria",
+                "Amukura",
+                "Chakol"
             ]
         },
         {
             "id": 41,
             "name": "Siaya",
             "number": "041",
-            "region": "UPCOUNTRY",
+            "region": "NYANZA",
             "main_towns": [
                 "Siaya Town",
                 "Bondo",
                 "Ugunja",
-                "Yala"
+                "Yala",
+                "Ukwala",
+                "Ambira",
+                "Ramula",
+                "Rwambwa",
+                "Ndori",
+                "Sega",
+                "Usenge",
+                "Karemo"
             ]
         },
         {
             "id": 42,
             "name": "Kisumu",
             "number": "042",
-            "region": "UPCOUNTRY",
+            "region": "NYANZA",
             "main_towns": [
                 "Kisumu City",
                 "Ahero",
                 "Maseno",
-                "Kondele"
+                "Kondele",
+                "Kibos",
+                "Muhoroni",
+                "Nyando",
+                "Katito",
+                "Awasi",
+                "Miwani",
+                "Kombewa",
+                "Winam",
+                "Nyamasaria",
+                "Kolwa",
+                "Chiga"
             ]
         },
         {
             "id": 43,
             "name": "Homa Bay",
             "number": "043",
-            "region": "UPCOUNTRY",
+            "region": "NYANZA",
             "main_towns": [
                 "Homa Bay Town",
                 "Ndhiwa",
                 "Oyugis",
-                "Kendu Bay"
+                "Kendu Bay",
+                "Mbita",
+                "Sindo",
+                "Rodi Kopany",
+                "Rangwe",
+                "Karachuonyo",
+                "Kabondo",
+                "Rusinga Island"
             ]
         },
         {
             "id": 44,
             "name": "Migori",
             "number": "044",
-            "region": "UPCOUNTRY",
+            "region": "NYANZA",
             "main_towns": [
                 "Migori Town",
                 "Rongo",
                 "Awendo",
-                "Kehancha"
+                "Kehancha",
+                "Isebania",
+                "Ntimaru",
+                "Suna",
+                "Uriri",
+                "Muhuru Bay",
+                "Macalder",
+                "Ogwedhi",
+                "Nyatike"
             ]
         },
         {
             "id": 45,
             "name": "Kisii",
             "number": "045",
-            "region": "UPCOUNTRY",
+            "region": "NYANZA",
             "main_towns": [
                 "Kisii Town",
                 "Ogembo",
                 "Keroka",
-                "Suneka"
+                "Suneka",
+                "Manga",
+                "Masimba",
+                "Nyacheki",
+                "Tabaka",
+                "Gesusu",
+                "Riosiri",
+                "Kenyenya",
+                "Bomorenda",
+                "Nyamarambe",
+                "Masaba"
             ]
         },
         {
             "id": 46,
             "name": "Nyamira",
             "number": "046",
-            "region": "UPCOUNTRY",
+            "region": "NYANZA",
             "main_towns": [
                 "Nyamira Town",
                 "Kebirigo",
-                "Ekerenyo"
+                "Ekerenyo",
+                "Nyansiongo",
+                "Rigoma",
+                "Keroka",
+                "Magwagwa",
+                "Itibo",
+                "Gesima",
+                "Borabu",
+                "Manga"
             ]
         },
         {
@@ -550,26 +905,98 @@
             "number": "047",
             "region": "NAIROBI",
             "main_towns": [
-                "Nairobi CBD",
+                "CBD",
                 "Westlands",
-                "Eastleigh",
-                "Kasarani",
-                "Embakasi",
-                "Kibera",
-                "Langata",
-                "Dagoretti",
-                "Karen",
-                "Runda",
-                "Kilimani",
-                "Lavington",
                 "Parklands",
-                "South B",
-                "South C",
+                "Ngara",
+                "Pangani",
+                "Eastleigh",
+                "Huruma",
+                "Mathare",
+                "Karen",
+                "Lavington",
+                "Kilimani",
+                "Kileleshwa",
+                "Gigiri",
+                "Muthaiga",
+                "Ngumo",
+                "Dagoretti",
+                "Buruburu",
                 "Donholm",
                 "Umoja",
+                "Embakasi",
                 "Kayole",
+                "Komarock",
+                "Utawala",
+                "Ruai",
+                "Jogoo Road",
+                "Pipeline",
+                "Industrial Area",
+                "Upper Hill",
+                "JKIA",
+                "South C",
+                "South B",
+                "Kasarani",
+                "Roysambu",
+                "Ruaraka",
+                "Githurai",
+                "Zimmerman",
+                "Kahawa",
+                "Mirema",
+                "Mwiki",
+                "Kamulu",
+                "Lang'ata",
+                "Kibera",
+                "Woodley",
+                "Riruta",
+                "Satellite",
+                "Rongai",
+                "Ngong Road",
+                "Adams Arcade",
+                "Hardy",
+                "Ridgeways",
+                "Loresho",
+                "Spring Valley",
+                "Brookside",
+                "Kitisuru",
+                "Runda",
+                "Nyari",
+                "Highridge",
+                "Highrise",
+                "Buru Buru",
+                "Harambee",
+                "Makongeni",
+                "Bahati",
+                "Jericho",
+                "Maringo",
+                "Hamza",
+                "Greenfields",
+                "Korogocho",
                 "Dandora",
-                "Mathare"
+                "Njiru",
+                "Tassia",
+                "Fedha",
+                "Kariobangi",
+                "Mowlem",
+                "Lucky Summer",
+                "Baba Dogo",
+                "Utalii",
+                "Clay City",
+                "Ngumba",
+                "Thome",
+                "Kahawa West",
+                "Kahawa Wendani",
+                "Githurai 44",
+                "Githurai 45",
+                "Sunton",
+                "Tena",
+                "Soweto",
+                "Mutu-ini",
+                "Waithaka",
+                "Kawangware",
+                "Kangemi",
+                "Mountain View",
+                "Westlands"
             ]
         }
     ]
