@@ -10,17 +10,12 @@ return new class extends Migration {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            if (Schema::hasTable('quotes')) {
+                $table->foreignId('quote_id')->nullable()->constrained('quotes')->nullOnDelete();
+            }
             $table->string('reference')->unique();
 
-            $table->string('document_type')->default('sale_order')->comment('sale_order | quotation');
-            $table->string('quotation_type')->nullable()->comment('delivery | product - null for sale_order documents');
-
-            $table->string('parent_quotation_id')->nullable()->constrained('orders')->nullOnDelete();
-
-            $table->timestamp('quoted_at')->nullable()->comment('Set when admin sends the priced quotation to customer');
-
             $table->string('invoice_path')->nullable()->comment('Relative path to tax invoice PDF in storage/app/');
-            $table->string('quotation_pdf_path')->nullable()->comment('Relative path to quotation PDF in storage/app/');
 
             $table->string('status')->default('pending');
             $table->string('payment_status')->default('pending');

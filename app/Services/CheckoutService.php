@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\OrdersStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus as EnumsPaymentStatus;
 use App\Enums\SapSyncStatus;
 use App\Jobs\SyncOrderToSapJob;
@@ -12,7 +12,6 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Services\Payment\PaymentService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
-use App\Services\Payment\ValueObjects\PaymentStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,11 +21,22 @@ class CheckoutService
         private readonly CartService $cartService,
         private readonly CheckoutSession $checkoutSession,
         private readonly PaymentService $paymentService,
-    ) {}
+    ) {
+    }
 
-    // ================================================
-    // PATH A — Normal sales order
-    // ================================================
+    // =====================================================
+    // Initiate checkout — single path, cart orders only
+    //
+    // Quote products have their own separate flow via
+    // QuoteBasketService (built separately).
+    //
+    // Steps:
+    //  1. Pre-flight checks
+    //  2. Resume existing failed order if within expiry window
+    //  3. DB transaction — Order + OrderItems + Payment
+    //  4. Payment gateway call (outside transaction)
+    //  5. Dispatch SyncOrderToSapJob on success
+    // =====================================================
 
     public function initiateCheckout(): PaymentResponse
     {
@@ -45,18 +55,21 @@ class CheckoutService
             throw new \RuntimeException('Shipping not selected. Please select a shipping method.');
         }
 
-        // Resume an existing pending order if one exists within the expiry window.
-        // Handles M-Pesa timeout retries without creating duplicate orders.
+        // Resume a failed order within the expiry window.
+        // Handles M-Pesa timeout retries without duplicating orders.
+        // whereNotNull('expires_at') guards against orders that never
+        // had expiry set (e.g. edge-case gateway errors before update).
         $existingOrder = Order::where('user_id', $user->id)
-            ->where('status', OrdersStatus::PENDING)
+            ->where('status', OrderStatus::PENDING)
             ->where('payment_status', EnumsPaymentStatus::FAILED)
+            ->whereNotNull('expires_at')
             ->where('expires_at', '>', now())
             ->latest()
             ->first();
 
         if ($existingOrder) {
-            Log::info('Resuming existing pending order', [
-                'order_id'  => $existingOrder->id,
+            Log::info('Resuming existing failed order', [
+                'order_id' => $existingOrder->id,
                 'reference' => $existingOrder->reference,
             ]);
 
@@ -67,74 +80,61 @@ class CheckoutService
             ?? $user->addresses()->where('is_default', true)->value('id')
             ?? $user->addresses()->oldest()->value('id');
 
-        $address      = Address::with(['county', 'area', 'shippingZone'])->findOrFail($addressId);
-        $cartItems    = $cart->items()->with('product.brand')->get();
-        $cartSummary  = $this->cartService->summary($cart);
+        $address = Address::with(['county', 'area', 'shippingZone'])->findOrFail($addressId);
+        $cartItems = $cart->items()->with('product.brand')->get();
+        $cartSummary = $this->cartService->summary($cart);
         $shippingData = $this->checkoutSession->getShipping();
 
         $subtotalCents = (int) round($cartSummary['subtotal'] * 100);
         $discountCents = (int) round($cartSummary['discount'] * 100);
         $shippingCents = (int) round($shippingData['cost'] * 100);
-        $totalCents    = max(0, $subtotalCents - $discountCents + $shippingCents);
+        $totalCents = max(0, $subtotalCents - $discountCents + $shippingCents);
 
         // -------------------------------------------------------
-        // DB Transaction — order, items, stock, payment record.
-        // The gateway call and SAP dispatch both happen OUTSIDE
-        // this transaction to avoid holding row locks open during
-        // slow external HTTP calls.
+        // DB transaction — Order + OrderItems + Payment
+        // Stock decremented inside with lockForUpdate() to prevent
+        // overselling under concurrent load.
+        // Gateway call happens after commit — never inside a tx.
         // -------------------------------------------------------
-        $order = DB::transaction(function () use (
-            $user,
-            $cartItems,
-            $cart,
-            $address,
-            $subtotalCents,
-            $discountCents,
-            $shippingCents,
-            $totalCents,
-            $shippingData
-        ) {
+        $order = DB::transaction(function () use ($user, $cart, $cartItems, $address, $subtotalCents, $discountCents, $shippingCents, $totalCents, $shippingData) {
             $order = Order::create([
-                'user_id'          => $user->id,
-                'reference'        => Order::generateReference('sales_order'),
-                'document_type'    => 'sales_order',
-                'quotation_type'   => null,
-                'status'           => OrdersStatus::PENDING,
-                'payment_status'   => EnumsPaymentStatus::PENDING,
-                'currency'         => 'KES',
-                'subtotal_cents'   => $subtotalCents,
-                'discount_cents'   => $discountCents,
-                'shipping_cents'   => $shippingCents,
-                'tax_cents'        => 0,
-                'total_cents'      => $totalCents,
+                'user_id' => $user->id,
+                'reference' => Order::generateReference(),
+                'status' => OrderStatus::PENDING,
+                'payment_status' => EnumsPaymentStatus::PENDING,
+                'currency' => 'KES',
+                'subtotal_cents' => $subtotalCents,
+                'discount_cents' => $discountCents,
+                'shipping_cents' => $shippingCents,
+                'tax_cents' => 0,
+                'total_cents' => $totalCents,
                 'shipping_address' => $this->snapshotAddress($address),
-                'billing_address'  => $this->snapshotAddress($address),
+                'billing_address' => $this->snapshotAddress($address),
                 'shipping_snapshot' => [
-                    'method_id'       => $shippingData['method_id'],
-                    'method_name'     => $shippingData['method_name'],
-                    'method_code'     => $shippingData['method_code'],
-                    'method_type'     => $shippingData['method_type'],
-                    'zone_id'         => $shippingData['zone_id'],
-                    'rate_id'         => $shippingData['rate_id'],
-                    'station_id'      => $shippingData['station_id'],
-                    'station_name'    => $shippingData['station_name'],
-                    'cost'            => $shippingData['cost'],
-                    'cost_breakdown'  => $shippingData['cost_breakdown'],
+                    'method_id' => $shippingData['method_id'],
+                    'method_name' => $shippingData['method_name'],
+                    'method_code' => $shippingData['method_code'],
+                    'method_type' => $shippingData['method_type'],
+                    'zone_id' => $shippingData['zone_id'],
+                    'rate_id' => $shippingData['rate_id'],
+                    'station_id' => $shippingData['station_id'],
+                    'station_name' => $shippingData['station_name'],
+                    'cost' => $shippingData['cost'],
+                    'cost_breakdown' => $shippingData['cost_breakdown'],
                     'delivery_window' => $shippingData['delivery_window'],
-                    'weight_kg'       => $this->cartService->getWeight($cart),
+                    'weight_kg' => $this->cartService->getWeight($cart),
                 ],
-                // SAP sync starts as pending — job dispatched after payment succeeds
-                'sap_sync_status'   => SapSyncStatus::PENDING,
+                'sap_sync_status' => SapSyncStatus::PENDING,
                 'sap_sync_attempts' => 0,
-                'expires_at'        => now()->addMinutes(30),
+                'expires_at' => now()->addMinutes(30),
             ]);
 
             $order->statusHistories()->create([
-                'from_status'          => null,
-                'to_status'            => OrdersStatus::PENDING->value,
-                'changed_by_user_id'   => auth()->id(),
-                'changed_by_type'      => 'user',
-                'notes'                => 'Order placed by customer',
+                'from_status' => null,
+                'to_status' => OrderStatus::PENDING->value,
+                'changed_by_user_id' => auth()->id(),
+                'changed_by_type' => 'user',
+                'notes' => 'Order placed by customer.',
             ]);
 
             foreach ($cartItems as $item) {
@@ -147,26 +147,26 @@ class CheckoutService
                 }
 
                 $order->items()->create([
-                    'product_id'         => $item->product_id,
+                    'product_id' => $item->product_id,
                     'product_variant_id' => $item->variant_id,
-                    'quantity'           => $item->quantity,
-                    'unit_price_cents'   => (int) round($item->product->final_price * 100),
-                    'unit_tax_cents'     => 0,
-                    'discount_cents'     => (int) round(
+                    'quantity' => $item->quantity,
+                    'unit_price_cents' => (int) round($item->product->final_price * 100),
+                    'unit_tax_cents' => 0,
+                    'discount_cents' => (int) round(
                         ($item->product->price - $item->product->final_price) * 100 * $item->quantity
                     ),
-                    'total_cents'        => (int) round($item->product->final_price * 100 * $item->quantity),
-                    'product_snapshot'   => [
-                        'id'         => $item->product->id,
-                        'name'       => $item->product->name,
-                        'sku'        => $item->product->sku,
-                        'slug'       => $item->product->slug,
+                    'total_cents' => (int) round($item->product->final_price * 100 * $item->quantity),
+                    'product_snapshot' => [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                        'sku' => $item->product->sku,
+                        'slug' => $item->product->slug,
                         'image_path' => $item->product->image_path,
-                        'price'      => $item->product->price,
+                        'price' => $item->product->price,
                         'sale_price' => $item->product->sale_price,
                         'final_price' => $item->product->final_price,
-                        'weight_kg'  => $item->product->weight ?? 0.5,
-                        'brand'      => $item->product->brand?->name,
+                        'weight_kg' => $item->product->weight ?? 0.5,
+                        'brand' => $item->product->brand?->name,
                     ],
                 ]);
 
@@ -174,14 +174,14 @@ class CheckoutService
             }
 
             Payment::create([
-                'order_id'     => $order->id,
+                'order_id' => $order->id,
                 'amount_cents' => $totalCents,
-                'currency'     => 'KES',
-                'status'       => EnumsPaymentStatus::PENDING,
-                'gateway'      => $this->paymentService->activeGateway(),
-                'expires_at'   => now()->addMinutes(30),
-                'meta'         => [
-                    'payment_method' => $this->checkoutSession->getPaymentMethod() ?? 'card',
+                'currency' => 'KES',
+                'status' => EnumsPaymentStatus::PENDING,
+                'gateway' => $this->paymentService->activeGateway(),
+                'expires_at' => now()->addMinutes(30),
+                'meta' => [
+                    'payment_method' => $this->checkoutSession->getPaymentMethod(),
                 ],
             ]);
 
@@ -189,16 +189,16 @@ class CheckoutService
         });
 
         // -------------------------------------------------------
-        // Gateway call — intentionally outside the transaction.
+        // Gateway call — intentionally outside the transaction
         // -------------------------------------------------------
         try {
             $response = $this->paymentService->initiate($order, $order->payment);
 
             if ($response->isFailed()) {
                 $order->transitionTo(
-                    OrdersStatus::CANCELLED,
+                    OrderStatus::CANCELLED,
                     notes: 'Payment initiation failed: ' . $response->message,
-                    changedByType: 'system'
+                    changedByType: 'system',
                 );
                 $order->update(['payment_status' => EnumsPaymentStatus::FAILED]);
 
@@ -208,57 +208,42 @@ class CheckoutService
 
                 Log::error('Payment initiation failed after order created', [
                     'order_id' => $order->id,
-                    'message'  => $response->message,
+                    'message' => $response->message,
                 ]);
 
                 return $response;
             }
 
-            // -------------------------------------------------------
-            // SAP dispatch — fires only when payment initiation
-            // succeeded. The job handles the full three-step SAP flow:
-            //   1. POST /Orders
-            //   2. POST /Invoices
-            //   3. POST /IncomingPayments
-            //
-            // It runs asynchronously so checkout returns immediately.
-            // Retries: 3 attempts at 1 min / 5 min / 15 min backoff.
-            // On final failure the job marks sap_sync_status = failed
-            // and alerts administrators.
-            // -------------------------------------------------------
             SyncOrderToSapJob::dispatch($order);
 
-            Log::info('SAP sync job dispatched', [
-                'order_id'  => $order->id,
+            Log::info('Order placed and SAP sync dispatched', [
+                'order_id' => $order->id,
                 'reference' => $order->reference,
             ]);
 
             return $response;
+
         } catch (\Throwable $e) {
-            Log::error('Payment initiation threw exception', [
+            Log::error('Payment gateway threw exception', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return PaymentResponse::failed($e->getMessage());
         }
     }
 
-    // ================================================
-    // Address snapshot helper
-    // ================================================
-
     private function snapshotAddress(Address $address): array
     {
         return [
-            'first_name'   => $address->first_name,
-            'last_name'    => $address->last_name,
-            'full_name'    => $address->full_name,
+            'first_name' => $address->first_name,
+            'last_name' => $address->last_name,
+            'full_name' => $address->full_name,
             'phone_number' => $address->phone_number,
-            'address'      => $address->address,
-            'area'         => $address->area?->name,
-            'county'       => $address->county?->name,
-            'zone'         => $address->shippingZone?->name,
+            'address' => $address->address,
+            'area' => $address->area?->name,
+            'county' => $address->county?->name,
+            'zone' => $address->shippingZone?->name,
         ];
     }
 }
