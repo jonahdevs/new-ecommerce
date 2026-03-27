@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use App\Enums\{OrdersStatus, PaymentStatus};
+use App\Enums\{OrdersStatus, PaymentStatus, SapSyncStatus};
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasManyThrough, HasOne};
-
 
 class Order extends Model
 {
@@ -35,19 +34,47 @@ class Order extends Model
         'customer_notes',
         'preferred_county',
         'preferred_area',
+        'lpo_number',
+
+        // SAP document references
+        'sap_order_number',
+        'sap_invoice_number',
+        'sap_payment_number',
+
+        // SAP sync lifecycle
+        'sap_sync_status',
+        'sap_synced_at',
+        'sap_sync_attempts',
+        'sap_sync_error',
+
+        // eTIMS device fields
+        'etims_cu_serial_no',
+        'etims_cu_datetime',
+        'etims_qr_code',
+        'etims_status',
+
+        // KRA receipt fields
+        'kra_cu_number',
+        'kra_invoice_number',
+        'kra_validated_at',
+        'kra_receipt_path',
     ];
 
     protected function casts(): array
     {
         return [
-            'shipping_address' => 'array',
-            'billing_address' => 'array',
+            'shipping_address'  => 'array',
+            'billing_address'   => 'array',
             'shipping_snapshot' => 'array',
-            'expires_at' => 'datetime',
-            'quoted_at' => 'datetime',
-            'status' => OrdersStatus::class,
-            'payment_status' => PaymentStatus::class,
-            'guest_info'               => 'array',
+            'guest_info'        => 'array',
+            'expires_at'        => 'datetime',
+            'quoted_at'         => 'datetime',
+            'sap_synced_at'     => 'datetime',
+            'etims_cu_datetime' => 'datetime',
+            'kra_validated_at'  => 'datetime',
+            'status'            => OrdersStatus::class,
+            'payment_status'    => PaymentStatus::class,
+            'sap_sync_status'   => SapSyncStatus::class,
         ];
     }
 
@@ -72,8 +99,12 @@ class Order extends Model
 
     public function statusHistories(): HasMany
     {
-
         return $this->hasMany(OrderStatusHistory::class);
+    }
+
+    public function sapSyncLogs(): HasMany
+    {
+        return $this->hasMany(SapSyncLog::class);
     }
 
     public function products(): HasManyThrough
@@ -81,10 +112,10 @@ class Order extends Model
         return $this->hasManyThrough(
             Product::class,
             OrderItem::class,
-            'order_id',      // FK on order_items
-            'id',            // FK on products
-            'id',            // local key on orders
-            'product_id',    // local key on order_items
+            'order_id',
+            'id',
+            'id',
+            'product_id',
         );
     }
 
@@ -93,13 +124,6 @@ class Order extends Model
         return $this->hasOne(DeliveryOrder::class);
     }
 
-    // ==============================================
-    // Quotation relationshiops
-    //
-    // parentQuotation() -> on a SALES ORDER, points back to the quotation it was converted from. Null on direct sales orders
-    //
-    // convertedOrder() - on a QUOTATION, points to the sale order that was created when the customer accepted the quote. Null until QUOTE_ACCEPTED convert() fires.
-    // ==============================================
     public function parentQuotation(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'parent_quotation_id');
@@ -110,43 +134,34 @@ class Order extends Model
         return $this->hasOne(Order::class, 'parent_quotation_id');
     }
 
-
-
     // ===============================================
-    // ACCESSORS
+    // Accessors
     // ===============================================
+
     protected function subtotal(): Attribute
     {
-        return Attribute::make(
-            get: fn() => $this->subtotal_cents / 100,
-        );
+        return Attribute::make(get: fn() => $this->subtotal_cents / 100);
     }
 
     protected function discount(): Attribute
     {
-        return Attribute::make(
-            get: fn() => $this->discount_cents / 100,
-        );
+        return Attribute::make(get: fn() => $this->discount_cents / 100);
     }
 
     protected function shipping(): Attribute
     {
-        return Attribute::make(
-            get: fn() => $this->shipping_cents / 100,
-        );
+        return Attribute::make(get: fn() => $this->shipping_cents / 100);
     }
 
     protected function total(): Attribute
     {
-        return Attribute::make(
-            get: fn() => $this->total_cents / 100,
-        );
+        return Attribute::make(get: fn() => $this->total_cents / 100);
     }
 
     // ===============================================
-    // HELPER PREDICATES
-    // Use these in Blade, Livewire, and policies instead of comparing document_type strings directly.
+    // Document type predicates
     // ===============================================
+
     public function isSalesOrder(): bool
     {
         return $this->document_type === 'sales_order';
@@ -167,45 +182,78 @@ class Order extends Model
         return $this->isQuotation() && $this->quotation_type === 'product';
     }
 
-    // True when the quotation has been submitted and is awaiting admin pricing
     public function isAwaitingAdminAction(): bool
     {
         return $this->status->isAwaitingAdminAction();
     }
 
-    //  True when this sales order was converted from a quotation
     public function wasConverted(): bool
     {
         return $this->isSalesOrder() && !is_null($this->parent_quotation_id);
     }
 
-    // True when this quotation has been accepted and a sales order exists
     public function hasBeenConverted(): bool
     {
         return $this->isQuotation() && $this->convertedOrder()->exists();
     }
 
-    // =================================================
-    // REFERENCE GENERATORS
-    // Generates a document-type-aware reference number.
-    //
-    // sale_order -> SO-2026-000001
-    // quotation -> QTN-2026-000001
-    //
-    // Call this statically before creating an order:
-    //  $refrence = Order::generateReference('sale_order');
-    //  $refrence = Order::generateReference('quotation');
-    //
-    // The sequence is per document_type and per year, so SO and QTN each have their own independent numbering - mirrors SAP exactly
-    // =================================================
+    // ===============================================
+    // SAP / KRA predicates
+    // Use these instead of comparing sap_sync_status strings directly.
+    // ===============================================
+
+    /**
+     * True once the order has at least reached SAP successfully.
+     * Covers synced, cu_pending, and cu_received — i.e. anything past the
+     * initial sync step.
+     */
+    public function isSapSynced(): bool
+    {
+        return in_array($this->sap_sync_status, [
+            SapSyncStatus::SYNCED,
+            SapSyncStatus::CU_PENDING,
+            SapSyncStatus::CU_RECEIVED,
+        ]);
+    }
+
+    /**
+     * True when both the CU number and the receipt PDF exist.
+     * Safe to call from Blade without hitting the DB.
+     */
+    public function hasKraReceipt(): bool
+    {
+        return !is_null($this->kra_cu_number) && !is_null($this->kra_receipt_path);
+    }
+
+    /**
+     * True when the order is in SAP but still waiting for eTIMS/KRA to
+     * return the CU number via webhook.
+     */
+    public function isAwaitingKraValidation(): bool
+    {
+        return $this->sap_sync_status === SapSyncStatus::CU_PENDING;
+    }
+
+    /**
+     * True when the sync has permanently failed (exhausted all retries).
+     */
+    public function hasSapSyncFailed(): bool
+    {
+        return $this->sap_sync_status === SapSyncStatus::FAILED;
+    }
+
+    // ===============================================
+    // Reference generators
+    // ===============================================
+
     public static function generateReference(string $documentType): string
     {
         $year = now()->year;
 
         $prefix = match ($documentType) {
-            'quotation' => 'QTN',
+            'quotation'   => 'QTN',
             'sales_order' => 'SO',
-            default => 'SO'
+            default       => 'SO',
         };
 
         $count = static::where('document_type', $documentType)
@@ -216,20 +264,7 @@ class Order extends Model
     }
 
     // ===============================================
-    // QUOTATION CONVERSION
-    // Create a new sales order from an accepted quotation.
-    //
-    // Usage (in QuotationService or Livewire action):
-    // $salesOrder = $quotation->convertToSalesOrder();
-    //
-    // What it does:
-    // 1. Validates the quotations is in QUOTE_ACCEPTED status
-    // 2. Creates a new Order with document_type=sales_order
-    // 3. Copies all financial fields + snapshots from the quotation
-    // 4. Clones all order items onto the new sales order
-    // 5. Returns the new sales order (ready for payment)
-    //
-    // The quotation record is never modified here - it remains the permanent historical document. The transitionTo (QUOTE_ACCEPTED) call must happen BEFORE calling this method
+    // Quotation conversion
     // ===============================================
 
     public function convertToSalesOrder(): static
@@ -245,70 +280,58 @@ class Order extends Model
         }
 
         if ($this->hasBeenConverted()) {
-            throw new \LogicException("This quotation has already been converted to a sales order.");
+            throw new \LogicException('This quotation has already been converted to a sales order.');
         }
 
         $salesOrder = static::create([
-            'user_id' => $this->user_id,
-            'reference' => static::generateReference('sales_order'),
-            'document_type' => 'sales_order',
-            'quotation_type' => null,
+            'user_id'             => $this->user_id,
+            'reference'           => static::generateReference('sales_order'),
+            'document_type'       => 'sales_order',
+            'quotation_type'      => null,
             'parent_quotation_id' => $this->id,
-            'status' => OrdersStatus::PENDING,
-            'payment_status' => PaymentStatus::PENDING,
-            'currency' => $this->currency,
-
-            // Copy all financial fields exactly — these were priced by admin
-            'subtotal_cents' => $this->subtotal_cents,
-            'discount_cents' => $this->discount_cents,
-            'shipping_cents' => $this->shipping_cents,
-            'tax_cents' => $this->tax_cents,
-            'total_cents' => $this->total_cents,
-
-            // Copy address and shipping snapshots
-            'shipping_address' => $this->shipping_address,
-            'billing_address' => $this->billing_address,
-            'shipping_snapshot' => $this->shipping_snapshot,
-
-            // Sales orders don't have quote-specific timestamps
-            'expires_at' => null,
-            'quoted_at' => null,
+            'status'              => OrdersStatus::PENDING,
+            'payment_status'      => PaymentStatus::PENDING,
+            'currency'            => $this->currency,
+            'subtotal_cents'      => $this->subtotal_cents,
+            'discount_cents'      => $this->discount_cents,
+            'shipping_cents'      => $this->shipping_cents,
+            'tax_cents'           => $this->tax_cents,
+            'total_cents'         => $this->total_cents,
+            'shipping_address'    => $this->shipping_address,
+            'billing_address'     => $this->billing_address,
+            'shipping_snapshot'   => $this->shipping_snapshot,
+            'expires_at'          => null,
+            'quoted_at'           => null,
         ]);
 
-        // Clone all order items onto the new sales order
         foreach ($this->items as $item) {
             $salesOrder->items()->create([
-                'product_id' => $item->product_id,
+                'product_id'         => $item->product_id,
                 'product_variant_id' => $item->product_variant_id,
-                'quantity' => $item->quantity,
-                'unit_price_cents' => $item->unit_price_cents,
-                'unit_tax_cents' => $item->unit_tax_cents,
-                'discount_cents' => $item->discount_cents,
-                'total_cents' => $item->total_cents,
-                'product_snapshot' => $item->product_snapshot,
+                'quantity'           => $item->quantity,
+                'unit_price_cents'   => $item->unit_price_cents,
+                'unit_tax_cents'     => $item->unit_tax_cents,
+                'discount_cents'     => $item->discount_cents,
+                'total_cents'        => $item->total_cents,
+                'product_snapshot'   => $item->product_snapshot,
             ]);
         }
 
-        // Record the conversion in the quotation's own status history
         $this->statusHistories()->create([
-            'from_status' => $this->status->value,
-            'to_status' => $this->status->value,
-            'changed_by_user_id' => auth()->id(),
-            'changed_by_type' => 'system',
-            'notes' => "Converted to sales order {$salesOrder->reference}.",
-            'metadata' => ['converted_order_id' => $salesOrder->id],
+            'from_status'          => $this->status->value,
+            'to_status'            => $this->status->value,
+            'changed_by_user_id'   => auth()->id(),
+            'changed_by_type'      => 'system',
+            'notes'                => "Converted to sales order {$salesOrder->reference}.",
+            'metadata'             => ['converted_order_id' => $salesOrder->id],
         ]);
 
         return $salesOrder;
     }
 
-    // ======================================================
-    // STATUS TRANSITION
-    // The OrderStatus enum's canTransitionTo() enforces correct lifecycle for each document type automatically.
-    // ======================================================
-
-
-
+    // ===============================================
+    // Status transitions
+    // ===============================================
 
     public function transitionTo(OrdersStatus $new, ?string $notes = null, string $changedByType = 'system'): void
     {
@@ -322,15 +345,19 @@ class Order extends Model
 
         $this->update(['status' => $new]);
 
-        // Auto-record every transition
         $this->statusHistories()->create([
-            'from_status' => $old->value,
-            'to_status' => $new->value,
-            'changed_by_user_id' => auth()->id(),
-            'changed_by_type' => auth()->check() ? 'user' : $changedByType,
-            'notes' => $notes,
+            'from_status'          => $old->value,
+            'to_status'            => $new->value,
+            'changed_by_user_id'   => auth()->id(),
+            'changed_by_type'      => auth()->check() ? 'user' : $changedByType,
+            'notes'                => $notes,
         ]);
     }
+
+    // ===============================================
+    // Customer helpers
+    // ===============================================
+
     public function customerName(): string
     {
         return $this->user?->name ?? $this->guest_info['name'] ?? 'Guest';

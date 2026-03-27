@@ -66,21 +66,6 @@ Route::prefix('payment')->name('payment.')->group(function () {
     Route::get('/callback/cancel', [CallbackController::class, 'cancel'])->name('callback.cancel');
 });
 
-// ----------------------------------------------------------------------------
-// Webhooks — CSRF-exempt, verified by gateway signatures
-// ----------------------------------------------------------------------------
-
-Route::prefix('webhooks')
-    ->name('webhooks.')
-    ->withoutMiddleware([
-        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
-    ])
-    ->group(function () {
-        Route::post('/pesawise', PesawiseWebhookController::class)->name('pesawise');
-        Route::post('/mpesa', MpesaWebhookController::class)->name('mpesa');
-        Route::post('/stripe', StripeWebhookController::class)->name('stripe');
-    });
 
 // ============================================================================
 // CHECKOUT — Authenticated customers only

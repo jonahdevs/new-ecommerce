@@ -141,8 +141,6 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->order = $this->order->fresh(['items.product', 'payment', 'user']);
         unset($this->isPaid, $this->isFailed);
 
-        \Log::info('Testing the Payment Confirmed event');
-
         if ($this->isPaid) {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
