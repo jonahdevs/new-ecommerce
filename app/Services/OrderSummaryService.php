@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
-
 /**
- * Class OrderSummaryService.
+ * OrderSummaryService
+ *
+ * Builds the summary array consumed by the order-summary Livewire component.
+ * Returns totals, shipping details, and selection state from the active
+ * cart and checkout session.
  */
 class OrderSummaryService
 {
@@ -14,8 +17,6 @@ class OrderSummaryService
     ) {}
 
     /**
-     * Build the complete summary array for the order-summary component.
-     *
      * @return array{
      *     subtotal: float,
      *     discount: float,
@@ -29,27 +30,25 @@ class OrderSummaryService
      */
     public function summary(): array
     {
-        $cart = $this->cartService->getCart();
+        $cart     = $this->cartService->getCart();
         $cartData = $this->cartService->summary($cart);
 
-        $shippingCost = $this->checkoutSession->getShippingCost();
-        $shippingMethod = $this->checkoutSession->getShippingMethodName();
-        $shippingWindow = $this->checkoutSession->getDeliveryWindow();
-        $stationName = $this->checkoutSession->isPus()
-            ? $this->checkoutSession->getShipping()['station_name'] ?? null
-            : null;
         $subtotal = (float) ($cartData['subtotal'] ?? 0);
         $discount = (float) ($cartData['discount'] ?? 0);
+        $shippingCost = $this->checkoutSession->getShippingCost();
+
+        $stationName = $this->checkoutSession->isPus()
+            ? ($this->checkoutSession->getShipping()['station_name'] ?? null)
+            : null;
 
         return [
-            'subtotal' => $subtotal,
-            'discount' => $discount,
-            'shipping_cost' => $shippingCost,
-            'shipping_method' => $shippingMethod,
-            'shipping_method_type' => $this->checkoutSession->getShipping()['method_type'] ?? null,
-            'shipping_window' => $shippingWindow,
-            'station_name' => $stationName,
-            'total' => max(0, $subtotal - $discount + $shippingCost),
+            'subtotal'         => $subtotal,
+            'discount'         => $discount,
+            'shipping_cost'    => $shippingCost,
+            'shipping_method'  => $this->checkoutSession->getShippingMethodName(),
+            'shipping_window'  => $this->checkoutSession->getDeliveryWindow(),
+            'station_name'     => $stationName,
+            'total'            => max(0, $subtotal - $discount + $shippingCost),
             'shipping_selected' => $this->checkoutSession->hasShipping(),
         ];
     }

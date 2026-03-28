@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatus;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
-
     protected $fillable = [
         'order_id',
         'amount_cents',
@@ -29,28 +29,34 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'meta' => 'array',
-            'status' => PaymentStatus::class,
-            'paid_at' => 'datetime',
+            'meta'     => 'array',
+            'status'   => PaymentStatus::class,
+            'paid_at'  => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 
+    // =====================================================
+    // Relationships
+    // =====================================================
 
-    // ===============================================
-    // RELATIONSHIPS
-    // ===============================================
-
-    /**
-     * Get the order that this payment belongs to
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    // Accessor for amount in currency units
-    public function getAmountAttribute(): float
+    // =====================================================
+    // Accessors
+    // =====================================================
+
+    /**
+     * Amount in currency units (cents ÷ 100).
+     * Consistent with the pattern used on Order model.
+     */
+    protected function amount(): Attribute
     {
-        return $this->amount_cents / 100;
+        return Attribute::make(
+            get: fn() => $this->amount_cents / 100,
+        );
     }
 }
