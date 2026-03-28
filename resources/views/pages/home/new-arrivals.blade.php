@@ -27,21 +27,13 @@
 
         {{-- Nav Buttons — inside container, no overflow bleed --}}
         <button type="button" @click="swiper?.slidePrev()"
-            class="absolute top-1/2 left-1 -translate-y-1/2 z-30
-                   w-7 h-7 rounded-full flex items-center justify-center
-                   bg-black/20 hover:bg-black/40 backdrop-blur-sm
-                   border border-white/20 hover:border-white/40
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50">
+            class="absolute top-1/2 left-1 -translate-y-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
             <flux:icon.chevron-left class="size-3.5 text-white" />
             <span class="sr-only">Previous</span>
         </button>
 
         <button type="button" @click="swiper?.slideNext()"
-            class="absolute top-1/2 right-1 -translate-y-1/2 z-30
-                   w-7 h-7 rounded-full flex items-center justify-center
-                   bg-black/20 hover:bg-black/40 backdrop-blur-sm
-                   border border-white/20 hover:border-white/40
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50">
+            class="absolute top-1/2 right-1 -translate-y-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
             <flux:icon.chevron-right class="size-3.5 text-white" />
             <span class="sr-only">Next</span>
         </button>

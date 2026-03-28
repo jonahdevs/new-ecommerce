@@ -11,13 +11,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
     public function mount(Order $order): void
     {
-        // Guard: this page is for sales orders only.
-        // Quotations have their own dedicated page.
-        if ($order->isQuotation()) {
-            $this->redirectRoute('customer.quotations.show', $order, navigate: true);
-            return;
-        }
-
         // Guard: order must belong to the authenticated customer
         if ($order->user_id !== auth()->id()) {
             $this->redirectRoute('customer.orders.index', navigate: true);
@@ -28,16 +21,59 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
             ->load([
                 'items.product',
                 'payment',
-                'parentQuotation', // loaded to show "converted from quote" notice
+                'quote', // loaded to show "converted from quote" notice when quote system is built
             ])
             ->loadCount('items');
     }
+
+    // =====================================================
+    // Computed
+    // =====================================================
 
     #[Computed]
     public function isPaid(): bool
     {
         return $this->order->payment?->status?->value === PaymentStatus::PAID->value;
     }
+
+    /**
+     * True when the KRA receipt PDF is ready for download.
+     *
+     * Requires both:
+     *  - kra_cu_number: the CU number returned by eTIMS via SAP webhook
+     *  - kra_receipt_path: the generated PDF stored on disk
+     *
+     * The download button is hidden until both are present.
+     * While waiting: sap_sync_status will be cu_pending.
+     */
+    #[Computed]
+    public function hasKraReceipt(): bool
+    {
+        return $this->order->hasKraReceipt();
+    }
+
+    /**
+     * True when SAP sync has completed but we are still
+     * waiting for the eTIMS/KRA webhook to return the CU number.
+     */
+    #[Computed]
+    public function isAwaitingKraValidation(): bool
+    {
+        return $this->order->isAwaitingKraValidation();
+    }
+
+    /**
+     * True when SAP sync has permanently failed after all retries.
+     */
+    #[Computed]
+    public function hasSapSyncFailed(): bool
+    {
+        return $this->order->hasSapSyncFailed();
+    }
+
+    // =====================================================
+    // Actions
+    // =====================================================
 
     public function buyAgain(int $productId): void
     {
@@ -65,17 +101,19 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
         <section class="p-5">
 
             {{-- ============================================================ --}}
-            {{-- CONVERTED FROM QUOTATION NOTICE                               --}}
-            {{-- Shown when this sales order originated from a quotation.      --}}
+            {{-- CONVERTED FROM QUOTE NOTICE                                   --}}
+            {{-- Shown when this order was converted from an accepted quote.   --}}
+            {{-- $order->quote relationship will be populated once the         --}}
+            {{-- Quote system is built. Hidden until then.                     --}}
             {{-- ============================================================ --}}
-            @if ($order->wasConverted() && $order->parentQuotation)
+            @if ($order->wasConvertedFromQuote() && $order->quote)
                 <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-5">
                     <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
                     <flux:text class="text-sm text-blue-800 flex-1">
-                        This order was created from quotation
-                        <flux:link :href="route('customer.quotations.show', $order->parentQuotation)" wire:navigate
+                        This order was created from quote
+                        <flux:link :href="route('customer.quotes.show', $order->quote)" wire:navigate
                             class="font-medium">
-                            {{ $order->parentQuotation->reference }}
+                            {{ $order->quote->reference }}
                         </flux:link>
                     </flux:text>
                 </div>
@@ -107,7 +145,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                     <div class="border rounded-md p-4">
 
-                        {{-- Status badge --}}
                         <div class="mb-3">
                             <flux:badge size="sm" :color="$order->status->color()">
                                 {{ $order->status->label() }}
@@ -133,8 +170,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                             {{-- Details + Actions --}}
                             <div class="flex flex-1 gap-4 justify-between">
-
-                                {{-- Details --}}
                                 <div class="flex-1">
                                     <flux:heading size="sm">{{ $name }}</flux:heading>
                                     @if ($sku)
@@ -149,7 +184,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                     </flux:text>
                                 </div>
 
-                                {{-- Actions --}}
                                 <div class="shrink-0 flex flex-col items-end gap-2">
                                     <flux:button size="sm" variant="primary" icon="shopping-cart"
                                         class="cursor-pointer" wire:click="buyAgain({{ $item->product_id }})"
@@ -162,7 +196,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                         See Status History
                                     </flux:link>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -205,19 +238,13 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
             {{-- ── Payment & Delivery ── --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-0 md:divide-x">
 
-                {{-- ============================================================ --}}
-                {{-- PAYMENT INFORMATION                                           --}}
-                {{-- Sales orders always have a payment record.                   --}}
-                {{-- The quote check has been removed — quotations are            --}}
-                {{-- redirected away in mount().                                  --}}
-                {{-- ============================================================ --}}
+                {{-- Payment Information --}}
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Payment Information</flux:heading>
 
                     @if ($order->payment)
                         <div class="space-y-3">
 
-                            {{-- Payment status badge --}}
                             <div class="flex items-center justify-between">
                                 <flux:text class="text-sm text-zinc-500">Status</flux:text>
                                 <flux:badge size="sm" :color="$order->payment->status->color()">
@@ -225,7 +252,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 </flux:badge>
                             </div>
 
-                            {{-- Gateway --}}
                             <div class="flex items-center justify-between">
                                 <flux:text class="text-sm text-zinc-500">Method</flux:text>
                                 <flux:text class="text-sm font-medium uppercase">
@@ -233,7 +259,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 </flux:text>
                             </div>
 
-                            {{-- Amount --}}
                             <div class="flex items-center justify-between">
                                 <flux:text class="text-sm text-zinc-500">Amount</flux:text>
                                 <flux:text class="text-sm font-medium">
@@ -242,7 +267,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 </flux:text>
                             </div>
 
-                            {{-- Paid at timestamp --}}
                             @if ($order->payment->paid_at)
                                 <div class="flex items-center justify-between">
                                     <flux:text class="text-sm text-zinc-500">Paid on</flux:text>
@@ -255,7 +279,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 </div>
                             @endif
 
-                            {{-- Card details if applicable --}}
                             @if ($order->payment->card_brand && $order->payment->card_last4)
                                 <div class="flex items-center justify-between">
                                     <flux:text class="text-sm text-zinc-500">Card</flux:text>
@@ -268,10 +291,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                         </div>
 
-                        {{-- Pending payment notice --}}
-                        @if (
-                            $order->payment->status->value === PaymentStatus::PENDING->value ||
-                                $order->payment->status->value === PaymentStatus::PROCESSING->value)
+                        @if (in_array($order->payment->status->value, [PaymentStatus::PENDING->value, PaymentStatus::PROCESSING->value]))
                             <div class="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                                 <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-amber-500" />
                                 <flux:text class="text-xs text-amber-700">
@@ -280,18 +300,15 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                             </div>
                         @endif
 
-                        {{-- Failed payment notice --}}
                         @if ($order->payment->status->value === PaymentStatus::FAILED->value)
                             <div class="mt-3 flex items-start gap-2 p-3 bg-rose-50 border border-rose-200 rounded-lg">
                                 <flux:icon.x-circle class="size-4 shrink-0 mt-0.5 text-rose-500" />
                                 <flux:text class="text-xs text-rose-700">
-                                    Payment was not completed. Please contact support if you believe
-                                    this is an error.
+                                    Payment was not completed. Please contact support if you believe this is an error.
                                 </flux:text>
                             </div>
                         @endif
                     @else
-                        {{-- No payment record yet --}}
                         <div class="flex items-start gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
                             <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-zinc-400" />
                             <flux:text class="text-sm text-zinc-500">
@@ -299,9 +316,82 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                             </flux:text>
                         </div>
                     @endif
+
+                    {{-- ============================================================ --}}
+                    {{-- KRA RECEIPT SECTION                                          --}}
+                    {{-- Shows different states depending on SAP sync progress.       --}}
+                    {{--                                                              --}}
+                    {{-- State 1 — cu_received: receipt ready, show download button  --}}
+                    {{-- State 2 — cu_pending:  SAP done, waiting for KRA webhook    --}}
+                    {{-- State 3 — failed:      SAP sync failed, show support notice --}}
+                    {{-- State 4 — pending/syncing: SAP not yet started              --}}
+                    {{-- ============================================================ --}}
+                    @if ($this->isPaid)
+                        <div class="mt-5">
+                            <flux:separator class="mb-4" />
+                            <flux:heading class="text-sm mb-3">KRA Tax Receipt</flux:heading>
+
+                            {{-- State 1: Receipt ready --}}
+                            @if ($this->hasKraReceipt)
+                                <div
+                                    class="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg mb-3">
+                                    <flux:icon.check-circle class="size-4 shrink-0 mt-0.5 text-emerald-600" />
+                                    <div>
+                                        <flux:text class="text-xs font-medium text-emerald-800">
+                                            KRA validated
+                                        </flux:text>
+                                        <flux:text class="text-xs text-emerald-700 mt-0.5">
+                                            CU No: {{ $order->kra_cu_number }}
+                                        </flux:text>
+                                        @if ($order->kra_validated_at)
+                                            <flux:text class="text-xs text-emerald-600 mt-0.5">
+                                                {{ $order->kra_validated_at->format('M j, Y g:i A') }}
+                                            </flux:text>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer w-full"
+                                    tag="a" href="{{ route('customer.orders.kra-receipt', $order) }}">
+                                    Download KRA Receipt
+                                </flux:button>
+
+                                {{-- State 2: Waiting for CU number --}}
+                            @elseif ($this->isAwaitingKraValidation)
+                                <div
+                                    class="flex items-start gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                                    <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-purple-500" />
+                                    <flux:text class="text-xs text-purple-700">
+                                        Receipt pending KRA validation. This usually completes within a few minutes.
+                                        We'll email you once it's ready.
+                                    </flux:text>
+                                </div>
+
+                                {{-- State 3: SAP sync failed --}}
+                            @elseif ($this->hasSapSyncFailed)
+                                <div class="flex items-start gap-2 p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                                    <flux:icon.exclamation-triangle class="size-4 shrink-0 mt-0.5 text-rose-500" />
+                                    <flux:text class="text-xs text-rose-700">
+                                        Receipt generation encountered an issue. Our team has been notified.
+                                        Please contact support if this persists.
+                                    </flux:text>
+                                </div>
+
+                                {{-- State 4: SAP sync pending or in progress --}}
+                            @else
+                                <div class="flex items-start gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
+                                    <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-zinc-400" />
+                                    <flux:text class="text-xs text-zinc-500">
+                                        Your KRA receipt is being prepared. Check back shortly.
+                                    </flux:text>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                 </div>
 
-                {{-- Delivery Information — unchanged from original --}}
+                {{-- Delivery Information --}}
                 <div class="px-4">
                     <flux:heading class="text-lg mb-4">Delivery Information</flux:heading>
 
@@ -341,7 +431,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                         @endif
                     @endif
                 </div>
-
             </div>
 
             <flux:separator class="my-8" />
@@ -352,13 +441,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     Need help?
                     <flux:link>Contact Support</flux:link>
                 </flux:text>
-
-                @if ($this->isPaid)
-                    <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer" tag="a"
-                        href="{{ route('customer.orders.receipt', $order) }}">
-                        Download Invoice
-                    </flux:button>
-                @endif
             </div>
 
         </section>

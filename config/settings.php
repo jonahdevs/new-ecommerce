@@ -7,8 +7,34 @@ return [
      * put them (manually) here.
      */
     'settings' => [
+        //  General
         \App\Settings\GeneralSettings::class,
+        \App\Settings\LocalizationSettings::class,
+        \App\Settings\RegionalSettings::class,
 
+        //  Commerce
+        \App\Settings\OrderSettings::class,
+        \App\Settings\TaxSettings::class,
+        \App\Settings\ReviewSettings::class,
+        \App\Settings\InventorySettings::class,
+
+        //  Payments
+        \App\Settings\PaymentSettings::class,
+        \App\Settings\MpesaSettings::class,
+        \App\Settings\StripeSettings::class,
+        \App\Settings\PaypalSettings::class,
+
+        //  Notifications
+        \App\Settings\MailSettings::class,
+        \App\Settings\NotificationSettings::class,
+        \App\Settings\CustomerNotificationSettings::class,
+
+        //  SEO & Marketing
+        \App\Settings\SeoSettings::class,
+        \App\Settings\SocialSettings::class,
+
+        //  System
+        \App\Settings\MaintenanceSettings::class,
     ],
 
     /*

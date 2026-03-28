@@ -2,8 +2,9 @@
 
 namespace App\Services\Payment\Gateways;
 
-use App\Enums\OrdersStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Jobs\SyncOrderToSapJob;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -45,8 +46,6 @@ class MpesaGateway implements PaymentGateway
             : 'https://sandbox.safaricom.co.ke';
     }
 
-    //  Interface implementation
-
     public function initiate(Order $order, Payment $payment, ?string $phone = null): PaymentResponse
     {
         if (!$phone) {
@@ -54,13 +53,12 @@ class MpesaGateway implements PaymentGateway
         }
 
         try {
-            // Use provided phone or fall back to resolvePhone()
             $phone = $this->normalisePhone($phone);
             $amount = (int) ceil($order->total_cents / 100);
             $timestamp = now()->format('YmdHis');
             $password = base64_encode($this->shortcode . $this->passkey . $timestamp);
-
             $token = $this->getAccessToken();
+
             $response = Http::withToken($token)
                 ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", [
                     'BusinessShortCode' => $this->shortcode,
@@ -104,6 +102,7 @@ class MpesaGateway implements PaymentGateway
             ]);
 
             return PaymentResponse::stkPush($checkoutRequestId);
+
         } catch (\Throwable $e) {
             Log::error('M-Pesa initiation failed', [
                 'order_id' => $order->id,
@@ -116,7 +115,6 @@ class MpesaGateway implements PaymentGateway
 
     public function verify(string $reference): PaymentStatusVO
     {
-        // M-Pesa confirms via callback only — read from payment record
         $payment = Payment::where('transaction_id', $reference)->first();
 
         if (!$payment)
@@ -160,15 +158,19 @@ class MpesaGateway implements PaymentGateway
         }
     }
 
-    //  Private helpers
-
     private function markPaid(Payment $payment, ?Order $order, array $result): void
     {
-        // Extract M-Pesa receipt from callback metadata
+        // Idempotency guard — Safaricom can deliver the callback more than once
+        if ($payment->status === PaymentStatus::PAID->value) {
+            Log::info('M-Pesa webhook already processed, skipping', [
+                'transaction_id' => $payment->transaction_id,
+            ]);
+            return;
+        }
+
         $items = collect($result['CallbackMetadata']['Item'] ?? []);
         $receipt = $items->firstWhere('Name', 'MpesaReceiptNumber')['Value'] ?? null;
 
-        // 1. Update payment record
         $payment->update([
             'status' => PaymentStatus::PAID->value,
             'transaction_id' => $receipt ?? $payment->transaction_id,
@@ -179,26 +181,24 @@ class MpesaGateway implements PaymentGateway
         if (!$order)
             return;
 
-        // 2. Transition order status — records history automatically
         $order->transitionTo(
-            OrdersStatus::CONFIRMED,
+            OrderStatus::CONFIRMED,
             notes: 'Payment confirmed via M-Pesa webhook. Receipt: ' . ($receipt ?? 'N/A'),
-            changedByType: 'system'
+            changedByType: 'system',
         );
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
 
-        // Generate and store the tax invoice
         app(DocumentService::class)->generateInvoice($order);
-
-        // 3. Clear cart — payment is confirmed
-        app(CartService::class)->clear(
-            User::find($order->user_id)
-        );
-
-        // 4. Clear checkout session
+        app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
 
-        Log::info('M-Pesa payment confirmed', [
+        // -------------------------------------------------------
+        // Dispatch SAP sync — fires after M-Pesa confirms payment.
+        // Order is CONFIRMED, payment_status = paid.
+        // -------------------------------------------------------
+        SyncOrderToSapJob::dispatch($order->fresh());
+
+        Log::info('M-Pesa payment confirmed, SAP sync dispatched', [
             'order_id' => $order->id,
             'receipt' => $receipt,
         ]);
@@ -206,7 +206,14 @@ class MpesaGateway implements PaymentGateway
 
     private function markFailed(Payment $payment, ?Order $order, array $result, int $resultCode): void
     {
-        // 1. Update payment record
+        // Idempotency guard
+        if ($payment->status === PaymentStatus::FAILED->value) {
+            Log::info('M-Pesa failure webhook already processed, skipping', [
+                'transaction_id' => $payment->transaction_id,
+            ]);
+            return;
+        }
+
         $payment->update([
             'status' => PaymentStatus::FAILED->value,
             'meta' => array_merge($payment->meta ?? [], $result),
@@ -215,15 +222,13 @@ class MpesaGateway implements PaymentGateway
         if (!$order)
             return;
 
-        // 2. Transition order status
         $order->transitionTo(
-            OrdersStatus::CANCELLED,
+            OrderStatus::CANCELLED,
             notes: "M-Pesa payment failed. Result code: {$resultCode}",
-            changedByType: 'system'
+            changedByType: 'system',
         );
         $order->update(['payment_status' => PaymentStatus::FAILED->value]);
 
-        // 3. Restore stock
         $this->restoreStock($order);
 
         Log::info('M-Pesa payment failed', [
@@ -253,9 +258,6 @@ class MpesaGateway implements PaymentGateway
         });
     }
 
-    /**
-     * Normalise phone to 254XXXXXXXXX format for Daraja API.
-     */
     private function normalisePhone(string $phone): string
     {
         $digits = preg_replace('/\D/', '', $phone);

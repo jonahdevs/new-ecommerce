@@ -1,65 +1,224 @@
-<div class="flex items-start max-md:flex-col">
-    <div class="me-10 w-full pb-4 md:w-[220px]">
+@props([
+    'heading' => '',
+    'subheading' => '',
+])
 
-        {{-- Account Settings --}}
-        <flux:navlist aria-label="{{ __('Account Settings') }}">
-            <flux:navlist.group :heading="__('Account')">
-                <flux:navlist.item :href="route('profile.edit')" wire:navigate>
-                    {{ __('Profile') }}
-                </flux:navlist.item>
-                <flux:navlist.item :href="route('user-password.edit')" wire:navigate>
-                    {{ __('Password') }}
-                </flux:navlist.item>
-                @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
-                    <flux:navlist.item :href="route('two-factor.show')" wire:navigate>
-                        {{ __('Two-Factor Auth') }}
-                    </flux:navlist.item>
-                @endif
-                <flux:navlist.item :href="route('appearance.edit')" wire:navigate>
-                    {{ __('Appearance') }}
-                </flux:navlist.item>
-            </flux:navlist.group>
-        </flux:navlist>
+@php
+    $currentRoute = Route::currentRouteName();
 
-        {{-- System Settings — staff with permission only --}}
-        @can('manage.settings')
-            <flux:navlist class="mt-4" aria-label="{{ __('System Settings') }}">
-                <flux:navlist.group :heading="__('System')">
-                    <flux:navlist.item :href="route('admin.settings.general')" wire:navigate>
-                        {{ __('General') }}
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('admin.settings.seo')" wire:navigate>
-                        {{ __('SEO') }}
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('admin.settings.mail')" wire:navigate>
-                        {{ __('Mail') }}
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('admin.settings.payment')" wire:navigate>
-                        {{ __('Payment') }}
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('admin.settings.social')" wire:navigate>
-                        {{ __('Social Media') }}
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('admin.settings.shipping')" wire:navigate>
-                        {{ __('Shipping') }}
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('admin.settings.maintenance')" wire:navigate>
-                        {{ __('Maintenance') }}
-                    </flux:navlist.item>
-                </flux:navlist.group>
-            </flux:navlist>
-        @endcan
+    $tabs = [
+        'account' => [
+            'label' => __('Account'),
+            'route' => 'profile.edit',
+            'permission' => null,
+            'active_on' => ['profile.edit', 'user-password.edit', 'two-factor.show', 'appearance.edit'],
+        ],
+        'general' => [
+            'label' => __('General'),
+            'route' => 'settings.store-info',
+            'permission' => 'manage.settings',
+            'active_on' => ['settings.store-info', 'settings.localization', 'settings.regional'],
+        ],
+        'commerce' => [
+            'label' => __('Commerce'),
+            'route' => 'settings.orders',
+            'permission' => 'manage.settings',
+            'active_on' => ['settings.orders', 'settings.tax', 'settings.reviews', 'settings.inventory'],
+        ],
+        'payments' => [
+            'label' => __('Payments'),
+            'route' => 'settings.payments.gateways',
+            'permission' => 'manage.settings',
+            'active_on' => [
+                'settings.payments.gateways',
+                'settings.payments.mpesa',
+                'settings.payments.stripe',
+                'settings.payments.paypal',
+                'settings.payments.pesapal',
+                'settings.payments.pesawise',
+                'settings.payments.cod',
+            ],
+        ],
+        'notifications' => [
+            'label' => __('Notifications'),
+            'route' => 'settings.mail',
+            'permission' => 'manage.settings',
+            'active_on' => ['settings.mail', 'settings.admin-alerts', 'settings.customer-emails'],
+        ],
+        'seo' => [
+            'label' => __('SEO & Marketing'),
+            'route' => 'settings.seo',
+            'permission' => 'manage.settings',
+            'active_on' => ['settings.seo', 'settings.social'],
+        ],
+        'system' => [
+            'label' => __('System'),
+            'route' => 'settings.maintenance',
+            'permission' => 'manage.settings',
+            'active_on' => ['settings.maintenance'],
+        ],
+    ];
 
+    $subnavs = [
+        'account' => [
+            ['label' => __('Profile'), 'route' => 'profile.edit', 'permission' => null],
+            ['label' => __('Password'), 'route' => 'user-password.edit', 'permission' => null],
+            [
+                'label' => __('Two-Factor Auth'),
+                'route' => 'two-factor.show',
+                'permission' => null,
+                'visible' => Laravel\Fortify\Features::canManageTwoFactorAuthentication(),
+            ],
+            ['label' => __('Appearance'), 'route' => 'appearance.edit', 'permission' => null],
+        ],
+        'general' => [
+            ['label' => __('Store info'), 'route' => 'settings.store-info', 'permission' => 'manage.settings'],
+            ['label' => __('Localization'), 'route' => 'settings.localization', 'permission' => 'manage.settings'],
+            ['label' => __('Regional'), 'route' => 'settings.regional', 'permission' => 'manage.settings'],
+        ],
+        'commerce' => [
+            ['label' => __('Orders'), 'route' => 'settings.orders', 'permission' => 'manage.settings'],
+            ['label' => __('Tax'), 'route' => 'settings.tax', 'permission' => 'manage.settings'],
+            ['label' => __('Reviews'), 'route' => 'settings.reviews', 'permission' => 'manage.settings'],
+            ['label' => __('Inventory'), 'route' => 'settings.inventory', 'permission' => 'manage.settings'],
+        ],
+
+        //  Payments subnav is built dynamically below based on gateway_mode
+        'payments' => [],
+
+        'notifications' => [
+            ['label' => __('Mail config'), 'route' => 'settings.mail', 'permission' => 'manage.settings'],
+            ['label' => __('Admin alerts'), 'route' => 'settings.admin-alerts', 'permission' => 'manage.settings'],
+            [
+                'label' => __('Customer emails'),
+                'route' => 'settings.customer-emails',
+                'permission' => 'manage.settings',
+            ],
+        ],
+        'seo' => [
+            ['label' => __('SEO'), 'route' => 'settings.seo', 'permission' => 'manage.settings'],
+            ['label' => __('Social links'), 'route' => 'settings.social', 'permission' => 'manage.settings'],
+        ],
+        'system' => [
+            ['label' => __('Maintenance'), 'route' => 'settings.maintenance', 'permission' => 'manage.settings'],
+        ],
+    ];
+
+    //  Resolve active tab
+    $activeTab =
+        collect($tabs)
+            ->filter(function ($tab) use ($currentRoute) {
+                return in_array($currentRoute, $tab['active_on']);
+            })
+            ->keys()
+            ->first() ?? 'account';
+
+    //  Build payments subnav dynamically from PaymentSettings
+    // Items shown depend on gateway_mode so the subnav stays consistent
+    // with the Overview page toggle without requiring a page reload.
+    if (auth()->user()->can('manage.settings')) {
+        $paymentSettings = app(\App\Settings\PaymentSettings::class);
+        $gatewayMode = $paymentSettings->gateway_mode; // individual | aggregator
+        $activeAggregator = $paymentSettings->active_aggregator; // pesapal | pesawise
+
+        $paymentItems = [
+            // Overview is always the first item
+            ['label' => __('Gateways'), 'route' => 'settings.payments.gateways'],
+        ];
+
+        if ($gatewayMode === 'individual') {
+            $paymentItems[] = ['label' => __('M-Pesa'), 'route' => 'settings.payments.mpesa'];
+            $paymentItems[] = ['label' => __('Stripe'), 'route' => 'settings.payments.stripe'];
+            $paymentItems[] = ['label' => __('PayPal'), 'route' => 'settings.payments.paypal'];
+        } else {
+            // Aggregator — show only whichever provider is selected
+            match ($activeAggregator) {
+                'pesapal' => ($paymentItems[] = ['label' => __('PesaPal'), 'route' => 'settings.payments.pesapal']),
+                'pesawise' => ($paymentItems[] = ['label' => __('PesaWise'), 'route' => 'settings.payments.pesawise']),
+                default => null,
+            };
+        }
+
+        // COD always available — independent of mode
+        $paymentItems[] = ['label' => __('Cash on delivery'), 'route' => 'settings.payments.cod'];
+
+        $subnavs['payments'] = collect($paymentItems)
+            ->map(fn($item) => array_merge($item, ['permission' => 'manage.settings']))
+            ->toArray();
+    }
+@endphp
+
+<div class="flex flex-col">
+
+    {{--  Page heading  --}}
+    <div class="mb-1">
+        <flux:heading size="xl">{{ __('Settings') }}</flux:heading>
+        <flux:subheading>{{ __('Manage your store configuration and account preferences') }}</flux:subheading>
     </div>
 
-    <flux:separator class="md:hidden" />
+    {{--  Top tabs  --}}
+    <div class="mt-4 border-b border-zinc-200 dark:border-zinc-700">
+        <nav class="flex gap-1 overflow-x-auto">
+            @foreach ($tabs as $key => $tab)
+                @php
+                    $canSee = $tab['permission'] ? auth()->user()->can($tab['permission']) : true;
+                @endphp
 
-    <div class="flex-1 self-stretch max-md:pt-6">
-        <flux:heading>{{ $heading ?? '' }}</flux:heading>
-        <flux:subheading>{{ $subheading ?? '' }}</flux:subheading>
+                @if ($canSee)
+                    <a href="{{ route($tab['route']) }}" wire:navigate @class([
+                        'relative flex items-center px-4 py-3 text-sm whitespace-nowrap',
+                        'transition-colors duration-150 -mb-px border-b-2',
+                        'font-medium text-[var(--brand-primary)] border-[var(--brand-primary)]' =>
+                            $activeTab === $key,
+                        'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 border-transparent' =>
+                            $activeTab !== $key,
+                    ])>
+                        {{ $tab['label'] }}
+                    </a>
+                @endif
+            @endforeach
+        </nav>
+    </div>
 
-        <div class="mt-5 w-full">
+    {{--  Body: sub-nav + content ─ --}}
+    <div class="flex items-start gap-8 mt-6 max-md:flex-col">
+
+        {{-- Left sub-nav --}}
+        <div class="w-full md:w-[200px] shrink-0">
+            <flux:navlist aria-label="{{ __('Settings navigation') }}">
+                @foreach ($subnavs[$activeTab] as $item)
+                    @php
+                        $itemVisible = $item['visible'] ?? true;
+                        $itemAllowed = $item['permission'] ? auth()->user()->can($item['permission']) : true;
+                    @endphp
+
+                    @if ($itemVisible && $itemAllowed)
+                        <flux:navlist.item :href="route($item['route'])" :current="$currentRoute === $item['route']"
+                            wire:navigate>
+                            {{ $item['label'] }}
+                        </flux:navlist.item>
+                    @endif
+                @endforeach
+            </flux:navlist>
+        </div>
+
+        <flux:separator class="md:hidden" />
+
+        {{-- Main content --}}
+        <div class="flex-1 min-w-0">
+            @if ($heading || $subheading)
+                <div class="mb-5">
+                    @if ($heading)
+                        <flux:heading size="lg">{{ $heading }}</flux:heading>
+                    @endif
+                    @if ($subheading)
+                        <flux:subheading>{{ $subheading }}</flux:subheading>
+                    @endif
+                </div>
+            @endif
+
             {{ $slot }}
         </div>
+
     </div>
 </div>

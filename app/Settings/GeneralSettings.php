@@ -6,31 +6,21 @@ use Spatie\LaravelSettings\Settings;
 
 class GeneralSettings extends Settings
 {
-    // Identity
-    public string $company_name = '';
-    public string $email_address = '';
-    public string $phone_number = '';
+    // Store Identity
+    public string $store_name;
+    public ?string $store_tagline;
+    public ?string $store_logo;
+    public ?string $store_favicon;
 
-    // Images
-    public ?string $logo_light = null;
-    public ?string $logo_dark = null;
-    public ?string $apple_icon = null;
-    public ?string $favicon = null;
-
-    // Address
-    public string $address = '';
-    public string $country = '';
-    public string $town = '';
-    public string $postal_code = '';
-
-    // Localization
-    public string $currency = 'KES';
-    public string $currency_symbol = 'KSh';
-    public string $timezone = 'Africa/Nairobi';
-
-    // Business
-    public ?string $vat_number = null;
-    public ?string $registration_number = null;
+    // Contact
+    public ?string $store_email;
+    public ?string $store_phone;
+    public ?string $store_address;
+    public ?string $store_address_line_2;
+    public ?string $store_city;
+    public ?string $store_state;
+    public ?string $store_postal_code;
+    public ?string $store_country;
 
     public static function group(): string
     {

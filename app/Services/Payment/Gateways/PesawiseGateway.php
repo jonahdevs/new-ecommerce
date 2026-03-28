@@ -2,9 +2,10 @@
 
 namespace App\Services\Payment\Gateways;
 
-use App\Enums\OrdersStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\PaymentConfirmed;
+use App\Jobs\SyncOrderToSapJob;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -38,8 +39,6 @@ class PesawiseGateway implements PaymentGateway
         $this->apiUrl = config('services.pesawise.api_url', 'https://api.pesawise.xyz/api');
     }
 
-    //  Interface implementation
-
     public function initiate(Order $order, Payment $payment): PaymentResponse
     {
         try {
@@ -61,6 +60,7 @@ class PesawiseGateway implements PaymentGateway
             ]);
 
             return PaymentResponse::redirect($loadUrl);
+
         } catch (\Throwable $e) {
             Log::error('Pesawise initiation failed', [
                 'order_id' => $order->id,
@@ -74,10 +74,7 @@ class PesawiseGateway implements PaymentGateway
     public function verify(string $reference): PaymentStatusVO
     {
         try {
-            $response = $this->makeRequest('/e-com/verify', [
-                'externalId' => $reference,
-            ], 'get');
-
+            $response = $this->makeRequest('/e-com/verify', ['externalId' => $reference], 'get');
             $data = $response->json();
             $status = $data['status'] ?? 'unknown';
 
@@ -93,6 +90,7 @@ class PesawiseGateway implements PaymentGateway
                 'CANCELLED' => PaymentStatusVO::cancelled(),
                 default => PaymentStatusVO::failed($status),
             };
+
         } catch (\Throwable $e) {
             Log::error('Pesawise verification failed', [
                 'reference' => $reference,
@@ -104,7 +102,6 @@ class PesawiseGateway implements PaymentGateway
 
     public function handleWebhook(Request $request): void
     {
-        // Verify webhook signature
         $secret = app(PaymentSettings::class)->pesawise_webhook_secret;
         $signature = $request->header('X-Pesawise-Signature');
 
@@ -116,9 +113,8 @@ class PesawiseGateway implements PaymentGateway
         $data = $request->json()->all();
         $reference = $data['externalId'] ?? null;
 
-        if (!$reference) {
+        if (!$reference)
             return;
-        }
 
         $order = Order::where('reference', $reference)->first();
 
@@ -140,7 +136,112 @@ class PesawiseGateway implements PaymentGateway
         };
     }
 
-    //  Private helpers
+    private function markPaid(Order $order, array $data): void
+    {
+        // Idempotency guard
+        if ($order->payment?->status === PaymentStatus::PAID->value) {
+            Log::info('Pesawise webhook already processed, skipping', [
+                'reference' => $order->reference,
+            ]);
+            return;
+        }
+
+        $order->payment?->update([
+            'status' => PaymentStatus::PAID->value,
+            'transaction_id' => $data['transactionId'] ?? null,
+            'paid_at' => now(),
+            'meta' => array_merge($order->payment->meta ?? [], $data),
+        ]);
+
+        $order->transitionTo(
+            OrderStatus::CONFIRMED,
+            notes: 'Payment confirmed via Pesawise webhook',
+            changedByType: 'system',
+        );
+        $order->update(['payment_status' => PaymentStatus::PAID->value]);
+
+        app(DocumentService::class)->generateInvoice($order);
+        app(CartService::class)->clear(User::find($order->user_id));
+        app(CheckoutSession::class)->clear();
+
+        // -------------------------------------------------------
+        // Dispatch SAP sync — fires after Pesawise confirms payment.
+        // Order is CONFIRMED, payment_status = paid.
+        // -------------------------------------------------------
+        SyncOrderToSapJob::dispatch($order->fresh());
+
+        PaymentConfirmed::dispatch($order->fresh(['payment']));
+
+        Log::info('Pesawise payment confirmed, SAP sync dispatched', [
+            'order_id' => $order->id,
+            'transaction_id' => $data['transactionId'] ?? null,
+        ]);
+    }
+
+    private function markFailed(Order $order, array $data): void
+    {
+        if ($order->payment?->status === PaymentStatus::FAILED->value) {
+            Log::info('Pesawise failure webhook already processed, skipping', [
+                'reference' => $order->reference,
+            ]);
+            return;
+        }
+
+        $order->payment?->update([
+            'status' => PaymentStatus::FAILED->value,
+            'meta' => $data,
+        ]);
+
+        $order->transitionTo(
+            OrderStatus::CANCELLED,
+            notes: 'Payment failed via Pesawise webhook',
+            changedByType: 'system',
+        );
+        $order->update(['payment_status' => PaymentStatus::FAILED->value]);
+
+        $this->restoreStock($order);
+
+        Log::info('Pesawise payment failed', [
+            'order_id' => $order->id,
+            'reference' => $order->reference,
+        ]);
+    }
+
+    private function markCancelled(Order $order, array $data): void
+    {
+        if ($order->payment?->status === PaymentStatus::CANCELLED->value) {
+            Log::info('Pesawise cancellation webhook already processed, skipping', [
+                'reference' => $order->reference,
+            ]);
+            return;
+        }
+
+        $order->payment?->update([
+            'status' => PaymentStatus::CANCELLED->value,
+            'meta' => $data,
+        ]);
+
+        $order->transitionTo(
+            OrderStatus::CANCELLED,
+            notes: 'Payment cancelled via Pesawise webhook',
+            changedByType: 'system',
+        );
+        $order->update(['payment_status' => PaymentStatus::CANCELLED->value]);
+
+        $this->restoreStock($order);
+
+        Log::info('Pesawise payment cancelled', [
+            'order_id' => $order->id,
+            'reference' => $order->reference,
+        ]);
+    }
+
+    private function restoreStock(Order $order): void
+    {
+        foreach ($order->items()->with('product')->get() as $item) {
+            $item->product?->increment('stock_quantity', $item->quantity);
+        }
+    }
 
     private function buildPayload(Order $order): array
     {
@@ -207,106 +308,10 @@ class PesawiseGateway implements PaymentGateway
         ]);
     }
 
-    private function markPaid(Order $order, array $data): void
-    {
-        // 1. Update payment record
-        $order->payment?->update([
-            'status' => PaymentStatus::PAID->value,
-            'transaction_id' => $data['transactionId'] ?? null,
-            'paid_at' => now(),
-            'meta' => array_merge($order->payment->meta ?? [], $data),
-        ]);
-
-        // 2. Transition order status — records history automatically
-        $order->transitionTo(
-            OrdersStatus::CONFIRMED,
-            notes: 'Payment confirmed via Pesawise webhook',
-            changedByType: 'system'
-        );
-        $order->update(['payment_status' => PaymentStatus::PAID->value]);
-
-        // Generate and store the tax invoice
-        app(DocumentService::class)->generateInvoice($order);
-
-        // 3. Clear cart — payment is confirmed, cart no longer needed
-        app(CartService::class)->clear(
-            User::find($order->user_id)
-        );
-
-        // 4. Clear checkout session
-        app(CheckoutSession::class)->clear();
-
-        // 5. Broadcast payment confirmation event
-        PaymentConfirmed::dispatch($order->fresh(['payment']));
-
-        Log::info('Pesawise payment confirmed', [
-            'order_id' => $order->id,
-            'transaction_id' => $data['transactionId'] ?? null,
-        ]);
-    }
-
-    private function markFailed(Order $order, array $data): void
-    {
-        // 1. Update payment record
-        $order->payment?->update([
-            'status' => PaymentStatus::FAILED->value,
-            'meta' => $data,
-        ]);
-
-        // 2. Transition order status
-        $order->transitionTo(
-            OrdersStatus::CANCELLED,
-            notes: 'Payment failed via Pesawise webhook',
-            changedByType: 'system'
-        );
-        $order->update(['payment_status' => PaymentStatus::FAILED->value]);
-
-        // 3. Restore stock
-        $this->restoreStock($order);
-
-        Log::info('Pesawise payment failed', [
-            'order_id' => $order->id,
-            'reference' => $order->reference,
-        ]);
-    }
-
-    private function markCancelled(Order $order, array $data): void
-    {
-        // 1. Update payment record
-        $order->payment?->update([
-            'status' => PaymentStatus::CANCELLED->value,
-            'meta' => $data,
-        ]);
-
-        // 2. Transition order status
-        $order->transitionTo(
-            OrdersStatus::CANCELLED,
-            notes: 'Payment cancelled via Pesawise webhook',
-            changedByType: 'system'
-        );
-        $order->update(['payment_status' => PaymentStatus::CANCELLED->value]);
-
-        // 3. Restore stock
-        $this->restoreStock($order);
-
-        Log::info('Pesawise payment cancelled', [
-            'order_id' => $order->id,
-            'reference' => $order->reference,
-        ]);
-    }
-
-    private function restoreStock(Order $order): void
-    {
-        foreach ($order->items()->with('product')->get() as $item) {
-            $item->product?->increment('stock_quantity', $item->quantity);
-        }
-    }
-
     private function resolveCustomerName(Order $order): string
     {
-        if ($order->user?->name) {
+        if ($order->user?->name)
             return $order->user->name;
-        }
 
         $first = $order->shipping_address['first_name'] ?? '';
         $last = $order->shipping_address['last_name'] ?? '';

@@ -2,10 +2,12 @@
 
 use App\Enums\OrdersStatus;
 use App\Enums\PaymentStatus;
+use App\Jobs\SyncOrderToSapJob;
 use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
+use App\Services\DocumentService;
 use App\Services\Payment\PaymentService;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\{Computed, Layout, Locked, On};
@@ -28,27 +30,26 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->order = $order->load(['items.product', 'payment', 'user']);
         $this->orderId = $order->id;
 
-        // Handle 3DS redirect back from Stripe first
-        // Must run before session check so 3DS return works correctly
+        // Handle 3DS redirect back from Stripe first.
+        // Must run before session check so 3DS return works correctly.
         $this->verifyStripeIfNeeded();
 
-        // Session-based page invalidation
+        // Session-based page invalidation — redirects away if already seen
         $this->handleSessionCheck();
 
-        // Only runs on first legitimate visit
+        // Only runs on first legitimate visit after payment confirmed
         if ($this->isPaid) {
             $this->sendConfirmationEmailOnce();
-            $this->clearCartIfPaid();
-            $this->dispatch('cart-updated');
         }
     }
 
+    // =====================================================
     // Computed
+    // =====================================================
 
     #[Computed]
     public function isPaid(): bool
     {
-        // Use ?->value consistently — status may be cast as an enum on the model
         return $this->order->payment?->status?->value === PaymentStatus::PAID->value;
     }
 
@@ -93,7 +94,9 @@ new #[Layout('layouts.guest')] class extends Component {
         return "order_confirmation_{$this->order->id}";
     }
 
-    //  Public Methods
+    // =====================================================
+    // Public methods
+    // =====================================================
 
     public function viewOrderDetails(): void
     {
@@ -107,7 +110,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
     /**
      * Polling fallback — called every 3s while in pending/unknown state.
-     * Catches cases where Echo broadcast was missed (e.g. page loaded after webhook fired).
+     * Catches cases where Echo broadcast was missed (e.g. page loaded
+     * after webhook fired but before Echo delivered the event).
      */
     public function refreshOrderStatus(): void
     {
@@ -118,7 +122,6 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
             $this->sendConfirmationEmailOnce();
-            $this->clearCartIfPaid();
             $this->dispatch('cart-updated');
         }
     }
@@ -130,10 +133,12 @@ new #[Layout('layouts.guest')] class extends Component {
         ];
     }
 
-    //  Echo Event Listener
+    // =====================================================
+    // Echo event listener
+    // =====================================================
 
     /**
-     * Fires when Stripe webhook broadcasts PaymentConfirmed via Pusher.
+     * Fires when gateway webhook broadcasts PaymentConfirmed via Pusher.
      * Flips UI from pending → confirmed instantly without a page reload.
      */
     public function onPaymentConfirmed(): void
@@ -145,12 +150,13 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
             $this->sendConfirmationEmailOnce();
-            $this->clearCartIfPaid();
             $this->dispatch('cart-updated');
         }
     }
 
-    // Private Helpers
+    // =====================================================
+    // Private helpers
+    // =====================================================
 
     private function handleSessionCheck(): void
     {
@@ -166,6 +172,22 @@ new #[Layout('layouts.guest')] class extends Component {
         session()->put($this->sessionKey, true);
     }
 
+    /**
+     * Handles the redirect back from Stripe after 3DS authentication.
+     *
+     * The normal Stripe webhook (payment_intent.succeeded) handles most
+     * payments. But for 3DS cards the customer is redirected back to this
+     * page with ?payment_intent=pi_xxx&redirect_status=succeeded in the
+     * URL. The webhook may not have fired yet by the time they land here,
+     * so we verify and confirm inline.
+     *
+     * Fixes:
+     *  - SAP sync was missing for 3DS payments (now dispatched here)
+     *  - Invoice generation was missing for 3DS payments (now called here)
+     *  - Cart/session clearing removed — gateway webhooks handle that;
+     *    this path only fires when the webhook hasn't arrived yet, so
+     *    we clear here as a fallback only when we confirm inline.
+     */
     private function verifyStripeIfNeeded(): void
     {
         $paymentIntent = request('payment_intent');
@@ -179,21 +201,36 @@ new #[Layout('layouts.guest')] class extends Component {
             $status = app(PaymentService::class)->gateway('stripe')->verify($paymentIntent);
 
             if ($status->isPaid) {
+                // Update payment record
                 $this->order->payment->update([
                     'status' => PaymentStatus::PAID->value,
                     'transaction_id' => $status->transactionId,
                     'paid_at' => now(),
                 ]);
 
+                // Transition order to confirmed
                 $this->order->transitionTo(OrdersStatus::CONFIRMED, notes: 'Payment confirmed via Stripe 3DS redirect', changedByType: 'system');
 
                 $this->order->update(['payment_status' => PaymentStatus::PAID->value]);
                 $this->order->refresh();
-
                 unset($this->isPaid, $this->isFailed);
 
+                // Generate tax invoice — same as the normal webhook path
+                app(DocumentService::class)->generateInvoice($this->order);
+
+                // Clear cart and session — fallback since webhook may not
+                // have fired yet for this 3DS payment
                 app(CartService::class)->clear($this->order->user);
                 app(CheckoutSession::class)->clear();
+
+                // Dispatch SAP sync — this was missing for 3DS payments.
+                // The Stripe webhook (handleSucceeded) also dispatches this,
+                // but SyncOrderToSapJob has an idempotency guard via
+                // sap_sync_status — if the webhook fires later and the job
+                // is already running/done, the duplicate dispatch is harmless.
+                SyncOrderToSapJob::dispatch($this->order->fresh());
+
+                $this->dispatch('cart-updated');
             }
         }
     }
@@ -233,26 +270,6 @@ new #[Layout('layouts.guest')] class extends Component {
         $method = $this->order->payment?->meta['payment_method'] ?? null;
         return $method === 'card' ? 'Card' : 'M-Pesa';
     }
-
-    private function clearCartIfPaid(): void
-    {
-        if (!$this->isPaid) {
-            return;
-        }
-
-        $meta = $this->order->payment?->meta ?? [];
-        $alreadyCleared = $meta['cart_cleared'] ?? false;
-
-        if ($alreadyCleared) {
-            return;
-        }
-
-        app(CartService::class)->clear($this->order->user);
-        app(CheckoutSession::class)->clear();
-
-        $meta['cart_cleared'] = true;
-        $this->order->payment->update(['meta' => $meta]);
-    }
 };
 ?>
 
@@ -277,15 +294,10 @@ new #[Layout('layouts.guest')] class extends Component {
 
             <div class="container mx-auto px-4 py-12 max-w-3xl">
 
-                {{-- ══════════════════════════════════════ --}}
-                {{-- 1. HERO                                --}}
-                {{-- ══════════════════════════════════════ --}}
+                {{-- Hero --}}
                 <div class="text-center mb-10">
-
-                    {{-- icon --}}
                     <flux:icon.check-circle class="size-14 mx-auto text-green-600 mb-6" />
 
-                    {{-- Title --}}
                     <flux:heading level="1" class="text-3xl! font-bold! mb-3">
                         {{ $justConfirmed ? '🎉 Payment Confirmed!' : 'Thank You for Your Order!' }}
                     </flux:heading>
@@ -294,7 +306,6 @@ new #[Layout('layouts.guest')] class extends Component {
                         Hi <span class="font-medium text-zinc-700">{{ $order->user?->name }}</span>,
                         your order has been placed successfully.
                     </flux:text>
-
 
                     <div class="inline-flex items-center gap-2 bg-zinc-100 rounded-full px-4 py-1.5 mb-3">
                         <flux:icon.clipboard-document-check class="size-4 text-zinc-500" />
@@ -310,24 +321,17 @@ new #[Layout('layouts.guest')] class extends Component {
                     </flux:text>
                 </div>
 
-                {{-- ══════════════════════════════════════ --}}
-                {{-- 2. ORDER ITEMS + TOTALS                --}}
-                {{-- ══════════════════════════════════════ --}}
+                {{-- Order items + totals --}}
                 <flux:card class="anim-4 p-0 mb-6">
-
-                    {{-- Header --}}
                     <div class="px-6 py-4 border-b border-zinc-100">
                         <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest">
                             Items Ordered
                         </h2>
                     </div>
 
-                    {{-- Items --}}
                     <div class="divide-y divide-zinc-100">
                         @foreach ($order->items as $item)
                             <div class="flex items-center gap-4 px-6 py-4">
-
-                                {{-- Image --}}
                                 <div
                                     class="w-16 h-16 rounded-xl border border-zinc-100 bg-zinc-50 overflow-hidden shrink-0">
                                     @php $img = $item->product_image_url ?? $item->product?->image_url; @endphp
@@ -339,7 +343,6 @@ new #[Layout('layouts.guest')] class extends Component {
                                     @endif
                                 </div>
 
-                                {{-- Name + qty --}}
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-semibold text-zinc-800 leading-snug line-clamp-2 mb-1">
                                         {{ $item->product_snapshot['name'] ?? $item->product?->name }}
@@ -347,17 +350,14 @@ new #[Layout('layouts.guest')] class extends Component {
                                     <p class="text-xs text-zinc-400">Qty: {{ $item->quantity }}</p>
                                 </div>
 
-                                {{-- Price --}}
                                 <p class="text-sm font-bold text-zinc-800 shrink-0">
                                     {{ format_currency($item->total_cents / 100) }}
                                 </p>
-
                             </div>
                         @endforeach
                     </div>
 
-                    {{-- Totals --}}
-                    <div class="px-6 py-4 bg-white\80 border-t border-zinc-100 space-y-2">
+                    <div class="px-6 py-4 bg-white/80 border-t border-zinc-100 space-y-2">
                         <div class="flex justify-between text-xs text-zinc-500">
                             <span>Subtotal</span>
                             <span>{{ format_currency($order->subtotal) }}</span>
@@ -372,9 +372,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         <div class="flex justify-between text-xs text-zinc-500">
                             <span>Shipping</span>
-                            <span>
-                                {{ $order->shipping == 0 ? 'Free' : format_currency($order->shipping) }}
-                            </span>
+                            <span>{{ $order->shipping == 0 ? 'Free' : format_currency($order->shipping) }}</span>
                         </div>
 
                         <div
@@ -385,9 +383,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                 </flux:card>
 
-                {{-- ══════════════════════════════════════ --}}
-                {{-- 3. ACTIONS                             --}}
-                {{-- ══════════════════════════════════════ --}}
+                {{-- Actions --}}
                 <div class="anim-5 flex flex-col sm:flex-row gap-3">
                     <flux:button wire:click="viewOrderDetails" variant="primary" icon="clipboard-document-list"
                         class="cursor-pointer w-full">
@@ -400,7 +396,6 @@ new #[Layout('layouts.guest')] class extends Component {
                     </flux:button>
                 </div>
 
-                {{-- Support link --}}
                 <p class="anim-5 text-center text-xs text-zinc-400 mt-4">
                     Questions about your order?
                     <a href="#"
@@ -408,7 +403,6 @@ new #[Layout('layouts.guest')] class extends Component {
                         Contact support
                     </a>
                 </p>
-
             </div>
 
             {{-- ══════════════════════════════════════════════════ --}}
@@ -447,10 +441,9 @@ new #[Layout('layouts.guest')] class extends Component {
             </div>
 
             {{-- ══════════════════════════════════════════════════ --}}
-            {{-- PENDING / PROCESSING / UNKNOWN                     --}}
-            {{-- All non-failed, non-paid states show the spinner.  --}}
-            {{-- wire:poll refreshes every 3s as a fallback in case --}}
-            {{-- the Echo broadcast was missed.                      --}}
+            {{-- PENDING / PROCESSING STATE                        --}}
+            {{-- wire:poll.3s fires refreshOrderStatus() as a     --}}
+            {{-- fallback if the Echo broadcast was missed.        --}}
             {{-- ══════════════════════════════════════════════════ --}}
         @else
             <div wire:poll.3s="refreshOrderStatus" class="text-center py-16">
@@ -480,7 +473,6 @@ new #[Layout('layouts.guest')] class extends Component {
 
     </div>
 </div>
-
 
 <style>
     @keyframes pop-in {
