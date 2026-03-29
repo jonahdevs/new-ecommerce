@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteStatus;
+use App\Models\Quote;
 use App\Services\QuotationService;
 use Illuminate\Console\Command;
 
@@ -10,8 +12,8 @@ class ExpireQuotations extends Command
     // =========================================================================
     //  Artisan command: php artisan quotations:expire
     //
-    //  Finds all QUOTE_SENT quotations whose expires_at is in the past
-    //  and transitions them to QUOTE_EXPIRED.
+    //  Finds all SENT quotations whose expires_at is in the past
+    //  and transitions them to EXPIRED.
     //
     //  Designed to run hourly via the scheduler in routes/console.php.
     //  All transition logic and error handling lives in
@@ -25,7 +27,7 @@ class ExpireQuotations extends Command
     protected $signature = 'quotations:expire
                             {--dry-run : List expired quotations without transitioning them}';
 
-    protected $description = 'Expire QUOTE_SENT quotations whose validity period has passed';
+    protected $description = 'Expire SENT quotations whose validity period has passed';
 
     public function handle(QuotationService $service): int
     {
@@ -78,8 +80,7 @@ class ExpireQuotations extends Command
     {
         $this->warn('DRY RUN — no changes will be made.');
 
-        $quotations = \App\Models\Order::where('document_type', 'quotation')
-            ->where('status', \App\Enums\OrdersStatus::QUOTE_SENT->value)
+        $quotations = Quote::where('status', QuoteStatus::SENT)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', now())
             ->with('user')
@@ -93,11 +94,10 @@ class ExpireQuotations extends Command
         $this->warn("Found {$quotations->count()} quotation(s) that would be expired:");
 
         $this->table(
-            ['Reference', 'Customer', 'Type', 'Expired At'],
+            ['Reference', 'Customer', 'Expired At'],
             $quotations->map(fn($q) => [
                 $q->reference,
-                $q->user?->name ?? '—',
-                ucfirst($q->quotation_type ?? '—'),
+                $q->user?->name ?? $q->customerName(),
                 $q->expires_at->format('M d, Y H:i'),
             ])
         );

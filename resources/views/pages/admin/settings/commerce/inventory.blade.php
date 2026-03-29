@@ -17,10 +17,10 @@ new #[Title('Inventory')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Inventory settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Inventory settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save inventory settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -31,7 +31,7 @@ new #[Title('Inventory')] class extends Component {
 
             {{-- Stock Management --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Stock management') }}</flux:heading>
                 </div>
 
@@ -58,7 +58,7 @@ new #[Title('Inventory')] class extends Component {
             {{-- Thresholds & Behaviour --}}
             @if ($form->inventory_tracking_enabled)
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('Thresholds & behaviour') }}</flux:heading>
                     </div>
 

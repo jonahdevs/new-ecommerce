@@ -4,7 +4,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Services\Payment\Gateways\MpesaGateway;
 use App\Services\Payment\Gateways\StripeGateway;
-use App\Settings\PaymentSettings;
+use App\Settings\StripeSettings;
 use Livewire\Attributes\{Computed, Layout, Locked};
 use Livewire\Component;
 
@@ -58,7 +58,8 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function publicKey(): string
     {
-        return app(PaymentSettings::class)->stripe_public_key ?: config('services.stripe.publishable_key');
+        $settings = app(StripeSettings::class);
+        return $settings->public_key ?: config('services.stripe.publishable_key', '');
     }
 
     #[Computed]

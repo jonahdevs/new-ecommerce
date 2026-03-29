@@ -11,6 +11,8 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Services\Payment\PaymentService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
+use App\Settings\LocalizationSettings;
+use App\Settings\OrderSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +22,9 @@ class CheckoutService
         private readonly CartService $cartService,
         private readonly CheckoutSession $checkoutSession,
         private readonly PaymentService $paymentService,
+        private readonly InventoryService $inventoryService,
+        private readonly LocalizationSettings $localization,
+        private readonly OrderSettings $orderSettings,
     ) {}
 
     // =====================================================
@@ -53,6 +58,13 @@ class CheckoutService
 
         if (!$this->checkoutSession->isComplete()) {
             throw new \RuntimeException('Shipping not selected. Please select a shipping method.');
+        }
+
+        // Pre-flight stock availability check
+        $unavailable = $this->inventoryService->checkAvailability($cart);
+        if (!empty($unavailable)) {
+            $items = collect($unavailable)->pluck('product')->implode(', ');
+            throw new \RuntimeException("Some items are out of stock: {$items}");
         }
 
         // Resume a failed order within the expiry window.
@@ -107,7 +119,7 @@ class CheckoutService
                 'reference'        => Order::generateReference(),
                 'status'           => OrderStatus::PENDING,
                 'payment_status'   => EnumsPaymentStatus::PENDING,
-                'currency'         => 'KES',
+                'currency'         => $this->localization->currency,
                 'subtotal_cents'   => $subtotalCents,
                 'discount_cents'   => $discountCents,
                 'shipping_cents'   => $shippingCents,
@@ -143,45 +155,61 @@ class CheckoutService
             ]);
 
             foreach ($cartItems as $item) {
-                $product = Product::lockForUpdate()->find($item->product_id);
-
-                if ($product->stock_quantity < $item->quantity) {
-                    throw new \RuntimeException(
-                        "{$product->name} only has {$product->stock_quantity} units available."
-                    );
-                }
+                // Use variant price if available, otherwise product price
+                $unitPrice = $item->variant?->final_price ?? $item->product->final_price;
+                $originalPrice = $item->variant?->price ?? $item->product->price;
 
                 $order->items()->create([
                     'product_id'         => $item->product_id,
                     'product_variant_id' => $item->variant_id,
                     'quantity'           => $item->quantity,
-                    'unit_price_cents'   => (int) round($item->product->final_price * 100),
+                    'unit_price_cents'   => (int) round($unitPrice * 100),
                     'unit_tax_cents'     => 0,
                     'discount_cents'     => (int) round(
-                        ($item->product->price - $item->product->final_price) * 100 * $item->quantity
+                        ($originalPrice - $unitPrice) * 100 * $item->quantity
                     ),
-                    'total_cents'        => (int) round($item->product->final_price * 100 * $item->quantity),
+                    'total_cents'        => (int) round($unitPrice * 100 * $item->quantity),
                     'product_snapshot'   => [
                         'id'          => $item->product->id,
                         'name'        => $item->product->name,
-                        'sku'         => $item->product->sku,
+                        'sku'         => $item->variant?->sku ?? $item->product->sku,
                         'slug'        => $item->product->slug,
                         'image_path'  => $item->product->image_path,
-                        'price'       => $item->product->price,
-                        'sale_price'  => $item->product->sale_price,
-                        'final_price' => $item->product->final_price,
+                        'price'       => $originalPrice,
+                        'sale_price'  => $item->variant?->sale_price ?? $item->product->sale_price,
+                        'final_price' => $unitPrice,
                         'weight_kg'   => $item->product->weight ?? 0.5,
                         'brand'       => $item->product->brand?->name,
+                        'variant'     => $item->variant ? [
+                            'id' => $item->variant->id,
+                            'sku' => $item->variant->sku,
+                            'attributes' => $item->variant->attributeValues?->mapWithKeys(
+                                fn($av) => [$av->attribute->name => $av->label ?: $av->value]
+                            )->toArray() ?? [],
+                        ] : null,
                     ],
                 ]);
+            }
 
-                $product->decrement('stock_quantity', $item->quantity);
+            // Reserve stock (soft lock) or deduct immediately based on settings
+            // Reservation pattern prevents overselling while payment is processing
+            if ($this->orderSettings->stock_reduce_on_order) {
+                // Deduct stock immediately on order creation
+                foreach ($cartItems as $item) {
+                    $stockItem = $item->variant_id
+                        ? \App\Models\ProductVariant::lockForUpdate()->find($item->variant_id)
+                        : Product::lockForUpdate()->find($item->product_id);
+
+                    if ($stockItem && $stockItem->stock_quantity >= $item->quantity) {
+                        $stockItem->decrement('stock_quantity', $item->quantity);
+                    }
+                }
             }
 
             Payment::create([
                 'order_id'     => $order->id,
                 'amount_cents' => $totalCents,
-                'currency'     => 'KES',
+                'currency'     => $this->localization->currency,
                 'status'       => EnumsPaymentStatus::PENDING,
                 'gateway'      => $this->paymentService->activeGateway(),
                 'expires_at'   => now()->addMinutes(30),
@@ -192,6 +220,22 @@ class CheckoutService
 
             return $order;
         });
+
+        // Reserve stock outside transaction if not deducting on order
+        // This creates soft locks that expire with the payment
+        if (!$this->orderSettings->stock_reduce_on_order) {
+            try {
+                $this->inventoryService->reserveStock($order);
+            } catch (\Exception $e) {
+                // If reservation fails, cancel the order
+                $order->transitionTo(
+                    OrderStatus::CANCELLED,
+                    notes: 'Stock reservation failed: ' . $e->getMessage(),
+                    changedByType: 'system',
+                );
+                throw new \RuntimeException('Unable to reserve stock. Please try again.');
+            }
+        }
 
         // -------------------------------------------------------
         // Gateway call — outside the transaction.
@@ -213,8 +257,18 @@ class CheckoutService
                 );
                 $order->update(['payment_status' => EnumsPaymentStatus::FAILED]);
 
-                foreach ($order->items()->with('product')->get() as $item) {
-                    $item->product?->increment('stock_quantity', $item->quantity);
+                // Release reservations or restore stock based on settings
+                if ($this->orderSettings->stock_reduce_on_order) {
+                    // Stock was deducted, restore it
+                    foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
+                        $stockItem = $item->product_variant_id
+                            ? $item->variant
+                            : $item->product;
+                        $stockItem?->increment('stock_quantity', $item->quantity);
+                    }
+                } else {
+                    // Stock was reserved, release reservations
+                    $this->inventoryService->releaseReservation($order);
                 }
 
                 Log::error('Payment initiation failed after order created', [

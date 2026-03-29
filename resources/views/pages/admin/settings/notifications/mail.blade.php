@@ -17,10 +17,10 @@ new #[Title('Mail Configuration')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Mail settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Mail settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save mail settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 
@@ -28,9 +28,9 @@ new #[Title('Mail Configuration')] class extends Component {
     {
         try {
             \Illuminate\Support\Facades\Mail::raw(__('This is a test email from your Sheffield Africa store.'), fn($msg) => $msg->to(auth()->user()->email)->subject(__('Test Email — Sheffield Africa')));
-            $this->dispatch('notify', variant: 'success', message: __('Test email sent to :email.', ['email' => auth()->user()->email]));
+            $this->dispatch('notify', variant: 'success', title: __('Test email sent'), message: __('Test email sent to :email.', ['email' => auth()->user()->email]));
         } catch (\Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: __('Failed to send test email: :error', ['error' => $e->getMessage()]));
+            $this->dispatch('notify', variant: 'danger', title: __('Send failed'), message: __('Failed to send test email: :error', ['error' => $e->getMessage()]));
         }
     }
 }; ?>
@@ -41,7 +41,7 @@ new #[Title('Mail Configuration')] class extends Component {
 
             {{-- SMTP --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('SMTP configuration') }}</flux:heading>
                 </div>
 
@@ -83,7 +83,7 @@ new #[Title('Mail Configuration')] class extends Component {
 
             {{-- Sender Identity --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Sender identity') }}</flux:heading>
                 </div>
 

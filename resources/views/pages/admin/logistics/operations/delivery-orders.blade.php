@@ -5,6 +5,7 @@ use App\Models\DeliveryOrder;
 use App\Models\LogisticsProvider;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
+use App\Settings\RegionalSettings;
 use Livewire\Attributes\{Title, Computed, Url};
 use Livewire\WithPagination;
 use Livewire\Component;
@@ -86,6 +87,12 @@ new #[Title('Delivery Orders')] class extends Component {
     }
 
     // ── Computed ──────────────────────────────────────────────
+
+    #[Computed]
+    public function regionalSettings(): RegionalSettings
+    {
+        return app(RegionalSettings::class);
+    }
 
     #[Computed]
     public function orders()
@@ -826,7 +833,7 @@ new #[Title('Delivery Orders')] class extends Component {
                     <div>
                         <p class="text-zinc-400 text-xs mb-0.5">Weight</p>
                         <p class="font-medium">
-                            {{ $order->package_weight_kg ? $order->package_weight_kg . ' kg' : '—' }}</p>
+                            {{ $order->package_weight_kg ? $order->package_weight_kg . ' ' . $this->regionalSettings->weight_unit : '—' }}</p>
                     </div>
                     <div>
                         <p class="text-zinc-400 text-xs mb-0.5">Created</p>

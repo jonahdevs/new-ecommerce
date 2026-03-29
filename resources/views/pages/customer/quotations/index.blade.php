@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Quote;
+use App\Enums\QuoteStatus;
 use Livewire\Component;
 use Livewire\Attributes\{Layout, Computed};
 use Livewire\WithPagination;
@@ -16,26 +18,22 @@ new #[Layout('layouts.customer')] class extends Component {
     #[Computed]
     public function hasQuotations(): bool
     {
-        return auth()->user()->orders()->where('document_type', 'quotation')->exists();
+        return Quote::where('user_id', auth()->id())->exists();
     }
 
     // =========================================================================
     //  COMPUTED — ACTIVE QUOTATIONS
     //
     //  Shows quotations that are still in play:
-    //    pending_quote  → submitted, awaiting admin pricing
-    //    quote_sent     → priced by admin, awaiting customer response ← needs action
-    //    quote_accepted → customer accepted, sales order being created
+    //    pending  → submitted, awaiting admin pricing
+    //    sent     → priced by admin, awaiting customer response ← needs action
     // =========================================================================
 
     #[Computed]
     public function activeQuotations()
     {
-        return auth()
-            ->user()
-            ->orders()
-            ->where('document_type', 'quotation')
-            ->whereIn('status', ['pending_quote', 'quote_sent', 'quote_accepted'])
+        return Quote::where('user_id', auth()->id())
+            ->whereIn('status', [QuoteStatus::PENDING, QuoteStatus::SENT])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
             ->latest()
@@ -45,18 +43,20 @@ new #[Layout('layouts.customer')] class extends Component {
     // =========================================================================
     //  COMPUTED — CLOSED QUOTATIONS
     //
-    //  Terminal quotations — rejected, expired, or cancelled.
+    //  Terminal quotations — accepted, rejected, expired, or cancelled.
     //  Shown separately so the active tab stays focused on actionable items.
     // =========================================================================
 
     #[Computed]
     public function closedQuotations()
     {
-        return auth()
-            ->user()
-            ->orders()
-            ->where('document_type', 'quotation')
-            ->whereIn('status', ['quote_rejected', 'quote_expired', 'cancelled'])
+        return Quote::where('user_id', auth()->id())
+            ->whereIn('status', [
+                QuoteStatus::ACCEPTED,
+                QuoteStatus::REJECTED,
+                QuoteStatus::EXPIRED,
+                QuoteStatus::CANCELLED,
+            ])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
             ->latest()
@@ -71,7 +71,9 @@ new #[Layout('layouts.customer')] class extends Component {
     #[Computed]
     public function awaitingResponseCount(): int
     {
-        return auth()->user()->orders()->where('document_type', 'quotation')->where('status', 'quote_sent')->count();
+        return Quote::where('user_id', auth()->id())
+            ->where('status', QuoteStatus::SENT)
+            ->count();
     }
 };
 ?>
@@ -96,7 +98,7 @@ new #[Layout('layouts.customer')] class extends Component {
                     <flux:icon.tag class="size-12 text-zinc-300" />
                     <flux:heading>No quotations yet</flux:heading>
                     <flux:text class="text-zinc-500 max-w-sm">
-                        When you request a quote for a product or out-of-zone delivery,
+                        When you request a quote for a product,
                         it will appear here.
                     </flux:text>
                     <flux:button :href="route('shop.index')" variant="primary" icon="shopping-bag" wire:navigate
@@ -134,8 +136,8 @@ new #[Layout('layouts.customer')] class extends Component {
                                         $firstItem?->product_snapshot['name'] ??
                                         ($firstItem?->product?->name ?? 'Product');
                                     $extraCount = $quotation->items_count - 1;
-                                    $needsResponse = $quotation->status->value === 'quote_sent';
-                                    $img = $firstItem?->product_image_url ?? $firstItem?->product?->image_url;
+                                    $needsResponse = $quotation->status === QuoteStatus::SENT;
+                                    $img = $firstItem?->product_snapshot['image_url'] ?? $firstItem?->product?->image_url;
                                 @endphp
 
                                 <div wire:key="active-{{ $quotation->id }}"
@@ -176,21 +178,10 @@ new #[Layout('layouts.customer')] class extends Component {
                                                 <flux:badge size="sm" :color="$quotation->status->color()">
                                                     {{ $quotation->status->label() }}
                                                 </flux:badge>
-
-                                                {{-- Quotation type badge --}}
-                                                @if ($quotation->quotation_type === 'delivery')
-                                                    <flux:badge size="sm" color="indigo" variant="flat">
-                                                        Delivery
-                                                    </flux:badge>
-                                                @elseif ($quotation->quotation_type === 'product')
-                                                    <flux:badge size="sm" color="purple" variant="flat">
-                                                        Product
-                                                    </flux:badge>
-                                                @endif
                                             </div>
 
                                             {{-- Expiry warning --}}
-                                            @if ($quotation->expires_at && $quotation->status->value === 'quote_sent')
+                                            @if ($quotation->expires_at && $quotation->status === QuoteStatus::SENT)
                                                 <flux:text
                                                     class="text-xs mt-1
                                                     {{ $quotation->expires_at->isPast()
@@ -240,7 +231,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                         $firstItem?->product_snapshot['name'] ??
                                         ($firstItem?->product?->name ?? 'Product');
                                     $extraCount = $quotation->items_count - 1;
-                                    $img = $firstItem?->product_image_url ?? $firstItem?->product?->image_url;
+                                    $img = $firstItem?->product_snapshot['image_url'] ?? $firstItem?->product?->image_url;
                                 @endphp
 
                                 <div wire:key="closed-{{ $quotation->id }}"

@@ -62,7 +62,7 @@ return [
         'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
         'passkey' => env('MPESA_PASSKEY'),
         'shortcode' => env('MPESA_SHORTCODE', '174379'), // 174379 is sandbox default
-        'callback_url' => env('MPESA_CALLBACK_URL', env('APP_URL') . '/checkout/mpesa/callback'),
+        'callback_url' => env('MPESA_CALLBACK_URL', env('APP_URL') . '/api/webhooks/mpesa'),
     ],
     'stripe' => [
         'secret_key' => env('STRIPE_SECRET'),

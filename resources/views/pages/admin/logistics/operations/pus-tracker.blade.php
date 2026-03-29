@@ -3,6 +3,7 @@
 use App\Enums\DeliveryOrderStatus;
 use App\Models\DeliveryOrder;
 use App\Models\PickupStation;
+use App\Settings\RegionalSettings;
 use Livewire\Attributes\{Title, Computed, Url};
 use Livewire\Component;
 use Flux\Flux;
@@ -22,6 +23,12 @@ new #[Title('PUS Tracker')] class extends Component {
     public function updatedFilterUrgency(): void {}
 
     //  Queries
+
+    #[Computed]
+    public function regionalSettings(): RegionalSettings
+    {
+        return app(RegionalSettings::class);
+    }
 
     #[Computed]
     public function parcels()
@@ -389,7 +396,7 @@ new #[Title('PUS Tracker')] class extends Component {
                     @if ($order->package_weight_kg)
                         <div>
                             <p class="text-zinc-400 text-xs mb-0.5">Package Weight</p>
-                            <p class="font-medium">{{ $order->package_weight_kg }} kg</p>
+                            <p class="font-medium">{{ $order->package_weight_kg }} {{ $this->regionalSettings->weight_unit }}</p>
                         </div>
                     @endif
                 </div>

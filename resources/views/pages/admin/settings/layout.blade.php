@@ -4,29 +4,50 @@
 ])
 
 @php
+    // During Livewire update requests, Route::currentRouteName() returns
+    // the Livewire endpoint name instead of the page route. We fall back
+    // to the previous URL so the active-tab resolution stays correct.
     $currentRoute = Route::currentRouteName();
+
+    if (request()->routeIs('livewire.*') || str_contains($currentRoute ?? '', 'livewire')) {
+        $previousUrl = url()->previous();
+        try {
+            $previousRoute = app('router')->getRoutes()->match(
+                request()->create($previousUrl)
+            )->getName();
+            if ($previousRoute) {
+                $currentRoute = $previousRoute;
+            }
+        } catch (\Throwable $e) {
+            // keep $currentRoute as-is
+        }
+    }
 
     $tabs = [
         'account' => [
             'label' => __('Account'),
+            'icon' => 'user-circle',
             'route' => 'profile.edit',
             'permission' => null,
             'active_on' => ['profile.edit', 'user-password.edit', 'two-factor.show', 'appearance.edit'],
         ],
         'general' => [
             'label' => __('General'),
+            'icon' => 'building-storefront',
             'route' => 'settings.store-info',
             'permission' => 'manage.settings',
             'active_on' => ['settings.store-info', 'settings.localization', 'settings.regional'],
         ],
         'commerce' => [
             'label' => __('Commerce'),
+            'icon' => 'shopping-bag',
             'route' => 'settings.orders',
             'permission' => 'manage.settings',
-            'active_on' => ['settings.orders', 'settings.tax', 'settings.reviews', 'settings.inventory'],
+            'active_on' => ['settings.orders', 'settings.quotations', 'settings.tax', 'settings.reviews', 'settings.inventory'],
         ],
         'payments' => [
             'label' => __('Payments'),
+            'icon' => 'credit-card',
             'route' => 'settings.payments.gateways',
             'permission' => 'manage.settings',
             'active_on' => [
@@ -41,18 +62,21 @@
         ],
         'notifications' => [
             'label' => __('Notifications'),
+            'icon' => 'bell',
             'route' => 'settings.mail',
             'permission' => 'manage.settings',
             'active_on' => ['settings.mail', 'settings.admin-alerts', 'settings.customer-emails'],
         ],
         'seo' => [
             'label' => __('SEO & Marketing'),
+            'icon' => 'magnifying-glass',
             'route' => 'settings.seo',
             'permission' => 'manage.settings',
             'active_on' => ['settings.seo', 'settings.social'],
         ],
         'system' => [
             'label' => __('System'),
+            'icon' => 'cog-6-tooth',
             'route' => 'settings.maintenance',
             'permission' => 'manage.settings',
             'active_on' => ['settings.maintenance'],
@@ -78,6 +102,7 @@
         ],
         'commerce' => [
             ['label' => __('Orders'), 'route' => 'settings.orders', 'permission' => 'manage.settings'],
+            ['label' => __('Quotations'), 'route' => 'settings.quotations', 'permission' => 'manage.settings'],
             ['label' => __('Tax'), 'route' => 'settings.tax', 'permission' => 'manage.settings'],
             ['label' => __('Reviews'), 'route' => 'settings.reviews', 'permission' => 'manage.settings'],
             ['label' => __('Inventory'), 'route' => 'settings.inventory', 'permission' => 'manage.settings'],
@@ -119,7 +144,6 @@
     if (auth()->user()->can('manage.settings')) {
         $paymentSettings = app(\App\Settings\PaymentSettings::class);
         $gatewayMode = $paymentSettings->gateway_mode; // individual | aggregator
-        $activeAggregator = $paymentSettings->active_aggregator; // pesapal | pesawise
 
         $paymentItems = [
             // Overview is always the first item
@@ -131,12 +155,9 @@
             $paymentItems[] = ['label' => __('Stripe'), 'route' => 'settings.payments.stripe'];
             $paymentItems[] = ['label' => __('PayPal'), 'route' => 'settings.payments.paypal'];
         } else {
-            // Aggregator — show only whichever provider is selected
-            match ($activeAggregator) {
-                'pesapal' => ($paymentItems[] = ['label' => __('PesaPal'), 'route' => 'settings.payments.pesapal']),
-                'pesawise' => ($paymentItems[] = ['label' => __('PesaWise'), 'route' => 'settings.payments.pesawise']),
-                default => null,
-            };
+            // Aggregator — show both providers so either can be configured
+            $paymentItems[] = ['label' => __('PesaPal'), 'route' => 'settings.payments.pesapal'];
+            $paymentItems[] = ['label' => __('PesaWise'), 'route' => 'settings.payments.pesawise'];
         }
 
         // COD always available — independent of mode
@@ -157,22 +178,21 @@
     </div>
 
     {{--  Top tabs  --}}
-    <div class="mt-4 border-b border-zinc-200 dark:border-zinc-700">
+    <div class="mt-4 border-b border-zinc-200 dark:border-zinc-600">
         <nav class="flex gap-1 overflow-x-auto">
             @foreach ($tabs as $key => $tab)
                 @php
                     $canSee = $tab['permission'] ? auth()->user()->can($tab['permission']) : true;
+                    $isActive = $activeTab === $key;
                 @endphp
 
                 @if ($canSee)
                     <a href="{{ route($tab['route']) }}" wire:navigate @class([
-                        'relative flex items-center px-4 py-3 text-sm whitespace-nowrap',
-                        'transition-colors duration-150 -mb-px border-b-2',
-                        'font-medium text-[var(--brand-primary)] border-[var(--brand-primary)]' =>
-                            $activeTab === $key,
-                        'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 border-transparent' =>
-                            $activeTab !== $key,
+                        'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
+                        'bg-brand-primary text-brand-primary-content font-medium' => $isActive,
+                        'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => !$isActive,
                     ])>
+                        <flux:icon :name="$tab['icon']" class="size-4 shrink-0" variant="outline" />
                         {{ $tab['label'] }}
                     </a>
                 @endif

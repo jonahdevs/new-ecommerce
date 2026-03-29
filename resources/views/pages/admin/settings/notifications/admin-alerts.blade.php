@@ -17,10 +17,10 @@ new #[Title('Admin Alerts')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Admin alert settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Admin alert settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save notification settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -30,7 +30,7 @@ new #[Title('Admin Alerts')] class extends Component {
         <form wire:submit="save" class="space-y-6">
 
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Alert triggers') }}</flux:heading>
                 </div>
 
@@ -49,11 +49,24 @@ new #[Title('Admin Alerts')] class extends Component {
 
                     <flux:checkbox wire:model="form.notify_new_user" label="{{ __('New customer registered') }}"
                         description="{{ __('Notify when a new customer account is created') }}" />
+
+                    <flux:separator />
+
+                    <flux:subheading class="text-xs! uppercase tracking-wide text-zinc-500">{{ __('Quotations') }}</flux:subheading>
+
+                    <flux:checkbox wire:model="form.notify_new_quote" label="{{ __('New quote request') }}"
+                        description="{{ __('Notify when a customer requests a quotation') }}" />
+
+                    <flux:checkbox wire:model="form.notify_quote_accepted" label="{{ __('Quote accepted') }}"
+                        description="{{ __('Notify when a customer accepts a quotation') }}" />
+
+                    <flux:checkbox wire:model="form.notify_quote_rejected" label="{{ __('Quote rejected') }}"
+                        description="{{ __('Notify when a customer rejects a quotation') }}" />
                 </div>
             </flux:card>
 
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Notification recipient') }}</flux:heading>
                 </div>
 

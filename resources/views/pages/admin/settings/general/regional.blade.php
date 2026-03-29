@@ -17,10 +17,10 @@ new #[Title('Regional')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Regional settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Regional settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save regional settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -30,7 +30,7 @@ new #[Title('Regional')] class extends Component {
         <form wire:submit="save" class="space-y-6">
 
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Measurement units') }}</flux:heading>
                 </div>
 

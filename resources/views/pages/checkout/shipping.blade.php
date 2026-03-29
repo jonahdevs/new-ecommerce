@@ -67,7 +67,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
         $cartService = app(CartService::class);
 
-        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, areaId: $this->address->area_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal())->reject(fn($option) => $option->isQuoteRequest());
+        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, areaId: $this->address->area_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
     }
 
     #[Computed]
@@ -291,12 +291,14 @@ new #[Layout('layouts.checkout')] class extends Component {
         </div>
     </flux:card>
 
-    <flux:card class="opacity-70 p-0  mb-4">
-        <div class="px-3 py-2 flex items-center gap-1">
-            <flux:icon.check-circle variant="solid" class="size-5 text-zinc-600" />
-            <flux:heading level="3">Payment Methods</flux:heading>
-        </div>
-    </flux:card>
+    @if (app(\App\Services\Payment\PaymentService::class)->isCustom())
+        <flux:card class="opacity-70 p-0 mb-4">
+            <div class="px-3 py-2 flex items-center gap-1">
+                <flux:icon.check-circle variant="solid" class="size-5 text-zinc-600" />
+                <flux:heading level="3">Payment Methods</flux:heading>
+            </div>
+        </flux:card>
+    @endif
 
     <flux:link :href="route('shop.index')" wire:navigate class="text-xs">
         ← Continue shopping

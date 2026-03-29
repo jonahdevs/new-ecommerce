@@ -29,22 +29,14 @@
 
     {{-- County --}}
     <flux:select wire:model.live="form.county_id" placeholder="Select County..." :label="__('Region / County')">
-        {{-- Explicit null placeholder option --}}
         <flux:select.option value="" selected hidden>
             Select County...
         </flux:select.option>
-        @foreach ($this->counties as $zoneName => $zoneCounties)
-            <flux:select.option disabled value="">
-                -- {{ $zoneName }} --
+        @foreach ($this->counties as $county)
+            <flux:select.option :value="$county->id">
+                {{ $county->name }}
             </flux:select.option>
-
-            @foreach ($zoneCounties as $county)
-                <flux:select.option :value="$county->id">
-                    {{ $county->name }}
-                </flux:select.option>
-            @endforeach
         @endforeach
-
     </flux:select>
 
     {{-- Area --}}

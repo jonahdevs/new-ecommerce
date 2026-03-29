@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Quote;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,7 +14,7 @@ class QuoteAcceptedNotification extends Notification implements ShouldQueue
     use Queueable;
 
     // =========================================================================
-    //  Fires when a customer accepts a quotation (QUOTE_ACCEPTED transition).
+    //  Fires when a customer accepts a quotation (ACCEPTED transition).
     //  Sent to the admin team.
     //
     //  Receives both the quotation AND the newly created sales order so
@@ -21,8 +22,8 @@ class QuoteAcceptedNotification extends Notification implements ShouldQueue
     // =========================================================================
 
     public function __construct(
-        public readonly Order $quotation,
-        public readonly Order $salesOrder,
+        public readonly Quote $quote,
+        public readonly Order $order,
     ) {
     }
 
@@ -33,17 +34,17 @@ class QuoteAcceptedNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName = $this->quotation->user?->name ?? 'Customer';
-        $customerEmail = $this->quotation->user?->email ?? '';
-        $total = format_currency($this->salesOrder->total);
-        $orderUrl = route('admin.orders.show', $this->salesOrder);
+        $customerName = $this->quote->user?->name ?? 'Customer';
+        $customerEmail = $this->quote->user?->email ?? '';
+        $total = format_currency($this->order->total);
+        $orderUrl = route('admin.orders.show', $this->order);
 
         return (new MailMessage)
-            ->subject("Quote Accepted — {$this->salesOrder->reference} Created")
+            ->subject("Quote Accepted — {$this->order->reference} Created")
             ->greeting('A customer has accepted their quotation')
-            ->line("{$customerName} ({$customerEmail}) has accepted quotation **{$this->quotation->reference}**.")
+            ->line("{$customerName} ({$customerEmail}) has accepted quotation **{$this->quote->reference}**.")
             ->line("A sales order has been automatically created.")
-            ->line("**Sales order:** {$this->salesOrder->reference}")
+            ->line("**Sales order:** {$this->order->reference}")
             ->line("**Total:** {$total}")
             ->line('The customer has been routed to the payment page. You will receive another notification once payment is confirmed.')
             ->action('View Sales Order', $orderUrl)

@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\CleanupExpiredOrders;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -27,4 +28,37 @@ Schedule::command('quotations:expire')
     ->withoutOverlapping()
     ->onOneServer()
     ->runInBackground()
+    ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+
+// ==============================================
+// QUOTATIONS: Send expiring reminders
+//
+// Runs daily at 9 AM. Sends reminder emails to customers whose
+// quotes are expiring within the configured reminder window.
+//
+// Only sends one reminder per quote (tracks via reminder_sent_at).
+// Respects customer_notifications.quote_expiring_reminder setting.
+// ==============================================
+Schedule::command('quotations:remind-expiring')
+    ->dailyAt('09:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+
+// ==============================================
+// ORDERS: Cleanup expired orders and reservations
+//
+// Runs every 5 minutes. Finds pending orders with expired payments
+// and releases their inventory reservations.
+//
+// This prevents phantom stock depletion when users abandon checkout
+// or payment links expire without completion.
+// ==============================================
+Schedule::job(new CleanupExpiredOrders)
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
     ->appendOutputTo(storage_path('logs/scheduler.log'));

@@ -340,11 +340,10 @@ $options = app(ShippingCalculator::class)->calculate(
 1. Resolves the shipping zone for the address
 2. Loads all active `flat` and `pus` methods
 3. Skips `flat` if `zone->is_delivery_available = false`
-4. Always runs `pus` regardless of zone
-5. Appends a virtual quote option for unavailable zones
-6. Sorts: free first → by cost → by delivery speed
+4. Always runs `pus` regardless of zone (main store is always available as pickup)
+5. Sorts: free first → by cost → by delivery speed
 
-**The quote option** is a virtual `ShippingOption` with `methodType = 'quote'` and `isVirtualQuote = true`. It is filtered out of the checkout UI with `.reject(fn($o) => $o->isQuoteRequest())` and shown separately as a banner on the summary page.
+**Note:** Quote requests are handled through a separate quote basket flow, not the cart checkout.
 
 ---
 

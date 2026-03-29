@@ -20,23 +20,23 @@ new #[Title('Store Info')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Store info saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Store info saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save store info.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 
     public function removeLogo(GeneralSettings $settings): void
     {
         $this->form->removeLogo($settings);
-        $this->dispatch('notify', variant: 'success', message: __('Logo removed.'));
+        $this->dispatch('notify', variant: 'success', title: __('Logo removed'), message: __('Logo removed.'));
     }
 
     public function removeFavicon(GeneralSettings $settings): void
     {
         $this->form->removeFavicon($settings);
-        $this->dispatch('notify', variant: 'success', message: __('Favicon removed.'));
+        $this->dispatch('notify', variant: 'success', title: __('Favicon removed'), message: __('Favicon removed.'));
     }
 }; ?>
 
@@ -46,7 +46,7 @@ new #[Title('Store Info')] class extends Component {
 
             {{-- Store Identity --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Store identity') }}</flux:heading>
                 </div>
 
@@ -148,7 +148,7 @@ new #[Title('Store Info')] class extends Component {
 
             {{-- Contact & Address --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Contact & address') }}</flux:heading>
                 </div>
 

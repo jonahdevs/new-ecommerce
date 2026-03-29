@@ -17,10 +17,10 @@ new #[Title('Reviews')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Review settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Review settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save review settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -31,7 +31,7 @@ new #[Title('Reviews')] class extends Component {
 
             {{-- Review Settings --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Review settings') }}</flux:heading>
                 </div>
 
@@ -63,7 +63,7 @@ new #[Title('Reviews')] class extends Component {
             {{-- Limits — only when reviews and images are enabled --}}
             @if ($form->reviews_enabled)
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('Limits') }}</flux:heading>
                     </div>
 

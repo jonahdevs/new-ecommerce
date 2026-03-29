@@ -17,10 +17,10 @@ new #[Title('Orders')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Order settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Order settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save order settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -31,7 +31,7 @@ new #[Title('Orders')] class extends Component {
 
             {{-- Order Configuration --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Order configuration') }}</flux:heading>
                 </div>
 
@@ -61,7 +61,7 @@ new #[Title('Orders')] class extends Component {
 
             {{-- Checkout & Cancellation --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Checkout & cancellation') }}</flux:heading>
                 </div>
 

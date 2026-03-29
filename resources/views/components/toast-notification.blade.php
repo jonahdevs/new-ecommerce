@@ -64,11 +64,11 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-sky-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -97,11 +97,11 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-green-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 bg-white rounded-full border shadow-lg p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -120,7 +120,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center  px-3 py-2.5 relative shadow-xl">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.exclamation-circle class="text-amber-500" />
                             </div>
@@ -130,11 +130,11 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-amber-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -163,12 +163,12 @@
                             <div class="ps-3">
                                 <flux:heading x-text="notification.title" class="text-red-500 mb-0.5 text-xs">
                                 </flux:heading>
-                                <flux:text class="text-xs text-zinc-400" x-text="notification.message"></flux:text>
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400" x-text="notification.message"></flux:text>
                             </div>
 
                             <button type="button"
                                 x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <flux:icon.x-mark class="w-3.5 h-3.5" />
@@ -180,7 +180,7 @@
                 <!-- Message Notification  -->
                 <template x-if="notification.variant === 'message'">
                     <div x-data="{ isVisible: false, timeout: null }" x-cloak x-show="isVisible"
-                        class="pointer-events-auto relative rounded-sm border border-neutral-300 bg-white text-neutral-600 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300"
+                        class="pointer-events-auto relative rounded-sm border border-zinc-300 bg-white text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300"
                         role="alert" x-on:pause-auto-dismiss.window="clearTimeout(timeout)"
                         x-on:resume-auto-dismiss.window="timeout = setTimeout(() => { isVisible = false, removeNotification(notification.id) }, displayDuration)"
                         x-init="$nextTick(() => { isVisible = true }), (timeout = setTimeout(() => { isVisible = false, removeNotification(notification.id) }, displayDuration))" x-transition:enter="transition duration-300 ease-out"
@@ -189,7 +189,7 @@
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
                         <div
-                            class="flex w-full rounded-sm items-center gap-2.5 bg-neutral-50 p-4 transition-all duration-300 dark:bg-neutral-900">
+                            class="flex w-full rounded-sm items-center gap-2.5 bg-zinc-50 p-4 transition-all duration-300 dark:bg-zinc-800">
                             <div class="flex w-full items-center gap-2.5">
 
                                 <!-- Avatar -->
@@ -198,9 +198,9 @@
                                 <div class="flex flex-col items-start gap-2">
                                     <!-- Title & Message -->
                                     <h3 x-cloak x-show="notification.sender.name"
-                                        class="text-sm font-semibold text-neutral-900 dark:text-white"
+                                        class="text-sm font-semibold text-zinc-900 dark:text-white"
                                         x-text="notification.sender.name"></h3>
-                                    <p x-cloak x-show="notification.message" class="text-pretty text-sm"
+                                    <p x-cloak x-show="notification.message" class="text-pretty text-sm text-zinc-600 dark:text-zinc-300"
                                         x-text="notification.message"></p>
 
                                     <!-- Action Buttons -->
@@ -208,16 +208,16 @@
                                         <button type="button"
                                             class="whitespace-nowrap bg-transparent text-center text-sm font-bold tracking-wide text-black transition hover:opacity-75 active:opacity-100 dark:text-white">Reply</button>
                                         <button type="button"
-                                            class="whitespace-nowrap bg-transparent text-center text-sm font-bold tracking-wide text-neutral-600 transition hover:opacity-75 active:opacity-100 dark:text-neutral-300"
+                                            class="whitespace-nowrap bg-transparent text-center text-sm font-bold tracking-wide text-zinc-600 transition hover:opacity-75 active:opacity-100 dark:text-zinc-300"
                                             x-on:click=" (isVisible = false), setTimeout(() => { removeNotification(notification.id) }, 400)">Dismiss</button>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Dismiss Button -->
-                            <button type="button" class="ml-auto" aria-label="dismiss notification"
+                            <button type="button" class="ml-auto text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" aria-label="dismiss notification"
                                 x-on:click="(isVisible = false), removeNotification(notification.id)">
-                                <svg xmlns="http://www.w3.org/2000/svg viewBox="0 0 24 24 stroke="currentColor"
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor"
                                     fill="none" stroke-width="2" class="size-5 shrink-0" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>

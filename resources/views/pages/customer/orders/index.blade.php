@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OrderStatus;
 use Livewire\Component;
 use Livewire\Attributes\{Layout, Computed};
 use Livewire\WithPagination;
@@ -11,21 +12,16 @@ new #[Layout('layouts.customer')] class extends Component {
 
     // =========================================================================
     //  COMPUTED — ORDER EXISTENCE CHECK
-    //  Checks sales orders only — quotations live on their own page.
     // =========================================================================
 
     #[Computed]
     public function hasOrders(): bool
     {
-        return auth()->user()->orders()->where('document_type', 'sales_order')->exists();
+        return auth()->user()->orders()->exists();
     }
 
     // =========================================================================
     //  COMPUTED — ONGOING ORDERS
-    //
-    //  Sales orders only (document_type = sales_order).
-    //  Quotation statuses (pending_quote, quote_sent, etc.) are intentionally
-    //  excluded — they belong on the /quotations page.
     // =========================================================================
 
     #[Computed]
@@ -34,8 +30,13 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->orders()
-            ->where('document_type', 'sales_order')
-            ->whereIn('status', ['pending', 'confirmed', 'processing', 'shipped', 'delivered'])
+            ->whereIn('status', [
+                OrderStatus::PENDING,
+                OrderStatus::CONFIRMED,
+                OrderStatus::PROCESSING,
+                OrderStatus::SHIPPED,
+                OrderStatus::DELIVERED,
+            ])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
             ->latest()
@@ -44,7 +45,6 @@ new #[Layout('layouts.customer')] class extends Component {
 
     // =========================================================================
     //  COMPUTED — CANCELLED / RETURNED ORDERS
-    //  Sales orders only — cancelled quotations live on the quotations page.
     // =========================================================================
 
     #[Computed]
@@ -53,8 +53,7 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->orders()
-            ->where('document_type', 'sales_order')
-            ->whereIn('status', ['cancelled', 'returned'])
+            ->whereIn('status', [OrderStatus::CANCELLED, OrderStatus::RETURNED])
             ->with(['items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
             ->latest()

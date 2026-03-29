@@ -10,9 +10,7 @@ return new class extends Migration {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-
-            // quote_id is added via a separate migration once the quotes
-            // table exists. See: add_quote_id_to_orders migration.
+            $table->foreignId('quote_id')->nullable()->constrained()->nullOnDelete();
 
             $table->string('reference')->unique();
 

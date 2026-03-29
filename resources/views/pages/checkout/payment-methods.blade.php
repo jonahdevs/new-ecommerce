@@ -12,10 +12,18 @@ new #[Layout('layouts.checkout')] class extends Component {
     public function mount(): void
     {
         $checkoutSession = app(CheckoutSession::class);
+        $paymentService = app(PaymentService::class);
 
         // Guard: no shipping selected yet
         if (!$checkoutSession->hasShipping()) {
             $this->redirectRoute('checkout.shipping', navigate: true);
+            return;
+        }
+
+        // If using aggregator mode, skip payment method selection
+        // The provider (Pesawise/Pesapal) handles payment method choice
+        if (!$paymentService->isCustom()) {
+            $this->redirectRoute('checkout.summary', navigate: true);
             return;
         }
 
@@ -95,7 +103,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     {{-- 1. Address — confirmed, read-only --}}
     <flux:card class="p-0 mb-4">
-        <div class="px-4 py-2 border-b flex items-center justify-between">
+        <div class="px-4 py-2 border-b dark:border-zinc-600 flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
                 <flux:heading level="3" class="font-medium!">Delivering to</flux:heading>
@@ -124,7 +132,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     {{-- 2. Shipping — confirmed, read-only --}}
     <flux:card class="p-0 mb-4">
-        <div class="px-4 py-2 border-b flex items-center justify-between">
+        <div class="px-4 py-2 border-b dark:border-zinc-600 flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
                 <flux:heading level="3" class="font-medium!">Shipping Method</flux:heading>
@@ -157,7 +165,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     {{-- 3. Payment Method Section --}}
     <flux:card class="p-0 mb-4 overflow-hidden">
-        <div class="px-4 py-2 border-b">
+        <div class="px-4 py-2 border-b dark:border-zinc-600">
             <div class="flex items-center gap-2">
                 <flux:icon.check-circle variant="solid" @class([
                     'size-5',

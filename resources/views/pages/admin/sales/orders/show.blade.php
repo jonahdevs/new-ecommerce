@@ -14,19 +14,12 @@ new #[Title('Order Details')] class extends Component {
 
     public function mount(Order $order): void
     {
-        // Guard: this page is for sales orders only.
-        // Quotations have their own dedicated show page with different actions.
-        if ($order->isQuotation()) {
-            $this->redirectRoute('admin.orders.quotations.show', $order, navigate: true);
-            return;
-        }
-
         $this->order = $order->load([
             'payment',
             'user',
             'statusHistories.changedBy',
             'items.product',
-            'parentQuotation', // loaded to show "converted from quote" notice
+            'quote', // loaded to show "converted from quote" notice
         ]);
 
         $allowed = $order->status->allowedTransitions();
@@ -159,14 +152,14 @@ new #[Title('Order Details')] class extends Component {
     {{-- Shown when this sales order was converted from a quotation.         --}}
     {{-- Gives admin a direct link back to the originating quotation.        --}}
     {{-- ================================================================== --}}
-    @if ($order->wasConverted() && $order->parentQuotation)
+    @if ($order->wasConvertedFromQuote() && $order->quote)
         <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-5">
             <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
             <flux:text class="text-sm text-blue-800">
                 This order was converted from quotation
-                <flux:link :href="route('admin.orders.quotations.show', $order->parentQuotation)" wire:navigate
+                <flux:link :href="route('admin.quotations.show', $order->quote)" wire:navigate
                     class="font-medium">
-                    {{ $order->parentQuotation->reference }}
+                    {{ $order->quote->reference }}
                 </flux:link>
             </flux:text>
         </div>
@@ -297,7 +290,7 @@ new #[Title('Order Details')] class extends Component {
             {{-- ============================================================ --}}
             {{-- ORDER TIMELINE                                                --}}
             {{-- Sales orders only — always uses the standard 5-step path.    --}}
-            {{-- Quotation timeline lives on admin.orders.quotations.show.    --}}
+            {{-- Quotation timeline lives on admin.quotations.show.           --}}
             {{-- ============================================================ --}}
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b flex items-center justify-between">

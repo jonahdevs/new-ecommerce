@@ -76,8 +76,6 @@ new class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
     <flux:heading class="sr-only">{{ __('Profile Settings') }}</flux:heading>
 
     <x-pages::admin.settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
@@ -125,7 +123,7 @@ new class extends Component {
         </form>
 
         @if ($this->showDeleteUser)
-            <livewire:pages::admin.settings.delete-user-form />
+            <livewire:pages::admin.settings.account.delete-user-form />
         @endif
     </x-pages::admin.settings.layout>
 </section>

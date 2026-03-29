@@ -150,7 +150,8 @@
     --color-accent-content: var(--brand-primary);
     --color-accent-foreground: var(--brand-primary-content);
 
-    --color-input-ring: #64748b; /* slate-500 — neutral, never red */
+    --color-input-ring: #64748b;
+    /* slate-500 — neutral, never red */
     --color-input-ring-offset: #ffffff;
 }
 
@@ -158,6 +159,7 @@
    7. BASE LAYER
    ============================================================ */
 @layer base {
+
     *,
     ::after,
     ::before,
@@ -173,9 +175,11 @@
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }
+
 [data-flux-label] {
     @apply !mb-0 !leading-tight;
 }
+
 [data-flux-card] {
     @apply rounded-md;
 }
@@ -205,6 +209,7 @@ select:focus[data-flux-control] {
     background-color: var(--brand-primary);
     color: var(--brand-primary-content);
 }
+
 [data-navbar] a:hover,
 .navbar-public a:hover {
     background-color: var(--brand-primary-dark);
@@ -219,14 +224,18 @@ select:focus[data-flux-control] {
     color: var(--brand-footer-text);
     border-top: 1px solid var(--brand-footer-border);
 }
+
 [data-footer] a,
 .footer-public a {
     color: var(--brand-footer-text);
 }
+
 [data-footer] a:hover,
 .footer-public a:hover {
-    color: var(--brand-primary-light); /* subtle brand nod on hover */
+    color: var(--brand-primary-light);
+    /* subtle brand nod on hover */
 }
+
 [data-footer] .footer-muted,
 .footer-public .footer-muted {
     color: var(--brand-footer-muted);
@@ -235,10 +244,11 @@ select:focus[data-flux-control] {
 /* ============================================================
    11. MARYUI OVERRIDES
    ============================================================ */
-.mary-table-pagination span[aria-current="page"] > span {
+.mary-table-pagination span[aria-current="page"]>span {
     background-color: var(--brand-primary);
     @apply text-white;
 }
+
 .mary-table-pagination button {
     @apply cursor-pointer;
 }
@@ -252,6 +262,7 @@ select:focus[data-flux-control] {
     background-color: var(--brand-secondary);
     border-color: var(--brand-secondary-dark);
 }
+
 .dark [data-flux-sidebar] {
     background-color: var(--brand-secondary-dark);
 }
@@ -259,23 +270,29 @@ select:focus[data-flux-control] {
 [data-flux-navlist-group] [data-flux-heading] {
     @apply text-white/50 text-xs uppercase tracking-widest;
 }
+
 [data-flux-sidebar] [data-flux-navlist-item] {
     @apply text-white/75;
 }
+
 [data-flux-sidebar-item]:hover {
     background-color: var(--brand-secondary-light);
     @apply text-white;
 }
+
 [data-flux-navlist-item][data-current] {
     @apply bg-white;
     color: var(--brand-secondary);
 }
+
 [data-flux-navlist-item] svg {
     @apply text-inherit;
 }
+
 [data-flux-sidebar] [data-flux-separator] {
     @apply border-white/15;
 }
+
 [data-flux-sidebar] [data-flux-brand] * {
     @apply text-white;
 }
@@ -284,17 +301,20 @@ select:focus[data-flux-control] {
 [data-flux-sidebar] [data-flux-navlist-group] {
     @apply bg-transparent;
 }
+
 [data-flux-sidebar] [data-flux-navlist-group] button,
 [data-flux-sidebar] [data-flux-navlist-group] [role="button"] {
     @apply bg-transparent text-white/75;
 }
+
 [data-flux-sidebar] [data-flux-navlist-group] button:hover,
 [data-flux-sidebar] [data-flux-navlist-group] [role="button"]:hover {
     background-color: var(--brand-secondary-light);
     @apply text-white;
 }
-[data-flux-sidebar] [data-flux-navlist-group] > div,
-[data-flux-sidebar] [data-flux-navlist-group] > ul {
+
+[data-flux-sidebar] [data-flux-navlist-group]>div,
+[data-flux-sidebar] [data-flux-navlist-group]>ul {
     @apply bg-transparent;
 }
 
@@ -307,23 +327,28 @@ flux-sidebar,
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
 }
+
 flux-sidebar:hover,
 [data-flux-sidebar]:hover {
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
+
 flux-sidebar::-webkit-scrollbar,
 [data-flux-sidebar]::-webkit-scrollbar {
     width: 4px;
 }
+
 flux-sidebar::-webkit-scrollbar-track,
 [data-flux-sidebar]::-webkit-scrollbar-track {
     background: transparent;
 }
+
 flux-sidebar::-webkit-scrollbar-thumb,
 [data-flux-sidebar]::-webkit-scrollbar-thumb {
     background-color: transparent;
     border-radius: 999px;
 }
+
 flux-sidebar:hover::-webkit-scrollbar-thumb,
 [data-flux-sidebar]:hover::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.25);
@@ -332,6 +357,7 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
 .scrollbar-none::-webkit-scrollbar {
     display: none;
 }
+
 .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -345,4 +371,45 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
     float: left;
     height: 0;
     pointer-events: none;
+}
+
+/* TipTap dark mode — invert prose colors when dark class is active */
+.dark .tiptap {
+    color: var(--color-zinc-100);
+}
+
+.dark .tiptap h1,
+.dark .tiptap h2,
+.dark .tiptap h3,
+.dark .tiptap h4,
+.dark .tiptap h5,
+.dark .tiptap h6 {
+    color: var(--color-zinc-50);
+}
+
+.dark .tiptap strong {
+    color: var(--color-zinc-50);
+}
+
+.dark .tiptap a {
+    color: var(--color-blue-400);
+}
+
+.dark .tiptap blockquote {
+    color: var(--color-zinc-300);
+    border-left-color: var(--color-zinc-600);
+}
+
+.dark .tiptap code {
+    color: var(--color-zinc-200);
+    background-color: var(--color-zinc-800);
+}
+
+.dark .tiptap pre {
+    background-color: var(--color-zinc-800);
+    color: var(--color-zinc-200);
+}
+
+.dark .tiptap hr {
+    border-color: var(--color-zinc-700);
 }

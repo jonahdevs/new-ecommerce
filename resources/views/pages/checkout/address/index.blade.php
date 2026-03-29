@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use Livewire\Attributes\{Layout, Computed};
+use App\Services\CheckoutSession;
 
 new #[Layout('layouts.checkout')] class extends Component {
     public ?int $selectedAddress = null;
@@ -24,10 +25,29 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         // Multiple addresses — resolve which one to pre-select
-        $sessionAddress = session('checkout_address_id');
+        $checkoutSession = app(CheckoutSession::class);
+        $sessionAddress = $checkoutSession->getAddressId();
 
-        $this->selectedAddress = $sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists() ? $sessionAddress : $user->defaultAddress?->id ?? $addresses->first()->id;
+        $this->selectedAddress = $sessionAddress && $user->addresses()->where('id', $sessionAddress)->exists() 
+            ? $sessionAddress 
+            : $user->defaultAddress?->id ?? $addresses->first()->id;
     }
+
+    /**
+     * Handle address selection from wire:click
+     * Validates ownership before updating the selected address
+     */
+    public function setSelectedAddress(int $addressId): void
+    {
+        // Verify the address belongs to the current user
+        if (!auth()->user()->addresses()->where('id', $addressId)->exists()) {
+            $this->addError('selectedAddress', 'Invalid address selected.');
+            return;
+        }
+
+        $this->selectedAddress = $addressId;
+    }
+    
     #[Computed]
     public function addresses()
     {
@@ -46,7 +66,8 @@ new #[Layout('layouts.checkout')] class extends Component {
             return;
         }
 
-        session(['checkout_address_id' => $this->selectedAddress]);
+        // Use CheckoutSession to store the address ID consistently
+        app(CheckoutSession::class)->setAddressId($this->selectedAddress);
 
         $this->dispatch('notify', title: 'Address Selected', variant: 'success', message: 'Delivery address has been selected successfully');
 
@@ -101,7 +122,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                     @php $isSelected = $selectedAddress === $address->id; @endphp
 
                     <div wire:key="address-{{ $address->id }}"
-                        wire:click="$set('selectedAddress', {{ $address->id }})" @class([
+                        wire:click="setSelectedAddress({{ $address->id }})" @class([
                             'border rounded-lg flex flex-col overflow-hidden cursor-pointer transition-all',
                             'border-zinc-800 ring-1 ring-zinc-800' => $isSelected,
                             'border-zinc-200 hover:border-zinc-400' => !$isSelected,
@@ -162,12 +183,14 @@ new #[Layout('layouts.checkout')] class extends Component {
         </div>
     </flux:card>
 
-    <flux:card class="opacity-70 p-0 mb-4">
-        <div class="px-3 py-2 flex items-center gap-1">
-            <flux:icon.check-circle variant="solid" class="size-5 text-zinc-400" />
-            <flux:heading level="3">Payment Methods</flux:heading>
-        </div>
-    </flux:card>
+    @if (app(\App\Services\Payment\PaymentService::class)->isCustom())
+        <flux:card class="opacity-70 p-0 mb-4">
+            <div class="px-3 py-2 flex items-center gap-1">
+                <flux:icon.check-circle variant="solid" class="size-5 text-zinc-400" />
+                <flux:heading level="3">Payment Methods</flux:heading>
+            </div>
+        </flux:card>
+    @endif
 
     <flux:link :href="route('shop.index')" wire:navigate class="text-xs">
         Go back & continue shopping

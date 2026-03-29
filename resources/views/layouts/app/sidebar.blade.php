@@ -51,6 +51,10 @@
 
             {{-- Sales --}}
             <flux:navlist.group heading="Sales" class="grid">
+                <flux:navlist.item icon="document-text" wire:navigate :href="route('admin.quotations.index')"
+                    :current="request()->routeIs('admin.quotations.*')">Quotations
+                </flux:navlist.item>
+
                 <flux:navlist.item icon="shopping-cart" wire:navigate :href="route('admin.orders.index')"
                     :current="request()->routeIs('admin.orders.*')">Orders
                 </flux:navlist.item>

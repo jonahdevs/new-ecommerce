@@ -1,6 +1,7 @@
 <?php
 use App\Models\Product;
 use App\Livewire\Forms\Admin\ProductForm;
+use App\Settings\RegionalSettings;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Category;
@@ -52,6 +53,12 @@ new class extends Component {
                 'component' => static::class,
             ]);
         }
+    }
+
+    #[Computed]
+    public function regionalSettings(): RegionalSettings
+    {
+        return app(RegionalSettings::class);
     }
 
     #[Computed]
@@ -408,20 +415,20 @@ new class extends Component {
 
                         {{-- Shipping --}}
                         <div wire:cloak wire:show="activeTab == 'shipping'" class="space-y-5">
-                            <flux:input type="number" wire:model="form.weight" label=" Weight (kg)"
+                            <flux:input type="number" wire:model="form.weight" label="Weight ({{ $this->regionalSettings->weight_unit }})"
                                 placeholder="0.00" step="0.01" min="0" />
 
                             <flux:field>
-                                <flux:label>Dimensions</flux:label>
+                                <flux:label>Dimensions ({{ $this->regionalSettings->dimension_unit }})</flux:label>
 
                                 <flux:input.group>
-                                    <flux:input type="number" wire:model="form.length" placeholder="Length (0.00)"
+                                    <flux:input type="number" wire:model="form.length" placeholder="Length"
                                         step="0.01" min="0" />
 
-                                    <flux:input type="number" wire:model="form.width" placeholder="Width (0.00)"
+                                    <flux:input type="number" wire:model="form.width" placeholder="Width"
                                         step="0.01" min="0" />
 
-                                    <flux:input type="number" wire:model="form.height" placeholder="Height (0.00)"
+                                    <flux:input type="number" wire:model="form.height" placeholder="Height"
                                         step="0.01" min="0" />
                                 </flux:input.group>
 

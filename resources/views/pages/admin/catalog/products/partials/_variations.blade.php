@@ -1,3 +1,8 @@
+@php
+    $regionalSettings = app(\App\Settings\RegionalSettings::class);
+    $weightUnit = $regionalSettings->weight_unit;
+    $dimensionUnit = $regionalSettings->dimension_unit;
+@endphp
 <div x-data="{
     allCollapsed: false,
     init() {
@@ -335,10 +340,10 @@
 
                                 {{-- Shipping --}}
                                 <div class="grid grid-cols-2 gap-3">
-                                    <flux:input label="Weight (kg)" type="number" step="0.01"
+                                    <flux:input label="Weight ({{ $weightUnit }})" type="number" step="0.01"
                                         wire:model="variants.{{ $index }}.weight" />
                                     <flux:field>
-                                        <flux:label>Dimensions (L x W x H)</flux:label>
+                                        <flux:label>Dimensions - L x W x H ({{ $dimensionUnit }})</flux:label>
                                         <flux:input.group>
                                             <flux:input placeholder="Length"
                                                 wire:model="variants.{{ $index }}.length" />

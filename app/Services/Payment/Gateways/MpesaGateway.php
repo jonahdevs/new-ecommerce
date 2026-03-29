@@ -11,10 +11,12 @@ use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\DocumentService;
+use App\Services\InventoryService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
-use App\Settings\PaymentSettings;
+use App\Settings\MpesaSettings;
+use App\Settings\OrderSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -30,16 +32,15 @@ class MpesaGateway implements PaymentGateway
     private string $callbackUrl;
     private string $baseUrl;
 
-    public function __construct(PaymentSettings $settings)
+    public function __construct(MpesaSettings $settings)
     {
-        $this->isProduction = ($settings->mpesa_env
-            ?: config('services.mpesa.environment')) === 'production';
-
-        $this->consumerKey = $settings->mpesa_consumer_key ?: config('services.mpesa.consumer_key');
-        $this->consumerSecret = $settings->mpesa_consumer_secret ?: config('services.mpesa.consumer_secret');
-        $this->shortcode = $settings->mpesa_shortcode ?: config('services.mpesa.shortcode');
-        $this->passkey = $settings->mpesa_passkey ?: config('services.mpesa.passkey');
-        $this->callbackUrl = $settings->mpesa_callback_url ?: config('services.mpesa.callback_url');
+        // Use settings with config fallback
+        $this->isProduction = ($settings->environment ?: config('services.mpesa.environment', 'sandbox')) === 'live';
+        $this->consumerKey = $settings->consumer_key ?: config('services.mpesa.consumer_key');
+        $this->consumerSecret = $settings->consumer_secret ?: config('services.mpesa.consumer_secret');
+        $this->shortcode = $settings->shortcode ?: config('services.mpesa.shortcode', '');
+        $this->passkey = $settings->passkey ?: config('services.mpesa.passkey');
+        $this->callbackUrl = $settings->callback_url ?: config('services.mpesa.callback_url', '');
 
         $this->baseUrl = $this->isProduction
             ? 'https://api.safaricom.co.ke'
@@ -239,8 +240,20 @@ class MpesaGateway implements PaymentGateway
 
     private function restoreStock(Order $order): void
     {
-        foreach ($order->items()->with('product')->get() as $item) {
-            $item->product?->increment('stock_quantity', $item->quantity);
+        $inventoryService = app(InventoryService::class);
+        $orderSettings = app(OrderSettings::class);
+
+        if ($orderSettings->stock_reduce_on_order) {
+            // Stock was deducted on order, restore it
+            foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
+                $stockItem = $item->product_variant_id
+                    ? $item->variant
+                    : $item->product;
+                $stockItem?->increment('stock_quantity', $item->quantity);
+            }
+        } else {
+            // Stock was reserved, release reservations
+            $inventoryService->releaseReservation($order);
         }
     }
 

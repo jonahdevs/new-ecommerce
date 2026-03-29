@@ -2,12 +2,19 @@
 
 namespace App\Services;
 
-use App\Enums\OrdersStatus;
+use App\Enums\QuoteStatus;
+use App\Enums\OrderStatus;
+use App\Models\Quote;
 use App\Models\Order;
 use App\Notifications\QuoteAcceptedNotification;
+use App\Notifications\QuoteExpiringNotification;
 use App\Notifications\QuoteRejectedNotification;
 use App\Notifications\QuoteRequestedNotification;
 use App\Notifications\QuoteSentNotification;
+use App\Settings\CustomerNotificationSettings;
+use App\Settings\LocalizationSettings;
+use App\Settings\NotificationSettings;
+use App\Settings\QuotationSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,19 +22,61 @@ use Illuminate\Support\Facades\Notification;
 
 class QuotationService
 {
+    public function __construct(
+        private readonly LocalizationSettings $localization,
+        private readonly QuotationSettings $quotationSettings,
+        private readonly NotificationSettings $notificationSettings,
+        private readonly CustomerNotificationSettings $customerNotificationSettings,
+    ) {}
+
     // =========================================================================
     // ADMIN NOTIFICATION ROUTING
     // =========================================================================
 
     private function adminEmail(): string
     {
-        return config('services.quotation.admin_email', config('mail.from.address'));
+        // Priority: quotation-specific email > general notification email > mail from address
+        return $this->quotationSettings->admin_notification_email
+            ?? $this->notificationSettings->admin_notification_email
+            ?? config('mail.from.address');
     }
 
     private function notifyAdmin(mixed $notification): void
     {
         Notification::route('mail', $this->adminEmail())
             ->notify($notification);
+    }
+
+    // =========================================================================
+    // CHECK IF QUOTATIONS ARE ENABLED
+    // =========================================================================
+
+    public function isEnabled(): bool
+    {
+        return $this->quotationSettings->enabled;
+    }
+
+    public function allowsGuestQuotes(): bool
+    {
+        return $this->quotationSettings->allow_guest_quotes;
+    }
+
+    public function requiresPhone(): bool
+    {
+        return $this->quotationSettings->require_phone;
+    }
+
+    public function getDefaultValidityDays(): int
+    {
+        return $this->quotationSettings->default_validity_days;
+    }
+
+    public function getValidityRange(): array
+    {
+        return [
+            'min' => $this->quotationSettings->min_validity_days,
+            'max' => $this->quotationSettings->max_validity_days,
+        ];
     }
 
     // =========================================================================
@@ -47,15 +96,15 @@ class QuotationService
     // ]
     //
     // What it does:
-    //   1. Creates Order (document_type=quotation, quotation_type=product)
-    //   2. Creates OrderItems from basket with product snapshots
+    //   1. Creates Quote with status PENDING
+    //   2. Creates QuoteItems from basket with product snapshots
     //   3. Clears the session basket
     //   4. Calls notifyRequested() to alert admin
     //
-    // Returns the new Order so caller can redirect to confirmation page.
+    // Returns the new Quote so caller can redirect to confirmation page.
     // =========================================================================
 
-    public function createFromBasket(QuoteBasketService $basket, array $data): Order
+    public function createFromBasket(QuoteBasketService $basket, array $data): Quote
     {
         if ($basket->isEmpty()) {
             throw new \RuntimeException('Quote basket is empty.');
@@ -67,31 +116,31 @@ class QuotationService
             fn($item) => round($item['unit_price'] * $item['quantity'] * 100)
         );
 
-        $order = DB::transaction(function () use ($items, $subtotalCents, $data) {
+        $quote = DB::transaction(function () use ($items, $subtotalCents, $data) {
 
-            $order = Order::create([
-                'user_id'                 => Auth::id(),
-                'reference'               => Order::generateReference('quotation'),
-                'document_type'           => 'quotation',
-                'quotation_type'          => 'product',
-                'status'                  => OrdersStatus::PENDING_QUOTE->value,
-                'payment_status'          => 'pending',
-                'currency'                => 'KES',
-                'subtotal_cents'          => $subtotalCents,
-                'total_cents'             => $subtotalCents,
-                'preferred_county'        => $data['preferred_county'] ?? null,
-                'preferred_area'          => $data['preferred_area'] ?? null,
-                'customer_notes'          => $data['customer_notes'] ?? null,
-                'guest_info'              => Auth::check() ? null : [
+            $quote = Quote::create([
+                'user_id'          => Auth::id(),
+                'reference'        => Quote::generateReference(),
+                'status'           => QuoteStatus::PENDING,
+                'currency'         => $this->localization->currency,
+                'subtotal_cents'   => $subtotalCents,
+                'discount_cents'   => 0,
+                'shipping_cents'   => 0,
+                'tax_cents'        => 0,
+                'total_cents'      => $subtotalCents,
+                'preferred_county' => $data['preferred_county'] ?? null,
+                'preferred_area'   => $data['preferred_area'] ?? null,
+                'customer_notes'   => $data['customer_notes'] ?? null,
+                'guest_info'       => Auth::check() ? null : [
                     'name'  => $data['name'] ?? null,
                     'email' => $data['email'] ?? null,
                     'phone' => $data['phone'] ?? null,
                 ],
             ]);
 
-            $order->statusHistories()->create([
+            $quote->statusHistories()->create([
                 'from_status'     => null,
-                'to_status'       => OrdersStatus::PENDING_QUOTE->value,
+                'to_status'       => QuoteStatus::PENDING->value,
                 'changed_by_type' => 'user',
                 'notes'           => 'Quotation request submitted by customer.',
             ]);
@@ -102,15 +151,13 @@ class QuotationService
 
                 $unitPriceCents = (int) round($item['unit_price'] * 100);
 
-                $order->items()->create([
-                    'product_id'         => $product->id,
-                    'product_variant_id' => $variant?->id,
-                    'quantity'           => $item['quantity'],
-                    'unit_price_cents'   => $unitPriceCents,
-                    'unit_tax_cents'     => 0,
-                    'discount_cents'     => 0,
-                    'total_cents'        => $unitPriceCents * $item['quantity'],
-                    'product_snapshot'   => [
+                $quote->items()->create([
+                    'product_id'           => $product->id,
+                    'product_variant_id'   => $variant?->id,
+                    'quantity'             => $item['quantity'],
+                    'original_price_cents' => $unitPriceCents,
+                    'quoted_price_cents'   => null,
+                    'product_snapshot'     => [
                         'name'      => $product->name,
                         'sku'       => $variant?->sku ?? $product->sku,
                         'image_url' => $product->image_url,
@@ -124,30 +171,31 @@ class QuotationService
                 ]);
             }
 
-            return $order;
+            return $quote;
         });
 
         $basket->clear();
 
-        $this->notifyRequested($order);
+        $this->notifyRequested($quote);
 
-        return $order;
+        return $quote;
     }
 
     // =========================================================================
     // QUOTE REQUESTED (admin notification)
-    //
-    // Called after createFromBasket() and also after the delivery quotation
-    // checkout flow creates the order.
     // =========================================================================
 
-    public function notifyRequested(Order $order): void
+    public function notifyRequested(Quote $quote): void
     {
+        if (!$this->notificationSettings->notify_new_quote) {
+            return;
+        }
+
         try {
-            $this->notifyAdmin(new QuoteRequestedNotification($order));
+            $this->notifyAdmin(new QuoteRequestedNotification($quote));
         } catch (\Throwable $e) {
             Log::error('Failed to send QuoteRequestedNotification.', [
-                'order_id' => $order->id,
+                'quote_id' => $quote->id,
                 'error'    => $e->getMessage(),
             ]);
         }
@@ -167,36 +215,33 @@ class QuotationService
     // ]
     // =========================================================================
 
-    public function send(Order $order, array $pricing): Order
+    public function send(Quote $quote, array $pricing): Quote
     {
         $shippingCents = (int) round((float) ($pricing['shipping'] ?? 0) * 100);
         $validityDays  = max(1, (int) ($pricing['validity_days'] ?? 7));
         $note          = $pricing['note'] ?? null;
         $itemPrices    = $pricing['item_prices'] ?? [];
 
-        DB::transaction(function () use ($order, $shippingCents, $validityDays, $note, $itemPrices) {
+        DB::transaction(function () use ($quote, $shippingCents, $validityDays, $note, $itemPrices) {
 
-            if ($order->isProductQuotation() && !empty($itemPrices)) {
+            if (!empty($itemPrices)) {
                 $subtotalCents = 0;
 
-                foreach ($order->items as $item) {
+                foreach ($quote->items as $item) {
                     $newUnitPriceCents = isset($itemPrices[$item->id])
                         ? (int) round((float) $itemPrices[$item->id] * 100)
-                        : $item->unit_price_cents;
-
-                    $newItemTotal = $newUnitPriceCents * $item->quantity;
+                        : ($item->quoted_price_cents ?? $item->original_price_cents);
 
                     $item->update([
-                        'unit_price_cents' => $newUnitPriceCents,
-                        'total_cents'      => $newItemTotal,
+                        'quoted_price_cents' => $newUnitPriceCents,
                     ]);
 
-                    $subtotalCents += $newItemTotal;
+                    $subtotalCents += $newUnitPriceCents * $item->quantity;
                 }
 
-                $totalCents = max(0, $subtotalCents - $order->discount_cents + $shippingCents);
+                $totalCents = max(0, $subtotalCents - $quote->discount_cents + $shippingCents);
 
-                $order->update([
+                $quote->update([
                     'subtotal_cents' => $subtotalCents,
                     'shipping_cents' => $shippingCents,
                     'total_cents'    => $totalCents,
@@ -204,99 +249,156 @@ class QuotationService
             } else {
                 $totalCents = max(
                     0,
-                    $order->subtotal_cents - $order->discount_cents + $shippingCents
+                    $quote->subtotal_cents - $quote->discount_cents + $shippingCents
                 );
 
-                $order->update([
+                $quote->update([
                     'shipping_cents' => $shippingCents,
                     'total_cents'    => $totalCents,
                 ]);
             }
 
-            $order->update([
+            $quote->update([
                 'expires_at' => now()->addDays($validityDays),
                 'quoted_at'  => now(),
             ]);
 
-            $order->transitionTo(
-                OrdersStatus::QUOTE_SENT,
+            $quote->transitionTo(
+                QuoteStatus::SENT,
                 notes: $note ?: "Quotation priced and sent to customer. Valid for {$validityDays} day(s).",
                 changedByType: 'user'
             );
         });
 
-        $order->refresh();
+        $quote->refresh();
 
-        app(DocumentService::class)->generateQuotation($order);
+        app(DocumentService::class)->generateQuotation($quote);
 
-        try {
-            // Use customerEmail() so guest quotations also get notified
-            if ($order->user) {
-                $order->user->notify(new QuoteSentNotification($order));
-            } else {
-                Notification::route('mail', $order->customerEmail())
-                    ->notify(new QuoteSentNotification($order));
+        // Send notification to customer if enabled
+        if ($this->customerNotificationSettings->quote_sent) {
+            try {
+                if ($quote->user) {
+                    $quote->user->notify(new QuoteSentNotification($quote));
+                } else {
+                    Notification::route('mail', $quote->customerEmail())
+                        ->notify(new QuoteSentNotification($quote));
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to send QuoteSentNotification.', [
+                    'quote_id' => $quote->id,
+                    'error'    => $e->getMessage(),
+                ]);
             }
-        } catch (\Throwable $e) {
-            Log::error('Failed to send QuoteSentNotification.', [
-                'order_id' => $order->id,
-                'error'    => $e->getMessage(),
-            ]);
         }
 
-        return $order;
+        return $quote;
     }
 
     // =========================================================================
     // ACCEPT QUOTE (customer → sales order)
     // =========================================================================
 
-    public function accept(Order $order): Order
+    public function accept(Quote $quote): Order
     {
-        $salesOrder = DB::transaction(function () use ($order) {
-            $order->transitionTo(
-                OrdersStatus::QUOTE_ACCEPTED,
+        $order = DB::transaction(function () use ($quote) {
+            $quote->transitionTo(
+                QuoteStatus::ACCEPTED,
                 notes: 'Customer accepted the quotation.',
                 changedByType: 'user'
             );
 
-            return $order->convertToSalesOrder();
+            $quote->update(['accepted_at' => now()]);
+
+            return $this->convertToOrder($quote);
         });
 
-        try {
-            $this->notifyAdmin(new QuoteAcceptedNotification($order, $salesOrder));
-        } catch (\Throwable $e) {
-            Log::error('Failed to send QuoteAcceptedNotification.', [
-                'quotation_id'   => $order->id,
-                'sales_order_id' => $salesOrder->id,
-                'error'          => $e->getMessage(),
+        // Send notification to admin if enabled
+        if ($this->notificationSettings->notify_quote_accepted) {
+            try {
+                $this->notifyAdmin(new QuoteAcceptedNotification($quote, $order));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send QuoteAcceptedNotification.', [
+                    'quote_id' => $quote->id,
+                    'order_id' => $order->id,
+                    'error'    => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $order;
+    }
+
+    // =========================================================================
+    // CONVERT QUOTE TO ORDER
+    // =========================================================================
+
+    private function convertToOrder(Quote $quote): Order
+    {
+        $order = Order::create([
+            'user_id'        => $quote->user_id,
+            'quote_id'       => $quote->id,
+            'reference'      => Order::generateReference(),
+            'status'         => OrderStatus::PENDING,
+            'currency'       => $quote->currency,
+            'subtotal_cents' => $quote->subtotal_cents,
+            'discount_cents' => $quote->discount_cents,
+            'shipping_cents' => $quote->shipping_cents,
+            'tax_cents'      => $quote->tax_cents,
+            'total_cents'    => $quote->total_cents,
+        ]);
+
+        foreach ($quote->items as $quoteItem) {
+            $order->items()->create([
+                'product_id'         => $quoteItem->product_id,
+                'product_variant_id' => $quoteItem->product_variant_id,
+                'quantity'           => $quoteItem->quantity,
+                'unit_price_cents'   => $quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents,
+                'unit_tax_cents'     => 0,
+                'discount_cents'     => 0,
+                'total_cents'        => ($quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents) * $quoteItem->quantity,
+                'product_snapshot'   => $quoteItem->product_snapshot,
             ]);
         }
 
-        return $salesOrder;
+        $order->statusHistories()->create([
+            'from_status'     => null,
+            'to_status'       => OrderStatus::PENDING->value,
+            'changed_by_type' => 'system',
+            'notes'           => "Order created from accepted quotation {$quote->reference}.",
+        ]);
+
+        return $order;
     }
 
     // =========================================================================
     // REJECT QUOTE (customer → terminal)
     // =========================================================================
 
-    public function reject(Order $order, ?string $note = null): void
+    public function reject(Quote $quote, ?string $reason = null): void
     {
-        DB::transaction(function () use ($order, $note) {
-            $order->transitionTo(
-                OrdersStatus::QUOTE_REJECTED,
-                notes: $note ?: 'Customer rejected the quotation.',
+        DB::transaction(function () use ($quote, $reason) {
+            $quote->transitionTo(
+                QuoteStatus::REJECTED,
+                notes: $reason ?: 'Customer rejected the quotation.',
                 changedByType: 'user'
             );
+
+            $quote->update([
+                'rejected_at'      => now(),
+                'rejection_reason' => $reason,
+            ]);
         });
 
-        try {
-            $this->notifyAdmin(new QuoteRejectedNotification($order));
-        } catch (\Throwable $e) {
-            Log::error('Failed to send QuoteRejectedNotification.', [
-                'order_id' => $order->id,
-                'error'    => $e->getMessage(),
-            ]);
+        // Send notification to admin if enabled
+        if ($this->notificationSettings->notify_quote_rejected) {
+            try {
+                $this->notifyAdmin(new QuoteRejectedNotification($quote));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send QuoteRejectedNotification.', [
+                    'quote_id' => $quote->id,
+                    'error'    => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -304,11 +406,11 @@ class QuotationService
     // CANCEL QUOTE (admin → terminal)
     // =========================================================================
 
-    public function cancel(Order $order, ?string $note = null): void
+    public function cancel(Quote $quote, ?string $note = null): void
     {
-        DB::transaction(function () use ($order, $note) {
-            $order->transitionTo(
-                OrdersStatus::CANCELLED,
+        DB::transaction(function () use ($quote, $note) {
+            $quote->transitionTo(
+                QuoteStatus::CANCELLED,
                 notes: $note ?: 'Cancelled by admin.',
                 changedByType: 'user'
             );
@@ -321,19 +423,22 @@ class QuotationService
 
     public function expireOverdue(): int
     {
-        $expired = Order::where('document_type', 'quotation')
-            ->where('status', OrdersStatus::QUOTE_SENT->value)
+        if (!$this->quotationSettings->auto_expire_enabled) {
+            return 0;
+        }
+
+        $expired = Quote::where('status', QuoteStatus::SENT)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', now())
             ->get();
 
         $count = 0;
 
-        foreach ($expired as $order) {
+        foreach ($expired as $quote) {
             try {
-                DB::transaction(function () use ($order) {
-                    $order->transitionTo(
-                        OrdersStatus::QUOTE_EXPIRED,
+                DB::transaction(function () use ($quote) {
+                    $quote->transitionTo(
+                        QuoteStatus::EXPIRED,
                         notes: 'Quote expired — no customer response before validity period ended.',
                         changedByType: 'system'
                     );
@@ -341,7 +446,56 @@ class QuotationService
                 $count++;
             } catch (\Throwable $e) {
                 Log::error('Failed to expire quotation.', [
-                    'order_id' => $order->id,
+                    'quote_id' => $quote->id,
+                    'error'    => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $count;
+    }
+
+    // =========================================================================
+    // SEND EXPIRING REMINDERS (system → customer, called by scheduled command)
+    //
+    // Sends reminder emails to customers whose quotes are expiring soon.
+    // Only sends one reminder per quote (tracks via reminder_sent_at column).
+    // =========================================================================
+
+    public function sendExpiringReminders(): int
+    {
+        if (!$this->customerNotificationSettings->quote_expiring_reminder) {
+            return 0;
+        }
+
+        $daysBeforeExpiry = $this->customerNotificationSettings->quote_expiring_days;
+        $reminderDate = now()->addDays($daysBeforeExpiry);
+
+        // Find quotes expiring within the reminder window that haven't been reminded
+        $quotes = Quote::where('status', QuoteStatus::SENT)
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', $reminderDate)
+            ->where('expires_at', '>', now())
+            ->whereNull('reminder_sent_at')
+            ->with('user')
+            ->get();
+
+        $count = 0;
+
+        foreach ($quotes as $quote) {
+            try {
+                if ($quote->user) {
+                    $quote->user->notify(new QuoteExpiringNotification($quote));
+                } else {
+                    Notification::route('mail', $quote->customerEmail())
+                        ->notify(new QuoteExpiringNotification($quote));
+                }
+
+                $quote->update(['reminder_sent_at' => now()]);
+                $count++;
+            } catch (\Throwable $e) {
+                Log::error('Failed to send QuoteExpiringNotification.', [
+                    'quote_id' => $quote->id,
                     'error'    => $e->getMessage(),
                 ]);
             }
@@ -359,15 +513,14 @@ class QuotationService
 
     public function attachGuestQuotes(string $email, int $userId): int
     {
-        $orphaned = Order::where('document_type', 'quotation')
-            ->whereNull('user_id')
+        $orphaned = Quote::whereNull('user_id')
             ->whereJsonContains('guest_info->email', $email)
             ->get();
 
         $count = 0;
 
-        foreach ($orphaned as $order) {
-            $order->update([
+        foreach ($orphaned as $quote) {
+            $quote->update([
                 'user_id'    => $userId,
                 'guest_info' => null,
             ]);

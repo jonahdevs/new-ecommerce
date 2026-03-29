@@ -7,10 +7,18 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use App\Services\CompareService;
 use App\Services\CartService;
+use App\Settings\RegionalSettings;
 
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
+
+    #[Computed]
+    public function regionalSettings(): RegionalSettings
+    {
+        return app(RegionalSettings::class);
+    }
+
     #[Computed]
     #[On('compare-updated')]
     public function products()
@@ -341,7 +349,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                     @foreach ($products as $product)
                                         <td
                                             class="p-4 text-center text-sm text-zinc-600 dark:text-zinc-400 border-l dark:border-zinc-700">
-                                            {{ $product->weight ? $product->weight . ' kg' : 'N/A' }}
+                                            {{ $product->weight ? $product->weight . ' ' . $this->regionalSettings->weight_unit : 'N/A' }}
                                         </td>
                                     @endforeach
                                 </tr>
@@ -360,7 +368,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                             class="p-4 text-center text-sm text-zinc-600 dark:text-zinc-400 border-l dark:border-zinc-700">
                                             @if ($product->length || $product->width || $product->height)
                                                 {{ $product->length ?? 'N/A' }} x {{ $product->width ?? 'N/A' }} x
-                                                {{ $product->height ?? 'N/A' }} cm
+                                                {{ $product->height ?? 'N/A' }} {{ $this->regionalSettings->dimension_unit }}
                                             @else
                                                 N/A
                                             @endif

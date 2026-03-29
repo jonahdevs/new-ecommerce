@@ -12,10 +12,13 @@ use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\DocumentService;
+use App\Services\InventoryService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
-use App\Settings\PaymentSettings;
+use App\Settings\LocalizationSettings;
+use App\Settings\OrderSettings;
+use App\Settings\PesawiseSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -27,16 +30,22 @@ class PesawiseGateway implements PaymentGateway
     private string $apiSecret;
     private string $balanceId;
     private bool $isProduction;
+    private string $currency;
+    private bool $stockReduceOnOrder;
 
-    public function __construct(PaymentSettings $settings)
-    {
-        $this->isProduction = ($settings->pesawise_env
-            ?: config('services.pesawise.pesawise_mode_production')) === 'production';
-
-        $this->apiKey = $settings->pesawise_api_key ?: config('services.pesawise.api_key');
-        $this->apiSecret = $settings->pesawise_api_secret ?: config('services.pesawise.api_secret');
-        $this->balanceId = $settings->pesawise_account_number ?: config('services.pesawise.balance_id_kes');
+    public function __construct(
+        PesawiseSettings $settings,
+        LocalizationSettings $localization,
+        OrderSettings $orderSettings,
+    ) {
+        // Use settings with config fallback
+        $this->isProduction = ($settings->environment ?: config('services.pesawise.environment', 'sandbox')) === 'live';
+        $this->apiKey = $settings->api_key ?: config('services.pesawise.api_key', '');
+        $this->apiSecret = $settings->api_secret ?: config('services.pesawise.api_secret', '');
+        $this->balanceId = $settings->account_number ?: config('services.pesawise.balance_id_kes', '');
         $this->apiUrl = config('services.pesawise.api_url', 'https://api.pesawise.xyz/api');
+        $this->currency = $localization->currency;
+        $this->stockReduceOnOrder = $orderSettings->stock_reduce_on_order;
     }
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
@@ -160,6 +169,18 @@ class PesawiseGateway implements PaymentGateway
         );
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
 
+        // Deduct stock if using reservation pattern (stock not deducted on order)
+        if (!$this->stockReduceOnOrder) {
+            try {
+                app(InventoryService::class)->deductStock($order);
+            } catch (\Exception $e) {
+                Log::error('Failed to deduct stock after payment', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         app(DocumentService::class)->generateInvoice($order);
         app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
@@ -238,8 +259,19 @@ class PesawiseGateway implements PaymentGateway
 
     private function restoreStock(Order $order): void
     {
-        foreach ($order->items()->with('product')->get() as $item) {
-            $item->product?->increment('stock_quantity', $item->quantity);
+        $inventoryService = app(InventoryService::class);
+
+        if ($this->stockReduceOnOrder) {
+            // Stock was deducted on order, restore it
+            foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
+                $stockItem = $item->product_variant_id
+                    ? $item->variant
+                    : $item->product;
+                $stockItem?->increment('stock_quantity', $item->quantity);
+            }
+        } else {
+            // Stock was reserved, release reservations
+            $inventoryService->releaseReservation($order);
         }
     }
 
@@ -248,7 +280,7 @@ class PesawiseGateway implements PaymentGateway
         return [
             'amount' => $order->total_cents / 100,
             'customerName' => $this->resolveCustomerName($order),
-            'currency' => 'KES',
+            'currency' => $this->currency,
             'externalId' => $order->reference,
             'description' => "Payment for Order #{$order->reference}",
             'balanceId' => $this->balanceId,

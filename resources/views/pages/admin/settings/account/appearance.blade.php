@@ -7,8 +7,6 @@ new class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
     <flux:heading class="sr-only">{{ __('Appearance Settings') }}</flux:heading>
 
     <x-pages::admin.settings.layout :heading="__('Appearance')" :subheading="__('Update the appearance settings for your account')">

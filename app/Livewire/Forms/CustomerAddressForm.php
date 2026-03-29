@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Address;
 use App\Models\Area;
 use App\Models\County;
+use App\Models\ShippingZone;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -32,9 +33,28 @@ class CustomerAddressForm extends Form
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'phone_number' => ['required', 'string', 'regex:/^[0-9\s]{9,12}$/'],
-            'alternative_phone_number' => ['nullable', 'string', 'regex:/^[0-9\s]{9,12}$/'],
-            'county_id' => ['required', 'exists:counties,id'],
+            // Phone mask is "999 999 999" (9 digits + 2 spaces = 11 chars)
+            // Regex allows 9-12 chars with digits and spaces
+            'phone_number' => ['required', 'string', 'regex:/^[0-9]{3}\s?[0-9]{3}\s?[0-9]{3}$/'],
+            'alternative_phone_number' => ['nullable', 'string', 'regex:/^[0-9]{3}\s?[0-9]{3}\s?[0-9]{3}$/'],
+            'county_id' => [
+                'required',
+                'exists:counties,id',
+                function ($attribute, $value, $fail) {
+                    // Validate that the county has a shipping zone configured
+                    $zoneId = $this->resolveShippingZone();
+                    if (!$zoneId) {
+                        $fail('Delivery is not available in this county. Please select a different location or contact support.');
+                        return;
+                    }
+                    
+                    // Validate the zone is active
+                    $zone = ShippingZone::find($zoneId);
+                    if (!$zone || $zone->status->value !== 'active') {
+                        $fail('Delivery is temporarily unavailable in this area. Please try again later or contact support.');
+                    }
+                },
+            ],
             'area_id' => ['nullable', 'exists:areas,id'],
             'address_text' => [
                 Rule::requiredIf(fn() => !$this->latitude || !$this->longitude),

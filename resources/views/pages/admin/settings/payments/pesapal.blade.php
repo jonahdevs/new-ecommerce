@@ -17,10 +17,10 @@ new #[Title('PesaPal Settings')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('PesaPal settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('PesaPal settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save PesaPal settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -30,7 +30,7 @@ new #[Title('PesaPal Settings')] class extends Component {
         <form wire:submit="save" class="space-y-6">
 
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3 flex items-center justify-between">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3 flex items-center justify-between">
                     <flux:heading>{{ __('PesaPal status') }}</flux:heading>
                     <flux:checkbox wire:model.live="form.enabled" label="{{ __('Enabled') }}" />
                 </div>
@@ -47,7 +47,7 @@ new #[Title('PesaPal Settings')] class extends Component {
 
             @if ($form->enabled)
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('API credentials') }}</flux:heading>
                         <flux:subheading>
                             {{ __('Credentials are encrypted and stored securely. Leave blank to keep existing values.') }}
@@ -69,7 +69,7 @@ new #[Title('PesaPal Settings')] class extends Component {
                 </flux:card>
 
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('Callback') }}</flux:heading>
                     </div>
                     <div class="p-5">

@@ -5,26 +5,26 @@ use Livewire\Component;
 use Livewire\Attributes\Title;
 
 new #[Title('Maintenance Settings')] class extends Component {
-    public bool $enabled = false;
-    public string $message = '';
-    public string $scheduled_end = '';
-    public string $contact_email = '';
+    public bool $maintenance_mode = false;
+    public string $maintenance_message = '';
+    public string $maintenance_allowed_ips = '';
+    public string $maintenance_secret = '';
 
     public function mount(MaintenanceSettings $settings): void
     {
-        $this->enabled = $settings->enabled;
-        $this->message = $settings->message;
-        $this->scheduled_end = $settings->scheduled_end ?? '';
-        $this->contact_email = $settings->contact_email ?? '';
+        $this->maintenance_mode = $settings->maintenance_mode;
+        $this->maintenance_message = $settings->maintenance_message ?? '';
+        $this->maintenance_allowed_ips = $settings->maintenance_allowed_ips ?? '';
+        $this->maintenance_secret = $settings->maintenance_secret ?? '';
     }
 
     public function rules(): array
     {
         return [
-            'enabled' => ['boolean'],
-            'message' => ['required', 'string', 'max:500'],
-            'scheduled_end' => ['nullable', 'date', 'after:now'],
-            'contact_email' => ['nullable', 'email'],
+            'maintenance_mode' => ['boolean'],
+            'maintenance_message' => ['nullable', 'string', 'max:500'],
+            'maintenance_allowed_ips' => ['nullable', 'string', 'max:500'],
+            'maintenance_secret' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -33,23 +33,23 @@ new #[Title('Maintenance Settings')] class extends Component {
         $this->validate();
 
         try {
-            $settings->enabled = $this->enabled;
-            $settings->message = $this->message;
-            $settings->scheduled_end = $this->scheduled_end ?: null;
-            $settings->contact_email = $this->contact_email ?: null;
+            $settings->maintenance_mode = $this->maintenance_mode;
+            $settings->maintenance_message = $this->maintenance_message ?: null;
+            $settings->maintenance_allowed_ips = $this->maintenance_allowed_ips ?: null;
+            $settings->maintenance_secret = $this->maintenance_secret ?: null;
             $settings->save();
 
-            $this->dispatch('notify', variant: 'success', message: $this->enabled ? 'Maintenance mode enabled. Customers will see the maintenance page.' : 'Maintenance mode disabled. Store is live.');
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: $this->maintenance_mode
+                ? __('Maintenance mode enabled. Customers will see the maintenance page.')
+                : __('Maintenance mode disabled. Store is live.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save maintenance settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
 
 <div>
-    @include('partials.settings-heading')
-
     <x-pages::admin.settings.layout :heading="__('Maintenance')" :subheading="__('Control your store\'s maintenance mode')">
         <form wire:submit="save" class="space-y-6">
 
@@ -57,31 +57,31 @@ new #[Title('Maintenance Settings')] class extends Component {
             <div class="space-y-4">
 
                 {{-- Active warning --}}
-                @if ($enabled)
+                @if ($maintenance_mode)
                     <div
                         class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-4">
                         <flux:icon name="exclamation-triangle"
                             class="size-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
                         <div>
                             <flux:text class="text-sm font-medium text-red-700 dark:text-red-400">
-                                Maintenance mode is currently active
+                                {{ __('Maintenance mode is currently active') }}
                             </flux:text>
                             <flux:text class="text-xs text-red-600 dark:text-red-400 mt-0.5">
-                                Customers are seeing the maintenance page. Only staff can access the store.
+                                {{ __('Customers are seeing the maintenance page. Only staff can access the store.') }}
                             </flux:text>
                         </div>
                     </div>
                 @endif
 
                 <div
-                    class="flex items-start justify-between gap-4 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+                    class="flex items-start justify-between gap-4 rounded-lg border border-zinc-200 dark:border-zinc-600 p-4">
                     <div>
-                        <flux:text class="text-sm font-medium">Enable Maintenance Mode</flux:text>
+                        <flux:text class="text-sm font-medium">{{ __('Enable Maintenance Mode') }}</flux:text>
                         <flux:text class="text-xs text-zinc-400 mt-0.5">
-                            Customers will see the maintenance page. Staff can still access the store normally.
+                            {{ __('Customers will see the maintenance page. Staff can still access the store normally.') }}
                         </flux:text>
                     </div>
-                    <flux:switch wire:model.live="enabled" />
+                    <flux:switch wire:model.live="maintenance_mode" />
                 </div>
             </div>
 
@@ -90,40 +90,38 @@ new #[Title('Maintenance Settings')] class extends Component {
             {{-- Message --}}
             <flux:card class="p-0">
                 <div class="px-3 py-2 border-b">
-                    <flux:heading>Maintenance Message</flux:heading>
+                    <flux:heading>{{ __('Maintenance message') }}</flux:heading>
                 </div>
 
                 <div class="p-5">
-                    <flux:textarea label="Message" wire:model="message" rows="3"
-                        description:trailing="Shown to customers on the maintenance page."
-                        placeholder="We are currently performing scheduled maintenance. We will be back shortly." />
+                    <flux:textarea label="{{ __('Message') }}" wire:model="maintenance_message" rows="3"
+                        description:trailing="{{ __('Shown to customers on the maintenance page.') }}"
+                        placeholder="{{ __('We are currently performing scheduled maintenance. We will be back shortly.') }}" />
                 </div>
             </flux:card>
 
-            {{-- Schedule --}}
+            {{-- Access --}}
             <flux:card class="p-0">
                 <div class="border-b px-3 py-2">
-                    <flux:subheading class="font-medium">Schedule</flux:subheading>
+                    <flux:heading>{{ __('Bypass access') }}</flux:heading>
                 </div>
 
-                <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {{-- Expected End Time --}}
-                    <flux:input label="Expected End Time (Optional)"
-                        description:trailing="If set, customers will see when the store is expected to be back"
-                        wire:model="scheduled_end" type="datetime-local" />
+                <div class="p-5 space-y-5">
+                    <flux:input label="{{ __('Allowed IPs') }}" wire:model="maintenance_allowed_ips"
+                        placeholder="{{ __('e.g. 192.168.1.1, 10.0.0.1') }}"
+                        description="{{ __('Comma-separated IP addresses that can bypass maintenance mode') }}" />
 
-                    {{-- Contact Email --}}
-                    <flux:input label="Contact Email" wire:model="contact_email" type="email"
-                        description:trailing="Customers can reach out to this email during maintenance."
-                        placeholder="hello@sheffield.com" />
+                    <flux:input label="{{ __('Secret bypass token') }}" wire:model="maintenance_secret"
+                        placeholder="{{ __('e.g. my-secret-token') }}"
+                        description="{{ __('Visitors can bypass maintenance by visiting /my-secret-token') }}" />
                 </div>
             </flux:card>
 
             <flux:separator />
 
             <div class="flex justify-end">
-                <flux:button type="submit" :variant="$enabled ? 'danger' : 'primary'" class="cursor-pointer">
-                    {{ $enabled ? 'Save & Keep Maintenance Active' : 'Save Changes' }}
+                <flux:button type="submit" :variant="$maintenance_mode ? 'danger' : 'primary'" class="cursor-pointer">
+                    {{ $maintenance_mode ? __('Save & Keep Maintenance Active') : __('Save Changes') }}
                 </flux:button>
             </div>
 

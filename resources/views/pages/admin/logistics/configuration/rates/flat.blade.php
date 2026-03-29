@@ -6,6 +6,7 @@ use App\Models\ShippingRate;
 use App\Models\ShippingZone;
 use App\Livewire\Forms\Admin\FlatRateCellForm;
 use App\Livewire\Forms\Admin\FlatRateTierForm;
+use App\Settings\RegionalSettings;
 use Livewire\Attributes\{Title, Computed, Url};
 use Livewire\Component;
 use Flux\Flux;
@@ -18,6 +19,12 @@ new #[Title('Flat Rates')] class extends Component {
     public string $selectedMethodId = '';
 
     public bool $showHistory = false;
+
+    #[Computed]
+    public function regionalSettings(): RegionalSettings
+    {
+        return app(RegionalSettings::class);
+    }
 
     #[Computed]
     public function flatMethods()
@@ -381,11 +388,11 @@ new #[Title('Flat Rates')] class extends Component {
         <form wire:submit="saveTier" class="space-y-4">
 
             <div class="grid grid-cols-3 gap-4">
-                <flux:input wire:model="tierForm.min_weight" label="Min Weight (Kg)" type="number" min="0"
+                <flux:input wire:model="tierForm.min_weight" label="Min Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
                     step="0.01" placeholder="0" />
-                <flux:input wire:model="tierForm.max_weight" label="Max Weight (Kg)" type="number" min="0"
+                <flux:input wire:model="tierForm.max_weight" label="Max Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
                     step="0.01" placeholder="Leave blank for XL" />
-                <flux:input wire:model="tierForm.weight_label" label="Label" placeholder="e.g. Small (0–5 Kgs)"
+                <flux:input wire:model="tierForm.weight_label" label="Label" placeholder="e.g. Small (0–5 {{ $this->regionalSettings->weight_unit }})"
                     class="col-span-3" />
             </div>
 

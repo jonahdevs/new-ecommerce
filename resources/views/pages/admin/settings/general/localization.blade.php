@@ -18,10 +18,10 @@ new #[Title('Localization')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Localization settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Localization settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save localization settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 
@@ -39,7 +39,7 @@ new #[Title('Localization')] class extends Component {
 
             {{-- Currency --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Currency') }}</flux:heading>
                 </div>
 
@@ -94,7 +94,7 @@ new #[Title('Localization')] class extends Component {
 
             {{-- Locale --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Locale') }}</flux:heading>
                 </div>
 

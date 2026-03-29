@@ -122,8 +122,8 @@ Route::middleware(['auth', 'customer', 'verified'])
 
         Route::prefix('quotations')->name('quotations.')->group(function () {
             Route::livewire('/', 'pages::customer.quotations.index')->name('index');
-            Route::livewire('/{order}', 'pages::customer.quotations.show')->name('show');
-            Route::get('/{order}/pdf', QuotationPdfController::class)->name('pdf');
+            Route::livewire('/{quote}', 'pages::customer.quotations.show')->name('show');
+            Route::get('/{quote}/pdf', QuotationPdfController::class)->name('pdf');
         });
 
         // Address Book
@@ -151,7 +151,11 @@ Route::middleware(['auth', 'staff', 'verified'])
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::livewire('/', 'pages::admin.sales.orders.index')->name('index');
             Route::livewire('/{order}', 'pages::admin.sales.orders.show')->name('show');
-            Route::livewire('/quotations/{order}', 'pages::admin.sales.quotations.show')->name('quotations.show');
+        });
+
+        Route::prefix('quotations')->name('quotations.')->group(function () {
+            Route::livewire('/', 'pages::admin.sales.quotations.index')->name('index');
+            Route::livewire('/{quote}', 'pages::admin.sales.quotations.show')->name('show');
         });
 
 

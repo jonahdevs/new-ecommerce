@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Admin;
 
-use App\Enums\OrdersStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\QuoteStatus;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Quote;
 use App\Models\User;
 use Livewire\Attributes\{Computed, Title};
 use Livewire\Component;
@@ -54,10 +56,9 @@ new #[Title('Dashboard')] class extends Component {
     public function needsAttention(): array
     {
         return [
-            'pending_orders' => Order::where('document_type', 'sales_order')->where('status', OrdersStatus::PENDING->value)->count(),
-            'pending_quotes' => Order::where('document_type', 'quotation')->where('status', OrdersStatus::PENDING_QUOTE->value)->count(),
-            'expiring_quotes' => Order::where('document_type', 'quotation')
-                ->where('status', OrdersStatus::QUOTE_SENT->value)
+            'pending_orders' => Order::where('status', OrderStatus::PENDING->value)->count(),
+            'pending_quotes' => Quote::where('status', QuoteStatus::PENDING->value)->count(),
+            'expiring_quotes' => Quote::where('status', QuoteStatus::SENT->value)
                 ->whereNotNull('expires_at')
                 ->where('expires_at', '<=', now()->addHours(48))
                 ->where('expires_at', '>', now())
@@ -70,7 +71,7 @@ new #[Title('Dashboard')] class extends Component {
     {
         [$from, $to] = $this->dateRange;
 
-        $base = Order::where('document_type', 'sales_order')->whereBetween('created_at', [$from, $to]);
+        $base = Order::whereBetween('created_at', [$from, $to]);
         $revenue = (clone $base)->where('payment_status', PaymentStatus::PAID->value)->sum('total_cents') / 100;
         $count = (clone $base)->count();
         $paid = (clone $base)->where('payment_status', PaymentStatus::PAID->value)->count();
@@ -80,7 +81,7 @@ new #[Title('Dashboard')] class extends Component {
             ->subSeconds($diff + 1)
             ->startOfDay();
         $prevTo = Carbon::parse($this->dateFrom)->subSecond()->endOfDay();
-        $prevBase = Order::where('document_type', 'sales_order')->whereBetween('created_at', [$prevFrom, $prevTo]);
+        $prevBase = Order::whereBetween('created_at', [$prevFrom, $prevTo]);
         $prevRevenue = (clone $prevBase)->where('payment_status', PaymentStatus::PAID->value)->sum('total_cents') / 100;
         $prevCount = (clone $prevBase)->count();
 
@@ -98,16 +99,16 @@ new #[Title('Dashboard')] class extends Component {
     public function quotationStats(): array
     {
         [$from, $to] = $this->dateRange;
-        $base = Order::where('document_type', 'quotation')->whereBetween('created_at', [$from, $to]);
-        $accepted = (clone $base)->where('status', OrdersStatus::QUOTE_ACCEPTED->value)->count();
-        $rejected = (clone $base)->where('status', OrdersStatus::QUOTE_REJECTED->value)->count();
-        $expired = (clone $base)->where('status', OrdersStatus::QUOTE_EXPIRED->value)->count();
+        $base = Quote::whereBetween('created_at', [$from, $to]);
+        $accepted = (clone $base)->where('status', QuoteStatus::ACCEPTED->value)->count();
+        $rejected = (clone $base)->where('status', QuoteStatus::REJECTED->value)->count();
+        $expired = (clone $base)->where('status', QuoteStatus::EXPIRED->value)->count();
         $resolved = $accepted + $rejected + $expired;
 
         return [
             'total' => (clone $base)->count(),
-            'pending_admin' => (clone $base)->where('status', OrdersStatus::PENDING_QUOTE->value)->count(),
-            'sent' => (clone $base)->where('status', OrdersStatus::QUOTE_SENT->value)->count(),
+            'pending_admin' => (clone $base)->where('status', QuoteStatus::PENDING->value)->count(),
+            'sent' => (clone $base)->where('status', QuoteStatus::SENT->value)->count(),
             'accepted' => $accepted,
             'conversion_rate' => $resolved > 0 ? round(($accepted / $resolved) * 100, 1) : null,
         ];
@@ -141,7 +142,7 @@ new #[Title('Dashboard')] class extends Component {
         return [
             'total' => $total,
             'new' => $new,
-            'returning' => User::customer()->whereHas('orders', fn($q) => $q->where('document_type', 'sales_order'), '>=', 2)->count(),
+            'returning' => User::customer()->has('orders', '>=', 2)->count(),
             'new_trend' => $prevNew > 0 ? round((($new - $prevNew) / $prevNew) * 100, 1) : null,
         ];
     }
@@ -164,8 +165,7 @@ new #[Title('Dashboard')] class extends Component {
         }
 
         // Revenue (paid orders)
-        $revenueRows = Order::where('document_type', 'sales_order')
-            ->where('payment_status', PaymentStatus::PAID->value)
+        $revenueRows = Order::where('payment_status', PaymentStatus::PAID->value)
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw("SUM(total_cents) / 100 as revenue, {$groupBy} as period")
             ->groupBy('period')
@@ -173,16 +173,14 @@ new #[Title('Dashboard')] class extends Component {
             ->pluck('revenue', 'period');
 
         // Order counts (all statuses)
-        $orderRows = Order::where('document_type', 'sales_order')
-            ->whereBetween('created_at', [$from, $to])
+        $orderRows = Order::whereBetween('created_at', [$from, $to])
             ->selectRaw("COUNT(*) as cnt, {$groupBy} as period")
             ->groupBy('period')
             ->orderBy('period')
             ->pluck('cnt', 'period');
 
         // Cancelled/failed as "refunds" proxy
-        $refundRows = Order::where('document_type', 'sales_order')
-            ->whereIn('status', [OrdersStatus::CANCELLED->value, OrdersStatus::RETURNED->value])
+        $refundRows = Order::whereIn('status', [OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value])
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw("COUNT(*) as cnt, {$groupBy} as period")
             ->groupBy('period')
@@ -212,8 +210,7 @@ new #[Title('Dashboard')] class extends Component {
         $lastStart = now()->subMonth()->startOfMonth();
         $lastEnd = now()->subMonth()->endOfMonth();
 
-        $query = fn($from, $to) => Order::where('document_type', 'sales_order')
-            ->where('payment_status', PaymentStatus::PAID->value)
+        $query = fn($from, $to) => Order::where('payment_status', PaymentStatus::PAID->value)
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw('DATE(created_at) as day, SUM(total_cents) / 100 as revenue')
             ->groupBy('day')
@@ -256,7 +253,6 @@ new #[Title('Dashboard')] class extends Component {
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('category_product', 'order_items.product_id', '=', 'category_product.product_id')
             ->join('categories', 'category_product.category_id', '=', 'categories.id')
-            ->where('orders.document_type', 'sales_order')
             ->where('orders.payment_status', PaymentStatus::PAID->value)
             ->whereBetween('orders.created_at', [$from, $to])
             ->whereNotNull('order_items.product_id')
@@ -311,7 +307,6 @@ new #[Title('Dashboard')] class extends Component {
 
         $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->where('orders.document_type', 'sales_order')
             ->where('orders.payment_status', PaymentStatus::PAID->value)
             ->whereBetween('orders.created_at', [$from, $to])
             ->whereNotNull('order_items.product_id')
@@ -343,8 +338,7 @@ new #[Title('Dashboard')] class extends Component {
     #[Computed]
     public function recentOrders()
     {
-        return Order::where('document_type', 'sales_order')
-            ->with(['user', 'payment'])
+        return Order::with(['user', 'payment'])
             ->withCount('items')
             ->latest()
             ->limit(6)
@@ -354,8 +348,7 @@ new #[Title('Dashboard')] class extends Component {
     #[Computed]
     public function recentDeliveries()
     {
-        return Order::where('document_type', 'sales_order')
-            ->whereIn('status', [OrdersStatus::SHIPPED->value, OrdersStatus::DELIVERED->value, OrdersStatus::PROCESSING->value, OrdersStatus::CONFIRMED->value])
+        return Order::whereIn('status', [OrderStatus::SHIPPED->value, OrderStatus::DELIVERED->value, OrderStatus::PROCESSING->value, OrderStatus::CONFIRMED->value])
             ->with(['user', 'items.product'])
             ->latest()
             ->limit(5)
@@ -391,21 +384,21 @@ new #[Title('Dashboard')] class extends Component {
                 </a>
             @endif
             @if ($this->needsAttention['pending_quotes'] > 0)
-                <a href="{{ route('admin.orders.index') }}" wire:navigate
+                <a href="{{ route('admin.quotations.index') }}" wire:navigate
                     class="text-xs px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors font-medium">
                     {{ $this->needsAttention['pending_quotes'] }}
                     {{ Str::plural('quote', $this->needsAttention['pending_quotes']) }} to price
                 </a>
             @endif
             @if ($this->needsAttention['expiring_quotes'] > 0)
-                <a href="{{ route('admin.orders.index') }}" wire:navigate
+                <a href="{{ route('admin.quotations.index') }}" wire:navigate
                     class="text-xs px-2.5 py-1 bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-full hover:bg-rose-200 dark:hover:bg-rose-900 transition-colors font-medium">
                     {{ $this->needsAttention['expiring_quotes'] }} expiring soon
                 </a>
             @endif
             <div class="ml-auto flex items-center gap-2">
                 <div class="relative">
-                    <input id="dashboardDateRange" type="text" readonly
+                    <input class="dashboard-date-range" type="text" readonly
                         class="w-64 pl-8 pr-3 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
                     <flux:icon.calendar-days
                         class="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
@@ -424,7 +417,7 @@ new #[Title('Dashboard')] class extends Component {
             </div>
             <div class="flex items-center gap-2">
                 <div class="relative">
-                    <input id="dashboardDateRange" type="text" readonly
+                    <input class="dashboard-date-range" type="text" readonly
                         class="w-64 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
                     <flux:icon.calendar-days
                         class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
@@ -1418,9 +1411,14 @@ new #[Title('Dashboard')] class extends Component {
         }
 
         function initDateRangePicker() {
-            const el = $('#dashboardDateRange');
+            const el = $('.dashboard-date-range').first();
             if (!el.length || typeof $.fn.daterangepicker === 'undefined') return;
-            if (el.data('daterangepicker')) el.data('daterangepicker').remove();
+            
+            // Destroy existing instance if any
+            if (el.data('daterangepicker')) {
+                el.data('daterangepicker').remove();
+            }
+            
             el.daterangepicker({
                 startDate: moment($wire.dateFrom),
                 endDate: moment($wire.dateTo),
@@ -1463,11 +1461,8 @@ new #[Title('Dashboard')] class extends Component {
             }) => {
                 onMorph(async () => {
                     initAllCharts();
-                    const picker = $('#dashboardDateRange').data('daterangepicker');
-                    if (picker) {
-                        picker.setStartDate(moment($wire.dateFrom));
-                        picker.setEndDate(moment($wire.dateTo));
-                    }
+                    // Reinitialize datepicker after DOM morph
+                    initDateRangePicker();
                 });
             });
         });

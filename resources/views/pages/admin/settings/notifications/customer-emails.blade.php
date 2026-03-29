@@ -17,10 +17,10 @@ new #[Title('Customer Emails')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Customer email settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Customer email settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save customer notification settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -31,7 +31,7 @@ new #[Title('Customer Emails')] class extends Component {
 
             {{-- Order lifecycle --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Order lifecycle') }}</flux:heading>
                 </div>
 
@@ -53,7 +53,7 @@ new #[Title('Customer Emails')] class extends Component {
 
             {{-- Engagement --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Engagement emails') }}</flux:heading>
                 </div>
 
@@ -76,6 +76,29 @@ new #[Title('Customer Emails')] class extends Component {
                         <flux:input label="{{ __('Send request after (days)') }}"
                             wire:model="form.review_request_delay" type="number" min="1" max="30"
                             description="{{ __('Between 1 and 30 days after delivery') }}" />
+                    @endif
+                </div>
+            </flux:card>
+
+            {{-- Quotations --}}
+            <flux:card class="p-0">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
+                    <flux:heading>{{ __('Quotation emails') }}</flux:heading>
+                </div>
+
+                <div class="p-5 space-y-5">
+                    <flux:checkbox wire:model="form.quote_sent" label="{{ __('Quote sent') }}"
+                        description="{{ __('Sent when admin sends a priced quotation to the customer') }}" />
+
+                    <flux:separator />
+
+                    <flux:checkbox wire:model.live="form.quote_expiring_reminder" label="{{ __('Quote expiring reminder') }}"
+                        description="{{ __('Remind customers before their quotation expires') }}" />
+
+                    @if ($form->quote_expiring_reminder)
+                        <flux:input label="{{ __('Send reminder before (days)') }}"
+                            wire:model="form.quote_expiring_days" type="number" min="1" max="30"
+                            description="{{ __('Days before expiry to send the reminder') }}" />
                     @endif
                 </div>
             </flux:card>

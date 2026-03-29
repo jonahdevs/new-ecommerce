@@ -17,10 +17,10 @@ new #[Title('M-Pesa Settings')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('M-Pesa settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('M-Pesa settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save M-Pesa settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -31,7 +31,7 @@ new #[Title('M-Pesa Settings')] class extends Component {
 
             {{-- Status & Environment --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3 flex items-center justify-between">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3 flex items-center justify-between">
                     <flux:heading>{{ __('M-Pesa status') }}</flux:heading>
                     <flux:checkbox wire:model.live="form.enabled" label="{{ __('Enabled') }}" />
                 </div>
@@ -63,7 +63,7 @@ new #[Title('M-Pesa Settings')] class extends Component {
             {{-- Credentials --}}
             @if ($form->enabled)
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('API credentials') }}</flux:heading>
                         <flux:subheading>
                             {{ __('Credentials are encrypted and stored securely. Leave blank to keep existing values.') }}
@@ -90,7 +90,7 @@ new #[Title('M-Pesa Settings')] class extends Component {
 
                 {{-- Callback URL --}}
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('Callback') }}</flux:heading>
                     </div>
                     <div class="p-5">

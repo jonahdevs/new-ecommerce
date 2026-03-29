@@ -28,7 +28,8 @@ new #[Layout('layouts.checkout')] class extends Component {
             return;
         }
 
-        if (app(PaymentService::class)->isCustom() && !$checkoutSession->hasPaymentMethod() && $checkoutSession->getShipping()['method_type'] !== 'quote') {
+        // Only require payment method selection for custom gateway (individual mode)
+        if ($this->isCustomGateway && !$checkoutSession->hasPaymentMethod()) {
             $this->redirectRoute('checkout.payment-methods', navigate: true);
             return;
         }
@@ -58,6 +59,12 @@ new #[Layout('layouts.checkout')] class extends Component {
         return app(CheckoutSession::class)->getShipping();
     }
 
+    #[Computed]
+    public function isCustomGateway(): bool
+    {
+        return app(PaymentService::class)->isCustom();
+    }
+
     public function changeShipping()
     {
         $this->redirectRoute('checkout.shipping', navigate: true);
@@ -78,23 +85,9 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     <x-slot:heading>Checkout Summary</x-slot:heading>
 
-    {{-- Quote notice banner — only shown when customer selected quote --}}
-    @if ($this->shipping && $this->shipping['method_type'] === 'quote')
-        <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
-            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5 text-amber-500" />
-            <div class="text-sm">
-                <p class="font-medium text-amber-800">Delivery outside Nairobi</p>
-                <p class="text-amber-700 mt-0.5">
-                    No payment is taken today. Our team will contact you
-                    with a delivery cost before your order is confirmed.
-                </p>
-            </div>
-        </div>
-    @endif
-
     {{-- Address --}}
     <flux:card class="mb-4 p-0">
-        <div class="px-4 py-2 border-b flex items-center justify-between">
+        <div class="px-4 py-2 border-b dark:border-zinc-600 flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
                 <flux:heading level="3" class="font-medium!">Delivery Address</flux:heading>
@@ -120,7 +113,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     {{-- Shipping method --}}
     <flux:card class="mb-4 p-0">
-        <div class="px-4 py-2 border-b flex items-center justify-between">
+        <div class="px-4 py-2 border-b dark:border-zinc-600 flex items-center justify-between">
             <div class="flex items-center gap-1.5">
                 <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
                 <flux:heading level="3" class="font-medium!">Shipping Method</flux:heading>
@@ -143,9 +136,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                         </flux:text>
                     </div>
                     <span class="font-semibold text-sm">
-                        @if ($this->shipping['method_type'] === 'quote')
-                            <span class="text-amber-500 font-medium text-sm">TBD</span>
-                        @elseif($this->shipping['cost'] == 0)
+                        @if($this->shipping['cost'] == 0)
                             <span class="text-green-600 font-medium text-sm">Free</span>
                         @else
                             {{ format_currency($this->shipping['cost']) }}
@@ -156,10 +147,10 @@ new #[Layout('layouts.checkout')] class extends Component {
         </div>
     </flux:card>
 
-    {{-- Payment method --}}
-    @if (!$this->shipping || $this->shipping['method_type'] !== 'quote')
+    {{-- Payment method - only show for custom gateway (individual mode) --}}
+    @if ($this->isCustomGateway)
         <flux:card class="p-0 mb-4">
-            <div class="px-4 py-2 border-b flex items-center justify-between">
+            <div class="px-4 py-2 border-b dark:border-zinc-600 flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
                     <flux:icon.check-circle variant="solid" class="size-5 text-green-500" />
                     <flux:heading level="3" class="font-medium!">Payment Method</flux:heading>

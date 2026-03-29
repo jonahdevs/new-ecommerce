@@ -56,7 +56,7 @@ class CleanupExpiredOrders implements ShouldQueue
                         $order->update(['status' => 'expired']);
 
                         // Log status change
-                        $order->statusHistor()->create([
+                        $order->statusHistories()->create([
                             'from_status' => 'pending',
                             'to_status' => 'expired',
                             'changed_by_type' => 'system',

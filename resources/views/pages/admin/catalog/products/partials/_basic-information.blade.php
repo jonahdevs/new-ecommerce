@@ -22,10 +22,8 @@
 
         <flux:field>
             <flux:label>{{ __('Short Description') }}</flux:label>
-            <x-my-markdown wire:model="form.short_description" />
+            <x-rich-editor model="form.short_description" placeholder="Brief product summary shown in listings..." />
             <flux:error name="form.short_description" />
-
-
         </flux:field>
     </div>
 </flux:card>

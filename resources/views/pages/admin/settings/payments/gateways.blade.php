@@ -45,10 +45,10 @@ new #[Title('Payment Gateways')] class extends Component {
     {
         try {
             $this->form->save($settings);
-            $this->dispatch('notify', variant: 'success', message: __('Payment settings saved.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: __('Payment settings saved.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save payment settings.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: __('Something went wrong. Please try again.'));
+            $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
         }
     }
 }; ?>
@@ -59,7 +59,7 @@ new #[Title('Payment Gateways')] class extends Component {
 
             {{-- Mode switcher --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('Payment mode') }}</flux:heading>
                 </div>
 
@@ -71,7 +71,7 @@ new #[Title('Payment Gateways')] class extends Component {
                             'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
                             'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' =>
                                 $form->gateway_mode === 'individual',
-                            'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' =>
+                            'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300' =>
                                 $form->gateway_mode !== 'individual',
                         ])>
                             <input type="radio" wire:model.live="form.gateway_mode" value="individual"
@@ -90,7 +90,7 @@ new #[Title('Payment Gateways')] class extends Component {
                             'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
                             'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' =>
                                 $form->gateway_mode === 'aggregator',
-                            'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' =>
+                            'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300' =>
                                 $form->gateway_mode !== 'aggregator',
                         ])>
                             <input type="radio" wire:model.live="form.gateway_mode" value="aggregator"
@@ -105,62 +105,58 @@ new #[Title('Payment Gateways')] class extends Component {
                         </label>
                     </div>
 
-                    {{-- Aggregator selector --}}
-                    @if ($form->gateway_mode === 'aggregator')
-                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2">
-
-                            <label @class([
-                                'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                                'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' =>
-                                    $form->active_aggregator === 'pesapal',
-                                'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' =>
-                                    $form->active_aggregator !== 'pesapal',
-                            ])>
-                                <input type="radio" wire:model.live="form.active_aggregator" value="pesapal"
-                                    class="mt-0.5 accent-[var(--brand-primary)]" />
-                                <div>
-                                    <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">PesaPal</p>
-                                    <p class="text-xs text-zinc-500 mt-0.5">M-Pesa · Airtel · Visa/Mastercard · Bank</p>
-                                    @if ($pesapal_enabled)
-                                        <span
-                                            class="inline-flex items-center mt-1.5 text-xs font-medium text-green-700 dark:text-green-400">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                                            {{ $pesapal_env === 'live' ? __('Live') : __('Sandbox') }}
-                                        </span>
-                                    @endif
-                                </div>
-                            </label>
-
-                            <label @class([
-                                'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                                'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' =>
-                                    $form->active_aggregator === 'pesawise',
-                                'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' =>
-                                    $form->active_aggregator !== 'pesawise',
-                            ])>
-                                <input type="radio" wire:model.live="form.active_aggregator" value="pesawise"
-                                    class="mt-0.5 accent-[var(--brand-primary)]" />
-                                <div>
-                                    <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">PesaWise</p>
-                                    <p class="text-xs text-zinc-500 mt-0.5">M-Pesa · Airtel · Cards · Bank transfer</p>
-                                    @if ($pesawise_enabled)
-                                        <span
-                                            class="inline-flex items-center mt-1.5 text-xs font-medium text-green-700 dark:text-green-400">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                                            {{ $pesawise_env === 'live' ? __('Live') : __('Sandbox') }}
-                                        </span>
-                                    @endif
-                                </div>
-                            </label>
-                        </div>
-                    @endif
                 </div>
             </flux:card>
+
+            {{-- Aggregator — choose provider --}}
+            @if ($form->gateway_mode === 'aggregator')
+                <flux:card class="p-0">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
+                        <flux:heading>{{ __('Choose provider') }}</flux:heading>
+                        <flux:subheading class="text-xs">{{ __('Select which aggregator handles your payments') }}</flux:subheading>
+                    </div>
+                    <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+
+                        {{-- PesaPal --}}
+                        <label class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            <input type="radio" wire:model.live="form.active_aggregator" value="pesapal"
+                                class="shrink-0 accent-[var(--brand-primary)]" />
+                            <div class="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">PP</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">PesaPal</p>
+                                <p class="text-xs text-zinc-500">M-Pesa · Airtel · Visa/Mastercard · Bank</p>
+                            </div>
+                            <x-settings-gateway-badge :enabled="$pesapal_enabled" :environment="$pesapal_env" />
+                            <flux:button size="sm" href="{{ route('settings.payments.pesapal') }}" wire:navigate
+                                class="cursor-pointer">
+                                {{ __('Configure') }}
+                            </flux:button>
+                        </label>
+
+                        {{-- PesaWise --}}
+                        <label class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            <input type="radio" wire:model.live="form.active_aggregator" value="pesawise"
+                                class="shrink-0 accent-[var(--brand-primary)]" />
+                            <div class="w-9 h-9 rounded-lg bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">PW</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">PesaWise</p>
+                                <p class="text-xs text-zinc-500">M-Pesa · Airtel · Cards · Bank transfer</p>
+                            </div>
+                            <x-settings-gateway-badge :enabled="$pesawise_enabled" :environment="$pesawise_env" />
+                            <flux:button size="sm" href="{{ route('settings.payments.pesawise') }}" wire:navigate
+                                class="cursor-pointer">
+                                {{ __('Configure') }}
+                            </flux:button>
+                        </label>
+
+                    </div>
+                </flux:card>
+            @endif
 
             {{-- Individual gateway status cards --}}
             @if ($form->gateway_mode === 'individual')
                 <flux:card class="p-0">
-                    <div class="border-b px-4 py-3">
+                    <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                         <flux:heading>{{ __('Gateway status') }}</flux:heading>
                     </div>
                     <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -220,7 +216,7 @@ new #[Title('Payment Gateways')] class extends Component {
 
             {{-- General payment settings --}}
             <flux:card class="p-0">
-                <div class="border-b px-4 py-3">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
                     <flux:heading>{{ __('General') }}</flux:heading>
                 </div>
                 <div class="p-5 space-y-5">

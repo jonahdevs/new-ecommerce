@@ -18,38 +18,37 @@
 
         {{-- ── Toolbar ── --}}
         <div
-            class="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+            class="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-zinc-800 border-b border-gray-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200">
 
             {{-- Bold / Italic / Underline --}}
-            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-gray-600">
+            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-zinc-600">
                 <button type="button" title="Bold" @click="toggleBold()"
-                    :class="isActive('bold') ? 'bg-gray-200 dark:bg-gray-600' : 'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive('bold') ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded text-sm font-bold">B</button>
 
                 <button type="button" title="Italic" @click="toggleItalic()"
-                    :class="isActive('italic') ? 'bg-gray-200 dark:bg-gray-600' : 'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive('italic') ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded text-sm italic">I</button>
 
                 <button type="button" title="Underline" @click="toggleUnderline()"
-                    :class="isActive('underline') ? 'bg-gray-200 dark:bg-gray-600' : 'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive('underline') ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded text-sm underline">U</button>
             </div>
 
             {{-- Headings --}}
-            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-gray-600">
+            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-zinc-600">
                 @foreach ([1, 2, 3] as $level)
                     <button type="button" title="Heading {{ $level }}"
                         @click="toggleHeading({{ $level }})"
-                        :class="isActive('heading', { level: {{ $level }} }) ? 'bg-gray-200 dark:bg-gray-600' :
-                            'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                        :class="isActive('heading', { level: {{ $level }} }) ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                         class="w-8 h-7 flex items-center justify-center rounded text-xs font-semibold">H{{ $level }}</button>
                 @endforeach
             </div>
 
             {{-- Lists & Blockquote --}}
-            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-gray-600">
+            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-zinc-600">
                 <button type="button" title="Bullet list" @click="toggleBulletList()"
-                    :class="isActive('bulletList') ? 'bg-gray-200 dark:bg-gray-600' : 'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive('bulletList') ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="9" y1="6" x2="20" y2="6" />
@@ -62,8 +61,7 @@
                 </button>
 
                 <button type="button" title="Numbered list" @click="toggleOrderedList()"
-                    :class="isActive('orderedList') ? 'bg-gray-200 dark:bg-gray-600' :
-                        'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive('orderedList') ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="10" y1="6" x2="21" y2="6" />
@@ -74,7 +72,7 @@
                 </button>
 
                 <button type="button" title="Blockquote" @click="toggleBlockquote()"
-                    :class="isActive('blockquote') ? 'bg-gray-200 dark:bg-gray-600' : 'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive('blockquote') ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path
@@ -84,10 +82,9 @@
             </div>
 
             {{-- Alignment --}}
-            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-gray-600">
+            <div class="flex items-center gap-0.5 pr-2 mr-1 border-r border-gray-300 dark:border-zinc-600">
                 <button type="button" title="Align left" @click="alignLeft()"
-                    :class="isActive({ textAlign: 'left' }) ? 'bg-gray-200 dark:bg-gray-600' :
-                        'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive({ textAlign: 'left' }) ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="21" y1="6" x2="3" y2="6" />
@@ -97,8 +94,7 @@
                 </button>
 
                 <button type="button" title="Align center" @click="alignCenter()"
-                    :class="isActive({ textAlign: 'center' }) ? 'bg-gray-200 dark:bg-gray-600' :
-                        'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive({ textAlign: 'center' }) ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="21" y1="6" x2="3" y2="6" />
@@ -108,8 +104,7 @@
                 </button>
 
                 <button type="button" title="Align right" @click="alignRight()"
-                    :class="isActive({ textAlign: 'right' }) ? 'bg-gray-200 dark:bg-gray-600' :
-                        'hover:bg-gray-200 dark:hover:bg-gray-700'"
+                    :class="isActive({ textAlign: 'right' }) ? 'bg-gray-200 dark:bg-zinc-600' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
                     class="w-7 h-7 flex items-center justify-center rounded">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="21" y1="6" x2="3" y2="6" />
@@ -122,14 +117,14 @@
             {{-- Undo / Redo --}}
             <div class="flex items-center gap-0.5">
                 <button type="button" title="Undo" @click="undo()"
-                    class="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                    class="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-zinc-700">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 7v6h6" />
                         <path d="M21 17A9 9 0 006 5.7L3 8" />
                     </svg>
                 </button>
                 <button type="button" title="Redo" @click="redo()"
-                    class="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                    class="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-zinc-700">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 7v6h-6" />
                         <path d="M3 17a9 9 0 0015-3.7L21 8" />
@@ -139,7 +134,7 @@
         </div>
 
         {{-- ── Editor Area ── --}}
-        <div x-ref="editor" class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"></div>
+        <div x-ref="editor" class="bg-white dark:bg-zinc-900"></div>
     </div>
 
     @if ($error)

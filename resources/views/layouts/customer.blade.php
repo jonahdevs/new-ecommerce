@@ -77,9 +77,8 @@
 
                             <flux:navlist.item :href="route('customer.quotations.index')" icon="tag" wire:navigate
                                 :current="request()->routeIs('customer.quotations.*')"
-                                :badge="auth()->user()->orders()
-                                                                        ->where('document_type', 'quotation')
-                                                                        ->where('status', 'quote_sent')
+                                :badge="\App\Models\Quote::where('user_id', auth()->id())
+                                                                        ->where('status', \App\Enums\QuoteStatus::SENT)
                                                                         ->count() ?: null">
                                 Quotations
                             </flux:navlist.item>

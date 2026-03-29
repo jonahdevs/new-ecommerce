@@ -5,6 +5,7 @@ use App\Enums\VehicleType;
 use App\Models\ShippingMethod;
 use App\Models\VehicleRate;
 use App\Livewire\Forms\Admin\VehicleRateForm;
+use App\Settings\RegionalSettings;
 use Livewire\Attributes\{Title, Computed, Url};
 use Livewire\Component;
 use Flux\Flux;
@@ -22,6 +23,12 @@ new #[Title('Vehicle Rates')] class extends Component {
     public bool $showHistory = false;
 
     public function updatedFilterStatus(): void {}
+
+    #[Computed]
+    public function regionalSettings(): RegionalSettings
+    {
+        return app(RegionalSettings::class);
+    }
 
     #[Computed]
     public function distanceMethods()
@@ -213,7 +220,7 @@ new #[Title('Vehicle Rates')] class extends Component {
 
                             <flux:table.cell>
                                 <span class="text-sm">
-                                    {{ $rate->max_weight_kg ? number_format($rate->max_weight_kg, 0) . ' kg' : '—' }}
+                                    {{ $rate->max_weight_kg ? number_format($rate->max_weight_kg, 0) . ' ' . $this->regionalSettings->weight_unit : '—' }}
                                 </span>
                             </flux:table.cell>
 
@@ -296,7 +303,7 @@ new #[Title('Vehicle Rates')] class extends Component {
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.max_weight_kg" label="Max Weight (Kg)" type="number" min="0"
+                <flux:input wire:model="form.max_weight_kg" label="Max Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
                     step="0.01" placeholder="Optional" />
                 <flux:input wire:model="form.max_volume_m3" label="Max Volume (m³)" type="number" min="0"
                     step="0.001" placeholder="Optional" />

@@ -18,15 +18,28 @@ use RuntimeException;
 class CartService
 {
 
-    public function getCart($user = null)
+    /**
+     * Get or create the cart for the current user/session.
+     * 
+     * @param User|null $user Optional user to get cart for
+     * @param bool $withItems Whether to eager load items with product/variant relationships
+     * @return Cart
+     */
+    public function getCart($user = null, bool $withItems = false)
     {
         if (Auth::check() || $user) {
             $userId = $user?->id ?? Auth::id();
 
-            return Cart::firstOrCreate(
+            $cart = Cart::firstOrCreate(
                 ['user_id' => $userId],
                 ['expires_at' => now()->addDays(30)]
             );
+
+            if ($withItems) {
+                $cart->load(['items.product', 'items.variant']);
+            }
+
+            return $cart;
         }
 
         $sessionId = session()->getId();
@@ -37,8 +50,21 @@ class CartService
             ['expires_at' => now()->addDays(7)]
         );
 
+        if ($withItems) {
+            $cart->load(['items.product', 'items.variant']);
+        }
+
         session(['guest_cart_id' => $cart->id]);
         return $cart;
+    }
+
+    /**
+     * Get cart with items eager loaded (convenience method).
+     * Use this when you need to iterate over cart items.
+     */
+    public function getCartWithItems($user = null): Cart
+    {
+        return $this->getCart($user, withItems: true);
     }
 
     /**
@@ -266,9 +292,19 @@ class CartService
 
     /**
      * Cart Summary
+     * 
+     * Note: Expects cart items to be eager loaded with 'product' and 'variant' relationships.
+     * If not loaded, this method will trigger N+1 queries.
      */
     public function summary(Cart $cart)
     {
+        // Ensure relationships are loaded to avoid N+1
+        if (!$cart->relationLoaded('items')) {
+            $cart->load(['items.product', 'items.variant']);
+        } elseif ($cart->items->isNotEmpty() && !$cart->items->first()->relationLoaded('product')) {
+            $cart->load(['items.product', 'items.variant']);
+        }
+
         $subtotal = $cart->items->reduce(function ($carry, $item) {
             // Use variant price if available, fall back to product price
             $price = $item->variant?->final_price ?? $item->product->final_price;

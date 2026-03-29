@@ -12,8 +12,8 @@ class MailSettingsForm extends Form
     public int $port = 587;
     public string $username = '';
     public string $encryption = 'tls';
-    public string $from_address = '';
-    public string $from_name = '';
+    public ?string $from_address = null;
+    public ?string $from_name = null;
     public string $reply_to_address = '';
 
     // Encrypted — user must re-enter to change
@@ -58,8 +58,8 @@ class MailSettingsForm extends Form
         $settings->port = $this->port;
         $settings->username = $this->username ?: null;
         $settings->encryption = $this->encryption ?: null;
-        $settings->from_address = $this->from_address;
-        $settings->from_name = $this->from_name;
+        $settings->from_address = $this->from_address ?: null;
+        $settings->from_name = $this->from_name ?: null;
         $settings->reply_to_address = $this->reply_to_address ?: null;
 
         if ($this->password) {

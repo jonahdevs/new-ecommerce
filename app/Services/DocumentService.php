@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Quote;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -86,42 +87,34 @@ class DocumentService
     // =========================================================================
     //  GENERATE QUOTATION PDF
     //
-    //  Called inside QuotationService::send() after the QUOTE_SENT transition.
+    //  Called inside QuotationService::send() after the SENT transition.
     //  Generates a quotation PDF, stores it to storage/app/quotations/,
-    //  and updates order.quotation_pdf_path.
+    //  and updates quote.document_path.
     //
     //  Returns the storage path on success, null on failure.
     //  Failure is logged but never throws — quote is already sent to customer
     //  even if PDF generation fails (they can still see details on the portal).
     // =========================================================================
 
-    public function generateQuotation(Order $order): ?string
+    public function generateQuotation(Quote $quote): ?string
     {
-        if (!$order->isQuotation()) {
-            Log::warning('generateQuotation called on a non-quotation.', [
-                'order_id' => $order->id,
-                'document_type' => $order->document_type,
-            ]);
-            return null;
-        }
-
         try {
-            $pdf = Pdf::loadView('pdf.quotation', ['order' => $order->load(['items', 'user'])])
+            $pdf = Pdf::loadView('pdf.quotation', ['quote' => $quote->load(['items', 'user'])])
                 ->setPaper('a4', 'portrait')
                 ->setOption('dpi', 150)
                 ->setOption('isHtml5ParserEnabled', true)
                 ->setOption('isRemoteEnabled', false);
 
-            $filename = "{$order->reference}.pdf";
+            $filename = "{$quote->reference}.pdf";
             $path = self::QUOTATION_DIR . '/' . $filename;
 
             Storage::disk(self::DISK)->put($path, $pdf->output());
 
-            $order->update(['quotation_pdf_path' => $path]);
+            $quote->update(['document_path' => $path]);
 
             Log::info('Quotation PDF generated.', [
-                'order_id' => $order->id,
-                'reference' => $order->reference,
+                'quote_id' => $quote->id,
+                'reference' => $quote->reference,
                 'path' => $path,
             ]);
 
@@ -129,8 +122,8 @@ class DocumentService
 
         } catch (\Throwable $e) {
             Log::error('Failed to generate quotation PDF.', [
-                'order_id' => $order->id,
-                'reference' => $order->reference,
+                'quote_id' => $quote->id,
+                'reference' => $quote->reference,
                 'error' => $e->getMessage(),
             ]);
 

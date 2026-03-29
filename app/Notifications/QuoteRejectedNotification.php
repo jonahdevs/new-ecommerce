@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\Order;
+use App\Models\Quote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,14 +13,14 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
     use Queueable;
 
     // =========================================================================
-    //  Fires when a customer rejects a quotation (QUOTE_REJECTED transition).
+    //  Fires when a customer rejects a quotation (REJECTED transition).
     //  Sent to the admin team.
     //
     //  No customer notification here — they've already confirmed their
     //  decision on the portal and see a confirmation message there.
     // =========================================================================
 
-    public function __construct(public readonly Order $order)
+    public function __construct(public readonly Quote $quote)
     {
     }
 
@@ -31,26 +31,20 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName = $this->order->user?->name ?? 'Customer';
-        $customerEmail = $this->order->user?->email ?? '';
-        $total = format_currency($this->order->total);
-        $quotationUrl = route('admin.orders.quotations.show', $this->order);
-
-        // Get rejection note from the most recent status history entry if any
-        $rejectionNote = $this->order->statusHistories
-            ->where('to_status', 'quote_rejected')
-            ->last()
-                ?->notes;
+        $customerName = $this->quote->user?->name ?? 'Customer';
+        $customerEmail = $this->quote->user?->email ?? '';
+        $total = format_currency($this->quote->total);
+        $quotationUrl = route('admin.quotations.show', $this->quote);
 
         return (new MailMessage)
-            ->subject("Quote Rejected — {$this->order->reference}")
+            ->subject("Quote Rejected — {$this->quote->reference}")
             ->greeting('A customer has rejected their quotation')
-            ->line("{$customerName} ({$customerEmail}) has rejected quotation **{$this->order->reference}**.")
+            ->line("{$customerName} ({$customerEmail}) has rejected quotation **{$this->quote->reference}**.")
             ->line("**Quoted total:** {$total}")
             ->when(
-                $rejectionNote,
+                $this->quote->rejection_reason,
                 fn($mail) =>
-                $mail->line("**Customer note:** {$rejectionNote}")
+                $mail->line("**Customer note:** {$this->quote->rejection_reason}")
             )
             ->line('You may wish to follow up with the customer to understand their concerns or offer a revised quotation.')
             ->action('View Quotation', $quotationUrl)

@@ -1,68 +1,50 @@
 <?php
 
-use App\Enums\OrdersStatus;
-use App\Models\Order;
+use App\Enums\QuoteStatus;
+use App\Models\Quote;
 use App\Services\QuotationService;
 use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
 
 new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Component {
-    public Order $order;
+    public Quote $quote;
 
     // Rejection reason — optional, shown when customer clicks Reject
     public string $rejectNote = '';
 
     // =========================================================================
     //  MOUNT
-    //
-    //  Guards:
-    //    - Quotation must belong to the authenticated customer
-    //    - Must be a quotation document (not a sales order)
     // =========================================================================
 
-    public function mount(Order $order): void
+    public function mount(Quote $quote): void
     {
         // Ensure the quotation belongs to this customer
-        if ($order->user_id !== auth()->id() || !$order->isQuotation()) {
+        if ($quote->user_id !== auth()->id()) {
             $this->redirectRoute('customer.quotations.index', navigate: true);
             return;
         }
 
-        $this->order = $order->load([
-            'items.product',
-            'statusHistories',
-            'convertedOrder', // the sales order created after acceptance
-        ]);
+        $this->quote = $quote->load(['items.product', 'statusHistories', 'order']);
     }
 
     // =========================================================================
     //  COMPUTED — UI STATE HELPERS
     // =========================================================================
 
-    // Customer can only respond when the quote has been sent by admin
     #[Computed]
     public function canRespond(): bool
     {
-        return $this->order->status === OrdersStatus::QUOTE_SENT && !$this->order->expires_at?->isPast();
+        return $this->quote->canBeAccepted();
     }
 
-    // Whether the quote has expired without a response
     #[Computed]
     public function isExpired(): bool
     {
-        return $this->order->status === OrdersStatus::QUOTE_EXPIRED || ($this->order->status === OrdersStatus::QUOTE_SENT && $this->order->expires_at?->isPast());
+        return $this->quote->isExpired() || ($this->quote->isSent() && $this->quote->expires_at?->isPast());
     }
 
     // =========================================================================
     //  ACCEPT QUOTE
-    //
-    //  Delegates to QuotationService::accept() which:
-    //    1. Transitions quotation → QUOTE_ACCEPTED
-    //    2. Creates a new sales order (convertToSalesOrder)
-    //    3. Notifies admin
-    //
-    //  After acceptance the customer is routed to the payment page
-    //  for the new sales order — same /checkout/pay/{order} flow.
     // =========================================================================
 
     public function acceptQuote(): void
@@ -73,15 +55,13 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
         }
 
         try {
-            $salesOrder = app(QuotationService::class)->accept($this->order);
+            $salesOrder = app(QuotationService::class)->accept($this->quote);
 
             $this->dispatch('notify', variant: 'success', message: 'Quotation accepted! Redirecting to payment...');
-
-            // Route directly to the payment page for the new sales order
             $this->redirectRoute('checkout.pay', $salesOrder->reference, navigate: true);
         } catch (\Throwable $e) {
             logger()->error('Customer failed to accept quotation.', [
-                'quotation_id' => $this->order->id,
+                'quote_id' => $this->quote->id,
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);
@@ -91,12 +71,6 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
     // =========================================================================
     //  REJECT QUOTE
-    //
-    //  Delegates to QuotationService::reject() which:
-    //    1. Transitions quotation → QUOTE_REJECTED
-    //    2. Notifies admin
-    //
-    //  The rejection note is optional — the customer may explain why.
     // =========================================================================
 
     public function rejectQuote(): void
@@ -111,9 +85,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
         }
 
         try {
-            app(QuotationService::class)->reject($this->order, $this->rejectNote ?: null);
+            app(QuotationService::class)->reject($this->quote, $this->rejectNote ?: null);
 
-            $this->order->refresh();
+            $this->quote->refresh();
             $this->rejectNote = '';
             $this->modal('reject-quote')->close();
             $this->dispatch('notify', variant: 'warning', message: 'Quotation rejected.');
@@ -132,19 +106,17 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             <flux:button size="xs" icon="arrow-long-left" variant="ghost" class="cursor-pointer"
                 :href="route('customer.quotations.index')" wire:navigate />
 
-
             <flux:heading size="lg">Quotation Details</flux:heading>
 
-            {{-- Download button — only shown once admin has sent the quote --}}
-            @if ($order->quoted_at)
+            @if ($quote->quoted_at)
                 <flux:button size="xs" variant="ghost" icon="arrow-down-tray" class="cursor-pointer"
-                    :href="route('customer.quotations.pdf', $order)" target="_blank">
+                    :href="route('customer.quotations.pdf', $quote)" target="_blank">
                     PDF
                 </flux:button>
             @endif
 
-            <flux:badge :color="$order->status->color()" variant="solid" size="sm" class="ml-auto">
-                {{ $order->status->label() }}
+            <flux:badge :color="$quote->status->color()" variant="solid" size="sm" class="ml-auto">
+                {{ $quote->status->label() }}
             </flux:badge>
         </div>
 
@@ -154,7 +126,6 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             {{-- CONTEXT BANNERS                                               --}}
             {{-- ============================================================ --}}
 
-            {{-- Quote ready — needs customer response --}}
             @if ($this->canRespond)
                 <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg mb-5">
                     <flux:icon.clock class="size-5 shrink-0 mt-0.5 text-amber-500" />
@@ -163,8 +134,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                         <p class="text-amber-700 mt-0.5">
                             Sheffield Africa has priced your request.
                             Please review the details below and accept or reject before
-                            @if ($order->expires_at)
-                                <strong>{{ $order->expires_at->format('M d, Y') }}</strong>.
+                            @if ($quote->expires_at)
+                                <strong>{{ $quote->expires_at->format('M d, Y') }}</strong>.
                             @else
                                 the validity period ends.
                             @endif
@@ -173,7 +144,6 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 </div>
             @endif
 
-            {{-- Expired --}}
             @if ($this->isExpired)
                 <div class="flex items-start gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-5">
                     <flux:icon.exclamation-triangle class="size-5 shrink-0 mt-0.5 text-zinc-400" />
@@ -188,27 +158,25 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 </div>
             @endif
 
-            {{-- Converted — show link to the resulting sales order --}}
-            @if ($order->status === \App\Enums\OrdersStatus::QUOTE_ACCEPTED && $order->convertedOrder)
+            @if ($quote->isAccepted() && $quote->order)
                 <div class="flex items-start gap-3 p-4 bg-teal-50 border border-teal-200 rounded-lg mb-5">
                     <flux:icon.check-circle class="size-5 shrink-0 mt-0.5 text-teal-500" />
                     <div class="text-sm flex items-center justify-between w-full">
                         <div>
                             <p class="font-medium text-teal-800">You accepted this quotation</p>
                             <p class="text-teal-700 mt-0.5">
-                                A sales order has been created: {{ $order->convertedOrder->reference }}
+                                A sales order has been created: {{ $quote->order->reference }}
                             </p>
                         </div>
                         <flux:button size="sm" variant="ghost"
-                            :href="route('customer.orders.show', $order->convertedOrder)" wire:navigate>
+                            :href="route('customer.orders.show', $quote->order)" wire:navigate>
                             View Order
                         </flux:button>
                     </div>
                 </div>
             @endif
 
-            {{-- Rejected --}}
-            @if ($order->status === \App\Enums\OrdersStatus::QUOTE_REJECTED)
+            @if ($quote->isRejected())
                 <div class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg mb-5">
                     <flux:icon.x-circle class="size-5 shrink-0 mt-0.5 text-red-400" />
                     <div class="text-sm">
@@ -221,23 +189,22 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             @endif
 
             {{-- ============================================================ --}}
-            {{-- ORDER META                                                     --}}
+            {{-- QUOTE META                                                     --}}
             {{-- ============================================================ --}}
             <div class="space-y-1 mb-5">
-                <flux:heading>{{ $order->reference }}</flux:heading>
+                <flux:heading>{{ $quote->reference }}</flux:heading>
                 <flux:text>
-                    {{ $order->items_count ?? $order->items->count() }}
-                    {{ Str::plural('item', $order->items->count()) }}
+                    {{ $quote->items->count() }}
+                    {{ Str::plural('item', $quote->items->count()) }}
                 </flux:text>
-                <flux:text>Submitted on {{ $order->created_at->format('M j, Y') }}</flux:text>
-                @if ($order->quoted_at)
-                    <flux:text>Quoted on {{ $order->quoted_at->format('M j, Y') }}</flux:text>
+                <flux:text>Submitted on {{ $quote->created_at->format('M j, Y') }}</flux:text>
+                @if ($quote->quoted_at)
+                    <flux:text>Quoted on {{ $quote->quoted_at->format('M j, Y') }}</flux:text>
                 @endif
-                @if ($order->expires_at && $this->canRespond)
-                    <flux:text
-                        class="{{ $order->expires_at->diffInHours() <= 48 ? 'text-amber-600' : 'text-zinc-500' }}">
-                        Valid until {{ $order->expires_at->format('M j, Y') }}
-                        ({{ $order->expires_at->diffForHumans() }})
+                @if ($quote->expires_at && $this->canRespond)
+                    <flux:text class="{{ $quote->expires_at->diffInHours() <= 48 ? 'text-amber-600' : 'text-zinc-500' }}">
+                        Valid until {{ $quote->expires_at->format('M j, Y') }}
+                        ({{ $quote->expires_at->diffForHumans() }})
                     </flux:text>
                 @endif
             </div>
@@ -250,20 +217,12 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             <flux:heading class="text-lg mb-4">Items in Your Quotation</flux:heading>
 
             <div class="space-y-4">
-                @foreach ($order->items as $item)
-                    @php
-                        $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—');
-                        $sku = $item->product_snapshot['sku'] ?? null;
-                        $imagePath = $item->product_image_url ?? $item->product?->image_url;
-                    @endphp
-
+                @foreach ($quote->items as $item)
                     <div class="border rounded-md p-4">
                         <div class="flex gap-4">
-
-                            {{-- Image --}}
                             <div class="shrink-0">
-                                @if ($imagePath)
-                                    <img src="{{ asset($imagePath) }}" alt="{{ $name }}"
+                                @if ($item->productImageUrl())
+                                    <img src="{{ asset($item->productImageUrl()) }}" alt="{{ $item->productName() }}"
                                         class="w-20 h-20 object-contain rounded" />
                                 @else
                                     <div class="w-20 h-20 bg-zinc-100 rounded flex items-center justify-center">
@@ -272,18 +231,16 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                                 @endif
                             </div>
 
-                            {{-- Details --}}
                             <div class="flex-1">
-                                <flux:heading size="sm">{{ $name }}</flux:heading>
-                                @if ($sku)
-                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $sku }}
-                                    </flux:text>
+                                <flux:heading size="sm">{{ $item->productName() }}</flux:heading>
+                                @if ($item->productSku())
+                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $item->productSku() }}</flux:text>
                                 @endif
                                 <flux:text size="sm" class="text-zinc-500 mt-1">
-                                    {{ $item->quantity }} × {{ format_currency($item->unit_price_cents / 100) }}
+                                    {{ $item->quantity }} × {{ format_currency($item->effective_price) }}
                                 </flux:text>
                                 <flux:text size="sm" class="font-semibold mt-1">
-                                    {{ format_currency($item->total_cents / 100) }}
+                                    {{ format_currency($item->effective_price * $item->quantity) }}
                                 </flux:text>
                             </div>
                         </div>
@@ -291,31 +248,32 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 @endforeach
             </div>
 
+
             {{-- ============================================================ --}}
             {{-- TOTALS                                                         --}}
             {{-- ============================================================ --}}
             <div class="mt-6 space-y-1.5 max-w-xs ml-auto">
                 <div class="flex justify-between text-sm">
                     <flux:text>Subtotal</flux:text>
-                    <span>{{ format_currency($order->subtotal) }}</span>
+                    <span>{{ format_currency($quote->subtotal) }}</span>
                 </div>
 
-                @if ($order->discount > 0)
+                @if ($quote->discount > 0)
                     <div class="flex justify-between text-sm text-green-600">
                         <span>Discount</span>
-                        <span>− {{ format_currency($order->discount) }}</span>
+                        <span>− {{ format_currency($quote->discount) }}</span>
                     </div>
                 @endif
 
                 <div class="flex justify-between text-sm">
                     <flux:text>Delivery</flux:text>
                     <span>
-                        @if ($order->shipping_cents === 0 && !$order->status->isTerminal())
+                        @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
                             <span class="text-amber-500">TBD</span>
-                        @elseif ($order->shipping_cents === 0)
+                        @elseif ($quote->shipping_cents === 0)
                             <span class="text-green-600">Free</span>
                         @else
-                            {{ format_currency($order->shipping) }}
+                            {{ format_currency($quote->shipping) }}
                         @endif
                     </span>
                 </div>
@@ -323,8 +281,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 <div class="flex justify-between font-semibold border-t pt-2">
                     <span>Total</span>
                     <div class="text-right">
-                        <span>{{ format_currency($order->total) }}</span>
-                        @if ($order->shipping_cents === 0 && !$order->status->isTerminal())
+                        <span>{{ format_currency($quote->total) }}</span>
+                        @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
                             <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
                         @endif
                     </div>
@@ -335,11 +293,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             {{-- ============================================================ --}}
             {{-- ACCEPT / REJECT ACTIONS                                        --}}
-            {{-- Only shown when the quote is in QUOTE_SENT and not expired    --}}
             {{-- ============================================================ --}}
             @if ($this->canRespond)
-                <div
-                    class="flex flex-col sm:flex-row items-center gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-8">
+                <div class="flex flex-col sm:flex-row items-center gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-8">
                     <div class="flex-1 text-sm">
                         <p class="font-medium text-zinc-800">Ready to decide?</p>
                         <p class="text-zinc-500 mt-0.5">
@@ -347,14 +303,12 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                         </p>
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
-                        {{-- Reject --}}
                         <flux:modal.trigger name="reject-quote">
                             <flux:button variant="ghost" icon="x-circle" class="cursor-pointer text-red-500!">
                                 Reject
                             </flux:button>
                         </flux:modal.trigger>
 
-                        {{-- Accept --}}
                         <flux:modal.trigger name="accept-quote">
                             <flux:button variant="primary" icon="check-circle" class="cursor-pointer">
                                 Accept Quote
@@ -371,22 +325,21 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             @php
                 $mainPath = [
-                    \App\Enums\OrdersStatus::PENDING_QUOTE,
-                    \App\Enums\OrdersStatus::QUOTE_SENT,
-                    \App\Enums\OrdersStatus::QUOTE_ACCEPTED,
+                    QuoteStatus::PENDING,
+                    QuoteStatus::SENT,
+                    QuoteStatus::ACCEPTED,
                 ];
 
-                $isCancelled = $order->status === \App\Enums\OrdersStatus::CANCELLED;
-                $isRejected = $order->status === \App\Enums\OrdersStatus::QUOTE_REJECTED;
-                $isExpiredS = $order->status === \App\Enums\OrdersStatus::QUOTE_EXPIRED;
+                $isCancelled = $quote->isCancelled();
+                $isRejected = $quote->isRejected();
+                $isExpiredS = $quote->isExpired();
                 $isTerminal = $isCancelled || $isRejected || $isExpiredS;
-                $histories = $order->statusHistories->keyBy('to_status');
+                $histories = $quote->statusHistories->keyBy('to_status');
 
-                // Customer-friendly labels
                 $stepLabels = [
-                    'pending_quote' => ['label' => 'Quote Requested', 'desc' => 'Your quote request was submitted.'],
-                    'quote_sent' => ['label' => 'Quote Ready', 'desc' => 'Sheffield Africa has priced your request.'],
-                    'quote_accepted' => ['label' => 'Quote Accepted', 'desc' => 'You accepted this quotation.'],
+                    'pending' => ['label' => 'Quote Requested', 'desc' => 'Your quote request was submitted.'],
+                    'sent' => ['label' => 'Quote Ready', 'desc' => 'Sheffield Africa has priced your request.'],
+                    'accepted' => ['label' => 'Quote Accepted', 'desc' => 'You accepted this quotation.'],
                 ];
             @endphp
 
@@ -403,16 +356,13 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     @endphp
 
                     <div class="relative flex gap-5 {{ $isLast ? 'pb-0' : 'pb-8' }}">
-
                         @if (!$isLast)
-                            <div
-                                class="absolute left-4 top-8 bottom-0 w-0.5 z-0
+                            <div class="absolute left-4 top-8 bottom-0 w-0.5 z-0
                                 {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}">
                             </div>
                         @endif
 
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
                             {{ $reached
                                 ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
                                 : ($dimmed
@@ -424,13 +374,11 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                         <div class="flex-1 pt-1">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
-                                    <flux:text
-                                        class="text-sm font-semibold
+                                    <flux:text class="text-sm font-semibold
                                         {{ $reached ? 'text-zinc-900 dark:text-white' : ($dimmed ? 'text-zinc-300' : 'text-zinc-400') }}">
                                         {{ $meta['label'] }}
                                     </flux:text>
-                                    <flux:text
-                                        class="text-xs mt-0.5
+                                    <flux:text class="text-xs mt-0.5
                                         {{ $reached ? 'text-zinc-500' : 'text-zinc-300 dark:text-zinc-600' }}">
                                         {{ $reached ? $meta['desc'] : 'Pending' }}
                                     </flux:text>
@@ -451,13 +399,11 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     </div>
                 @endforeach
 
-                {{-- Branch: Rejected --}}
                 @if ($isRejected)
                     <div class="relative flex gap-5 pt-6">
                         <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-500">
-                            <flux:icon name="{{ \App\Enums\OrdersStatus::QUOTE_REJECTED->icon() }}" class="size-4" />
+                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-500">
+                            <flux:icon name="{{ QuoteStatus::REJECTED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
                             <flux:text class="text-sm font-semibold text-red-600">You rejected this quote</flux:text>
@@ -468,13 +414,11 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     </div>
                 @endif
 
-                {{-- Branch: Expired --}}
                 @if ($isExpiredS)
                     <div class="relative flex gap-5 pt-6">
                         <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-400">
-                            <flux:icon name="{{ \App\Enums\OrdersStatus::QUOTE_EXPIRED->icon() }}" class="size-4" />
+                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-400">
+                            <flux:icon name="{{ QuoteStatus::EXPIRED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
                             <flux:text class="text-sm font-semibold text-zinc-500">Quote expired</flux:text>
@@ -485,13 +429,11 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     </div>
                 @endif
 
-                {{-- Branch: Cancelled --}}
                 @if ($isCancelled)
                     <div class="relative flex gap-5 pt-6">
                         <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-500">
-                            <flux:icon name="{{ \App\Enums\OrdersStatus::CANCELLED->icon() }}" class="size-4" />
+                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-500">
+                            <flux:icon name="{{ QuoteStatus::CANCELLED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
                             <flux:text class="text-sm font-semibold text-rose-600">Quotation cancelled</flux:text>
@@ -507,10 +449,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             {{-- Footer --}}
             <div class="flex flex-col items-center gap-3">
-                {{-- Download quotation PDF — available once quote has been sent --}}
-                @if ($order->quoted_at)
+                @if ($quote->quoted_at)
                     <flux:button variant="ghost" icon="arrow-down-tray" size="sm" class="cursor-pointer"
-                        :href="route('customer.quotations.pdf', $order)" target="_blank">
+                        :href="route('customer.quotations.pdf', $quote)" target="_blank">
                         Download Quotation PDF
                     </flux:button>
                 @endif
@@ -520,9 +461,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     <flux:link>Contact Support</flux:link>
                 </flux:text>
             </div>
-
         </section>
     </flux:card>
+
 
     {{-- ================================================================== --}}
     {{-- MODAL: Accept Quote confirmation                                    --}}
@@ -536,20 +477,19 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 </flux:subheading>
             </div>
 
-            {{-- Summary --}}
             <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-sm space-y-1.5">
                 <div class="flex justify-between">
                     <flux:text class="text-zinc-500">Reference</flux:text>
-                    <flux:text class="font-medium">{{ $order->reference }}</flux:text>
+                    <flux:text class="font-medium">{{ $quote->reference }}</flux:text>
                 </div>
                 <div class="flex justify-between">
                     <flux:text class="text-zinc-500">Total</flux:text>
-                    <flux:text class="font-medium">{{ format_currency($order->total) }}</flux:text>
+                    <flux:text class="font-medium">{{ format_currency($quote->total) }}</flux:text>
                 </div>
-                @if ($order->expires_at)
+                @if ($quote->expires_at)
                     <div class="flex justify-between">
                         <flux:text class="text-zinc-500">Valid until</flux:text>
-                        <flux:text class="font-medium">{{ $order->expires_at->format('M d, Y') }}</flux:text>
+                        <flux:text class="font-medium">{{ $quote->expires_at->format('M d, Y') }}</flux:text>
                     </div>
                 @endif
             </div>
@@ -590,5 +530,4 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             </div>
         </div>
     </flux:modal>
-
 </div>

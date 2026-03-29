@@ -1,46 +1,37 @@
 <?php
 
-use App\Enums\OrdersStatus;
-use App\Models\Order;
+use App\Enums\QuoteStatus;
+use App\Models\Quote;
 use App\Services\{QuotationService, DocumentService};
 use Livewire\Attributes\{Computed, Title};
 use Livewire\Component;
 
 new #[Title('Quotation Details')] class extends Component {
-    public Order $order;
+    public Quote $quote;
 
-    //  Price & Send form fields
+    // Price & Send form fields
     public string $quotedShipping = '';
     public int $validityDays = 7;
     public string $note = '';
 
-    // For product quotations — admin can override unit prices per item.
-    // Keyed by order_item.id → new unit price in KES (string for input binding).
+    // Admin can override unit prices per item (keyed by quote_item.id)
     public array $itemPrices = [];
 
-    //  Cancel form
+    // Cancel form
     public string $cancelNote = '';
 
     // =========================================================================
     //  MOUNT
     // =========================================================================
 
-    public function mount(Order $order): void
+    public function mount(Quote $quote): void
     {
-        // Guard: this page is only for quotation documents
-        if (!$order->isQuotation()) {
-            $this->redirectRoute('admin.orders.show', $order, navigate: true);
-            return;
-        }
+        $this->quote = $quote->load(['user', 'items.product', 'statusHistories.changedBy', 'order']);
 
-        $this->order = $order->load(['user', 'items.product', 'statusHistories.changedBy', 'convertedOrder']);
-
-        // Pre-populate item prices for product quotations so the pricing
-        // form shows the current catalogue price rather than a blank field.
-        if ($order->isProductQuotation()) {
-            foreach ($order->items as $item) {
-                $this->itemPrices[$item->id] = number_format($item->unit_price_cents / 100, 2, '.', '');
-            }
+        // Pre-populate item prices so the pricing form shows current prices
+        foreach ($quote->items as $item) {
+            $price = $item->quoted_price_cents ?? $item->original_price_cents;
+            $this->itemPrices[$item->id] = number_format($price / 100, 2, '.', '');
         }
     }
 
@@ -48,54 +39,35 @@ new #[Title('Quotation Details')] class extends Component {
     //  COMPUTED — UI state helpers
     // =========================================================================
 
-    // Show the Price & Send form only when awaiting admin pricing
     #[Computed]
     public function canPrice(): bool
     {
-        return $this->order->status === OrdersStatus::PENDING_QUOTE;
+        return $this->quote->isPending();
     }
 
-    // Show the Convert button only after customer acceptance (and only once)
-    #[Computed]
-    public function canConvert(): bool
-    {
-        return $this->order->status === OrdersStatus::QUOTE_ACCEPTED && !$this->order->hasBeenConverted();
-    }
-
-    // Show Cancel button for any non-terminal quotation
     #[Computed]
     public function canCancel(): bool
     {
-        return $this->order->status->canTransitionTo(OrdersStatus::CANCELLED);
+        return $this->quote->status->canTransitionTo(QuoteStatus::CANCELLED);
     }
 
-    // Live total preview — recalculates as admin types in the pricing form.
-    // For delivery quotes: existing subtotal + quoted shipping.
-    // For product quotes: sum of overridden item prices + quoted shipping.
+    // Live total preview as admin types in the pricing form
     #[Computed]
     public function quotedTotal(): float
     {
         $shipping = (float) str_replace(',', '', $this->quotedShipping ?? '0');
+        $itemsTotal = 0;
 
-        if ($this->order->isProductQuotation() && !empty($this->itemPrices)) {
-            $itemsTotal = 0;
-            foreach ($this->itemPrices as $itemId => $price) {
-                $item = $this->order->items->firstWhere('id', (int) $itemId);
-                $itemsTotal += (float) str_replace(',', '', $price ?? '0') * ($item?->quantity ?? 1);
-            }
-            return max(0, $itemsTotal - $this->order->discount_cents / 100 + $shipping);
+        foreach ($this->itemPrices as $itemId => $price) {
+            $item = $this->quote->items->firstWhere('id', (int) $itemId);
+            $itemsTotal += (float) str_replace(',', '', $price ?? '0') * ($item?->quantity ?? 1);
         }
 
-        return max(0, $this->order->subtotal + $shipping - $this->order->discount);
+        return max(0, $itemsTotal - $this->quote->discount_cents / 100 + $shipping);
     }
 
     // =========================================================================
     //  PRICE & SEND QUOTE
-    //
-    //  Validates the form, builds the pricing payload, and delegates
-    //  all business logic to QuotationService::send().
-    //  The service handles DB transactions, financial updates, status
-    //  transitions, and customer notification.
     // =========================================================================
 
     public function sendQuote(): void
@@ -113,20 +85,20 @@ new #[Title('Quotation Details')] class extends Component {
         }
 
         try {
-            app(QuotationService::class)->send($this->order, [
+            app(QuotationService::class)->send($this->quote, [
                 'shipping' => $this->quotedShipping,
                 'validity_days' => $this->validityDays,
                 'note' => $this->note ?: null,
                 'item_prices' => $this->itemPrices,
             ]);
 
-            $this->order->refresh();
+            $this->quote->refresh();
             $this->note = '';
             $this->modal('price-quote')->close();
             $this->dispatch('notify', variant: 'success', message: 'Quotation sent to customer.');
         } catch (\Throwable $e) {
             logger()->error('Failed to send quotation.', [
-                'order_id' => $this->order->id,
+                'quote_id' => $this->quote->id,
                 'error' => $e->getMessage(),
             ]);
             $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
@@ -134,39 +106,7 @@ new #[Title('Quotation Details')] class extends Component {
     }
 
     // =========================================================================
-    //  CONVERT TO SALES ORDER
-    //
-    //  Delegates to QuotationService::accept() which handles the transition
-    //  and conversion in a single transaction, then notifies admin.
-    //  Redirects to the new sales order show page on success.
-    // =========================================================================
-
-    public function convertToSalesOrder(): void
-    {
-        if (!$this->canConvert) {
-            $this->dispatch('notify', variant: 'danger', message: 'This quotation cannot be converted.');
-            return;
-        }
-
-        try {
-            $salesOrder = app(QuotationService::class)->accept($this->order);
-
-            $this->dispatch('notify', variant: 'success', message: "Sales order {$salesOrder->reference} created.");
-            $this->redirectRoute('admin.orders.show', $salesOrder, navigate: true);
-        } catch (\Throwable $e) {
-            logger()->error('Failed to convert quotation.', [
-                'quotation_id' => $this->order->id,
-                'error' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: $e->getMessage());
-        }
-    }
-
-    // =========================================================================
     //  CANCEL QUOTATION
-    //
-    //  Delegates to QuotationService::cancel().
-    //  No customer notification — admin handles communication directly.
     // =========================================================================
 
     public function cancelQuotation(): void
@@ -181,9 +121,9 @@ new #[Title('Quotation Details')] class extends Component {
         }
 
         try {
-            app(QuotationService::class)->cancel($this->order, $this->cancelNote ?: null);
+            app(QuotationService::class)->cancel($this->quote, $this->cancelNote ?: null);
 
-            $this->order->refresh();
+            $this->quote->refresh();
             $this->cancelNote = '';
             $this->modal('cancel-quote')->close();
             $this->dispatch('notify', variant: 'warning', message: 'Quotation cancelled.');
@@ -194,44 +134,35 @@ new #[Title('Quotation Details')] class extends Component {
 
     // =========================================================================
     //  DOWNLOAD QUOTATION PDF
-    //
-    //  Admin-side download — bypasses the customer ownership check
-    //  on QuotationPdfController (which requires auth()->id() === order->user_id).
-    //
-    //  If the PDF hasn't been generated yet (e.g. DocumentService failed silently
-    //  when the quote was sent), it generates it on the fly before serving.
     // =========================================================================
 
     public function downloadPdf(): mixed
     {
-        $order = $this->order;
+        $quote = $this->quote;
 
-        // Generate if not yet stored
-        if (!$order->quotation_pdf_path) {
-            $path = app(DocumentService::class)->generateQuotation($order);
+        if (!$quote->document_path) {
+            $path = app(DocumentService::class)->generateQuotation($quote);
 
             if (!$path) {
                 $this->dispatch('notify', variant: 'danger', message: 'Unable to generate PDF. Please try again.');
                 return null;
             }
 
-            $order->refresh();
+            $quote->refresh();
         }
 
-        $response = app(DocumentService::class)->serve($order->quotation_pdf_path, 'Quotation');
+        $response = app(DocumentService::class)->serve($quote->document_path, 'Quotation');
 
         if (!$response) {
-            // File missing on disk — regenerate
-            $path = app(DocumentService::class)->generateQuotation($order);
+            $path = app(DocumentService::class)->generateQuotation($quote);
 
             if (!$path) {
                 $this->dispatch('notify', variant: 'danger', message: 'PDF not found. Please try again.');
                 return null;
             }
 
-            $order->refresh();
-
-            return app(DocumentService::class)->serve($order->quotation_pdf_path, 'Quotation');
+            $quote->refresh();
+            return app(DocumentService::class)->serve($quote->document_path, 'Quotation');
         }
 
         return $response;
@@ -247,48 +178,34 @@ new #[Title('Quotation Details')] class extends Component {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <flux:breadcrumbs class="mb-2">
-                <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline"
-                    wire:navigate />
-                <flux:breadcrumbs.item :href="route('admin.orders.index')" wire:navigate>Orders</flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>{{ $order->reference }}</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
+                <flux:breadcrumbs.item :href="route('admin.quotations.index')" wire:navigate>Quotations</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>{{ $quote->reference }}</flux:breadcrumbs.item>
             </flux:breadcrumbs>
 
             <div class="flex items-center gap-3 flex-wrap">
                 <flux:heading size="xl" class="font-bold tracking-tight">
-                    {{ $order->reference }}
+                    {{ $quote->reference }}
                 </flux:heading>
-                <flux:badge :color="$order->status->color()" variant="solid" size="sm"
+                <flux:badge :color="$quote->status->color()" variant="solid" size="sm"
                     class="uppercase text-[10px] tracking-widest font-bold">
-                    {{ $order->status->label() }}
+                    {{ $quote->status->label() }}
                 </flux:badge>
-                @if ($order->quotation_type === 'delivery')
-                    <flux:badge color="indigo" variant="flat" size="sm" icon="truck">Delivery Quote</flux:badge>
-                @elseif ($order->quotation_type === 'product')
-                    <flux:badge color="purple" variant="flat" size="sm" icon="tag">Product Quote</flux:badge>
-                @endif
             </div>
 
             <flux:text class="mt-1 flex items-center gap-2">
                 <flux:icon name="calendar" class="size-4 text-zinc-400" />
-                Submitted on {{ $order->created_at->format('M d, Y') }} at {{ $order->created_at->format('g:i A') }}
+                Submitted on {{ $quote->created_at->format('M d, Y') }} at {{ $quote->created_at->format('g:i A') }}
             </flux:text>
         </div>
 
-        {{-- Primary actions — only show what's relevant to the current status --}}
+        {{-- Primary actions --}}
         <div class="flex items-center gap-3 flex-wrap">
-
-            <flux:button variant="outline" icon="document-text" size="sm" wire:click="downloadPdf"
-                class="cursor-pointer">
-                <span wire:loading.remove wire:target="downloadPdf">Quotation PDF</span>
-                <span wire:loading wire:target="downloadPdf">Generating...</span>
-            </flux:button>
-
-            @if ($this->canConvert)
-                <flux:modal.trigger name="convert-quote">
-                    <flux:button size="sm" variant="primary" icon="arrow-right-circle" class="cursor-pointer">
-                        Convert to Sales Order
-                    </flux:button>
-                </flux:modal.trigger>
+            @if ($quote->isSent())
+                <flux:button variant="outline" icon="document-text" size="sm" wire:click="downloadPdf" class="cursor-pointer">
+                    <span wire:loading.remove wire:target="downloadPdf">Quotation PDF</span>
+                    <span wire:loading wire:target="downloadPdf">Generating...</span>
+                </flux:button>
             @endif
 
             @if ($this->canPrice)
@@ -306,7 +223,6 @@ new #[Title('Quotation Details')] class extends Component {
                     </flux:button>
                 </flux:modal.trigger>
             @endif
-
         </div>
     </div>
 
@@ -315,13 +231,13 @@ new #[Title('Quotation Details')] class extends Component {
     {{-- ================================================================== --}}
 
     {{-- Awaiting admin pricing --}}
-    @if ($order->status === \App\Enums\OrdersStatus::PENDING_QUOTE)
+    @if ($quote->isPending())
         <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg mb-5">
             <flux:icon.clock class="size-5 shrink-0 mt-0.5 text-amber-500" />
             <div class="text-sm">
                 <p class="font-medium text-amber-800">This quotation is awaiting your pricing</p>
                 <p class="text-amber-700 mt-0.5">
-                    Review the items and delivery address below, then click
+                    Review the items and delivery preferences below, then click
                     <strong>Price & Send Quote</strong> to notify the customer.
                 </p>
             </div>
@@ -329,15 +245,12 @@ new #[Title('Quotation Details')] class extends Component {
     @endif
 
     {{-- Expiring soon --}}
-    @if (
-        $order->status === \App\Enums\OrdersStatus::QUOTE_SENT &&
-            $order->expires_at?->diffInHours(now()) <= 48 &&
-            !$order->expires_at?->isPast())
+    @if ($quote->isSent() && $quote->expires_at?->diffInHours(now()) <= 48 && !$quote->expires_at?->isPast())
         <div class="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-lg mb-5">
             <flux:icon.exclamation-triangle class="size-5 shrink-0 mt-0.5 text-rose-500" />
             <div class="text-sm">
                 <p class="font-medium text-rose-800">
-                    This quotation expires {{ $order->expires_at->diffForHumans() }}
+                    This quotation expires {{ $quote->expires_at->diffForHumans() }}
                 </p>
                 <p class="text-rose-700 mt-0.5">Follow up with the customer to ensure they have seen the quote.</p>
             </div>
@@ -345,35 +258,36 @@ new #[Title('Quotation Details')] class extends Component {
     @endif
 
     {{-- Converted to sales order --}}
-    @if ($order->hasBeenConverted())
+    @if ($quote->order)
         <div class="flex items-start gap-3 p-4 bg-teal-50 border border-teal-200 rounded-lg mb-5">
             <flux:icon.check-circle class="size-5 shrink-0 mt-0.5 text-teal-500" />
             <div class="text-sm flex items-center justify-between w-full">
                 <div>
                     <p class="font-medium text-teal-800">Converted to a sales order</p>
-                    <p class="text-teal-700 mt-0.5">Reference: {{ $order->convertedOrder->reference }}</p>
+                    <p class="text-teal-700 mt-0.5">Reference: {{ $quote->order->reference }}</p>
                 </div>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
-                    :href="route('admin.orders.show', $order->convertedOrder)" wire:navigate>
+                    :href="route('admin.orders.show', $quote->order)" wire:navigate>
                     View Order
                 </flux:button>
             </div>
         </div>
     @endif
 
+
     {{-- ================================================================== --}}
     {{-- MAIN LAYOUT                                                         --}}
     {{-- ================================================================== --}}
-    <div class="grid grid-cols-4 gap-5 mt-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 mt-6">
 
         {{-- ── Left: Main content (3 cols) ── --}}
-        <div class="col-span-3 space-y-5">
+        <div class="lg:col-span-3 space-y-5">
 
             {{-- Items table --}}
             <flux:card class="p-0">
                 <div class="px-6 py-2 border-b flex justify-between items-center">
                     <flux:heading level="3" class="font-semibold">Items</flux:heading>
-                    <flux:badge variant="outline">{{ $order->items->sum('quantity') }} items</flux:badge>
+                    <flux:badge variant="outline">{{ $quote->items->sum('quantity') }} items</flux:badge>
                 </div>
 
                 <flux:table>
@@ -381,52 +295,51 @@ new #[Title('Quotation Details')] class extends Component {
                         <flux:table.column class="ps-6!">Product</flux:table.column>
                         <flux:table.column>SKU</flux:table.column>
                         <flux:table.column>Qty</flux:table.column>
-                        <flux:table.column>Unit Price</flux:table.column>
-                        <flux:table.column>Discount</flux:table.column>
+                        <flux:table.column>Original Price</flux:table.column>
+                        <flux:table.column>Quoted Price</flux:table.column>
                         <flux:table.column>Total</flux:table.column>
-                        @if ($order->isProductQuotation())
-                            <flux:table.column></flux:table.column>
-                        @endif
                     </flux:table.columns>
 
                     <flux:table.rows>
-                        @forelse ($order->items as $item)
-                            @php
-                                $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—');
-                                $sku = $item->product_snapshot['sku'] ?? '—';
-                                $imagePath = $item->product?->image_url;
-                                $requiresQuote = $item->product_snapshot['requires_quotation'] ?? false;
-                            @endphp
+                        @forelse ($quote->items as $item)
                             <flux:table.row :key="$item->id">
                                 <flux:table.cell class="ps-6!">
                                     <div class="flex items-center gap-3">
                                         <div class="shrink-0 w-12 h-12 rounded border overflow-hidden bg-zinc-50">
-                                            @if ($imagePath)
-                                                <img src="{{ asset($imagePath) }}" alt="{{ $name }}"
+                                            @if ($item->productImageUrl())
+                                                <img src="{{ asset($item->productImageUrl()) }}" alt="{{ $item->productName() }}"
                                                     class="w-full h-full object-cover" />
                                             @else
                                                 <flux:icon name="photo" class="w-full h-full p-2 text-zinc-300" />
                                             @endif
                                         </div>
-                                        <flux:text class="text-sm font-medium">{{ $name }}</flux:text>
+                                        <div>
+                                            <flux:text class="text-sm font-medium">{{ $item->productName() }}</flux:text>
+                                            @if ($item->product_snapshot['variant'] ?? null)
+                                                <flux:text class="text-xs text-zinc-400">
+                                                    {{ collect($item->product_snapshot['variant'])->map(fn($v, $k) => "$k: $v")->join(', ') }}
+                                                </flux:text>
+                                            @endif
+                                        </div>
                                     </div>
                                 </flux:table.cell>
                                 <flux:table.cell>
-                                    <flux:text class="text-xs text-zinc-400">{{ $sku }}</flux:text>
+                                    <flux:text class="text-xs text-zinc-400">{{ $item->productSku() }}</flux:text>
                                 </flux:table.cell>
                                 <flux:table.cell>{{ $item->quantity }}</flux:table.cell>
-                                <flux:table.cell>{{ format_currency($item->unit_price_cents / 100) }}</flux:table.cell>
-                                <flux:table.cell>{{ format_currency($item->discount_cents / 100) }}</flux:table.cell>
-                                <flux:table.cell class="font-medium">{{ format_currency($item->total_cents / 100) }}
+                                <flux:table.cell>{{ format_currency($item->original_price) }}</flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($item->quoted_price_cents)
+                                        <span class="{{ $item->hasCustomPrice() ? 'text-blue-600 font-medium' : '' }}">
+                                            {{ format_currency($item->quoted_price) }}
+                                        </span>
+                                    @else
+                                        <span class="text-zinc-400">—</span>
+                                    @endif
                                 </flux:table.cell>
-                                @if ($order->isProductQuotation())
-                                    <flux:table.cell>
-                                        @if ($requiresQuote)
-                                            <flux:badge size="sm" color="amber" variant="flat">Quote required
-                                            </flux:badge>
-                                        @endif
-                                    </flux:table.cell>
-                                @endif
+                                <flux:table.cell class="font-medium">
+                                    {{ format_currency($item->effective_price * $item->quantity) }}
+                                </flux:table.cell>
                             </flux:table.row>
                         @empty
                             <flux:table.row>
@@ -444,25 +357,25 @@ new #[Title('Quotation Details')] class extends Component {
                         <div class="w-full max-w-xs space-y-2">
                             <div class="flex justify-between text-sm">
                                 <flux:text>Subtotal</flux:text>
-                                <flux:text class="font-medium">{{ format_currency($order->subtotal) }}</flux:text>
+                                <flux:text class="font-medium">{{ format_currency($quote->subtotal) }}</flux:text>
                             </div>
-                            @if ($order->discount > 0)
+                            @if ($quote->discount > 0)
                                 <div class="flex justify-between text-sm">
                                     <flux:text>Discount</flux:text>
                                     <flux:text class="font-medium text-green-600">
-                                        − {{ format_currency($order->discount) }}
+                                        − {{ format_currency($quote->discount) }}
                                     </flux:text>
                                 </div>
                             @endif
                             <div class="flex justify-between text-sm">
                                 <flux:text>Shipping</flux:text>
                                 <flux:text class="font-medium">
-                                    @if ($order->shipping_cents === 0 && !$order->status->isTerminal())
+                                    @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
                                         <span class="text-amber-500">TBD</span>
-                                    @elseif ($order->shipping_cents === 0)
+                                    @elseif ($quote->shipping_cents === 0)
                                         <span class="text-green-600">Free</span>
                                     @else
-                                        {{ format_currency($order->shipping) }}
+                                        {{ format_currency($quote->shipping) }}
                                     @endif
                                 </flux:text>
                             </div>
@@ -470,9 +383,9 @@ new #[Title('Quotation Details')] class extends Component {
                                 <flux:heading size="lg">Total</flux:heading>
                                 <div class="text-right">
                                     <flux:heading size="lg" class="font-bold">
-                                        {{ format_currency($order->total) }}
+                                        {{ format_currency($quote->total) }}
                                     </flux:heading>
-                                    @if ($order->shipping_cents === 0 && !$order->status->isTerminal())
+                                    @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
                                         <p class="text-xs text-amber-500 font-normal">Excludes shipping</p>
                                     @endif
                                 </div>
@@ -482,31 +395,31 @@ new #[Title('Quotation Details')] class extends Component {
                 </div>
             </flux:card>
 
+
             {{-- Timeline --}}
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b flex items-center justify-between">
                     <flux:heading>Quotation Timeline</flux:heading>
-                    <flux:badge :color="$order->status->color()" variant="solid" size="sm">
-                        {{ $order->status->label() }}
+                    <flux:badge :color="$quote->status->color()" variant="solid" size="sm">
+                        {{ $quote->status->label() }}
                     </flux:badge>
                 </div>
 
                 <div class="p-5">
                     @php
                         $mainPath = [
-                            \App\Enums\OrdersStatus::PENDING_QUOTE,
-                            \App\Enums\OrdersStatus::QUOTE_SENT,
-                            \App\Enums\OrdersStatus::QUOTE_ACCEPTED,
+                            QuoteStatus::PENDING,
+                            QuoteStatus::SENT,
+                            QuoteStatus::ACCEPTED,
                         ];
-                        $isCancelled = $order->status === \App\Enums\OrdersStatus::CANCELLED;
-                        $isRejected = $order->status === \App\Enums\OrdersStatus::QUOTE_REJECTED;
-                        $isExpired = $order->status === \App\Enums\OrdersStatus::QUOTE_EXPIRED;
+                        $isCancelled = $quote->isCancelled();
+                        $isRejected = $quote->isRejected();
+                        $isExpired = $quote->isExpired();
                         $isTerminal = $isCancelled || $isRejected || $isExpired;
-                        $histories = $order->statusHistories->keyBy('to_status');
+                        $histories = $quote->statusHistories->keyBy('to_status');
                     @endphp
 
                     <div class="relative">
-
                         @foreach ($mainPath as $index => $step)
                             @php
                                 $history = $histories->get($step->value);
@@ -519,14 +432,12 @@ new #[Title('Quotation Details')] class extends Component {
 
                             <div class="relative flex gap-4 {{ $isLast ? 'pb-0' : 'pb-6' }}">
                                 @if (!$isLast)
-                                    <div
-                                        class="absolute left-4 top-8 bottom-0 w-px
+                                    <div class="absolute left-4 top-8 bottom-0 w-px
                                         {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }} z-0">
                                     </div>
                                 @endif
 
-                                <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
                                     {{ $reached
                                         ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
                                         : ($dimmed
@@ -537,19 +448,17 @@ new #[Title('Quotation Details')] class extends Component {
 
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1 min-w-0">
                                     <div class="min-w-0">
-                                        <flux:text
-                                            class="text-sm
+                                        <flux:text class="text-sm
                                             {{ $reached ? 'font-medium text-zinc-900 dark:text-white' : ($dimmed ? 'text-zinc-300' : 'text-zinc-400') }}">
                                             {{ $step->label() }}
                                         </flux:text>
 
-                                        @if ($step === \App\Enums\OrdersStatus::QUOTE_SENT && $order->expires_at && $reached)
-                                            <flux:text
-                                                class="text-xs mt-0.5
-                                                {{ $order->expires_at->isPast() ? 'text-rose-500' : 'text-zinc-400' }}">
-                                                {{ $order->expires_at->isPast() ? 'Expired' : 'Expires' }}
-                                                {{ $order->expires_at->diffForHumans() }}
-                                                ({{ $order->expires_at->format('M d, Y') }})
+                                        @if ($step === QuoteStatus::SENT && $quote->expires_at && $reached)
+                                            <flux:text class="text-xs mt-0.5
+                                                {{ $quote->expires_at->isPast() ? 'text-rose-500' : 'text-zinc-400' }}">
+                                                {{ $quote->expires_at->isPast() ? 'Expired' : 'Expires' }}
+                                                {{ $quote->expires_at->diffForHumans() }}
+                                                ({{ $quote->expires_at->format('M d, Y') }})
                                             </flux:text>
                                         @endif
 
@@ -578,19 +487,16 @@ new #[Title('Quotation Details')] class extends Component {
                         @endforeach
 
                         {{-- Branch: Converted --}}
-                        @if ($order->hasBeenConverted())
+                        @if ($quote->order)
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-900 dark:bg-white z-0"></div>
-                                <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-600 text-white">
+                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-600 text-white">
                                     <flux:icon name="arrow-right-circle" class="size-4" />
                                 </div>
                                 <div class="flex-1 pt-1">
-                                    <flux:text class="text-sm font-medium text-teal-600">Converted to sales order
-                                    </flux:text>
-                                    <flux:link :href="route('admin.orders.show', $order->convertedOrder)" wire:navigate
-                                        class="text-xs text-teal-500">
-                                        {{ $order->convertedOrder->reference }} →
+                                    <flux:text class="text-sm font-medium text-teal-600">Converted to sales order</flux:text>
+                                    <flux:link :href="route('admin.orders.show', $quote->order)" wire:navigate class="text-xs text-teal-500">
+                                        {{ $quote->order->reference }} →
                                     </flux:link>
                                 </div>
                             </div>
@@ -598,29 +504,27 @@ new #[Title('Quotation Details')] class extends Component {
 
                         {{-- Branch: Rejected --}}
                         @if ($isRejected)
-                            @php $h = $histories->get('quote_rejected'); @endphp
+                            @php $h = $histories->get(QuoteStatus::REJECTED->value); @endphp
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-300 z-0"></div>
-                                <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 dark:bg-red-950 text-red-600">
-                                    <flux:icon name="{{ \App\Enums\OrdersStatus::QUOTE_REJECTED->icon() }}"
-                                        class="size-4" />
+                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-500 text-white">
+                                    <flux:icon name="x-circle" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:text class="text-sm font-medium text-red-600">Quote rejected by customer
-                                        </flux:text>
-                                        @if ($h?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $h->notes }}
-                                            </flux:text>
+                                        <flux:text class="text-sm font-medium text-red-600">Rejected by customer</flux:text>
+                                        @if ($quote->rejection_reason)
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $quote->rejection_reason }}</flux:text>
                                         @endif
                                     </div>
                                     @if ($h)
                                         <div class="text-right shrink-0">
                                             <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                                {{ $h->created_at->format('M d, Y') }}</flux:text>
+                                                {{ $h->created_at->format('M d, Y') }}
+                                            </flux:text>
                                             <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                                {{ $h->created_at->format('g:i A') }}</flux:text>
+                                                {{ $h->created_at->format('g:i A') }}
+                                            </flux:text>
                                         </div>
                                     @endif
                                 </div>
@@ -629,30 +533,22 @@ new #[Title('Quotation Details')] class extends Component {
 
                         {{-- Branch: Expired --}}
                         @if ($isExpired)
-                            @php $h = $histories->get('quote_expired'); @endphp
+                            @php $h = $histories->get(QuoteStatus::EXPIRED->value); @endphp
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-300 z-0"></div>
-                                <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-400">
-                                    <flux:icon name="{{ \App\Enums\OrdersStatus::QUOTE_EXPIRED->icon() }}"
-                                        class="size-4" />
+                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-400 text-white">
+                                    <flux:icon name="exclamation-circle" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
-                                    <div>
-                                        <flux:text class="text-sm font-medium text-zinc-500">Quote expired without
-                                            response</flux:text>
-                                        @if ($h?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $h->notes }}
-                                            </flux:text>
-                                        @endif
-                                    </div>
+                                    <flux:text class="text-sm font-medium text-zinc-500">Quote expired</flux:text>
                                     @if ($h)
                                         <div class="text-right shrink-0">
                                             <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                                {{ $h->created_at->format('M d, Y') }}</flux:text>
+                                                {{ $h->created_at->format('M d, Y') }}
+                                            </flux:text>
                                             <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                                {{ $h->created_at->format('g:i A') }}</flux:text>
-                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">System</flux:text>
+                                                {{ $h->created_at->format('g:i A') }}
+                                            </flux:text>
                                         </div>
                                     @endif
                                 </div>
@@ -661,286 +557,220 @@ new #[Title('Quotation Details')] class extends Component {
 
                         {{-- Branch: Cancelled --}}
                         @if ($isCancelled)
-                            @php $h = $histories->get('cancelled'); @endphp
+                            @php $h = $histories->get(QuoteStatus::CANCELLED->value); @endphp
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-300 z-0"></div>
-                                <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 dark:bg-rose-950 text-rose-600">
-                                    <flux:icon name="{{ \App\Enums\OrdersStatus::CANCELLED->icon() }}"
-                                        class="size-4" />
+                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-400 text-white">
+                                    <flux:icon name="x-mark" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:text class="text-sm font-medium text-rose-600">Quotation Cancelled
-                                        </flux:text>
+                                        <flux:text class="text-sm font-medium text-zinc-500">Cancelled by admin</flux:text>
                                         @if ($h?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $h->notes }}
-                                            </flux:text>
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $h->notes }}</flux:text>
                                         @endif
                                     </div>
                                     @if ($h)
                                         <div class="text-right shrink-0">
                                             <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                                {{ $h->created_at->format('M d, Y') }}</flux:text>
+                                                {{ $h->created_at->format('M d, Y') }}
+                                            </flux:text>
                                             <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                                {{ $h->created_at->format('g:i A') }}</flux:text>
-                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
-                                                {{ $h->changedBy?->name ?? 'System' }}</flux:text>
+                                                {{ $h->created_at->format('g:i A') }}
+                                            </flux:text>
                                         </div>
                                     @endif
                                 </div>
                             </div>
                         @endif
-
                     </div>
                 </div>
             </flux:card>
-
         </div>
 
-        {{-- ── Right: Sidebar (1 col) ── --}}
-        <div class="col-span-1 space-y-5">
 
-            {{-- Customer --}}
+        {{-- ── Right: Sidebar (1 col) ── --}}
+        <div class="space-y-5">
+
+            {{-- Customer info --}}
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b">
                     <flux:heading>Customer</flux:heading>
                 </div>
-                <div class="p-5 text-sm space-y-4">
-                    <flux:card class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/50">
-                        <div class="shrink-0">
-                            @if ($order->user?->avatar)
-                                <flux:avatar circle class="size-10" src="{{ $order->user->avatar }}" />
-                            @else
-                                <flux:avatar circle class="size-10" name="{{ $order->user?->name ?? 'U' }}" />
+                <div class="p-5 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="shrink-0 w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                            <flux:icon name="user" class="size-5 text-zinc-400" />
+                        </div>
+                        <div>
+                            <flux:text class="font-medium">{{ $quote->customerName() }}</flux:text>
+                            @if ($quote->isGuest())
+                                <flux:badge size="sm" color="zinc" variant="flat">Guest</flux:badge>
                             @endif
                         </div>
-                        <div>
-                            <flux:text class="font-medium">{{ $order->user?->name }}</flux:text>
-                            <flux:link href="mailto:{{ $order->user?->email }}" class="text-xs">
-                                {{ $order->user?->email }}
-                            </flux:link>
-                        </div>
-                    </flux:card>
-
-                    <div class="flex items-start gap-3">
-                        <flux:icon name="phone" class="size-4 mt-0.5 text-zinc-400" />
-                        <flux:text size="sm">{{ format_phone($order->user?->phone_number) ?? 'No phone' }}
-                        </flux:text>
                     </div>
 
-                    <div class="flex items-start gap-3">
-                        <flux:icon name="map-pin" class="size-4 mt-0.5 text-zinc-400" />
-                        <div>
-                            <flux:text size="sm" class="font-medium block">Delivery Address</flux:text>
-                            <flux:text size="xs" class="leading-relaxed">
-                                {{ $order->shipping_address['address'] ?? 'N/A' }}<br>
-                                {{ $order->shipping_address['area'] ?? '' }},
-                                {{ $order->shipping_address['county'] ?? '' }}
-                            </flux:text>
-                            <flux:text size="xs" class="text-zinc-400 mt-1">
-                                Zone: {{ $order->shipping_address['zone'] ?? '—' }}
-                            </flux:text>
-                        </div>
+                    <div class="space-y-2 text-sm">
+                        @if ($quote->customerEmail())
+                            <div class="flex items-center gap-2">
+                                <flux:icon name="envelope" class="size-4 text-zinc-400" />
+                                <flux:link href="mailto:{{ $quote->customerEmail() }}">{{ $quote->customerEmail() }}</flux:link>
+                            </div>
+                        @endif
+                        @if ($quote->customerPhone())
+                            <div class="flex items-center gap-2">
+                                <flux:icon name="phone" class="size-4 text-zinc-400" />
+                                <flux:text>{{ $quote->customerPhone() }}</flux:text>
+                            </div>
+                        @endif
                     </div>
+
+                    @if ($quote->user)
+                        <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
+                            :href="route('admin.customers.show', $quote->user)" wire:navigate class="w-full">
+                            View Customer
+                        </flux:button>
+                    @endif
                 </div>
             </flux:card>
 
-            {{-- Quote Details --}}
+            {{-- Delivery preferences --}}
             <flux:card class="p-0">
                 <div class="px-5 py-3 border-b">
-                    <flux:heading>Quote Details</flux:heading>
+                    <flux:heading>Delivery Preferences</flux:heading>
                 </div>
-                <div class="p-5 text-sm space-y-3">
-
-                    <div class="flex justify-between items-center">
-                        <flux:text class="text-zinc-500">Type</flux:text>
-                        @if ($order->quotation_type === 'delivery')
-                            <flux:badge size="sm" color="indigo" variant="flat">Delivery</flux:badge>
-                        @else
-                            <flux:badge size="sm" color="purple" variant="flat">Product</flux:badge>
-                        @endif
-                    </div>
-
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Submitted</flux:text>
-                        <flux:text class="font-medium">{{ $order->created_at->format('M d, Y') }}</flux:text>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Quoted</flux:text>
-                        <flux:text class="font-medium">
-                            {{ $order->quoted_at ? $order->quoted_at->format('M d, Y') : '—' }}
-                        </flux:text>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Expires</flux:text>
-                        @if ($order->expires_at)
-                            <flux:text @class([
-                                'font-medium',
-                                'text-rose-600' => $order->expires_at->isPast(),
-                                'text-amber-600' =>
-                                    !$order->expires_at->isPast() &&
-                                    $order->expires_at->diffInHours() <= 48,
-                            ])>
-                                {{ $order->expires_at->format('M d, Y') }}
-                            </flux:text>
-                        @else
-                            <flux:text class="text-zinc-400">Not set</flux:text>
-                        @endif
-                    </div>
-
-                    @if ($order->quotation_type === 'delivery')
-                        <div class="flex justify-between">
-                            <flux:text class="text-zinc-500">Package weight</flux:text>
-                            <flux:text class="font-medium">
-                                {{ $order->shipping_snapshot['weight_kg'] ?? '—' }} kg
-                            </flux:text>
+                <div class="p-5 space-y-3 text-sm">
+                    @if ($quote->preferred_county || $quote->preferred_area)
+                        <div class="flex items-start gap-2">
+                            <flux:icon name="map-pin" class="size-4 text-zinc-400 mt-0.5" />
+                            <div>
+                                @if ($quote->preferred_area)
+                                    <flux:text>{{ $quote->preferred_area }}</flux:text>
+                                @endif
+                                @if ($quote->preferred_county)
+                                    <flux:text class="text-zinc-400">{{ $quote->preferred_county }}</flux:text>
+                                @endif
+                            </div>
                         </div>
+                    @else
+                        <flux:text class="text-zinc-400">No delivery preferences specified.</flux:text>
                     @endif
-
-                    @if ($order->hasBeenConverted())
-                        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                            <flux:text class="text-zinc-500 text-xs mb-1">Converted to</flux:text>
-                            <flux:link :href="route('admin.orders.show', $order->convertedOrder)" wire:navigate
-                                class="text-sm font-medium">
-                                {{ $order->convertedOrder->reference }}
-                                <flux:icon.arrow-top-right-on-square class="size-3 inline-block ms-1" />
-                            </flux:link>
-                        </div>
-                    @endif
-
                 </div>
             </flux:card>
 
+            {{-- Customer notes --}}
+            @if ($quote->customer_notes)
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b">
+                        <flux:heading>Customer Notes</flux:heading>
+                    </div>
+                    <div class="p-5">
+                        <flux:text class="text-sm whitespace-pre-wrap">{{ $quote->customer_notes }}</flux:text>
+                    </div>
+                </flux:card>
+            @endif
+
+            {{-- Admin notes --}}
+            @if ($quote->admin_notes)
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b">
+                        <flux:heading>Admin Notes</flux:heading>
+                    </div>
+                    <div class="p-5">
+                        <flux:text class="text-sm whitespace-pre-wrap">{{ $quote->admin_notes }}</flux:text>
+                    </div>
+                </flux:card>
+            @endif
         </div>
     </div>
 
+
     {{-- ================================================================== --}}
-    {{-- MODAL: Price & Send Quote                                           --}}
+    {{-- MODALS                                                              --}}
     {{-- ================================================================== --}}
-    <flux:modal name="price-quote" class="w-full max-w-lg">
-        <div class="space-y-5">
+
+    {{-- Price & Send Quote Modal --}}
+    <flux:modal name="price-quote" class="max-w-2xl">
+        <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Price & Send Quote</flux:heading>
-                <flux:subheading>
-                    @if ($order->isDeliveryQuotation())
-                        Set the delivery cost. Product prices are fixed from the catalogue.
-                    @else
-                        Adjust item prices if needed, then set the delivery cost.
-                    @endif
-                </flux:subheading>
+                <flux:text class="mt-1">Set item prices and shipping, then send the quotation to the customer.</flux:text>
             </div>
 
             <form wire:submit="sendQuote" class="space-y-5">
-
-                {{-- Product quotation: editable item prices --}}
-                @if ($order->isProductQuotation())
-                    <div>
-                        <flux:text class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
-                            Item Prices (KES)
-                        </flux:text>
-                        <div class="space-y-2">
-                            @foreach ($order->items as $item)
-                                @php $name = $item->product_snapshot['name'] ?? ($item->product?->name ?? '—'); @endphp
-                                <div class="flex items-center gap-3">
-                                    <flux:text class="flex-1 text-sm truncate" title="{{ $name }}">
-                                        {{ $name }}
-                                        <span class="text-zinc-400">× {{ $item->quantity }}</span>
-                                    </flux:text>
-                                    <flux:input wire:model.live="itemPrices.{{ $item->id }}" type="number"
-                                        step="0.01" min="0" class="w-32" placeholder="0.00" />
-                                </div>
-                            @endforeach
+                {{-- Item prices --}}
+                <div class="space-y-3">
+                    <flux:label>Item Prices</flux:label>
+                    @foreach ($quote->items as $item)
+                        <div class="flex items-center gap-4 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                            <div class="flex-1 min-w-0">
+                                <flux:text class="text-sm font-medium truncate">{{ $item->productName() }}</flux:text>
+                                <flux:text class="text-xs text-zinc-400">Qty: {{ $item->quantity }} × Original: {{ format_currency($item->original_price) }}</flux:text>
+                            </div>
+                            <div class="w-32">
+                                <flux:input type="number" step="0.01" min="0"
+                                    wire:model.live.debounce.300ms="itemPrices.{{ $item->id }}"
+                                    placeholder="Unit price" />
+                            </div>
                         </div>
-                    </div>
-                @endif
-
-                <flux:input wire:model.live="quotedShipping" type="number" step="0.01" min="0"
-                    label="Delivery cost (KES)" placeholder="e.g. 1500" description="Enter 0 if delivery is free" />
-
-                <flux:input wire:model="validityDays" type="number" min="1" max="90"
-                    label="Valid for (days)" description="Customer must accept before this expires" />
-
-                {{-- Live total preview --}}
-                <div class="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-sm">
-                    <flux:text class="font-medium">Quoted total</flux:text>
-                    <flux:text class="font-bold text-base">{{ format_currency($this->quotedTotal) }}</flux:text>
+                    @endforeach
                 </div>
 
-                <flux:textarea wire:model="note" label="Note (optional)"
-                    placeholder="Any notes for this quotation..." rows="3" />
+                {{-- Shipping --}}
+                <flux:input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="quotedShipping"
+                    label="Shipping Cost (KES)" placeholder="0.00" />
 
-                <div class="flex justify-end gap-3 pt-2">
+                {{-- Validity --}}
+                <flux:input type="number" min="1" max="90" wire:model="validityDays"
+                    label="Validity Period (days)" description="How long the customer has to accept this quote." />
+
+                {{-- Note --}}
+                <flux:textarea wire:model="note" label="Note to Customer (optional)"
+                    placeholder="Any additional information for the customer..." rows="3" />
+
+                {{-- Live total preview --}}
+                <div class="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <flux:text class="font-medium">Quoted Total</flux:text>
+                        <flux:heading size="lg" class="font-bold">{{ format_currency($this->quotedTotal) }}</flux:heading>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
                     <flux:modal.close>
-                        <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
+                        <flux:button variant="ghost">Cancel</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary" class="cursor-pointer">
-                        Send Quote to Customer
+                    <flux:button type="submit" variant="primary" icon="paper-airplane">
+                        <span wire:loading.remove wire:target="sendQuote">Send Quote</span>
+                        <span wire:loading wire:target="sendQuote">Sending...</span>
                     </flux:button>
                 </div>
             </form>
         </div>
     </flux:modal>
 
-    {{-- ================================================================== --}}
-    {{-- MODAL: Convert to Sales Order                                       --}}
-    {{-- ================================================================== --}}
-    <flux:modal name="convert-quote" class="w-full max-w-md">
-        <div class="space-y-4">
-            <div>
-                <flux:heading size="lg">Convert to Sales Order</flux:heading>
-                <flux:subheading>
-                    Creates a new sales order and routes the customer to payment.
-                    This cannot be undone.
-                </flux:subheading>
-            </div>
-            <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-sm space-y-1.5">
-                <div class="flex justify-between">
-                    <flux:text class="text-zinc-500">Quotation</flux:text>
-                    <flux:text class="font-medium">{{ $order->reference }}</flux:text>
-                </div>
-                <div class="flex justify-between">
-                    <flux:text class="text-zinc-500">Customer</flux:text>
-                    <flux:text class="font-medium">{{ $order->user?->name }}</flux:text>
-                </div>
-                <div class="flex justify-between">
-                    <flux:text class="text-zinc-500">Total</flux:text>
-                    <flux:text class="font-medium">{{ format_currency($order->total) }}</flux:text>
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 pt-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
-                </flux:modal.close>
-                <flux:button wire:click="convertToSalesOrder" variant="primary" class="cursor-pointer">
-                    Create Sales Order
-                </flux:button>
-            </div>
-        </div>
-    </flux:modal>
-
-    {{-- ================================================================== --}}
-    {{-- MODAL: Cancel Quotation                                             --}}
-    {{-- ================================================================== --}}
-    <flux:modal name="cancel-quote" class="w-full max-w-md">
-        <div class="space-y-4">
+    {{-- Cancel Quote Modal --}}
+    <flux:modal name="cancel-quote" class="max-w-md">
+        <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Cancel Quotation</flux:heading>
-                <flux:subheading>This quotation will be permanently cancelled.</flux:subheading>
+                <flux:text class="mt-1">Are you sure you want to cancel this quotation? This action cannot be undone.</flux:text>
             </div>
-            <flux:textarea wire:model="cancelNote" label="Reason (optional)"
-                placeholder="Why is this quotation being cancelled?" rows="3" />
-            <div class="flex justify-end gap-3 pt-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" class="cursor-pointer">Keep</flux:button>
-                </flux:modal.close>
-                <flux:button wire:click="cancelQuotation" variant="danger" class="cursor-pointer">
-                    Cancel Quotation
-                </flux:button>
-            </div>
+
+            <form wire:submit="cancelQuotation" class="space-y-5">
+                <flux:textarea wire:model="cancelNote" label="Reason (optional)"
+                    placeholder="Why is this quotation being cancelled?" rows="3" />
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Keep Quote</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="danger" icon="x-circle">
+                        <span wire:loading.remove wire:target="cancelQuotation">Cancel Quotation</span>
+                        <span wire:loading wire:target="cancelQuotation">Cancelling...</span>
+                    </flux:button>
+                </div>
+            </form>
         </div>
     </flux:modal>
-
 </div>

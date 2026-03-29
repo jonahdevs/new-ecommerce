@@ -139,14 +139,14 @@
 <?php endif; ?>
                                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-500 dark:text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs text-zinc-400','x-text' => 'notification.message']); ?>
+<?php $component->withAttributes(['class' => 'text-xs text-zinc-500 dark:text-zinc-400','x-text' => 'notification.message']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -161,7 +161,7 @@
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <?php if (isset($component)) { $__componentOriginal155e76c41fe51242bc25d269fabf82f5 = $component; } ?>
@@ -295,14 +295,14 @@
 <?php endif; ?>
                                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-500 dark:text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs text-zinc-400','x-text' => 'notification.message']); ?>
+<?php $component->withAttributes(['class' => 'text-xs text-zinc-500 dark:text-zinc-400','x-text' => 'notification.message']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -317,7 +317,7 @@
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 bg-white rounded-full border shadow-lg p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <?php if (isset($component)) { $__componentOriginal155e76c41fe51242bc25d269fabf82f5 = $component; } ?>
@@ -368,14 +368,14 @@
                         x-transition:leave-start="translate-x-0 opacity-100">
                         <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'flex items-center  px-3 py-2.5 relative shadow-xl']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'flex items-center px-3 py-2.5 relative shadow-xl']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'flex items-center  px-3 py-2.5 relative shadow-xl']); ?>
+<?php $component->withAttributes(['class' => 'flex items-center px-3 py-2.5 relative shadow-xl']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             <div class="pe-3 flex items-center justify-center">
@@ -451,14 +451,14 @@
 <?php endif; ?>
                                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-500 dark:text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs text-zinc-400','x-text' => 'notification.message']); ?>
+<?php $component->withAttributes(['class' => 'text-xs text-zinc-500 dark:text-zinc-400','x-text' => 'notification.message']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -473,7 +473,7 @@
                             </div>
 
                             <button type="button" x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <?php if (isset($component)) { $__componentOriginal155e76c41fe51242bc25d269fabf82f5 = $component; } ?>
@@ -607,14 +607,14 @@
 <?php endif; ?>
                                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs text-zinc-500 dark:text-zinc-400','xText' => 'notification.message']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs text-zinc-400','x-text' => 'notification.message']); ?>
+<?php $component->withAttributes(['class' => 'text-xs text-zinc-500 dark:text-zinc-400','x-text' => 'notification.message']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -630,7 +630,7 @@
 
                             <button type="button"
                                 x-on:click="(isVisible = false), removeNotification(notification.id)"
-                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 p-0.5 inline-flex items-center justify-center"
+                                class="absolute! -top-3 -right-3 cursor-pointer text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-600 shadow-lg p-0.5 inline-flex items-center justify-center"
                                 aria-label="Close">
                                 <span class="sr-only">Close</span>
                                 <?php if (isset($component)) { $__componentOriginal155e76c41fe51242bc25d269fabf82f5 = $component; } ?>
@@ -672,7 +672,7 @@
                 <!-- Message Notification  -->
                 <template x-if="notification.variant === 'message'">
                     <div x-data="{ isVisible: false, timeout: null }" x-cloak x-show="isVisible"
-                        class="pointer-events-auto relative rounded-sm border border-neutral-300 bg-white text-neutral-600 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300"
+                        class="pointer-events-auto relative rounded-sm border border-zinc-300 bg-white text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300"
                         role="alert" x-on:pause-auto-dismiss.window="clearTimeout(timeout)"
                         x-on:resume-auto-dismiss.window="timeout = setTimeout(() => { isVisible = false, removeNotification(notification.id) }, displayDuration)"
                         x-init="$nextTick(() => { isVisible = true }), (timeout = setTimeout(() => { isVisible = false, removeNotification(notification.id) }, displayDuration))" x-transition:enter="transition duration-300 ease-out"
@@ -681,7 +681,7 @@
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
                         <div
-                            class="flex w-full rounded-sm items-center gap-2.5 bg-neutral-50 p-4 transition-all duration-300 dark:bg-neutral-900">
+                            class="flex w-full rounded-sm items-center gap-2.5 bg-zinc-50 p-4 transition-all duration-300 dark:bg-zinc-800">
                             <div class="flex w-full items-center gap-2.5">
 
                                 <!-- Avatar -->
@@ -690,9 +690,9 @@
                                 <div class="flex flex-col items-start gap-2">
                                     <!-- Title & Message -->
                                     <h3 x-cloak x-show="notification.sender.name"
-                                        class="text-sm font-semibold text-neutral-900 dark:text-white"
+                                        class="text-sm font-semibold text-zinc-900 dark:text-white"
                                         x-text="notification.sender.name"></h3>
-                                    <p x-cloak x-show="notification.message" class="text-pretty text-sm"
+                                    <p x-cloak x-show="notification.message" class="text-pretty text-sm text-zinc-600 dark:text-zinc-300"
                                         x-text="notification.message"></p>
 
                                     <!-- Action Buttons -->
@@ -700,16 +700,16 @@
                                         <button type="button"
                                             class="whitespace-nowrap bg-transparent text-center text-sm font-bold tracking-wide text-black transition hover:opacity-75 active:opacity-100 dark:text-white">Reply</button>
                                         <button type="button"
-                                            class="whitespace-nowrap bg-transparent text-center text-sm font-bold tracking-wide text-neutral-600 transition hover:opacity-75 active:opacity-100 dark:text-neutral-300"
+                                            class="whitespace-nowrap bg-transparent text-center text-sm font-bold tracking-wide text-zinc-600 transition hover:opacity-75 active:opacity-100 dark:text-zinc-300"
                                             x-on:click=" (isVisible = false), setTimeout(() => { removeNotification(notification.id) }, 400)">Dismiss</button>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Dismiss Button -->
-                            <button type="button" class="ml-auto" aria-label="dismiss notification"
+                            <button type="button" class="ml-auto text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" aria-label="dismiss notification"
                                 x-on:click="(isVisible = false), removeNotification(notification.id)">
-                                <svg xmlns="http://www.w3.org/2000/svg viewBox="0 0 24 24 stroke="currentColor"
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor"
                                     fill="none" stroke-width="2" class="size-5 shrink-0" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>

@@ -29,6 +29,7 @@ Route::middleware(['auth', 'staff', 'verified'])
 
         // Commerce
         Route::livewire('commerce/orders', 'pages::admin.settings.commerce.orders')->name('settings.orders');
+        Route::livewire('commerce/quotations', 'pages::admin.settings.commerce.quotations')->name('settings.quotations');
         Route::livewire('commerce/tax', 'pages::admin.settings.commerce.tax')->name('settings.tax');
         Route::livewire('commerce/reviews', 'pages::admin.settings.commerce.reviews')->name('settings.reviews');
         Route::livewire('commerce/inventory', 'pages::admin.settings.commerce.inventory')->name('settings.inventory');

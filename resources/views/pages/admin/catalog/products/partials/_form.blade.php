@@ -1,3 +1,8 @@
+@php
+    $regionalSettings = app(\App\Settings\RegionalSettings::class);
+    $weightUnit = $regionalSettings->weight_unit;
+    $dimensionUnit = $regionalSettings->dimension_unit;
+@endphp
 <form wire:submit="save" class="mt-6 lg:grid lg:grid-cols-12 lg:gap-5 " id="product-form">
     {{-- Sidebar --}}
     <div class="lg:col-span-8 xl:col-span-9 lg:col-start-1 space-y-5">
@@ -457,10 +462,10 @@
     {{-- Bulk Dimensions Modal --}}
     <flux:modal name="bulk-dimensions" class="max-w-lg space-y-5">
         <flux:heading>Set Dimensions & Weight for All Variations</flux:heading>
-        <flux:input wire:model.defer="bulkWeight" label="Weight (kg)" type="number" step="0.01"
+        <flux:input wire:model.defer="bulkWeight" label="Weight ({{ $weightUnit }})" type="number" step="0.01"
             placeholder="Leave blank to skip" />
         <flux:field>
-            <flux:label>Dimensions (L x W x H)</flux:label>
+            <flux:label>Dimensions - L x W x H ({{ $dimensionUnit }})</flux:label>
             <flux:input.group>
                 <flux:input wire:model.defer="bulkLength" placeholder="Length" />
                 <flux:input wire:model.defer="bulkWidth" placeholder="Width" />

@@ -12,8 +12,8 @@ class MailSettings extends Settings
     public ?int $port;
     public ?string $username;
     public ?string $encryption;
-    public string $from_address;
-    public string $from_name;
+    public ?string $from_address;
+    public ?string $from_name;
     public ?string $reply_to_address;
 
     #[ShouldBeEncrypted]

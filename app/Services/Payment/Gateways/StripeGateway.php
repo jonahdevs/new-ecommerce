@@ -12,10 +12,12 @@ use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\DocumentService;
+use App\Services\InventoryService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
-use App\Settings\PaymentSettings;
+use App\Settings\OrderSettings;
+use App\Settings\StripeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
@@ -26,15 +28,14 @@ class StripeGateway implements PaymentGateway
     private StripeClient $stripe;
     private string $webhookSecret;
 
-    public function __construct(PaymentSettings $settings)
+    public function __construct(StripeSettings $settings)
     {
-        $secretKey = $settings->stripe_secret_key ?: config('services.stripe.secret_key');
+        // Use settings with config fallback
+        $secretKey = $settings->secret_key ?: config('services.stripe.secret_key');
 
         $this->stripe = new StripeClient($secretKey);
 
-        $this->webhookSecret = $settings->stripe_webhook_secret
-            ?: config('services.stripe.webhook_secret')
-            ?: '';
+        $this->webhookSecret = $settings->webhook_secret ?: config('services.stripe.webhook_secret', '');
     }
 
     public function initiate(Order $order, Payment $payment): PaymentResponse
@@ -323,8 +324,20 @@ class StripeGateway implements PaymentGateway
 
     private function restoreStock(Order $order): void
     {
-        foreach ($order->items()->with('product')->get() as $item) {
-            $item->product?->increment('stock_quantity', $item->quantity);
+        $inventoryService = app(InventoryService::class);
+        $orderSettings = app(OrderSettings::class);
+
+        if ($orderSettings->stock_reduce_on_order) {
+            // Stock was deducted on order, restore it
+            foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
+                $stockItem = $item->product_variant_id
+                    ? $item->variant
+                    : $item->product;
+                $stockItem?->increment('stock_quantity', $item->quantity);
+            }
+        } else {
+            // Stock was reserved, release reservations
+            $inventoryService->releaseReservation($order);
         }
     }
 }

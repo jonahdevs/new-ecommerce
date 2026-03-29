@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\Order;
+use App\Models\Quote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,14 +13,14 @@ class QuoteSentNotification extends Notification implements ShouldQueue
     use Queueable;
 
     // =========================================================================
-    //  Fires when admin prices and sends a quotation (QUOTE_SENT transition).
+    //  Fires when admin prices and sends a quotation (SENT transition).
     //  Sent to the customer — this is their prompt to log in and respond.
     //
     //  This email IS the customer's entry point to the portal accept/reject
     //  page, so the action URL must link directly to their quotation.
     // =========================================================================
 
-    public function __construct(public readonly Order $order)
+    public function __construct(public readonly Quote $quote)
     {
     }
 
@@ -31,28 +31,28 @@ class QuoteSentNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName = $this->order->user?->name ?? 'Customer';
-        $total = format_currency($this->order->total);
-        $shipping = $this->order->shipping_cents > 0
-            ? format_currency($this->order->shipping)
+        $customerName = $this->quote->user?->name ?? 'Customer';
+        $total = format_currency($this->quote->total);
+        $shipping = $this->quote->shipping_cents > 0
+            ? format_currency($this->quote->shipping)
             : 'Free';
-        $expiresAt = $this->order->expires_at?->format('M d, Y') ?? 'N/A';
-        $portalUrl = route('customer.orders.show', $this->order);
+        $expiresAt = $this->quote->expires_at?->format('M d, Y') ?? 'N/A';
+        $portalUrl = route('customer.quotations.show', $this->quote);
 
         // Build a readable item list for the email body
-        $itemLines = $this->order->items->map(function ($item) {
+        $itemLines = $this->quote->items->map(function ($item) {
             $name = $item->product_snapshot['name'] ?? 'Product';
             $qty = $item->quantity;
-            $price = format_currency($item->unit_price_cents / 100);
-            $total = format_currency($item->total_cents / 100);
-            return "• {$name} × {$qty} @ {$price} = {$total}";
+            $price = format_currency(($item->quoted_price_cents ?? $item->original_price_cents) / 100);
+            $itemTotal = ($item->quoted_price_cents ?? $item->original_price_cents) * $qty;
+            return "• {$name} × {$qty} @ {$price} = " . format_currency($itemTotal / 100);
         })->join("\n");
 
         return (new MailMessage)
-            ->subject("Your Quotation is Ready — {$this->order->reference}")
+            ->subject("Your Quotation is Ready — {$this->quote->reference}")
             ->greeting("Hello {$customerName},")
             ->line('Your quotation from Sheffield Africa is ready for your review.')
-            ->line("**Quotation reference:** {$this->order->reference}")
+            ->line("**Quotation reference:** {$this->quote->reference}")
             ->line("**Items:**")
             ->line($itemLines)
             ->line("**Delivery:** {$shipping}")
