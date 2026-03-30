@@ -75,7 +75,7 @@
     }
 }">
     <div class="flex items-center justify-between mb-3">
-        <flux:heading size="sm">Price (KES)</flux:heading>
+        <flux:heading size="sm">Price ({{ get_currency_symbol() }})</flux:heading>
         <div class="flex items-center gap-2">
             <button @click="reset" x-show="localMin != absoluteMin || localMax != absoluteMax" x-transition
                 class="text-zinc-500 text-xs hover:text-zinc-700 cursor-pointer font-medium" type="button">
@@ -89,8 +89,8 @@
     </div>
     <div class="space-y-4">
         <div class="flex items-center justify-between text-sm">
-            <span class="text-zinc-600">KES <span x-text="Math.round(localMin).toLocaleString()"></span></span>
-            <span class="text-zinc-600">KES <span x-text="Math.round(localMax).toLocaleString()"></span></span>
+            <span class="text-zinc-600">{{ get_currency_symbol() }} <span x-text="Math.round(localMin).toLocaleString()"></span></span>
+            <span class="text-zinc-600">{{ get_currency_symbol() }} <span x-text="Math.round(localMax).toLocaleString()"></span></span>
         </div>
         <div class="relative">
             <div class="relative w-full h-2 bg-zinc-200 rounded pointer-events-none">

@@ -208,13 +208,6 @@ new class extends Component {
                                 icon-variant="outline">
                                 Orders
                             </flux:navmenu.item>
-
-                            @auth
-                                <flux:navmenu.item :href="route('customer.quotations.index')" wire:navigate
-                                    icon="clipboard-document-list" icon-variant="outline">
-                                    My Quotations
-                                </flux:navmenu.item>
-                            @endauth
                             <flux:navmenu.item :href="route('quote')" wire:navigate icon="document-text"
                                 icon-variant="outline">
                                 <span class="flex items-center gap-2 w-full">
@@ -251,11 +244,6 @@ new class extends Component {
                                     @endif
                                 </span>
                             </flux:navmenu.item>
-                            @auth
-                                <flux:navmenu.item href="#" wire:navigate icon="envelope" icon-variant="outline">
-                                    Messages
-                                </flux:navmenu.item>
-                            @endauth
                             <flux:menu.separator />
                             @auth
                                 <form action="{{ route('logout') }}" method="post">

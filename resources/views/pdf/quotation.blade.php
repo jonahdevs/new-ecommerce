@@ -516,8 +516,8 @@
                         </td>
                         <td><span class="item-sku">{{ $sku }}</span></td>
                         <td class="text-right">{{ $item->quantity }}</td>
-                        <td class="text-right">KES {{ number_format($unitPrice, 2) }}</td>
-                        <td class="text-right">KES {{ number_format($lineTotal, 2) }}</td>
+                        <td class="text-right">{{ format_currency($unitPrice) }}</td>
+                        <td class="text-right">{{ format_currency($lineTotal) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -529,12 +529,12 @@
         <table class="totals-table">
             <tr>
                 <td class="label">Subtotal</td>
-                <td class="value">KES {{ number_format($quote->subtotal, 2) }}</td>
+                <td class="value">{{ format_currency($quote->subtotal) }}</td>
             </tr>
             @if ($quote->discount > 0)
                 <tr>
                     <td class="label">Discount</td>
-                    <td class="value" style="color: #16a34a;">− KES {{ number_format($quote->discount, 2) }}</td>
+                    <td class="value" style="color: #16a34a;">− {{ format_currency($quote->discount) }}</td>
                 </tr>
             @endif
             <tr>
@@ -543,7 +543,7 @@
                     @if ($quote->shipping_cents === 0)
                         <span style="color: #b45309; font-style: italic;">See note</span>
                     @else
-                        KES {{ number_format($quote->shipping, 2) }}
+                        {{ format_currency($quote->shipping) }}
                     @endif
                 </td>
             </tr>
@@ -553,7 +553,7 @@
             </tr>
             <tr class="total-row">
                 <td>Quoted Total</td>
-                <td style="text-align: right;">KES {{ number_format($quote->total, 2) }}</td>
+                <td style="text-align: right;">{{ format_currency($quote->total) }}</td>
             </tr>
             @if ($quote->shipping_cents === 0)
                 <tr class="note-row">

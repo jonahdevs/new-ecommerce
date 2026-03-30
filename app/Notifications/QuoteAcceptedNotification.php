@@ -29,7 +29,7 @@ class QuoteAcceptedNotification extends Notification implements ShouldQueue
 
     public function via(): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(): MailMessage
@@ -49,5 +49,18 @@ class QuoteAcceptedNotification extends Notification implements ShouldQueue
             ->line('The customer has been routed to the payment page. You will receive another notification once payment is confirmed.')
             ->action('View Sales Order', $orderUrl)
             ->salutation('Sheffield Africa · Orders Team');
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'quote_id' => $this->quote->id,
+            'order_id' => $this->order->id,
+            'reference' => $this->quote->reference,
+            'order_reference' => $this->order->reference,
+            'title' => 'Quote Accepted',
+            'message' => "Quote {$this->quote->reference} accepted. Order {$this->order->reference} created.",
+            'url' => route('admin.orders.show', $this->order),
+        ];
     }
 }

@@ -392,7 +392,7 @@ new #[Title('Transactions')] class extends Component {
                             <div class="font-semibold text-sm text-zinc-800 dark:text-zinc-200">
                                 {{ format_currency($payment->amount_cents / 100) }}
                             </div>
-                            <div class="text-xs text-zinc-400">{{ $payment->currency ?? 'KES' }}</div>
+                            <div class="text-xs text-zinc-400">{{ $payment->currency ?? get_currency_code() }}</div>
                         </flux:table.cell>
 
                         {{-- Status --}}

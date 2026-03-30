@@ -30,7 +30,7 @@ class QuoteRequestedNotification extends Notification implements ShouldQueue
 
     public function via(): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(): MailMessage
@@ -61,5 +61,16 @@ class QuoteRequestedNotification extends Notification implements ShouldQueue
             ->line('Please log in to the admin panel to review and send a priced quotation.')
             ->action('Review & Price Quotation', $adminUrl)
             ->salutation('Sheffield Africa · Orders Team');
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'quote_id' => $this->quote->id,
+            'reference' => $this->quote->reference,
+            'title' => 'New Quote Request',
+            'message' => "New quote request {$this->quote->reference} from {$this->quote->customerName()}",
+            'url' => route('admin.quotations.show', $this->quote),
+        ];
     }
 }

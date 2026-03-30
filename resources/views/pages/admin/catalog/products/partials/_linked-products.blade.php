@@ -10,9 +10,11 @@
             <flux:label>Grouped Products</flux:label>
             <div class="flex gap-2">
                 <div class="flex-1">
-                    <x-my-choices-offline wire:model.live="selectedGroupedProducts" :options="$this->products"
+                    <x-my-choices wire:model.live="selectedGroupedProducts"
+                        :options="$this->products"
+                        search-function="searchProducts"
                         placeholder="Search and select products..." option-sub-label="sku" option-avatar="image_url"
-                        searchable clearable />
+                        searchable clearable debounce="300" min-chars="2" />
                 </div>
                 <flux:button type="button" icon="plus" wire:click="addGroupedProducts"
                     :disabled="empty($selectedGroupedProducts)" class="cursor-pointer disabled:cursor-not-allowed">
@@ -48,10 +50,10 @@
                                     class="text-center w-20!" />
                             </div>
                             <div class="col-span-2 text-right text-sm text-zinc-500 dark:text-zinc-400">
-                                KES {{ number_format($item['price'] ?? 0, 2) }}
+                                {{ format_currency($item['price'] ?? 0) }}
                             </div>
                             <div class="col-span-2 text-right text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                KES {{ number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 2) }}
+                                {{ format_currency(($item['price'] ?? 0) * ($item['quantity'] ?? 1)) }}
                             </div>
                             <div class="col-span-1 flex justify-end">
                                 <button type="button" wire:click="removeGroupedProduct({{ $index }})"
@@ -84,10 +86,10 @@
                                         class="text-center w-20" />
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xs text-zinc-400">KES {{ number_format($item['price'] ?? 0, 2) }}
+                                    <p class="text-xs text-zinc-400">{{ format_currency($item['price'] ?? 0) }}
                                         each</p>
                                     <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                        KES {{ number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 2) }}
+                                        {{ format_currency(($item['price'] ?? 0) * ($item['quantity'] ?? 1)) }}
                                     </p>
                                 </div>
                             </div>
@@ -99,7 +101,7 @@
                     class="grid grid-cols-12 gap-3 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-t dark:border-zinc-700">
                     <div class="col-span-9 text-sm font-medium text-zinc-500 text-right">Kit Total</div>
                     <div class="col-span-2 text-right text-sm font-bold text-zinc-800 dark:text-zinc-100">
-                        KES {{ number_format($this->getGroupedTotal(), 2) }}
+                        {{ format_currency($this->getGroupedTotal()) }}
                     </div>
                     <div class="col-span-1"></div>
                 </div>
@@ -120,8 +122,9 @@
     <flux:field>
         <flux:label>Upsells</flux:label>
         <flux:description class="text-xs">Higher-end alternatives to suggest to the customer.</flux:description>
-        <x-my-choices-offline wire:model="form.selected_upsells" placeholder="Select products for upsells"
-            :options="$this->products" option-sub-label="sku" option-avatar="image_url" clearable searchable />
+        <x-my-choices wire:model="form.selected_upsells" placeholder="Select products for upsells"
+            :options="$this->products" search-function="searchProducts"
+            option-sub-label="sku" option-avatar="image_url" clearable searchable debounce="300" min-chars="2" />
         <flux:error name="form.selected_upsells" />
     </flux:field>
 
@@ -132,9 +135,10 @@
         <flux:field>
             <flux:label>Cross-Sells</flux:label>
             <flux:description class="text-xs">Related products suggested in the cart.</flux:description>
-            <x-my-choices-offline wire:model="form.selected_cross_sells" :options="$this->products"
+            <x-my-choices wire:model="form.selected_cross_sells" :options="$this->products"
+                search-function="searchProducts"
                 placeholder="Select products for cross-sells" option-sub-label="sku" option-avatar="image_url" clearable
-                searchable />
+                searchable debounce="300" min-chars="2" />
             <flux:error name="form.selected_cross_sells" />
         </flux:field>
     </div>
@@ -152,9 +156,10 @@
             </flux:description>
             <div class="flex gap-2">
                 <div class="flex-1">
-                    <x-my-choices-offline wire:model.live="selectedAccessories" :options="$this->products"
+                    <x-my-choices wire:model.live="selectedAccessories" :options="$this->products"
+                        search-function="searchProducts"
                         placeholder="Search and select accessories..." option-sub-label="sku" option-avatar="image_url"
-                        searchable clearable />
+                        searchable clearable debounce="300" min-chars="2" />
                 </div>
                 <flux:button type="button" icon="plus" wire:click="addAccessories"
                     :disabled="empty($selectedAccessories)" class="cursor-pointer disabled:cursor-not-allowed">
@@ -200,7 +205,7 @@
 
                             {{-- Unit Price --}}
                             <div class="col-span-2 text-right text-sm text-zinc-500 dark:text-zinc-400">
-                                KES {{ number_format($item['price'] ?? 0, 2) }}
+                                {{ format_currency($item['price'] ?? 0) }}
                             </div>
 
                             {{-- Remove --}}
@@ -235,7 +240,7 @@
                                         class="text-center w-20" />
                                 </div>
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                                    KES {{ number_format($item['price'] ?? 0, 2) }}
+                                    {{ format_currency($item['price'] ?? 0) }}
                                 </p>
                             </div>
                         </div>

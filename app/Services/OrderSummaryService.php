@@ -14,6 +14,7 @@ class OrderSummaryService
     public function __construct(
         private readonly CartService $cartService,
         private readonly CheckoutSession $checkoutSession,
+        private readonly TaxService $taxService,
     ) {}
 
     /**
@@ -24,6 +25,11 @@ class OrderSummaryService
      *     shipping_method: string|null,
      *     shipping_window: string|null,
      *     station_name: string|null,
+     *     tax: float,
+     *     tax_name: string,
+     *     tax_rate: string,
+     *     tax_enabled: bool,
+     *     tax_inclusive: bool,
      *     total: float,
      *     shipping_selected: bool,
      * }
@@ -41,6 +47,18 @@ class OrderSummaryService
             ? ($this->checkoutSession->getShipping()['station_name'] ?? null)
             : null;
 
+        // Calculate tax
+        $taxableSubtotal = (int) round(($subtotal - $discount) * 100);
+        $shippingCents = (int) round($shippingCost * 100);
+        $taxBreakdown = $this->taxService->calculateOrderTax($taxableSubtotal, $shippingCents);
+        $taxCents = $taxBreakdown['total_tax'];
+
+        // For exclusive tax, add to total; for inclusive, total stays the same
+        $baseTotal = $subtotal - $discount + $shippingCost;
+        $total = $this->taxService->isInclusive()
+            ? max(0, $baseTotal)
+            : max(0, $baseTotal + ($taxCents / 100));
+
         return [
             'subtotal'         => $subtotal,
             'discount'         => $discount,
@@ -48,7 +66,12 @@ class OrderSummaryService
             'shipping_method'  => $this->checkoutSession->getShippingMethodName(),
             'shipping_window'  => $this->checkoutSession->getDeliveryWindow(),
             'station_name'     => $stationName,
-            'total'            => max(0, $subtotal - $discount + $shippingCost),
+            'tax'              => $taxCents / 100,
+            'tax_name'         => $this->taxService->name(),
+            'tax_rate'         => $this->taxService->rateLabel(),
+            'tax_enabled'      => $this->taxService->isEnabled(),
+            'tax_inclusive'    => $this->taxService->isInclusive(),
+            'total'            => $total,
             'shipping_selected' => $this->checkoutSession->hasShipping(),
         ];
     }

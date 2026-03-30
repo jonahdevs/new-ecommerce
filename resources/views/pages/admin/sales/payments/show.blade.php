@@ -111,7 +111,7 @@ new class extends Component {
         <div class="lg:col-span-2 space-y-6">
             {{-- Payment Details Card --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
                     <flux:heading>Payment Information</flux:heading>
                 </div>
 

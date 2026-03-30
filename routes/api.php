@@ -22,6 +22,6 @@ Route::prefix('webhooks')
         Route::post('/pesawise', PesawiseWebhookController::class)->name('pesawise');
         Route::post('/mpesa', MpesaWebhookController::class)->name('mpesa');
         Route::post('/stripe', StripeWebhookController::class)->name('stripe');
-        Route::post('/webhooks/sap', SapWebhookController::class)
-            ->name('webhooks.sap');
+        Route::post('/sap', SapWebhookController::class)
+            ->name('sap');
     });

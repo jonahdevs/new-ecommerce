@@ -290,7 +290,7 @@ new #[Title('PUS Tracker')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm font-medium">KES {{ number_format($parcel->shipping_cost, 0) }}</span>
+                            <span class="text-sm font-medium">{{ format_currency($parcel->shipping_cost) }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
@@ -387,7 +387,7 @@ new #[Title('PUS Tracker')] class extends Component {
                     </div>
                     <div>
                         <p class="text-zinc-400 text-xs mb-0.5">Shipping Cost</p>
-                        <p class="font-semibold">KES {{ number_format($order->shipping_cost, 0) }}</p>
+                        <p class="font-semibold">{{ format_currency($order->shipping_cost) }}</p>
                     </div>
                     <div>
                         <p class="text-zinc-400 text-xs mb-0.5">Holding Days</p>
@@ -413,14 +413,14 @@ new #[Title('PUS Tracker')] class extends Component {
                                         <span
                                             class="text-zinc-500 capitalize">{{ str_replace('_', ' ', $key) }}</span>
                                         <span class="font-medium">
-                                            {{ is_numeric($value) ? 'KES ' . number_format($value, 0) : $value }}
+                                            {{ is_numeric($value) ? format_currency($value) : $value }}
                                         </span>
                                     </div>
                                 @endif
                             @endforeach
                             <div class="flex justify-between px-3 py-2 font-semibold">
                                 <span>Total</span>
-                                <span>KES {{ number_format($breakdown['total'] ?? $order->shipping_cost, 0) }}</span>
+                                <span>{{ format_currency($breakdown['total'] ?? $order->shipping_cost) }}</span>
                             </div>
                         </div>
                     </div>

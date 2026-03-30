@@ -4,9 +4,16 @@ namespace App\Services\Sap;
 
 use App\Models\Order;
 use App\Notifications\KraReceiptNotification;
+use App\Services\TaxService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+
+class KraReceiptService
+{
+    public function __construct(
+        private readonly TaxService $taxService,
+    ) {}
 
 class KraReceiptService
 {
@@ -126,7 +133,7 @@ class KraReceiptService
 
         return [
             'taxable_amount' => $taxableAmount,
-            'vat_rate'       => '16%',
+            'vat_rate'       => $this->taxService->rateLabel(),
             'vat_amount'     => $vatAmount,
             'total'          => $order->total_cents / 100,
         ];

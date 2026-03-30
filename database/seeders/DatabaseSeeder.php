@@ -24,7 +24,8 @@ class DatabaseSeeder extends Seeder
             // ReviewSeeder::class,
             ShippingSeeder::class,
             CountyCoordinatesSeeder::class,
-            DeliveryOrderSeeder::class,
+            // DeliveryOrderSeeder::class, // Replaced by SalesFlowSeeder
+            SalesFlowSeeder::class,
         ]);
     }
 }

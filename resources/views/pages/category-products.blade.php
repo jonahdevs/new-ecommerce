@@ -161,6 +161,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
             ])
             ->active()
+            ->visibleInCatalog()
             ->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds));
 
         $query->when(!empty($this->selectedBrands), fn(Builder $q) =>
@@ -635,7 +636,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             @endforeach
                             @if ($minPriceUrl !== null || $maxPriceUrl !== null)
                                 <flux:badge color="zinc" size="sm">
-                                    KES {{ number_format($minPrice) }} – {{ number_format($maxPrice) }}
+                                    {{ get_currency_symbol() }} {{ number_format($minPrice) }} – {{ number_format($maxPrice) }}
                                     <button wire:click="clearPriceFilter"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />

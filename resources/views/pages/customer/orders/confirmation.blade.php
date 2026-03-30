@@ -122,6 +122,7 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
             $this->sendConfirmationEmailOnce();
+            $this->dispatchSapSyncIfNeeded();
             $this->dispatch('cart-updated');
         }
     }
@@ -150,6 +151,7 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
             $this->sendConfirmationEmailOnce();
+            $this->dispatchSapSyncIfNeeded();
             $this->dispatch('cart-updated');
         }
     }
@@ -269,6 +271,20 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         $method = $this->order->payment?->meta['payment_method'] ?? null;
         return $method === 'card' ? 'Card' : 'M-Pesa';
+    }
+
+    /**
+     * Dispatch SAP sync only if it hasn't been triggered yet.
+     * Guards against double-dispatch when both the webhook and the
+     * confirmation page try to fire the job.
+     */
+    private function dispatchSapSyncIfNeeded(): void
+    {
+        $order = $this->order->fresh();
+
+        if ($order->sap_sync_status?->value === \App\Enums\SapSyncStatus::PENDING->value) {
+            SyncOrderToSapJob::dispatch($order);
+        }
     }
 };
 ?>

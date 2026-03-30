@@ -110,6 +110,9 @@ Route::middleware(['auth', 'customer', 'verified'])
     ->name('customer.')
     ->group(function () {
         Route::livewire('/account', 'pages::customer.account')->name('account');
+        Route::livewire('/recently-viewed', 'pages::customer.recently-viewed')->name('recently-viewed');
+        Route::livewire('/pending-reviews', 'pages::customer.pending-reviews')->name('pending-reviews');
+        Route::livewire('/inbox', 'pages::customer.inbox')->name('inbox');
 
         // Orders
         Route::prefix('orders')->name('orders.')->group(function () {
@@ -132,6 +135,13 @@ Route::middleware(['auth', 'customer', 'verified'])
             Route::livewire('/create', 'pages::customer.address-book.create')->name('create');
             Route::livewire('/{address}/edit', 'pages::customer.address-book.edit')->name('edit');
         });
+
+        // Settings
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::livewire('/', 'pages::customer.settings.profile')->name('profile');
+            Route::livewire('/security', 'pages::customer.settings.security')->name('security');
+            Route::livewire('/preferences', 'pages::customer.settings.preferences')->name('preferences');
+        });
     });
 
 // ============================================================================
@@ -143,6 +153,7 @@ Route::middleware(['auth', 'staff', 'verified'])
     ->name('admin.')
     ->group(function () {
         Route::livewire('dashboard', 'pages::admin.dashboard')->name('dashboard');
+        Route::livewire('notifications', 'pages::admin.notifications.index')->name('notifications');
 
         // --------------------------------------------------------------------
         // Sales

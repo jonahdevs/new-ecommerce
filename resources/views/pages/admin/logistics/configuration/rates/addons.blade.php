@@ -235,7 +235,7 @@ new #[Title('Rate Addons')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="font-medium text-sm">KES {{ number_format($addon->addon_amount, 0) }}</span>
+                            <span class="font-medium text-sm">{{ format_currency($addon->addon_amount) }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -315,7 +315,7 @@ new #[Title('Rate Addons')] class extends Component {
                     @endforeach
                 </flux:select>
 
-                <flux:input wire:model="form.addon_amount" label="Amount (KES)" type="number" min="0"
+                <flux:input wire:model="form.addon_amount" label="Amount ({{ get_currency_symbol() }})" type="number" min="0"
                     step="0.01" placeholder="e.g. 300" />
             </div>
 

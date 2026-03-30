@@ -5,8 +5,11 @@ use App\Models\Quote;
 use App\Services\{QuotationService, DocumentService};
 use Livewire\Attributes\{Computed, Title};
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new #[Title('Quotation Details')] class extends Component {
+    use WithFileUploads;
+
     public Quote $quote;
 
     // Price & Send form fields
@@ -19,6 +22,9 @@ new #[Title('Quotation Details')] class extends Component {
 
     // Cancel form
     public string $cancelNote = '';
+
+    // SAP-prepared PDF upload
+    public $sapPdfUpload = null;
 
     // =========================================================================
     //  MOUNT
@@ -67,6 +73,44 @@ new #[Title('Quotation Details')] class extends Component {
     }
 
     // =========================================================================
+    //  SAVE QUOTE (prepare without sending)
+    // =========================================================================
+
+    public function saveQuote(): void
+    {
+        $this->validate([
+            'quotedShipping' => ['required', 'numeric', 'min:0'],
+            'validityDays' => ['required', 'integer', 'min:1', 'max:90'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'itemPrices.*' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        if (!$this->canPrice) {
+            $this->dispatch('notify', variant: 'danger', message: 'This quotation can no longer be priced.');
+            return;
+        }
+
+        try {
+            app(QuotationService::class)->prepare($this->quote, [
+                'shipping' => $this->quotedShipping,
+                'validity_days' => $this->validityDays,
+                'note' => $this->note ?: null,
+                'item_prices' => $this->itemPrices,
+            ]);
+
+            $this->quote->refresh();
+            $this->modal('price-quote')->close();
+            $this->dispatch('notify', variant: 'success', message: 'Quotation saved. You can send it when ready.');
+        } catch (\Throwable $e) {
+            logger()->error('Failed to save quotation.', [
+                'quote_id' => $this->quote->id,
+                'error' => $e->getMessage(),
+            ]);
+            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+        }
+    }
+
+    // =========================================================================
     //  PRICE & SEND QUOTE
     // =========================================================================
 
@@ -106,6 +150,33 @@ new #[Title('Quotation Details')] class extends Component {
     }
 
     // =========================================================================
+    //  UPLOAD SAP-PREPARED PDF
+    // =========================================================================
+
+    public function uploadSapPdf(): void
+    {
+        $this->validate([
+            'sapPdfUpload' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10MB max
+        ]);
+
+        try {
+            $path = $this->sapPdfUpload->store('quotations', 'local');
+            $this->quote->update(['document_path' => $path]);
+            $this->quote->refresh();
+
+            $this->sapPdfUpload = null;
+            $this->modal('upload-sap-pdf')->close();
+            $this->dispatch('notify', variant: 'success', message: 'SAP quotation PDF uploaded successfully.');
+        } catch (\Throwable $e) {
+            logger()->error('Failed to upload SAP PDF.', [
+                'quote_id' => $this->quote->id,
+                'error' => $e->getMessage(),
+            ]);
+            $this->dispatch('notify', variant: 'danger', message: 'Failed to upload PDF. Please try again.');
+        }
+    }
+
+    // =========================================================================
     //  CANCEL QUOTATION
     // =========================================================================
 
@@ -130,6 +201,42 @@ new #[Title('Quotation Details')] class extends Component {
         } catch (\Throwable $e) {
             $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
+    }
+
+    // =========================================================================
+    //  PREVIEW QUOTATION PDF (stream inline)
+    // =========================================================================
+
+    public function previewPdf(): mixed
+    {
+        $quote = $this->quote;
+
+        if (!$quote->document_path) {
+            $path = app(DocumentService::class)->generateQuotation($quote);
+
+            if (!$path) {
+                $this->dispatch('notify', variant: 'danger', message: 'Unable to generate PDF. Please try again.');
+                return null;
+            }
+
+            $quote->refresh();
+        }
+
+        $response = app(DocumentService::class)->stream($quote->document_path, 'Quotation');
+
+        if (!$response) {
+            $path = app(DocumentService::class)->generateQuotation($quote);
+
+            if (!$path) {
+                $this->dispatch('notify', variant: 'danger', message: 'PDF not found. Please try again.');
+                return null;
+            }
+
+            $quote->refresh();
+            return app(DocumentService::class)->stream($quote->document_path, 'Quotation');
+        }
+
+        return $response;
     }
 
     // =========================================================================
@@ -201,14 +308,29 @@ new #[Title('Quotation Details')] class extends Component {
 
         {{-- Primary actions --}}
         <div class="flex items-center gap-3 flex-wrap">
-            @if ($quote->isSent())
-                <flux:button variant="outline" icon="document-text" size="sm" wire:click="downloadPdf" class="cursor-pointer">
-                    <span wire:loading.remove wire:target="downloadPdf">Quotation PDF</span>
-                    <span wire:loading wire:target="downloadPdf">Generating...</span>
+            @if ($quote->document_path)
+                <flux:button variant="outline" icon="eye" size="sm" wire:click="previewPdf" class="cursor-pointer">
+                    <span wire:loading.remove wire:target="previewPdf">Preview PDF</span>
+                    <span wire:loading wire:target="previewPdf">Loading...</span>
+                </flux:button>
+                <flux:button variant="outline" icon="arrow-down-tray" size="sm" wire:click="downloadPdf" class="cursor-pointer">
+                    <span wire:loading.remove wire:target="downloadPdf">Download</span>
+                    <span wire:loading wire:target="downloadPdf">Downloading...</span>
+                </flux:button>
+            @elseif ($quote->isSent())
+                <flux:button variant="outline" icon="document-text" size="sm" wire:click="previewPdf" class="cursor-pointer">
+                    <span wire:loading.remove wire:target="previewPdf">Generate & Preview</span>
+                    <span wire:loading wire:target="previewPdf">Generating...</span>
                 </flux:button>
             @endif
 
             @if ($this->canPrice)
+                <flux:modal.trigger name="upload-sap-pdf">
+                    <flux:button size="sm" variant="outline" icon="arrow-up-tray" class="cursor-pointer">
+                        Upload Quote
+                    </flux:button>
+                </flux:modal.trigger>
+
                 <flux:modal.trigger name="price-quote">
                     <flux:button size="sm" variant="primary" icon="pencil-square" class="cursor-pointer">
                         Price & Send Quote
@@ -285,7 +407,7 @@ new #[Title('Quotation Details')] class extends Component {
 
             {{-- Items table --}}
             <flux:card class="p-0">
-                <div class="px-6 py-2 border-b flex justify-between items-center">
+                <div class="px-6 py-2 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
                     <flux:heading level="3" class="font-semibold">Items</flux:heading>
                     <flux:badge variant="outline">{{ $quote->items->sum('quantity') }} items</flux:badge>
                 </div>
@@ -379,7 +501,7 @@ new #[Title('Quotation Details')] class extends Component {
                                     @endif
                                 </flux:text>
                             </div>
-                            <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                            <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-600">
                                 <flux:heading size="lg">Total</flux:heading>
                                 <div class="text-right">
                                     <flux:heading size="lg" class="font-bold">
@@ -398,7 +520,7 @@ new #[Title('Quotation Details')] class extends Component {
 
             {{-- Timeline --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b flex items-center justify-between">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600 flex items-center justify-between">
                     <flux:heading>Quotation Timeline</flux:heading>
                     <flux:badge :color="$quote->status->color()" variant="solid" size="sm">
                         {{ $quote->status->label() }}
@@ -417,6 +539,14 @@ new #[Title('Quotation Details')] class extends Component {
                         $isExpired = $quote->isExpired();
                         $isTerminal = $isCancelled || $isRejected || $isExpired;
                         $histories = $quote->statusHistories->keyBy('to_status');
+
+                        // Find the current active step (last reached step)
+                        $currentStepIndex = -1;
+                        foreach ($mainPath as $idx => $step) {
+                            if ($histories->has($step->value)) {
+                                $currentStepIndex = $idx;
+                            }
+                        }
                     @endphp
 
                     <div class="relative">
@@ -424,6 +554,7 @@ new #[Title('Quotation Details')] class extends Component {
                             @php
                                 $history = $histories->get($step->value);
                                 $reached = (bool) $history;
+                                $isActive = $index === $currentStepIndex && !$isTerminal;
                                 $isLast = $index === count($mainPath) - 1;
                                 $next = $mainPath[$index + 1] ?? null;
                                 $nextReached = $next && $histories->has($next->value);
@@ -432,24 +563,32 @@ new #[Title('Quotation Details')] class extends Component {
 
                             <div class="relative flex gap-4 {{ $isLast ? 'pb-0' : 'pb-6' }}">
                                 @if (!$isLast)
-                                    <div class="absolute left-4 top-8 bottom-0 w-px
-                                        {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }} z-0">
-                                    </div>
+                                    <div @class([
+                                        'absolute left-4 top-8 bottom-0 w-px z-0',
+                                        'bg-green-500' => $nextReached,
+                                        'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
+                                    ])></div>
                                 @endif
 
-                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
-                                    {{ $reached
-                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                        : ($dimmed
-                                            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300'
-                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400') }}">
+                                <div @class([
+                                    'relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                                    'bg-green-500 text-white ring-4 ring-green-100 dark:ring-green-900' => $isActive,
+                                    'bg-green-500 text-white' => $reached && !$isActive,
+                                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' => !$reached && !$dimmed,
+                                ])>
                                     <flux:icon name="{{ $step->icon() }}" class="size-4" />
                                 </div>
 
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1 min-w-0">
                                     <div class="min-w-0">
-                                        <flux:text class="text-sm
-                                            {{ $reached ? 'font-medium text-zinc-900 dark:text-white' : ($dimmed ? 'text-zinc-300' : 'text-zinc-400') }}">
+                                        <flux:text @class([
+                                            'text-sm',
+                                            'font-semibold text-green-600 dark:text-green-400' => $isActive,
+                                            'font-medium text-zinc-900 dark:text-white' => $reached && !$isActive,
+                                            'text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                            'text-zinc-400' => !$reached && !$dimmed,
+                                        ])>
                                             {{ $step->label() }}
                                         </flux:text>
 
@@ -489,7 +628,7 @@ new #[Title('Quotation Details')] class extends Component {
                         {{-- Branch: Converted --}}
                         @if ($quote->order)
                             <div class="relative flex gap-4 pt-6">
-                                <div class="absolute left-4 top-0 h-6 w-px bg-zinc-900 dark:bg-white z-0"></div>
+                                <div class="absolute left-4 top-0 h-6 w-px bg-green-500 z-0"></div>
                                 <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-600 text-white">
                                     <flux:icon name="arrow-right-circle" class="size-4" />
                                 </div>
@@ -594,7 +733,7 @@ new #[Title('Quotation Details')] class extends Component {
 
             {{-- Customer info --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
                     <flux:heading>Customer</flux:heading>
                 </div>
                 <div class="p-5 space-y-4">
@@ -636,7 +775,7 @@ new #[Title('Quotation Details')] class extends Component {
 
             {{-- Delivery preferences --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
                     <flux:heading>Delivery Preferences</flux:heading>
                 </div>
                 <div class="p-5 space-y-3 text-sm">
@@ -661,7 +800,7 @@ new #[Title('Quotation Details')] class extends Component {
             {{-- Customer notes --}}
             @if ($quote->customer_notes)
                 <flux:card class="p-0">
-                    <div class="px-5 py-3 border-b">
+                    <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
                         <flux:heading>Customer Notes</flux:heading>
                     </div>
                     <div class="p-5">
@@ -673,7 +812,7 @@ new #[Title('Quotation Details')] class extends Component {
             {{-- Admin notes --}}
             @if ($quote->admin_notes)
                 <flux:card class="p-0">
-                    <div class="px-5 py-3 border-b">
+                    <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
                         <flux:heading>Admin Notes</flux:heading>
                     </div>
                     <div class="p-5">
@@ -718,7 +857,7 @@ new #[Title('Quotation Details')] class extends Component {
 
                 {{-- Shipping --}}
                 <flux:input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="quotedShipping"
-                    label="Shipping Cost (KES)" placeholder="0.00" />
+                    label="Shipping Cost ({{ get_currency_symbol() }})" placeholder="0.00" />
 
                 {{-- Validity --}}
                 <flux:input type="number" min="1" max="90" wire:model="validityDays"
@@ -740,9 +879,62 @@ new #[Title('Quotation Details')] class extends Component {
                     <flux:modal.close>
                         <flux:button variant="ghost">Cancel</flux:button>
                     </flux:modal.close>
+                    <flux:button wire:click="saveQuote" variant="outline" icon="bookmark">
+                        <span wire:loading.remove wire:target="saveQuote">Save Only</span>
+                        <span wire:loading wire:target="saveQuote">Saving...</span>
+                    </flux:button>
                     <flux:button type="submit" variant="primary" icon="paper-airplane">
                         <span wire:loading.remove wire:target="sendQuote">Send Quote</span>
                         <span wire:loading wire:target="sendQuote">Sending...</span>
+                    </flux:button>
+                </div>
+            </form>
+        </div>
+    </flux:modal>
+
+    {{-- Upload SAP PDF Modal --}}
+    <flux:modal name="upload-sap-pdf" class="max-w-md">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Upload Quotation</flux:heading>
+                <flux:text class="mt-1">Upload a quotation PDF. This will replace any existing document.</flux:text>
+            </div>
+
+            <form wire:submit="uploadSapPdf" class="space-y-5">
+                <div>
+                    <flux:label>PDF File</flux:label>
+                    <input type="file" wire:model="sapPdfUpload" accept=".pdf"
+                        class="mt-1 block w-full text-sm text-zinc-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-medium
+                            file:bg-zinc-100 file:text-zinc-700
+                            hover:file:bg-zinc-200
+                            dark:file:bg-zinc-800 dark:file:text-zinc-300
+                            dark:hover:file:bg-zinc-700" />
+                    @error('sapPdfUpload')
+                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                    <flux:description class="mt-1">Maximum file size: 10MB</flux:description>
+                </div>
+
+                @if ($sapPdfUpload)
+                    <div class="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                        <flux:text class="text-sm text-green-700 dark:text-green-300">
+                            <flux:icon name="document" class="size-4 inline mr-1" />
+                            {{ $sapPdfUpload->getClientOriginalName() }}
+                            ({{ number_format($sapPdfUpload->getSize() / 1024, 1) }} KB)
+                        </flux:text>
+                    </div>
+                @endif
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="primary" icon="arrow-up-tray" :disabled="!$sapPdfUpload">
+                        <span wire:loading.remove wire:target="uploadSapPdf">Upload PDF</span>
+                        <span wire:loading wire:target="uploadSapPdf">Uploading...</span>
                     </flux:button>
                 </div>
             </form>

@@ -58,11 +58,11 @@ new #[Layout('layouts.guest')] class extends Component {
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active(), 'accessories' => fn($q) => $q->active()->withPivot('sort_order', 'quantity')]);
+        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active()->visible(), 'accessories' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
 
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn($q) => $q->active()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
 
@@ -93,7 +93,7 @@ new #[Layout('layouts.guest')] class extends Component {
         // Grouped product — load items and pre-select all
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn($q) => $q->active()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
 
             // Pre-select all items and set default quantities from pivot
@@ -135,7 +135,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function groupedProducts()
     {
-        return $this->product->groupedProducts()->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+        return $this->product->groupedProducts()->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
     #[Computed]
@@ -539,7 +539,7 @@ new #[Layout('layouts.guest')] class extends Component {
             $newQuantity = $this->cartQuantity - 1;
 
             if ($newQuantity < 1) {
-                $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
+                $this->removeFromCart($cartService);
                 return;
             }
 

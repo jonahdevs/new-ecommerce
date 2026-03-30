@@ -12,7 +12,6 @@ class OrderSettingsForm extends Form
     public bool $guest_checkout_enabled = true;
     public bool $auto_cancel_unpaid = false;
     public int $auto_cancel_hours = 24;
-    public bool $stock_reduce_on_order = true;
     public string $default_order_status = 'pending';
 
     public function rules(): array
@@ -23,7 +22,6 @@ class OrderSettingsForm extends Form
             'guest_checkout_enabled' => ['boolean'],
             'auto_cancel_unpaid' => ['boolean'],
             'auto_cancel_hours' => ['required_if:auto_cancel_unpaid,true', 'integer', 'min:1', 'max:720'],
-            'stock_reduce_on_order' => ['boolean'],
             'default_order_status' => ['required', 'in:pending,processing,on-hold'],
         ];
     }
@@ -35,7 +33,6 @@ class OrderSettingsForm extends Form
         $this->guest_checkout_enabled = $settings->guest_checkout_enabled;
         $this->auto_cancel_unpaid = $settings->auto_cancel_unpaid;
         $this->auto_cancel_hours = $settings->auto_cancel_hours;
-        $this->stock_reduce_on_order = $settings->stock_reduce_on_order;
         $this->default_order_status = $settings->default_order_status;
     }
 
@@ -48,7 +45,6 @@ class OrderSettingsForm extends Form
         $settings->guest_checkout_enabled = $this->guest_checkout_enabled;
         $settings->auto_cancel_unpaid = $this->auto_cancel_unpaid;
         $settings->auto_cancel_hours = $this->auto_cancel_hours;
-        $settings->stock_reduce_on_order = $this->stock_reduce_on_order;
         $settings->default_order_status = $this->default_order_status;
 
         $settings->save();

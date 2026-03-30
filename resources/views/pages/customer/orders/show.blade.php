@@ -329,7 +329,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     @if ($this->isPaid)
                         <div class="mt-5">
                             <flux:separator class="mb-4" />
-                            <flux:heading class="text-sm mb-3">KRA Tax Receipt</flux:heading>
+                            <flux:heading class="text-sm mb-3">Receipt</flux:heading>
 
                             {{-- State 1: Receipt ready --}}
                             @if ($this->hasKraReceipt)
@@ -382,7 +382,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 <div class="flex items-start gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
                                     <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-zinc-400" />
                                     <flux:text class="text-xs text-zinc-500">
-                                        Your KRA receipt is being prepared. Check back shortly.
+                                        Your receipt is being prepared. Check back shortly.
                                     </flux:text>
                                 </div>
                             @endif

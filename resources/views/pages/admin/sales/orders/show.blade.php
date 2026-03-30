@@ -80,13 +80,6 @@ new #[Title('Order Details')] class extends Component {
 
     private function createDeliveryOrder(): void
     {
-        // Guard: delivery orders must only be created for sales_order documents.
-        // This should never be reached since mount() redirects quotations away,
-        // but this acts as a safety net against any future code paths.
-        if (!$this->order->isSalesOrder()) {
-            throw new \LogicException('Cannot create a delivery order for a quotation.');
-        }
-
         $snapshot = $this->order->shipping_snapshot;
 
         if (!$snapshot) {
@@ -138,7 +131,21 @@ new #[Title('Order Details')] class extends Component {
         </div>
 
         <div class="flex items-center gap-3">
-            <flux:button variant="outline" icon="printer" size="sm">Print Invoice</flux:button>
+            @if ($order->hasKraReceipt())
+                <flux:button variant="outline" icon="printer" size="sm" 
+                    :href="route('customer.orders.receipt', $order)" target="_blank">
+                    Print KRA Receipt
+                </flux:button>
+            @elseif ($order->invoice_path)
+                <flux:button variant="outline" icon="printer" size="sm" 
+                    :href="route('customer.orders.receipt', $order)" target="_blank">
+                    Print Invoice
+                </flux:button>
+            @else
+                <flux:button variant="outline" icon="printer" size="sm" disabled>
+                    Invoice Pending
+                </flux:button>
+            @endif
             <flux:modal.trigger name="edit-order">
                 <flux:button size="sm" variant="primary" icon="pencil-square" class="cursor-pointer">
                     Manage Status
@@ -177,7 +184,7 @@ new #[Title('Order Details')] class extends Component {
             {{-- ITEMS & INVENTORY                                             --}}
             {{-- ============================================================ --}}
             <flux:card class="p-0">
-                <div class="px-6 py-2 border-b flex justify-between items-center">
+                <div class="px-6 py-2 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
                     <flux:heading level="3" class="font-semibold">Items & Inventory</flux:heading>
                     <flux:badge variant="outline">{{ $order->items->sum('quantity') }} Items</flux:badge>
                 </div>
@@ -276,7 +283,7 @@ new #[Title('Order Details')] class extends Component {
                                     @endif
                                 </flux:text>
                             </div>
-                            <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                            <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-600">
                                 <flux:heading size="lg">Total Amount</flux:heading>
                                 <flux:heading size="lg" class="text-zinc-900 dark:text-white font-bold">
                                     {{ format_currency($order->total) }}
@@ -293,7 +300,7 @@ new #[Title('Order Details')] class extends Component {
             {{-- Quotation timeline lives on admin.quotations.show.           --}}
             {{-- ============================================================ --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b flex items-center justify-between">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600 flex items-center justify-between">
                     <flux:heading>Order Timeline</flux:heading>
                     <flux:badge :color="$order->status->color()" variant="solid" size="sm">
                         {{ $order->status->label() }}
@@ -319,6 +326,14 @@ new #[Title('Order Details')] class extends Component {
 
                         // Histories keyed by to_status for quick lookup
                         $histories = $order->statusHistories->keyBy('to_status');
+                        
+                        // Find the current active step (last reached step)
+                        $currentStepIndex = -1;
+                        foreach ($mainPath as $idx => $step) {
+                            if ($histories->has($step->value)) {
+                                $currentStepIndex = $idx;
+                            }
+                        }
                     @endphp
 
                     <div class="relative">
@@ -328,6 +343,7 @@ new #[Title('Order Details')] class extends Component {
                             @php
                                 $history = $histories->get($step->value);
                                 $reached = (bool) $history;
+                                $isActive = $index === $currentStepIndex && !$isTerminal;
                                 $isLast = $index === count($mainPath) - 1;
                                 $next = $mainPath[$index + 1] ?? null;
                                 $nextReached = $next && $histories->has($next->value);
@@ -338,33 +354,34 @@ new #[Title('Order Details')] class extends Component {
 
                                 {{-- Connector line --}}
                                 @if (!$isLast)
-                                    <div
-                                        class="absolute left-4 top-8 bottom-0 w-px z-0
-                                        {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}">
-                                    </div>
+                                    <div @class([
+                                        'absolute left-4 top-8 bottom-0 w-px z-0',
+                                        'bg-green-500' => $nextReached,
+                                        'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
+                                    ])></div>
                                 @endif
 
                                 {{-- Step dot --}}
-                                <div
-                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
-                                    {{ $reached
-                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                        : ($dimmed
-                                            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600'
-                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400') }}">
+                                <div @class([
+                                    'relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                                    'bg-green-500 text-white ring-4 ring-green-100 dark:ring-green-900' => $isActive,
+                                    'bg-green-500 text-white' => $reached && !$isActive,
+                                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' => !$reached && !$dimmed,
+                                ])>
                                     <flux:icon name="{{ $step->icon() }}" class="size-4" />
                                 </div>
 
                                 {{-- Content --}}
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1 min-w-0">
                                     <div class="min-w-0">
-                                        <flux:text
-                                            class="text-sm
-                                            {{ $reached
-                                                ? 'font-medium text-zinc-900 dark:text-white'
-                                                : ($dimmed
-                                                    ? 'text-zinc-300 dark:text-zinc-600'
-                                                    : 'text-zinc-400') }}">
+                                        <flux:text @class([
+                                            'text-sm',
+                                            'font-semibold text-green-600 dark:text-green-400' => $isActive,
+                                            'font-medium text-zinc-900 dark:text-white' => $reached && !$isActive,
+                                            'text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                            'text-zinc-400' => !$reached && !$dimmed,
+                                        ])>
                                             {{ $step->label() }}
                                         </flux:text>
                                         @if ($history?->notes)
@@ -481,7 +498,7 @@ new #[Title('Order Details')] class extends Component {
 
             {{-- Customer Details --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
                     <flux:heading>Customer</flux:heading>
                 </div>
                 <div class="p-5 text-sm space-y-4">
@@ -526,7 +543,7 @@ new #[Title('Order Details')] class extends Component {
             {{-- Payment Information --}}
             {{-- Sales orders always have a payment record — no quote checks needed. --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b flex justify-between items-center">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
                     <flux:heading>Payment</flux:heading>
                     <flux:badge :color="$order->payment?->status?->color()" size="sm">
                         {{ $order->payment?->status?->label() ?? 'No payment' }}

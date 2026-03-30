@@ -28,6 +28,7 @@ new class extends Component {
 
         // Products — name, slug, image and category only — no price
         $products = Product::active()
+            ->visibleInSearch()
             ->where(function (Builder $q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
                     ->orWhere('sku', 'like', "%{$term}%")

@@ -175,7 +175,7 @@ new #[Title('Free Shipping Rules')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="font-medium text-sm">KES {{ number_format($rule->min_order_amount, 0) }}</span>
+                            <span class="font-medium text-sm">{{ format_currency($rule->min_order_amount) }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -274,7 +274,7 @@ new #[Title('Free Shipping Rules')] class extends Component {
             <flux:input wire:model="form.name" label="Rule Name" placeholder="e.g. Christmas Promo 2025" />
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.min_order_amount" label="Min Order Amount (KES)" type="number"
+                <flux:input wire:model="form.min_order_amount" label="Min Order Amount ({{ get_currency_symbol() }})" type="number"
                     min="0" step="0.01" placeholder="e.g. 5000" />
                 <flux:input wire:model="form.max_weight" label="Max Weight (Kg, Optional)" type="number" min="0"
                     step="0.01" placeholder="No weight ceiling" />

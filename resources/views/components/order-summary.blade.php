@@ -198,6 +198,16 @@ new class extends Component {
             @endif
         </div>
 
+        @if ($this->summary['tax_enabled'] && !$this->summary['tax_inclusive'] && $this->summary['tax'] > 0)
+            <div class="flex justify-between text-sm text-zinc-500">
+                <span class="flex items-center gap-1.5">
+                    <flux:icon.receipt-percent class="size-3.5 shrink-0" />
+                    {{ $this->summary['tax_name'] }} ({{ $this->summary['tax_rate'] }})
+                </span>
+                <span>{{ format_currency($this->summary['tax']) }}</span>
+            </div>
+        @endif
+
         <div class="flex justify-between font-semibold text-sm border-t pt-2 mt-1">
             <span>Total</span>
             <span>{{ format_currency($this->summary['total']) }}</span>

@@ -16,7 +16,6 @@ use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
 use App\Settings\MpesaSettings;
-use App\Settings\OrderSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -193,6 +192,16 @@ class MpesaGateway implements PaymentGateway
         app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
 
+        // Deduct stock — reservation is converted to a real deduction
+        try {
+            app(InventoryService::class)->deductStock($order);
+        } catch (\Exception $e) {
+            Log::error('Failed to deduct stock after M-Pesa payment', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // -------------------------------------------------------
         // Dispatch SAP sync — fires after M-Pesa confirms payment.
         // Order is CONFIRMED, payment_status = paid.
@@ -240,21 +249,7 @@ class MpesaGateway implements PaymentGateway
 
     private function restoreStock(Order $order): void
     {
-        $inventoryService = app(InventoryService::class);
-        $orderSettings = app(OrderSettings::class);
-
-        if ($orderSettings->stock_reduce_on_order) {
-            // Stock was deducted on order, restore it
-            foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
-                $stockItem = $item->product_variant_id
-                    ? $item->variant
-                    : $item->product;
-                $stockItem?->increment('stock_quantity', $item->quantity);
-            }
-        } else {
-            // Stock was reserved, release reservations
-            $inventoryService->releaseReservation($order);
-        }
+        app(InventoryService::class)->releaseReservation($order);
     }
 
     private function getAccessToken(): string

@@ -281,7 +281,7 @@ new #[Title('Flat Rates')] class extends Component {
                                     @if ($cell)
                                         <button wire:click="editCell({{ $cell->id }})"
                                             class="group/cell inline-flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100 hover:text-brand-secondary transition-colors cursor-pointer">
-                                            KES {{ number_format($cell->price, 0) }}
+                                            {{ format_currency($cell->price) }}
                                             <flux:icon.pencil-square
                                                 class="w-3.5 h-3.5 opacity-0 group-hover/cell:opacity-60 transition-opacity" />
                                         </button>
@@ -321,7 +321,7 @@ new #[Title('Flat Rates')] class extends Component {
                                             <td class="px-4 py-2 text-right">
                                                 @if ($histRate)
                                                     <span class="text-xs text-zinc-400 line-through">
-                                                        KES {{ number_format($histRate->price, 0) }}
+                                                        {{ format_currency($histRate->price) }}
                                                     </span>
                                                     <span class="text-xs text-zinc-300 ml-1">
                                                         {{ $histRate->created_at->format('d M Y') }}
@@ -353,7 +353,7 @@ new #[Title('Flat Rates')] class extends Component {
         </div>
 
         <form wire:submit="saveCell" class="space-y-4">
-            <flux:input wire:model="cellForm.price" label="Price (KES)" type="number" min="0" step="0.01"
+            <flux:input wire:model="cellForm.price" label="Price ({{ get_currency_symbol() }})" type="number" min="0" step="0.01"
                 placeholder="e.g. 800" />
 
             <div class="grid grid-cols-2 gap-4">
@@ -404,7 +404,7 @@ new #[Title('Flat Rates')] class extends Component {
             </div>
 
             <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Prices per zone (KES)</p>
+                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Prices per zone ({{ get_currency_symbol() }})</p>
                 <div class="space-y-3">
                     @foreach ($this->zones as $zone)
                         <flux:input wire:model="tierForm.prices.{{ $zone->id }}" :label="$zone->name"

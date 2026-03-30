@@ -26,7 +26,7 @@ class QuoteExpiringNotification extends Notification implements ShouldQueue
 
     public function via(): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(): MailMessage
@@ -50,5 +50,19 @@ class QuoteExpiringNotification extends Notification implements ShouldQueue
             ->action('View Quotation', $portalUrl)
             ->line('If you have any questions, please reply to this email or contact our sales team.')
             ->salutation('Sheffield Africa · Sales Team');
+    }
+
+    public function toArray(): array
+    {
+        $daysLeft = $this->quote->expires_at?->diffInDays(now()) ?? 0;
+        $urgency = $daysLeft <= 1 ? 'expires tomorrow' : "expires in {$daysLeft} days";
+
+        return [
+            'quote_id' => $this->quote->id,
+            'reference' => $this->quote->reference,
+            'title' => 'Quotation Expiring Soon',
+            'message' => "Your quotation {$this->quote->reference} {$urgency}. Please respond before it expires.",
+            'url' => route('customer.quotations.show', $this->quote),
+        ];
     }
 }

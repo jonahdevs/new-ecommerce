@@ -283,10 +283,10 @@
                                 <div class="grid grid-cols-2 gap-3">
                                     <flux:input type="number" step="0.01"
                                         wire:model="variants.{{ $index }}.price"
-                                        label="Regular Price (KES)" />
+                                        label="Regular Price ({{ get_currency_symbol() }})" />
                                     <flux:input type="number" step="0.01"
                                         wire:model="variants.{{ $index }}.sale_price"
-                                        label="Sale Price (KES)" />
+                                        label="Sale Price ({{ get_currency_symbol() }})" />
                                 </div>
 
                                 {{-- Stock  --}}

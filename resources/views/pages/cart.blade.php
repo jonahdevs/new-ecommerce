@@ -19,7 +19,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
             ->getCart()
             ->items()
             ->with([
-                'product' => fn($q) => $q->with('crossSells'),
+                'product' => fn($q) => $q->with(['crossSells' => fn($cs) => $cs->active()->visible()]),
                 'variant' => fn($q) => $q->with(['attributeValues:id,attribute_id,value,label', 'attributeValues.attribute:id,name']),
             ])
             ->get();
@@ -476,6 +476,14 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                     <flux:heading class="text-green-600">
                                         − {{ format_currency($this->cartSummary['discount']) }}
                                     </flux:heading>
+                                </div>
+                            @endif
+                            @if ($this->cartSummary['tax_enabled'] && !$this->cartSummary['tax_inclusive'] && $this->cartSummary['tax'] > 0)
+                                <div class="flex items-center justify-between">
+                                    <flux:text>
+                                        {{ $this->cartSummary['tax_name'] }} ({{ $this->cartSummary['tax_rate'] }})
+                                    </flux:text>
+                                    <flux:heading>{{ format_currency($this->cartSummary['tax']) }}</flux:heading>
                                 </div>
                             @endif
                         </div>

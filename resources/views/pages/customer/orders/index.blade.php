@@ -91,10 +91,50 @@ new #[Layout('layouts.customer')] class extends Component {
                     </flux:button>
                 </div>
             @else
-                <x-my-tabs wire:model="selectedTab">
+                {{-- Status Tabs --}}
+                <div class="border-b border-zinc-200 dark:border-zinc-600 mb-4">
+                    <nav class="flex gap-1 overflow-x-auto">
+                        <button 
+                            wire:click="$set('selectedTab', 'ongoing')"
+                            @class([
+                                'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
+                                'bg-brand-secondary text-brand-secondary-content font-medium' => $selectedTab === 'ongoing',
+                                'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => $selectedTab !== 'ongoing',
+                            ])
+                        >
+                            <flux:icon.truck class="size-4" />
+                            Ongoing / Delivered
+                            <span @class([
+                                'text-xs px-1.5 py-0.5 rounded-full',
+                                'bg-white/20' => $selectedTab === 'ongoing',
+                                'bg-zinc-200 dark:bg-zinc-700' => $selectedTab !== 'ongoing',
+                            ])>
+                                {{ $this->ongoingOrders->total() }}
+                            </span>
+                        </button>
+                        <button 
+                            wire:click="$set('selectedTab', 'cancelled')"
+                            @class([
+                                'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
+                                'bg-brand-secondary text-brand-secondary-content font-medium' => $selectedTab === 'cancelled',
+                                'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => $selectedTab !== 'cancelled',
+                            ])
+                        >
+                            <flux:icon.x-circle class="size-4" />
+                            Cancelled / Returned
+                            <span @class([
+                                'text-xs px-1.5 py-0.5 rounded-full',
+                                'bg-white/20' => $selectedTab === 'cancelled',
+                                'bg-zinc-200 dark:bg-zinc-700' => $selectedTab !== 'cancelled',
+                            ])>
+                                {{ $this->cancelledOrders->total() }}
+                            </span>
+                        </button>
+                    </nav>
+                </div>
 
-                    {{-- Ongoing / Delivered --}}
-                    <x-my-tab name="ongoing" label="Ongoing / Delivered">
+                {{-- Ongoing / Delivered Tab Content --}}
+                @if ($selectedTab === 'ongoing')
                         <div class="space-y-3">
                             @forelse ($this->ongoingOrders as $order)
                                 @php
@@ -178,10 +218,10 @@ new #[Layout('layouts.customer')] class extends Component {
                                 <flux:pagination :paginator="$this->ongoingOrders" />
                             </div>
                         @endif
-                    </x-my-tab>
+                @endif
 
-                    {{-- Cancelled / Returned --}}
-                    <x-my-tab name="cancelled" label="Cancelled / Returned">
+                {{-- Cancelled / Returned Tab Content --}}
+                @if ($selectedTab === 'cancelled')
                         <div class="space-y-3">
                             @forelse ($this->cancelledOrders as $order)
                                 @php
@@ -261,9 +301,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                 <flux:pagination :paginator="$this->cancelledOrders" />
                             </div>
                         @endif
-                    </x-my-tab>
-
-                </x-my-tabs>
+                @endif
             @endif
         </div>
     </flux:card>

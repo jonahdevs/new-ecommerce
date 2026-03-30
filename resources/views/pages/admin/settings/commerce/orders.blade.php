@@ -49,12 +49,6 @@ new #[Title('Orders')] class extends Component {
                             <flux:select.option value="processing">{{ __('Processing') }}</flux:select.option>
                             <flux:select.option value="on-hold">{{ __('On hold') }}</flux:select.option>
                         </flux:select>
-
-                        <flux:select label="{{ __('Reduce stock on') }}" wire:model="form.stock_reduce_on_order"
-                            description="{{ __('When should product stock be deducted') }}">
-                            <flux:select.option value="1">{{ __('Order placed') }}</flux:select.option>
-                            <flux:select.option value="0">{{ __('Payment confirmed') }}</flux:select.option>
-                        </flux:select>
                     </div>
                 </div>
             </flux:card>

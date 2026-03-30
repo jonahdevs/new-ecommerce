@@ -11,6 +11,7 @@ enum PaymentStatus: string
     case PENDING = 'pending';
     case PROCESSING = 'processing';
     case QUEUED = 'queued';
+    case REFUNDED = 'refunded';
     case REVERSED = 'reversed';
     case SUCCESS = 'success';
     case CANCELLED = 'cancelled';
@@ -30,6 +31,7 @@ enum PaymentStatus: string
             self::PROCESSING          => 'amber',
             self::ONGOING             => 'blue',
             self::QUEUED              => 'purple',
+            self::REFUNDED            => 'sky',
             self::REVERSED            => 'orange',
             self::CANCELLED           => 'rose',
         };

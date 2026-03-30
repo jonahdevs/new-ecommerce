@@ -73,7 +73,10 @@
                                 :current="request()->routeIs('customer.account')">My Account</flux:navlist.item>
 
                             <flux:navlist.item :href="route('customer.orders.index')" icon="package" wire:navigate
-                                :current="request()->routeIs('customer.orders.*')">Orders</flux:navlist.item>
+                                :current="request()->routeIs('customer.orders.*')"
+                                :badge="\App\Models\Order::where('user_id', auth()->id())->count() ?: null">
+                                Orders
+                            </flux:navlist.item>
 
                             <flux:navlist.item :href="route('customer.quotations.index')" icon="tag" wire:navigate
                                 :current="request()->routeIs('customer.quotations.*')"
@@ -83,15 +86,19 @@
                                 Quotations
                             </flux:navlist.item>
 
-                            <flux:navlist.item href="#" icon="envelope" badge="12">
+                            <flux:navlist.item :href="route('customer.inbox')" wire:navigate icon="envelope"
+                                :current="request()->routeIs('customer.inbox')"
+                                :badge="auth()->user()->unreadNotifications()->count() ?: null">
                                 Inbox
                             </flux:navlist.item>
 
-                            <flux:navlist.item href="#" icon="star">
+                            <flux:navlist.item :href="route('customer.pending-reviews')" wire:navigate icon="star"
+                                :current="request()->routeIs('customer.pending-reviews')">
                                 Pending Reviews
                             </flux:navlist.item>
 
-                            <flux:navlist.item href="#" icon="eye">
+                            <flux:navlist.item :href="route('customer.recently-viewed')" wire:navigate icon="eye"
+                                :current="request()->routeIs('customer.recently-viewed')">
                                 Recently Viewed
                             </flux:navlist.item>
 
@@ -101,14 +108,11 @@
 
                             <flux:separator class="my-2" />
 
-                            <flux:navlist.item href="#" icon="cog-8-tooth">Settings</flux:navlist.item>
+                            <flux:navlist.item :href="route('customer.settings.profile')" wire:navigate icon="cog-8-tooth"
+                                :current="request()->routeIs('customer.settings.*')">Settings</flux:navlist.item>
 
                             <flux:navlist.item :href="route('customer.address-book.index')" wire:navigate
                                 icon="book-open">Address Book</flux:navlist.item>
-
-                            <flux:navlist.item href="#" wire:navigate icon="newspaper">
-                                Newsletter Preference
-                            </flux:navlist.item>
 
                             <flux:separator class="my-2" />
 

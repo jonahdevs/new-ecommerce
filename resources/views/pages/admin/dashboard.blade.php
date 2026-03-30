@@ -36,7 +36,7 @@ new #[Title('Dashboard')] class extends Component {
 
     private function clearComputedCache(): void
     {
-        unset($this->dateRange, $this->periodLabel, $this->salesStats, $this->quotationStats, $this->productStats, $this->customerStats, $this->revenueChartData, $this->topProductsChartData, $this->recentOrders, $this->recentDeliveries, $this->recentCustomers, $this->satisfactionStats, $this->categoryStats, $this->stockReport, $this->needsAttention);
+        unset($this->dateRange, $this->periodLabel, $this->salesStats, $this->quotationStats, $this->productStats, $this->customerStats, $this->revenueChartData, $this->topProductsChartData, $this->recentOrders, $this->recentDeliveries, $this->recentCustomers, $this->satisfactionStats, $this->categoryStats, $this->stockReport);
     }
 
     #[Computed]
@@ -50,20 +50,6 @@ new #[Title('Dashboard')] class extends Component {
     {
         [$from, $to] = $this->dateRange;
         return $from->isSameDay($to) ? $from->format('M j, Y') : $from->format('M j') . ' – ' . $to->format('M j, Y');
-    }
-
-    #[Computed]
-    public function needsAttention(): array
-    {
-        return [
-            'pending_orders' => Order::where('status', OrderStatus::PENDING->value)->count(),
-            'pending_quotes' => Quote::where('status', QuoteStatus::PENDING->value)->count(),
-            'expiring_quotes' => Quote::where('status', QuoteStatus::SENT->value)
-                ->whereNotNull('expires_at')
-                ->where('expires_at', '<=', now()->addHours(48))
-                ->where('expires_at', '>', now())
-                ->count(),
-        ];
     }
 
     #[Computed]
@@ -366,70 +352,27 @@ new #[Title('Dashboard')] class extends Component {
 <div>
 
     {{-- ================================================================== --}}
-    {{-- NEEDS ATTENTION / PAGE HEADER                                       --}}
+    {{-- PAGE HEADER                                                         --}}
     {{-- ================================================================== --}}
-    @if (
-        $this->needsAttention['pending_orders'] > 0 ||
-            $this->needsAttention['pending_quotes'] > 0 ||
-            $this->needsAttention['expiring_quotes'] > 0)
-        <div
-            class="flex flex-wrap items-center gap-2 px-4 py-2.5 mb-5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
-            <flux:icon.exclamation-triangle class="size-4 text-amber-500 shrink-0" />
-            <span class="text-xs font-semibold text-amber-800 dark:text-amber-300">Needs attention</span>
-            @if ($this->needsAttention['pending_orders'] > 0)
-                <a href="{{ route('admin.orders.index') }}" wire:navigate
-                    class="text-xs px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors font-medium">
-                    {{ $this->needsAttention['pending_orders'] }} pending
-                    {{ Str::plural('order', $this->needsAttention['pending_orders']) }}
-                </a>
-            @endif
-            @if ($this->needsAttention['pending_quotes'] > 0)
-                <a href="{{ route('admin.quotations.index') }}" wire:navigate
-                    class="text-xs px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors font-medium">
-                    {{ $this->needsAttention['pending_quotes'] }}
-                    {{ Str::plural('quote', $this->needsAttention['pending_quotes']) }} to price
-                </a>
-            @endif
-            @if ($this->needsAttention['expiring_quotes'] > 0)
-                <a href="{{ route('admin.quotations.index') }}" wire:navigate
-                    class="text-xs px-2.5 py-1 bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-full hover:bg-rose-200 dark:hover:bg-rose-900 transition-colors font-medium">
-                    {{ $this->needsAttention['expiring_quotes'] }} expiring soon
-                </a>
-            @endif
-            <div class="ml-auto flex items-center gap-2">
-                <div class="relative">
-                    <input class="dashboard-date-range" type="text" readonly
-                        class="w-64 pl-8 pr-3 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
-                    <flux:icon.calendar-days
-                        class="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+    <div class="flex items-center justify-between mb-5">
+        <div>
+            <flux:heading size="xl" class="font-bold tracking-tight">Dashboard</flux:heading>
+            <flux:subheading>{{ $this->periodLabel }}</flux:subheading>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="relative">
+                <input class="dashboard-date-range" type="text" readonly
+                    class="w-64 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
+                <flux:icon.calendar-days
+                    class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            </div>
+            <div wire:loading wire:target="setDateRange" class="flex items-center gap-1.5 text-xs text-zinc-400">
+                <div class="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin">
                 </div>
-                <div wire:loading wire:target="setDateRange" class="flex items-center gap-1 text-xs text-zinc-400">
-                    <div class="w-3 h-3 border-2 border-zinc-300 border-t-zinc-500 rounded-full animate-spin">
-                    </div>
-                </div>
+                Updating...
             </div>
         </div>
-    @else
-        <div class="flex items-center justify-between mb-5">
-            <div>
-                <flux:heading size="xl" class="font-bold tracking-tight">Dashboard</flux:heading>
-                <flux:subheading>{{ $this->periodLabel }}</flux:subheading>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="relative">
-                    <input class="dashboard-date-range" type="text" readonly
-                        class="w-64 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
-                    <flux:icon.calendar-days
-                        class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-                </div>
-                <div wire:loading wire:target="setDateRange" class="flex items-center gap-1.5 text-xs text-zinc-400">
-                    <div class="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin">
-                    </div>
-                    Updating...
-                </div>
-            </div>
-        </div>
-    @endif
+    </div>
 
     {{-- ================================================================== --}}
     {{-- ROW 1: KPI CARDS                                                    --}}
@@ -607,32 +550,6 @@ new #[Title('Dashboard')] class extends Component {
                             <p class="text-2xl font-bold text-zinc-300 dark:text-zinc-600 leading-none">—</p>
                         @endif
                     </div>
-
-                    {{-- Only render when something genuinely needs action --}}
-                    @if ($this->needsAttention['pending_orders'] > 0 || $this->needsAttention['expiring_quotes'] > 0)
-                        <div class="px-5 py-4 bg-sky-50 dark:bg-sky-950/40 flex-1">
-                            <p class="text-xs font-semibold text-sky-900 dark:text-sky-200 mb-1">
-                                @if ($this->needsAttention['pending_orders'] > 0)
-                                    {{ $this->needsAttention['pending_orders'] }}
-                                    {{ Str::plural('order', $this->needsAttention['pending_orders']) }} pending
-                                @else
-                                    {{ $this->needsAttention['expiring_quotes'] }}
-                                    {{ Str::plural('quote', $this->needsAttention['expiring_quotes']) }} expiring soon
-                                @endif
-                            </p>
-                            <p class="text-[11px] text-sky-700 dark:text-sky-300 mb-3 leading-relaxed">
-                                @if ($this->needsAttention['pending_orders'] > 0)
-                                    Review and confirm pending orders to keep fulfilment on track.
-                                @else
-                                    Follow up with customers before their quotes expire.
-                                @endif
-                            </p>
-                            <a href="{{ route('admin.orders.index') }}" wire:navigate
-                                class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors">
-                                See orders <flux:icon.arrow-right class="size-3" />
-                            </a>
-                        </div>
-                    @endif
 
                 </div>
             </div>
@@ -1117,6 +1034,7 @@ new #[Title('Dashboard')] class extends Component {
 @script
     <script>
         const chartInstances = {};
+        const currencySymbol = '{{ get_currency_symbol() }}';
         const isDark = () => document.documentElement.classList.contains('dark');
         const gridColor = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
         const textColor = () => isDark() ? '#71717a' : '#a1a1aa';
@@ -1240,7 +1158,7 @@ new #[Title('Dashboard')] class extends Component {
                             callbacks: {
                                 label: ctx => {
                                     if (ctx.dataset.yAxisID === 'yRevenue') {
-                                        return `  ${ctx.dataset.label}: KES ${ctx.parsed.y.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
+                                        return `  ${ctx.dataset.label}: ${currencySymbol} ${ctx.parsed.y.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
                                     }
                                     return `  ${ctx.dataset.label}: ${ctx.parsed.y}`;
                                 },
@@ -1389,7 +1307,7 @@ new #[Title('Dashboard')] class extends Component {
                             callbacks: {
                                 title: ctx => `Day ${ctx[0].label}`,
                                 label: ctx =>
-                                    `  ${ctx.dataset.label}: KES ${ctx.parsed.y.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`,
+                                    `  ${ctx.dataset.label}: ${currencySymbol} ${ctx.parsed.y.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`,
                             },
                         },
                     },

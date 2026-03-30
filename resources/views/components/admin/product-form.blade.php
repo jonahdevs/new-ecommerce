@@ -176,7 +176,40 @@ new class extends Component {
     #[Computed]
     public function products()
     {
-        return Product::active()->orderBy('name')->get();
+        // Only load selected products for initial display
+        $selectedIds = collect([
+            ...$this->form->selectedUpsells ?? [],
+            ...$this->form->selectedCrossSells ?? [],
+        ])->filter()->unique()->values()->toArray();
+
+        if (empty($selectedIds)) {
+            return collect();
+        }
+
+        return Product::active()
+            ->select('id', 'name', 'sku', 'image_path')
+            ->whereIn('id', $selectedIds)
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function searchProducts(string $search = '')
+    {
+        return Product::active()
+            ->select('id', 'name', 'sku', 'image_path')
+            ->when($search, fn($q) => $q->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%");
+            }))
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(fn($product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'image_url' => $product->image_url,
+            ]);
     }
 
     public function hasGeneralErrors(): bool
@@ -444,17 +477,21 @@ new class extends Component {
                             <flux:field>
                                 <flux:label> Upsells</flux:label>
 
-                                <x-my-choices-offline wire:model="form.selectedUpsells"
-                                    placeholder="Select products for upsells" :options="$this->products" option-sub-label="sku"
-                                    option-avatar="image_url" clearable searchable />
+                                <x-my-choices wire:model="form.selectedUpsells"
+                                    placeholder="Select products for upsells" :options="$this->products"
+                                    search-function="searchProducts"
+                                    option-sub-label="sku" option-avatar="image_url" clearable searchable
+                                    debounce="300" min-chars="2" />
                                 <flux:error name="form.selectedUpsells" />
                             </flux:field>
 
                             <flux:field>
                                 <flux:label> Cross Sells</flux:label>
-                                <x-my-choices-offline wire:model="form.selectedCrossSells" :options="$this->products"
+                                <x-my-choices wire:model="form.selectedCrossSells" :options="$this->products"
+                                    search-function="searchProducts"
                                     placeholder="Select products for cross sells (.e.g. Accessories)"
-                                    option-sub-label="sku" option-avatar="image_url" clearable searchable />
+                                    option-sub-label="sku" option-avatar="image_url" clearable searchable
+                                    debounce="300" min-chars="2" />
                                 <flux:error name="form.selectedCrossSells" />
                             </flux:field>
                         </div>

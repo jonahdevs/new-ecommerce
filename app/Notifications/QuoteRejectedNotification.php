@@ -26,7 +26,7 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
 
     public function via(): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(): MailMessage
@@ -49,5 +49,16 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
             ->line('You may wish to follow up with the customer to understand their concerns or offer a revised quotation.')
             ->action('View Quotation', $quotationUrl)
             ->salutation('Sheffield Africa · Orders Team');
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'quote_id' => $this->quote->id,
+            'reference' => $this->quote->reference,
+            'title' => 'Quote Rejected',
+            'message' => "Quote {$this->quote->reference} was rejected by {$this->quote->user?->name ?? 'customer'}.",
+            'url' => route('admin.quotations.show', $this->quote),
+        ];
     }
 }

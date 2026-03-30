@@ -41,15 +41,6 @@ class DocumentService
 
     public function generateInvoice(Order $order): ?string
     {
-        // Only generate for confirmed sales orders that have been paid
-        if (!$order->isSalesOrder()) {
-            Log::warning('generateInvoice called on a non-sales-order.', [
-                'order_id' => $order->id,
-                'document_type' => $order->document_type,
-            ]);
-            return null;
-        }
-
         try {
             $pdf = Pdf::loadView('pdf.invoice', ['order' => $order->load(['items', 'payment', 'user'])])
                 ->setPaper('a4', 'portrait')
@@ -153,6 +144,33 @@ class DocumentService
         $filename = basename($path);
 
         return Storage::disk(self::DISK)->download($path, "{$label}-{$filename}");
+    }
+
+    // =========================================================================
+    //  STREAM PDF (inline preview in browser)
+    //
+    //  Returns a response that displays the PDF inline in the browser.
+    //  Used for preview functionality instead of forcing download.
+    //
+    //  Usage:
+    //    return app(DocumentService::class)->stream($quote->document_path, 'Quotation');
+    //
+    //  Returns null if the file doesn't exist — caller should handle gracefully.
+    // =========================================================================
+
+    public function stream(string $path, string $label = 'Document'): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        if (!Storage::disk(self::DISK)->exists($path)) {
+            Log::warning('PDF stream requested but file not found.', ['path' => $path]);
+            return null;
+        }
+
+        $filename = basename($path);
+
+        return Storage::disk(self::DISK)->response($path, "{$label}-{$filename}", [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $label . '-' . $filename . '"',
+        ]);
     }
 
     // =========================================================================

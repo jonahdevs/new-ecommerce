@@ -229,6 +229,19 @@ class Order extends Model
             'changed_by_type' => auth()->check() ? 'user' : $changedByType,
             'notes' => $notes,
         ]);
+
+        // Notify customer of status change for relevant statuses
+        $notifiableStatuses = [
+            OrderStatus::CONFIRMED,
+            OrderStatus::PROCESSING,
+            OrderStatus::SHIPPED,
+            OrderStatus::DELIVERED,
+            OrderStatus::CANCELLED,
+        ];
+
+        if ($this->user && in_array($new, $notifiableStatuses)) {
+            $this->user->notify(new \App\Notifications\OrderStatusNotification($this, $new));
+        }
     }
 
     // =====================================================

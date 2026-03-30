@@ -10,7 +10,6 @@ return new class extends SettingsMigration {
         $this->migrator->add('orders.guest_checkout_enabled', true);
         $this->migrator->add('orders.auto_cancel_unpaid', false);
         $this->migrator->add('orders.auto_cancel_hours', 24);
-        $this->migrator->add('orders.stock_reduce_on_order', true);
         $this->migrator->add('orders.default_order_status', 'pending');
     }
 };

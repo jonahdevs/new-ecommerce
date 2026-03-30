@@ -26,7 +26,7 @@ class QuoteSentNotification extends Notification implements ShouldQueue
 
     public function via(): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(): MailMessage
@@ -62,5 +62,16 @@ class QuoteSentNotification extends Notification implements ShouldQueue
             ->action('View & Respond to Quotation', $portalUrl)
             ->line('If you have any questions about this quotation, please reply to this email or contact our team.')
             ->salutation('Sheffield Africa · Sales Team');
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'quote_id' => $this->quote->id,
+            'reference' => $this->quote->reference,
+            'title' => 'Quotation Ready',
+            'message' => "Your quotation {$this->quote->reference} is ready for review. Total: " . format_currency($this->quote->total),
+            'url' => route('customer.quotations.show', $this->quote),
+        ];
     }
 }

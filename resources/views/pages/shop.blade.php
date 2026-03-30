@@ -109,14 +109,18 @@ new #[Layout('layouts.guest')] class extends Component {
             ])
             ->active();
 
-        $query->when(!empty($this->search), function (Builder $q) {
+        // Apply visibility based on whether user is searching or browsing
+        if (!empty($this->search)) {
+            $query->visibleInSearch();
             $term = $this->search;
-            $q->where(fn(Builder $q2) =>
+            $query->where(fn(Builder $q2) =>
                 $q2->where('name', 'like', "%{$term}%")
                     ->orWhere('sku', 'like', "%{$term}%")
                     ->orWhere('short_description', 'like', "%{$term}%")
             );
-        });
+        } else {
+            $query->visibleInCatalog();
+        }
 
         $query->when(!empty($this->selectedBrands), fn(Builder $q) =>
             $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands))
@@ -481,7 +485,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             @endforeach
                             @if ($minPriceUrl !== null || $maxPriceUrl !== null)
                                 <flux:badge color="zinc" size="sm">
-                                    KES {{ number_format($minPrice) }} – {{ number_format($maxPrice) }}
+                                    {{ get_currency_symbol() }} {{ number_format($minPrice) }} – {{ number_format($maxPrice) }}
                                     <button wire:click="clearPriceFilter"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />

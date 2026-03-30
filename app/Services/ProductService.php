@@ -39,6 +39,7 @@ class ProductService
             ])
             ->withAvg('reviews', 'rating')
             ->active()
+            ->visible()
             ->orderByPivot('sort_order')
             ->limit($limit)
             ->get();
@@ -74,6 +75,7 @@ class ProductService
             ])
             ->withAvg('reviews', 'rating')
             ->active()
+            ->visible()
             ->orderByPivot('sort_order')
             ->limit($limit)
             ->get();
@@ -114,6 +116,7 @@ class ProductService
                 ->whereHas('categories', fn($q) => $q->whereIn('categories.id', $categoryIds))
                 ->where('id', '!=', $product->id)
                 ->active()
+                ->visible()
                 ->inRandomOrder()
                 ->limit($limit * 2)
                 ->get();
@@ -137,6 +140,7 @@ class ProductService
                 ->where('id', '!=', $product->id)
                 ->whereNotIn('id', $relatedProducts->pluck('id'))
                 ->active()
+                ->visible()
                 ->inRandomOrder()
                 ->limit($limit)
                 ->get();
@@ -163,6 +167,7 @@ class ProductService
                     ->where('id', '!=', $product->id)
                     ->whereNotIn('id', $relatedProducts->pluck('id'))
                     ->active()
+                    ->visible()
                     ->inRandomOrder()
                     ->limit($limit)
                     ->get();
@@ -186,6 +191,7 @@ class ProductService
                 ->where('id', '!=', $product->id)
                 ->whereNotIn('id', $relatedProducts->pluck('id'))
                 ->active()
+                ->visible()
                 ->inRandomOrder()
                 ->limit($limit)
                 ->get();
@@ -219,6 +225,7 @@ class ProductService
                 ->withAvg('reviews', 'rating')
                 ->with(['brand:id,name'])
                 ->active()
+                ->visible()
                 ->orderByPivot('sort_order')
                 ->get();
 
@@ -279,9 +286,9 @@ class ProductService
 
         $user = auth()->user();
 
-        $user->recentlyViewedProducts()->syncWithoutDetaching([
-            $product->id => ['viewed_at' => now()],
-        ]);
+        // Detach first if exists, then attach with new timestamp to ensure viewed_at is updated
+        $user->recentlyViewedProducts()->detach($product->id);
+        $user->recentlyViewedProducts()->attach($product->id, ['viewed_at' => now()]);
 
         $totalCount = $user->recentlyViewedProducts()->count();
 
@@ -331,6 +338,7 @@ class ProductService
             ->withAvg('reviews', 'rating')
             ->with(['brand:id,name'])
             ->active()
+            ->visible()
             ->whereIn('products.id', $ids)
             ->orderByRaw('FIELD(products.id, ' . implode(',', $ids) . ')')
             ->get();

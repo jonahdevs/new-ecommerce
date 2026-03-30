@@ -282,6 +282,42 @@ class Product extends Model
             });
     }
 
+    /**
+     * Scope for products visible in catalog/category pages.
+     * Includes PUBLIC and CATALOG visibility.
+     */
+    #[Scope]
+    protected function visibleInCatalog(Builder $query): void
+    {
+        $query->whereIn('products.visibility', [
+            ProductVisibility::PUBLIC,
+            ProductVisibility::CATALOG,
+        ]);
+    }
+
+    /**
+     * Scope for products visible in search results.
+     * Includes PUBLIC and SEARCH visibility.
+     */
+    #[Scope]
+    protected function visibleInSearch(Builder $query): void
+    {
+        $query->whereIn('products.visibility', [
+            ProductVisibility::PUBLIC,
+            ProductVisibility::SEARCH,
+        ]);
+    }
+
+    /**
+     * Scope for products visible anywhere (not hidden).
+     * Excludes only HIDDEN visibility.
+     */
+    #[Scope]
+    protected function visible(Builder $query): void
+    {
+        $query->where('products.visibility', '!=', ProductVisibility::HIDDEN);
+    }
+
 
     #[Scope()]
     protected function newArrivals(Builder $query): void

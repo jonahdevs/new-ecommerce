@@ -78,7 +78,7 @@ new class extends Component {
     public function addToCart(CartService $cartService): void
     {
         try {
-            $cartService->addItem($this->product->id, $this->cartQuantity);
+            $cartService->addItem($this->product->id, 1);
 
             $this->inCart = true;
             $cartItem = $cartService->getCartItem($this->product->id);
@@ -121,7 +121,7 @@ new class extends Component {
             $newQuantity = $this->cartQuantity - 1;
 
             if ($newQuantity < 1) {
-                // $this->dispatch('notify', variant: 'warning', message: 'Minimum quantity is 1');
+                $this->removeFromCart($cartService);
                 return;
             }
 

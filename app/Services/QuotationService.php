@@ -4,13 +4,17 @@ namespace App\Services;
 
 use App\Enums\QuoteStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
+use App\Enums\SapSyncStatus;
 use App\Models\Quote;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Notifications\QuoteAcceptedNotification;
 use App\Notifications\QuoteExpiringNotification;
 use App\Notifications\QuoteRejectedNotification;
 use App\Notifications\QuoteRequestedNotification;
 use App\Notifications\QuoteSentNotification;
+use App\Services\Payment\PaymentService;
 use App\Settings\CustomerNotificationSettings;
 use App\Settings\LocalizationSettings;
 use App\Settings\NotificationSettings;
@@ -27,6 +31,7 @@ class QuotationService
         private readonly QuotationSettings $quotationSettings,
         private readonly NotificationSettings $notificationSettings,
         private readonly CustomerNotificationSettings $customerNotificationSettings,
+        private readonly PaymentService $paymentService,
     ) {}
 
     // =========================================================================
@@ -202,6 +207,73 @@ class QuotationService
     }
 
     // =========================================================================
+    // PREPARE QUOTE (admin saves pricing without sending)
+    //
+    // Called from the admin quotation show page when admin wants to save
+    // pricing without sending to customer yet.
+    //
+    // $pricing array shape:
+    // [
+    //   'shipping'      => float,
+    //   'validity_days' => int,
+    //   'note'          => string|null,
+    //   'item_prices'   => array|null,  // [item_id => price] for product quotes
+    // ]
+    // =========================================================================
+
+    public function prepare(Quote $quote, array $pricing): Quote
+    {
+        $shippingCents = (int) round((float) ($pricing['shipping'] ?? 0) * 100);
+        $validityDays  = max(1, (int) ($pricing['validity_days'] ?? 7));
+        $note          = $pricing['note'] ?? null;
+        $itemPrices    = $pricing['item_prices'] ?? [];
+
+        DB::transaction(function () use ($quote, $shippingCents, $validityDays, $note, $itemPrices) {
+
+            if (!empty($itemPrices)) {
+                $subtotalCents = 0;
+
+                foreach ($quote->items as $item) {
+                    $newUnitPriceCents = isset($itemPrices[$item->id])
+                        ? (int) round((float) $itemPrices[$item->id] * 100)
+                        : ($item->quoted_price_cents ?? $item->original_price_cents);
+
+                    $item->update([
+                        'quoted_price_cents' => $newUnitPriceCents,
+                    ]);
+
+                    $subtotalCents += $newUnitPriceCents * $item->quantity;
+                }
+
+                $totalCents = max(0, $subtotalCents - $quote->discount_cents + $shippingCents);
+
+                $quote->update([
+                    'subtotal_cents' => $subtotalCents,
+                    'shipping_cents' => $shippingCents,
+                    'total_cents'    => $totalCents,
+                ]);
+            } else {
+                $totalCents = max(
+                    0,
+                    $quote->subtotal_cents - $quote->discount_cents + $shippingCents
+                );
+
+                $quote->update([
+                    'shipping_cents' => $shippingCents,
+                    'total_cents'    => $totalCents,
+                ]);
+            }
+
+            // Store admin notes if provided
+            if ($note) {
+                $quote->update(['admin_notes' => $note]);
+            }
+        });
+
+        return $quote->refresh();
+    }
+
+    // =========================================================================
     // SEND QUOTE (admin → customer)
     //
     // Called from the admin quotation show page when admin submits pricing.
@@ -334,17 +406,66 @@ class QuotationService
 
     private function convertToOrder(Quote $quote): Order
     {
+        $user = $quote->user;
+
+        // Resolve shipping address from user's default address
+        $address = $user?->addresses()
+            ->with(['county', 'area', 'shippingZone'])
+            ->where('is_default', true)
+            ->first()
+            ?? $user?->addresses()->with(['county', 'area', 'shippingZone'])->oldest()->first();
+
+        $addressSnapshot = $address ? [
+            'first_name'   => $address->first_name,
+            'last_name'    => $address->last_name,
+            'full_name'    => $address->full_name,
+            'phone_number' => $address->phone_number,
+            'address'      => $address->address,
+            'area'         => $address->area?->name,
+            'county'       => $address->county?->name,
+            'zone'         => $address->shippingZone?->name,
+        ] : [
+            'full_name'    => $quote->customerName(),
+            'phone_number' => $quote->customerPhone(),
+            'address'      => $quote->preferred_area . ', ' . $quote->preferred_county,
+            'area'         => $quote->preferred_area,
+            'county'       => $quote->preferred_county,
+        ];
+
+        // Shipping snapshot — quote has shipping cost but no method details
+        $shippingSnapshot = [
+            'method_id'       => null,
+            'method_name'     => 'As per quotation',
+            'method_code'     => 'quote',
+            'method_type'     => 'quote',
+            'zone_id'         => null,
+            'rate_id'         => null,
+            'station_id'      => null,
+            'station_name'    => null,
+            'cost'            => $quote->shipping,
+            'cost_breakdown'  => null,
+            'delivery_window' => null,
+            'weight_kg'       => null,
+        ];
+
         $order = Order::create([
-            'user_id'        => $quote->user_id,
-            'quote_id'       => $quote->id,
-            'reference'      => Order::generateReference(),
-            'status'         => OrderStatus::PENDING,
-            'currency'       => $quote->currency,
-            'subtotal_cents' => $quote->subtotal_cents,
-            'discount_cents' => $quote->discount_cents,
-            'shipping_cents' => $quote->shipping_cents,
-            'tax_cents'      => $quote->tax_cents,
-            'total_cents'    => $quote->total_cents,
+            'user_id'           => $quote->user_id,
+            'quote_id'          => $quote->id,
+            'reference'         => Order::generateReference(),
+            'status'            => OrderStatus::PENDING,
+            'payment_status'    => PaymentStatus::PENDING,
+            'currency'          => $quote->currency,
+            'subtotal_cents'    => $quote->subtotal_cents,
+            'discount_cents'    => $quote->discount_cents,
+            'shipping_cents'    => $quote->shipping_cents,
+            'tax_cents'         => $quote->tax_cents,
+            'total_cents'       => $quote->total_cents,
+            'shipping_address'  => $addressSnapshot,
+            'billing_address'   => $addressSnapshot,
+            'shipping_snapshot' => $shippingSnapshot,
+            'sap_sync_status'   => SapSyncStatus::PENDING,
+            'sap_sync_attempts' => 0,
+            'expires_at'        => now()->addMinutes(30),
         ]);
 
         foreach ($quote->items as $quoteItem) {
@@ -365,6 +486,17 @@ class QuotationService
             'to_status'       => OrderStatus::PENDING->value,
             'changed_by_type' => 'system',
             'notes'           => "Order created from accepted quotation {$quote->reference}.",
+        ]);
+
+        // Create the payment record so checkout.pay can initiate the gateway
+        Payment::create([
+            'order_id'     => $order->id,
+            'amount_cents' => $quote->total_cents,
+            'currency'     => $quote->currency,
+            'status'       => PaymentStatus::PENDING,
+            'gateway'      => $this->paymentService->activeGateway(),
+            'expires_at'   => now()->addMinutes(30),
+            'meta'         => ['payment_method' => 'card'],
         ]);
 
         return $order;

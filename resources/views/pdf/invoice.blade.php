@@ -350,8 +350,14 @@
                         <strong>Invoice Date:</strong> {{ now()->format('d M Y') }}<br>
                         <strong>Payment Date:</strong>
                         {{ $order->payment?->paid_at?->format('d M Y') ?? now()->format('d M Y') }}<br>
-                        @if ($order->wasConverted() && $order->parentQuotation)
-                            <strong>Quotation Ref:</strong> {{ $order->parentQuotation->reference }}<br>
+                        @if ($order->wasConvertedFromQuote() && $order->quote)
+                            <strong>Quotation Ref:</strong> {{ $order->quote->reference }}<br>
+                        @endif
+                        @if ($order->kra_cu_number)
+                            <strong>KRA CU No:</strong> {{ $order->kra_cu_number }}<br>
+                        @endif
+                        @if ($order->kra_invoice_number)
+                            <strong>KRA Invoice:</strong> {{ $order->kra_invoice_number }}<br>
                         @endif
                     </div>
                 </td>
@@ -468,12 +474,12 @@
         <table class="totals-table">
             <tr>
                 <td class="label">Subtotal</td>
-                <td class="value">KES {{ number_format($order->subtotal, 2) }}</td>
+                <td class="value">{{ format_currency($order->subtotal) }}</td>
             </tr>
             @if ($order->discount > 0)
                 <tr>
                     <td class="label">Discount</td>
-                    <td class="value" style="color: #16a34a;">− KES {{ number_format($order->discount, 2) }}</td>
+                    <td class="value" style="color: #16a34a;">− {{ format_currency($order->discount) }}</td>
                 </tr>
             @endif
             <tr>
@@ -482,7 +488,7 @@
                     @if ($order->shipping == 0)
                         Free
                     @else
-                        KES {{ number_format($order->shipping, 2) }}
+                        {{ format_currency($order->shipping) }}
                     @endif
                 </td>
             </tr>
@@ -499,23 +505,80 @@
                     Excl. VAT (16%)
                 </td>
                 <td class="value" style="border-top: 1px solid #cccccc; padding-top: 6px;">
-                    KES {{ number_format($exclVat, 2) }}
+                    {{ format_currency($exclVat) }}
                 </td>
             </tr>
             <tr>
                 <td class="label">VAT @ 16%</td>
-                <td class="value">KES {{ number_format($vatAmount, 2) }}</td>
+                <td class="value">{{ format_currency($vatAmount) }}</td>
             </tr>
             <tr class="total-row">
                 <td>Total (Incl. VAT)</td>
-                <td style="text-align: right;">KES {{ number_format($order->total, 2) }}</td>
+                <td style="text-align: right;">{{ format_currency($order->total) }}</td>
             </tr>
             <tr class="vat-row">
                 <td colspan="2" style="padding-top: 4px; text-align: center;">
-                    All amounts in Kenya Shillings (KES). VAT inclusive at 16%.
+                    All amounts in {{ get_currency_code() }}. VAT inclusive at 16%.
                 </td>
             </tr>
         </table>
+
+        {{-- ================================================================== --}}
+        {{-- ETIMS / KRA COMPLIANCE SECTION                                      --}}
+        {{-- ================================================================== --}}
+        @if ($order->kra_cu_number || $order->etims_cu_serial_no)
+            <table style="width: 100%; margin-bottom: 24px; border: 1px solid #d4ddd4; border-radius: 2px;">
+                <tr>
+                    <td style="background: #f5f7f5; padding: 8px 14px; border-bottom: 1px solid #d4ddd4;">
+                        <span style="font-size: 9.5px; font-weight: bold; color: #1a3c2e; text-transform: uppercase; letter-spacing: 0.5px;">
+                            KRA eTIMS Compliance
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 14px;">
+                        <table style="width: 100%; font-size: 10px; color: #444444;">
+                            @if ($order->kra_cu_number)
+                                <tr>
+                                    <td style="width: 30%; padding: 3px 0;"><strong>CU Number:</strong></td>
+                                    <td style="padding: 3px 0;">{{ $order->kra_cu_number }}</td>
+                                </tr>
+                            @endif
+                            @if ($order->kra_invoice_number)
+                                <tr>
+                                    <td style="padding: 3px 0;"><strong>KRA Invoice No:</strong></td>
+                                    <td style="padding: 3px 0;">{{ $order->kra_invoice_number }}</td>
+                                </tr>
+                            @endif
+                            @if ($order->etims_cu_serial_no)
+                                <tr>
+                                    <td style="padding: 3px 0;"><strong>eTIMS Serial:</strong></td>
+                                    <td style="padding: 3px 0;">{{ $order->etims_cu_serial_no }}</td>
+                                </tr>
+                            @endif
+                            @if ($order->etims_cu_datetime)
+                                <tr>
+                                    <td style="padding: 3px 0;"><strong>eTIMS Date:</strong></td>
+                                    <td style="padding: 3px 0;">{{ $order->etims_cu_datetime->format('d M Y H:i:s') }}</td>
+                                </tr>
+                            @endif
+                            @if ($order->kra_validated_at)
+                                <tr>
+                                    <td style="padding: 3px 0;"><strong>Validated:</strong></td>
+                                    <td style="padding: 3px 0;">{{ $order->kra_validated_at->format('d M Y H:i:s') }}</td>
+                                </tr>
+                            @endif
+                        </table>
+                        @if ($order->etims_qr_code)
+                            <div style="margin-top: 10px; text-align: center;">
+                                <img src="data:image/png;base64,{{ $order->etims_qr_code }}" alt="eTIMS QR Code" style="width: 80px; height: 80px;" />
+                                <div style="font-size: 8px; color: #888888; margin-top: 4px;">Scan to verify</div>
+                            </div>
+                        @endif
+                    </td>
+                </tr>
+            </table>
+        @endif
 
         {{-- ================================================================== --}}
         {{-- NOTES                                                               --}}

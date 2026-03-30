@@ -12,7 +12,7 @@ use App\Models\Product;
 use App\Services\Payment\PaymentService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Settings\LocalizationSettings;
-use App\Settings\OrderSettings;
+use App\Settings\TaxSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -23,8 +23,8 @@ class CheckoutService
         private readonly CheckoutSession $checkoutSession,
         private readonly PaymentService $paymentService,
         private readonly InventoryService $inventoryService,
+        private readonly TaxService $taxService,
         private readonly LocalizationSettings $localization,
-        private readonly OrderSettings $orderSettings,
     ) {}
 
     // =====================================================
@@ -98,7 +98,16 @@ class CheckoutService
         $subtotalCents = (int) round($cartSummary['subtotal'] * 100);
         $discountCents = (int) round($cartSummary['discount'] * 100);
         $shippingCents = (int) round($shippingData['cost'] * 100);
-        $totalCents    = max(0, $subtotalCents - $discountCents + $shippingCents);
+
+        // Calculate tax based on settings (inclusive extracts, exclusive adds)
+        $taxableSubtotal = $subtotalCents - $discountCents;
+        $taxBreakdown = $this->taxService->calculateOrderTax($taxableSubtotal, $shippingCents);
+        $taxCents = $taxBreakdown['total_tax'];
+
+        // For exclusive tax, add tax to total; for inclusive, total stays the same
+        $totalCents = $this->taxService->isInclusive()
+            ? max(0, $subtotalCents - $discountCents + $shippingCents)
+            : max(0, $subtotalCents - $discountCents + $shippingCents + $taxCents);
 
         // -------------------------------------------------------
         // DB transaction — Order + OrderItems + Payment
@@ -111,6 +120,7 @@ class CheckoutService
             $subtotalCents,
             $discountCents,
             $shippingCents,
+            $taxCents,
             $totalCents,
             $shippingData
         ) {
@@ -123,7 +133,7 @@ class CheckoutService
                 'subtotal_cents'   => $subtotalCents,
                 'discount_cents'   => $discountCents,
                 'shipping_cents'   => $shippingCents,
-                'tax_cents'        => 0,
+                'tax_cents'        => $taxCents,
                 'total_cents'      => $totalCents,
                 'shipping_address' => $this->snapshotAddress($address),
                 'billing_address'  => $this->snapshotAddress($address),
@@ -158,13 +168,15 @@ class CheckoutService
                 // Use variant price if available, otherwise product price
                 $unitPrice = $item->variant?->final_price ?? $item->product->final_price;
                 $originalPrice = $item->variant?->price ?? $item->product->price;
+                $unitPriceCents = (int) round($unitPrice * 100);
+                $unitTaxCents = $this->taxService->calculateTax($unitPriceCents);
 
                 $order->items()->create([
                     'product_id'         => $item->product_id,
                     'product_variant_id' => $item->variant_id,
                     'quantity'           => $item->quantity,
-                    'unit_price_cents'   => (int) round($unitPrice * 100),
-                    'unit_tax_cents'     => 0,
+                    'unit_price_cents'   => $unitPriceCents,
+                    'unit_tax_cents'     => $unitTaxCents,
                     'discount_cents'     => (int) round(
                         ($originalPrice - $unitPrice) * 100 * $item->quantity
                     ),
@@ -191,20 +203,8 @@ class CheckoutService
                 ]);
             }
 
-            // Reserve stock (soft lock) or deduct immediately based on settings
-            // Reservation pattern prevents overselling while payment is processing
-            if ($this->orderSettings->stock_reduce_on_order) {
-                // Deduct stock immediately on order creation
-                foreach ($cartItems as $item) {
-                    $stockItem = $item->variant_id
-                        ? \App\Models\ProductVariant::lockForUpdate()->find($item->variant_id)
-                        : Product::lockForUpdate()->find($item->product_id);
-
-                    if ($stockItem && $stockItem->stock_quantity >= $item->quantity) {
-                        $stockItem->decrement('stock_quantity', $item->quantity);
-                    }
-                }
-            }
+            // Reserve stock (soft lock) — prevents overselling while payment is processing.
+            // Stock is deducted for real only after payment is confirmed by the gateway webhook.
 
             Payment::create([
                 'order_id'     => $order->id,
@@ -221,20 +221,16 @@ class CheckoutService
             return $order;
         });
 
-        // Reserve stock outside transaction if not deducting on order
-        // This creates soft locks that expire with the payment
-        if (!$this->orderSettings->stock_reduce_on_order) {
-            try {
-                $this->inventoryService->reserveStock($order);
-            } catch (\Exception $e) {
-                // If reservation fails, cancel the order
-                $order->transitionTo(
-                    OrderStatus::CANCELLED,
-                    notes: 'Stock reservation failed: ' . $e->getMessage(),
-                    changedByType: 'system',
-                );
-                throw new \RuntimeException('Unable to reserve stock. Please try again.');
-            }
+        // Reserve stock outside the transaction — soft locks expire with the payment window.
+        try {
+            $this->inventoryService->reserveStock($order);
+        } catch (\Exception $e) {
+            $order->transitionTo(
+                OrderStatus::CANCELLED,
+                notes: 'Stock reservation failed: ' . $e->getMessage(),
+                changedByType: 'system',
+            );
+            throw new \RuntimeException('Unable to reserve stock. Please try again.');
         }
 
         // -------------------------------------------------------
@@ -257,19 +253,8 @@ class CheckoutService
                 );
                 $order->update(['payment_status' => EnumsPaymentStatus::FAILED]);
 
-                // Release reservations or restore stock based on settings
-                if ($this->orderSettings->stock_reduce_on_order) {
-                    // Stock was deducted, restore it
-                    foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
-                        $stockItem = $item->product_variant_id
-                            ? $item->variant
-                            : $item->product;
-                        $stockItem?->increment('stock_quantity', $item->quantity);
-                    }
-                } else {
-                    // Stock was reserved, release reservations
-                    $this->inventoryService->releaseReservation($order);
-                }
+                // Release stock reservation on payment initiation failure
+                $this->inventoryService->releaseReservation($order);
 
                 Log::error('Payment initiation failed after order created', [
                     'order_id' => $order->id,

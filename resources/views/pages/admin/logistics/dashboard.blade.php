@@ -189,7 +189,7 @@ new #[Title('Logistics Overview')] class extends Component {
                 </div>
             </div>
             <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums">
-                {{ number_format($this->stats['this_month_revenue'], 0) }}
+                {{ format_currency($this->stats['this_month_revenue']) }}
             </p>
             <div class="flex items-center gap-1.5 mt-1">
                 @if ($this->stats['revenue_change'] !== null)
@@ -208,7 +208,7 @@ new #[Title('Logistics Overview')] class extends Component {
                     </span>
                     <span class="text-xs text-zinc-400">vs last month</span>
                 @else
-                    <span class="text-xs text-zinc-400">KES · first month</span>
+                    <span class="text-xs text-zinc-400">{{ get_currency_symbol() }} · first month</span>
                 @endif
             </div>
         </flux:card>
@@ -257,7 +257,7 @@ new #[Title('Logistics Overview')] class extends Component {
                             </span>
                             <span
                                 class="text-xs font-medium text-zinc-600 dark:text-zinc-300 tabular-nums hidden sm:block">
-                                KES {{ number_format($order->shipping_cost, 0) }}
+                                {{ format_currency($order->shipping_cost) }}
                             </span>
                             <flux:badge :color="$status->color()" variant="flat" size="sm">
                                 {{ $status->label() }}
@@ -458,7 +458,7 @@ new #[Title('Logistics Overview')] class extends Component {
                                         </span>
                                         <span
                                             class="text-xs font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
-                                            KES {{ number_format($row['revenue'], 0) }}
+                                            {{ format_currency($row['revenue']) }}
                                         </span>
                                     </div>
                                 </div>

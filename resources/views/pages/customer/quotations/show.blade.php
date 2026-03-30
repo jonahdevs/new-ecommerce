@@ -43,6 +43,18 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
         return $this->quote->isExpired() || ($this->quote->isSent() && $this->quote->expires_at?->isPast());
     }
 
+    /**
+     * Check if prices should be shown.
+     * For product quotes (PENDING status), we don't show prices since
+     * the customer is asking for pricing. Prices are only shown after
+     * the quote has been sent (priced by admin).
+     */
+    #[Computed]
+    public function showPrices(): bool
+    {
+        return $this->quote->isSent() || $this->quote->isAccepted();
+    }
+
     // =========================================================================
     //  ACCEPT QUOTE
     // =========================================================================
@@ -102,7 +114,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
     <flux:card class="rounded-md p-0">
 
         {{-- Header --}}
-        <div class="flex items-center gap-3 px-3 py-2 border-b">
+        <div class="flex items-center gap-3 px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
             <flux:button size="xs" icon="arrow-long-left" variant="ghost" class="cursor-pointer"
                 :href="route('customer.quotations.index')" wire:navigate />
 
@@ -237,11 +249,16 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                                     <flux:text size="sm" class="text-zinc-400">SKU: {{ $item->productSku() }}</flux:text>
                                 @endif
                                 <flux:text size="sm" class="text-zinc-500 mt-1">
-                                    {{ $item->quantity }} × {{ format_currency($item->effective_price) }}
+                                    Qty: {{ $item->quantity }}
                                 </flux:text>
-                                <flux:text size="sm" class="font-semibold mt-1">
-                                    {{ format_currency($item->effective_price * $item->quantity) }}
-                                </flux:text>
+                                @if ($this->showPrices)
+                                    <flux:text size="sm" class="text-zinc-500">
+                                        {{ $item->quantity }} × {{ format_currency($item->effective_price) }}
+                                    </flux:text>
+                                    <flux:text size="sm" class="font-semibold mt-1">
+                                        {{ format_currency($item->effective_price * $item->quantity) }}
+                                    </flux:text>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -250,44 +267,53 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
 
             {{-- ============================================================ --}}
-            {{-- TOTALS                                                         --}}
+            {{-- TOTALS (only shown when prices are available)                  --}}
             {{-- ============================================================ --}}
-            <div class="mt-6 space-y-1.5 max-w-xs ml-auto">
-                <div class="flex justify-between text-sm">
-                    <flux:text>Subtotal</flux:text>
-                    <span>{{ format_currency($quote->subtotal) }}</span>
-                </div>
-
-                @if ($quote->discount > 0)
-                    <div class="flex justify-between text-sm text-green-600">
-                        <span>Discount</span>
-                        <span>− {{ format_currency($quote->discount) }}</span>
+            @if ($this->showPrices)
+                <div class="mt-6 space-y-1.5 max-w-xs ml-auto">
+                    <div class="flex justify-between text-sm">
+                        <flux:text>Subtotal</flux:text>
+                        <span>{{ format_currency($quote->subtotal) }}</span>
                     </div>
-                @endif
 
-                <div class="flex justify-between text-sm">
-                    <flux:text>Delivery</flux:text>
-                    <span>
-                        @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
-                            <span class="text-amber-500">TBD</span>
-                        @elseif ($quote->shipping_cents === 0)
-                            <span class="text-green-600">Free</span>
-                        @else
-                            {{ format_currency($quote->shipping) }}
-                        @endif
-                    </span>
-                </div>
+                    @if ($quote->discount > 0)
+                        <div class="flex justify-between text-sm text-green-600">
+                            <span>Discount</span>
+                            <span>− {{ format_currency($quote->discount) }}</span>
+                        </div>
+                    @endif
 
-                <div class="flex justify-between font-semibold border-t pt-2">
-                    <span>Total</span>
-                    <div class="text-right">
-                        <span>{{ format_currency($quote->total) }}</span>
-                        @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
-                            <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
-                        @endif
+                    <div class="flex justify-between text-sm">
+                        <flux:text>Delivery</flux:text>
+                        <span>
+                            @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
+                                <span class="text-amber-500">TBD</span>
+                            @elseif ($quote->shipping_cents === 0)
+                                <span class="text-green-600">Free</span>
+                            @else
+                                {{ format_currency($quote->shipping) }}
+                            @endif
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between font-semibold border-t pt-2">
+                        <span>Total</span>
+                        <div class="text-right">
+                            <span>{{ format_currency($quote->total) }}</span>
+                            @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
+                                <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
-            </div>
+            @else
+                <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <flux:text class="text-sm text-amber-700">
+                        <flux:icon name="clock" class="size-4 inline mr-1" />
+                        Pricing is being prepared by our team. You'll be notified once your quotation is ready.
+                    </flux:text>
+                </div>
+            @endif
 
             <flux:separator class="my-8" />
 
@@ -336,6 +362,14 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 $isTerminal = $isCancelled || $isRejected || $isExpiredS;
                 $histories = $quote->statusHistories->keyBy('to_status');
 
+                // Find the current active step (last reached step)
+                $currentStepIndex = -1;
+                foreach ($mainPath as $idx => $step) {
+                    if ($histories->has($step->value)) {
+                        $currentStepIndex = $idx;
+                    }
+                }
+
                 $stepLabels = [
                     'pending' => ['label' => 'Quote Requested', 'desc' => 'Your quote request was submitted.'],
                     'sent' => ['label' => 'Quote Ready', 'desc' => 'Sheffield Africa has priced your request.'],
@@ -348,6 +382,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     @php
                         $history = $histories->get($step->value);
                         $reached = (bool) $history;
+                        $isActive = $index === $currentStepIndex && !$isTerminal;
                         $isLast = $index === count($mainPath) - 1;
                         $next = $mainPath[$index + 1] ?? null;
                         $nextReached = $next && $histories->has($next->value);
@@ -357,25 +392,33 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
                     <div class="relative flex gap-5 {{ $isLast ? 'pb-0' : 'pb-8' }}">
                         @if (!$isLast)
-                            <div class="absolute left-4 top-8 bottom-0 w-0.5 z-0
-                                {{ $nextReached ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700' }}">
-                            </div>
+                            <div @class([
+                                'absolute left-4 top-8 bottom-0 w-0.5 z-0',
+                                'bg-green-500' => $nextReached,
+                                'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
+                            ])></div>
                         @endif
 
-                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors
-                            {{ $reached
-                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                : ($dimmed
-                                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300'
-                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400') }}">
+                        <div @class([
+                            'relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                            'bg-green-500 text-white ring-4 ring-green-100 dark:ring-green-900' => $isActive,
+                            'bg-green-500 text-white' => $reached && !$isActive,
+                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600' => $dimmed,
+                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' => !$reached && !$dimmed,
+                        ])>
                             <flux:icon name="{{ $step->icon() }}" class="size-4" />
                         </div>
 
                         <div class="flex-1 pt-1">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
-                                    <flux:text class="text-sm font-semibold
-                                        {{ $reached ? 'text-zinc-900 dark:text-white' : ($dimmed ? 'text-zinc-300' : 'text-zinc-400') }}">
+                                    <flux:text @class([
+                                        'text-sm',
+                                        'font-semibold text-green-600 dark:text-green-400' => $isActive,
+                                        'font-semibold text-zinc-900 dark:text-white' => $reached && !$isActive,
+                                        'text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                        'text-zinc-400' => !$reached && !$dimmed,
+                                    ])>
                                         {{ $meta['label'] }}
                                     </flux:text>
                                     <flux:text class="text-xs mt-0.5

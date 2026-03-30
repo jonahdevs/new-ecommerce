@@ -225,6 +225,9 @@
         <flux:spacer />
 
         <div class="flex items-center gap-3">
+            {{-- Notifications --}}
+            <livewire:admin-notifications-dropdown />
+
             <flux:dropdown x-data align="end" hover>
                 <flux:button variant="subtle" square class="group" aria-label="Preferred color scheme">
                     <flux:icon.sun x-show="$flux.appearance === 'light'" variant="mini"

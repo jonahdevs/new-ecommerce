@@ -1396,19 +1396,53 @@ abstract class BaseProductComponent extends Component
     }
 
     /**
-     * All active products except the current one, for use in
-     * upsell/cross-sell/accessory/grouped selectors.
-     * Not persisted — product list can change during the session.
+     * Only loads already-selected products for initial display.
+     * Search is handled via searchProducts() method for AJAX.
      */
     #[Computed]
     public function products()
+    {
+        $selectedIds = collect([
+            ...$this->form->selected_upsells,
+            ...$this->form->selected_cross_sells,
+            ...collect($this->accessories)->pluck('id'),
+            ...collect($this->groupedProducts)->pluck('id'),
+        ])->filter()->unique()->values()->toArray();
+
+        if (empty($selectedIds)) {
+            return collect();
+        }
+
+        return Product::active()
+            ->select('id', 'name', 'sku', 'image_path')
+            ->whereIn('id', $selectedIds)
+            ->orderBy('name')
+            ->get()
+            ->map(fn($product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'image_url' => $product->image_url,
+            ]);
+    }
+
+    /**
+     * AJAX search for products - used by x-my-choices component.
+     * Returns max 20 results to keep response fast.
+     */
+    public function searchProducts(string $search = '')
     {
         $currentId = $this->form->getProductId();
 
         return Product::active()
             ->select('id', 'name', 'sku', 'image_path')
             ->when($currentId, fn($q) => $q->where('id', '!=', $currentId))
+            ->when($search, fn($q) => $q->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%");
+            }))
             ->orderBy('name')
+            ->limit(20)
             ->get()
             ->map(fn($product) => [
                 'id' => $product->id,

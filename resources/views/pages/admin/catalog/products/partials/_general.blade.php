@@ -5,16 +5,16 @@
 
         <div class="grid grid-cols-2 gap-5">
             {{-- Regular Price --}}
-            <flux:input label="Regular Price (KES)" type="number" step="0.01" min="0" wire:model="form.price"
+            <flux:input label="Regular Price ({{ get_currency_symbol() }})" type="number" step="0.01" min="0" wire:model="form.price"
                 placeholder="0.00" />
 
             {{-- Sale Price --}}
-            <flux:input label="Sale Price (KES)" type="number" step="0.01" min="0"
+            <flux:input label="Sale Price ({{ get_currency_symbol() }})" type="number" step="0.01" min="0"
                 wire:model="form.sale_price" placeholder="0.00" />
         </div>
 
         {{-- Cost Price --}}
-        <flux:input label="Cost Price (KES)" type="number" step="0.01" min="0" wire:model="form.cost_price"
+        <flux:input label="Cost Price ({{ get_currency_symbol() }})" type="number" step="0.01" min="0" wire:model="form.cost_price"
             placeholder="0.00" />
     </div>
 

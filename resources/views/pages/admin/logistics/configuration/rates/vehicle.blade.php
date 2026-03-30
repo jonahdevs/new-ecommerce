@@ -207,7 +207,7 @@ new #[Title('Vehicle Rates')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <span class="font-medium">KES {{ number_format($rate->base_rate, 0) }}</span>
+                                <span class="font-medium">{{ format_currency($rate->base_rate) }}</span>
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -215,7 +215,7 @@ new #[Title('Vehicle Rates')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <span class="text-sm">KES {{ number_format($rate->extra_km_rate, 0) }}/km</span>
+                                <span class="text-sm">{{ format_currency($rate->extra_km_rate) }}/km</span>
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -294,7 +294,7 @@ new #[Title('Vehicle Rates')] class extends Component {
             </div>
 
             <div class="grid grid-cols-3 gap-4">
-                <flux:input wire:model="form.base_rate" label="Base Rate (KES)" type="number" min="0"
+                <flux:input wire:model="form.base_rate" label="Base Rate ({{ get_currency_symbol() }})" type="number" min="0"
                     step="0.01" placeholder="8500" />
                 <flux:input wire:model="form.base_km" label="Included KM" type="number" min="1"
                     placeholder="50" />

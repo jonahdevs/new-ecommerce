@@ -69,42 +69,23 @@ class SyncOrderToSapJob implements ShouldQueue
             'sap_sync_status' => SapSyncStatus::SYNCING,
         ]);
 
-        // Step 1 — Sales Order
-        $orderResult = $sap->syncOrder($this->order);
+        // Single API call — the middleware handles Sales Order,
+        // A/R Invoice and Incoming Payment creation internally.
+        $result = $sap->syncOrder($this->order);
 
         $this->order->update([
-            'sap_order_number' => $orderResult->documentNumber,
+            'sap_order_number'   => $result->documentEntry ?: $result->documentNumber,
+            'sap_invoice_number' => $result->documentNumber,
+            'sap_sync_status'    => SapSyncStatus::SYNCED,
+            'sap_synced_at'      => now(),
+            'sap_sync_attempts'  => $this->attempts(),
+            'sap_sync_error'     => null,
         ]);
 
-        // Step 2 — A/R Invoice
-        $invoiceResult = $sap->createInvoice($this->order, $orderResult->documentNumber);
-
-        $this->order->update([
-            'sap_invoice_number' => $invoiceResult->documentNumber,
-        ]);
-
-        // Step 3 — Incoming Payment
-        $paymentResult = $sap->createIncomingPayment($this->order, $invoiceResult->documentNumber);
-
-        $this->order->update([
-            'sap_payment_number'  => $paymentResult->documentNumber,
-            'sap_sync_status'     => SapSyncStatus::CU_PENDING,
-            'sap_synced_at'       => now(),
-            'sap_sync_attempts'   => $this->attempts(),
-            'sap_sync_error'      => null,
-        ]);
-
-        Log::info('SAP sync completed — awaiting KRA validation', [
+        Log::info('SAP sync completed', [
             'order_id'           => $this->order->id,
-            'sap_order_number'   => $orderResult->documentNumber,
-            'sap_invoice_number' => $invoiceResult->documentNumber,
-            'sap_payment_number' => $paymentResult->documentNumber,
+            'sap_document'       => $result->documentNumber,
         ]);
-
-        // Dispatch the polling fallback in case the webhook never arrives.
-        // It will check every 5 minutes for up to 10 attempts before giving up.
-        PollSapCuNumberJob::dispatch($this->order)
-            ->delay(now()->addMinutes(10));
     }
 
     // -------------------------------------------------------

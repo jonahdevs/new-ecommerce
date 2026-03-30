@@ -440,7 +440,7 @@
     <flux:modal name="bulk-pricing" class="max-w-lg space-y-5">
         <flux:heading>{{ $form->name }} Says</flux:heading>
         <flux:text>Add price to all variations that don't have a price</flux:text>
-        <flux:input wire:model.defer="bulkPrice" label="Regular Price (KES)" type="number" step="0.01"
+        <flux:input wire:model.defer="bulkPrice" label="Regular Price ({{ get_currency_symbol() }})" type="number" step="0.01"
             placeholder="Leave blank to skip" />
 
         <div class="flex gap-3 justify-end">

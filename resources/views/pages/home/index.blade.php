@@ -37,6 +37,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
             ])
             ->active()
+            ->visibleInCatalog()
             ->newArrivals()
             ->latest()
             ->limit(20)
@@ -61,6 +62,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
             ])
             ->active()
+            ->visibleInCatalog()
             ->orderBy('sales_count', 'desc')
             ->limit(24)
             ->get();

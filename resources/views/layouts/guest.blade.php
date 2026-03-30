@@ -60,7 +60,7 @@
                             <div class="swiper-slide flex items-center justify-center">
                                 <a href="#"
                                     class="text-center text-xs sm:text-sm hover:opacity-90 transition-opacity">
-                                    Free Shipping on Orders Over KES 10,000 <span class="underline font-medium">Learn
+                                    Free Shipping on Orders Over {{ get_currency_symbol() }} 10,000 <span class="underline font-medium">Learn
                                         More</span>
                                 </a>
                             </div>

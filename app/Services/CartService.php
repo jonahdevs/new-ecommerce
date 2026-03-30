@@ -322,9 +322,19 @@ class CartService
             return $carry;
         }, 0);
 
+        // Calculate tax for cart display
+        $taxService = app(TaxService::class);
+        $taxableAmount = (int) round(($subtotal - $discount) * 100);
+        $taxCents = $taxService->calculateTax($taxableAmount);
+
         return [
-            'subtotal' => $subtotal,
-            'discount' => $discount,
+            'subtotal'      => $subtotal,
+            'discount'      => $discount,
+            'tax'           => $taxCents / 100,
+            'tax_name'      => $taxService->name(),
+            'tax_rate'      => $taxService->rateLabel(),
+            'tax_enabled'   => $taxService->isEnabled(),
+            'tax_inclusive' => $taxService->isInclusive(),
         ];
     }
 
