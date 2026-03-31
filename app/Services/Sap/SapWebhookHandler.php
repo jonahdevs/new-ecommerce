@@ -46,16 +46,20 @@ class SapWebhookHandler
 
     public function validateSignature(Request $request): bool
     {
-        $signature = $request->header('X-SAP-Signature');
+        $secret = config('sap.webhook_secret');
 
-        if (!$signature) {
+        // If no secret configured, skip validation (not recommended for production)
+        if (empty($secret)) {
+            return true;
+        }
+
+        $providedSecret = $request->header('X-SAP-Secret');
+
+        if (!$providedSecret) {
             return false;
         }
 
-        $secret = config('sap.webhook_secret');
-        $expected = hash_hmac('sha256', $request->getContent(), $secret);
-
-        return hash_equals($expected, $signature);
+        return hash_equals($secret, $providedSecret);
     }
 
     // ================================================================
