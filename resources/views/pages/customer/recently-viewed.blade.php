@@ -3,8 +3,14 @@
 use App\Services\ProductService;
 use Livewire\Attributes\{Layout, Computed};
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.customer')] class extends Component {
+    public function mount(): void
+    {
+        SEOMeta::setRobots('noindex,nofollow');
+    }
+
     #[Computed]
     public function products()
     {

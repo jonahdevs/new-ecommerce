@@ -25,7 +25,8 @@ class CheckoutService
         private readonly InventoryService $inventoryService,
         private readonly TaxService $taxService,
         private readonly LocalizationSettings $localization,
-    ) {}
+    ) {
+    }
 
     // =====================================================
     // Initiate checkout — single path, cart orders only
@@ -79,7 +80,7 @@ class CheckoutService
 
         if ($existingOrder) {
             Log::info('Resuming existing failed order', [
-                'order_id'  => $existingOrder->id,
+                'order_id' => $existingOrder->id,
                 'reference' => $existingOrder->reference,
             ]);
 
@@ -90,9 +91,9 @@ class CheckoutService
             ?? $user->addresses()->where('is_default', true)->value('id')
             ?? $user->addresses()->oldest()->value('id');
 
-        $address      = Address::with(['county', 'area', 'shippingZone'])->findOrFail($addressId);
-        $cartItems    = $cart->items()->with('product.brand')->get();
-        $cartSummary  = $this->cartService->summary($cart);
+        $address = Address::with(['county', 'area', 'shippingZone'])->findOrFail($addressId);
+        $cartItems = $cart->items()->with('product.brand')->get();
+        $cartSummary = $this->cartService->summary($cart);
         $shippingData = $this->checkoutSession->getShipping();
 
         $subtotalCents = (int) round($cartSummary['subtotal'] * 100);
@@ -112,56 +113,45 @@ class CheckoutService
         // -------------------------------------------------------
         // DB transaction — Order + OrderItems + Payment
         // -------------------------------------------------------
-        $order = DB::transaction(function () use (
-            $user,
-            $cart,
-            $cartItems,
-            $address,
-            $subtotalCents,
-            $discountCents,
-            $shippingCents,
-            $taxCents,
-            $totalCents,
-            $shippingData
-        ) {
+        $order = DB::transaction(function () use ($user, $cart, $cartItems, $address, $subtotalCents, $discountCents, $shippingCents, $taxCents, $totalCents, $shippingData) {
             $order = Order::create([
-                'user_id'          => $user->id,
-                'reference'        => Order::generateReference(),
-                'status'           => OrderStatus::PENDING,
-                'payment_status'   => EnumsPaymentStatus::PENDING,
-                'currency'         => $this->localization->currency,
-                'subtotal_cents'   => $subtotalCents,
-                'discount_cents'   => $discountCents,
-                'shipping_cents'   => $shippingCents,
-                'tax_cents'        => $taxCents,
-                'total_cents'      => $totalCents,
+                'user_id' => $user->id,
+                'reference' => Order::generateReference(),
+                'status' => OrderStatus::PENDING,
+                'payment_status' => EnumsPaymentStatus::PENDING,
+                'currency' => $this->localization->currency,
+                'subtotal_cents' => $subtotalCents,
+                'discount_cents' => $discountCents,
+                'shipping_cents' => $shippingCents,
+                'tax_cents' => $taxCents,
+                'total_cents' => $totalCents,
                 'shipping_address' => $this->snapshotAddress($address),
-                'billing_address'  => $this->snapshotAddress($address),
+                'billing_address' => $this->snapshotAddress($address),
                 'shipping_snapshot' => [
-                    'method_id'       => $shippingData['method_id'],
-                    'method_name'     => $shippingData['method_name'],
-                    'method_code'     => $shippingData['method_code'],
-                    'method_type'     => $shippingData['method_type'],
-                    'zone_id'         => $shippingData['zone_id'],
-                    'rate_id'         => $shippingData['rate_id'],
-                    'station_id'      => $shippingData['station_id'],
-                    'station_name'    => $shippingData['station_name'],
-                    'cost'            => $shippingData['cost'],
-                    'cost_breakdown'  => $shippingData['cost_breakdown'],
+                    'method_id' => $shippingData['method_id'],
+                    'method_name' => $shippingData['method_name'],
+                    'method_code' => $shippingData['method_code'],
+                    'method_type' => $shippingData['method_type'],
+                    'zone_id' => $shippingData['zone_id'],
+                    'rate_id' => $shippingData['rate_id'],
+                    'station_id' => $shippingData['station_id'],
+                    'station_name' => $shippingData['station_name'],
+                    'cost' => $shippingData['cost'],
+                    'cost_breakdown' => $shippingData['cost_breakdown'],
                     'delivery_window' => $shippingData['delivery_window'],
-                    'weight_kg'       => $this->cartService->getWeight($cart),
+                    'weight_kg' => $this->cartService->getWeight($cart),
                 ],
-                'sap_sync_status'   => SapSyncStatus::PENDING,
+                'sap_sync_status' => SapSyncStatus::PENDING,
                 'sap_sync_attempts' => 0,
-                'expires_at'        => now()->addMinutes(30),
+                'expires_at' => now()->addMinutes(30),
             ]);
 
             $order->statusHistories()->create([
-                'from_status'        => null,
-                'to_status'          => OrderStatus::PENDING->value,
+                'from_status' => null,
+                'to_status' => OrderStatus::PENDING->value,
                 'changed_by_user_id' => auth()->id(),
-                'changed_by_type'    => 'user',
-                'notes'              => 'Order placed by customer.',
+                'changed_by_type' => 'user',
+                'notes' => 'Order placed by customer.',
             ]);
 
             foreach ($cartItems as $item) {
@@ -172,27 +162,27 @@ class CheckoutService
                 $unitTaxCents = $this->taxService->calculateTax($unitPriceCents);
 
                 $order->items()->create([
-                    'product_id'         => $item->product_id,
+                    'product_id' => $item->product_id,
                     'product_variant_id' => $item->variant_id,
-                    'quantity'           => $item->quantity,
-                    'unit_price_cents'   => $unitPriceCents,
-                    'unit_tax_cents'     => $unitTaxCents,
-                    'discount_cents'     => (int) round(
+                    'quantity' => $item->quantity,
+                    'unit_price_cents' => $unitPriceCents,
+                    'unit_tax_cents' => $unitTaxCents,
+                    'discount_cents' => (int) round(
                         ($originalPrice - $unitPrice) * 100 * $item->quantity
                     ),
-                    'total_cents'        => (int) round($unitPrice * 100 * $item->quantity),
-                    'product_snapshot'   => [
-                        'id'          => $item->product->id,
-                        'name'        => $item->product->name,
-                        'sku'         => $item->variant?->sku ?? $item->product->sku,
-                        'slug'        => $item->product->slug,
-                        'image_path'  => $item->product->image_path,
-                        'price'       => $originalPrice,
-                        'sale_price'  => $item->variant?->sale_price ?? $item->product->sale_price,
+                    'total_cents' => (int) round($unitPrice * 100 * $item->quantity),
+                    'product_snapshot' => [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                        'sku' => $item->variant?->sku ?? $item->product->sku,
+                        'slug' => $item->product->slug,
+                        'image_path' => $item->product->image_path,
+                        'price' => $originalPrice,
+                        'sale_price' => $item->variant?->sale_price ?? $item->product->sale_price,
                         'final_price' => $unitPrice,
-                        'weight_kg'   => $item->product->weight ?? 0.5,
-                        'brand'       => $item->product->brand?->name,
-                        'variant'     => $item->variant ? [
+                        'weight_kg' => $item->product->weight ?? 0.5,
+                        'brand' => $item->product->brand?->name,
+                        'variant' => $item->variant ? [
                             'id' => $item->variant->id,
                             'sku' => $item->variant->sku,
                             'attributes' => $item->variant->attributeValues?->mapWithKeys(
@@ -207,13 +197,13 @@ class CheckoutService
             // Stock is deducted for real only after payment is confirmed by the gateway webhook.
 
             Payment::create([
-                'order_id'     => $order->id,
+                'order_id' => $order->id,
                 'amount_cents' => $totalCents,
-                'currency'     => $this->localization->currency,
-                'status'       => EnumsPaymentStatus::PENDING,
-                'gateway'      => $this->paymentService->activeGateway(),
-                'expires_at'   => now()->addMinutes(30),
-                'meta'         => [
+                'currency' => $this->localization->currency,
+                'status' => EnumsPaymentStatus::PENDING,
+                'gateway' => $this->paymentService->activeGateway(),
+                'expires_at' => now()->addMinutes(30),
+                'meta' => [
                     'payment_method' => $this->checkoutSession->getPaymentMethod(),
                 ],
             ]);
@@ -225,12 +215,18 @@ class CheckoutService
         try {
             $this->inventoryService->reserveStock($order);
         } catch (\Exception $e) {
+            Log::error('Stock reservation failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             $order->transitionTo(
                 OrderStatus::CANCELLED,
-                notes: 'Stock reservation failed: ' . $e->getMessage(),
+                notes: "Stock reservation failed: {$e->getMessage()}",
                 changedByType: 'system',
             );
-            throw new \RuntimeException('Unable to reserve stock. Please try again.');
+            throw new \RuntimeException("Unable to reserve stock: {$e->getMessage()}");
         }
 
         // -------------------------------------------------------
@@ -258,7 +254,7 @@ class CheckoutService
 
                 Log::error('Payment initiation failed after order created', [
                     'order_id' => $order->id,
-                    'message'  => $response->message,
+                    'message' => $response->message,
                 ]);
             }
 
@@ -266,7 +262,7 @@ class CheckoutService
         } catch (\Throwable $e) {
             Log::error('Payment gateway threw exception', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return PaymentResponse::failed($e->getMessage());
@@ -276,14 +272,14 @@ class CheckoutService
     private function snapshotAddress(Address $address): array
     {
         return [
-            'first_name'   => $address->first_name,
-            'last_name'    => $address->last_name,
-            'full_name'    => $address->full_name,
+            'first_name' => $address->first_name,
+            'last_name' => $address->last_name,
+            'full_name' => $address->full_name,
             'phone_number' => $address->phone_number,
-            'address'      => $address->address,
-            'area'         => $address->area?->name,
-            'county'       => $address->county?->name,
-            'zone'         => $address->shippingZone?->name,
+            'address' => $address->address,
+            'area' => $address->area?->name,
+            'county' => $address->county?->name,
+            'zone' => $address->shippingZone?->name,
         ];
     }
 }

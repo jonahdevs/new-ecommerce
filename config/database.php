@@ -61,6 +61,17 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+            'dump' => [
+                'dump_binary_path' => env('MYSQLDUMP_PATH', 'mysqldump'),
+                'use_single_transaction' => true,
+                'timeout' => 60 * 5, // 5 minute timeout
+                'exclude_tables' => [
+                    // Add tables to exclude from backup if needed
+                    // 'sessions',
+                    // 'cache',
+                ],
+                'add_extra_option' => '--single-transaction --routines --triggers',
+            ],
         ],
 
         'mariadb' => [
@@ -148,7 +159,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
+            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')) . '-database-'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 

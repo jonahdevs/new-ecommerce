@@ -132,12 +132,7 @@ new #[Title('Order Details')] class extends Component {
 
         <div class="flex items-center gap-3">
             @if ($order->hasKraReceipt())
-                <flux:button variant="outline" icon="printer" size="sm" 
-                    :href="route('customer.orders.receipt', $order)" target="_blank">
-                    Print KRA Receipt
-                </flux:button>
-            @elseif ($order->invoice_path)
-                <flux:button variant="outline" icon="printer" size="sm" 
+                <flux:button variant="outline" icon="printer" size="sm"
                     :href="route('customer.orders.receipt', $order)" target="_blank">
                     Print Invoice
                 </flux:button>
@@ -164,8 +159,7 @@ new #[Title('Order Details')] class extends Component {
             <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
             <flux:text class="text-sm text-blue-800">
                 This order was converted from quotation
-                <flux:link :href="route('admin.quotations.show', $order->quote)" wire:navigate
-                    class="font-medium">
+                <flux:link :href="route('admin.quotations.show', $order->quote)" wire:navigate class="font-medium">
                     {{ $order->quote->reference }}
                 </flux:link>
             </flux:text>
@@ -326,7 +320,7 @@ new #[Title('Order Details')] class extends Component {
 
                         // Histories keyed by to_status for quick lookup
                         $histories = $order->statusHistories->keyBy('to_status');
-                        
+
                         // Find the current active step (last reached step)
                         $currentStepIndex = -1;
                         foreach ($mainPath as $idx => $step) {

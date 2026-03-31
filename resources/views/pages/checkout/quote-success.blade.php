@@ -3,6 +3,7 @@
 use App\Models\Order;
 use Livewire\Attributes\{Layout, Locked};
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.guest')] class extends Component {
     #[Locked]
@@ -10,6 +11,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function mount(string $reference): void
     {
+        SEOMeta::setRobots('noindex,nofollow');
+
         // Ensure the order belongs to the authenticated user
         $order = Order::where('reference', $reference)
             ->where('user_id', auth()->id())

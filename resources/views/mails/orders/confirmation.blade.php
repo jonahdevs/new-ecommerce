@@ -379,21 +379,21 @@
 
                 @foreach ($order->items as $item)
                     <div class="item">
-                        @if ($item->product?->image_path)
+                        @if ($item->getProductImagePath())
                             <img class="item-image"
-                                src="{{ $item->product->image_url ?? asset($item->product->image_path) }}"
-                                alt="{{ $item->name }}" />
+                                src="{{ $item->product_image_url ?? asset('storage/' . $item->getProductImagePath()) }}"
+                                alt="{{ $item->getProductName() }}" />
                         @else
                             <div class="item-image-placeholder"></div>
                         @endif
 
                         <div style="flex: 1; min-width: 0;">
-                            <p class="item-name">{{ $item->name }}</p>
+                            <p class="item-name">{{ $item->getProductName() }}</p>
                             <p class="item-meta">
                                 Qty: {{ $item->quantity }}
                                 · {{ format_currency($item->unit_price_cents / 100) }} each
-                                @if ($item->sku)
-                                    · SKU: {{ $item->sku }}
+                                @if ($item->getProductSku())
+                                    · SKU: {{ $item->getProductSku() }}
                                 @endif
                             </p>
                         </div>

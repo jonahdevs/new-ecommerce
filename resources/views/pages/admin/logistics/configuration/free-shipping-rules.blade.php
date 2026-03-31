@@ -39,7 +39,7 @@ new #[Title('Free Shipping Rules')] class extends Component {
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->orderByRaw("FIELD(status, 'active', 'scheduled', 'inactive', 'expired')")
             ->orderBy('starts_at', 'desc')
-            ->paginate(15);
+            ->paginate(10);
     }
 
     #[Computed]
@@ -121,28 +121,19 @@ new #[Title('Free Shipping Rules')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Free Shipping Rules</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Free Shipping Rules"
+    subheading="Promotional thresholds that waive shipping at checkout. Scope by zone and method, and schedule with start and end dates.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Free Shipping Rules</flux:heading>
-            <flux:subheading>Promotional thresholds that waive shipping at checkout. Scope by zone and method, and
-                schedule with start and end dates.</flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Rule
         </flux:button>
     </div>
 
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b">
+        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by rule name..."
                 icon="magnifying-glass" clearable class="max-w-md" />
 
@@ -274,8 +265,8 @@ new #[Title('Free Shipping Rules')] class extends Component {
             <flux:input wire:model="form.name" label="Rule Name" placeholder="e.g. Christmas Promo 2025" />
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.min_order_amount" label="Min Order Amount ({{ get_currency_symbol() }})" type="number"
-                    min="0" step="0.01" placeholder="e.g. 5000" />
+                <flux:input wire:model="form.min_order_amount" label="Min Order Amount ({{ get_currency_symbol() }})"
+                    type="number" min="0" step="0.01" placeholder="e.g. 5000" />
                 <flux:input wire:model="form.max_weight" label="Max Weight (Kg, Optional)" type="number" min="0"
                     step="0.01" placeholder="No weight ceiling" />
             </div>
@@ -333,11 +324,12 @@ new #[Title('Free Shipping Rules')] class extends Component {
             <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
         </div>
     </flux:modal>
-</div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

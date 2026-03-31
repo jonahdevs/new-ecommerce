@@ -156,9 +156,17 @@ Route::middleware(['auth', 'staff', 'verified'])
         Route::livewire('notifications', 'pages::admin.notifications.index')->name('notifications');
 
         // --------------------------------------------------------------------
+        // System
+        // --------------------------------------------------------------------
+    
+        Route::prefix('activity-logs')->name('activity-logs.')->group(function () {
+            Route::livewire('/', 'pages::admin.activity-logs.index')->name('index');
+        });
+
+        // --------------------------------------------------------------------
         // Sales
         // --------------------------------------------------------------------
-
+    
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::livewire('/', 'pages::admin.sales.orders.index')->name('index');
             Route::livewire('/{order}', 'pages::admin.sales.orders.show')->name('show');
@@ -178,7 +186,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Catalog
         // --------------------------------------------------------------------
-
+    
         Route::prefix('catalog')->name('catalog.')->group(function () {
 
             Route::prefix('categories')->name('categories.')->group(function () {
@@ -214,7 +222,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Logistics
         // --------------------------------------------------------------------
-
+    
         Route::prefix('logistics')->name('logistics.')->group(function () {
             Route::livewire('/overview', 'pages::admin.logistics.dashboard')->name('overview');
 
@@ -247,7 +255,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Engagement
         // --------------------------------------------------------------------
-
+    
         Route::prefix('customers')->name('customers.')->group(function () {
             Route::livewire('/', 'pages::admin.engagement.customers.index')->name('index');
             Route::livewire('/create', 'pages::admin.engagement.customers.create')->name('create');
@@ -263,7 +271,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         // --------------------------------------------------------------------
         // Access Control
         // --------------------------------------------------------------------
-
+    
         Route::prefix('access-control')->name('access-control.')->group(function () {
             Route::prefix('roles')->name('roles.')->group(function () {
                 Route::livewire('/', 'pages::admin.access-control.roles.index')->name('index');
@@ -284,10 +292,6 @@ Route::middleware(['auth', 'staff', 'verified'])
 // ============================================================================
 
 if (app()->isLocal()) {
-    Route::livewire('/test-broadcast', 'pages::broadcast-test')
-        ->middleware('auth')
-        ->name('test.broadcast');
-
     Route::get('test-error/{code}', function ($code) {
         abort($code);
     });

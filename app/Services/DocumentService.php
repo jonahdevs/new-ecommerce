@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Order;
 use App\Models\Quote;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
@@ -14,66 +13,12 @@ class DocumentService
     //  Storage disk and directory constants
     //
     //  All PDFs are stored on the local disk under storage/app/.
-    //  They are served via the OrderReceiptController using a signed URL
-    //  or a direct storage response — never publicly accessible by path.
+    //  They are served via controllers using a signed URL or a direct storage
+    //  response — never publicly accessible by path.
     // =========================================================================
 
     private const DISK = 'local';
-    private const INVOICE_DIR = 'invoices';
     private const QUOTATION_DIR = 'quotations';
-
-    // =========================================================================
-    //  GENERATE TAX INVOICE
-    //
-    //  Called when an order's payment is confirmed (payment webhook fires).
-    //  Generates a tax invoice PDF, stores it to storage/app/invoices/,
-    //  and updates order.invoice_path.
-    //
-    //  Returns the storage path on success, null on failure.
-    //  Failure is logged but never throws — a PDF generation failure must
-    //  never block the payment confirmation flow.
-    //
-    //  Wiring — add to your payment webhook handlers after payment confirmed:
-    //    app(DocumentService::class)->generateInvoice($order);
-    //
-    //  Or listen on the OrderStatusUpdated / PaymentConfirmed event if you have one.
-    // =========================================================================
-
-    public function generateInvoice(Order $order): ?string
-    {
-        try {
-            $pdf = Pdf::loadView('pdf.invoice', ['order' => $order->load(['items', 'payment', 'user'])])
-                ->setPaper('a4', 'portrait')
-                ->setOption('dpi', 150)
-                ->setOption('isHtml5ParserEnabled', true)
-                ->setOption('isRemoteEnabled', false); // local images only
-
-            $filename = "{$order->reference}.pdf";
-            $path = self::INVOICE_DIR . '/' . $filename;
-
-            Storage::disk(self::DISK)->put($path, $pdf->output());
-
-            // Store the path on the order so download buttons can serve it
-            $order->update(['invoice_path' => $path]);
-
-            Log::info('Tax invoice generated.', [
-                'order_id' => $order->id,
-                'reference' => $order->reference,
-                'path' => $path,
-            ]);
-
-            return $path;
-
-        } catch (\Throwable $e) {
-            Log::error('Failed to generate tax invoice.', [
-                'order_id' => $order->id,
-                'reference' => $order->reference,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-    }
 
     // =========================================================================
     //  GENERATE QUOTATION PDF
@@ -129,7 +74,7 @@ class DocumentService
     //  Used in controllers and Livewire components to serve the file.
     //
     //  Usage:
-    //    return app(DocumentService::class)->serve($order->invoice_path, 'Invoice');
+    //    return app(DocumentService::class)->serve($quote->document_path, 'Quotation');
     //
     //  Returns null if the file doesn't exist — caller should handle gracefully.
     // =========================================================================
@@ -169,7 +114,7 @@ class DocumentService
 
         return Storage::disk(self::DISK)->response($path, "{$label}-{$filename}", [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $label . '-' . $filename . '"',
+            'Content-Disposition' => "inline; filename=\"{$label}-{$filename}\"",
         ]);
     }
 

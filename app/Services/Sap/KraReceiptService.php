@@ -4,30 +4,25 @@ namespace App\Services\Sap;
 
 use App\Models\Order;
 use App\Notifications\KraReceiptNotification;
-use App\Services\TaxService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class KraReceiptService
 {
-    public function __construct(
-        private readonly TaxService $taxService,
-    ) {}
+    private const DISK = 'local';
+    private const INVOICE_DIR = 'invoices';
 
-class KraReceiptService
-{
     // ================================================================
     // Public API
     // ================================================================
 
     /**
-     * Generates the KRA-compliant receipt PDF and stores it in the
-     * default filesystem disk. Updates order.kra_receipt_path on success.
+     * Generates the tax invoice PDF with KRA compliance data and stores
+     * it in storage/app/invoices/. Updates order.invoice_path on success.
      *
-     * Property 8: the generated PDF must contain CU number, KRA invoice
-     * number, order reference, line items, VAT breakdown, total, and
-     * the business PIN.
+     * This is the single legal document — only generated when KRA data
+     * (CU number, KRA invoice number, validated_at) is present.
      *
      * @return string Storage path of the generated PDF
      */
@@ -35,28 +30,30 @@ class KraReceiptService
     {
         if (!$this->canGenerate($order)) {
             throw new \LogicException(
-                "Cannot generate KRA receipt for order {$order->reference}: CU number not yet available."
+                "Cannot generate invoice for order {$order->reference}: KRA validation not yet complete."
             );
         }
 
-        $order->loadMissing('items', 'user');
+        $order->loadMissing('items.product', 'payment', 'user');
 
-        $pdf = Pdf::loadView('pdf.kra', [
-            'order'       => $order,
-            'businessPin' => config('sap.business_pin'),
-            'lineItems'   => $this->buildLineItems($order),
-            'vatBreakdown' => $this->buildVatBreakdown($order),
-        ]);
+        $pdf = Pdf::loadView('pdf.invoice', ['order' => $order])
+            ->setPaper('a4', 'portrait')
+            ->setOption('dpi', 150)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', false);
 
-        $path = "receipts/kra/{$order->reference}.pdf";
+        $filename = "{$order->reference}.pdf";
+        $path = self::INVOICE_DIR . '/' . $filename;
 
-        Storage::put($path, $pdf->output());
+        Storage::disk(self::DISK)->put($path, $pdf->output());
 
-        $order->update(['kra_receipt_path' => $path]);
+        $order->update(['invoice_path' => $path]);
 
-        Log::info('KRA receipt generated', [
+        Log::info('Tax invoice generated (KRA validated)', [
             'order_id' => $order->id,
-            'path'     => $path,
+            'reference' => $order->reference,
+            'kra_cu_number' => $order->kra_cu_number,
+            'path' => $path,
         ]);
 
         return $path;
@@ -74,7 +71,7 @@ class KraReceiptService
     }
 
     /**
-     * Emails the generated receipt PDF to the customer.
+     * Emails the generated invoice PDF to the customer.
      * Silently skips if no email address is available (guest with no email).
      */
     public function sendToCustomer(Order $order): void
@@ -82,16 +79,16 @@ class KraReceiptService
         $email = $order->customerEmail();
 
         if (!$email) {
-            Log::warning('KRA receipt: no customer email, skipping send', [
+            Log::warning('Invoice: no customer email, skipping send', [
                 'order_id' => $order->id,
             ]);
             return;
         }
 
-        if (!$order->kra_receipt_path || !Storage::exists($order->kra_receipt_path)) {
-            Log::warning('KRA receipt: PDF not found, skipping send', [
+        if (!$order->invoice_path || !Storage::disk(self::DISK)->exists($order->invoice_path)) {
+            Log::warning('Invoice: PDF not found, skipping send', [
                 'order_id' => $order->id,
-                'path'     => $order->kra_receipt_path,
+                'path' => $order->invoice_path,
             ]);
             return;
         }
@@ -99,43 +96,11 @@ class KraReceiptService
         $order->user
             ? $order->user->notify(new KraReceiptNotification($order))
             : \Illuminate\Support\Facades\Notification::route('mail', $email)
-            ->notify(new KraReceiptNotification($order));
+                ->notify(new KraReceiptNotification($order));
 
-        Log::info('KRA receipt emailed to customer', [
+        Log::info('Invoice emailed to customer', [
             'order_id' => $order->id,
-            'email'    => $email,
+            'email' => $email,
         ]);
-    }
-
-    // ================================================================
-    // Private helpers
-    // ================================================================
-
-    private function buildLineItems(Order $order): array
-    {
-        return $order->items->map(function ($item) {
-            $snapshot = $item->product_snapshot ?? [];
-            return [
-                'name'       => $snapshot['name'] ?? 'Product',
-                'sku'        => $snapshot['sku'] ?? '',
-                'quantity'   => $item->quantity,
-                'unit_price' => $item->unit_price_cents / 100,
-                'total'      => $item->total_cents / 100,
-                'tax'        => $item->unit_tax_cents / 100 * $item->quantity,
-            ];
-        })->toArray();
-    }
-
-    private function buildVatBreakdown(Order $order): array
-    {
-        $taxableAmount = $order->subtotal_cents / 100;
-        $vatAmount     = $order->tax_cents / 100;
-
-        return [
-            'taxable_amount' => $taxableAmount,
-            'vat_rate'       => $this->taxService->rateLabel(),
-            'vat_amount'     => $vatAmount,
-            'total'          => $order->total_cents / 100,
-        ];
     }
 }

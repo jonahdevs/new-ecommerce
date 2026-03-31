@@ -7,6 +7,7 @@ use App\Services\Shipping\ShippingCalculator;
 use App\Services\Shipping\ShippingOption;
 use Livewire\Attributes\{Computed, Layout, Locked};
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.checkout')] class extends Component {
     // The selected method code — bound to the radio group
@@ -20,6 +21,8 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     public function mount(): void
     {
+        SEOMeta::setRobots('noindex,nofollow');
+
         $user = auth()->user();
 
         // Guard: no address at all

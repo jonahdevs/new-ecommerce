@@ -18,7 +18,7 @@ new class extends Component {
     #[Computed]
     public function attributeValues()
     {
-        return $this->attribute->values()->orderBy('sort_order')->paginate(15);
+        return $this->attribute->values()->orderBy('sort_order')->paginate(10);
     }
 
     public function editValue(int $id): void

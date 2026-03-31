@@ -3,12 +3,14 @@
 use Livewire\Component;
 use Livewire\Attributes\{Layout, Computed};
 use App\Models\User;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.customer')] class extends Component {
     public User $user;
 
     public function mount()
     {
+        SEOMeta::setRobots('noindex,nofollow');
         $this->user = auth()->user();
     }
 
@@ -156,7 +158,8 @@ new #[Layout('layouts.customer')] class extends Component {
                         offers.
                     </flux:text>
 
-                    <flux:link href="{{ route('customer.settings.preferences') }}" wire:navigate class="text-brand-secondary hover:underline ">Edit
+                    <flux:link href="{{ route('customer.settings.preferences') }}" wire:navigate
+                        class="text-brand-secondary hover:underline ">Edit
                         newsletter
                         preference
                     </flux:link>

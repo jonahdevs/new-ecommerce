@@ -50,7 +50,7 @@ new #[Title('Areas & Towns')] class extends Component {
             ->when($this->filterCounty, fn($q) => $q->where('county_id', $this->filterCounty))
             ->when($this->filterZone, fn($q) => $q->where('shipping_zone_id', $this->filterZone))
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(10);
     }
 
     #[Computed]
@@ -126,28 +126,19 @@ new #[Title('Areas & Towns')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Areas & Towns</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Areas & Towns"
+    subheading="Towns, suburbs, and estates within each county. An area can optionally override its county's shipping zone for more granular pricing.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Areas & Towns</flux:heading>
-            <flux:subheading>Towns, suburbs, and estates within each county. An area can optionally override its
-                county's shipping zone for more granular pricing.</flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         <flux:button variant="primary" icon="plus" wire:click="openCreate" class="cursor-pointer">
             Add Area
         </flux:button>
     </div>
 
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 border-b px-5 py-3">
+        <div class="flex flex-col md:flex-row gap-4 border-b dark:border-zinc-600 px-5 py-3">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search area or county name..."
                 icon="magnifying-glass" clearable class="max-w-md" />
 
@@ -286,11 +277,12 @@ new #[Title('Areas & Towns')] class extends Component {
             </flux:button>
         </div>
     </flux:modal>
-</div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

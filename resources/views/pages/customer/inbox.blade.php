@@ -3,11 +3,17 @@
 use Livewire\Component;
 use Livewire\Attributes\{Layout, Computed, On};
 use Livewire\WithPagination;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.customer')] class extends Component {
     use WithPagination;
 
     public string $selectedTab = 'unread';
+
+    public function mount(): void
+    {
+        SEOMeta::setRobots('noindex,nofollow');
+    }
 
     #[Computed]
     public function hasNotifications(): bool
@@ -37,21 +43,21 @@ new #[Layout('layouts.customer')] class extends Component {
     {
         $notification = auth()->user()->notifications()->find($id);
         $notification?->markAsRead();
-        
+
         unset($this->unreadNotifications, $this->readNotifications, $this->unreadCount);
     }
 
     public function markAllAsRead(): void
     {
         auth()->user()->unreadNotifications->markAsRead();
-        
+
         unset($this->unreadNotifications, $this->readNotifications, $this->unreadCount);
     }
 
     public function deleteNotification(string $id): void
     {
         auth()->user()->notifications()->where('id', $id)->delete();
-        
+
         unset($this->unreadNotifications, $this->readNotifications, $this->hasNotifications);
     }
 
@@ -136,41 +142,41 @@ new #[Layout('layouts.customer')] class extends Component {
                     <flux:icon.inbox class="size-12 text-zinc-300" />
                     <flux:heading>No notifications yet</flux:heading>
                     <flux:text class="text-zinc-500 max-w-sm">
-                        When you receive order updates, quotation responses, or other important messages, they'll appear here.
+                        When you receive order updates, quotation responses, or other important messages, they'll appear
+                        here.
                     </flux:text>
                 </div>
             @else
                 {{-- Status Tabs --}}
                 <div class="border-b border-zinc-200 dark:border-zinc-600 mb-4">
                     <nav class="flex gap-1 overflow-x-auto">
-                        <button 
-                            wire:click="$set('selectedTab', 'unread')"
-                            @class([
-                                'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                                'bg-brand-secondary text-brand-secondary-content font-medium' => $selectedTab === 'unread',
-                                'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => $selectedTab !== 'unread',
-                            ])
-                        >
+                        <button wire:click="$set('selectedTab', 'unread')" @class([
+                            'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
+                            'bg-brand-secondary text-brand-secondary-content font-medium' =>
+                                $selectedTab === 'unread',
+                            'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                                $selectedTab !== 'unread',
+                        ])>
                             <flux:icon.envelope class="size-4" />
                             Unread
                             @if ($this->unreadCount > 0)
                                 <span @class([
                                     'text-xs px-1.5 py-0.5 rounded-full',
                                     'bg-white/20' => $selectedTab === 'unread',
-                                    'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300' => $selectedTab !== 'unread',
+                                    'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300' =>
+                                        $selectedTab !== 'unread',
                                 ])>
                                     {{ $this->unreadCount }}
                                 </span>
                             @endif
                         </button>
-                        <button 
-                            wire:click="$set('selectedTab', 'read')"
-                            @class([
-                                'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                                'bg-brand-secondary text-brand-secondary-content font-medium' => $selectedTab === 'read',
-                                'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => $selectedTab !== 'read',
-                            ])
-                        >
+                        <button wire:click="$set('selectedTab', 'read')" @class([
+                            'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
+                            'bg-brand-secondary text-brand-secondary-content font-medium' =>
+                                $selectedTab === 'read',
+                            'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                                $selectedTab !== 'read',
+                        ])>
                             <flux:icon.envelope-open class="size-4" />
                             Read
                         </button>
@@ -215,11 +221,13 @@ new #[Layout('layouts.customer')] class extends Component {
 
                                         <div class="flex items-center gap-2 mt-3">
                                             @if ($data['url'])
-                                                <flux:button :href="$data['url']" wire:navigate size="xs" variant="filled">
+                                                <flux:button :href="$data['url']" wire:navigate size="xs"
+                                                    variant="filled">
                                                     {{ $data['action'] }}
                                                 </flux:button>
                                             @endif
-                                            <flux:button wire:click="markAsRead('{{ $notification->id }}')" size="xs" variant="ghost">
+                                            <flux:button wire:click="markAsRead('{{ $notification->id }}')"
+                                                size="xs" variant="ghost">
                                                 Mark as read
                                             </flux:button>
                                         </div>
@@ -253,7 +261,8 @@ new #[Layout('layouts.customer')] class extends Component {
                                 class="border rounded-md p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                                 <div class="flex items-start gap-3">
                                     {{-- Icon --}}
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-zinc-100 dark:bg-zinc-800 text-zinc-400">
+                                    <div
+                                        class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-zinc-100 dark:bg-zinc-800 text-zinc-400">
                                         <flux:icon :name="$data['icon']" class="size-5" />
                                     </div>
 
@@ -275,11 +284,12 @@ new #[Layout('layouts.customer')] class extends Component {
 
                                         <div class="flex items-center gap-2 mt-3">
                                             @if ($data['url'])
-                                                <flux:button :href="$data['url']" wire:navigate size="xs" variant="ghost">
+                                                <flux:button :href="$data['url']" wire:navigate size="xs"
+                                                    variant="ghost">
                                                     {{ $data['action'] }}
                                                 </flux:button>
                                             @endif
-                                            <flux:button wire:click="deleteNotification('{{ $notification->id }}')" 
+                                            <flux:button wire:click="deleteNotification('{{ $notification->id }}')"
                                                 size="xs" variant="ghost" class="text-red-500 hover:text-red-600">
                                                 Delete
                                             </flux:button>

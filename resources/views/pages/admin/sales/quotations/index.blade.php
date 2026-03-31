@@ -20,7 +20,7 @@ new #[Title('Quotations')] class extends Component {
     public string $dateTo = '';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
-    public int $perPage = 25;
+    public int $perPage = 10;
 
     // =========================================================================
     //  PAGINATION RESETS
@@ -283,10 +283,10 @@ new #[Title('Quotations')] class extends Component {
     {{-- ================================================================== --}}
     {{-- MAIN TABLE CARD                                                     --}}
     {{-- ================================================================== --}}
-    <flux:card class="p-0">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search reference, name or email..." class="max-w-xs" clearable />

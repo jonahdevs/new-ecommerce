@@ -62,3 +62,45 @@ Schedule::job(new CleanupExpiredOrders)
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+
+// ==============================================
+// BACKUPS: Automated backup management
+//
+// Daily database backup at 2:00 AM - captures all data changes
+// Weekly full backup on Sundays at 3:00 AM - includes files and database
+// Monthly cleanup on first day at 4:00 AM - removes old backups per retention policy
+// Daily health monitoring at 6:00 AM - checks backup integrity
+// ==============================================
+
+// Daily database backup
+Schedule::command('backup:scheduled database --notify')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup.log'));
+
+// Weekly full backup (Sundays)
+Schedule::command('backup:scheduled full --notify')
+    ->weeklyOn(0, '03:00') // 0 = Sunday
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup.log'));
+
+// Monthly cleanup (first day of month)
+Schedule::command('backup:clean')
+    ->monthlyOn(1, '04:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup.log'));
+
+// Daily backup health monitoring
+Schedule::command('backup:monitor')
+    ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup.log'));

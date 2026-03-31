@@ -130,19 +130,10 @@ new #[Title('Vehicle Rates')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Vehicle Rates</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Vehicle Rates"
+    subheading="On-demand pricing by vehicle type. Price = base rate + extra KM charges beyond the included distance.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Vehicle Rates</flux:heading>
-            <flux:subheading>On-demand pricing by vehicle type. Price = base rate + extra KM charges beyond the included
-                distance.</flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         @if ($selectedMethodId)
             <div class="flex items-center gap-3">
                 <flux:switch wire:model.live="showHistory" label="Show deprecated" />
@@ -294,8 +285,8 @@ new #[Title('Vehicle Rates')] class extends Component {
             </div>
 
             <div class="grid grid-cols-3 gap-4">
-                <flux:input wire:model="form.base_rate" label="Base Rate ({{ get_currency_symbol() }})" type="number" min="0"
-                    step="0.01" placeholder="8500" />
+                <flux:input wire:model="form.base_rate" label="Base Rate ({{ get_currency_symbol() }})" type="number"
+                    min="0" step="0.01" placeholder="8500" />
                 <flux:input wire:model="form.base_km" label="Included KM" type="number" min="1"
                     placeholder="50" />
                 <flux:input wire:model="form.extra_km_rate" label="Extra KM Rate" type="number" min="0"
@@ -303,7 +294,8 @@ new #[Title('Vehicle Rates')] class extends Component {
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.max_weight_kg" label="Max Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
+                <flux:input wire:model="form.max_weight_kg"
+                    label="Max Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
                     step="0.01" placeholder="Optional" />
                 <flux:input wire:model="form.max_volume_m3" label="Max Volume (m³)" type="number" min="0"
                     step="0.001" placeholder="Optional" />
@@ -333,11 +325,12 @@ new #[Title('Vehicle Rates')] class extends Component {
             <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Deprecate</flux:button>
         </div>
     </flux:modal>
-</div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

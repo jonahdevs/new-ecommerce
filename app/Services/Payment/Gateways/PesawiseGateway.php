@@ -11,12 +11,12 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
-use App\Services\DocumentService;
 use App\Services\InventoryService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
 use App\Settings\LocalizationSettings;
+use App\Settings\PaymentSettings;
 use App\Settings\PesawiseSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -63,6 +63,20 @@ class PesawiseGateway implements PaymentGateway
                 'order_id' => $order->id,
                 'reference' => $order->reference,
             ]);
+
+            // Log activity
+            activity()
+                ->performedOn($payment)
+                ->causedBy(auth()->user())
+                ->withProperties([
+                    'order_id' => $order->id,
+                    'order_reference' => $order->reference,
+                    'amount' => $order->total,
+                    'currency' => $this->currency,
+                    'gateway' => 'pesawise',
+                    'payment_url' => $loadUrl,
+                ])
+                ->log('payment_initiated');
 
             return PaymentResponse::redirect($loadUrl);
 
@@ -175,7 +189,7 @@ class PesawiseGateway implements PaymentGateway
             ]);
         }
 
-        app(DocumentService::class)->generateInvoice($order);
+        // Invoice is generated later when SAP webhook returns KRA data
         app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
 
@@ -186,6 +200,19 @@ class PesawiseGateway implements PaymentGateway
         SyncOrderToSapJob::dispatch($order->fresh());
 
         PaymentConfirmed::dispatch($order->fresh(['payment']));
+
+        // Log activity
+        activity()
+            ->performedOn($order->payment)
+            ->withProperties([
+                'order_id' => $order->id,
+                'order_reference' => $order->reference,
+                'transaction_id' => $data['transactionId'] ?? null,
+                'gateway_status' => $data['status'] ?? null,
+                'amount' => $order->total,
+                'gateway' => 'pesawise',
+            ])
+            ->log('payment_confirmed');
 
         Log::info('Pesawise payment confirmed, SAP sync dispatched', [
             'order_id' => $order->id,
@@ -215,6 +242,18 @@ class PesawiseGateway implements PaymentGateway
         $order->update(['payment_status' => PaymentStatus::FAILED->value]);
 
         $this->restoreStock($order);
+
+        // Log activity
+        activity()
+            ->performedOn($order->payment)
+            ->withProperties([
+                'order_id' => $order->id,
+                'order_reference' => $order->reference,
+                'reason' => $data['message'] ?? 'Payment failed',
+                'gateway' => 'pesawise',
+                'gateway_response' => $data,
+            ])
+            ->log('payment_failed');
 
         Log::info('Pesawise payment failed', [
             'order_id' => $order->id,

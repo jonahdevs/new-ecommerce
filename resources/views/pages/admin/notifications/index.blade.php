@@ -20,7 +20,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
             $query->whereNotNull('read_at');
         }
 
-        return $query->latest()->paginate(20);
+        return $query->latest()->paginate(10);
     }
 
     #[Computed]
@@ -105,7 +105,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
 <div class="container mx-auto p-6">
     <flux:card class="p-0">
         {{-- Header --}}
-        <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+        <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-600 flex items-center justify-between">
             <flux:heading size="lg">Notifications</flux:heading>
             @if ($this->unreadCount > 0)
                 <flux:button wire:click="markAllAsRead" variant="ghost" size="sm">
@@ -116,7 +116,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
 
         <div class="p-4">
             {{-- Filter Tabs --}}
-            <div class="border-b border-zinc-200 dark:border-zinc-700 mb-4">
+            <div class="border-b border-zinc-200 dark:border-zinc-600 mb-4">
                 <nav class="flex gap-1">
                     <button 
                         wire:click="$set('filter', 'unread')"
@@ -165,7 +165,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
                     <div @class([
                         'border rounded-lg p-4 transition-colors',
                         'bg-blue-50/50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900' => !$notification->read_at,
-                        'bg-white border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700' => $notification->read_at,
+                        'bg-white border-zinc-200 dark:bg-zinc-800 dark:border-zinc-600' => $notification->read_at,
                     ])>
                         <div class="flex items-start gap-3">
                             {{-- Icon --}}

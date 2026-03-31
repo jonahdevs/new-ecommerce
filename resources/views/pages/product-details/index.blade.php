@@ -16,6 +16,10 @@ use App\Models\ReviewHelpfulness;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Services\QuoteBasketService;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\TwitterCard;
+use Artesaos\SEOTools\Facades\JsonLd;
 
 new #[Layout('layouts.guest')] class extends Component {
     public Product $product;
@@ -128,6 +132,78 @@ new #[Layout('layouts.guest')] class extends Component {
                     $this->cartQuantity = $cartItem->quantity;
                 }
             }
+        }
+
+        // SEO Implementation
+        $this->setupSEO($product);
+    }
+
+    private function setupSEO(Product $product): void
+    {
+        $description = strip_tags($product->short_description ?? $product->name);
+        $keywords = [$product->name, 'commercial kitchen equipment'];
+
+        if ($product->brand) {
+            $keywords[] = $product->brand->name;
+        }
+
+        // Basic Meta
+        SEOMeta::setTitle($product->name);
+        SEOMeta::setDescription($description);
+        SEOMeta::addKeyword($keywords);
+
+        // OpenGraph
+        OpenGraph::setTitle($product->name);
+        OpenGraph::setDescription($description);
+        OpenGraph::setType('product');
+        OpenGraph::setUrl(route('products.show', $product->slug));
+        OpenGraph::addImage($product->image_url);
+        OpenGraph::addProperty('product:price:amount', $product->final_price);
+        OpenGraph::addProperty('product:price:currency', 'KES');
+
+        if ($product->brand) {
+            OpenGraph::addProperty('product:brand', $product->brand->name);
+        }
+
+        // Twitter Card
+        TwitterCard::setType('summary_large_image');
+        TwitterCard::setTitle($product->name);
+        TwitterCard::setDescription($description);
+        TwitterCard::setImage($product->image_url);
+
+        // JSON-LD Product Schema
+        JsonLd::setType('Product');
+        JsonLd::setTitle($product->name);
+        JsonLd::setDescription($description);
+        JsonLd::setImage($product->image_url);
+
+        if ($product->brand) {
+            JsonLd::addValue('brand', [
+                '@type' => 'Brand',
+                'name' => $product->brand->name,
+            ]);
+        }
+
+        JsonLd::addValue('offers', [
+            '@type' => 'Offer',
+            'price' => $product->final_price,
+            'priceCurrency' => 'KES',
+            'availability' => $product->stock_status === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            'url' => route('products.show', $product->slug),
+        ]);
+
+        if ($product->average_rating && $product->reviews_count > 0) {
+            JsonLd::addValue('aggregateRating', [
+                '@type' => 'AggregateRating',
+                'ratingValue' => $product->average_rating,
+                'reviewCount' => $product->reviews_count,
+                'bestRating' => 5,
+                'worstRating' => 1,
+            ]);
+        }
+
+        if ($product->sku) {
+            JsonLd::addValue('sku', $product->sku);
         }
     }
 

@@ -7,6 +7,7 @@ use App\Services\Payment\Gateways\StripeGateway;
 use App\Settings\StripeSettings;
 use Livewire\Attributes\{Computed, Layout, Locked};
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.guest')] class extends Component {
     #[Locked]
@@ -18,6 +19,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function mount(string $order): void
     {
+        SEOMeta::setRobots('noindex,nofollow');
+
         $orderModel = Order::where('reference', $order)
             ->with(['payment', 'items.product', 'user'])
             ->firstOrFail();

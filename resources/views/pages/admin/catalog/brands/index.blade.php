@@ -38,7 +38,7 @@ new #[Title('Brands')] class extends Component {
     #[Computed]
     public function brands()
     {
-        return Brand::query()->withCount('products')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->latest()->paginate(15);
+        return Brand::query()->withCount('products')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->latest()->paginate(10);
     }
 }; ?>
 
@@ -61,9 +61,9 @@ new #[Title('Brands')] class extends Component {
     </div>
 
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="px-5 py-3 border-b">
+        <div class="px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search brands..." class="max-w-md"
                 clearable />
         </div>

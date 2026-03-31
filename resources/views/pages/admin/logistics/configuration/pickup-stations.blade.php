@@ -67,7 +67,7 @@ new #[Title('Pickup Stations')] class extends Component {
             ->when($this->filterProvider, fn($q) => $q->where('logistics_provider_id', $this->filterProvider))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(10);
     }
 
     #[Computed]
@@ -166,27 +166,18 @@ new #[Title('Pickup Stations')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Pickup Stations</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Pickup Stations"
+    subheading="Physical collection points for the PUS model. Customers collect parcels here within the holding period.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Pickup Stations</flux:heading>
-            <flux:subheading>Physical collection points for the PUS model. Customers collect parcels here within the
-                holding period.</flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Station
         </flux:button>
     </div>
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b">
+        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name, code or address..."
                 icon="magnifying-glass" clearable class="max-w-md" />
 
@@ -388,11 +379,12 @@ new #[Title('Pickup Stations')] class extends Component {
             <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
         </div>
     </flux:modal>
-</div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

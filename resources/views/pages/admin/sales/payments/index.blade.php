@@ -14,7 +14,7 @@ new #[Title('Transactions')] class extends Component {
     public string $gatewayFilter = 'all';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
-    public int $perPage = 25;
+    public int $perPage = 10;
 
     public function updatingSearch(): void
     {
@@ -142,7 +142,7 @@ new #[Title('Transactions')] class extends Component {
     {{-- Stats cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
-        <flux:card class="p-4 border-l-4 border-l-emerald-500 rounded-l-none!">
+        <flux:card class="p-4 border-l-4 border-l-emerald-500 dark:border-l-emerald-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
@@ -160,7 +160,7 @@ new #[Title('Transactions')] class extends Component {
             </div>
         </flux:card>
 
-        <flux:card class="p-4 border-l-4 border-l-amber-500 rounded-l-none!">
+        <flux:card class="p-4 border-l-4 border-l-amber-500 dark:border-l-amber-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
@@ -178,7 +178,7 @@ new #[Title('Transactions')] class extends Component {
             </div>
         </flux:card>
 
-        <flux:card class="p-4 border-l-4 border-l-red-500 rounded-l-none!">
+        <flux:card class="p-4 border-l-4 border-l-red-500 dark:border-l-red-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
@@ -195,7 +195,7 @@ new #[Title('Transactions')] class extends Component {
             </div>
         </flux:card>
 
-        <flux:card class="p-4 border-l-4 border-l-blue-500 rounded-l-none!">
+        <flux:card class="p-4 border-l-4 border-l-blue-500 dark:border-l-blue-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
@@ -217,10 +217,10 @@ new #[Title('Transactions')] class extends Component {
 
 
     {{-- Main card --}}
-    <flux:card class="p-0">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search transaction, order ref, or customer..." class="max-w-xs" clearable />

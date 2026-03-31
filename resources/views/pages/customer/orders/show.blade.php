@@ -37,11 +37,11 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
     }
 
     /**
-     * True when the KRA receipt PDF is ready for download.
+     * True when the tax invoice PDF is ready for download.
      *
      * Requires both:
      *  - kra_cu_number: the CU number returned by eTIMS via SAP webhook
-     *  - kra_receipt_path: the generated PDF stored on disk
+     *  - invoice_path: the generated PDF stored on disk
      *
      * The download button is hidden until both are present.
      * While waiting: sap_sync_status will be cu_pending.
@@ -318,10 +318,10 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     @endif
 
                     {{-- ============================================================ --}}
-                    {{-- KRA RECEIPT SECTION                                          --}}
+                    {{-- INVOICE SECTION                                              --}}
                     {{-- Shows different states depending on SAP sync progress.       --}}
                     {{--                                                              --}}
-                    {{-- State 1 — cu_received: receipt ready, show download button  --}}
+                    {{-- State 1 — cu_received: invoice ready, show download button  --}}
                     {{-- State 2 — cu_pending:  SAP done, waiting for KRA webhook    --}}
                     {{-- State 3 — failed:      SAP sync failed, show support notice --}}
                     {{-- State 4 — pending/syncing: SAP not yet started              --}}
@@ -329,9 +329,9 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     @if ($this->isPaid)
                         <div class="mt-5">
                             <flux:separator class="mb-4" />
-                            <flux:heading class="text-sm mb-3">Receipt</flux:heading>
+                            <flux:heading class="text-sm mb-3">Tax Invoice</flux:heading>
 
-                            {{-- State 1: Receipt ready --}}
+                            {{-- State 1: Invoice ready --}}
                             @if ($this->hasKraReceipt)
                                 <div
                                     class="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg mb-3">
@@ -352,8 +352,8 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 </div>
 
                                 <flux:button size="sm" icon="arrow-down-tray" class="cursor-pointer w-full"
-                                    tag="a" href="{{ route('customer.orders.kra-receipt', $order) }}">
-                                    Download KRA Receipt
+                                    tag="a" href="{{ route('customer.orders.receipt', $order) }}">
+                                    Download Invoice
                                 </flux:button>
 
                                 {{-- State 2: Waiting for CU number --}}
@@ -362,7 +362,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                     class="flex items-start gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
                                     <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-purple-500" />
                                     <flux:text class="text-xs text-purple-700">
-                                        Receipt pending KRA validation. This usually completes within a few minutes.
+                                        Invoice pending KRA validation. This usually completes within a few minutes.
                                         We'll email you once it's ready.
                                     </flux:text>
                                 </div>
@@ -372,7 +372,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 <div class="flex items-start gap-2 p-3 bg-rose-50 border border-rose-200 rounded-lg">
                                     <flux:icon.exclamation-triangle class="size-4 shrink-0 mt-0.5 text-rose-500" />
                                     <flux:text class="text-xs text-rose-700">
-                                        Receipt generation encountered an issue. Our team has been notified.
+                                        Invoice generation encountered an issue. Our team has been notified.
                                         Please contact support if this persists.
                                     </flux:text>
                                 </div>
@@ -382,7 +382,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                 <div class="flex items-start gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
                                     <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-zinc-400" />
                                     <flux:text class="text-xs text-zinc-500">
-                                        Your receipt is being prepared. Check back shortly.
+                                        Your invoice is being prepared. Check back shortly.
                                     </flux:text>
                                 </div>
                             @endif

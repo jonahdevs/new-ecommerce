@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\TwitterCard;
 
 new #[Layout('layouts.guest')] class extends Component {
     use WithPagination;
@@ -58,6 +61,22 @@ new #[Layout('layouts.guest')] class extends Component {
         $range = $this->priceRange;
         $this->minPrice = $this->minPriceUrl ?? ($range->min_price ?? 0);
         $this->maxPrice = $this->maxPriceUrl ?? ($range->max_price ?? 1000000);
+
+        // SEO Setup
+        $title = !empty($this->search) ? "Search Results for '{$this->search}' - Commercial Kitchen Equipment" : 'Shop Commercial Kitchen Equipment - Restaurant & Bakery Supplies';
+
+        $description = !empty($this->search) ? "Browse our selection of {$this->search} for commercial kitchens. Quality equipment for restaurants, bakeries, and hotels." : 'Browse our complete range of commercial kitchen equipment. Restaurant equipment, bakery machines, refrigeration solutions, and professional kitchen supplies.';
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::addKeyword(['commercial kitchen equipment', 'restaurant equipment', 'bakery equipment', 'kitchen supplies', 'shop kitchen equipment']);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setUrl(route('shop.index'));
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
     }
 
     // =========================================================================
@@ -67,16 +86,18 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function priceRange()
     {
-        return Cache::remember('shop_price_range', 300, fn() =>
-            Product::active()->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first()
-        );
+        return Cache::remember('shop_price_range', 300, fn() => Product::active()->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
     }
 
     #[Computed(persist: true)]
     public function brands()
     {
-        return Cache::remember('all_active_brands', 300, fn() =>
-            Brand::active()->orderBy('name')->get(['id', 'name', 'slug'])
+        return Cache::remember(
+            'all_active_brands',
+            300,
+            fn() => Brand::active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
         );
     }
 
@@ -93,12 +114,7 @@ new #[Layout('layouts.guest')] class extends Component {
     public function products()
     {
         $query = Product::query()
-            ->select([
-                'id', 'name', 'slug', 'brand_id', 'price', 'sale_price',
-                'image_path', 'short_description', 'type', 'requires_quotation',
-                'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity',
-                'average_rating', 'reviews_count', 'sales_count', 'created_at',
-            ])
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'sales_count', 'created_at'])
             ->with([
                 'brand:id,name,slug',
                 'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
@@ -113,43 +129,36 @@ new #[Layout('layouts.guest')] class extends Component {
         if (!empty($this->search)) {
             $query->visibleInSearch();
             $term = $this->search;
-            $query->where(fn(Builder $q2) =>
-                $q2->where('name', 'like', "%{$term}%")
+            $query->where(
+                fn(Builder $q2) => $q2
+                    ->where('name', 'like', "%{$term}%")
                     ->orWhere('sku', 'like', "%{$term}%")
-                    ->orWhere('short_description', 'like', "%{$term}%")
+                    ->orWhere('short_description', 'like', "%{$term}%"),
             );
         } else {
             $query->visibleInCatalog();
         }
 
-        $query->when(!empty($this->selectedBrands), fn(Builder $q) =>
-            $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands))
-        );
+        $query->when(!empty($this->selectedBrands), fn(Builder $q) => $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands)));
 
         $query->when($this->minPrice !== null, fn(Builder $q) => $q->where('price', '>=', $this->minPrice));
         $query->when($this->maxPrice !== null, fn(Builder $q) => $q->where('price', '<=', $this->maxPrice));
 
-        $query->when($this->minRating, fn(Builder $q) =>
-            $q->where('average_rating', '>=', $this->minRating)
-        );
+        $query->when($this->minRating, fn(Builder $q) => $q->where('average_rating', '>=', $this->minRating));
 
-        $query->when($this->inStock, fn(Builder $q) =>
-            $q->where(fn($q2) => $q2->where('stock_quantity', '>', 0)->orWhere('stock_status', 'in_stock'))
-        );
+        $query->when($this->inStock, fn(Builder $q) => $q->where(fn($q2) => $q2->where('stock_quantity', '>', 0)->orWhere('stock_status', 'in_stock')));
         $query->when($this->featured, fn(Builder $q) => $q->where('is_featured', true));
-        $query->when($this->onSale, fn(Builder $q) =>
-            $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price'))
-        );
+        $query->when($this->onSale, fn(Builder $q) => $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price')));
 
         match ($this->sortBy) {
-            'name_asc'   => $query->orderBy('name', 'asc'),
-            'name_desc'  => $query->orderBy('name', 'desc'),
-            'price_asc'  => $query->orderBy('price', 'asc'),
+            'name_asc' => $query->orderBy('name', 'asc'),
+            'name_desc' => $query->orderBy('name', 'desc'),
+            'price_asc' => $query->orderBy('price', 'asc'),
             'price_desc' => $query->orderBy('price', 'desc'),
-            'rating'     => $query->orderBy('average_rating', 'desc'),
-            'newest'     => $query->orderBy('created_at', 'desc'),
-            'popular'    => $query->orderBy('sales_count', 'desc'),
-            default      => $query->orderBy('created_at', 'desc'),
+            'rating' => $query->orderBy('average_rating', 'desc'),
+            'newest' => $query->orderBy('created_at', 'desc'),
+            'popular' => $query->orderBy('sales_count', 'desc'),
+            default => $query->orderBy('created_at', 'desc'),
         };
 
         return $query->paginate(20);
@@ -164,8 +173,13 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function categories()
     {
-        return Cache::remember('root_active_categories', 300, fn() =>
-            Category::active()->whereNull('parent_id')->orderBy('name')->get(['id', 'name', 'slug'])
+        return Cache::remember(
+            'root_active_categories',
+            300,
+            fn() => Category::active()
+                ->whereNull('parent_id')
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
         );
     }
 
@@ -485,7 +499,8 @@ new #[Layout('layouts.guest')] class extends Component {
                             @endforeach
                             @if ($minPriceUrl !== null || $maxPriceUrl !== null)
                                 <flux:badge color="zinc" size="sm">
-                                    {{ get_currency_symbol() }} {{ number_format($minPrice) }} – {{ number_format($maxPrice) }}
+                                    {{ get_currency_symbol() }} {{ number_format($minPrice) }} –
+                                    {{ number_format($maxPrice) }}
                                     <button wire:click="clearPriceFilter"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />

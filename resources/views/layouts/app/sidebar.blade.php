@@ -65,104 +65,12 @@
             </flux:navlist.group>
 
 
-            {{-- Logistics Management --}}
+            {{-- Logistics --}}
             <flux:navlist.group heading="Logistics" class="grid">
-
-                {{-- Dashboard --}}
-                <flux:navlist.item icon="chart-bar-square" wire:navigate :href="route('admin.logistics.overview')"
-                    :current="request()->routeIs('admin.logistics.overview')">
-                    Overview
+                <flux:navlist.item icon="truck" wire:navigate :href="route('admin.logistics.overview')"
+                    :current="request()->routeIs('admin.logistics.*')">
+                    Logistics
                 </flux:navlist.item>
-
-                {{--  Configuration  --}}
-                <flux:navlist.group heading="Configuration" expandable expanded="false" class="grid">
-
-                    <flux:navlist.item icon="building-office" wire:navigate
-                        :href="route('admin.logistics.configuration.providers')"
-                        :current="request()->routeIs('admin.logistics.configuration.providers')">
-                        Providers
-                    </flux:navlist.item>
-
-                    <flux:navlist.item icon="map" wire:navigate
-                        :href="route('admin.logistics.configuration.zones')"
-                        :current="request()->routeIs('admin.logistics.configuration.zones')">
-                        Zones
-                    </flux:navlist.item>
-
-                    <flux:navlist.group heading="Locations" expandable expanded="false" class="grid">
-                        <flux:navlist.item icon="building-office-2" wire:navigate
-                            :href="route('admin.logistics.configuration.locations.counties')"
-                            :current="request()->routeIs('admin.logistics.configuration.locations.counties')">
-                            Counties
-                        </flux:navlist.item>
-                        <flux:navlist.item icon="map-pin" wire:navigate
-                            :href="route('admin.logistics.configuration.locations.areas')"
-                            :current="request()->routeIs('admin.logistics.configuration.locations.areas')">
-                            Areas
-                        </flux:navlist.item>
-                    </flux:navlist.group>
-
-                    <flux:navlist.item icon="truck" wire:navigate
-                        :href="route('admin.logistics.configuration.methods')"
-                        :current="request()->routeIs('admin.logistics.configuration.methods')">
-                        Methods
-                    </flux:navlist.item>
-
-                    <flux:navlist.group heading="Rates" expandable expanded="false" class="grid">
-                        <flux:navlist.item icon="table-cells" wire:navigate
-                            :href="route('admin.logistics.configuration.rates.flat')"
-                            :current="request()->routeIs('admin.logistics.configuration.rates.flat')">
-                            Flat Rates
-                        </flux:navlist.item>
-
-                        <flux:navlist.item icon="calculator" wire:navigate
-                            :href="route('admin.logistics.configuration.rates.vehicle')"
-                            :current="request()->routeIs('admin.logistics.configuration.rates.vehicle')">
-                            Vehicle Rates
-                        </flux:navlist.item>
-
-                        <flux:navlist.item icon="plus-circle" wire:navigate
-                            :href="route('admin.logistics.configuration.rates.addons')"
-                            :current="request()->routeIs('admin.logistics.configuration.rates.addons')">
-                            Rate Addons
-                        </flux:navlist.item>
-                    </flux:navlist.group>
-
-                    <flux:navlist.item icon="building-storefront" wire:navigate
-                        :href="route('admin.logistics.configuration.pickup-stations')"
-                        :current="request()->routeIs('admin.logistics.configuration.pickup-stations')">
-                        Pickup Stations
-                    </flux:navlist.item>
-
-                    <flux:navlist.item icon="gift" wire:navigate
-                        :href="route('admin.logistics.configuration.free-shipping-rules')"
-                        :current="request()->routeIs('admin.logistics.configuration.free-shipping-rules')">
-                        Free Shipping Rules
-                    </flux:navlist.item>
-                </flux:navlist.group>
-
-                {{--  Operations  --}}
-                <flux:navlist.group heading="Operations" expandable expanded="false" class="grid">
-
-                    <flux:navlist.item icon="clipboard-document-list" wire:navigate
-                        :href="route('admin.logistics.operations.delivery-orders')"
-                        :current="request()->routeIs('admin.logistics.operations.delivery-orders')">
-                        Delivery Orders
-                    </flux:navlist.item>
-
-                    <flux:navlist.item icon="arrow-uturn-left" wire:navigate
-                        :href="route('admin.logistics.operations.returns')"
-                        :current="request()->routeIs('admin.logistics.operations.returns')">
-                        Returns
-                    </flux:navlist.item>
-
-                    <flux:navlist.item icon="building-storefront" wire:navigate
-                        :href="route('admin.logistics.operations.pus-tracker')"
-                        :current="request()->routeIs('admin.logistics.operations.pus-tracker')">
-                        PUS Tracker
-                    </flux:navlist.item>
-                </flux:navlist.group>
-
             </flux:navlist.group>
 
 
@@ -194,6 +102,10 @@
             {{-- Reports --}}
             <flux:navlist.group heading="Reports & Analytics" expanded="false" class="grid">
                 <flux:navlist.item icon="chart-bar" wire:navigate href="#">Reports
+                </flux:navlist.item>
+                <flux:navlist.item icon="clipboard-document-list" wire:navigate
+                    :href="route('admin.activity-logs.index')" :current="request()->routeIs('admin.activity-logs.*')">
+                    Activity Logs
                 </flux:navlist.item>
             </flux:navlist.group>
 

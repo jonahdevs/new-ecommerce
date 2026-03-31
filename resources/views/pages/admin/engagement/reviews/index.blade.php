@@ -93,9 +93,9 @@ new #[Title('Reviews')] class extends Component {
     </div>
 
 
-    <flux:card class="p-0 mt-6 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 mt-6 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex items-center gap-4 px-5 py-3 border-b ">
+        <div class="flex items-center gap-4 px-5 py-3 border-b dark:border-zinc-600 ">
             <flux:input wire:model.live="search" icon="magnifying-glass"
                 placeholder="Search by product, user, or review content..." class="flex-1 max-w-md" />
 

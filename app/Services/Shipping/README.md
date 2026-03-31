@@ -4,6 +4,19 @@ This document covers the full shipping architecture for the Sheffield Africa e-c
 
 ---
 
+## Files
+
+| File                         | Responsibility                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------- |
+| `ShippingCalculator.php`     | Single entry point — resolves all shipping options for a given address + cart |
+| `ShippingOption.php`         | Value object returned per available shipping method                           |
+| `Engines/FlatRateEngine.php` | Weight bracket × zone pricing (standard delivery)                             |
+| `Engines/PusEngine.php`      | Pickup station pricing (line haul + surcharge)                                |
+
+**Distance engine** (`distance` type) is defined in the schema but not yet implemented. Vehicle rates exist in the DB for future use.
+
+---
+
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)

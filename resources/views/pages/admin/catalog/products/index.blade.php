@@ -321,10 +321,10 @@ new #[Title('Products')] class extends Component {
     </div>
 
     {{-- Main card --}}
-    <flux:card class="p-0">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             {{-- Search --}}
             <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search by name or SKU..."
@@ -407,7 +407,7 @@ new #[Title('Products')] class extends Component {
             x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
             x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0"
             x-transition:leave-end="opacity-0 -translate-y-2"
-            class="flex flex-wrap items-center gap-2 px-5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+            class="flex flex-wrap items-center gap-2 px-5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
             {{-- Count --}}
             <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 me-1">
                 <span x-text="selected.length"></span> selected

@@ -189,7 +189,7 @@ new #[Title('Roles')] class extends Component {
         {{-- ── Users Table ── --}}
         <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
             {{-- Filters --}}
-            <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
+            <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
                 <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass"
                     placeholder="Search users..." class="max-w-xs" />
 

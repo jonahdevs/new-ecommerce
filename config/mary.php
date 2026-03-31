@@ -38,8 +38,8 @@ return [
      * Components settings
      */
     'components' => [
-        'spotlight' => [
-            'class' => 'App\Support\Spotlight',
-        ]
+        // 'spotlight' => [
+        //     'class' => 'App\Support\Spotlight',
+        // ]
     ]
 ];

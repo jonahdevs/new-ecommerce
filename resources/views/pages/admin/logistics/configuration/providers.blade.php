@@ -39,7 +39,7 @@ new #[Title('Logistics Providers')] class extends Component {
     #[Computed]
     public function providers()
     {
-        return LogisticsProvider::query()->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterType, fn($q) => $q->where('type', $this->filterType))->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))->withCount('shippingMethods')->orderBy('name')->paginate(15);
+        return LogisticsProvider::query()->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterType, fn($q) => $q->where('type', $this->filterType))->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))->withCount('shippingMethods')->orderBy('name')->paginate(10);
     }
 
     #[Computed]
@@ -117,28 +117,18 @@ new #[Title('Logistics Providers')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Providers</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Logistics Providers"
+    subheading="Manage the companies that fulfill your deliveries. Start with your own internal operations, add external couriers later.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Logistics Providers</flux:heading>
-            <flux:subheading>Manage the companies that fulfill your deliveries. Start with your own internal operations,
-                add external couriers later.</flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Provider
         </flux:button>
     </div>
 
-
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b">
+        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name or code..."
                 icon="magnifying-glass" clearable class="max-w-md" />
 
@@ -291,11 +281,12 @@ new #[Title('Logistics Providers')] class extends Component {
             <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
         </div>
     </flux:modal>
-</div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

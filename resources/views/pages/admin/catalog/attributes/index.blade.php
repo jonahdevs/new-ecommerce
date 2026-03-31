@@ -62,7 +62,7 @@ new #[Title('Product Attributes')] class extends Component {
     #[Computed]
     public function productAttributes()
     {
-        return Attribute::withCount('values')->with('values')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->orderBy('sort_order')->paginate(15);
+        return Attribute::withCount('values')->with('values')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))->orderBy('sort_order')->paginate(10);
     }
 }; ?>
 

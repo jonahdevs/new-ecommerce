@@ -10,6 +10,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Defer;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Validate('nullable|integer|exists:counties,id')]
@@ -34,6 +35,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
     public function mount(): void
     {
+        SEOMeta::setRobots('noindex,nofollow');
+
         if (Auth::check()) {
             $user = Auth::user();
             $this->guestName = $user->name ?? '';

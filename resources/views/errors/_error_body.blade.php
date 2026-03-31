@@ -1,5 +1,5 @@
 {{--
-    Shared error body — included by 404, 403, 419, 503.
+    Shared error body — included by 404, 403, 419, 429, 500, 503.
     Variables expected:
       $code    — HTTP status code string e.g. '404'
       $title   — Short error title
@@ -7,7 +7,7 @@
       $isAdmin — bool, switches button color/destination
 --}}
 
-<div class="flex items-center justify-center min-h-[calc(100vh-200px)] px-4 py-16">
+<div class="flex items-center justify-center min-h-[60vh] px-4 py-16">
     <div class="text-center max-w-lg w-full">
 
         {{-- Error code --}}

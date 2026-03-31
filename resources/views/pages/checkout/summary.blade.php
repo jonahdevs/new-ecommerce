@@ -5,10 +5,13 @@ use App\Services\CheckoutSession;
 use Livewire\Attributes\{Computed, Layout};
 use Livewire\Component;
 use App\Services\Payment\PaymentService;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.checkout')] class extends Component {
     public function mount(): void
     {
+        SEOMeta::setRobots('noindex,nofollow');
+
         $cartService = app(CartService::class);
         $checkoutSession = app(CheckoutSession::class);
 
@@ -136,7 +139,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                         </flux:text>
                     </div>
                     <span class="font-semibold text-sm">
-                        @if($this->shipping['cost'] == 0)
+                        @if ($this->shipping['cost'] == 0)
                             <span class="text-green-600 font-medium text-sm">Free</span>
                         @else
                             {{ format_currency($this->shipping['cost']) }}

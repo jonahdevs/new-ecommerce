@@ -29,7 +29,7 @@ new #[Title('Tags')] class extends Component {
     #[Computed]
     public function tags()
     {
-        return Tag::query()->withCount('products')->when($this->search, fn($q) => $q->where('name->en', 'like', "%{$this->search}%"))->when($this->typeFilter, fn($q) => $q->where('type', $this->typeFilter))->orderBy('order_column')->paginate(15);
+        return Tag::query()->withCount('products')->when($this->search, fn($q) => $q->where('name->en', 'like', "%{$this->search}%"))->when($this->typeFilter, fn($q) => $q->where('type', $this->typeFilter))->orderBy('order_column')->paginate(10);
     }
 
     #[Computed]
@@ -84,23 +84,35 @@ new #[Title('Tags')] class extends Component {
 
     {{-- Type Filter --}}
     @if ($this->types->isNotEmpty())
-        <div class="flex gap-2 mb-6 flex-wrap">
-            <flux:button wire:click="$set('typeFilter', null)"
-                variant="{{ $typeFilter === null ? 'primary' : 'ghost' }}" size="sm">
-                All Types
-            </flux:button>
-            @foreach ($this->types as $type)
-                <flux:button wire:click="$set('typeFilter', '{{ $type }}')"
-                    variant="{{ $typeFilter === $type ? 'primary' : 'ghost' }}" size="sm">
-                    {{ ucfirst($type) }}
-                </flux:button>
-            @endforeach
+        <div class="mt-4 mb-5 border-b border-zinc-200 dark:border-zinc-600">
+            <nav class="flex gap-1 overflow-x-auto">
+                <button wire:click="$set('typeFilter', null)" @class([
+                    'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
+                    'bg-brand-primary text-brand-primary-content font-medium' =>
+                        $typeFilter === null,
+                    'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                        $typeFilter !== null,
+                ])>
+                    All Types
+                </button>
+                @foreach ($this->types as $type)
+                    <button wire:click="$set('typeFilter', '{{ $type }}')" @class([
+                        'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
+                        'bg-brand-primary text-brand-primary-content font-medium' =>
+                            $typeFilter === $type,
+                        'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                            $typeFilter !== $type,
+                    ])>
+                        {{ ucfirst($type) }}
+                    </button>
+                @endforeach
+            </nav>
         </div>
     @endif
 
     {{-- Tags Table --}}
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
-        <div class="px-5 py-3 border-b">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+        <div class="px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search tags by name..." class="max-w-md" />
         </div>

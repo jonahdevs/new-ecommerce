@@ -5,12 +5,15 @@ use App\Services\CheckoutSession;
 use App\Services\Payment\PaymentService;
 use Livewire\Attributes\{Computed, Layout};
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.checkout')] class extends Component {
     public string $paymentMethod = 'mpesa'; // mpesa | card
 
     public function mount(): void
     {
+        SEOMeta::setRobots('noindex,nofollow');
+
         $checkoutSession = app(CheckoutSession::class);
         $paymentService = app(PaymentService::class);
 

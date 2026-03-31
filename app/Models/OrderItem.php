@@ -82,7 +82,25 @@ class OrderItem extends Model
     protected function productImageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->product_snapshot['image_path'] ? asset('storage/' . $this->product_snapshot['image_path']) : null,
+            get: fn() => isset($this->product_snapshot['image_path']) && $this->product_snapshot['image_path']
+            ? asset('storage/' . $this->product_snapshot['image_path'])
+            : null,
         );
+    }
+
+    // Helper methods for accessing snapshot data
+    public function getProductName(): string
+    {
+        return $this->product_snapshot['name'] ?? $this->product?->name ?? 'Unknown Product';
+    }
+
+    public function getProductSku(): string
+    {
+        return $this->product_snapshot['sku'] ?? $this->product?->sku ?? '';
+    }
+
+    public function getProductImagePath(): ?string
+    {
+        return $this->product_snapshot['image_path'] ?? $this->product?->image_path ?? null;
     }
 }

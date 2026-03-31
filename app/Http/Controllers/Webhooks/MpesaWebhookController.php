@@ -11,6 +11,16 @@ class MpesaWebhookController extends Controller
 {
     public function __invoke(Request $request, MpesaGateway $gateway)
     {
+        // Log webhook received
+        activity()
+            ->withProperties([
+                'gateway' => 'mpesa',
+                'ip' => $request->ip(),
+                'payload' => $request->all(),
+                'timestamp' => now(),
+            ])
+            ->log('webhook_received_mpesa');
+
         Log::info('Webhook received', [
             'gateway' => 'mpesa', // or pesawise/stripe
             'ip' => $request->ip(),

@@ -39,7 +39,7 @@ class OrderConfirmationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.orders.confirmation',
+            view: 'mails.orders.confirmation',
             with: [
                 'order' => $this->order->load([
                     'items.product',
@@ -48,11 +48,11 @@ class OrderConfirmationMail extends Mailable
                     'deliveryOrder.pickupStation',
                     'user',
                 ]),
-                'customerName'    => $this->order->user?->name
+                'customerName' => $this->order->user?->name
                     ?? $this->order->shipping_address['full_name']
                     ?? 'Customer',
-                'deliveryWindow'  => $this->resolveDeliveryWindow(),
-                'paymentLabel'    => $this->resolvePaymentLabel(),
+                'deliveryWindow' => $this->resolveDeliveryWindow(),
+                'paymentLabel' => $this->resolvePaymentLabel(),
             ],
         );
     }
@@ -71,7 +71,8 @@ class OrderConfirmationMail extends Mailable
     {
         $delivery = $this->order->deliveryOrder;
 
-        if (! $delivery) return null;
+        if (!$delivery)
+            return null;
 
         $min = $delivery->shippingRate?->estimated_days_min;
         $max = $delivery->shippingRate?->estimated_days_max;
@@ -90,12 +91,12 @@ class OrderConfirmationMail extends Mailable
     private function resolvePaymentLabel(): string
     {
         return match ($this->order->payment?->gateway) {
-            'mpesa'    => 'M-Pesa',
-            'stripe'   => 'Card',
+            'mpesa' => 'M-Pesa',
+            'stripe' => 'Card',
             'pesawise' => 'Pesawise',
-            'pesapal'  => 'Pesapal',
-            'paypal'   => 'PayPal',
-            default    => ucfirst($this->order->payment?->gateway ?? 'Online'),
+            'pesapal' => 'Pesapal',
+            'paypal' => 'PayPal',
+            default => ucfirst($this->order->payment?->gateway ?? 'Online'),
         };
     }
 }

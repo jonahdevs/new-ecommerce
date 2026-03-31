@@ -53,7 +53,6 @@ class Order extends Model
         'kra_cu_number',
         'kra_invoice_number',
         'kra_validated_at',
-        'kra_receipt_path',
     ];
 
     protected function casts(): array
@@ -181,7 +180,7 @@ class Order extends Model
 
     public function hasKraReceipt(): bool
     {
-        return !is_null($this->kra_cu_number) && !is_null($this->kra_receipt_path);
+        return !is_null($this->kra_cu_number) && !is_null($this->invoice_path);
     }
 
     public function isAwaitingKraValidation(): bool

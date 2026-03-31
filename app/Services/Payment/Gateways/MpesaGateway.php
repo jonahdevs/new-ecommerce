@@ -10,7 +10,6 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
-use App\Services\DocumentService;
 use App\Services\InventoryService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
@@ -188,7 +187,7 @@ class MpesaGateway implements PaymentGateway
         );
         $order->update(['payment_status' => PaymentStatus::PAID->value]);
 
-        app(DocumentService::class)->generateInvoice($order);
+        // Invoice is generated later when SAP webhook returns KRA data
         app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
 

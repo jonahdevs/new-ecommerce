@@ -157,20 +157,8 @@ new #[Title('PUS Tracker')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>PUS Tracker</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
-
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <flux:heading size="xl" class="mb-2">PUS Tracker</flux:heading>
-            <flux:subheading>Parcels waiting at pickup stations. Sorted by collection deadline — most urgent first.
-            </flux:subheading>
-        </div>
-    </div>
+<x-admin.logistics.layout heading="PUS Tracker"
+    subheading="Parcels waiting at pickup stations. Sorted by collection deadline — most urgent first.">
 
     {{-- Stats bar --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -204,9 +192,9 @@ new #[Title('PUS Tracker')] class extends Component {
     </div>
 
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col justify-end md:flex-row gap-3 px-5 py-3 border-b">
+        <div class="flex flex-col justify-end md:flex-row gap-3 px-5 py-3 border-b dark:border-zinc-600">
             <flux:select wire:model.live="filterStation" placeholder="All Stations" clearable class="md:w-56">
                 @foreach ($this->stations as $station)
                     <flux:select.option value="{{ $station->id }}">{{ $station->name }}</flux:select.option>
@@ -356,7 +344,7 @@ new #[Title('PUS Tracker')] class extends Component {
                 $breakdown = $order->cost_breakdown ?? [];
             @endphp
 
-            <div class="pb-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div class="pb-4 border-b dark:border-zinc-600 border-zinc-100 dark:border-zinc-800">
                 <flux:heading size="lg">Parcel #{{ $order->order_id }}</flux:heading>
                 <p class="text-sm text-zinc-500 mt-1">{{ $order->pickupStation->name }}</p>
             </div>
@@ -396,7 +384,8 @@ new #[Title('PUS Tracker')] class extends Component {
                     @if ($order->package_weight_kg)
                         <div>
                             <p class="text-zinc-400 text-xs mb-0.5">Package Weight</p>
-                            <p class="font-medium">{{ $order->package_weight_kg }} {{ $this->regionalSettings->weight_unit }}</p>
+                            <p class="font-medium">{{ $order->package_weight_kg }}
+                                {{ $this->regionalSettings->weight_unit }}</p>
                         </div>
                     @endif
                 </div>
@@ -466,4 +455,5 @@ new #[Title('PUS Tracker')] class extends Component {
             </flux:button>
         </div>
     </flux:modal>
-</div>
+
+</x-admin.logistics.layout>

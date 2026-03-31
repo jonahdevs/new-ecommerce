@@ -6,8 +6,15 @@ use Livewire\Attributes\{Layout, Defer, On, Title};
 use App\Services\CartService;
 use App\Services\WishlistService;
 use Flux\Flux;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
+    public function mount(): void
+    {
+        // Cart is a private page - should not be indexed
+        SEOMeta::setRobots('noindex,nofollow');
+    }
+
     // -----------------------------------------------------------------------
     // Computed
     // -----------------------------------------------------------------------

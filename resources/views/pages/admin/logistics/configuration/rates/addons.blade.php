@@ -48,7 +48,7 @@ new #[Title('Rate Addons')] class extends Component {
             ->when($this->filterAddonType, fn($q) => $q->where('addon_type', $this->filterAddonType))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(10);
     }
 
     // Only flat/pus methods make sense for addons
@@ -158,27 +158,18 @@ new #[Title('Rate Addons')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Rate Addons</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Rate Addons"
+    subheading="Surcharges that stack on top of flat rates. Used primarily for PUS pickup station fees.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Rate Addons</flux:heading>
-            <flux:subheading>Surcharges that stack on top of flat rates. Used primarily for PUS pickup station fees.
-            </flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Addon
         </flux:button>
     </div>
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row justify-end gap-4 px-5 py-3 border-b">
+        <div class="flex flex-col md:flex-row justify-end gap-4 px-5 py-3 border-b dark:border-zinc-600">
             <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable class="md:w-56">
                 @foreach ($this->methods as $method)
                     <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
@@ -315,8 +306,8 @@ new #[Title('Rate Addons')] class extends Component {
                     @endforeach
                 </flux:select>
 
-                <flux:input wire:model="form.addon_amount" label="Amount ({{ get_currency_symbol() }})" type="number" min="0"
-                    step="0.01" placeholder="e.g. 300" />
+                <flux:input wire:model="form.addon_amount" label="Amount ({{ get_currency_symbol() }})" type="number"
+                    min="0" step="0.01" placeholder="e.g. 300" />
             </div>
 
             <flux:input wire:model="form.label" label="Label (Optional)" placeholder="e.g. Pickup Station Surcharge" />
@@ -356,11 +347,12 @@ new #[Title('Rate Addons')] class extends Component {
             <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
         </div>
     </flux:modal>
-</div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

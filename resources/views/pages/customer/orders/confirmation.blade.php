@@ -7,7 +7,6 @@ use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
-use App\Services\DocumentService;
 use App\Services\Payment\PaymentService;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\{Computed, Layout, Locked, On};
@@ -217,8 +216,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 $this->order->refresh();
                 unset($this->isPaid, $this->isFailed);
 
-                // Generate tax invoice — same as the normal webhook path
-                app(DocumentService::class)->generateInvoice($this->order);
+                // Invoice is generated later when SAP webhook returns KRA data
 
                 // Clear cart and session — fallback since webhook may not
                 // have fired yet for this 3DS payment

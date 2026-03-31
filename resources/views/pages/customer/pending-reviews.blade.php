@@ -5,8 +5,14 @@ use App\Models\OrderItem;
 use App\Models\Review;
 use Livewire\Attributes\{Layout, Computed};
 use Livewire\Component;
+use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.customer')] class extends Component {
+    public function mount(): void
+    {
+        SEOMeta::setRobots('noindex,nofollow');
+    }
+
     #[Computed]
     public function pendingProducts()
     {
@@ -41,7 +47,8 @@ new #[Layout('layouts.customer')] class extends Component {
                     <flux:icon.star class="w-12 h-12 mx-auto text-zinc-300 mb-4" />
                     <flux:heading size="lg">{{ __('No pending reviews') }}</flux:heading>
                     <flux:text class="mt-2">{{ __('You have reviewed all your purchased products.') }}</flux:text>
-                    <flux:button href="{{ route('customer.orders.index') }}" wire:navigate variant="primary" class="mt-4">
+                    <flux:button href="{{ route('customer.orders.index') }}" wire:navigate variant="primary"
+                        class="mt-4">
                         {{ __('View Orders') }}
                     </flux:button>
                 </div>
@@ -65,7 +72,7 @@ new #[Layout('layouts.customer')] class extends Component {
                             {{-- Product Info --}}
                             <div class="flex-1 min-w-0">
                                 <flux:heading size="base" class="truncate">
-                                    {{ $item->product?->name ?? $item->product_snapshot['name'] ?? 'Product' }}
+                                    {{ $item->product?->name ?? ($item->product_snapshot['name'] ?? 'Product') }}
                                 </flux:heading>
                                 <flux:text size="sm" class="text-zinc-500">
                                     {{ __('Order') }}: {{ $item->order->reference }}
@@ -75,12 +82,8 @@ new #[Layout('layouts.customer')] class extends Component {
                             {{-- Action --}}
                             <div class="shrink-0 flex items-center">
                                 @if ($item->product)
-                                    <flux:button 
-                                        href="{{ route('products.reviews', $item->product->slug) }}" 
-                                        wire:navigate
-                                        size="sm"
-                                        variant="primary"
-                                    >
+                                    <flux:button href="{{ route('products.reviews', $item->product->slug) }}"
+                                        wire:navigate size="sm" variant="primary">
                                         {{ __('Write Review') }}
                                     </flux:button>
                                 @endif

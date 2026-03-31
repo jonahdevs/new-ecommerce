@@ -24,7 +24,7 @@ class OrderService
 
         return DB::transaction(function () use ($cart) {
             $user = auth()->user();
-            $summary = app(OrderSummaryService::class)->summary($cart);
+            $summary = app(OrderSummaryService::class)->summary();
             $shippingAddress = $user?->defaultAddress;
 
             if (!$shippingAddress && $user) {
@@ -73,6 +73,23 @@ class OrderService
                 ],
             ]);
 
+            // Log activity
+            activity()
+                ->performedOn($order)
+                ->causedBy($user)
+                ->withProperties([
+                    'cart_id' => $cart->id,
+                    'items_count' => $cart->items->count(),
+                    'subtotal' => $summary['subtotal'],
+                    'shipping' => $summary['shipping_cost'],
+                    'tax' => $summary['tax'] ?? 0,
+                    'total' => $summary['total'],
+                    'shipping_method' => $summary['shipping_method'] ?? null,
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ])
+                ->log('order_created');
+
             return $order->fresh(['items', 'statusHistories', 'payment']);
         });
     }
@@ -94,13 +111,19 @@ class OrderService
             'order_id' => $order->id,
             'product_id' => $product->id,
             'product_variant_id' => $variant?->id,
-            'sku' => $variant?->sku ?? $product->sku,
-            'name' => $product->name . $variantName,
             'quantity' => $cartItem->quantity,
             'unit_price_cents' => $unitPrice * 100,
             'unit_tax_cents' => 0,
             'discount_cents' => 0,
             'total_cents' => ($unitPrice * $cartItem->quantity) * 100,
+            'product_snapshot' => [
+                'id' => $product->id,
+                'name' => $product->name . $variantName,
+                'sku' => $variant?->sku ?? $product->sku,
+                'image_path' => $product->image_path,
+                'price' => $unitPrice,
+                'variant_name' => $variant?->name,
+            ],
         ]);
     }
 
@@ -163,6 +186,18 @@ class OrderService
                 'metadata' => $paymentData,
             ]);
 
+            // Log activity
+            activity()
+                ->performedOn($order)
+                ->withProperties([
+                    'previous_status' => $previousStatus,
+                    'new_status' => 'paid',
+                    'payment_data' => $paymentData,
+                    'transaction_id' => $paymentData['transactionId'] ?? $order->payment->transaction_id,
+                    'amount' => $order->total,
+                ])
+                ->log('order_marked_paid');
+
             // TODO: Deduct inventory here after payment confirmation
             // foreach ($order->items as $item) {
             //     if ($item->product) {
@@ -200,6 +235,16 @@ class OrderService
                 'notes' => $reason,
             ]);
 
+            // Log activity
+            activity()
+                ->performedOn($order)
+                ->withProperties([
+                    'reason' => $reason,
+                    'payment_gateway' => $order->payment?->gateway,
+                    'amount' => $order->total,
+                ])
+                ->log('payment_failed');
+
             // Optionally update order status
             // $order->update(['status' => 'payment_failed']);
         });
@@ -230,6 +275,17 @@ class OrderService
                 'changed_by_type' => auth()->check() ? 'user' : 'system',
                 'notes' => $reason,
             ]);
+
+            // Log activity
+            activity()
+                ->performedOn($order)
+                ->causedBy(auth()->user())
+                ->withProperties([
+                    'previous_status' => $previousStatus,
+                    'reason' => $reason,
+                    'refund_initiated' => false,
+                ])
+                ->log('order_cancelled');
 
             // If order was paid, you might want to initiate refund here
         });

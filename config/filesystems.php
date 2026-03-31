@@ -48,8 +48,20 @@ return [
         ],
         'private' => [
             'driver' => 'local',
-            'root'   => storage_path('app/private'),
-            'throw'  => false,
+            'root' => storage_path('app/private'),
+            'throw' => false,
+        ],
+
+        'backups' => [
+            'driver' => 'local',
+            'root' => storage_path('app/backups'),
+            'throw' => false,
+        ],
+
+        'backup-drive' => [
+            'driver' => 'local',
+            'root' => env('BACKUP_DRIVE_PATH', storage_path('app/backups')),
+            'throw' => false,
         ],
 
         's3' => [

@@ -183,19 +183,10 @@ new #[Title('Flat Rates')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Flat Rates</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<x-admin.logistics.layout heading="Flat Rates"
+    subheading="Weight-bracket pricing per shipping zone. Editing a rate archives the old one — history is always preserved.">
 
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Flat Rates</flux:heading>
-            <flux:subheading>Weight-bracket pricing per shipping zone. Editing a rate archives the old one — history is
-                always preserved.</flux:subheading>
-        </div>
+    <div class="flex items-center justify-end mb-5">
         @if ($selectedMethodId)
             <div class="flex items-center gap-3">
                 <flux:switch wire:model.live="showHistory" label="Show history" />
@@ -249,7 +240,7 @@ new #[Title('Flat Rates')] class extends Component {
         <flux:card class="p-0 overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="border-b border-zinc-200 dark:border-zinc-700">
+                    <tr class="border-b border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800">
                         <th class="text-left font-medium text-zinc-500 px-4 py-3 w-48">Weight Tier</th>
                         <th class="text-left font-medium text-zinc-500 px-4 py-3 w-32">Delivery</th>
                         @foreach ($this->matrix['zones'] as $zone)
@@ -353,8 +344,8 @@ new #[Title('Flat Rates')] class extends Component {
         </div>
 
         <form wire:submit="saveCell" class="space-y-4">
-            <flux:input wire:model="cellForm.price" label="Price ({{ get_currency_symbol() }})" type="number" min="0" step="0.01"
-                placeholder="e.g. 800" />
+            <flux:input wire:model="cellForm.price" label="Price ({{ get_currency_symbol() }})" type="number"
+                min="0" step="0.01" placeholder="e.g. 800" />
 
             <div class="grid grid-cols-2 gap-4">
                 <flux:input wire:model="cellForm.estimated_days_min" label="Min Delivery" type="number" min="1"
@@ -388,12 +379,14 @@ new #[Title('Flat Rates')] class extends Component {
         <form wire:submit="saveTier" class="space-y-4">
 
             <div class="grid grid-cols-3 gap-4">
-                <flux:input wire:model="tierForm.min_weight" label="Min Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
+                <flux:input wire:model="tierForm.min_weight"
+                    label="Min Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
                     step="0.01" placeholder="0" />
-                <flux:input wire:model="tierForm.max_weight" label="Max Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
+                <flux:input wire:model="tierForm.max_weight"
+                    label="Max Weight ({{ $this->regionalSettings->weight_unit }})" type="number" min="0"
                     step="0.01" placeholder="Leave blank for XL" />
-                <flux:input wire:model="tierForm.weight_label" label="Label" placeholder="e.g. Small (0–5 {{ $this->regionalSettings->weight_unit }})"
-                    class="col-span-3" />
+                <flux:input wire:model="tierForm.weight_label" label="Label"
+                    placeholder="e.g. Small (0–5 {{ $this->regionalSettings->weight_unit }})" class="col-span-3" />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -404,7 +397,8 @@ new #[Title('Flat Rates')] class extends Component {
             </div>
 
             <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Prices per zone ({{ get_currency_symbol() }})</p>
+                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Prices per zone
+                    ({{ get_currency_symbol() }})</p>
                 <div class="space-y-3">
                     @foreach ($this->zones as $zone)
                         <flux:input wire:model="tierForm.prices.{{ $zone->id }}" :label="$zone->name"
@@ -422,4 +416,5 @@ new #[Title('Flat Rates')] class extends Component {
             </div>
         </form>
     </flux:modal>
-</div>
+
+</x-admin.logistics.layout>

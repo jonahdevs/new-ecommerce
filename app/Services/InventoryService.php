@@ -71,13 +71,13 @@ class InventoryService
                     : Product::lockForUpdate()->find($item->product_id);
 
                 if (!$stockItem) {
-                    throw new \Exception("Product not found: {$item->name}");
+                    throw new \Exception("Product not found: {$item->getProductName()}");
                 }
 
                 $availableStock = $this->getAvailableStock($stockItem);
 
                 if ($availableStock < $item->quantity) {
-                    throw new \Exception("Insufficient stock for {$item->name}. Available: {$availableStock}, Requested: {$item->quantity}");
+                    throw new \Exception("Insufficient stock for {$item->getProductName()}. Available: {$availableStock}, Requested: {$item->quantity}");
                 }
 
                 // Create reservation record
@@ -89,10 +89,23 @@ class InventoryService
 
                 Log::info('Stock reserved', [
                     'order_id' => $order->id,
-                    'product' => $item->name,
+                    'product' => $item->getProductName(),
                     'quantity' => $item->quantity,
                 ]);
             }
+
+            // Log activity
+            activity()
+                ->performedOn($order)
+                ->withProperties([
+                    'order_id' => $order->id,
+                    'items' => $order->items->map(fn($item) => [
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->getProductName(),
+                        'quantity' => $item->quantity,
+                    ])->toArray(),
+                ])
+                ->log('inventory_reserved');
         });
     }
 
@@ -115,18 +128,18 @@ class InventoryService
                         'order_id' => $order->id,
                         'item_id' => $item->id,
                     ]);
-                    throw new \Exception("Product not found: {$item->name}");
+                    throw new \Exception("Product not found: {$item->getProductName()}");
                 }
 
                 // Verify stock is still sufficient
                 if ($stockItem->stock_quantity < $item->quantity) {
                     Log::error('Insufficient stock during deduction', [
                         'order_id' => $order->id,
-                        'product' => $item->name,
+                        'product' => $item->getProductName(),
                         'available' => $stockItem->stock_quantity,
                         'required' => $item->quantity,
                     ]);
-                    throw new \Exception("Stock changed for {$item->name}");
+                    throw new \Exception("Stock changed for {$item->getProductName()}");
                 }
 
                 // Deduct the stock
@@ -139,11 +152,24 @@ class InventoryService
 
                 Log::info('Stock deducted', [
                     'order_id' => $order->id,
-                    'product' => $item->name,
+                    'product' => $item->getProductName(),
                     'quantity' => $item->quantity,
                     'remaining' => $stockItem->fresh()->stock_quantity,
                 ]);
             }
+
+            // Log activity
+            activity()
+                ->performedOn($order)
+                ->withProperties([
+                    'order_id' => $order->id,
+                    'items' => $order->items->map(fn($item) => [
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->getProductName(),
+                        'quantity_deducted' => $item->quantity,
+                    ])->toArray(),
+                ])
+                ->log('inventory_deducted');
         });
     }
 
@@ -172,7 +198,7 @@ class InventoryService
                 if ($deleted > 0) {
                     Log::info('Stock reservation released', [
                         'order_id' => $order->id,
-                        'product' => $item->name,
+                        'product' => $item->getProductName(),
                         'quantity' => $item->quantity,
                     ]);
                 }

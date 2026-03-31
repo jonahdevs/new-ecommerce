@@ -88,7 +88,7 @@ new #[Title('Returns')] class extends Component {
             ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
             ->when($this->filterDateTo, fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
             ->latest()
-            ->paginate(20);
+            ->paginate(10);
     }
 
     #[Computed]
@@ -202,25 +202,13 @@ new #[Title('Returns')] class extends Component {
     }
 }; ?>
 
-<div>
-    <flux:breadcrumbs class="mb-2">
-        <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item>Logistics</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Returns</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
-
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <flux:heading size="xl" class="mb-2">Returns</flux:heading>
-            <flux:subheading>Reverse logistics — parcels being returned from customer back to sender. Cossim charges
-                returns at the same rate as forward delivery.</flux:subheading>
-        </div>
-    </div>
+<x-admin.logistics.layout heading="Returns"
+    subheading="Reverse logistics — parcels being returned from customer back to sender. Cossim charges returns at the same rate as forward delivery.">
 
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row md:justify-between border-b px-5 py-2 gap-3">
+        <div class="flex flex-col md:flex-row md:justify-between border-b dark:border-zinc-600 px-5 py-2 gap-3">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Order ID, reference..."
                 icon="magnifying-glass" clearable class="col-span-2 md:col-span-1" class="max-w-md" />
 
@@ -372,7 +360,7 @@ new #[Title('Returns')] class extends Component {
                 $breakdown = $order->cost_breakdown ?? [];
             @endphp
 
-            <div class="flex items-start justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div class="flex items-start justify-between pb-4 border-b dark:border-zinc-600 border-zinc-100 dark:border-zinc-800">
                 <div>
                     <flux:heading size="lg">Return #{{ $order->order_id }}</flux:heading>
                     <flux:badge color="orange" variant="flat" size="sm" class="mt-1">Return Shipment</flux:badge>
@@ -470,11 +458,13 @@ new #[Title('Returns')] class extends Component {
             </div>
         @endif
     </flux:modal>
-</div>
+    </div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
+    <style>
+        [data-flux-pagination] {
+            padding-inline: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+
+</x-admin.logistics.layout>

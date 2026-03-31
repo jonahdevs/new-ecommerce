@@ -53,7 +53,7 @@ new #[Title('Categories')] class extends Component {
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
             ->latest()
-            ->paginate(15);
+            ->paginate(10);
     }
 
     // -----------------------------------------------
@@ -200,42 +200,48 @@ new #[Title('Categories')] class extends Component {
     </div>
 
     {{-- Tabs --}}
-    <div class="flex items-center gap-1 border-b mb-5 overflow-x-auto">
+    <div class="mt-4 border-b border-zinc-200 dark:border-zinc-600">
+        <nav class="flex gap-1 overflow-x-auto">
 
-        {{-- All tab --}}
-        <button type="button" wire:click="selectTab('all')" @class([
-            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer',
-            'border-brand-secondary text-brand-secondary' => $tab === 'all',
-            'border-transparent text-zinc-500 hover:text-zinc-800' => $tab !== 'all',
-        ])>
-            All Categories
-        </button>
-
-        {{-- Section tabs --}}
-        @foreach (\App\Enums\CategorySection::cases() as $section)
-            <button type="button" wire:click="selectTab('{{ $section->value }}')" @class([
-                'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer',
-                'border-brand-secondary text-brand-secondary' => $tab === $section->value,
-                'border-transparent text-zinc-500 hover:text-zinc-800' =>
-                    $tab !== $section->value,
+            {{-- All tab --}}
+            <button type="button" wire:click="selectTab('all')" @class([
+                'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
+                'bg-brand-primary text-brand-primary-content font-medium' => $tab === 'all',
+                'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                    $tab !== 'all',
             ])>
-                {{ $section->label() }}
-                @if (!empty($this->sectionCounts[$section->value]))
-                    <span @class([
-                        'text-xs px-1.5 py-0.5 rounded-full font-normal',
-                        'bg-brand-secondary text-white' => $tab === $section->value,
-                        'bg-zinc-200 text-zinc-600' => $tab !== $section->value,
-                    ])>{{ $this->sectionCounts[$section->value] }}</span>
-                @endif
+                All Categories
             </button>
-        @endforeach
+
+            {{-- Section tabs --}}
+            @foreach (\App\Enums\CategorySection::cases() as $section)
+                <button type="button" wire:click="selectTab('{{ $section->value }}')" @class([
+                    'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
+                    'bg-brand-primary text-brand-primary-content font-medium' =>
+                        $tab === $section->value,
+                    'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                        $tab !== $section->value,
+                ])>
+                    {{ $section->label() }}
+                    @if (!empty($this->sectionCounts[$section->value]))
+                        <span @class([
+                            'text-xs px-1.5 py-0.5 rounded-full font-normal',
+                            'bg-white/20 text-white' => $tab === $section->value,
+                            'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400' =>
+                                $tab !== $section->value,
+                        ])>{{ $this->sectionCounts[$section->value] }}</span>
+                    @endif
+                </button>
+            @endforeach
+
+        </nav>
     </div>
 
     {{-- ================================================ --}}
     {{-- ALL TAB                                          --}}
     {{-- ================================================ --}}
     @if ($tab === 'all')
-        <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+        <flux:card class="p-0 mt-5 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
             {{-- Toolbar --}}
             <div class="px-5 py-3 border-b dark:border-zinc-600 flex items-center gap-3">
@@ -354,7 +360,7 @@ new #[Title('Categories')] class extends Component {
     {{-- SECTION TABS                                     --}}
     {{-- ================================================ --}}
     @if ($this->isSection())
-        <div class="flex gap-5">
+        <div class="flex gap-5 mt-5">
 
             {{-- Sortable list --}}
             <div class="flex-1">

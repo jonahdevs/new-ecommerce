@@ -23,7 +23,7 @@ new #[Title('Orders')] class extends Component {
     public string $dateTo = '';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
-    public int $perPage = 25;
+    public int $perPage = 10;
 
     // =========================================================================
     //  PAGINATION RESETS
@@ -391,10 +391,10 @@ new #[Title('Orders')] class extends Component {
     {{-- ================================================================== --}}
     {{-- MAIN TABLE CARD                                                     --}}
     {{-- ================================================================== --}}
-    <flux:card class="p-0">
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search reference, name or email..." class="max-w-xs" clearable />
@@ -453,7 +453,7 @@ new #[Title('Orders')] class extends Component {
             x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
             x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0"
             x-transition:leave-end="opacity-0 -translate-y-2"
-            class="flex flex-wrap items-center gap-2 px-5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+            class="flex flex-wrap items-center gap-2 px-5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 me-1">
                 <span x-text="selected.length"></span> selected

@@ -5,12 +5,59 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use App\Models\{Category, Product};
 use App\Enums\CategorySection;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\TwitterCard;
+use Artesaos\SEOTools\Facades\JsonLd;
 
 new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function heroBanners()
     {
         return config('site.hero_slides');
+    }
+
+    public function mount(): void
+    {
+        // SEO Meta Tags
+        SEOMeta::setTitle('Commercial Kitchen Equipment Supplier in East Africa');
+        SEOMeta::setDescription('Leading supplier of commercial kitchen equipment in Kenya, Uganda & Rwanda. Restaurant equipment, bakery machines, refrigeration solutions, and professional kitchen supplies.');
+        SEOMeta::addKeyword(['commercial kitchen equipment', 'restaurant equipment Kenya', 'bakery equipment East Africa', 'refrigeration solutions', 'kitchen supplies', 'Sheffield Africa', 'commercial kitchen Uganda', 'restaurant equipment Rwanda']);
+
+        // OpenGraph
+        OpenGraph::setTitle('Sheffield Africa - Commercial Kitchen Equipment Supplier');
+        OpenGraph::setDescription('Leading supplier of commercial kitchen equipment in East Africa. Quality restaurant equipment, bakery machines, and refrigeration solutions.');
+        OpenGraph::setUrl(route('home'));
+        OpenGraph::setType('website');
+        OpenGraph::addImage(asset('images/og-home.jpg'));
+
+        // Twitter Card
+        TwitterCard::setType('summary_large_image');
+        TwitterCard::setTitle('Sheffield Africa - Commercial Kitchen Equipment');
+        TwitterCard::setDescription('Leading supplier of commercial kitchen equipment in East Africa');
+        TwitterCard::setImage(asset('images/og-home.jpg'));
+
+        // JSON-LD Organization Schema
+        JsonLd::setType('Organization');
+        JsonLd::setTitle(config('app.name'));
+        JsonLd::setDescription('Leading supplier of commercial kitchen equipment in East Africa');
+        JsonLd::setUrl(config('app.url'));
+        JsonLd::addValue('logo', asset('images/logo.png'));
+        JsonLd::addValue('contactPoint', [
+            [
+                '@type' => 'ContactPoint',
+                'telephone' => '+254-713-444-000',
+                'contactType' => 'customer service',
+                'areaServed' => ['KE', 'UG', 'RW'],
+                'availableLanguage' => ['English', 'Swahili'],
+            ],
+        ]);
+        JsonLd::addValue('address', [
+            '@type' => 'PostalAddress',
+            'streetAddress' => 'Off Old Mombasa Road before the Nairobi SGR Terminus',
+            'addressLocality' => 'Nairobi',
+            'addressCountry' => 'KE',
+        ]);
     }
 
     #[Computed(persist: true)]
@@ -22,12 +69,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function newArrivals()
     {
-        return Product::select([
-                'id', 'name', 'slug', 'brand_id', 'price', 'sale_price',
-                'image_path', 'short_description', 'type', 'requires_quotation',
-                'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity',
-                'average_rating', 'reviews_count', 'created_at',
-            ])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'created_at'])
             ->with([
                 'brand:id,name,slug',
                 'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
@@ -47,12 +89,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function products()
     {
-        return Product::select([
-                'id', 'name', 'slug', 'brand_id', 'price', 'sale_price',
-                'image_path', 'short_description', 'type', 'requires_quotation',
-                'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity',
-                'average_rating', 'reviews_count', 'sales_count', 'created_at',
-            ])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'sales_count', 'created_at'])
             ->with([
                 'brand:id,name,slug',
                 'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),

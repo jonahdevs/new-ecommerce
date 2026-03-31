@@ -361,8 +361,8 @@ new #[Title('Dashboard')] class extends Component {
         </div>
         <div class="flex items-center gap-2">
             <div class="relative">
-                <input class="dashboard-date-range" type="text" readonly
-                    class="w-64 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
+                <input type="text" readonly
+                    class="dashboard-date-range w-64 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
                 <flux:icon.calendar-days
                     class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
             </div>
@@ -638,142 +638,111 @@ new #[Title('Dashboard')] class extends Component {
 
 
     {{-- ================================================================== --}}
-    {{-- ROW 3: RECENT ORDERS TABLE                                          --}}
-    {{-- ================================================================== --}}
-    <flux:card class="p-0 mb-4">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
-            <flux:heading>Recent orders</flux:heading>
-            <flux:link :href="route('admin.orders.index')" wire:navigate class="text-xs">View all
-            </flux:link>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b border-zinc-100 dark:border-zinc-800">
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Reference</th>
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Customer</th>
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Items</th>
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Amount</th>
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Date</th>
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Payment</th>
-                        <th
-                            class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                            Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    @forelse ($this->recentOrders as $order)
-                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
-                            <td class="px-5 py-3">
-                                <a href="{{ route('admin.orders.show', $order) }}" wire:navigate
-                                    class="text-blue-600 dark:text-blue-400 font-medium text-xs hover:underline">{{ $order->reference }}</a>
-                            </td>
-                            <td class="px-5 py-3">
-                                <div class="flex items-center gap-2.5">
-                                    <div
-                                        class="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-[10px] font-semibold text-zinc-500 shrink-0">
-                                        {{ strtoupper(substr($order->user?->name ?? '?', 0, 2)) }}
-                                    </div>
-                                    <span
-                                        class="text-xs text-zinc-800 dark:text-zinc-200">{{ $order->user?->name ?? '—' }}</span>
-                                </div>
-                            </td>
-                            <td class="px-5 py-3 text-xs text-zinc-500">{{ $order->items_count }}</td>
-                            <td class="px-5 py-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                                {{ format_currency($order->total) }}</td>
-                            <td class="px-5 py-3 text-xs text-zinc-400 whitespace-nowrap">
-                                {{ $order->created_at->diffForHumans() }}</td>
-                            <td class="px-5 py-3">
-                                @php
-                                    $pStatus = $order->payment_status->value;
-                                    $pColor = match ($pStatus) {
-                                        'paid'
-                                            => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
-                                        'failed' => 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400',
-                                        'processing'
-                                            => 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
-                                        default => 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
-                                    };
-                                @endphp
-                                <span
-                                    class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $pColor }}">{{ ucfirst($pStatus) }}</span>
-                            </td>
-                            <td class="px-5 py-3">
-                                <flux:badge size="sm" :color="$order->status->color()">
-                                    {{ $order->status->label() }}</flux:badge>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-5 py-10 text-center text-zinc-400 text-sm">No
-                                orders yet</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </flux:card>
-
-    {{-- ================================================================== --}}
-    {{-- ROW 4: CUSTOMER SATISFACTION + STOCK REPORT                        --}}
+    {{-- ROW 3: RECENT ACTIVITY + RECENT ORDERS                              --}}
     {{-- ================================================================== --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
-        <flux:card class="p-0 flex flex-col">
+        {{-- Recent Activity Widget (Left, 1 col) --}}
+        <div class="lg:col-span-1">
+            <livewire:admin.recent-activity-widget />
+        </div>
+
+        {{-- Recent Orders Table (Right, 2 cols) --}}
+        <flux:card class="p-0 lg:col-span-2">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
-                <flux:heading>Customer satisfaction</flux:heading>
-                <flux:text class="text-xs text-blue-500 cursor-pointer hover:underline">Report</flux:text>
+                <flux:heading>Recent orders</flux:heading>
+                <flux:link :href="route('admin.orders.index')" wire:navigate class="text-xs">View all
+                </flux:link>
             </div>
-
-            <div class="p-4 flex flex-col flex-1">
-                {{-- Data bridge — morphed by Livewire, read by JS --}}
-                <div id="satisfactionChartData"
-                    data-this-series="{{ json_encode($this->satisfactionStats['this_series']) }}"
-                    data-last-series="{{ json_encode($this->satisfactionStats['last_series']) }}"
-                    data-days="{{ $this->satisfactionStats['days_this_month'] }}">
-                </div>
-                {{-- Canvas — fixed height, owned by Chart.js --}}
-                <div class="flex-1">
-                    <div wire:ignore style="position:relative; height:100%; width:100%;">
-                        <canvas id="satisfactionChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 mt-4">
-                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-                            {{ format_currency($this->satisfactionStats['this_month']) }}
-                        </p>
-                        <p class="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                            <flux:icon.arrow-path class="size-3 text-blue-500 shrink-0" />
-                            {{ $this->satisfactionStats['month_label'] }}
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-                            {{ format_currency($this->satisfactionStats['last_month']) }}
-                        </p>
-                        <p class="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                            <flux:icon.arrow-path class="size-3 text-emerald-500 shrink-0" />
-                            {{ $this->satisfactionStats['last_month_label'] }}
-                        </p>
-                    </div>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-zinc-100 dark:border-zinc-800">
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Reference</th>
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Customer</th>
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Items</th>
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Amount</th>
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Date</th>
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Payment</th>
+                            <th
+                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @forelse ($this->recentOrders as $order)
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
+                                <td class="px-5 py-3">
+                                    <a href="{{ route('admin.orders.show', $order) }}" wire:navigate
+                                        class="text-blue-600 dark:text-blue-400 font-medium text-xs hover:underline">{{ $order->reference }}</a>
+                                </td>
+                                <td class="px-5 py-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <div
+                                            class="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-[10px] font-semibold text-zinc-500 shrink-0">
+                                            {{ strtoupper(substr($order->user?->name ?? '?', 0, 2)) }}
+                                        </div>
+                                        <span
+                                            class="text-xs text-zinc-800 dark:text-zinc-200">{{ $order->user?->name ?? '—' }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-3 text-xs text-zinc-500">{{ $order->items_count }}</td>
+                                <td class="px-5 py-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ format_currency($order->total) }}</td>
+                                <td class="px-5 py-3 text-xs text-zinc-400 whitespace-nowrap">
+                                    {{ $order->created_at->diffForHumans() }}</td>
+                                <td class="px-5 py-3">
+                                    @php
+                                        $pStatus = $order->payment_status->value;
+                                        $pColor = match ($pStatus) {
+                                            'paid'
+                                                => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
+                                            'failed'
+                                                => 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400',
+                                            'processing'
+                                                => 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
+                                            default => 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+                                        };
+                                    @endphp
+                                    <span
+                                        class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $pColor }}">{{ ucfirst($pStatus) }}</span>
+                                </td>
+                                <td class="px-5 py-3">
+                                    <flux:badge size="sm" :color="$order->status->color()">
+                                        {{ $order->status->label() }}</flux:badge>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-5 py-10 text-center text-zinc-400 text-sm">No
+                                    orders yet</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </flux:card>
 
+    </div>
+
+    {{-- ================================================================== --}}
+    {{-- ROW 4: STOCK REPORT + CUSTOMER SATISFACTION                        --}}
+    {{-- ================================================================== --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+
+        {{-- Stock Report (Left, 2 cols) --}}
         <flux:card class="p-0 lg:col-span-2">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Stock report</flux:heading>
@@ -843,6 +812,50 @@ new #[Title('Dashboard')] class extends Component {
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </flux:card>
+
+        {{-- Customer Satisfaction (Right, 1 col) --}}
+        <flux:card class="p-0 flex flex-col">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
+                <flux:heading>Customer satisfaction</flux:heading>
+                <flux:text class="text-xs text-blue-500 cursor-pointer hover:underline">Report</flux:text>
+            </div>
+
+            <div class="p-4 flex flex-col flex-1">
+                {{-- Data bridge — morphed by Livewire, read by JS --}}
+                <div id="satisfactionChartData"
+                    data-this-series="{{ json_encode($this->satisfactionStats['this_series']) }}"
+                    data-last-series="{{ json_encode($this->satisfactionStats['last_series']) }}"
+                    data-days="{{ $this->satisfactionStats['days_this_month'] }}">
+                </div>
+                {{-- Canvas — fixed height, owned by Chart.js --}}
+                <div class="flex-1">
+                    <div wire:ignore style="position:relative; height:100%; width:100%;">
+                        <canvas id="satisfactionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
+                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                            {{ format_currency($this->satisfactionStats['this_month']) }}
+                        </p>
+                        <p class="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                            <flux:icon.arrow-path class="size-3 text-blue-500 shrink-0" />
+                            {{ $this->satisfactionStats['month_label'] }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
+                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                            {{ format_currency($this->satisfactionStats['last_month']) }}
+                        </p>
+                        <p class="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                            <flux:icon.arrow-path class="size-3 text-emerald-500 shrink-0" />
+                            {{ $this->satisfactionStats['last_month_label'] }}
+                        </p>
+                    </div>
+                </div>
             </div>
         </flux:card>
 
@@ -1019,6 +1032,8 @@ new #[Title('Dashboard')] class extends Component {
         </flux:card>
 
     </div>
+
+
 
 </div>
 
@@ -1328,15 +1343,24 @@ new #[Title('Dashboard')] class extends Component {
             initSatisfactionChart();
         }
 
+        function waitForLibraries(callback) {
+            if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !==
+                'undefined') {
+                callback();
+            } else {
+                setTimeout(() => waitForLibraries(callback), 100);
+            }
+        }
+
         function initDateRangePicker() {
             const el = $('.dashboard-date-range').first();
             if (!el.length || typeof $.fn.daterangepicker === 'undefined') return;
-            
+
             // Destroy existing instance if any
             if (el.data('daterangepicker')) {
                 el.data('daterangepicker').remove();
             }
-            
+
             el.daterangepicker({
                 startDate: moment($wire.dateFrom),
                 endDate: moment($wire.dateTo),
@@ -1366,9 +1390,11 @@ new #[Title('Dashboard')] class extends Component {
             });
         }
 
-        // Boot
+        // Boot - wait for libraries to load before initializing
         initAllCharts();
-        initDateRangePicker();
+        waitForLibraries(() => {
+            initDateRangePicker();
+        });
 
         // Livewire 4 — fires once per component after full DOM morph
         $wire.interceptMessage(({
@@ -1380,7 +1406,9 @@ new #[Title('Dashboard')] class extends Component {
                 onMorph(async () => {
                     initAllCharts();
                     // Reinitialize datepicker after DOM morph
-                    initDateRangePicker();
+                    waitForLibraries(() => {
+                        initDateRangePicker();
+                    });
                 });
             });
         });

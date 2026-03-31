@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\TwitterCard;
 
 new #[Layout('layouts.guest')] class extends Component {
     use WithPagination;
@@ -63,6 +67,25 @@ new #[Layout('layouts.guest')] class extends Component {
         $range = $this->priceRange;
         $this->minPrice = $this->minPriceUrl ?? ($range->min_price ?? 0);
         $this->maxPrice = $this->maxPriceUrl ?? ($range->max_price ?? 1000000);
+
+        // SEO Setup
+        $title = $this->category->name . ' - Commercial Kitchen Equipment';
+        $description = $this->category->description ?? "Browse our selection of {$this->category->name} for commercial kitchens. Quality equipment for restaurants, bakeries, and hotels in East Africa.";
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::addKeyword([$this->category->name, 'commercial kitchen equipment', 'restaurant equipment', $this->category->name . ' Kenya']);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setUrl(route('shop.category', $this->category->slug));
+
+        if ($this->category->image_path) {
+            OpenGraph::addImage(Storage::url($this->category->image_path));
+        }
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
     }
 
     // -----------------------------------------------------------------------
@@ -114,19 +137,18 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         $catIds = array_merge([$this->category->id], $this->category->children()->pluck('id')->toArray());
 
-        return Cache::remember("category_price_range_{$this->category->id}", 300, fn() =>
-            Product::active()
-                ->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds))
-                ->selectRaw('MIN(price) as min_price, MAX(price) as max_price')
-                ->first()
-        );
+        return Cache::remember("category_price_range_{$this->category->id}", 300, fn() => Product::active()->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds))->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
     }
 
     #[Computed(persist: true)]
     public function brands()
     {
-        return Cache::remember('all_active_brands', 300, fn() =>
-            Brand::active()->orderBy('name')->get(['id', 'name', 'slug'])
+        return Cache::remember(
+            'all_active_brands',
+            300,
+            fn() => Brand::active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
         );
     }
 
@@ -146,12 +168,7 @@ new #[Layout('layouts.guest')] class extends Component {
         $catIds = array_merge([$rootCat->id], $rootCat->children()->pluck('id')->toArray());
 
         $query = Product::query()
-            ->select([
-                'id', 'name', 'slug', 'brand_id', 'price', 'sale_price',
-                'image_path', 'short_description', 'type', 'requires_quotation',
-                'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity',
-                'average_rating', 'reviews_count', 'created_at',
-            ])
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'created_at'])
             ->with([
                 'brand:id,name,slug',
                 'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
@@ -164,42 +181,35 @@ new #[Layout('layouts.guest')] class extends Component {
             ->visibleInCatalog()
             ->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds));
 
-        $query->when(!empty($this->selectedBrands), fn(Builder $q) =>
-            $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands))
-        );
+        $query->when(!empty($this->selectedBrands), fn(Builder $q) => $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands)));
 
         $query->when($this->minPrice !== null, fn(Builder $q) => $q->where('price', '>=', $this->minPrice));
         $query->when($this->maxPrice !== null, fn(Builder $q) => $q->where('price', '<=', $this->maxPrice));
 
-        $query->when($this->minRating, fn(Builder $q) =>
-            $q->where('average_rating', '>=', $this->minRating)
-        );
+        $query->when($this->minRating, fn(Builder $q) => $q->where('average_rating', '>=', $this->minRating));
 
-        $query->when($this->inStock, fn(Builder $q) =>
-            $q->where(fn($q2) => $q2->where('stock_quantity', '>', 0)->orWhere('stock_status', 'in_stock'))
-        );
-        $query->when($this->onSale, fn(Builder $q) =>
-            $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price'))
-        );
+        $query->when($this->inStock, fn(Builder $q) => $q->where(fn($q2) => $q2->where('stock_quantity', '>', 0)->orWhere('stock_status', 'in_stock')));
+        $query->when($this->onSale, fn(Builder $q) => $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price')));
 
         $query->when(!empty($this->search), function (Builder $q) {
             $term = $this->search;
-            $q->where(fn(Builder $q2) =>
-                $q2->where('name', 'like', "%{$term}%")
+            $q->where(
+                fn(Builder $q2) => $q2
+                    ->where('name', 'like', "%{$term}%")
                     ->orWhere('sku', 'like', "%{$term}%")
-                    ->orWhere('short_description', 'like', "%{$term}%")
+                    ->orWhere('short_description', 'like', "%{$term}%"),
             );
         });
 
         match ($this->sortBy) {
-            'name_asc'   => $query->orderBy('name', 'asc'),
-            'name_desc'  => $query->orderBy('name', 'desc'),
-            'price_asc'  => $query->orderBy('price', 'asc'),
+            'name_asc' => $query->orderBy('name', 'asc'),
+            'name_desc' => $query->orderBy('name', 'desc'),
+            'price_asc' => $query->orderBy('price', 'asc'),
             'price_desc' => $query->orderBy('price', 'desc'),
-            'rating'     => $query->orderBy('average_rating', 'desc'),
-            'newest'     => $query->orderBy('created_at', 'desc'),
-            'popular'    => $query->orderBy('sales_count', 'desc'),
-            default      => $query->orderBy('created_at', 'desc'),
+            'rating' => $query->orderBy('average_rating', 'desc'),
+            'newest' => $query->orderBy('created_at', 'desc'),
+            'popular' => $query->orderBy('sales_count', 'desc'),
+            default => $query->orderBy('created_at', 'desc'),
         };
 
         return $query->paginate(20);
@@ -636,7 +646,8 @@ new #[Layout('layouts.guest')] class extends Component {
                             @endforeach
                             @if ($minPriceUrl !== null || $maxPriceUrl !== null)
                                 <flux:badge color="zinc" size="sm">
-                                    {{ get_currency_symbol() }} {{ number_format($minPrice) }} – {{ number_format($maxPrice) }}
+                                    {{ get_currency_symbol() }} {{ number_format($minPrice) }} –
+                                    {{ number_format($maxPrice) }}
                                     <button wire:click="clearPriceFilter"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
