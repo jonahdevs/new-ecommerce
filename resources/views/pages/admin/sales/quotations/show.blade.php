@@ -86,7 +86,7 @@ new #[Title('Quotation Details')] class extends Component {
         ]);
 
         if (!$this->canPrice) {
-            $this->dispatch('notify', variant: 'danger', message: 'This quotation can no longer be priced.');
+            $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'This quotation can no longer be priced');
             return;
         }
 
@@ -100,13 +100,10 @@ new #[Title('Quotation Details')] class extends Component {
 
             $this->quote->refresh();
             $this->modal('price-quote')->close();
-            $this->dispatch('notify', variant: 'success', message: 'Quotation saved. You can send it when ready.');
+
+            $this->dispatch('notify', title: 'Quotation Saved', variant: 'success', message: 'The quotation has been saved and is ready to be sent');
         } catch (\Throwable $e) {
-            logger()->error('Failed to save quotation.', [
-                'quote_id' => $this->quote->id,
-                'error' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again');
         }
     }
 
@@ -124,7 +121,7 @@ new #[Title('Quotation Details')] class extends Component {
         ]);
 
         if (!$this->canPrice) {
-            $this->dispatch('notify', variant: 'danger', message: 'This quotation can no longer be priced.');
+            $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'This quotation can no longer be priced');
             return;
         }
 
@@ -139,18 +136,15 @@ new #[Title('Quotation Details')] class extends Component {
             $this->quote->refresh();
             $this->note = '';
             $this->modal('price-quote')->close();
-            $this->dispatch('notify', variant: 'success', message: 'Quotation sent to customer.');
+
+            $this->dispatch('notify', title: 'Quotation Sent', variant: 'success', message: 'The quotation has been sent to the customer successfully');
         } catch (\Throwable $e) {
-            logger()->error('Failed to send quotation.', [
-                'quote_id' => $this->quote->id,
-                'error' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Send Failed', variant: 'danger', message: 'Something went wrong while sending the quotation. Please try again');
         }
     }
 
     // =========================================================================
-    //  UPLOAD SAP-PREPARED PDF
+    //  UPLOAD QUOTATION PDF
     // =========================================================================
 
     public function uploadSapPdf(): void
@@ -166,13 +160,10 @@ new #[Title('Quotation Details')] class extends Component {
 
             $this->sapPdfUpload = null;
             $this->modal('upload-sap-pdf')->close();
-            $this->dispatch('notify', variant: 'success', message: 'SAP quotation PDF uploaded successfully.');
+
+            $this->dispatch('notify', title: 'Upload Successful', variant: 'success', message: 'Quotation PDF uploaded successfully.');
         } catch (\Throwable $e) {
-            logger()->error('Failed to upload SAP PDF.', [
-                'quote_id' => $this->quote->id,
-                'error' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to upload PDF. Please try again.');
+            $this->dispatch('notify', title: 'Upload Failed', variant: 'danger', message: 'Failed to upload the PDF. Please try again.');
         }
     }
 
@@ -187,7 +178,7 @@ new #[Title('Quotation Details')] class extends Component {
         ]);
 
         if (!$this->canCancel) {
-            $this->dispatch('notify', variant: 'danger', message: 'This quotation cannot be cancelled.');
+            $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'This quotation cannot be cancelled.');
             return;
         }
 
@@ -197,9 +188,9 @@ new #[Title('Quotation Details')] class extends Component {
             $this->quote->refresh();
             $this->cancelNote = '';
             $this->modal('cancel-quote')->close();
-            $this->dispatch('notify', variant: 'warning', message: 'Quotation cancelled.');
+            $this->dispatch('notify', title: 'Quotation Cancelled', variant: 'warning', message: 'Quotation cancelled.');
         } catch (\Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Cancellation Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -215,7 +206,7 @@ new #[Title('Quotation Details')] class extends Component {
             $path = app(DocumentService::class)->generateQuotation($quote);
 
             if (!$path) {
-                $this->dispatch('notify', variant: 'danger', message: 'Unable to generate PDF. Please try again.');
+                $this->dispatch('notify', title: 'Generation Failed', variant: 'danger', message: 'Unable to generate PDF. Please try again.');
                 return null;
             }
 
@@ -228,7 +219,7 @@ new #[Title('Quotation Details')] class extends Component {
             $path = app(DocumentService::class)->generateQuotation($quote);
 
             if (!$path) {
-                $this->dispatch('notify', variant: 'danger', message: 'PDF not found. Please try again.');
+                $this->dispatch('notify', title: 'PDF Not Found', variant: 'danger', message: 'PDF not found. Please try again.');
                 return null;
             }
 
@@ -251,7 +242,7 @@ new #[Title('Quotation Details')] class extends Component {
             $path = app(DocumentService::class)->generateQuotation($quote);
 
             if (!$path) {
-                $this->dispatch('notify', variant: 'danger', message: 'Unable to generate PDF. Please try again.');
+                $this->dispatch('notify', title: 'Generation Failed', variant: 'danger', message: 'Unable to generate PDF. Please try again.');
                 return null;
             }
 
@@ -264,7 +255,7 @@ new #[Title('Quotation Details')] class extends Component {
             $path = app(DocumentService::class)->generateQuotation($quote);
 
             if (!$path) {
-                $this->dispatch('notify', variant: 'danger', message: 'PDF not found. Please try again.');
+                $this->dispatch('notify', title: 'PDF Not Found', variant: 'danger', message: 'PDF not found. Please try again.');
                 return null;
             }
 
@@ -359,46 +350,39 @@ new #[Title('Quotation Details')] class extends Component {
 
     {{-- Awaiting admin pricing --}}
     @if ($quote->isPending())
-        <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg mb-5">
-            <flux:icon.clock class="size-5 shrink-0 mt-0.5 text-amber-500" />
-            <div class="text-sm">
-                <p class="font-medium text-amber-800">This quotation is awaiting your pricing</p>
-                <p class="text-amber-700 mt-0.5">
-                    Review the items and delivery preferences below, then click
-                    <strong>Price & Send Quote</strong> to notify the customer.
-                </p>
-            </div>
-        </div>
+        <flux:callout icon="clock" variant="warning" class="mb-5">
+            <flux:heading size="sm" class="font-medium!">This quotation is awaiting your pricing</flux:heading>
+            <flux:subheading class="mt-0.5">
+                Review the items and delivery preferences below, then click
+                <strong>Price & Send Quote</strong> to notify the customer.
+            </flux:subheading>
+        </flux:callout>
     @endif
 
     {{-- Expiring soon --}}
     @if ($quote->isSent() && $quote->expires_at?->diffInHours(now()) <= 48 && !$quote->expires_at?->isPast())
-        <div class="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-lg mb-5">
-            <flux:icon.exclamation-triangle class="size-5 shrink-0 mt-0.5 text-rose-500" />
-            <div class="text-sm">
-                <p class="font-medium text-rose-800">
-                    This quotation expires {{ $quote->expires_at->diffForHumans() }}
-                </p>
-                <p class="text-rose-700 mt-0.5">Follow up with the customer to ensure they have seen the quote.</p>
-            </div>
-        </div>
+        <flux:callout icon="exclamation-triangle" variant="danger" class="mb-5">
+            <flux:heading size="sm" class="font-medium!">
+                This quotation expires {{ $quote->expires_at->diffForHumans() }}
+            </flux:heading>
+            <flux:subheading class="mt-0.5">Follow up with the customer to ensure they have seen the quote.</flux:subheading>
+        </flux:callout>
     @endif
 
     {{-- Converted to sales order --}}
     @if ($quote->order)
-        <div class="flex items-start gap-3 p-4 bg-teal-50 border border-teal-200 rounded-lg mb-5">
-            <flux:icon.check-circle class="size-5 shrink-0 mt-0.5 text-teal-500" />
-            <div class="text-sm flex items-center justify-between w-full">
+        <flux:callout icon="check-circle" variant="success" class="mb-5">
+            <div class="flex items-center justify-between w-full">
                 <div>
-                    <p class="font-medium text-teal-800">Converted to a sales order</p>
-                    <p class="text-teal-700 mt-0.5">Reference: {{ $quote->order->reference }}</p>
+                    <flux:heading size="sm" class="font-medium!">Converted to a sales order</flux:heading>
+                    <flux:subheading class="mt-0.5">Reference: {{ $quote->order->reference }}</flux:subheading>
                 </div>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
                     :href="route('admin.orders.show', $quote->order)" wire:navigate>
                     View Order
                 </flux:button>
             </div>
-        </div>
+        </flux:callout>
     @endif
 
 
@@ -411,7 +395,8 @@ new #[Title('Quotation Details')] class extends Component {
         <div class="lg:col-span-3 space-y-5">
 
             {{-- Items table --}}
-            <flux:card class="p-0">
+            <flux:card
+                class="p-0 overflow-hidden **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
                 <div class="px-6 py-2 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
                     <flux:heading level="3" class="font-semibold">Items</flux:heading>
                     <flux:badge variant="outline">{{ $quote->items->sum('quantity') }} items</flux:badge>
@@ -482,7 +467,7 @@ new #[Title('Quotation Details')] class extends Component {
                 </flux:table>
 
                 {{-- Totals panel --}}
-                <div class="bg-zinc-50/50 dark:bg-white/2 border-t border-zinc-100 dark:border-zinc-800 p-6">
+                <div class="bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-100 dark:border-zinc-600 p-6">
                     <div class="flex flex-col items-end">
                         <div class="w-full max-w-xs space-y-2">
                             <div class="flex justify-between text-sm">
@@ -755,7 +740,7 @@ new #[Title('Quotation Details')] class extends Component {
                     <div class="flex items-center gap-3">
                         <div
                             class="shrink-0 w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                            <flux:icon name="user" class="size-5 text-zinc-400" />
+                            <flux:icon.user class="size-5 text-zinc-400" />
                         </div>
                         <div>
                             <flux:text class="font-medium">{{ $quote->customerName() }}</flux:text>

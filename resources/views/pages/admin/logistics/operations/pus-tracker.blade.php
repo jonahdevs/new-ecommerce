@@ -114,7 +114,7 @@ new #[Title('PUS Tracker')] class extends Component {
 
             $label = $this->pendingAction === DeliveryOrderStatus::COLLECTED->value ? 'Marked as collected.' : 'Marked for return.';
 
-            $this->dispatch('notify', variant: 'success', message: $label);
+            $this->dispatch('notify', title: 'Action Complete', variant: 'success', message: $label);
         } catch (\Throwable $e) {
             logger()->error('PUS Tracker action failed.', [
                 'exception' => $e->getMessage(),
@@ -122,7 +122,7 @@ new #[Title('PUS Tracker')] class extends Component {
                 'action' => $this->pendingAction,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Action failed. Please try again.');
+            $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: 'Action failed. Please try again.');
         }
     }
 
@@ -164,30 +164,33 @@ new #[Title('PUS Tracker')] class extends Component {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <flux:card class="p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             wire:click="$set('filterUrgency', '')">
-            <p class="text-xs text-zinc-400 mb-1">Total at Stations</p>
-            <p class="text-2xl font-bold">{{ $this->stats['total'] }}</p>
+            <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total at Stations</flux:subheading>
+            <flux:heading size="xl" class="font-bold!">{{ $this->stats['total'] }}</flux:heading>
         </flux:card>
 
         <flux:card
             class="p-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-red-100 dark:border-red-900"
             wire:click="$set('filterUrgency', 'overdue')">
-            <p class="text-xs text-red-400 mb-1">Overdue</p>
-            <p class="text-2xl font-bold text-red-600">{{ $this->stats['overdue'] }}</p>
+            <flux:subheading class="text-xs! uppercase tracking-wide text-red-400 mb-1">Overdue</flux:subheading>
+            <flux:heading size="xl" class="font-bold! text-red-600">{{ $this->stats['overdue'] }}</flux:heading>
         </flux:card>
 
 
         <flux:card
             class="p-4 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors border-orange-100 dark:border-orange-900"
             wire:click="$set('filterUrgency', 'today')">
-            <p class="text-xs text-orange-400 mb-1">Deadline Today</p>
-            <p class="text-2xl font-bold text-orange-600">{{ $this->stats['today'] }}</p>
+            <flux:subheading class="text-xs! uppercase tracking-wide text-orange-400 mb-1">Deadline Today
+            </flux:subheading>
+            <flux:heading size="xl" class="font-bold! text-orange-600">{{ $this->stats['today'] }}</flux:heading>
         </flux:card>
 
         <flux:card
             class="p-4 cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors border-yellow-100 dark:border-yellow-900"
             wire:click="$set('filterUrgency', 'this_week')">
-            <p class="text-xs text-yellow-600 mb-1">Due This Week</p>
-            <p class="text-2xl font-bold text-yellow-600">{{ $this->stats['this_week'] }}</p>
+            <flux:subheading class="text-xs! uppercase tracking-wide text-yellow-600 mb-1">Due This Week
+            </flux:subheading>
+            <flux:heading size="xl" class="font-bold! text-yellow-600">{{ $this->stats['this_week'] }}
+            </flux:heading>
         </flux:card>
     </div>
 
@@ -249,21 +252,24 @@ new #[Title('PUS Tracker')] class extends Component {
                         class="{{ $deadline?->isPast() ? 'bg-red-50/50 dark:bg-red-900/10' : '' }}">
 
                         <flux:table.cell class="ps-4!">
-                            <div class="font-semibold text-sm">#{{ $parcel->order_id }}</div>
+                            <flux:heading size="sm" class="font-semibold!">#{{ $parcel->order_id }}</flux:heading>
                             @if ($parcel->provider_reference)
-                                <code class="text-xs text-zinc-400">{{ $parcel->provider_reference }}</code>
+                                <flux:subheading class="text-xs! font-mono">{{ $parcel->provider_reference }}
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <div class="text-sm font-medium">{{ $parcel->pickupStation->name }}</div>
-                            <div class="text-xs text-zinc-400">{{ $parcel->pickupStation->county->name ?? '' }}</div>
+                            <flux:heading size="sm" class="font-medium!">{{ $parcel->pickupStation->name }}
+                            </flux:heading>
+                            <flux:subheading class="text-xs!">{{ $parcel->pickupStation->county->name ?? '' }}
+                            </flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm text-zinc-500">
+                            <flux:text class="text-sm">
                                 {{ $parcel->updated_at->format('d M Y') }}
-                            </span>
+                            </flux:text>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -271,14 +277,15 @@ new #[Title('PUS Tracker')] class extends Component {
                                 {{ $urgencyLabel }}
                             </flux:badge>
                             @if ($deadline)
-                                <div class="text-xs text-zinc-400 mt-0.5">
+                                <flux:subheading class="text-xs! mt-0.5">
                                     {{ $deadline->format('d M Y') }}
-                                </div>
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm font-medium">{{ format_currency($parcel->shipping_cost) }}</span>
+                            <flux:heading size="sm" class="font-medium!">
+                                {{ format_currency($parcel->shipping_cost) }}</flux:heading>
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
@@ -303,23 +310,23 @@ new #[Title('PUS Tracker')] class extends Component {
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="6" class="py-12 text-center">
-                            <div class="flex flex-col items-center gap-3 text-zinc-400">
-                                <flux:icon.building-storefront class="w-10 h-10 opacity-40" />
+                            <div class="flex flex-col items-center gap-3">
+                                <flux:icon.building-storefront class="w-10 h-10 opacity-40 text-zinc-400" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                                    <flux:heading size="sm" class="font-medium!">
                                         @if ($filterStation || $filterUrgency)
                                             No parcels match your filters
                                         @else
                                             No parcels awaiting collection
                                         @endif
-                                    </p>
-                                    <p class="text-xs mt-0.5">
+                                    </flux:heading>
+                                    <flux:subheading class="text-xs! mt-0.5">
                                         @if ($filterStation || $filterUrgency)
                                             Try adjusting your filters.
                                         @else
                                             Parcels arrive here once they reach a pickup station.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($filterStation || $filterUrgency)
                                     <flux:button variant="ghost" size="sm"
@@ -346,7 +353,7 @@ new #[Title('PUS Tracker')] class extends Component {
 
             <div class="pb-4 border-b dark:border-zinc-600 border-zinc-100 dark:border-zinc-800">
                 <flux:heading size="lg">Parcel #{{ $order->order_id }}</flux:heading>
-                <p class="text-sm text-zinc-500 mt-1">{{ $order->pickupStation->name }}</p>
+                <flux:subheading class="mt-1">{{ $order->pickupStation->name }}</flux:subheading>
             </div>
 
             <div class="py-4 space-y-5">
@@ -366,26 +373,30 @@ new #[Title('PUS Tracker')] class extends Component {
 
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Shipping Method</p>
-                        <p class="font-medium">{{ $order->shippingMethod->name }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Shipping Method</flux:subheading>
+                        <flux:heading size="sm" class="font-medium!">{{ $order->shippingMethod->name }}
+                        </flux:heading>
                     </div>
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Zone</p>
-                        <p class="font-medium">{{ $order->shippingZone->name }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Zone</flux:subheading>
+                        <flux:heading size="sm" class="font-medium!">{{ $order->shippingZone->name }}
+                        </flux:heading>
                     </div>
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Shipping Cost</p>
-                        <p class="font-semibold">{{ format_currency($order->shipping_cost) }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Shipping Cost</flux:subheading>
+                        <flux:heading size="sm" class="font-semibold!">
+                            {{ format_currency($order->shipping_cost) }}</flux:heading>
                     </div>
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Holding Days</p>
-                        <p class="font-medium">{{ $order->pickupStation->holding_days }} days</p>
+                        <flux:subheading class="text-xs! mb-0.5">Holding Days</flux:subheading>
+                        <flux:heading size="sm" class="font-medium!">{{ $order->pickupStation->holding_days }}
+                            days</flux:heading>
                     </div>
                     @if ($order->package_weight_kg)
                         <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Package Weight</p>
-                            <p class="font-medium">{{ $order->package_weight_kg }}
-                                {{ $this->regionalSettings->weight_unit }}</p>
+                            <flux:subheading class="text-xs! mb-0.5">Package Weight</flux:subheading>
+                            <flux:heading size="sm" class="font-medium!">{{ $order->package_weight_kg }}
+                                {{ $this->regionalSettings->weight_unit }}</flux:heading>
                         </div>
                     @endif
                 </div>
@@ -393,23 +404,24 @@ new #[Title('PUS Tracker')] class extends Component {
                 {{-- Cost breakdown --}}
                 @if (!empty($breakdown))
                     <div>
-                        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cost Breakdown</p>
+                        <flux:heading size="sm" class="font-medium! mb-2">Cost Breakdown</flux:heading>
                         <div
                             class="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg divide-y divide-zinc-100 dark:divide-zinc-700 text-sm">
                             @foreach ($breakdown as $key => $value)
                                 @if (!in_array($key, ['model', 'total']))
                                     <div class="flex justify-between px-3 py-2">
-                                        <span
-                                            class="text-zinc-500 capitalize">{{ str_replace('_', ' ', $key) }}</span>
-                                        <span class="font-medium">
+                                        <flux:subheading class="capitalize">{{ str_replace('_', ' ', $key) }}
+                                        </flux:subheading>
+                                        <flux:heading size="sm" class="font-medium!">
                                             {{ is_numeric($value) ? format_currency($value) : $value }}
-                                        </span>
+                                        </flux:heading>
                                     </div>
                                 @endif
                             @endforeach
-                            <div class="flex justify-between px-3 py-2 font-semibold">
-                                <span>Total</span>
-                                <span>{{ format_currency($breakdown['total'] ?? $order->shipping_cost) }}</span>
+                            <div class="flex justify-between px-3 py-2">
+                                <flux:heading size="sm" class="font-semibold!">Total</flux:heading>
+                                <flux:heading size="sm" class="font-semibold!">
+                                    {{ format_currency($breakdown['total'] ?? $order->shipping_cost) }}</flux:heading>
                             </div>
                         </div>
                     </div>
@@ -417,7 +429,7 @@ new #[Title('PUS Tracker')] class extends Component {
 
                 {{-- Quick actions --}}
                 <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                    <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Actions</p>
+                    <flux:heading size="sm" class="font-medium! mb-3">Actions</flux:heading>
                     <div class="flex gap-3">
                         <flux:button variant="primary" icon="check-circle" class="flex-1 cursor-pointer"
                             wire:click="confirmAction({{ $order->id }}, 'collected')">

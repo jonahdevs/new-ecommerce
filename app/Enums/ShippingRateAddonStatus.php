@@ -14,4 +14,12 @@ enum ShippingRateAddonStatus: string
             self::INACTIVE => 'Inactive',
         };
     }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::ACTIVE   => 'green',
+            self::INACTIVE => 'zinc',
+        };
+    }
 }

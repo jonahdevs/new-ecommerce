@@ -111,7 +111,7 @@ new #[Title('Pickup Stations')] class extends Component {
 
             $this->form->reset();
             Flux::modal('station-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Station updated.' : 'Station added.');
+            $this->dispatch('notify', title: $isEditing ? 'Station Updated' : 'Station Added', variant: 'success', message: $isEditing ? 'Station updated.' : 'Station added.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -120,7 +120,7 @@ new #[Title('Pickup Stations')] class extends Component {
                 'station_id' => $this->form->station?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -146,7 +146,7 @@ new #[Title('Pickup Stations')] class extends Component {
             $station = PickupStation::findOrFail($this->deletingId);
 
             if ($station->deliveryOrders()->exists()) {
-                $this->dispatch('notify', variant: 'warning', message: 'Cannot delete — this station has delivery orders attached. Deactivate it instead.');
+                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this station has delivery orders attached. Deactivate it instead.');
                 Flux::modal('delete-confirmation')->close();
                 return;
             }
@@ -154,14 +154,14 @@ new #[Title('Pickup Stations')] class extends Component {
             $station->delete();
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'Station deleted.');
+            $this->dispatch('notify', title: 'Station Deleted', variant: 'danger', message: 'Station deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete pickup station.', [
                 'exception' => $e->getMessage(),
                 'station_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this station. It may have dependent records.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this station. It may have dependent records.');
         }
     }
 }; ?>
@@ -182,23 +182,51 @@ new #[Title('Pickup Stations')] class extends Component {
                 icon="magnifying-glass" clearable class="max-w-md" />
 
             <div class="ms-auto flex items-center gap-5">
-                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable class="md:w-48">
-                    @foreach ($this->counties as $county)
-                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                <flux:dropdown position="bottom" align="end">
+                    <flux:button variant="ghost" size="sm" icon="funnel" icon-variant="outline" icon-trailing="chevron-down">
+                        Filters
+                        @php $activeFilters = collect([$filterCounty, $filterProvider, $filterStatus])->filter()->count(); @endphp
+                        @if ($activeFilters > 0)
+                            <flux:badge size="sm" class="ms-1">{{ $activeFilters }}</flux:badge>
+                        @endif
+                    </flux:button>
 
-                <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable class="md:w-48">
-                    @foreach ($this->providers as $provider)
-                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-
-                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="md:w-48">
-                    @foreach ($this->statuses as $status)
-                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                    <flux:menu class="min-w-64">
+                        <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-700">
+                            <flux:subheading>Filter Options</flux:subheading>
+                            <flux:button variant="ghost" size="xs"
+                                wire:click="$set('filterCounty', ''); $set('filterProvider', ''); $set('filterStatus', '')"
+                                class="cursor-pointer">Reset</flux:button>
+                        </div>
+                        <flux:separator />
+                        <div class="p-3 space-y-3">
+                            <flux:field>
+                                <flux:label>County</flux:label>
+                                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable>
+                                    @foreach ($this->counties as $county)
+                                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                            <flux:field>
+                                <flux:label>Provider</flux:label>
+                                <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable>
+                                    @foreach ($this->providers as $provider)
+                                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                            <flux:field>
+                                <flux:label>Status</flux:label>
+                                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
+                                    @foreach ($this->statuses as $status)
+                                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                        </div>
+                    </flux:menu>
+                </flux:dropdown>
             </div>
         </div>
 
@@ -217,31 +245,31 @@ new #[Title('Pickup Stations')] class extends Component {
                 @forelse ($this->stations as $station)
                     <flux:table.row :key="$station->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-semibold">{{ $station->name }}</div>
-                            <code class="text-xs text-zinc-400">{{ $station->code }}</code>
+                            <flux:heading size="sm">{{ $station->name }}</flux:heading>
+                            <flux:subheading>{{ $station->code }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <div class="text-sm">{{ $station->county->name }}</div>
+                            <flux:subheading>{{ $station->county->name }}</flux:subheading>
                             @if ($station->area)
-                                <div class="text-xs text-zinc-400">{{ $station->area->name }}</div>
+                                <flux:subheading>{{ $station->area->name }}</flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $station->logisticsProvider->name }}</span>
+                            <flux:subheading>{{ $station->logisticsProvider->name }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <div class="text-sm">{{ $station->phone ?? '—' }}</div>
+                            <flux:subheading>{{ $station->phone ?? '—' }}</flux:subheading>
                             @if ($station->operating_hours)
-                                <div class="text-xs text-zinc-400 max-w-45 truncate">
-                                    {{ $station->operating_hours }}</div>
+                                <flux:subheading class="max-w-45 truncate">
+                                    {{ $station->operating_hours }}</flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $station->holding_days }} days</span>
+                            <flux:subheading>{{ $station->holding_days }} days</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -258,28 +286,27 @@ new #[Title('Pickup Stations')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $station->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $station->id }})" tooltip="Edit station" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $station->id }})" />
+                                wire:click="confirmDelete({{ $station->id }})" tooltip="Delete station" />
                         </flux:table.cell>
                     </flux:table.row>
 
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="7" class="py-12 text-center">
-                            <div class="flex flex-col items-center gap-3 text-zinc-400">
-                                <flux:icon.building-storefront class="w-10 h-10 opacity-40" />
+                            <div class="flex flex-col items-center gap-3">
+                                <flux:icon.building-storefront class="w-10 h-10 opacity-40 text-zinc-400" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No stations found
-                                    </p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm" class="font-medium!">No stations found</flux:heading>
+                                    <flux:subheading class="text-xs! mt-0.5">
                                         @if ($this->search || $this->filterCounty || $this->filterProvider || $this->filterStatus)
                                             No results match your current filters.
                                         @else
                                             Add your first pickup station to enable the PUS delivery model.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterCounty || $this->filterProvider || $this->filterStatus)
                                     <flux:button variant="ghost" size="sm"
@@ -347,15 +374,16 @@ new #[Title('Pickup Stations')] class extends Component {
                 placeholder="e.g. Mon–Fri 8am–6pm, Sat 9am–2pm" />
 
             {{-- Coordinates --}}
-            <div>
-                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Coordinates (Optional)</p>
+            <flux:field>
+                <flux:label>Coordinates (Optional)</flux:label>
                 <div class="grid grid-cols-2 gap-4">
-                    <flux:input wire:model="form.latitude" label="Latitude" placeholder="-1.2921" type="number"
+                    <flux:input wire:model="form.latitude" placeholder="-1.2921" type="number"
                         step="any" />
-                    <flux:input wire:model="form.longitude" label="Longitude" placeholder="36.8219" type="number"
+                    <flux:input wire:model="form.longitude" placeholder="36.8219" type="number"
                         step="any" />
                 </div>
-            </div>
+                <flux:description>Latitude and Longitude for mapping</flux:description>
+            </flux:field>
 
             <div class="flex">
                 <flux:spacer />

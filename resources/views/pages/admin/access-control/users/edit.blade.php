@@ -33,16 +33,16 @@ new #[Title('Edit Staff User')] class extends Component {
     {
         try {
             $this->form->update();
-            $this->dispatch('notify', variant: 'success', message: 'Staff user updated successfully!');
+            $this->dispatch('notify', title: 'User Updated', variant: 'success', message: 'Staff user updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields.');
+            $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields.');
             throw $e;
         } catch (\Throwable $e) {
             logger()->error('Failed to update staff user.', [
                 'user_id' => $this->user->id,
                 'exception' => $e->getMessage(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 }; ?>
@@ -50,7 +50,7 @@ new #[Title('Edit Staff User')] class extends Component {
 <div>
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item :href="route('admin.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.access-control.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Edit {{ $user->name }}</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
@@ -60,8 +60,8 @@ new #[Title('Edit Staff User')] class extends Component {
     <form wire:submit="save" class="space-y-5 mt-6">
         @include('pages.admin.access-control.users._form-fields')
 
-        <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-800">
-            <flux:button variant="ghost" :href="route('admin.roles.index')" wire:navigate class="cursor-pointer">
+        <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-900">
+            <flux:button variant="ghost" :href="route('admin.access-control.roles.index')" wire:navigate class="cursor-pointer">
                 Cancel
             </flux:button>
 

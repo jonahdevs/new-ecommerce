@@ -5,7 +5,7 @@
 
         {{-- General Information --}}
         <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">General Information</flux:heading>
             </div>
 
@@ -27,47 +27,10 @@
             </div>
         </flux:card>
 
-        {{-- SEO Metadata --}}
-        <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
-                <flux:heading size="lg">SEO Metadata</flux:heading>
-            </div>
-
-            <div class="p-5 space-y-5">
-                <flux:input label="Meta Title" wire:model="form.meta_title"
-                    placeholder="Leave blank to use category name" />
-                <flux:textarea label="Meta Description" wire:model="form.meta_description"
-                    placeholder="Brief description for search engines..." rows="3" />
-            </div>
-        </flux:card>
-
-    </div>
-
-    {{-- Right Column --}}
-    <div class="space-y-5">
-
-        {{-- Status --}}
-        <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
-                <flux:heading size="lg">Status</flux:heading>
-            </div>
-            <div class="p-5">
-                <flux:select wire:model="form.status" label="Category Status">
-                    @foreach (\App\Enums\CategoryStatus::cases() as $status)
-                        <flux:select.option value="{{ $status->value }}">
-                            {{ $status->label() }}
-                        </flux:select.option>
-                    @endforeach
-                </flux:select>
-                <flux:description class="mt-2">
-                    Only <strong>Active</strong> categories are visible on the storefront.
-                </flux:description>
-            </div>
-        </flux:card>
 
         {{-- Placements --}}
         <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">Placements</flux:heading>
             </div>
             <div class="p-5 space-y-3">
@@ -87,9 +50,45 @@
             </div>
         </flux:card>
 
+        {{-- SEO Metadata --}}
+        <flux:card class="p-0">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
+                <flux:heading size="lg">SEO Metadata</flux:heading>
+            </div>
+
+            <div class="p-5 space-y-5">
+                <flux:input label="Meta Title" wire:model="form.meta_title"
+                    placeholder="Leave blank to use category name" />
+                <flux:textarea label="Meta Description" wire:model="form.meta_description"
+                    placeholder="Brief description for search engines..." rows="3" />
+            </div>
+        </flux:card>
+
+    </div>
+
+    {{-- Right Column --}}
+    <div class="space-y-5">
+
+        {{-- Status --}}
+        <flux:card class="p-0">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
+                <flux:heading size="lg">Status</flux:heading>
+            </div>
+            <div class="p-5">
+                <flux:select wire:model="form.status">
+                    @foreach (\App\Enums\CategoryStatus::cases() as $status)
+                        <flux:select.option value="{{ $status->value }}">
+                            {{ $status->label() }}
+                        </flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+        </flux:card>
+
+
         {{-- Icons & Media --}}
         <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">Icons & Media</flux:heading>
             </div>
             <div class="p-5 space-y-5" x-data>
@@ -99,7 +98,7 @@
                     <flux:label>Category Icon</flux:label>
                     <div class="flex items-center gap-3 mt-1">
                         <div
-                            class="shrink-0 w-16 h-16 rounded border bg-zinc-50 flex items-center justify-center overflow-hidden">
+                            class="shrink-0 w-16 h-16 rounded border bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
                             @if ($form->image_icon)
                                 <img src="{{ $form->image_icon->temporaryUrl() }}"
                                     class="w-full h-full object-contain p-1" />
@@ -107,7 +106,7 @@
                                 <img src="{{ Storage::url($form->existingImageIcon) }}"
                                     class="w-full h-full object-contain p-1" />
                             @else
-                                <flux:icon.photo class="size-8 text-zinc-300 stroke-1!" />
+                                <flux:icon.photo class="size-8 text-zinc-300 stroke-1! dark:text-zinc-600" />
                             @endif
                         </div>
                         <div>
@@ -154,19 +153,20 @@
 
         {{-- Category Banner --}}
         <flux:card class="p-0">
-            <div class="border-b px-3 py-2">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">Category Banner</flux:heading>
             </div>
             <div class="p-5 space-y-3" x-data>
                 @if ($form->image_path)
                     <img src="{{ $form->image_path->temporaryUrl() }}"
-                        class="w-full aspect-video rounded border object-cover" />
+                        class="w-full aspect-video rounded border dark:border-zinc-600 object-cover" />
                 @elseif ($form->existingBanner)
                     <img src="{{ Storage::url($form->existingBanner) }}"
-                        class="w-full aspect-video rounded border object-cover" />
+                        class="w-full aspect-video rounded border dark:border-zinc-600 object-cover" />
                 @else
-                    <div class="w-full aspect-video rounded border bg-zinc-50 flex items-center justify-center">
-                        <flux:icon.photo class="size-12 text-zinc-300 stroke-1!" />
+                    <div
+                        class="w-full aspect-video rounded border dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">
+                        <flux:icon.photo class="size-24 text-zinc-300 stroke-1! dark:text-zinc-600" />
                     </div>
                 @endif
 

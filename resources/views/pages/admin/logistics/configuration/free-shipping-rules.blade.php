@@ -74,7 +74,7 @@ new #[Title('Free Shipping Rules')] class extends Component {
 
             $this->form->reset();
             Flux::modal('rule-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Rule updated.' : 'Rule created.');
+            $this->dispatch('notify', title: $isEditing ? 'Rule Updated' : 'Rule Created', variant: 'success', message: $isEditing ? 'Rule updated.' : 'Rule created.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -83,7 +83,7 @@ new #[Title('Free Shipping Rules')] class extends Component {
                 'rule_id' => $this->form->rule?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -109,14 +109,14 @@ new #[Title('Free Shipping Rules')] class extends Component {
             FreeShippingRule::destroy($this->deletingId);
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'Rule deleted.');
+            $this->dispatch('notify', title: 'Rule Deleted', variant: 'danger', message: 'Rule deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete free shipping rule.', [
                 'exception' => $e->getMessage(),
                 'rule_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this rule.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this rule.');
         }
     }
 }; ?>
@@ -159,14 +159,14 @@ new #[Title('Free Shipping Rules')] class extends Component {
                 @forelse ($this->rules as $rule)
                     <flux:table.row :key="$rule->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-semibold">{{ $rule->name }}</div>
+                            <flux:heading size="sm">{{ $rule->name }}</flux:heading>
                             @if ($rule->max_weight)
-                                <div class="text-xs text-zinc-400 mt-0.5">Max weight: {{ $rule->max_weight }} kg</div>
+                                <flux:subheading class="mt-0.5">Max weight: {{ $rule->max_weight }} kg</flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="font-medium text-sm">{{ format_currency($rule->min_order_amount) }}</span>
+                            <flux:heading size="sm">{{ format_currency($rule->min_order_amount) }}</flux:heading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -175,33 +175,31 @@ new #[Title('Free Shipping Rules')] class extends Component {
                                     <flux:badge color="blue" variant="flat" size="sm">
                                         {{ $rule->shippingZone->name }}</flux:badge>
                                 @else
-                                    <span class="text-xs text-zinc-400">All zones</span>
+                                    <flux:subheading>All zones</flux:subheading>
                                 @endif
                                 @if ($rule->shippingMethod)
                                     <flux:badge color="purple" variant="flat" size="sm" class="block">
                                         {{ $rule->shippingMethod->name }}</flux:badge>
                                 @else
-                                    <span class="text-xs text-zinc-400 block">All methods</span>
+                                    <flux:subheading class="block">All methods</flux:subheading>
                                 @endif
                             </div>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <div class="text-xs space-y-0.5">
+                            <div class="space-y-0.5">
                                 @if ($rule->starts_at)
-                                    <div class="text-zinc-500">
-                                        From: <span
-                                            class="text-zinc-700 dark:text-zinc-300">{{ $rule->starts_at->format('d M Y') }}</span>
-                                    </div>
+                                    <flux:subheading>
+                                        From: {{ $rule->starts_at->format('d M Y') }}
+                                    </flux:subheading>
                                 @endif
                                 @if ($rule->ends_at)
-                                    <div class="text-zinc-500">
-                                        To: <span
-                                            class="text-zinc-700 dark:text-zinc-300">{{ $rule->ends_at->format('d M Y') }}</span>
-                                    </div>
+                                    <flux:subheading>
+                                        To: {{ $rule->ends_at->format('d M Y') }}
+                                    </flux:subheading>
                                 @endif
                                 @if (!$rule->starts_at && !$rule->ends_at)
-                                    <span class="text-zinc-400">No schedule</span>
+                                    <flux:subheading>No schedule</flux:subheading>
                                 @endif
                             </div>
                         </flux:table.cell>
@@ -220,10 +218,10 @@ new #[Title('Free Shipping Rules')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $rule->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $rule->id }})" tooltip="Edit rule" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $rule->id }})" />
+                                wire:click="confirmDelete({{ $rule->id }})" tooltip="Delete rule" />
                         </flux:table.cell>
                     </flux:table.row>
 
@@ -233,15 +231,14 @@ new #[Title('Free Shipping Rules')] class extends Component {
                             <div class="flex flex-col items-center gap-3 text-zinc-400">
                                 <flux:icon.gift class="w-10 h-10 opacity-40" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No free shipping
-                                        rules</p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm">No free shipping rules</flux:heading>
+                                    <flux:subheading class="mt-0.5">
                                         @if ($this->search || $this->filterStatus)
                                             No results match your current filters.
                                         @else
                                             Create a rule to offer free shipping above a spend threshold.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterStatus)
                                     <flux:button variant="ghost" size="sm"

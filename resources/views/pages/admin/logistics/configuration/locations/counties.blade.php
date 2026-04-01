@@ -55,7 +55,7 @@ new #[Title('Counties')] class extends Component {
 
             $this->form->reset();
             Flux::modal('county-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'County updated.' : 'County added.');
+            $this->dispatch('notify', title: $isEditing ? 'County Updated' : 'County Added', variant: 'success', message: $isEditing ? 'County updated.' : 'County added.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -64,7 +64,7 @@ new #[Title('Counties')] class extends Component {
                 'county_id' => $this->form->county?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -90,7 +90,7 @@ new #[Title('Counties')] class extends Component {
             $county = County::findOrFail($this->deletingId);
 
             if ($county->areas()->exists()) {
-                $this->dispatch('notify', variant: 'warning', message: 'Cannot delete — this county has areas attached. Remove them first.');
+                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this county has areas attached. Remove them first.');
                 Flux::modal('delete-confirmation')->close();
                 return;
             }
@@ -98,14 +98,14 @@ new #[Title('Counties')] class extends Component {
             $county->delete();
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'County deleted.');
+            $this->dispatch('notify', title: 'County Deleted', variant: 'danger', message: 'County deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete county.', [
                 'exception' => $e->getMessage(),
                 'county_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this county. It may have dependent records.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this county. It may have dependent records.');
         }
     }
 }; ?>
@@ -146,7 +146,9 @@ new #[Title('Counties')] class extends Component {
             <flux:table.rows>
                 @forelse ($this->counties as $county)
                     <flux:table.row :key="$county->id">
-                        <flux:table.cell class="font-semibold ps-4!">{{ $county->name }}</flux:table.cell>
+                        <flux:table.cell class="ps-4!">
+                            <flux:heading size="sm">{{ $county->name }}</flux:heading>
+                        </flux:table.cell>
 
                         <flux:table.cell>
                             @if ($county->code)
@@ -164,15 +166,15 @@ new #[Title('Counties')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $county->areas_count }}</span>
+                            <flux:subheading>{{ $county->areas_count }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $county->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $county->id }})" tooltip="Edit county" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $county->id }})" />
+                                wire:click="confirmDelete({{ $county->id }})" tooltip="Delete county" />
                         </flux:table.cell>
                     </flux:table.row>
 
@@ -182,15 +184,14 @@ new #[Title('Counties')] class extends Component {
                             <div class="flex flex-col items-center gap-3 text-zinc-400">
                                 <flux:icon.building-office-2 class="w-10 h-10 opacity-40" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No counties found
-                                    </p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm">No counties found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
                                         @if ($this->search || $this->filterZone)
                                             No results match your current filters.
                                         @else
                                             Add counties and assign them to a shipping zone.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterZone)
                                     <flux:button variant="ghost" size="sm"

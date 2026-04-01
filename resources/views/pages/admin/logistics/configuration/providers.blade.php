@@ -62,7 +62,7 @@ new #[Title('Logistics Providers')] class extends Component {
 
             $this->form->reset();
             Flux::modal('provider-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Provider updated.' : 'Provider added.');
+            $this->dispatch('notify', title: $isEditing ? 'Provider Updated' : 'Provider Added', variant: 'success', message: $isEditing ? 'Provider updated.' : 'Provider added.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -71,7 +71,7 @@ new #[Title('Logistics Providers')] class extends Component {
                 'provider_id' => $this->form->provider?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -97,7 +97,7 @@ new #[Title('Logistics Providers')] class extends Component {
             $provider = LogisticsProvider::findOrFail($this->deletingId);
 
             if ($provider->shippingMethods()->exists()) {
-                $this->dispatch('notify', variant: 'warning', message: 'Cannot delete — this provider has shipping methods attached.');
+                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this provider has shipping methods attached.');
                 Flux::modal('delete-confirmation')->close();
                 return;
             }
@@ -105,14 +105,14 @@ new #[Title('Logistics Providers')] class extends Component {
             $provider->delete();
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'Provider deleted.');
+            $this->dispatch('notify', title: 'Provider Deleted', variant: 'danger', message: 'Provider deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete logistics provider.', [
                 'exception' => $e->getMessage(),
                 'provider_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this provider. It may have dependent records.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this provider. It may have dependent records.');
         }
     }
 }; ?>
@@ -159,11 +159,11 @@ new #[Title('Logistics Providers')] class extends Component {
                 @forelse ($this->providers as $provider)
                     <flux:table.row :key="$provider->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-semibold">{{ $provider->name }}</div>
+                            <flux:heading size="sm">{{ $provider->name }}</flux:heading>
                             @if ($provider->description)
-                                <div class="text-xs text-zinc-400 mt-0.5 max-w-xs truncate">
+                                <flux:subheading class="mt-0.5 max-w-xs truncate">
                                     {{ $provider->description }}
-                                </div>
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
@@ -181,7 +181,7 @@ new #[Title('Logistics Providers')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $provider->shipping_methods_count }}</span>
+                            <flux:subheading>{{ $provider->shipping_methods_count }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -198,10 +198,10 @@ new #[Title('Logistics Providers')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $provider->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $provider->id }})" tooltip="Edit provider" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $provider->id }})" />
+                                wire:click="confirmDelete({{ $provider->id }})" tooltip="Delete provider" />
                         </flux:table.cell>
                     </flux:table.row>
 
@@ -211,16 +211,14 @@ new #[Title('Logistics Providers')] class extends Component {
                             <div class="flex flex-col items-center gap-3 text-zinc-400">
                                 <flux:icon.building-office class="w-10 h-10 opacity-40" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-                                        No providers found
-                                    </p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm">No providers found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
                                         @if ($this->search || $this->filterType || $this->filterStatus)
                                             No results match your current filters.
                                         @else
                                             Get started by adding your first logistics provider.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterType || $this->filterStatus)
                                     <flux:button variant="ghost" size="sm"

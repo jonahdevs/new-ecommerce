@@ -13,17 +13,24 @@ new #[Title('Tags')] class extends Component {
 
     public function delete($id): void
     {
-        $tag = Tag::findOrFail($id);
+        try {
+            $tag = Tag::findOrFail($id);
 
-        $productsCount = $tag->products()->count();
+            $productsCount = $tag->products()->count();
 
-        if ($productsCount > 0) {
-            session()->flash('error', "Cannot delete tag. It's used by {$productsCount} product(s).");
-            return;
+            if ($productsCount > 0) {
+                $this->dispatch('notify', title: 'Delete Failed', variant: 'warning', message: "This tag is used by {$productsCount} product(s) and cannot be deleted");
+                return;
+            }
+
+            $tag->delete();
+
+            $this->dispatch('notify', title: 'Tag Deleted', variant: 'success', message: 'The tag has been deleted successfully');
+        } catch (\Throwable $th) {
+            \Log::error('Error deleting tag: ' . $th->getMessage(), ['exception' => $th]);
+
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Failed to delete tag. Please try again');
         }
-
-        $tag->delete();
-        session()->flash('status', 'Tag deleted successfully.');
     }
 
     #[Computed]
@@ -56,14 +63,6 @@ new #[Title('Tags')] class extends Component {
         </flux:button>
     </div>
 
-    {{-- Flash Messages --}}
-    @if (session('status'))
-        <flux:callout variant="success" class="mb-6">{{ session('status') }}</flux:callout>
-    @endif
-
-    @if (session('error'))
-        <flux:callout variant="danger" class="mb-6">{{ session('error') }}</flux:callout>
-    @endif
 
     {{-- Stats --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -159,12 +158,12 @@ new #[Title('Tags')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                href="{{ route('admin.catalog.tags.edit', $tag) }}" wire:navigate />
+                                href="{{ route('admin.catalog.tags.edit', $tag) }}" wire:navigate tooltip="Edit Tag" />
 
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 class="text-red-500 dark:text-red-400!"
                                 wire:confirm="Delete this tag? This action cannot be undone if the tag is not used by any products."
-                                wire:click="delete({{ $tag->id }})" />
+                                wire:click="delete({{ $tag->id }})" tooltip="Delete Tag" />
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

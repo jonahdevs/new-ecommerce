@@ -35,7 +35,7 @@ new #[Title('Order Details')] class extends Component {
     public function updateStatus(): void
     {
         if (empty($this->order->status->allowedTransitions())) {
-            $this->dispatch('notify', variant: 'danger', message: 'This order cannot be updated further.');
+            $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'This order cannot be updated further.');
             return;
         }
 
@@ -66,7 +66,7 @@ new #[Title('Order Details')] class extends Component {
             $this->order->refresh();
             $this->note = '';
 
-            $this->dispatch('notify', variant: 'success', message: 'Order status updated.');
+            $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: 'Order status updated.');
             $this->modal('edit-order')->close();
         } catch (\Throwable $e) {
             logger()->error('Failed to update order status.', [
@@ -74,7 +74,7 @@ new #[Title('Order Details')] class extends Component {
                 'user_id' => auth()->id(),
                 'exception_message' => $e->getMessage(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -115,7 +115,7 @@ new #[Title('Order Details')] class extends Component {
             </flux:breadcrumbs>
 
             <div class="flex items-center gap-3">
-                <flux:heading size="xl" class="font-bold tracking-tight">
+                <flux:heading size="xl" class="font-bold! tracking-tight">
                     Order #{{ $order->reference }}
                 </flux:heading>
                 <flux:badge :color="$order->status->color()" variant="solid" size="sm"
@@ -124,10 +124,10 @@ new #[Title('Order Details')] class extends Component {
                 </flux:badge>
             </div>
 
-            <flux:text class="mt-1 flex items-center gap-2">
-                <flux:icon name="calendar" class="size-4 text-zinc-400" />
+            <flux:subheading class="mt-1 flex items-center gap-2">
+                <flux:icon name="calendar" class="size-4" />
                 Placed on {{ $order->created_at->format('M d, Y') }} at {{ $order->created_at->format('g:i A') }}
-            </flux:text>
+            </flux:subheading>
         </div>
 
         <div class="flex items-center gap-3">
@@ -155,15 +155,14 @@ new #[Title('Order Details')] class extends Component {
     {{-- Gives admin a direct link back to the originating quotation.        --}}
     {{-- ================================================================== --}}
     @if ($order->wasConvertedFromQuote() && $order->quote)
-        <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-5">
-            <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
-            <flux:text class="text-sm text-blue-800">
+        <flux:callout icon="tag" icon-variant="outline" color="purple" class="mb-5">
+            <flux:callout.heading>
                 This order was converted from quotation
                 <flux:link :href="route('admin.quotations.show', $order->quote)" wire:navigate class="font-medium">
                     {{ $order->quote->reference }}
                 </flux:link>
-            </flux:text>
-        </div>
+            </flux:callout.heading>
+        </flux:callout>
     @endif
 
     {{-- ================================================================== --}}
@@ -179,7 +178,7 @@ new #[Title('Order Details')] class extends Component {
             {{-- ============================================================ --}}
             <flux:card class="p-0">
                 <div class="px-6 py-2 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
-                    <flux:heading level="3" class="font-semibold">Items & Inventory</flux:heading>
+                    <flux:heading size="lg" class="font-semibold!">Items & Inventory</flux:heading>
                     <flux:badge variant="outline">{{ $order->items->sum('quantity') }} Items</flux:badge>
                 </div>
 
@@ -213,18 +212,18 @@ new #[Title('Order Details')] class extends Component {
                                             @endif
                                         </div>
                                         <div>
-                                            <flux:text class="text-sm font-medium">{{ $name }}</flux:text>
+                                            <flux:heading size="sm" class="font-medium!">{{ $name }}</flux:heading>
                                             @if ($item->productVariant)
-                                                <flux:text class="text-xs text-zinc-400">
+                                                <flux:subheading class="text-xs!">
                                                     {{ $item->productVariant->name }}
-                                                </flux:text>
+                                                </flux:subheading>
                                             @endif
                                         </div>
                                     </div>
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    <flux:text class="text-xs text-zinc-400">{{ $sku }}</flux:text>
+                                    <flux:subheading class="text-xs!">{{ $sku }}</flux:subheading>
                                 </flux:table.cell>
 
                                 <flux:table.cell>{{ $item->quantity }}</flux:table.cell>
@@ -244,7 +243,7 @@ new #[Title('Order Details')] class extends Component {
                         @empty
                             <flux:table.row>
                                 <flux:table.cell colspan="6" class="text-center py-8">
-                                    <flux:text class="text-zinc-400">No items found.</flux:text>
+                                    <flux:subheading>No items found.</flux:subheading>
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforelse
@@ -257,29 +256,29 @@ new #[Title('Order Details')] class extends Component {
                         <div class="w-full max-w-xs space-y-2">
                             <div class="flex justify-between text-sm">
                                 <flux:text>Subtotal</flux:text>
-                                <flux:text class="font-medium">{{ format_currency($order->subtotal) }}</flux:text>
+                                <flux:heading size="sm" class="font-medium!">{{ format_currency($order->subtotal) }}</flux:heading>
                             </div>
                             @if ($order->discount > 0)
                                 <div class="flex justify-between text-sm">
                                     <flux:text>Discount</flux:text>
-                                    <flux:text class="font-medium text-green-600">
+                                    <flux:heading size="sm" class="font-medium! text-green-600">
                                         − {{ format_currency($order->discount) }}
-                                    </flux:text>
+                                    </flux:heading>
                                 </div>
                             @endif
                             <div class="flex justify-between text-sm">
                                 <flux:text>Shipping</flux:text>
-                                <flux:text class="font-medium text-green-600">
+                                <flux:heading size="sm" class="font-medium! text-green-600">
                                     @if ($order->shipping == 0)
                                         Free
                                     @else
                                         {{ format_currency($order->shipping) }}
                                     @endif
-                                </flux:text>
+                                </flux:heading>
                             </div>
                             <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-600">
                                 <flux:heading size="lg">Total Amount</flux:heading>
-                                <flux:heading size="lg" class="text-zinc-900 dark:text-white font-bold">
+                                <flux:heading size="lg" class="font-bold!">
                                     {{ format_currency($order->total) }}
                                 </flux:heading>
                             </div>
@@ -379,28 +378,28 @@ new #[Title('Order Details')] class extends Component {
                                             {{ $step->label() }}
                                         </flux:text>
                                         @if ($history?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                                            <flux:subheading class="text-xs! mt-0.5 leading-relaxed">
                                                 {{ $history->notes }}
-                                            </flux:text>
+                                            </flux:subheading>
                                         @endif
                                         @if ($history?->changed_by_type === 'system')
-                                            <flux:text class="text-xs text-zinc-300 dark:text-zinc-600 mt-0.5 italic">
+                                            <flux:subheading class="text-xs! mt-0.5 italic">
                                                 Automatic
-                                            </flux:text>
+                                            </flux:subheading>
                                         @endif
                                     </div>
 
                                     @if ($history)
                                         <div class="text-right shrink-0">
-                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            <flux:heading size="sm" class="text-xs! font-medium!">
                                                 {{ $history->created_at->format('M d, Y') }}
-                                            </flux:text>
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                            </flux:heading>
+                                            <flux:subheading class="text-xs! mt-0.5">
                                                 {{ $history->created_at->format('g:i A') }}
-                                            </flux:text>
-                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
+                                            </flux:subheading>
+                                            <flux:subheading class="text-xs! italic mt-0.5">
                                                 {{ $history->changedBy?->name ?? 'System' }}
-                                            </flux:text>
+                                            </flux:subheading>
                                         </div>
                                     @endif
                                 </div>
@@ -418,26 +417,26 @@ new #[Title('Order Details')] class extends Component {
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:text class="text-sm font-medium text-rose-600 dark:text-rose-400">
+                                        <flux:heading size="sm" class="font-medium! text-rose-600 dark:text-rose-400">
                                             Order Cancelled
-                                        </flux:text>
+                                        </flux:heading>
                                         @if ($cancelHistory?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                            <flux:subheading class="text-xs! mt-0.5">
                                                 {{ $cancelHistory->notes }}
-                                            </flux:text>
+                                            </flux:subheading>
                                         @endif
                                     </div>
                                     @if ($cancelHistory)
                                         <div class="text-right shrink-0">
-                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            <flux:heading size="sm" class="text-xs! font-medium!">
                                                 {{ $cancelHistory->created_at->format('M d, Y') }}
-                                            </flux:text>
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                            </flux:heading>
+                                            <flux:subheading class="text-xs! mt-0.5">
                                                 {{ $cancelHistory->created_at->format('g:i A') }}
-                                            </flux:text>
-                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
+                                            </flux:subheading>
+                                            <flux:subheading class="text-xs! italic mt-0.5">
                                                 {{ $cancelHistory->changedBy?->name ?? 'System' }}
-                                            </flux:text>
+                                            </flux:subheading>
                                         </div>
                                     @endif
                                 </div>
@@ -455,26 +454,26 @@ new #[Title('Order Details')] class extends Component {
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:text class="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                        <flux:heading size="sm" class="font-medium! text-orange-600 dark:text-orange-400">
                                             Order Returned
-                                        </flux:text>
+                                        </flux:heading>
                                         @if ($returnHistory?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                            <flux:subheading class="text-xs! mt-0.5">
                                                 {{ $returnHistory->notes }}
-                                            </flux:text>
+                                            </flux:subheading>
                                         @endif
                                     </div>
                                     @if ($returnHistory)
                                         <div class="text-right shrink-0">
-                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            <flux:heading size="sm" class="text-xs! font-medium!">
                                                 {{ $returnHistory->created_at->format('M d, Y') }}
-                                            </flux:text>
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                            </flux:heading>
+                                            <flux:subheading class="text-xs! mt-0.5">
                                                 {{ $returnHistory->created_at->format('g:i A') }}
-                                            </flux:text>
-                                            <flux:text class="text-xs text-zinc-400 italic mt-0.5">
+                                            </flux:subheading>
+                                            <flux:subheading class="text-xs! italic mt-0.5">
                                                 {{ $returnHistory->changedBy?->name ?? 'System' }}
-                                            </flux:text>
+                                            </flux:subheading>
                                         </div>
                                     @endif
                                 </div>
@@ -506,7 +505,7 @@ new #[Title('Order Details')] class extends Component {
                             @endif
                         </div>
                         <div>
-                            <flux:text class="font-medium">{{ $order->user?->name }}</flux:text>
+                            <flux:heading size="sm" class="font-medium!">{{ $order->user?->name }}</flux:heading>
                             <flux:link href="mailto:{{ $order->user?->email }}" class="text-xs">
                                 {{ $order->user?->email }}
                             </flux:link>
@@ -523,8 +522,8 @@ new #[Title('Order Details')] class extends Component {
                     <div class="flex items-start gap-3">
                         <flux:icon name="map-pin" class="size-4 mt-0.5 text-zinc-400" />
                         <div>
-                            <flux:text size="sm" class="font-medium block">Shipping Address</flux:text>
-                            <flux:text size="xs" class="leading-relaxed">
+                            <flux:heading size="sm" class="font-medium!">Shipping Address</flux:heading>
+                            <flux:subheading class="text-xs! leading-relaxed">
                                 {{ $order->shipping_address['address'] ?? 'N/A' }}<br>
                                 {{ $order->shipping_address['area'] ?? '' }},
                                 {{ $order->shipping_address['county'] ?? '' }}
@@ -546,9 +545,9 @@ new #[Title('Order Details')] class extends Component {
                 <div class="p-5 text-sm space-y-2 text-zinc-500">
                     <div class="flex justify-between">
                         <flux:text>Method</flux:text>
-                        <flux:text class="font-medium uppercase">
+                        <flux:heading size="sm" class="font-medium! uppercase">
                             {{ $order->payment?->gateway ?? 'N/A' }}
-                        </flux:text>
+                        </flux:heading>
                     </div>
                     <div class="flex justify-between">
                         <flux:text>Amount</flux:text>

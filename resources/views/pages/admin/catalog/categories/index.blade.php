@@ -287,8 +287,8 @@ new #[Title('Categories')] class extends Component {
                                     @endif
                                 </div>
                                 <div>
-                                    <span class="font-medium text-zinc-800 dark:text-white">{{ $category->name }}</span>
-                                    <div class="text-xs text-zinc-400">{{ $category->slug }}</div>
+                                    <flux:heading>{{ $category->name }}</flux:heading>
+                                    <flux:text class="text-xs">{{ $category->slug }}</flux:text>
                                 </div>
                             </flux:table.cell>
 
@@ -313,7 +313,7 @@ new #[Title('Categories')] class extends Component {
 
                             <flux:table.cell>
                                 @if ($category->placements->isEmpty())
-                                    <span class="text-xs text-zinc-400">None</span>
+                                    <flux:text class="text-xs">None</flux:text>
                                 @else
                                     <div class="flex flex-wrap gap-1">
                                         @foreach ($category->placements as $placement)
@@ -328,11 +328,12 @@ new #[Title('Categories')] class extends Component {
                             <flux:table.cell align="end" class="pe-4!">
                                 <flux:button variant="ghost" size="sm" icon="pencil-square"
                                     :href="route('admin.catalog.categories.edit', $category->id)" wire:navigate
-                                    icon-variant="outline" class="cursor-pointer " title="Edit" />
+                                    icon-variant="outline" class="cursor-pointer " tooltip="Edit Category" />
 
                                 <flux:button variant="ghost" size="sm" icon="trash"
                                     wire:click="confirmDelete({{ $category->id }}, '{{ addslashes($category->name) }}')"
-                                    icon-variant="outline" class="text-red-500! cursor-pointer" title="Delete" />
+                                    icon-variant="outline" class="text-red-500! cursor-pointer"
+                                    tooltip="Delete Category" />
                             </flux:table.cell>
 
                         </flux:table.row>
@@ -340,14 +341,14 @@ new #[Title('Categories')] class extends Component {
                         <flux:table.row>
                             <flux:table.cell colspan="6" class="text-center py-12 text-zinc-400">
                                 <flux:icon.folder-open class="w-10 h-10 mx-auto mb-3 stroke-1" />
-                                <p class="font-medium">No categories found</p>
-                                <p class="text-sm mt-1">
+                                <flux:heading>No Categories found</flux:heading>
+                                <flux:text>
                                     @if ($search || $statusFilter)
                                         Try adjusting your search or filter.
                                     @else
                                         Get started by creating your first category.
                                     @endif
-                                </p>
+                                </flux:text>
                             </flux:table.cell>
                         </flux:table.row>
                     @endforelse
@@ -367,7 +368,8 @@ new #[Title('Categories')] class extends Component {
                 <flux:card class="p-0 overflow-hidden">
 
                     {{-- Section toolbar --}}
-                    <div class="px-5 py-3 border-b dark:border-zinc-600 flex items-center justify-between">
+                    <div
+                        class="px-5 py-3 border-b dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-between">
                         <div>
                             <span class="font-medium dark:text-zinc-200">{{ $this->currentSection->label() }}</span>
                             <span class="text-sm text-zinc-500 ml-2">
@@ -404,7 +406,7 @@ new #[Title('Categories')] class extends Component {
                     <div wire:sort="reorder" class="divide-y dark:divide-zinc-600">
                         @forelse ($this->sectionPlacements as $placement)
                             <div wire:sort:item="{{ $placement->id }}" wire:key="placement-{{ $placement->id }}"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-700 group bg-white dark:bg-zinc-800">
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 group bg-white dark:bg-zinc-700">
 
                                 {{-- Drag handle --}}
                                 <div wire:sort:handle
@@ -430,9 +432,10 @@ new #[Title('Categories')] class extends Component {
 
                                 {{-- Name & slug --}}
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-medium text-sm truncate dark:text-zinc-50">
-                                        {{ $placement->category->name }}</p>
-                                    <p class="text-xs text-zinc-400 truncate">{{ $placement->category->slug }}</p>
+                                    <flux:heading>
+                                        {{ $placement->category->name }}
+                                    </flux:heading>
+                                    <flux:text class="text-xs">{{ $placement->category->slug }}</flux:text>
                                 </div>
 
                                 {{-- Status --}}
@@ -443,17 +446,17 @@ new #[Title('Categories')] class extends Component {
 
                                 {{-- Edit shortcut --}}
                                 <flux:button variant="ghost" size="sm" icon="pencil-square"
+                                    tooltip="Edit category"
                                     :href="route('admin.catalog.categories.edit', $placement->category_id)"
                                     wire:navigate icon-variant="outline"
-                                    class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-brand-secondary! dark:text-brand-secondary-light!"
+                                    class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                                     title="Edit category" />
 
                                 {{-- Remove from section --}}
                                 <flux:button type="button" variant="ghost" size="sm" icon="x-mark"
-                                    wire:click="removePlacement({{ $placement->id }})"
+                                    tooltip="Remove from section" wire:click="removePlacement({{ $placement->id }})"
                                     wire:confirm="Remove '{{ addslashes($placement->category->name) }}' from this section?"
-                                    class="opacity-0 group-hover:opacity-100 transition-opacity text-red-400! cursor-pointer"
-                                    title="Remove from section" />
+                                    class="opacity-0 group-hover:opacity-100 transition-opacity text-red-400! cursor-pointer" />
 
                             </div>
 

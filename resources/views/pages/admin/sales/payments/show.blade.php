@@ -21,7 +21,7 @@ new class extends Component {
     public function openRefundModal()
     {
         if ($this->payment->status !== 'completed') {
-            session()->flash('error', 'Only completed payments can be refunded.');
+            $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'Only completed payments can be refunded.');
             return;
         }
 
@@ -70,12 +70,12 @@ new class extends Component {
             DB::commit();
 
             $this->showRefundModal = false;
-            session()->flash('status', 'Refund processed successfully.');
+            $this->dispatch('notify', title: 'Refund Processed', variant: 'success', message: 'Refund processed successfully.');
 
             $this->payment->refresh();
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Failed to process refund: ' . $e->getMessage());
+            $this->dispatch('notify', title: 'Refund Failed', variant: 'danger', message: 'Failed to process refund: ' . $e->getMessage());
         }
     }
 };
@@ -89,90 +89,78 @@ new class extends Component {
         <flux:breadcrumbs.item>Details</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <div>
+    <div class="mb-6">
         <flux:heading size="xl">Payment Details</flux:heading>
+        <flux:subheading>View transaction information and manage refunds.</flux:subheading>
     </div>
-
-    {{-- Flash Messages --}}
-    @if (session('status'))
-        <flux:callout variant="success" class="mb-6">
-            {{ session('status') }}
-        </flux:callout>
-    @endif
-
-    @if (session('error'))
-        <flux:callout variant="danger" class="mb-6">
-            {{ session('error') }}
-        </flux:callout>
-    @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         {{-- Main Content --}}
         <div class="lg:col-span-2 space-y-6">
             {{-- Payment Details Card --}}
             <flux:card class="p-0">
-                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
+                <div class="px-5 py-3 border-b dark:border-zinc-600">
                     <flux:heading>Payment Information</flux:heading>
                 </div>
 
                 <div class="grid grid-cols-2 gap-6 p-5">
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1">Transaction ID</div>
-                        <div class="font-mono text-sm text-zinc-800 dark:text-white break-all">
+                        <flux:subheading class="text-xs! mb-1">Transaction ID</flux:subheading>
+                        <flux:text class="font-mono text-sm break-all">
                             {{ $payment->transaction_id ?? 'N/A' }}
-                        </div>
+                        </flux:text>
                     </div>
 
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1">Amount</div>
-                        <div class="text-2xl font-bold text-zinc-900 dark:text-white">
+                        <flux:subheading class="text-xs! mb-1">Amount</flux:subheading>
+                        <flux:heading size="xl" class="font-bold!">
                             {{ format_currency($payment->amount) }}
-                        </div>
+                        </flux:heading>
                     </div>
 
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1">Status</div>
+                        <flux:subheading class="text-xs! mb-1">Status</flux:subheading>
                         <flux:badge size="lg" variant="flat" :color="$payment->status->color()">
                             {{ $payment->status->label() }}
                         </flux:badge>
                     </div>
 
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1">Gateway</div>
-                        <div class="text-zinc-800 dark:text-white">
+                        <flux:subheading class="text-xs! mb-1">Gateway</flux:subheading>
+                        <flux:text>
                             {{ ucfirst($payment->gateway) }}
-                        </div>
+                        </flux:text>
                     </div>
 
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1">Currency</div>
-                        <div class="text-zinc-800 dark:text-white">
+                        <flux:subheading class="text-xs! mb-1">Currency</flux:subheading>
+                        <flux:text>
                             {{ strtoupper($payment->currency) }}
-                        </div>
+                        </flux:text>
                     </div>
 
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1">Date</div>
-                        <div class="text-zinc-800 dark:text-white">
+                        <flux:subheading class="text-xs! mb-1">Date</flux:subheading>
+                        <flux:text>
                             {{ $payment->created_at?->format('M d, Y h:i A') }}
-                        </div>
+                        </flux:text>
                     </div>
 
                     @if ($payment->card_brand && $payment->card_last4)
                         <div>
-                            <div class="text-xs text-zinc-500 mb-1">Payment Method</div>
-                            <div class="text-zinc-800 dark:text-white">
+                            <flux:subheading class="text-xs! mb-1">Payment Method</flux:subheading>
+                            <flux:text>
                                 {{ ucfirst($payment->card_brand) }} •••• {{ $payment->card_last4 }}
-                            </div>
+                            </flux:text>
                         </div>
                     @endif
 
                     @if ($payment->payment_method_token)
                         <div>
-                            <div class="text-xs text-zinc-500 mb-1">Payment Token</div>
-                            <div class="font-mono text-xs text-zinc-600 break-all">
+                            <flux:subheading class="text-xs! mb-1">Payment Token</flux:subheading>
+                            <flux:text class="font-mono text-xs break-all">
                                 {{ Str::limit($payment->payment_method_token, 30) }}
-                            </div>
+                            </flux:text>
                         </div>
                     @endif
                 </div>
@@ -180,29 +168,31 @@ new class extends Component {
 
             {{-- Refund Information (if refunded) --}}
             @if ($payment->status === 'refunded' && isset($payment->meta['refund']))
-                <flux:card>
-                    <flux:heading size="lg" class="mb-4">Refund Information</flux:heading>
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b dark:border-zinc-600">
+                        <flux:heading size="lg" class="mb-4">Refund Information</flux:heading>
+                    </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-4 p-5">
                         <div>
-                            <div class="text-xs text-zinc-500 mb-1">Refund Amount</div>
-                            <div class="text-xl font-bold text-red-600">
+                            <flux:subheading class="text-xs! mb-1">Refund Amount</flux:subheading>
+                            <flux:heading size="xl" class="font-bold! text-red-600">
                                 {{ format_currency($payment->meta['refund']['amount']) }}
-                            </div>
+                            </flux:heading>
                         </div>
 
                         <div>
-                            <div class="text-xs text-zinc-500 mb-1">Refund Reason</div>
-                            <div class="text-sm text-zinc-700 dark:text-zinc-300">
+                            <flux:subheading class="text-xs! mb-1">Refund Reason</flux:subheading>
+                            <flux:text class="text-sm">
                                 {{ $payment->meta['refund']['reason'] }}
-                            </div>
+                            </flux:text>
                         </div>
 
                         <div>
-                            <div class="text-xs text-zinc-500 mb-1">Refunded At</div>
-                            <div class="text-sm text-zinc-700">
+                            <flux:subheading class="text-xs! mb-1">Refunded At</flux:subheading>
+                            <flux:text class="text-sm">
                                 {{ \Carbon\Carbon::parse($payment->meta['refund']['refunded_at'])->format('M d, Y h:i A') }}
-                            </div>
+                            </flux:text>
                         </div>
                     </div>
                 </flux:card>
@@ -210,30 +200,30 @@ new class extends Component {
 
             {{-- Related Order --}}
             @if ($payment->order)
-                <flux:card>
-                    <flux:heading size="lg" class="mb-4">Related Order</flux:heading>
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b dark:border-zinc-600">
+                        <flux:heading size="lg" class="mb-4">Related Order</flux:heading>
 
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <a href="{{ route('admin.orders.show', $payment->order) }}" wire:navigate
-                                class="font-medium text-blue-600 hover:text-blue-800 text-lg">
-                                Order #{{ $payment->order->reference }}
-                            </a>
-                            <div class="text-sm text-zinc-600 mt-1">
-                                {{ $payment->order->items->count() }}
-                                {{ Str::plural('item', $payment->order->items->count()) }}
-                                • {{ $payment->order->placed_at?->format('M d, Y') }}
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <flux:link href="{{ route('admin.orders.show', $payment->order) }}" wire:navigate
+                                    class="font-medium text-lg">
+                                    Order #{{ $payment->order->reference }}
+                                </flux:link>
+                                <flux:subheading class="text-sm mt-1">
+                                    {{ $payment->order->items->count() }}
+                                    {{ Str::plural('item', $payment->order->items->count()) }}
+                                    • {{ $payment->order->placed_at?->format('M d, Y') }}
+                                </flux:subheading>
                             </div>
-                        </div>
 
-                        <flux:badge size="sm" variant="flat" :color="$payment->order->status->color()">
-                            {{ $payment->order->status->label() }}
-                        </flux:badge>
+                            <flux:badge size="sm" variant="flat" :color="$payment->order->status->color()">
+                                {{ $payment->order->status->label() }}
+                            </flux:badge>
+                        </div>
                     </div>
 
-                    <flux:separator class="my-4" />
-
-                    <div class="space-y-3">
+                    <div class="space-y-3 p-5">
                         @foreach ($payment->order->items->take(3) as $item)
                             <div class="flex items-center gap-3 text-sm">
                                 <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
@@ -244,18 +234,18 @@ new class extends Component {
                                     @endif
                                 </div>
                                 <div class="flex-1">
-                                    <div class="font-medium text-zinc-800 dark:text-white">
+                                    <flux:heading size="sm" class="font-medium!">
                                         {{ $item->product_name }}
-                                    </div>
-                                    <div class="text-xs text-zinc-500">Qty: {{ $item->quantity }}</div>
+                                    </flux:heading>
+                                    <flux:subheading class="text-xs!">Qty: {{ $item->quantity }}</flux:subheading>
                                 </div>
                             </div>
                         @endforeach
 
                         @if ($payment->order->items->count() > 3)
-                            <div class="text-sm text-zinc-500 text-center pt-2">
+                            <flux:subheading class="text-sm! text-center pt-2">
                                 +{{ $payment->order->items->count() - 3 }} more items
-                            </div>
+                            </flux:subheading>
                         @endif
                     </div>
                 </flux:card>
@@ -263,10 +253,14 @@ new class extends Component {
 
             {{-- Meta Data (if exists) --}}
             @if ($payment->meta && count($payment->meta) > 0)
-                <flux:card>
-                    <flux:heading size="lg" class="mb-4">Additional Data</flux:heading>
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b dark:border-zinc-600">
+                        <flux:heading>Additional Data</flux:heading>
+                    </div>
 
-                    <pre class="text-xs bg-zinc-50 dark:bg-zinc-900 p-4 rounded overflow-auto max-h-96">{{ json_encode($payment->meta, JSON_PRETTY_PRINT) }}</pre>
+                    <div class="p-5">
+                        <pre class="text-xs dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-900 p-4 rounded overflow-auto max-h-96">{{ json_encode($payment->meta, JSON_PRETTY_PRINT) }}</pre>
+                    </div>
                 </flux:card>
             @endif
         </div>
@@ -274,11 +268,13 @@ new class extends Component {
         {{-- Sidebar --}}
         <div class="space-y-6">
             {{-- Actions --}}
-            <flux:card>
-                <flux:heading size="lg" class="mb-4">Actions</flux:heading>
+            <flux:card class="p-0">
+                <div class="px-5 py-3 border-b dark:border-zinc-600">
+                    <flux:heading>Actions</flux:heading>
+                </div>
 
-                <div class="space-y-3">
-                    @if ($payment->status === 'completed')
+                <div class="space-y-3 p-5">
+                    @if ($payment->status->value === 'paid')
                         <flux:button wire:click="openRefundModal" variant="danger" icon="arrow-uturn-left"
                             class="w-full">
                             Process Refund
@@ -296,27 +292,29 @@ new class extends Component {
 
             {{-- Customer Info --}}
             @if ($payment->order?->user)
-                <flux:card>
-                    <flux:heading size="lg" class="mb-4">Customer</flux:heading>
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b dark:border-zinc-600">
+                        <flux:heading>Customer</flux:heading>
+                    </div>
 
-                    <div class="space-y-3 text-sm">
+                    <div class="space-y-3 text-sm p-5">
                         <div>
-                            <div class="font-medium text-zinc-800 dark:text-white">
+                            <flux:heading size="sm" class="font-medium!">
                                 {{ $payment->order->user->name }}
-                            </div>
-                            <div class="text-zinc-600">{{ $payment->order->user->email }}</div>
+                            </flux:heading>
+                            <flux:subheading>{{ $payment->order->user->email }}</flux:subheading>
                             @if ($payment->order->user->phone)
-                                <div class="text-zinc-600">{{ $payment->order->user->phone }}</div>
+                                <flux:subheading>{{ $payment->order->user->phone }}</flux:subheading>
                             @endif
                         </div>
 
                         <flux:separator />
 
                         <div>
-                            <div class="text-xs text-zinc-500 mb-1">Total Orders</div>
-                            <div class="text-zinc-700">
+                            <flux:subheading class="text-xs! mb-1">Total Orders</flux:subheading>
+                            <flux:text>
                                 {{ $payment->order->user->orders()->count() }}
-                            </div>
+                            </flux:text>
                         </div>
                     </div>
                 </flux:card>

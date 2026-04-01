@@ -24,14 +24,18 @@ new class extends Component {
     {
         try {
             $this->form->store();
-            $this->dispatch('notify', variant: 'success', message: 'Category created successfully!');
+
+            $this->dispatch('notify', title: 'Category Created', variant: 'success', message: 'The category has been created successfully');
+
             $this->redirectRoute('admin.catalog.categories.index', navigate: true);
         } catch (ValidationException $e) {
-            $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
+            $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields and try again');
+
             throw $e;
         } catch (\Throwable $th) {
             \Log::error('Error creating category: ' . $th->getMessage(), ['exception' => $th]);
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to create category. Please try again.');
+
+            $this->dispatch('notify', title: 'Creation Failed', variant: 'danger', message: 'Failed to create category. Please try again');
         }
     }
 
@@ -50,12 +54,16 @@ new class extends Component {
         <flux:breadcrumbs.item>Create</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <flux:heading size="xl" class="mt-2">Create New Category</flux:heading>
+    <div class="mt-2 mb-6">
+        <flux:heading size="xl">Create New Category</flux:heading>
+        <flux:subheading size="md" class="text-zinc-500">Add a new category to your store. You can edit it later if
+            you need to.</flux:subheading>
+    </div>
 
     <form wire:submit="save" class="space-y-5 mt-6">
         @include('pages.admin.catalog.categories._form-fields')
 
-        <flux:card class="bg-zinc-50 flex justify-end gap-3">
+        <flux:card class="bg-zinc-50 dark:bg-zinc-900 flex justify-end gap-3">
             <flux:button type="button" variant="ghost" :href="route('admin.catalog.categories.index')" wire:navigate
                 class="cursor-pointer">
                 Cancel

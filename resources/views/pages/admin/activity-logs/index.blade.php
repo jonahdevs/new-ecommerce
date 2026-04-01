@@ -99,17 +99,17 @@ new #[Title('Activity Logs')] class extends Component {
         ];
     }
 
-    public function getEventIcon(string $description): string
+    public function getEventIcon(string $description): array
     {
         return match (true) {
-            str_contains($description, 'payment') => '💰',
-            str_contains($description, 'order') => '📦',
-            str_contains($description, 'inventory') => '📊',
-            str_contains($description, 'sap') => '🔄',
-            str_contains($description, 'quote') => '📝',
-            str_contains($description, 'user') => '👤',
-            str_contains($description, 'webhook') => '🔔',
-            default => '•',
+            str_contains($description, 'payment') => ['icon' => 'banknotes', 'color' => 'text-emerald-600 dark:text-emerald-400', 'bg' => 'bg-emerald-50 dark:bg-emerald-950/50'],
+            str_contains($description, 'order') => ['icon' => 'shopping-bag', 'color' => 'text-blue-600 dark:text-blue-400', 'bg' => 'bg-blue-50 dark:bg-blue-950/50'],
+            str_contains($description, 'inventory') => ['icon' => 'chart-bar', 'color' => 'text-violet-600 dark:text-violet-400', 'bg' => 'bg-violet-50 dark:bg-violet-950/50'],
+            str_contains($description, 'sap') => ['icon' => 'arrow-path', 'color' => 'text-indigo-600 dark:text-indigo-400', 'bg' => 'bg-indigo-50 dark:bg-indigo-950/50'],
+            str_contains($description, 'quote') => ['icon' => 'document-text', 'color' => 'text-amber-600 dark:text-amber-400', 'bg' => 'bg-amber-50 dark:bg-amber-950/50'],
+            str_contains($description, 'user') => ['icon' => 'user', 'color' => 'text-teal-600 dark:text-teal-400', 'bg' => 'bg-teal-50 dark:bg-teal-950/50'],
+            str_contains($description, 'webhook') => ['icon' => 'bell', 'color' => 'text-pink-600 dark:text-pink-400', 'bg' => 'bg-pink-50 dark:bg-pink-950/50'],
+            default => ['icon' => 'information-circle', 'color' => 'text-zinc-600 dark:text-zinc-400', 'bg' => 'bg-zinc-50 dark:bg-zinc-950/50'],
         };
     }
 
@@ -150,7 +150,7 @@ new #[Title('Activity Logs')] class extends Component {
     <flux:card class="p-0">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search activities..."
                 class="max-w-xs" clearable />
@@ -216,7 +216,7 @@ new #[Title('Activity Logs')] class extends Component {
 
         {{-- Active filter tags --}}
         @if ($eventType || $dateFrom || $dateTo)
-            <div class="flex flex-wrap gap-2 px-5 py-2 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="flex flex-wrap gap-2 px-5 py-2 border-b border-zinc-200 dark:border-zinc-600">
                 <span
                     class="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-center me-1">Active:</span>
 
@@ -243,25 +243,30 @@ new #[Title('Activity Logs')] class extends Component {
         {{-- Activity List --}}
         <div class="space-y-1">
             @forelse($this->activities as $activity)
+                @php
+                    $iconData = $this->getEventIcon($activity->description);
+                @endphp
                 <div
-                    class="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-                    <div class="text-3xl shrink-0">
-                        {{ $this->getEventIcon($activity->description) }}
+                    class="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-600 last:border-0">
+                    <div class="w-9 h-9 rounded-lg {{ $iconData['bg'] }} flex items-center justify-center shrink-0">
+                        <flux:icon :name="$iconData['icon']" class="size-4 {{ $iconData['color'] }}" />
                     </div>
 
                     <div class="flex-1 min-w-0">
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex-1">
-                                <p class="text-base font-semibold {{ $this->getEventColor($activity->description) }}">
+                                <flux:heading size="sm" class="{{ $this->getEventColor($activity->description) }}">
                                     {{ $this->getEventLabel($activity->description) }}
-                                </p>
+                                </flux:heading>
 
-                                <div class="flex items-center gap-3 mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                                    <span>by {{ $activity->causer?->name ?? 'System' }}</span>
-                                    <span>•</span>
-                                    <time>{{ $activity->created_at->format('M j, Y g:i A') }}</time>
-                                    <span>•</span>
-                                    <span class="text-xs">{{ $activity->created_at->diffForHumans() }}</span>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <flux:subheading>by {{ $activity->causer?->name ?? 'System' }}</flux:subheading>
+                                    <flux:subheading>•</flux:subheading>
+                                    <flux:subheading>{{ $activity->created_at->format('M j, Y g:i A') }}
+                                    </flux:subheading>
+                                    <flux:subheading>•</flux:subheading>
+                                    <flux:subheading class="text-xs!">{{ $activity->created_at->diffForHumans() }}
+                                    </flux:subheading>
                                 </div>
 
                                 @if ($activity->subject)
@@ -378,14 +383,29 @@ new #[Title('Activity Logs')] class extends Component {
                     </div>
                 </flux:modal>
             @empty
-                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
-                    <p>No activity logs found</p>
+                <div class="flex flex-col items-center gap-3 py-12 text-zinc-400 text-center">
+                    <flux:icon.clipboard-document-list class="w-10 h-10 opacity-40" />
+                    <div>
+                        <flux:heading size="sm">No activity logs found</flux:heading>
+                        <flux:subheading class="mt-0.5">
+                            @if ($search || $eventType || $dateFrom || $dateTo)
+                                No results match your current filters.
+                            @else
+                                Activity logs will appear here as actions are performed.
+                            @endif
+                        </flux:subheading>
+                    </div>
+                    @if ($search || $eventType || $dateFrom || $dateTo)
+                        <flux:button variant="ghost" size="sm" wire:click="resetFilters">
+                            Clear filters
+                        </flux:button>
+                    @endif
                 </div>
             @endforelse
         </div>
 
         {{-- Pagination --}}
-        <div class="px-5 py-3 border-t border-zinc-200 dark:border-zinc-700">
+        <div class="px-5 py-3 border-t border-zinc-200 dark:border-zinc-600">
             {{ $this->activities->links() }}
         </div>
     </flux:card>

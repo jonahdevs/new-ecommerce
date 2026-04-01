@@ -1,6 +1,6 @@
 {{-- Basic Info --}}
 <flux:card class="p-0">
-    <div class="px-3 py-2 border-b">
+    <div class="px-3 py-2 border-b dark:border-zinc-600">
         <flux:heading>Basic Information</flux:heading>
     </div>
 
@@ -23,7 +23,7 @@
 
 {{-- Password --}}
 <flux:card class="p-0">
-    <div class="px-3 py-2 border-b">
+    <div class="px-3 py-2 border-b dark:border-zinc-600">
         <flux:heading>Password</flux:heading>
         @isset($user)
             <flux:subheading>Leave blank to keep current password</flux:subheading>
@@ -41,7 +41,7 @@
 
 {{-- Account Status --}}
 <flux:card class="p-0">
-    <div class="px-3 py-2 border-b">
+    <div class="px-3 py-2 border-b dark:border-zinc-600">
         <flux:heading>Account Status</flux:heading>
     </div>
 

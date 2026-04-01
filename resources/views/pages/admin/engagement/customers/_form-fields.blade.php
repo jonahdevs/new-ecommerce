@@ -21,7 +21,7 @@
 
         {{-- Avatar Upload --}}
         <div class="flex flex-col items-center justify-center">
-            <div class="p-3 rounded-full border border-dashed w-fit">
+            <div class="p-3 rounded-full border border-dashed dark:border-zinc-600 w-fit">
                 <label for="avatar" class="cursor-pointer group">
                     <div
                         class="size-32 rounded-full overflow-hidden relative bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
@@ -132,92 +132,53 @@
 <div class="col-span-3 space-y-5">
     {{-- Personal Information --}}
     <flux:card class="p-0">
-        <div class="border-b px-3 py-2">
+        <div class="border-b px-3 py-2 dark:border-zinc-600">
             <flux:subheading class="font-medium">Personal Information</flux:subheading>
         </div>
 
         <div class="grid grid-cols-2 gap-x-5 gap-y-4 p-5">
-            <flux:field>
-                <flux:label>Full Name</flux:label>
-                <flux:input wire:model="form.name" placeholder="e.g. John Doe" />
-                <flux:error name="form.name" />
-            </flux:field>
+            <flux:input label="Full Name" wire:model="form.name" placeholder="e.g. John Doe" />
 
-            <flux:field>
-                <flux:label>Email Address</flux:label>
-                <flux:input wire:model="form.email" type="email" placeholder="e.g. johndoe@example.com" />
-                <flux:error name="form.email" />
-            </flux:field>
+            <flux:input label="Email Address" wire:model="form.email" type="email"
+                placeholder="e.g. johndoe@example.com" />
 
-            <flux:field>
-                <flux:label>Phone Number</flux:label>
-                <flux:input wire:model="form.phone_number" placeholder="e.g. 0700 000 000" />
-                <flux:error name="form.phone_number" />
-            </flux:field>
+            <flux:input label="Phone Number" wire:model="form.phone_number" placeholder="e.g. 0700 000 000" />
         </div>
 
     </flux:card>
 
     {{-- Default Address --}}
     <flux:card class="p-0">
-        <div class="border-b px-3 py-2">
+        <div class="border-b px-3 py-2 dark:border-zinc-600">
             <flux:subheading class="font-medium">Default Address</flux:subheading>
             <flux:text class="text-xs text-zinc-400 mt-1">This will be set as the customer's default shipping address
             </flux:text>
         </div>
 
         <div class="grid grid-cols-2 gap-x-5 gap-y-4 p-5">
-            <flux:field>
-                <flux:label>First Name</flux:label>
-                <flux:input wire:model="form.address_first_name" placeholder="e.g. John" />
-                <flux:error name="form.address_first_name" />
-            </flux:field>
+            <flux:input label="First Name" wire:model="form.address_first_name" placeholder="e.g. John" />
 
-            <flux:field>
-                <flux:label>Last Name</flux:label>
-                <flux:input wire:model="form.address_last_name" placeholder="e.g. Doe" />
-                <flux:error name="form.address_last_name" />
-            </flux:field>
+            <flux:input label="Last Name" wire:model="form.address_last_name" placeholder="e.g. Doe" />
 
-            <flux:field>
-                <flux:label>Phone Number</flux:label>
-                <flux:input wire:model="form.address_phone" placeholder="e.g. 0700 000 000" />
-                <flux:error name="form.address_phone" />
-            </flux:field>
+            <flux:input label="Phone Number" wire:model="form.address_phone" placeholder="e.g. 0700 000 000" />
 
-            <flux:field>
-                <flux:label>County</flux:label>
-                <flux:select wire:model.live="form.county_id" placeholder="Select county...">
-                    @foreach ($this->counties as $county)
-                        <flux:select.option :value="$county->id">{{ $county->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-                <flux:error name="form.county_id" />
-            </flux:field>
+            <flux:select label="County" wire:model.live="form.county_id" placeholder="Select county...">
+                @foreach ($this->counties as $county)
+                    <flux:select.option :value="$county->id">{{ $county->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
 
-            <flux:field>
-                <flux:label>Area</flux:label>
-                <flux:select wire:model="form.area_id" placeholder="Select area..." :disabled="!$form->county_id">
-                    @foreach ($this->areas as $area)
-                        <flux:select.option :value="$area->id">{{ $area->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-                <flux:error name="form.area_id" />
-            </flux:field>
+            <flux:select label="Area" wire:model="form.area_id" placeholder="Select area..."
+                :disabled="!$form->county_id">
+                @foreach ($this->areas as $area)
+                    <flux:select.option :value="$area->id">{{ $area->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
 
-            <flux:field class="col-span-2">
-                <flux:label>Address</flux:label>
-                <flux:input wire:model="form.address_line" placeholder="e.g. Fourth Floor, TRG Plaza" />
-                <flux:error name="form.address_line" />
-            </flux:field>
+            <flux:input label="Address" wire:model="form.address_line" placeholder="e.g. Fourth Floor, TRG Plaza" />
 
-            <flux:field class="col-span-2">
-                <flux:label>Additional Information <flux:badge size="sm" variant="ghost">Optional</flux:badge>
-                </flux:label>
-                <flux:textarea wire:model="form.additional_information"
-                    placeholder="Landmark, delivery instructions..." rows="2" />
-                <flux:error name="form.additional_information" />
-            </flux:field>
+            <flux:textarea label="Additional Information (optional)" wire:model="form.additional_information"
+                placeholder="Landmark, delivery instructions..." rows="2" />
         </div>
     </flux:card>
 </div>

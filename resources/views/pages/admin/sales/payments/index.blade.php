@@ -134,7 +134,7 @@ new #[Title('Transactions')] class extends Component {
     {{-- Page header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <flux:heading size="xl" class="mb-1">Transactions</flux:heading>
+            <flux:heading size="xl">Transactions</flux:heading>
             <flux:subheading>Monitor payment transactions, track revenue, and manage refunds.</flux:subheading>
         </div>
     </div>
@@ -145,13 +145,13 @@ new #[Title('Transactions')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-emerald-500 dark:border-l-emerald-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">
                         Total Revenue
-                    </flux:text>
+                    </flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold! text-emerald-600">
                         {{ format_currency($this->stats['revenue']) }}
                     </flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Paid transactions</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Paid transactions</flux:subheading>
                 </div>
                 <div
                     class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900 flex items-center justify-center shrink-0">
@@ -163,13 +163,13 @@ new #[Title('Transactions')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-amber-500 dark:border-l-amber-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">
                         Pending Value
-                    </flux:text>
+                    </flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold! text-amber-600">
                         {{ format_currency($this->stats['pending']) }}
                     </flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Pending / Processing</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Pending / Processing</flux:subheading>
                 </div>
                 <div
                     class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900 flex items-center justify-center shrink-0">
@@ -181,13 +181,13 @@ new #[Title('Transactions')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-red-500 dark:border-l-red-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">
                         Failed
-                    </flux:text>
+                    </flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold! text-red-600">
                         {{ number_format($this->stats['failed']) }}
                     </flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Failed transactions</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Failed transactions</flux:subheading>
                 </div>
                 <div class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900 flex items-center justify-center shrink-0">
                     <flux:icon.exclamation-triangle class="size-5 text-red-500" />
@@ -198,13 +198,13 @@ new #[Title('Transactions')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-blue-500 dark:border-l-blue-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">
                         Total Transactions
-                    </flux:text>
+                    </flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['total']) }}
                     </flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">All time</flux:text>
+                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
                 </div>
                 <div
                     class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900 flex items-center justify-center shrink-0">
@@ -325,13 +325,13 @@ new #[Title('Transactions')] class extends Component {
 
                         {{-- Transaction ID --}}
                         <flux:table.cell class="ps-4!">
-                            <div class="font-mono text-xs text-zinc-700 dark:text-zinc-300 max-w-40 truncate">
+                            <flux:text class="font-mono text-xs max-w-40 truncate">
                                 {{ $payment->transaction_id ?? '—' }}
-                            </div>
+                            </flux:text>
                             @if ($payment->gateway_order_id && $payment->gateway_order_id !== $payment->transaction_id)
-                                <div class="font-mono text-xs text-zinc-400 max-w-40 truncate mt-0.5">
+                                <flux:subheading class="font-mono text-xs! max-w-40 truncate mt-0.5">
                                     {{ $payment->gateway_order_id }}
-                                </div>
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
@@ -350,14 +350,14 @@ new #[Title('Transactions')] class extends Component {
                         {{-- Customer --}}
                         <flux:table.cell x-show="columns.customer">
                             @if ($payment->order?->user)
-                                <div class="font-medium text-zinc-800 dark:text-zinc-200">
+                                <flux:heading size="sm" class="font-medium!">
                                     {{ $payment->order->user->name }}
-                                </div>
-                                <div class="text-xs text-zinc-400">
+                                </flux:heading>
+                                <flux:subheading class="text-xs!">
                                     {{ $payment->order->user->email }}
-                                </div>
+                                </flux:subheading>
                             @else
-                                <span class="text-zinc-400">—</span>
+                                <flux:subheading>—</flux:subheading>
                             @endif
                         </flux:table.cell>
 
@@ -373,26 +373,26 @@ new #[Title('Transactions')] class extends Component {
                             @if ($payment->card_brand && $payment->card_last4)
                                 <div class="flex items-center gap-1.5">
                                     <flux:icon.credit-card class="size-3.5 text-zinc-400" />
-                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                                    <flux:text class="text-sm">
                                         {{ ucfirst($payment->card_brand) }} ···· {{ $payment->card_last4 }}
-                                    </span>
+                                    </flux:text>
                                 </div>
                             @elseif ($payment->gateway === 'mpesa' || ($payment->meta['payment_method'] ?? null) === 'mpesa')
                                 <div class="flex items-center gap-1.5">
                                     <flux:icon.device-phone-mobile class="size-3.5 text-zinc-400" />
-                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">M-Pesa</span>
+                                    <flux:text class="text-sm">M-Pesa</flux:text>
                                 </div>
                             @else
-                                <span class="text-zinc-400 text-sm">—</span>
+                                <flux:subheading class="text-sm!">—</flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         {{-- Amount --}}
                         <flux:table.cell>
-                            <div class="font-semibold text-sm text-zinc-800 dark:text-zinc-200">
+                            <flux:heading size="sm" class="font-semibold!">
                                 {{ format_currency($payment->amount_cents / 100) }}
-                            </div>
-                            <div class="text-xs text-zinc-400">{{ $payment->currency ?? get_currency_code() }}</div>
+                            </flux:heading>
+                            <flux:subheading class="text-xs!">{{ $payment->currency ?? get_currency_code() }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Status --}}
@@ -401,16 +401,16 @@ new #[Title('Transactions')] class extends Component {
                                 {{ $payment->status->label() }}
                             </flux:badge>
                             @if ($payment->paid_at)
-                                <div class="text-xs text-zinc-400 mt-0.5">
+                                <flux:subheading class="text-xs! mt-0.5">
                                     {{ $payment->paid_at->format('M d, g:i A') }}
-                                </div>
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         {{-- Date --}}
                         <flux:table.cell x-show="columns.date">
-                            <div class="text-sm">{{ $payment->created_at->format('M d, Y') }}</div>
-                            <div class="text-xs text-zinc-400">{{ $payment->created_at->format('h:i A') }}</div>
+                            <flux:text class="text-sm">{{ $payment->created_at->format('M d, Y') }}</flux:text>
+                            <flux:subheading class="text-xs!">{{ $payment->created_at->format('h:i A') }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Actions --}}
@@ -442,10 +442,10 @@ new #[Title('Transactions')] class extends Component {
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="9" class="text-center py-16">
-                            <div class="flex flex-col items-center justify-center text-zinc-400">
-                                <flux:icon.credit-card class="size-12 stroke-1 mb-3" />
-                                <flux:text class="font-medium text-zinc-500">No transactions found</flux:text>
-                                <flux:text class="text-xs mt-1">Try adjusting your filters or search query</flux:text>
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.credit-card class="size-12 stroke-1 mb-3 text-zinc-400" />
+                                <flux:heading size="sm" class="font-medium!">No transactions found</flux:heading>
+                                <flux:subheading class="text-xs! mt-1">Try adjusting your filters or search query</flux:subheading>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

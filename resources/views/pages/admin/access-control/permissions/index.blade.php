@@ -81,7 +81,7 @@ new #[Title('Permissions')] class extends Component {
                         <flux:table.row :key="$permission->id">
 
                             <flux:table.cell class="ps-5!">
-                                {{ str($permission->name)->replace('.', ' ') }}
+                                <flux:heading size="sm">{{ str($permission->name)->replace('.', ' ') }}</flux:heading>
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -105,29 +105,40 @@ new #[Title('Permissions')] class extends Component {
                                             {{ str($role->name)->replace('_', ' ')->title() }}
                                         </flux:badge>
                                     @empty
-                                        <flux:text class="text-sm text-zinc-400">—</flux:text>
+                                        <flux:subheading>—</flux:subheading>
                                     @endforelse
                                 </div>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <flux:text class="text-sm text-zinc-500">
+                                <flux:subheading>
                                     {{ $permission->created_at->format('M d, Y') }}
-                                </flux:text>
+                                </flux:subheading>
                             </flux:table.cell>
 
                         </flux:table.row>
 
                     @empty
                         <flux:table.row>
-                            <flux:table.cell colspan="3" class="text-center py-16">
-                                <div class="flex flex-col items-center gap-3">
-                                    <flux:icon name="shield-exclamation" class="size-10 text-zinc-300" />
-                                    <flux:heading size="lg" class="text-zinc-600">No Permissions Found
-                                    </flux:heading>
-                                    <flux:text class="text-sm text-zinc-400">
-                                        {{ $this->search || $this->role ? 'No permissions match your filters.' : 'No permissions have been created yet.' }}
-                                    </flux:text>
+                            <flux:table.cell colspan="3" class="text-center py-12">
+                                <div class="flex flex-col items-center gap-3 text-zinc-400">
+                                    <flux:icon.shield-exclamation class="w-10 h-10 opacity-40" />
+                                    <div>
+                                        <flux:heading size="sm">No permissions found</flux:heading>
+                                        <flux:subheading class="mt-0.5">
+                                            @if ($this->search || $this->role)
+                                                No results match your current filters.
+                                            @else
+                                                No permissions have been created yet.
+                                            @endif
+                                        </flux:subheading>
+                                    </div>
+                                    @if ($this->search || $this->role)
+                                        <flux:button variant="ghost" size="sm"
+                                            wire:click="$set('search', ''); $set('role', '')">
+                                            Clear filters
+                                        </flux:button>
+                                    @endif
                                 </div>
                             </flux:table.cell>
                         </flux:table.row>

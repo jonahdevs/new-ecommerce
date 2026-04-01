@@ -189,7 +189,7 @@ new #[Title('Orders')] class extends Component {
             $message .= " {$skipped} skipped (invalid transition).";
         }
 
-        $this->dispatch('notify', variant: $skipped > 0 ? 'warning' : 'success', message: $message);
+        $this->dispatch('notify', title: 'Bulk Update Complete', variant: $skipped > 0 ? 'warning' : 'success', message: $message);
     }
 
     // =========================================================================
@@ -202,7 +202,7 @@ new #[Title('Orders')] class extends Component {
             ->with(['user', 'payment'])
             ->get();
 
-        return $this->buildCsvDownload($orders, "orders-selected-" . now()->format('Y-m-d'));
+        return $this->buildCsvDownload($orders, 'orders-selected-' . now()->format('Y-m-d'));
     }
 
     public function exportFiltered()
@@ -216,7 +216,7 @@ new #[Title('Orders')] class extends Component {
             ->latest()
             ->get();
 
-        return $this->buildCsvDownload($orders, "orders-" . now()->format('Y-m-d'));
+        return $this->buildCsvDownload($orders, 'orders-' . now()->format('Y-m-d'));
     }
 
     private function buildCsvDownload($orders, string $filename)
@@ -310,15 +310,10 @@ new #[Title('Orders')] class extends Component {
     {{-- Page header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <flux:heading size="xl" class="mb-1">Orders</flux:heading>
+            <flux:heading size="xl">Orders</flux:heading>
             <flux:subheading>Manage sales orders and delivery tracking.</flux:subheading>
         </div>
         <div class="flex items-center gap-2">
-            @if ($this->pendingQuotesCount > 0)
-                <flux:button :href="route('admin.quotations.index')" wire:navigate variant="ghost" size="sm" icon="tag">
-                    {{ $this->pendingQuotesCount }} pending quotes
-                </flux:button>
-            @endif
             <flux:button icon="arrow-down-tray" variant="ghost" size="sm" @click="runExport()">
                 <span x-text="selected.length > 0 ? 'Export Selected (' + selected.length + ')' : 'Export'"></span>
             </flux:button>
@@ -333,12 +328,13 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-blue-500 dark:border-l-blue-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Orders</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Orders</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['total']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">All time</flux:text>
+                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.shopping-bag class="size-5 text-blue-500" />
                 </div>
             </div>
@@ -347,12 +343,13 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-emerald-500 dark:border-l-emerald-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Revenue</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Revenue</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ format_currency($this->stats['revenue']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">All time</flux:text>
+                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.banknotes class="size-5 text-emerald-500" />
                 </div>
             </div>
@@ -361,12 +358,13 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-violet-500 dark:border-l-violet-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Orders Today</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Orders Today</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['today']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">{{ now()->format('M j, Y') }}</flux:text>
+                    <flux:subheading class="text-xs! mt-1">{{ now()->format('M j, Y') }}</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.calendar-days class="size-5 text-violet-500" />
                 </div>
             </div>
@@ -375,13 +373,14 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-amber-500 dark:border-l-amber-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Needs Attention
-                    </flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Needs Attention
+                    </flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['pending']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Pending / Processing</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Pending / Processing</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.clock class="size-5 text-amber-500" />
                 </div>
             </div>
@@ -394,7 +393,8 @@ new #[Title('Orders')] class extends Component {
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
+        <div
+            class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search reference, name or email..." class="max-w-xs" clearable />
@@ -455,13 +455,13 @@ new #[Title('Orders')] class extends Component {
             x-transition:leave-end="opacity-0 -translate-y-2"
             class="flex flex-wrap items-center gap-2 px-5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
-            <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 me-1">
+            <flux:subheading class="text-sm! font-semibold! me-1">
                 <span x-text="selected.length"></span> selected
-            </span>
+            </flux:subheading>
 
             {{-- Bulk actions --}}
-            <flux:button size="sm" variant="ghost" icon="check-badge" icon-variant="outline"
-                class="cursor-pointer" @click="runBulkAction('{{ OrderStatus::CONFIRMED->value }}')">Confirm
+            <flux:button size="sm" variant="ghost" icon="check-badge" icon-variant="outline" class="cursor-pointer"
+                @click="runBulkAction('{{ OrderStatus::CONFIRMED->value }}')">Confirm
             </flux:button>
 
             <flux:button size="sm" variant="ghost" icon="arrow-path" icon-variant="outline"
@@ -560,45 +560,38 @@ new #[Title('Orders')] class extends Component {
                                 class="font-semibold text-zinc-800 dark:text-white hover:text-brand-primary transition-colors">
                                 {{ $order->reference }}
                             </a>
-                            {{-- Show "from quote" badge on orders converted from a quotation --}}
-                            @if ($order->quote_id)
-                                <div class="mt-0.5">
-                                    <flux:badge size="sm" color="blue" variant="flat">From quote</flux:badge>
-                                </div>
-                            @endif
                         </flux:table.cell>
 
                         {{-- Customer --}}
                         <flux:table.cell x-show="columns.customer">
-                            <div class="font-medium text-zinc-800 dark:text-zinc-200">{{ $order->user->name }}</div>
-                            <div class="text-xs text-zinc-400">{{ $order->user->email }}</div>
+                            <flux:heading size="sm" class="font-medium!">{{ $order->user->name }}</flux:heading>
+                            <flux:subheading class="text-xs!">{{ $order->user->email }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Date --}}
                         <flux:table.cell x-show="columns.date">
-                            <div class="text-sm">{{ $order->created_at->format('M d, Y') }}</div>
-                            <div class="text-xs text-zinc-400">{{ $order->created_at->format('h:i A') }}</div>
+                            <flux:text class="text-sm">{{ $order->created_at->format('M d, Y') }}</flux:text>
+                            <flux:subheading class="text-xs!">{{ $order->created_at->format('h:i A') }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Items --}}
                         <flux:table.cell x-show="columns.items">
-                            <span class="text-sm text-zinc-600 dark:text-zinc-400">
+                            <flux:text class="text-sm">
                                 {{ $order->items_count }} {{ Str::plural('item', $order->items_count) }}
-                            </span>
+                            </flux:text>
                         </flux:table.cell>
 
                         {{-- Total --}}
                         <flux:table.cell>
-                            <div class="font-semibold text-sm text-zinc-800 dark:text-zinc-200">
+                            <flux:heading size="sm" class="font-semibold!">
                                 {{ format_currency($order->total) }}
-                            </div>
+                            </flux:heading>
                         </flux:table.cell>
 
                         {{-- Payment column --}}
                         <flux:table.cell x-show="columns.payment">
                             @if ($order->payment)
-                                <flux:badge size="sm" variant="flat"
-                                    :color="$order->payment->status->color()">
+                                <flux:badge size="sm" variant="flat" :color="$order->payment->status->color()">
                                     {{ $order->payment->status?->label() }}
                                 </flux:badge>
                             @else
@@ -622,8 +615,8 @@ new #[Title('Orders')] class extends Component {
                                 <flux:menu>
 
                                     {{-- View --}}
-                                    <flux:menu.item icon="eye" icon-variant="outline" :href="route('admin.orders.show', $order)"
-                                        wire:navigate>
+                                    <flux:menu.item icon="eye" icon-variant="outline"
+                                        :href="route('admin.orders.show', $order)" wire:navigate>
                                         View Order
                                     </flux:menu.item>
 
@@ -659,12 +652,12 @@ new #[Title('Orders')] class extends Component {
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="10" class="text-center py-16">
-                            <div class="flex flex-col items-center justify-center text-zinc-400">
-                                <flux:icon.inbox class="size-12 stroke-1 mb-3" />
-                                <flux:text class="font-medium text-zinc-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.inbox class="size-12 stroke-1 mb-3 text-zinc-400" />
+                                <flux:heading size="sm" class="font-medium!">
                                     No orders found
-                                </flux:text>
-                                <flux:text class="text-xs mt-1">Try adjusting your filters or search query</flux:text>
+                                </flux:heading>
+                                <flux:subheading class="text-xs! mt-1">Try adjusting your filters or search query</flux:subheading>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

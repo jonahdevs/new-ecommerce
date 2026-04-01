@@ -178,15 +178,9 @@ new #[Title('Returns')] class extends Component {
             $this->newStatus = '';
 
             unset($this->viewingOrder, $this->allowedTransitions, $this->returns);
-            $this->dispatch('notify', variant: 'success', message: 'Return status updated.');
+            $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: 'Return status updated.');
         } catch (\Throwable $e) {
-            logger()->error('Failed to update return status.', [
-                'exception' => $e->getMessage(),
-                'order_id' => $this->viewingId,
-                'status' => $this->newStatus,
-                'user_id' => auth()->id(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not update status. Please try again.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Could not update status. Please try again.');
         }
     }
 
@@ -220,50 +214,65 @@ new #[Title('Returns')] class extends Component {
                 </flux:select>
 
                 <flux:dropdown>
-                    <flux:button icon="adjustments-horizontal" variant="ghost">
+                    <flux:button icon="funnel" icon-variant="outline" variant="ghost" size="sm">
                         Filters
                         @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
-                            <span class="ml-2 w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <flux:badge size="sm" class="ms-2" color="blue">
+                                {{ collect([$filterStatus, $filterMethod, $filterZone, $filterDateFrom, $filterDateTo])->filter()->count() }}
+                            </flux:badge>
                         @endif
                     </flux:button>
 
-                    <flux:menu class="min-w-72">
-                        <div class="p-4 space-y-4">
-                            <flux:heading size="sm">Advanced Filters</flux:heading>
-
-                            <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable>
-                                @foreach ($this->methods as $method)
-                                    <flux:select.option value="{{ $method->id }}">{{ $method->name }}
-                                    </flux:select.option>
-                                @endforeach
-                            </flux:select>
-
-                            <flux:select wire:model.live="filterZone" placeholder="All Zones" clearable>
-                                @foreach ($this->zones as $zone)
-                                    <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}
-                                    </flux:select.option>
-                                @endforeach
-                            </flux:select>
-
-                            <div class="space-y-2">
-                                <flux:label>Date Range</flux:label>
-                                <div class="flex items-center gap-2">
-                                    <flux:input wire:model.live="filterDateFrom" type="date" size="sm" />
-                                    <span class="text-zinc-400">-</span>
-                                    <flux:input wire:model.live="filterDateTo" type="date" size="sm" />
-                                </div>
+                    <flux:menu class="min-w-80">
+                        <div class="">
+                            <div class="flex items-center justify-between border-b dark:border-zinc-600 px-4 py-2">
+                                <flux:heading size="sm">Filter Options</flux:heading>
+                                @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
+                                    <flux:button variant="ghost" size="xs" wire:click="clearFilters"
+                                        class="cursor-pointer">
+                                        Reset
+                                    </flux:button>
+                                @endif
                             </div>
 
-                            <flux:menu.separator />
-                            <flux:button variant="ghost" size="sm" wire:click="clearFilters"
-                                class="cursor-pointer w-full">
-                                Clear filters
-                            </flux:button>
+                            <div class="space-y-3 p-5">
+                                <flux:field>
+                                    <flux:label>Shipping Method</flux:label>
+                                    <flux:select wire:model.live="filterMethod" placeholder="All Methods">
+                                        @foreach ($this->methods as $method)
+                                            <flux:select.option value="{{ $method->id }}">{{ $method->name }}
+                                            </flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                </flux:field>
+
+                                <flux:field>
+                                    <flux:label>Shipping Zone</flux:label>
+                                    <flux:select wire:model.live="filterZone" placeholder="All Zones">
+                                        @foreach ($this->zones as $zone)
+                                            <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}
+                                            </flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                </flux:field>
+
+                                <flux:field>
+                                    <flux:label>Date Range</flux:label>
+                                    <div class="space-y-2">
+                                        <flux:input wire:model.live="filterDateFrom" type="date" size="sm"
+                                            placeholder="From" />
+
+                                        <flux:input wire:model.live="filterDateTo" type="date" size="sm"
+                                            placeholder="To" />
+                                    </div>
+                                </flux:field>
+                            </div>
                         </div>
                     </flux:menu>
                 </flux:dropdown>
             </div>
         </div>
+
         <flux:table :paginate="$this->returns">
             <flux:table.columns>
                 <flux:table.column class="ps-4!">Order</flux:table.column>
@@ -285,26 +294,29 @@ new #[Title('Returns')] class extends Component {
                     @endphp
                     <flux:table.row :key="$order->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-semibold text-sm">#{{ $order->order_id }}</div>
+                            <flux:heading size="sm" class="font-semibold!">#{{ $order->order_id }}</flux:heading>
                             @if ($order->provider_reference)
-                                <code class="text-xs text-zinc-400">{{ $order->provider_reference }}</code>
+                                <flux:subheading class="text-xs! font-mono">{{ $order->provider_reference }}
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $order->shippingMethod->name }}</span>
+                            <flux:text class="text-sm">{{ $order->shippingMethod->name }}</flux:text>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $order->shippingZone->name }}</span>
+                            <flux:text class="text-sm">{{ $order->shippingZone->name }}</flux:text>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm font-medium">{{ format_currency($order->shipping_cost) }}</span>
+                            <flux:heading size="sm" class="font-medium!">
+                                {{ format_currency($order->shipping_cost) }}</flux:heading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-xs text-zinc-500">{{ $order->created_at->format('d M Y') }}</span>
+                            <flux:subheading class="text-xs!">{{ $order->created_at->format('d M Y') }}
+                            </flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -322,18 +334,18 @@ new #[Title('Returns')] class extends Component {
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="7" class="py-12 text-center">
-                            <div class="flex flex-col items-center gap-3 text-zinc-400">
-                                <flux:icon.arrow-uturn-left class="w-10 h-10 opacity-40" />
+                            <div class="flex flex-col items-center gap-3">
+                                <flux:icon.arrow-uturn-left class="w-10 h-10 opacity-40 text-zinc-400" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No return orders
-                                        found</p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm" class="font-medium!">No return orders found
+                                    </flux:heading>
+                                    <flux:subheading class="text-xs! mt-0.5">
                                         @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
                                             No returns match your current filters.
                                         @else
                                             Return shipments will appear here when raised.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
                                     <flux:button variant="ghost" size="sm" wire:click="clearFilters">
@@ -360,7 +372,8 @@ new #[Title('Returns')] class extends Component {
                 $breakdown = $order->cost_breakdown ?? [];
             @endphp
 
-            <div class="flex items-start justify-between pb-4 border-b dark:border-zinc-600 border-zinc-100 dark:border-zinc-800">
+            <div
+                class="flex items-start justify-between pb-4 border-b dark:border-zinc-600 border-zinc-100 dark:border-zinc-800">
                 <div>
                     <flux:heading size="lg">Return #{{ $order->order_id }}</flux:heading>
                     <flux:badge color="orange" variant="flat" size="sm" class="mt-1">Return Shipment</flux:badge>
@@ -371,25 +384,30 @@ new #[Title('Returns')] class extends Component {
             <div class="py-4 space-y-6">
                 <div class="grid grid-cols-3 gap-4 text-sm">
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Method</p>
-                        <p class="font-medium">{{ $order->shippingMethod->name }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Method</flux:subheading>
+                        <flux:heading size="sm" class="font-medium!">{{ $order->shippingMethod->name }}
+                        </flux:heading>
                     </div>
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Zone</p>
-                        <p class="font-medium">{{ $order->shippingZone->name }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Zone</flux:subheading>
+                        <flux:heading size="sm" class="font-medium!">{{ $order->shippingZone->name }}
+                        </flux:heading>
                     </div>
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Cost</p>
-                        <p class="font-semibold">{{ format_currency($order->shipping_cost) }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Cost</flux:subheading>
+                        <flux:heading size="sm" class="font-semibold!">
+                            {{ format_currency($order->shipping_cost) }}</flux:heading>
                     </div>
                     <div>
-                        <p class="text-zinc-400 text-xs mb-0.5">Created</p>
-                        <p class="font-medium">{{ $order->created_at->format('d M Y, H:i') }}</p>
+                        <flux:subheading class="text-xs! mb-0.5">Created</flux:subheading>
+                        <flux:heading size="sm" class="font-medium!">
+                            {{ $order->created_at->format('d M Y, H:i') }}</flux:heading>
                     </div>
                     @if ($order->delivered_at)
                         <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Returned At</p>
-                            <p class="font-medium text-green-600">{{ $order->delivered_at->format('d M Y, H:i') }}</p>
+                            <flux:subheading class="text-xs! mb-0.5">Returned At</flux:subheading>
+                            <flux:heading size="sm" class="font-medium! text-green-600">
+                                {{ $order->delivered_at->format('d M Y, H:i') }}</flux:heading>
                         </div>
                     @endif
                 </div>
@@ -397,22 +415,24 @@ new #[Title('Returns')] class extends Component {
                 {{-- Cost breakdown --}}
                 @if (!empty($breakdown))
                     <div>
-                        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cost Breakdown</p>
+                        <flux:heading size="sm" class="font-medium! mb-2">Cost Breakdown</flux:heading>
                         <div
                             class="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg divide-y divide-zinc-100 dark:divide-zinc-700 text-sm">
                             @foreach ($breakdown as $key => $value)
                                 @if (!in_array($key, ['model', 'total']))
                                     <div class="flex justify-between px-3 py-2">
-                                        <span class="text-zinc-500 capitalize">{{ str_replace('_', ' ', $key) }}</span>
-                                        <span class="font-medium">
+                                        <flux:subheading class="capitalize">{{ str_replace('_', ' ', $key) }}
+                                        </flux:subheading>
+                                        <flux:heading size="sm" class="font-medium!">
                                             {{ is_numeric($value) ? format_currency($value) : $value }}
-                                        </span>
+                                        </flux:heading>
                                     </div>
                                 @endif
                             @endforeach
-                            <div class="flex justify-between px-3 py-2 font-semibold">
-                                <span>Total</span>
-                                <span>{{ format_currency($breakdown['total'] ?? $order->shipping_cost) }}</span>
+                            <div class="flex justify-between px-3 py-2">
+                                <flux:heading size="sm" class="font-semibold!">Total</flux:heading>
+                                <flux:heading size="sm" class="font-semibold!">
+                                    {{ format_currency($breakdown['total'] ?? $order->shipping_cost) }}</flux:heading>
                             </div>
                         </div>
                     </div>
@@ -421,7 +441,7 @@ new #[Title('Returns')] class extends Component {
                 {{-- Status update --}}
                 @if (!$status->isTerminal() && count($this->allowedTransitions))
                     <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Update Status</p>
+                        <flux:heading size="sm" class="font-medium! mb-3">Update Status</flux:heading>
 
                         @if (!$confirmingStatus)
                             <div class="flex flex-wrap gap-2">
@@ -435,10 +455,10 @@ new #[Title('Returns')] class extends Component {
                             </div>
                         @else
                             <div class="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg p-4 space-y-3">
-                                <p class="text-sm">
+                                <flux:text class="text-sm">
                                     Mark as
                                     <strong>{{ \App\Enums\DeliveryOrderStatus::from($newStatus)->label() }}</strong>?
-                                </p>
+                                </flux:text>
                                 <flux:textarea wire:model="statusNote" placeholder="Optional note..."
                                     rows="2" />
                                 <div class="flex gap-2">
@@ -458,7 +478,6 @@ new #[Title('Returns')] class extends Component {
             </div>
         @endif
     </flux:modal>
-    </div>
 
     <style>
         [data-flux-pagination] {

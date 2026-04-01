@@ -22,7 +22,7 @@ new class extends Component {
             'moderated_at' => now(),
         ]);
 
-        session()->flash('status', 'Review approved successfully.');
+        $this->dispatch('notify', title: 'Review Approved', variant: 'success', message: 'Review approved successfully.');
         return $this->redirect(route('admin.reviews.index'), navigate: true);
     }
 
@@ -34,14 +34,14 @@ new class extends Component {
             'moderated_at' => now(),
         ]);
 
-        session()->flash('status', 'Review rejected successfully.');
+        $this->dispatch('notify', title: 'Review Rejected', variant: 'warning', message: 'Review rejected successfully.');
         return $this->redirect(route('admin.reviews.index'), navigate: true);
     }
 
     public function delete()
     {
         $this->review->delete();
-        session()->flash('status', 'Review deleted successfully.');
+        $this->dispatch('notify', title: 'Review Deleted', variant: 'danger', message: 'Review deleted successfully.');
         return $this->redirect(route('admin.reviews.index'), navigate: true);
     }
 }; ?>
@@ -70,17 +70,20 @@ new class extends Component {
         {{-- Main Content --}}
         <div class="lg:col-span-2 space-y-6">
             {{-- Review Content Card --}}
-            <flux:card>
-                <div class="space-y-4">
+            <flux:card class="p-0">
+                <div class="px-5 py-3 border-b dark:border-zinc-600">
+                    <flux:heading>Review Content</flux:heading>
+                </div>
+                <div class="space-y-4 p-5">
                     {{-- Rating --}}
                     <div>
                         <flux:subheading class="mb-2">Rating</flux:subheading>
                         <div class="flex items-center gap-2">
                             @for ($i = 1; $i <= 5; $i++)
-                                <flux:icon name="star" variant="{{ $i <= $review->rating ? 'solid' : 'outline' }}"
+                                <flux:icon.star variant="{{ $i <= $review->rating ? 'solid' : 'outline' }}"
                                     class="w-6 h-6 {{ $i <= $review->rating ? 'text-yellow-400' : 'text-zinc-300' }}" />
                             @endfor
-                            <span class="text-lg font-semibold ml-2">{{ $review->rating }} out of 5</span>
+                            <flux:heading size="lg" class="ml-2">{{ $review->rating }} out of 5</flux:heading>
                         </div>
                     </div>
 
@@ -88,24 +91,24 @@ new class extends Component {
                     @if ($review->title)
                         <div>
                             <flux:subheading class="mb-2">Review Title</flux:subheading>
-                            <p class="text-lg font-semibold text-zinc-800 dark:text-white">{{ $review->title }}</p>
+                            <flux:heading size="lg">{{ $review->title }}</flux:heading>
                         </div>
                     @endif
 
                     {{-- Review Text --}}
                     <div>
                         <flux:subheading class="mb-2">Review</flux:subheading>
-                        <flux:text class="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
-                            {{ $review->review_text }}</flux:text>
+                        <flux:subheading class="whitespace-pre-wrap leading-relaxed">
+                            {{ $review->review_text }}</flux:subheading>
                     </div>
 
                     {{-- Images --}}
                     @if ($review->images->count() > 0)
                         <div>
                             <flux:subheading class="mb-3">Photos ({{ $review->images->count() }})</flux:subheading>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
                                 @foreach ($review->images as $image)
-                                    <div class="aspect-square rounded-lg border bg-zinc-50 overflow-hidden">
+                                    <div class="aspect-square rounded-lg border dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 overflow-hidden">
                                         <img src="{{ $image->image_url }}" alt="Review image"
                                             class="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer">
                                     </div>
@@ -116,18 +119,16 @@ new class extends Component {
 
                     {{-- Helpfulness Stats --}}
                     @if ($review->helpful_count > 0 || $review->not_helpful_count > 0)
-                        <div class="pt-4 border-t">
+                        <div class="pt-4 border-t dark:border-zinc-600">
                             <flux:subheading class="mb-2">Customer Feedback</flux:subheading>
                             <div class="flex gap-6">
                                 <div class="flex items-center gap-2">
-                                    <flux:icon name="hand-thumb-up" variant="solid" class="w-5 h-5 text-green-600" />
-                                    <flux:text class="font-medium">{{ $review->helpful_count }} found helpful
-                                    </flux:text>
+                                    <flux:icon.hand-thumb-up variant="solid" class="w-5 h-5 text-green-600" />
+                                    <flux:subheading>{{ $review->helpful_count }} found helpful</flux:subheading>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <flux:icon name="hand-thumb-down" variant="solid" class="w-5 h-5 text-red-600" />
-                                    <flux:text class="font-medium">{{ $review->not_helpful_count }} not helpful
-                                    </flux:text>
+                                    <flux:icon.hand-thumb-down variant="solid" class="w-5 h-5 text-red-600" />
+                                    <flux:subheading>{{ $review->not_helpful_count }} not helpful</flux:subheading>
                                 </div>
                             </div>
                         </div>
@@ -137,15 +138,17 @@ new class extends Component {
 
             {{-- Moderation Actions --}}
             @if ($review->status === 'pending')
-                <flux:card>
-                    <flux:heading size="lg" class="mb-4">Moderation Actions</flux:heading>
-                    <div class="flex gap-3">
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b dark:border-zinc-600">
+                        <flux:heading>Moderation Actions</flux:heading>
+                    </div>
+                    <div class="flex gap-3 p-5">
                         <flux:button color="green" icon="check" wire:click="approve"
-                            wire:confirm="Approve this review?">
+                            wire:confirm="Approve this review?" class="cursor-pointer">
                             Approve Review
                         </flux:button>
                         <flux:button color="red" variant="outline" icon="x-mark" wire:click="reject"
-                            wire:confirm="Reject this review?">
+                            wire:confirm="Reject this review?" class="cursor-pointer">
                             Reject Review
                         </flux:button>
                     </div>
@@ -154,19 +157,21 @@ new class extends Component {
 
             {{-- Moderation History --}}
             @if ($review->moderated_at)
-                <flux:card>
-                    <flux:heading size="lg" class="mb-3">Moderation History</flux:heading>
-                    <div class="space-y-2 text-sm">
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b dark:border-zinc-600">
+                        <flux:heading>Moderation History</flux:heading>
+                    </div>
+                    <div class="space-y-2 p-5">
                         <div class="flex justify-between">
-                            <span class="text-zinc-600 dark:text-zinc-400">Moderated by:</span>
-                            <span class="font-medium">{{ $review->moderator->name ?? 'System' }}</span>
+                            <flux:subheading>Moderated by</flux:subheading>
+                            <flux:subheading>{{ $review->moderator->name ?? 'System' }}</flux:subheading>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-zinc-600 dark:text-zinc-400">Moderated at:</span>
-                            <span class="font-medium">{{ $review->moderated_at->format('M d, Y g:i A') }}</span>
+                            <flux:subheading>Moderated at</flux:subheading>
+                            <flux:subheading>{{ $review->moderated_at->format('M d, Y g:i A') }}</flux:subheading>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-zinc-600 dark:text-zinc-400">Action taken:</span>
+                            <flux:subheading>Action taken</flux:subheading>
                             <flux:badge size="sm" variant="flat"
                                 :color="$review->status === 'approved' ? 'green' : 'red'">
                                 {{ ucfirst($review->status) }}
@@ -181,17 +186,17 @@ new class extends Component {
         <div class="space-y-5">
             {{-- Customer Info --}}
             <flux:card class="p-0">
-                <div class="px-3 py-2 border-b">
+                <div class="px-3 py-2 border-b dark:border-zinc-600">
                     <flux:heading>Customer</flux:heading>
                 </div>
                 <div class="space-y-3 p-5">
                     <div>
-                        <flux:text class="mb-1">Name:</flux:text>
-                        <flux:heading>{{ $review->user?->name }}</flux:heading>
+                        <flux:subheading class="mb-1">Name</flux:subheading>
+                        <flux:heading size="sm">{{ $review->user?->name }}</flux:heading>
                     </div>
                     <div>
-                        <flux:text class="mb-1">Email:</flux:text>
-                        <flux:heading>{{ $review->user?->email }}</flux:heading>
+                        <flux:subheading class="mb-1">Email</flux:subheading>
+                        <flux:heading size="sm">{{ $review->user?->email }}</flux:heading>
                     </div>
                     @if ($review->is_verified_purchase)
                         <flux:badge color="green" variant="flat" size="sm" icon="check-badge">
@@ -203,22 +208,22 @@ new class extends Component {
 
             {{-- Product Info --}}
             <flux:card class="p-0">
-                <div class="px-4 py-2 border-b">
+                <div class="px-4 py-2 border-b dark:border-zinc-600">
                     <flux:heading>Product</flux:heading>
                 </div>
                 <div class="flex gap-3 p-5">
-                    <div class="w-16 h-16 rounded border bg-zinc-50 overflow-hidden shrink-0">
+                    <div class="w-16 h-16 rounded border dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 overflow-hidden shrink-0">
                         @if ($review->product?->image_path)
                             <img src="{{ $review->product?->image_url }}" class="object-cover w-full h-full">
                         @else
-                            <flux:icon name="photo" class="w-full h-full p-3 text-zinc-300" />
+                            <flux:icon.photo class="w-full h-full p-3 text-zinc-300" />
                         @endif
                     </div>
                     <div>
-                        <flux:heading class="mb-1">{{ $review->product?->name }}</flux:heading>
-                        <flux:text>
+                        <flux:heading size="sm" class="mb-1">{{ $review->product?->name }}</flux:heading>
+                        <flux:subheading>
                             SKU: {{ $review->product?->sku ?? 'N/A' }}
-                        </flux:text>
+                        </flux:subheading>
                         <flux:button variant="ghost" size="sm" class="mt-2 cursor-pointer" wire:navigate>
                             View Product
                         </flux:button>
@@ -228,22 +233,22 @@ new class extends Component {
 
             {{-- Review Meta --}}
             <flux:card class="p-0">
-                <div class="px-3 py-2 border-b">
+                <div class="px-3 py-2 border-b dark:border-zinc-600">
                     <flux:heading>Review Information</flux:heading>
                 </div>
-                <div class="space-y-3 text-sm p-5">
+                <div class="space-y-3 p-5">
                     <div class="flex justify-between">
-                        <flux:text>Submitted:</flux:text>
-                        <flux:heading>{{ $review->created_at?->format('M d, Y') }}</flux:heading>
+                        <flux:subheading>Submitted</flux:subheading>
+                        <flux:subheading>{{ $review->created_at?->format('M d, Y') }}</flux:subheading>
                     </div>
                     <div class="flex justify-between">
-                        <flux:text>Time ago:</flux:text>
-                        <flux:heading>{{ $review->created_at?->diffForHumans() }}</flux:heading>
+                        <flux:subheading>Time ago</flux:subheading>
+                        <flux:subheading>{{ $review->created_at?->diffForHumans() }}</flux:subheading>
                     </div>
                     @if ($review->updated_at != $review->created_at)
                         <div class="flex justify-between">
-                            <flux:text>Last updated:</flux:text>
-                            <flux:heading>{{ $review->updated_at->diffForHumans() }}</flux:heading>
+                            <flux:subheading>Last updated</flux:subheading>
+                            <flux:subheading>{{ $review->updated_at->diffForHumans() }}</flux:subheading>
                         </div>
                     @endif
                 </div>
@@ -251,7 +256,7 @@ new class extends Component {
 
             {{-- Danger Zone --}}
             <flux:card class="p-0">
-                <div class="px-3 py-2 border-b">
+                <div class="px-3 py-2 border-b dark:border-zinc-600">
                     <flux:heading class="text-red-600">Danger Zone</flux:heading>
                 </div>
                 <div class="p-5">

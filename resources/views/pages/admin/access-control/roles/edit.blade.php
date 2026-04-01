@@ -30,7 +30,7 @@ new class extends Component {
     {
         try {
             $this->form->update();
-            $this->dispatch('notify', variant: 'success', message: 'Role updated successfully.');
+            $this->dispatch('notify', title: 'Role Updated', variant: 'success', message: 'Role updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -39,7 +39,7 @@ new class extends Component {
                 'user_id' => auth()->id(),
                 'exception_message' => $e->getMessage(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 }; ?>
@@ -47,7 +47,7 @@ new class extends Component {
 <div>
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item :href="route('admin.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.access-control.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Edit Role Permissions</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
@@ -56,7 +56,7 @@ new class extends Component {
 
     <form wire:submit="save" class="mt-6">
         <flux:card class="p-0">
-            <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
+            <div class="divide-y divide-zinc-100 dark:divide-zinc-600">
                 @forelse ($this->groupedPermissions as $resource => $actions)
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-5 py-4">
 
@@ -80,18 +80,20 @@ new class extends Component {
 
                     </div>
                 @empty
-                    <div class="flex flex-col items-center gap-3 py-16">
-                        <flux:icon name="key" class="size-10 text-zinc-300" />
-                        <flux:heading size="lg" class="text-zinc-600">No Permissions Found</flux:heading>
-                        <flux:text class="text-sm text-zinc-400">
-                            No permissions have been created yet. Run your permission seeder to get started.
-                        </flux:text>
+                    <div class="flex flex-col items-center gap-3 py-16 text-zinc-400">
+                        <flux:icon.key class="w-10 h-10 opacity-40" />
+                        <div>
+                            <flux:heading size="sm">No permissions found</flux:heading>
+                            <flux:subheading class="mt-0.5">
+                                No permissions have been created yet. Run your permission seeder to get started.
+                            </flux:subheading>
+                        </div>
                     </div>
                 @endforelse
             </div>
 
             {{-- Footer --}}
-            <div class="px-5 py-4 border-t border-zinc-100 dark:border-zinc-700">
+            <div class="px-5 py-4 border-t border-zinc-100 dark:border-zinc-600">
                 <flux:button type="submit" variant="primary" class="min-w-44">
                     Update Role
                 </flux:button>

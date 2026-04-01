@@ -124,7 +124,7 @@ new #[Title('Flat Rates')] class extends Component {
         try {
             $this->cellForm->update();
             Flux::modal('cell-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: 'Rate updated. Previous rate archived.');
+            $this->dispatch('notify', title: 'Rate Updated', variant: 'success', message: 'Rate updated. Previous rate archived.');
             unset($this->matrix);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
@@ -134,7 +134,7 @@ new #[Title('Flat Rates')] class extends Component {
                 'rate_id' => $this->cellForm->rate?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -156,7 +156,7 @@ new #[Title('Flat Rates')] class extends Component {
         try {
             $this->tierForm->store();
             Flux::modal('tier-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: 'Weight tier added.');
+            $this->dispatch('notify', title: 'Tier Added', variant: 'success', message: 'Weight tier added.');
             unset($this->matrix);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
@@ -165,7 +165,7 @@ new #[Title('Flat Rates')] class extends Component {
                 'exception' => $e->getMessage(),
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -175,10 +175,10 @@ new #[Title('Flat Rates')] class extends Component {
     {
         try {
             ShippingRate::findOrFail($rateId)->update(['status' => ShippingRateStatus::EXPIRED->value]);
-            $this->dispatch('notify', variant: 'warning', message: 'Rate expired.');
+            $this->dispatch('notify', title: 'Rate Expired', variant: 'warning', message: 'Rate expired.');
             unset($this->matrix);
         } catch (\Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Could not expire this rate.');
+            $this->dispatch('notify', title: 'Expire Failed', variant: 'danger', message: 'Could not expire this rate.');
         }
     }
 }; ?>
@@ -215,9 +215,8 @@ new #[Title('Flat Rates')] class extends Component {
             <div class="flex flex-col items-center gap-3 text-zinc-400">
                 <flux:icon.table-cells class="w-10 h-10 opacity-40" />
                 <div class="text-center">
-                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Select a method to view its rate
-                        matrix</p>
-                    <p class="text-xs mt-0.5">Flat rates and PUS methods are shown above.</p>
+                    <flux:heading size="sm">Select a method to view its rate matrix</flux:heading>
+                    <flux:subheading class="mt-0.5">Flat rates and PUS methods are shown above.</flux:subheading>
                 </div>
             </div>
         </flux:card>
@@ -228,8 +227,8 @@ new #[Title('Flat Rates')] class extends Component {
             <div class="flex flex-col items-center gap-3 text-zinc-400">
                 <flux:icon.table-cells class="w-10 h-10 opacity-40" />
                 <div class="text-center">
-                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No rates configured yet</p>
-                    <p class="text-xs mt-0.5">Add a weight tier to start building the rate matrix.</p>
+                    <flux:heading size="sm">No rates configured yet</flux:heading>
+                    <flux:subheading class="mt-0.5">Add a weight tier to start building the rate matrix.</flux:subheading>
                 </div>
                 <flux:button variant="primary" size="sm" icon="plus" wire:click="openAddTier">
                     Add Weight Tier

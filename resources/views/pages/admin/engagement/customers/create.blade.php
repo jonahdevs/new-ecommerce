@@ -16,16 +16,12 @@ new #[Title('Create Customer')] class extends Component {
     {
         try {
             $this->form->store();
-            $this->dispatch('notify', variant: 'success', message: 'Customer created successfully.');
+            $this->dispatch('notify', title: 'Customer Created', variant: 'success', message: 'Customer created successfully.');
             $this->redirectRoute('admin.customers.index', navigate: true);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
-            logger()->error('Failed to create customer.', [
-                'user_id' => auth()->id(),
-                'exception_message' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Create Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 

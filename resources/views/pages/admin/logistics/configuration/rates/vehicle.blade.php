@@ -80,7 +80,7 @@ new #[Title('Vehicle Rates')] class extends Component {
 
             $message = $isEditing ? 'Rate updated. Previous rate deprecated.' : 'Vehicle rate added.';
 
-            $this->dispatch('notify', variant: 'success', message: $message);
+            $this->dispatch('notify', title: $isEditing ? 'Rate Updated' : 'Rate Added', variant: 'success', message: $message);
             unset($this->rates);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
@@ -90,7 +90,7 @@ new #[Title('Vehicle Rates')] class extends Component {
                 'vehicle_rate_id' => $this->form->vehicleRate?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -117,7 +117,7 @@ new #[Title('Vehicle Rates')] class extends Component {
 
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'warning', message: 'Vehicle rate deprecated.');
+            $this->dispatch('notify', title: 'Rate Deprecated', variant: 'warning', message: 'Vehicle rate deprecated.');
             unset($this->rates);
         } catch (\Throwable $e) {
             logger()->error('Failed to deprecate vehicle rate.', [
@@ -125,7 +125,7 @@ new #[Title('Vehicle Rates')] class extends Component {
                 'vehicle_rate_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not deprecate this rate.');
+            $this->dispatch('notify', title: 'Deprecate Failed', variant: 'danger', message: 'Could not deprecate this rate.');
         }
     }
 }; ?>
@@ -168,8 +168,8 @@ new #[Title('Vehicle Rates')] class extends Component {
             <div class="flex flex-col items-center gap-3 text-zinc-400">
                 <flux:icon.calculator class="w-10 h-10 opacity-40" />
                 <div class="text-center">
-                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Select a distance method above</p>
-                    <p class="text-xs mt-0.5">Only methods with type "Distance" are shown.</p>
+                    <flux:heading size="sm">Select a distance method above</flux:heading>
+                    <flux:subheading class="mt-0.5">Only methods with type "Distance" are shown.</flux:subheading>
                 </div>
             </div>
         </flux:card>
@@ -192,27 +192,26 @@ new #[Title('Vehicle Rates')] class extends Component {
                             class="{{ $rate->status === VehicleRateStatus::DEPRECATED->value || ($rate->status instanceof \App\Enums\VehicleRateStatus && $rate->status === \App\Enums\VehicleRateStatus::DEPRECATED) }}">
 
                             <flux:table.cell class="ps-4!">
-                                <div class="font-semibold">{{ $rate->vehicle_label }}</div>
-                                <code
-                                    class="text-xs text-zinc-400">{{ $rate->vehicle_type instanceof \App\Enums\VehicleType ? $rate->vehicle_type->value : $rate->vehicle_type }}</code>
+                                <flux:heading size="sm">{{ $rate->vehicle_label }}</flux:heading>
+                                <flux:subheading>{{ $rate->vehicle_type instanceof \App\Enums\VehicleType ? $rate->vehicle_type->value : $rate->vehicle_type }}</flux:subheading>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <span class="font-medium">{{ format_currency($rate->base_rate) }}</span>
+                                <flux:heading size="sm">{{ format_currency($rate->base_rate) }}</flux:heading>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <span class="text-sm">{{ $rate->base_km }} km</span>
+                                <flux:subheading>{{ $rate->base_km }} km</flux:subheading>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <span class="text-sm">{{ format_currency($rate->extra_km_rate) }}/km</span>
+                                <flux:subheading>{{ format_currency($rate->extra_km_rate) }}/km</flux:subheading>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <span class="text-sm">
+                                <flux:subheading>
                                     {{ $rate->max_weight_kg ? number_format($rate->max_weight_kg, 0) . ' ' . $this->regionalSettings->weight_unit : '—' }}
-                                </span>
+                                </flux:subheading>
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -230,11 +229,11 @@ new #[Title('Vehicle Rates')] class extends Component {
                             <flux:table.cell align="end" class="pe-4!">
                                 @if ($status !== \App\Enums\VehicleRateStatus::DEPRECATED)
                                     <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                        icon-variant="outline" class="cursor-pointer text-brand-secondary!"
-                                        wire:click="edit({{ $rate->id }})" />
+                                        icon-variant="outline" class="cursor-pointer"
+                                        wire:click="edit({{ $rate->id }})" tooltip="Edit rate" />
                                     <flux:button variant="ghost" size="sm" icon="archive-box"
                                         icon-variant="outline" color="red" class="cursor-pointer text-red-500!"
-                                        wire:click="confirmDelete({{ $rate->id }})" />
+                                        wire:click="confirmDelete({{ $rate->id }})" tooltip="Deprecate rate" />
                                 @endif
                             </flux:table.cell>
                         </flux:table.row>
@@ -245,9 +244,8 @@ new #[Title('Vehicle Rates')] class extends Component {
                                 <div class="flex flex-col items-center gap-3 text-zinc-400">
                                     <flux:icon.calculator class="w-10 h-10 opacity-40" />
                                     <div>
-                                        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No vehicle rates
-                                            yet</p>
-                                        <p class="text-xs mt-0.5">Add a vehicle rate to enable on-demand pricing.</p>
+                                        <flux:heading size="sm">No vehicle rates yet</flux:heading>
+                                        <flux:subheading class="mt-0.5">Add a vehicle rate to enable on-demand pricing.</flux:subheading>
                                     </div>
                                     <flux:button variant="primary" size="sm" icon="plus"
                                         wire:click="openCreate">

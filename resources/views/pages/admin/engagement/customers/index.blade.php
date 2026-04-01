@@ -45,14 +45,14 @@ new #[Title('Customers')] class extends Component {
     {
         try {
             User::findOrFail($id)->delete();
-            $this->dispatch('notify', variant: 'success', message: 'Customer deleted successfully.');
+            $this->dispatch('notify', title: 'Customer Deleted', variant: 'success', message: 'Customer deleted successfully.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete customer.', [
                 'customer_id' => $id,
                 'user_id' => auth()->id(),
                 'exception_message' => $e->getMessage(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 }; ?>
@@ -109,8 +109,8 @@ new #[Title('Customers')] class extends Component {
                 @forelse ($this->customers as $customer)
                     <flux:table.row :key="$customer->id">
 
-                        <flux:table.cell class="ps-5! text-zinc-400 text-sm">
-                            #{{ $customer->id }}
+                        <flux:table.cell class="ps-5!">
+                            <flux:subheading>#{{ $customer->id }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -124,29 +124,28 @@ new #[Title('Customers')] class extends Component {
                                     @endif
                                 </div>
                                 <div>
-                                    <flux:text class="text-sm font-medium">{{ $customer->name }}</flux:text>
-                                    <flux:text class="text-xs text-zinc-400">{{ $customer->email }}</flux:text>
+                                    <flux:heading size="sm">{{ $customer->name }}</flux:heading>
+                                    <flux:subheading>{{ $customer->email }}</flux:subheading>
                                 </div>
                             </div>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <flux:text class="text-sm">{{ $customer->phone_number ?? '—' }}</flux:text>
+                            <flux:subheading>{{ $customer->phone_number ?? '—' }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <flux:text class="text-sm">{{ $customer->orders_count }}</flux:text>
+                            <flux:subheading>{{ $customer->orders_count }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <flux:text class="text-sm">{{ number_format($customer->amount_spent ?? 0, 2) }}
-                            </flux:text>
+                            <flux:subheading>{{ number_format($customer->amount_spent ?? 0, 2) }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <flux:text class="text-sm text-zinc-500">
+                            <flux:subheading>
                                 {{ $customer->created_at->format('M d, Y') }}
-                            </flux:text>
+                            </flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -185,11 +184,13 @@ new #[Title('Customers')] class extends Component {
                     <flux:table.row>
                         <flux:table.cell colspan="8" class="text-center py-16">
                             <div class="flex flex-col items-center gap-3">
-                                <flux:icon name="users" class="size-10 text-zinc-300" />
-                                <flux:heading size="lg" class="text-zinc-600">No Customers Found</flux:heading>
-                                <flux:text class="text-sm text-zinc-400">
-                                    {{ $this->search || $this->status ? 'No customers match your filters.' : 'No customers have been added yet.' }}
-                                </flux:text>
+                                <flux:icon.users class="size-10 text-zinc-300" />
+                                <div>
+                                    <flux:heading size="sm">No Customers Found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
+                                        {{ $this->search || $this->status ? 'No customers match your filters.' : 'No customers have been added yet.' }}
+                                    </flux:subheading>
+                                </div>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

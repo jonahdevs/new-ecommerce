@@ -37,14 +37,18 @@ new class extends Component {
     {
         try {
             $this->form->update();
-            $this->dispatch('notify', variant: 'success', message: 'Category updated successfully!');
+
+            $this->dispatch('notify', title: 'Category Updated', variant: 'success', message: 'The category has been updated successfully');
+
             $this->redirectRoute('admin.catalog.categories.index', navigate: true);
         } catch (ValidationException $e) {
-            $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
+            $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields and try again');
+
             throw $e;
         } catch (\Throwable $th) {
             \Log::error('Error updating category: ' . $th->getMessage(), ['exception' => $th]);
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to update category. Please try again.');
+
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Failed to update category. Please try again');
         }
     }
 
@@ -67,18 +71,17 @@ new class extends Component {
         <flux:breadcrumbs.item>{{ $category->name }}</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <div class="flex items-center justify-between mt-2 mb-6">
+    <div class="mt-2 mb-6">
         <flux:heading size="xl">Edit Category</flux:heading>
-
-        <flux:badge :color="$category->status->color()" size="lg">
-            {{ $category->status->label() }}
-        </flux:badge>
+        <flux:subheading size="md" class="text-zinc-500">Make changes to your category and click save when you're
+            done.
+        </flux:subheading>
     </div>
 
     <form wire:submit="save" class="space-y-5">
         @include('pages.admin.catalog.categories._form-fields')
 
-        <flux:card class="flex justify-between items-center bg-zinc-50">
+        <flux:card class="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900">
             {{-- Danger zone --}}
             <flux:button type="button" variant="danger" size="sm" icon="trash"
                 wire:click="$dispatch('open-delete-modal', { id: {{ $category->id }}, name: '{{ $category->name }}' })"

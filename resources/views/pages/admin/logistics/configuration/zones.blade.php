@@ -55,7 +55,7 @@ new #[Title('Shipping Zones')] class extends Component {
 
             $this->form->reset();
             Flux::modal('zone-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Zone updated.' : 'Zone added.');
+            $this->dispatch('notify', title: $isEditing ? 'Zone Updated' : 'Zone Added', variant: 'success', message: $isEditing ? 'Zone updated.' : 'Zone added.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -64,7 +64,7 @@ new #[Title('Shipping Zones')] class extends Component {
                 'zone_id' => $this->form->zone?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -90,7 +90,7 @@ new #[Title('Shipping Zones')] class extends Component {
             $zone = ShippingZone::findOrFail($this->deletingId);
 
             if ($zone->counties()->exists()) {
-                $this->dispatch('notify', variant: 'warning', message: 'Cannot delete — this zone has counties assigned to it.');
+                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this zone has counties assigned to it.');
                 Flux::modal('delete-confirmation')->close();
                 return;
             }
@@ -98,14 +98,14 @@ new #[Title('Shipping Zones')] class extends Component {
             $zone->delete();
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'Zone deleted.');
+            $this->dispatch('notify', title: 'Zone Deleted', variant: 'danger', message: 'Zone deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete shipping zone.', [
                 'exception' => $e->getMessage(),
                 'zone_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this zone. It may have dependent records.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this zone. It may have dependent records.');
         }
     }
 }; ?>
@@ -148,7 +148,9 @@ new #[Title('Shipping Zones')] class extends Component {
             <flux:table.rows>
                 @forelse ($this->zones as $zone)
                     <flux:table.row :key="$zone->id">
-                        <flux:table.cell class="font-semibold ps-4!">{{ $zone->name }}</flux:table.cell>
+                        <flux:table.cell class="ps-4!">
+                            <flux:heading size="sm">{{ $zone->name }}</flux:heading>
+                        </flux:table.cell>
 
                         <flux:table.cell>
                             @if ($zone->code)
@@ -160,13 +162,13 @@ new #[Title('Shipping Zones')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $zone->counties_count }}</span>
+                            <flux:subheading>{{ $zone->counties_count }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm text-zinc-500 max-w-xs truncate block">
+                            <flux:subheading class="max-w-xs truncate block">
                                 {{ $zone->description ?? '—' }}
-                            </span>
+                            </flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -186,10 +188,10 @@ new #[Title('Shipping Zones')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $zone->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $zone->id }})" tooltip="Edit zone" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $zone->id }})" />
+                                wire:click="confirmDelete({{ $zone->id }})" tooltip="Delete zone" />
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
@@ -198,14 +200,14 @@ new #[Title('Shipping Zones')] class extends Component {
                             <div class="flex flex-col items-center gap-3 text-zinc-400">
                                 <flux:icon.map class="w-10 h-10 opacity-40" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No zones found</p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm">No zones found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
                                         @if ($this->search || $this->filterStatus)
                                             No results match your current filters.
                                         @else
                                             Get started by adding your first shipping zone.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterStatus)
                                     <flux:button variant="ghost" size="sm"

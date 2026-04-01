@@ -21,10 +21,9 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             TagSeeder::class,
             ProductSeeder::class,
-            // ReviewSeeder::class,
+            ReviewSeeder::class,
             ShippingSeeder::class,
             CountyCoordinatesSeeder::class,
-            // DeliveryOrderSeeder::class, // Replaced by SalesFlowSeeder
             SalesFlowSeeder::class,
         ]);
     }

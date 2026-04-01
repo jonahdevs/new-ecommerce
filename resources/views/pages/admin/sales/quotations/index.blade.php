@@ -57,9 +57,7 @@ new #[Title('Quotations')] class extends Component {
         return Quote::query()
             ->with(['user', 'items' => fn($q) => $q->with('product')->limit(1)])
             ->withCount('items')
-            ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")
-                ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")
-                    ->orWhere('email', 'like', "%{$this->search}%")))
+            ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
             ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
             ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
             ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
@@ -111,11 +109,7 @@ new #[Title('Quotations')] class extends Component {
     #[Computed]
     public function statusCounts(): array
     {
-        $counts = Quote::query()
-            ->selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+        $counts = Quote::query()->selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status')->toArray();
 
         return array_merge(['all' => array_sum($counts)], $counts);
     }
@@ -143,9 +137,7 @@ new #[Title('Quotations')] class extends Component {
     {
         $quotes = Quote::query()
             ->with(['user', 'items'])
-            ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")
-                ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")
-                    ->orWhere('email', 'like', "%{$this->search}%")))
+            ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
             ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
             ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
             ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
@@ -155,16 +147,7 @@ new #[Title('Quotations')] class extends Component {
         $rows = [['Reference', 'Customer', 'Email', 'Status', 'Total', 'Items', 'Expires At', 'Date']];
 
         foreach ($quotes as $quote) {
-            $rows[] = [
-                $quote->reference,
-                $quote->customerName(),
-                $quote->customerEmail(),
-                $quote->status->label(),
-                $quote->total,
-                $quote->items->count(),
-                $quote->expires_at?->format('Y-m-d') ?? 'N/A',
-                $quote->created_at->format('Y-m-d H:i'),
-            ];
+            $rows[] = [$quote->reference, $quote->customerName(), $quote->customerEmail(), $quote->status->label(), $quote->total, $quote->items->count(), $quote->expires_at?->format('Y-m-d') ?? 'N/A', $quote->created_at->format('Y-m-d H:i')];
         }
 
         $handle = fopen('php://temp', 'r+');
@@ -175,11 +158,7 @@ new #[Title('Quotations')] class extends Component {
         $csv = stream_get_contents($handle);
         fclose($handle);
 
-        return Response::streamDownload(
-            fn() => print $csv,
-            'quotations-' . now()->format('Y-m-d') . '.csv',
-            ['Content-Type' => 'text/csv']
-        );
+        return Response::streamDownload(fn() => print $csv, 'quotations-' . now()->format('Y-m-d') . '.csv', ['Content-Type' => 'text/csv']);
     }
 
     // =========================================================================
@@ -207,7 +186,7 @@ new #[Title('Quotations')] class extends Component {
     {{-- Page header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <flux:heading size="xl" class="mb-1">Quotations</flux:heading>
+            <flux:heading size="xl">Quotations</flux:heading>
             <flux:subheading>Manage customer quote requests and pricing.</flux:subheading>
         </div>
         <div class="flex items-center gap-2">
@@ -225,12 +204,13 @@ new #[Title('Quotations')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-blue-500 dark:border-l-blue-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Total Quotes</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Quotes</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['total']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">All time</flux:text>
+                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.document-text class="size-5 text-blue-500" />
                 </div>
             </div>
@@ -239,12 +219,13 @@ new #[Title('Quotations')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-amber-500 dark:border-l-amber-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Pending Review</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Pending Review</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['pending']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Awaiting pricing</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Awaiting pricing</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.clock class="size-5 text-amber-500" />
                 </div>
             </div>
@@ -253,12 +234,13 @@ new #[Title('Quotations')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-indigo-500 dark:border-l-indigo-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Sent to Customer</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Sent to Customer</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['sent']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Awaiting response</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Awaiting response</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.paper-airplane class="size-5 text-indigo-500" />
                 </div>
             </div>
@@ -267,12 +249,13 @@ new #[Title('Quotations')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-rose-500 dark:border-l-rose-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Expiring Soon</flux:text>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Expiring Soon</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!">
                         {{ number_format($this->stats['expiring']) }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-400 mt-1">Within 3 days</flux:text>
+                    <flux:subheading class="text-xs! mt-1">Within 3 days</flux:subheading>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/15 flex items-center justify-center shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.exclamation-triangle class="size-5 text-rose-500" />
                 </div>
             </div>
@@ -286,7 +269,8 @@ new #[Title('Quotations')] class extends Component {
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
+        <div
+            class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search reference, name or email..." class="max-w-xs" clearable />
@@ -366,7 +350,7 @@ new #[Title('Quotations')] class extends Component {
                 @forelse ($this->quotations as $quote)
                     @php
                         $firstItem = $quote->items->first();
-                        $productName = $firstItem?->product_snapshot['name'] ?? $firstItem?->product?->name ?? '—';
+                        $productName = $firstItem?->product_snapshot['name'] ?? ($firstItem?->product?->name ?? '—');
                     @endphp
                     <flux:table.row :key="$quote->id">
 
@@ -391,25 +375,26 @@ new #[Title('Quotations')] class extends Component {
 
                         {{-- Customer --}}
                         <flux:table.cell>
-                            <div class="font-medium text-zinc-800 dark:text-zinc-200">{{ $quote->customerName() }}</div>
-                            <div class="text-xs text-zinc-400">{{ $quote->customerEmail() }}</div>
+                            <flux:heading size="sm" class="font-medium!">{{ $quote->customerName() }}
+                            </flux:heading>
+                            <flux:subheading class="text-xs!">{{ $quote->customerEmail() }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Items --}}
                         <flux:table.cell>
-                            <div class="text-sm truncate max-w-[180px]">{{ $productName }}</div>
+                            <flux:text class="text-sm truncate max-w-[180px]">{{ $productName }}</flux:text>
                             @if ($quote->items_count > 1)
-                                <div class="text-xs text-zinc-400">+{{ $quote->items_count - 1 }} more</div>
+                                <flux:subheading class="text-xs!">+{{ $quote->items_count - 1 }} more</flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         {{-- Total --}}
                         <flux:table.cell>
-                            <div class="font-semibold text-sm text-zinc-800 dark:text-zinc-200">
+                            <flux:heading size="sm" class="font-semibold!">
                                 {{ format_currency($quote->total) }}
-                            </div>
+                            </flux:heading>
                             @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
-                                <div class="text-xs text-amber-500">+ shipping TBD</div>
+                                <flux:subheading class="text-xs! text-amber-500">+ shipping TBD</flux:subheading>
                             @endif
                         </flux:table.cell>
 
@@ -423,14 +408,15 @@ new #[Title('Quotations')] class extends Component {
 
                         {{-- Date --}}
                         <flux:table.cell>
-                            <div class="text-sm">{{ $quote->created_at->format('M d, Y') }}</div>
-                            <div class="text-xs text-zinc-400">{{ $quote->created_at->format('h:i A') }}</div>
+                            <flux:text class="text-sm">{{ $quote->created_at->format('M d, Y') }}</flux:text>
+                            <flux:subheading class="text-xs!">{{ $quote->created_at->format('h:i A') }}
+                            </flux:subheading>
                         </flux:table.cell>
 
                         {{-- Actions --}}
                         <flux:table.cell align="end" class="pe-5!">
                             <flux:button :href="route('admin.quotations.show', $quote)" wire:navigate variant="ghost"
-                                size="sm" icon="eye">
+                                size="sm" icon="eye" icon-variant="outline">
                                 View
                             </flux:button>
                         </flux:table.cell>
@@ -439,12 +425,13 @@ new #[Title('Quotations')] class extends Component {
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="7" class="text-center py-16">
-                            <div class="flex flex-col items-center justify-center text-zinc-400">
-                                <flux:icon.inbox class="size-12 stroke-1 mb-3" />
-                                <flux:text class="font-medium text-zinc-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.inbox class="size-12 stroke-1 mb-3 text-zinc-400" />
+                                <flux:heading size="sm" class="font-medium!">
                                     No quotations found
-                                </flux:text>
-                                <flux:text class="text-xs mt-1">Try adjusting your filters or search query</flux:text>
+                                </flux:heading>
+                                <flux:subheading class="text-xs! mt-1">Try adjusting your filters or search query
+                                </flux:subheading>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

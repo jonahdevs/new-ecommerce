@@ -15,7 +15,7 @@ new #[Title('Reviews')] class extends Component {
     {
         $review = Review::findOrFail($id);
         $review->delete();
-        session()->flash('status', 'Review deleted successfully.');
+        $this->dispatch('notify', title: 'Review Deleted', variant: 'danger', message: 'Review deleted successfully.');
     }
 
     public function quickApprove($id)
@@ -26,7 +26,7 @@ new #[Title('Reviews')] class extends Component {
             'moderated_by' => auth()->id(),
             'moderated_at' => now(),
         ]);
-        session()->flash('status', 'Review approved.');
+        $this->dispatch('notify', title: 'Review Approved', variant: 'success', message: 'Review approved.');
     }
 
     public function quickReject($id)
@@ -37,7 +37,7 @@ new #[Title('Reviews')] class extends Component {
             'moderated_by' => auth()->id(),
             'moderated_at' => now(),
         ]);
-        session()->flash('status', 'Review rejected.');
+        $this->dispatch('notify', title: 'Review Rejected', variant: 'warning', message: 'Review rejected.');
     }
 
     #[Computed]
@@ -121,8 +121,8 @@ new #[Title('Reviews')] class extends Component {
         {{-- Table --}}
         <flux:table :paginate="$this->reviews">
             <flux:table.columns>
-                <flux:table.column class="ps-4!">Review</flux:table.column>
-                <flux:table.column>Product</flux:table.column>
+                <flux:table.column class="ps-4!">Product</flux:table.column>
+                <flux:table.column>Review</flux:table.column>
                 <flux:table.column>Rating</flux:table.column>
                 <flux:table.column>Customer</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
@@ -131,39 +131,24 @@ new #[Title('Reviews')] class extends Component {
             </flux:table.columns>
 
             <flux:table.rows>
-                @foreach ($this->reviews as $review)
+                @forelse ($this->reviews as $review)
                     <flux:table.row :key="$review->id">
-                        {{-- Review Content --}}
-                        <flux:table.cell class="max-w-md ps-4!">
-                            <flux:heading class="mb-1">
-                                {{ $review->title ?? 'No title' }}
-                            </flux:heading>
-                            <flux:text class="line-clamp-2 whitespace-normal wrap-break-words">
-                                {{ $review->review_text }}
-                            </flux:text>
-                            @if ($review->images->count() > 0)
-                                <div class="flex gap-1 mt-2">
-                                    <flux:badge size="sm" color="blue" variant="outline">
-                                        <flux:icon name="photo" class="w-3 h-3" />
-                                        {{ $review->images->count() }}
-                                        {{ $review->images->count() === 1 ? 'image' : 'images' }}
-                                    </flux:badge>
-                                </div>
-                            @endif
+                        {{-- Product --}}
+                        <flux:table.cell class="ps-4!">
+                            <flux:heading size="sm" class="line-clamp-1">{{ $review->product->name }}</flux:heading>
                         </flux:table.cell>
 
-                        {{-- Product --}}
-                        <flux:table.cell>
-                            <div class="flex items-center gap-2">
-                                <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
-                                    @if ($review->product->image_path)
-                                        <img src="{{ $review->product->image_url }}" class="object-cover w-full h-full">
-                                    @else
-                                        <flux:icon name="photo" class="w-full h-full p-1.5 text-zinc-300" />
-                                    @endif
-                                </div>
-                                <div class="text-sm font-medium">{{ $review->product->name }}</div>
-                            </div>
+                        {{-- Review Content --}}
+                        <flux:table.cell class="max-w-sm">
+                            <flux:subheading class="line-clamp-2">
+                                {{ $review->review_text }}
+                            </flux:subheading>
+                            @if ($review->images->count() > 0)
+                                <flux:badge size="sm" color="blue" variant="outline" class="mt-1">
+                                    <flux:icon.photo class="w-3 h-3" />
+                                    {{ $review->images->count() }}
+                                </flux:badge>
+                            @endif
                         </flux:table.cell>
 
                         {{-- Rating --}}
@@ -176,7 +161,7 @@ new #[Title('Reviews')] class extends Component {
 
                         {{-- Customer --}}
                         <flux:table.cell>
-                            <flux:link class="text-xs">{{ $review->user->email }}</flux:link>
+                            <flux:subheading>{{ $review->user->name }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Status --}}
@@ -188,8 +173,7 @@ new #[Title('Reviews')] class extends Component {
 
                         {{-- Date --}}
                         <flux:table.cell>
-                            <div class="text-sm">{{ $review->created_at->format('M d, Y') }}</div>
-                            <div class="text-xs text-zinc-500">{{ $review->created_at->diffForHumans() }}</div>
+                            <flux:subheading>{{ $review->created_at->format('M d, Y') }}</flux:subheading>
                         </flux:table.cell>
 
                         {{-- Actions --}}
@@ -213,7 +197,32 @@ new #[Title('Reviews')] class extends Component {
                                 wire:click="delete({{ $review->id }})" tooltip="Delete" />
                         </flux:table.cell>
                     </flux:table.row>
-                @endforeach
+
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="7" class="py-12 text-center">
+                            <div class="flex flex-col items-center gap-3 text-zinc-400">
+                                <flux:icon.chat-bubble-left-right class="w-10 h-10 opacity-40" />
+                                <div>
+                                    <flux:heading size="sm">No reviews found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
+                                        @if ($this->search || $this->statusFilter || $this->ratingFilter)
+                                            No results match your current filters.
+                                        @else
+                                            Customer reviews will appear here once they start rating products.
+                                        @endif
+                                    </flux:subheading>
+                                </div>
+                                @if ($this->search || $this->statusFilter || $this->ratingFilter)
+                                    <flux:button variant="ghost" size="sm"
+                                        wire:click="$set('search', ''); $set('statusFilter', ''); $set('ratingFilter', '')">
+                                        Clear filters
+                                    </flux:button>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
             </flux:table.rows>
         </flux:table>
     </flux:card>

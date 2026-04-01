@@ -76,7 +76,7 @@ new #[Title('Shipping Methods')] class extends Component {
 
             $this->form->reset();
             Flux::modal('method-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Method updated.' : 'Method added.');
+            $this->dispatch('notify', title: $isEditing ? 'Method Updated' : 'Method Added', variant: 'success', message: $isEditing ? 'Method updated.' : 'Method added.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -85,7 +85,7 @@ new #[Title('Shipping Methods')] class extends Component {
                 'method_id' => $this->form->method?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -111,7 +111,7 @@ new #[Title('Shipping Methods')] class extends Component {
             $method = ShippingMethod::findOrFail($this->deletingId);
 
             if ($method->shippingRates()->exists() || $method->vehicleRates()->exists()) {
-                $this->dispatch('notify', variant: 'warning', message: 'Cannot delete — this method has rates attached. Deprecate it instead.');
+                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this method has rates attached. Deprecate it instead.');
                 Flux::modal('delete-confirmation')->close();
                 return;
             }
@@ -119,14 +119,14 @@ new #[Title('Shipping Methods')] class extends Component {
             $method->delete();
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'Method deleted.');
+            $this->dispatch('notify', title: 'Method Deleted', variant: 'danger', message: 'Method deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete shipping method.', [
                 'exception' => $e->getMessage(),
                 'method_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this method. It may have dependent records.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this method. It may have dependent records.');
         }
     }
 }; ?>
@@ -147,23 +147,51 @@ new #[Title('Shipping Methods')] class extends Component {
                 icon="magnifying-glass" clearable class="max-w-sm" />
 
             <div class="ms-auto flex items-center gap-5">
-                <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable class="md:w-48">
-                    @foreach ($this->providers as $provider)
-                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                <flux:dropdown position="bottom" align="end">
+                    <flux:button variant="ghost" size="sm" icon="funnel" icon-variant="outline" icon-trailing="chevron-down">
+                        Filters
+                        @php $activeFilters = collect([$filterProvider, $filterType, $filterStatus])->filter()->count(); @endphp
+                        @if ($activeFilters > 0)
+                            <flux:badge size="sm" class="ms-1">{{ $activeFilters }}</flux:badge>
+                        @endif
+                    </flux:button>
 
-                <flux:select wire:model.live="filterType" placeholder="All Types" clearable class="md:w-44">
-                    <flux:select.option value="flat">Flat Rate</flux:select.option>
-                    <flux:select.option value="distance">Distance (On-Demand)</flux:select.option>
-                    <flux:select.option value="pus">Pickup Station</flux:select.option>
-                </flux:select>
-
-                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="md:w-44">
-                    @foreach ($this->statuses as $status)
-                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                    <flux:menu class="min-w-64">
+                        <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-700">
+                            <flux:subheading>Filter Options</flux:subheading>
+                            <flux:button variant="ghost" size="xs"
+                                wire:click="$set('filterProvider', ''); $set('filterType', ''); $set('filterStatus', '')"
+                                class="cursor-pointer">Reset</flux:button>
+                        </div>
+                        <flux:separator />
+                        <div class="p-3 space-y-3">
+                            <flux:field>
+                                <flux:label>Provider</flux:label>
+                                <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable>
+                                    @foreach ($this->providers as $provider)
+                                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                            <flux:field>
+                                <flux:label>Type</flux:label>
+                                <flux:select wire:model.live="filterType" placeholder="All Types" clearable>
+                                    <flux:select.option value="flat">Flat Rate</flux:select.option>
+                                    <flux:select.option value="distance">Distance (On-Demand)</flux:select.option>
+                                    <flux:select.option value="pus">Pickup Station</flux:select.option>
+                                </flux:select>
+                            </flux:field>
+                            <flux:field>
+                                <flux:label>Status</flux:label>
+                                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
+                                    @foreach ($this->statuses as $status)
+                                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                        </div>
+                    </flux:menu>
+                </flux:dropdown>
             </div>
         </div>
 
@@ -182,12 +210,12 @@ new #[Title('Shipping Methods')] class extends Component {
                 @forelse ($this->methods as $method)
                     <flux:table.row :key="$method->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-semibold">{{ $method->name }}</div>
-                            <code class="text-xs text-zinc-400">{{ $method->code }}</code>
+                            <flux:heading size="sm">{{ $method->name }}</flux:heading>
+                            <flux:subheading>{{ $method->code }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm">{{ $method->logisticsProvider->name }}</span>
+                            <flux:subheading>{{ $method->logisticsProvider->name }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -207,7 +235,7 @@ new #[Title('Shipping Methods')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm capitalize">{{ $method->delivery_time_unit }}</span>
+                            <flux:subheading class="capitalize">{{ $method->delivery_time_unit }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -227,10 +255,10 @@ new #[Title('Shipping Methods')] class extends Component {
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $method->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $method->id }})" tooltip="Edit method" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $method->id }})" />
+                                wire:click="confirmDelete({{ $method->id }})" tooltip="Delete method" />
                         </flux:table.cell>
                     </flux:table.row>
 
@@ -240,15 +268,14 @@ new #[Title('Shipping Methods')] class extends Component {
                             <div class="flex flex-col items-center gap-3 text-zinc-400">
                                 <flux:icon.truck class="w-10 h-10 opacity-40" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No shipping methods
-                                        found</p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm">No shipping methods found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
                                         @if ($this->search || $this->filterProvider || $this->filterType || $this->filterStatus)
                                             No results match your current filters.
                                         @else
                                             Add a shipping method to start offering delivery options at checkout.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterProvider || $this->filterType || $this->filterStatus)
                                     <flux:button variant="ghost" size="sm"

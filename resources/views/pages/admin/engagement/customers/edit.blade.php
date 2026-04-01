@@ -23,16 +23,11 @@ new #[Title('Edit Customer')] class extends Component {
     {
         try {
             $this->form->update();
-            $this->dispatch('notify', variant: 'success', message: 'Customer updated successfully.');
+            $this->dispatch('notify', title: 'Customer Updated', variant: 'success', message: 'Customer updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
-            logger()->error('Failed to update customer.', [
-                'customer_id' => $this->customer->id,
-                'user_id' => auth()->id(),
-                'exception_message' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -40,15 +35,10 @@ new #[Title('Edit Customer')] class extends Component {
     {
         try {
             $this->customer->delete();
-            $this->dispatch('notify', variant: 'success', message: 'Customer deleted successfully.');
+            $this->dispatch('notify', title: 'Customer Deleted', variant: 'success', message: 'Customer deleted successfully.');
             $this->redirectRoute('admin.customers.index', navigate: true);
         } catch (\Throwable $e) {
-            logger()->error('Failed to delete customer.', [
-                'customer_id' => $this->customer->id,
-                'user_id' => auth()->id(),
-                'exception_message' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -75,9 +65,9 @@ new #[Title('Edit Customer')] class extends Component {
     {
         try {
             $this->form->sendPasswordResetLink();
-            $this->dispatch('notify', variant: 'success', message: 'Password reset link sent.');
+            $this->dispatch('notify', title: 'Reset Link Sent', variant: 'success', message: 'Password reset link sent.');
         } catch (\Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to send reset link.');
+            $this->dispatch('notify', title: 'Send Failed', variant: 'danger', message: 'Failed to send reset link.');
         }
     }
 }; ?>

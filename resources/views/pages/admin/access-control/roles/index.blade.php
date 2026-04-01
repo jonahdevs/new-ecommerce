@@ -70,14 +70,14 @@ new #[Title('Roles')] class extends Component {
     {
         try {
             $this->form->store();
-            $this->dispatch('notify', variant: 'success', message: 'Role created successfully.');
+            $this->dispatch('notify', title: 'Role Created', variant: 'success', message: 'Role created successfully.');
             $this->modal('create-role')->close();
             $this->form->reset();
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
             logger()->error('Failed to create role.', ['exception' => $e->getMessage()]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Creation Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -85,7 +85,7 @@ new #[Title('Roles')] class extends Component {
     {
         try {
             if ($role->is_system) {
-                $this->dispatch('notify', variant: 'warning', message: 'System roles cannot be deleted.');
+                $this->dispatch('notify', title: 'Action Not Allowed', variant: 'warning', message: 'System roles cannot be deleted.');
                 return;
             }
 
@@ -93,9 +93,9 @@ new #[Title('Roles')] class extends Component {
             $role->users()->each(fn($user) => $user->removeRole($role->name));
             $role->delete();
 
-            $this->dispatch('notify', variant: 'success', message: 'Role deleted successfully.');
+            $this->dispatch('notify', title: 'Role Deleted', variant: 'success', message: 'Role deleted successfully.');
         } catch (\Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Deletion Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 }; ?>
@@ -246,18 +246,16 @@ new #[Title('Roles')] class extends Component {
                                         <flux:avatar circle size="sm" name="{{ $user->name }}" />
                                     @endif
 
-                                    <flux:text class="text-sm font-medium">{{ $user->name }}</flux:text>
+                                    <flux:heading size="sm">{{ $user->name }}</flux:heading>
                                 </div>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <flux:link href="mailto:{{ $user->email }}" class="text-sm">
-                                    {{ $user->email }}
-                                </flux:link>
+                                <flux:subheading>{{ $user->email }}</flux:subheading>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <flux:text class="text-sm">{{ $user->phone_number ?? '—' }}</flux:text>
+                                <flux:subheading>{{ $user->phone_number ?? '—' }}</flux:subheading>
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -292,7 +290,7 @@ new #[Title('Roles')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell class="pe-4! flex items-center justify-end gap-1">
-                                <flux:button icon="pencil-square" variant="ghost" size="sm" tooltip="Edit"
+                                <flux:button icon="pencil-square" icon-variant="outline" variant="ghost" size="sm" tooltip="Edit"
                                     :href="route('admin.access-control.users.edit', $user)" class="cursor-pointer"
                                     wire:navigate />
 
@@ -304,12 +302,24 @@ new #[Title('Roles')] class extends Component {
                     @empty
                         <flux:table.row>
                             <flux:table.cell colspan="7" class="text-center py-12">
-                                <div class="flex flex-col items-center gap-3">
-                                    <flux:icon name="users" class="size-10 text-zinc-300" />
-                                    <flux:heading size="lg" class="text-zinc-600">No Users Found</flux:heading>
-                                    <flux:text class="text-sm text-zinc-400">
-                                        {{ $this->search ? 'No users match your search.' : 'No users have been added yet.' }}
-                                    </flux:text>
+                                <div class="flex flex-col items-center gap-3 text-zinc-400">
+                                    <flux:icon.users class="w-10 h-10 opacity-40" />
+                                    <div>
+                                        <flux:heading size="sm">No users found</flux:heading>
+                                        <flux:subheading class="mt-0.5">
+                                            @if ($this->search || $this->role || $this->status)
+                                                No results match your current filters.
+                                            @else
+                                                Staff users will appear here once they are added.
+                                            @endif
+                                        </flux:subheading>
+                                    </div>
+                                    @if ($this->search || $this->role || $this->status)
+                                        <flux:button variant="ghost" size="sm"
+                                            wire:click="$set('search', ''); $set('role', ''); $set('status', '')">
+                                            Clear filters
+                                        </flux:button>
+                                    @endif
                                 </div>
                             </flux:table.cell>
                         </flux:table.row>

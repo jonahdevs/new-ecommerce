@@ -13,14 +13,18 @@ new class extends Component {
     {
         try {
             $this->form->store();
-            $this->dispatch('notify', variant: 'success', message: 'Brand created successfully!');
+
+            $this->dispatch('notify', title: 'Brand Created', variant: 'success', message: 'The brand has been created successfully');
+
             $this->redirectRoute('admin.catalog.brands.index', navigate: true);
         } catch (ValidationException $e) {
-            $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
+            $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields and try again');
+
             throw $e;
         } catch (\Throwable $th) {
             \Log::error('Error creating brand: ' . $th->getMessage(), ['exception' => $th]);
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to create brand. Please try again.');
+
+            $this->dispatch('notify', title: 'Creation Failed', variant: 'danger', message: 'Failed to create brand. Please try again');
         }
     }
 }; ?>
@@ -33,13 +37,17 @@ new class extends Component {
         <flux:breadcrumbs.item>Create</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    <flux:heading size="xl">Create New Brand</flux:heading>
+    <div class="mt-2 mb-6">
+        <flux:heading size="xl">Create New Brand</flux:heading>
+        <flux:subheading size="md" class="text-zinc-500">Add a new brand to your store. You can edit it later if
+            you need to.</flux:subheading>
+    </div>
 
 
     <form wire:submit="save" class="space-y-5 mt-6">
         @include('pages.admin.catalog.brands._form-fields')
 
-        <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-800">
+        <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-900">
             <flux:button variant="ghost" href="{{ route('admin.catalog.brands.index') }}" class="cursor-pointer">
                 Cancel
             </flux:button>

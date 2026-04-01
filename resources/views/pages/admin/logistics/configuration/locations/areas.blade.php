@@ -79,7 +79,7 @@ new #[Title('Areas & Towns')] class extends Component {
 
             $this->form->reset();
             Flux::modal('area-modal')->close();
-            $this->dispatch('notify', variant: 'success', message: $isEditing ? 'Area updated.' : 'Area added.');
+            $this->dispatch('notify', title: $isEditing ? 'Area Updated' : 'Area Added', variant: 'success', message: $isEditing ? 'Area updated.' : 'Area added.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -88,7 +88,7 @@ new #[Title('Areas & Towns')] class extends Component {
                 'area_id' => $this->form->area?->id,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 
@@ -114,14 +114,14 @@ new #[Title('Areas & Towns')] class extends Component {
             Area::destroy($this->deletingId);
             $this->deletingId = null;
             Flux::modal('delete-confirmation')->close();
-            $this->dispatch('notify', variant: 'danger', message: 'Area deleted.');
+            $this->dispatch('notify', title: 'Area Deleted', variant: 'danger', message: 'Area deleted.');
         } catch (\Throwable $e) {
             logger()->error('Failed to delete area.', [
                 'exception' => $e->getMessage(),
                 'area_id' => $this->deletingId,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Could not delete this area. It may have dependent records.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Could not delete this area. It may have dependent records.');
         }
     }
 }; ?>
@@ -143,17 +143,43 @@ new #[Title('Areas & Towns')] class extends Component {
                 icon="magnifying-glass" clearable class="max-w-md" />
 
             <div class="flex items-center gap-4 ms-auto">
-                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable class="md:w-56">
-                    @foreach ($this->counties as $county)
-                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                <flux:dropdown position="bottom" align="end">
+                    <flux:button variant="ghost" size="sm" icon="funnel" icon-variant="outline" icon-trailing="chevron-down">
+                        Filters
+                        @php $activeFilters = collect([$filterCounty, $filterZone])->filter()->count(); @endphp
+                        @if ($activeFilters > 0)
+                            <flux:badge size="sm" class="ms-1">{{ $activeFilters }}</flux:badge>
+                        @endif
+                    </flux:button>
 
-                <flux:select wire:model.live="filterZone" placeholder="Zone Override" clearable class="md:w-48">
-                    @foreach ($this->zones as $zone)
-                        <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                    <flux:menu class="min-w-64">
+                        <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-700">
+                            <flux:subheading>Filter Options</flux:subheading>
+                            <flux:button variant="ghost" size="xs"
+                                wire:click="$set('filterCounty', ''); $set('filterZone', '')"
+                                class="cursor-pointer">Reset</flux:button>
+                        </div>
+                        <flux:separator />
+                        <div class="p-3 space-y-3">
+                            <flux:field>
+                                <flux:label>County</flux:label>
+                                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable>
+                                    @foreach ($this->counties as $county)
+                                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                            <flux:field>
+                                <flux:label>Zone Override</flux:label>
+                                <flux:select wire:model.live="filterZone" placeholder="Zone Override" clearable>
+                                    @foreach ($this->zones as $zone)
+                                        <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+                        </div>
+                    </flux:menu>
+                </flux:dropdown>
             </div>
         </div>
         <flux:table :paginate="$this->areas">
@@ -167,12 +193,12 @@ new #[Title('Areas & Towns')] class extends Component {
             <flux:table.rows>
                 @forelse ($this->areas as $area)
                     <flux:table.row :key="$area->id">
-                        <flux:table.cell class="font-semibold ps-4!">
-                            {{ $area->name }}
+                        <flux:table.cell class="ps-4!">
+                            <flux:heading size="sm">{{ $area->name }}</flux:heading>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            {{ $area->county->name }}
+                            <flux:subheading>{{ $area->county->name }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -181,21 +207,21 @@ new #[Title('Areas & Towns')] class extends Component {
                                     <flux:badge color="orange" variant="flat" size="sm">
                                         {{ $area->shippingZone->name }}
                                     </flux:badge>
-                                    <span class="text-xs text-zinc-400">override</span>
+                                    <flux:subheading>override</flux:subheading>
                                 </div>
                             @else
-                                <span class="text-xs text-zinc-400">
+                                <flux:subheading>
                                     Default ({{ $area->county->shippingZone->name ?? 'from county' }})
-                                </span>
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square" icon-variant="outline"
-                                class="cursor-pointer text-brand-secondary!" wire:click="edit({{ $area->id }})" />
+                                class="cursor-pointer" wire:click="edit({{ $area->id }})" tooltip="Edit area" />
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
                                 color="red" class="cursor-pointer text-red-500!"
-                                wire:click="confirmDelete({{ $area->id }})" />
+                                wire:click="confirmDelete({{ $area->id }})" tooltip="Delete area" />
                         </flux:table.cell>
                     </flux:table.row>
 
@@ -205,14 +231,14 @@ new #[Title('Areas & Towns')] class extends Component {
                             <div class="flex flex-col items-center gap-3 text-zinc-400">
                                 <flux:icon.map-pin class="w-10 h-10 opacity-40" />
                                 <div>
-                                    <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No areas found</p>
-                                    <p class="text-xs mt-0.5">
+                                    <flux:heading size="sm">No areas found</flux:heading>
+                                    <flux:subheading class="mt-0.5">
                                         @if ($this->search || $this->filterCounty || $this->filterZone)
                                             No results match your current filters.
                                         @else
                                             Add towns and suburbs to support accurate address selection at checkout.
                                         @endif
-                                    </p>
+                                    </flux:subheading>
                                 </div>
                                 @if ($this->search || $this->filterCounty || $this->filterZone)
                                     <flux:button variant="ghost" size="sm"
