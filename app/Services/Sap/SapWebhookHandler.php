@@ -26,12 +26,12 @@ class SapWebhookHandler
 
         $this->logWebhookRequest($request, $payload);
 
-        // Property 4: reject anything with an invalid or missing signature
+        // Property 4: reject anything with an invalid or missing secret header
         if (!$this->validateSignature($request)) {
-            Log::warning('SAP webhook rejected — invalid signature', [
+            Log::warning('SAP webhook rejected — invalid secret', [
                 'ip' => $request->ip(),
             ]);
-            abort(401, 'Invalid webhook signature.');
+            abort(401, 'Invalid webhook secret.');
         }
 
         $this->processPayload($payload);
@@ -39,9 +39,8 @@ class SapWebhookHandler
 
     // ================================================================
     // Signature validation
-    // SAP signs the raw request body with HMAC-SHA256 using the shared
-    // secret. We recompute and compare using hash_equals to prevent
-    // timing attacks.
+    // SAP sends a simple secret header (X-SAP-Secret) that we compare
+    // with our configured secret using hash_equals to prevent timing attacks.
     // ================================================================
 
     public function validateSignature(Request $request): bool

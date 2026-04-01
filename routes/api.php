@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SapProductSyncController;
 use App\Http\Controllers\Webhooks\MpesaWebhookController;
 use App\Http\Controllers\Webhooks\PesawiseWebhookController;
 use App\Http\Controllers\Webhooks\SapWebhookController;
@@ -25,3 +26,11 @@ Route::prefix('webhooks')
         Route::post('/sap', SapWebhookController::class)
             ->name('sap');
     });
+
+// SAP Product Sync API - Batch only
+Route::post('/sap/products/sync', SapProductSyncController::class)
+    ->withoutMiddleware([
+        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
+    ])
+    ->name('sap.products.sync');

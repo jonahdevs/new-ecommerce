@@ -14,7 +14,7 @@ new #[Title('Products')] class extends Component {
     public string $category = '';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
-    public int $perPage = 25;
+    public int $perPage = 10;
 
     // Bulk action state
     public string $bulkActionType = '';
@@ -324,7 +324,8 @@ new #[Title('Products')] class extends Component {
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Toolbar --}}
-        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
+        <div
+            class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             {{-- Search --}}
             <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search by name or SKU..."

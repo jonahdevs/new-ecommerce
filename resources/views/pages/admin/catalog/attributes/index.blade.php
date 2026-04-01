@@ -79,7 +79,7 @@ new #[Title('Product Attributes')] class extends Component {
     <div class="flex items-start gap-8 space-y-5 mt-6">
 
         <form wire:submit="createAttribute"
-            class="space-y-5 w-full max-w-md [&_[data-flux-description]]:mt-0! [&_[data-flux-error]]:mt-0!">
+            class="space-y-5 w-full max-w-md **:data-flux-description:mt-0! **:data-flux-error:mt-0!">
 
             <div class="flex items-center justify-between">
                 <flux:heading size="lg">
@@ -144,14 +144,14 @@ new #[Title('Product Attributes')] class extends Component {
 
                 <flux:table.rows>
                     @forelse ($this->productAttributes as $attribute)
-                        <flux:table.row :key="$attribute->id" class="group hover:bg-zinc-50">
+                        <flux:table.row :key="$attribute->id" class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                             <flux:table.cell class="ps-4!">
                                 <flux:heading>{{ $attribute->name }}</flux:heading>
 
                                 <div
                                     class="flex items-center divide-x mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out">
                                     <button type="button" wire:click="editAttribute({{ $attribute->id }})"
-                                        class="text-sm pe-2 text-brand-secondary hover:underline cursor-pointer">
+                                        class="text-sm pe-2 text-brand-secondary dark:text-brand-secondary-light hover:underline cursor-pointer">
                                         Edit
                                     </button>
 
@@ -205,7 +205,7 @@ new #[Title('Product Attributes')] class extends Component {
                                     @endif
                                 </div>
 
-                                <flux:link class="text-xs! text-brand-secondary"
+                                <flux:link class="text-xs! text-brand-secondary dark:text-brand-secondary-light"
                                     href="{{ route('admin.catalog.attributes.values', $attribute) }}" wire:navigate>
                                     Configure values
                                 </flux:link>

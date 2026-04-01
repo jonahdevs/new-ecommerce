@@ -14,10 +14,10 @@ class SapWebhookController extends Controller
      *
      * SAP calls this endpoint when the eTIMS device finishes KRA
      * validation and a CU number is ready. The handler validates the
-     * HMAC signature, updates the order, and triggers receipt generation.
+     * secret header, updates the order, and triggers receipt generation.
      *
      * Always returns 200 on success so SAP doesn't retry unnecessarily.
-     * Signature failures return 401. Processing errors bubble as 500 so
+     * Secret validation failures return 401. Processing errors bubble as 500 so
      * SAP knows to retry.
      */
     public function __invoke(Request $request, SapWebhookHandler $handler): Response

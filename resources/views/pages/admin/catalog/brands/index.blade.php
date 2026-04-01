@@ -83,8 +83,8 @@ new #[Title('Brands')] class extends Component {
                     <flux:table.row :key="$brand->id">
                         <flux:table.cell class="flex items-center gap-3 ps-4!">
                             @if ($brand->logo_path)
-                                <img src="{{ asset('storage/' . $brand->logo_path) }}"
-                                    class="w-10 h-10 rounded object-contain bg-white p-1 border">
+                                <img src="{{ $brand->logo_url }}" alt="{{ $brand->name }} Logo"
+                                    class="w-10 h-10 rounded object-contain p-1 border">
                             @else
                                 <div
                                     class="w-10 h-10 bg-zinc-50 dark:bg-zinc-900 border flex items-center justify-center rounded">
@@ -148,7 +148,8 @@ new #[Title('Brands')] class extends Component {
             <div>
                 <flux:subheading>
                     @if ($brandNameToDelete)
-                        <p class="mt-2">Are you sure you want to delete <strong>{{ $brandNameToDelete }}</strong>?</p>
+                        <p class="mt-2">Are you sure you want to delete <strong>{{ $brandNameToDelete }}</strong>?
+                        </p>
                         <p class="mt-1 text-sm text-red-600">This action cannot be undone.</p>
                     @endif
                 </flux:subheading>

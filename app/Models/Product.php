@@ -79,6 +79,9 @@ class Product extends Model
         'reviews_count',
 
         'sold_individually',
+
+        // SAP integration
+        'sap_last_synced_at',
     ];
 
     protected function casts(): array
@@ -102,6 +105,7 @@ class Product extends Model
             'min_order_quantity' => 'decimal:2',
             'expected_restock_date' => 'date',
             'published_at' => 'datetime',
+            'sap_last_synced_at' => 'datetime',
             'status' => ProductStatus::class,
             'visibility' => ProductVisibility::class,
             'type' => ProductType::class,
@@ -290,7 +294,7 @@ class Product extends Model
     protected function visibleInCatalog(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC,
+            ProductVisibility::PUBLIC ,
             ProductVisibility::CATALOG,
         ]);
     }
@@ -303,7 +307,7 @@ class Product extends Model
     protected function visibleInSearch(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC,
+            ProductVisibility::PUBLIC ,
             ProductVisibility::SEARCH,
         ]);
     }
@@ -350,8 +354,8 @@ class Product extends Model
     {
         return Attribute::make(
             get: fn() => $this->final_price !== null
-                ? format_currency($this->final_price)
-                : null,
+            ? format_currency($this->final_price)
+            : null,
         );
     }
 
@@ -456,8 +460,8 @@ class Product extends Model
             ->whereNotNull('price')
             ->min(
                 fn($v) => $v->sale_price && $v->sale_price < $v->price
-                    ? $v->sale_price
-                    : $v->price
+                ? $v->sale_price
+                : $v->price
             );
 
         return $minPrice !== null ? format_currency($minPrice) : null;
