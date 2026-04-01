@@ -9,16 +9,19 @@ use App\Jobs\SyncOrderToSapJob;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\FailedPaymentNotification;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\InventoryService;
 use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
+use App\Settings\NotificationSettings;
 use App\Settings\OrderSettings;
 use App\Settings\StripeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Stripe\StripeClient;
 use Stripe\Webhook;
 
@@ -27,8 +30,10 @@ class StripeGateway implements PaymentGateway
     private StripeClient $stripe;
     private string $webhookSecret;
 
-    public function __construct(StripeSettings $settings)
-    {
+    public function __construct(
+        StripeSettings $settings,
+        private readonly NotificationSettings $notificationSettings
+    ) {
         // Use settings with config fallback
         $secretKey = $settings->secret_key ?: config('services.stripe.secret_key');
 
@@ -276,6 +281,9 @@ class StripeGateway implements PaymentGateway
 
         $this->restoreStock($order);
 
+        // Send admin notification if enabled
+        $this->sendFailedPaymentNotification($order, $payment, $intent->last_payment_error?->message);
+
         Log::info('Stripe payment failed', [
             'order_id' => $order->id,
             'intent_id' => $intent->id,
@@ -354,5 +362,32 @@ class StripeGateway implements PaymentGateway
     private function restoreStock(Order $order): void
     {
         app(InventoryService::class)->releaseReservation($order);
+    }
+
+    private function sendFailedPaymentNotification(Order $order, Payment $payment, ?string $reason): void
+    {
+        if (!$this->notificationSettings->notify_failed_payment) {
+            return;
+        }
+
+        try {
+            $adminEmail = $this->notificationSettings->admin_notification_email
+                ?? config('mail.from.address');
+
+            Notification::route('mail', $adminEmail)
+                ->notify(new FailedPaymentNotification($order, $payment, $reason));
+
+            Log::info('Failed payment notification sent to admin', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'admin_email' => $adminEmail,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send payment failure notification to admin', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
     }
 }

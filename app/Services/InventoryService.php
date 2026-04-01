@@ -6,14 +6,21 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Notifications\LowStockNotification;
+use App\Settings\NotificationSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Service for managing product inventory and reservations
  */
 class InventoryService
 {
+    public function __construct(
+        private readonly NotificationSettings $notificationSettings
+    ) {}
+
     /**
      * Check if all cart items are in stock
      * 
@@ -145,6 +152,9 @@ class InventoryService
                 // Deduct the stock
                 $stockItem->decrement('stock_quantity', $item->quantity);
 
+                // Check if stock is now low and send notification
+                $this->checkLowStock($stockItem);
+
                 // Remove the reservation
                 $stockItem->reservations()
                     ->where('order_id', $order->id)
@@ -253,5 +263,54 @@ class InventoryService
         }
 
         return $deleted;
+    }
+
+    /**
+     * Check if product stock is low and send notification
+     * 
+     * @param Product|ProductVariant $stockItem
+     */
+    private function checkLowStock($stockItem): void
+    {
+        if (!$this->notificationSettings->notify_low_stock) {
+            return;
+        }
+
+        // Only check for products (not variants)
+        if ($stockItem instanceof ProductVariant) {
+            return;
+        }
+
+        // Only check if product manages stock
+        if (!$stockItem->manage_stock) {
+            return;
+        }
+
+        $currentStock = $stockItem->stock_quantity;
+        $threshold = $stockItem->low_stock_threshold ?? 10;
+
+        // Send notification if stock just hit or went below threshold
+        if ($currentStock <= $threshold && $currentStock > 0) {
+            try {
+                $adminEmail = $this->notificationSettings->admin_notification_email
+                    ?? config('mail.from.address');
+
+                Notification::route('mail', $adminEmail)
+                    ->notify(new LowStockNotification($stockItem));
+
+                Log::info('Low stock notification sent to admin', [
+                    'product_id' => $stockItem->id,
+                    'sku' => $stockItem->sku,
+                    'current_stock' => $currentStock,
+                    'threshold' => $threshold,
+                    'admin_email' => $adminEmail,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to send low stock notification to admin', [
+                    'product_id' => $stockItem->id,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

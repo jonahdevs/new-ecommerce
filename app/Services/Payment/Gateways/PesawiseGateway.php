@@ -9,6 +9,7 @@ use App\Jobs\SyncOrderToSapJob;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\FailedPaymentNotification;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\InventoryService;
@@ -16,11 +17,13 @@ use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
 use App\Settings\LocalizationSettings;
+use App\Settings\NotificationSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\PesawiseSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class PesawiseGateway implements PaymentGateway
 {
@@ -34,6 +37,7 @@ class PesawiseGateway implements PaymentGateway
     public function __construct(
         PesawiseSettings $settings,
         LocalizationSettings $localization,
+        private readonly NotificationSettings $notificationSettings
     ) {
         // Use settings with config fallback
         $this->isProduction = ($settings->environment ?: config('services.pesawise.environment', 'sandbox')) === 'live';
@@ -243,6 +247,9 @@ class PesawiseGateway implements PaymentGateway
 
         $this->restoreStock($order);
 
+        // Send admin notification if enabled
+        $this->sendFailedPaymentNotification($order, $order->payment, $data['message'] ?? 'Payment failed');
+
         // Log activity
         activity()
             ->performedOn($order->payment)
@@ -376,5 +383,32 @@ class PesawiseGateway implements PaymentGateway
         return $order->user?->phone_number
             ?? $order->shipping_address['phone_number']
             ?? '';
+    }
+
+    private function sendFailedPaymentNotification(Order $order, ?Payment $payment, string $reason): void
+    {
+        if (!$payment || !$this->notificationSettings->notify_failed_payment) {
+            return;
+        }
+
+        try {
+            $adminEmail = $this->notificationSettings->admin_notification_email
+                ?? config('mail.from.address');
+
+            Notification::route('mail', $adminEmail)
+                ->notify(new FailedPaymentNotification($order, $payment, $reason));
+
+            Log::info('Failed payment notification sent to admin', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'admin_email' => $adminEmail,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send payment failure notification to admin', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
     }
 }

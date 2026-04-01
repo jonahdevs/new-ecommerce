@@ -8,6 +8,7 @@ use App\Jobs\SyncOrderToSapJob;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\FailedPaymentNotification;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\InventoryService;
@@ -15,10 +16,12 @@ use App\Services\Payment\Contracts\PaymentGateway;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Services\Payment\ValueObjects\PaymentStatus as PaymentStatusVO;
 use App\Settings\MpesaSettings;
+use App\Settings\NotificationSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class MpesaGateway implements PaymentGateway
 {
@@ -30,8 +33,10 @@ class MpesaGateway implements PaymentGateway
     private string $callbackUrl;
     private string $baseUrl;
 
-    public function __construct(MpesaSettings $settings)
-    {
+    public function __construct(
+        MpesaSettings $settings,
+        private readonly NotificationSettings $notificationSettings
+    ) {
         // Use settings with config fallback
         $this->isProduction = ($settings->environment ?: config('services.mpesa.environment', 'sandbox')) === 'live';
         $this->consumerKey = $settings->consumer_key ?: config('services.mpesa.consumer_key');
@@ -240,6 +245,9 @@ class MpesaGateway implements PaymentGateway
 
         $this->restoreStock($order);
 
+        // Send admin notification if enabled
+        $this->sendFailedPaymentNotification($order, $payment, "M-Pesa payment failed. Result code: {$resultCode}");
+
         Log::info('M-Pesa payment failed', [
             'order_id' => $order->id,
             'result_code' => $resultCode,
@@ -249,6 +257,33 @@ class MpesaGateway implements PaymentGateway
     private function restoreStock(Order $order): void
     {
         app(InventoryService::class)->releaseReservation($order);
+    }
+
+    private function sendFailedPaymentNotification(Order $order, Payment $payment, string $reason): void
+    {
+        if (!$this->notificationSettings->notify_failed_payment) {
+            return;
+        }
+
+        try {
+            $adminEmail = $this->notificationSettings->admin_notification_email
+                ?? config('mail.from.address');
+
+            Notification::route('mail', $adminEmail)
+                ->notify(new FailedPaymentNotification($order, $payment, $reason));
+
+            Log::info('Failed payment notification sent to admin', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'admin_email' => $adminEmail,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send payment failure notification to admin', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function getAccessToken(): string
