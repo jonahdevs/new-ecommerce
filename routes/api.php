@@ -33,4 +33,4 @@ Route::post('/sap/products/sync', SapProductSyncController::class)
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
     ])
-    ->name('sap.products.sync');
+    ->name('products.sync');
