@@ -351,7 +351,7 @@ new #[Title('Order Details')] class extends Component {
                                     <div @class([
                                         'absolute left-4 top-8 bottom-0 w-px z-0',
                                         'bg-green-500' => $nextReached,
-                                        'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
+                                        'bg-zinc-200 dark:bg-zinc-600' => !$nextReached,
                                     ])></div>
                                 @endif
 

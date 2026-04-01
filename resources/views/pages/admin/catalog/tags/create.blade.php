@@ -13,7 +13,7 @@ new #[Title('Create Tag')] class extends Component {
         try {
             $this->form->store();
             $this->dispatch('notify', variant: 'success', message: 'Tag created successfully!');
-            $this->redirectRoute('admin.tags.index', navigate: true);
+            $this->redirectRoute('admin.catalog.tags.index', navigate: true);
         } catch (ValidationException $e) {
             $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields and try again.');
             throw $e;
@@ -28,7 +28,7 @@ new #[Title('Create Tag')] class extends Component {
 <div>
     <flux:breadcrumbs class="mb-2">
         <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-        <flux:breadcrumbs.item :href="route('admin.tags.index')" wire:navigate>Tags</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item :href="route('admin.catalog.tags.index')" wire:navigate>Tags</flux:breadcrumbs.item>
         <flux:breadcrumbs.item>Create</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
@@ -38,7 +38,7 @@ new #[Title('Create Tag')] class extends Component {
         @include('pages.admin.catalog.tags._form-fields')
 
         <flux:card class="flex gap-3 justify-end bg-zinc-50 dark:bg-zinc-800">
-            <flux:button variant="ghost" :href="route('admin.tags.index')" wire:navigate>
+            <flux:button variant="ghost" :href="route('admin.catalog.tags.index')" wire:navigate>
                 Cancel
             </flux:button>
             <flux:button type="submit" variant="primary">

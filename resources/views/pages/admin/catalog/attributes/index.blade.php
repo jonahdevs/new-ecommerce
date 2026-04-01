@@ -132,7 +132,8 @@ new #[Title('Product Attributes')] class extends Component {
             </div>
         </form>
 
-        <flux:card class="p-0 flex-1 ">
+        <flux:card
+            class="p-0 flex-1 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800 overflow-hidden overflow-x-auto">
             <flux:table :paginate="$this->productAttributes">
                 <flux:table.columns>
                     <flux:table.column class="ps-4!">Name</flux:table.column>
@@ -146,7 +147,7 @@ new #[Title('Product Attributes')] class extends Component {
                     @forelse ($this->productAttributes as $attribute)
                         <flux:table.row :key="$attribute->id" class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                             <flux:table.cell class="ps-4!">
-                                <flux:heading>{{ $attribute->name }}</flux:heading>
+                                <flux:text>{{ $attribute->name }}</flux:text>
 
                                 <div
                                     class="flex items-center divide-x mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out">
@@ -169,14 +170,13 @@ new #[Title('Product Attributes')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <flux:badge size="sm" color="zinc" variant="outline" class="capitalize">
+                                <flux:badge size="sm" color="zinc" class="capitalize">
                                     {{ $attribute->watch_type }}
                                 </flux:badge>
                             </flux:table.cell>
 
                             <flux:table.cell>
-                                <flux:badge size="sm" :color="$attribute->is_active ? 'green' : 'red'"
-                                    variant="flat">
+                                <flux:badge size="sm" :color="$attribute->is_active ? 'green' : 'red'">
                                     {{ $attribute->is_active ? 'Active' : 'Inactive' }}
                                 </flux:badge>
                             </flux:table.cell>
@@ -205,7 +205,7 @@ new #[Title('Product Attributes')] class extends Component {
                                     @endif
                                 </div>
 
-                                <flux:link class="text-xs! text-brand-secondary dark:text-brand-secondary-light"
+                                <flux:link class="text-xs! "
                                     href="{{ route('admin.catalog.attributes.values', $attribute) }}" wire:navigate>
                                     Configure values
                                 </flux:link>

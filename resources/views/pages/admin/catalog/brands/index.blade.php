@@ -87,14 +87,15 @@ new #[Title('Brands')] class extends Component {
                                     class="w-10 h-10 rounded object-contain p-1 border">
                             @else
                                 <div
-                                    class="w-10 h-10 bg-zinc-50 dark:bg-zinc-900 border flex items-center justify-center rounded">
+                                    class="w-10 h-10 bg-zinc-50 dark:bg-zinc-900 border dark:border-zinc-600 flex items-center justify-center rounded">
                                     <flux:icon name="building-storefront" variant="micro" />
                                 </div>
                             @endif
 
                             <div>
-                                <span class="font-medium text-zinc-800 dark:text-white">{{ $brand->name }}</span>
-                                <div class="text-xs text-zinc-500">{{ $brand->slug }}</div>
+                                <flux:text class="font-medium text-zinc-800 dark:text-zinc-100">{{ $brand->name }}
+                                </flux:text>
+                                <flux:text class="text-xs">{{ $brand->slug }}</flux:text>
                             </div>
                         </flux:table.cell>
 
@@ -117,7 +118,7 @@ new #[Title('Brands')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="text-sm text-zinc-600">{{ $brand->sort_order }}</span>
+                            <flux:text>{{ $brand->sort_order }}</flux:text>
                         </flux:table.cell>
 
                         <flux:table.cell>
@@ -129,7 +130,7 @@ new #[Title('Brands')] class extends Component {
                         <flux:table.cell align="end" class="pe-4!">
                             <flux:button variant="ghost" size="sm" icon="pencil-square"
                                 :href="route('admin.catalog.brands.edit', $brand->id)" wire:navigate
-                                class="cursor-pointer text-brand-secondary!" />
+                                icon-variant="outline" class="cursor-pointer" />
 
                             <flux:button variant="ghost" size="sm" icon="trash" color="red"
                                 wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')"

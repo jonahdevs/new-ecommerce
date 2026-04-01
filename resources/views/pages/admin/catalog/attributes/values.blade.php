@@ -102,7 +102,7 @@ new class extends Component {
 
     <div class="flex items-start gap-8">
         <form wire:submit="save"
-            class="space-y-5 w-full max-w-md [&_[data-flux-description]]:mt-0! [&_[data-flux-error]]:mt-0!">
+            class="space-y-5 w-full max-w-md **:data-flux-description:mt-0! **:data-flux-error:mt-0!">
 
             <div class="flex items-center justify-between">
                 <flux:heading size="lg">
@@ -144,7 +144,8 @@ new class extends Component {
             </div>
         </form>
 
-        <flux:card class="p-0 flex-1">
+        <flux:card
+            class="p-0 flex-1 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800 overflow-hidden overflow-x-auto">
             <flux:table>
                 <flux:table.columns>
                     <flux:table.column class="ps-4!">Preview</flux:table.column>
@@ -158,19 +159,19 @@ new class extends Component {
                 <flux:table.rows wire:sort="handleSort">
                     @forelse ($this->attributeValues as $val)
                         <flux:table.row :key="$val->id" wire:sort:item="{{ $val->id }}"
-                            class="group hover:bg-zinc-50">
+                            class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
 
                             {{-- Preview Column --}}
                             <flux:table.cell class="ps-4!">
                                 @if ($attribute->watch_type === 'color' && $val->color_code)
-                                    <div class="w-6 h-6 rounded-full border"
+                                    <div class="w-6 h-6 rounded-full border dark:border-zinc-600"
                                         style="background-color: {{ $val->color_code }}">
                                     </div>
                                 @elseif ($attribute->watch_type === 'swatch' && $val->image_path)
                                     <img src="{{ asset('storage/' . $val->image_path) }}"
-                                        class="w-6 h-6 rounded border object-cover">
+                                        class="w-6 h-6 rounded border dark:border-zinc-600 object-cover">
                                 @else
-                                    <flux:text size="sm" class="text-zinc-400">—</flux:text>
+                                    <flux:text size="sm">—</flux:text>
                                 @endif
                             </flux:table.cell>
 
@@ -181,7 +182,7 @@ new class extends Component {
                                 <div
                                     class="flex items-center divide-x mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out">
                                     <button type="button" wire:click="editValue({{ $val->id }})"
-                                        class="text-sm pe-2 text-brand-secondary hover:underline cursor-pointer">
+                                        class="text-sm pe-2 text-brand-secondary hover:underline dark:text-brand-secondary-light cursor-pointer">
                                         Edit
                                     </button>
 

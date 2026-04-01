@@ -68,26 +68,26 @@ new #[Title('Tags')] class extends Component {
     {{-- Stats --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <flux:card>
-            <div class="text-sm text-zinc-600 mb-1">Total Tags</div>
+            <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Tags</div>
             <div class="text-2xl font-bold text-zinc-900 dark:text-white">{{ Tag::count() }}</div>
         </flux:card>
         <flux:card>
-            <div class="text-sm text-zinc-600 mb-1">Tag Types</div>
-            <div class="text-2xl font-bold text-blue-600">{{ $this->types->count() }}</div>
+            <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tag Types</div>
+            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $this->types->count() }}</div>
         </flux:card>
         <flux:card>
-            <div class="text-sm text-zinc-600 mb-1">Total Tagged Products</div>
-            <div class="text-2xl font-bold text-zinc-500">
+            <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Tagged Products</div>
+            <div class="text-2xl font-bold text-zinc-500 dark:text-zinc-400">
                 {{ \DB::table('taggables')->distinct('taggable_id')->count() }}</div>
         </flux:card>
     </div>
 
     {{-- Type Filter --}}
     @if ($this->types->isNotEmpty())
-        <div class="mt-4 mb-5 border-b border-zinc-200 dark:border-zinc-600">
+        <div class="mt-4 border-b border-zinc-200 dark:border-zinc-600">
             <nav class="flex gap-1 overflow-x-auto">
-                <button wire:click="$set('typeFilter', null)" @class([
-                    'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
+                <button type="button" wire:click="$set('typeFilter', null)" @class([
+                    'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
                     'bg-brand-primary text-brand-primary-content font-medium' =>
                         $typeFilter === null,
                     'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
@@ -96,13 +96,14 @@ new #[Title('Tags')] class extends Component {
                     All Types
                 </button>
                 @foreach ($this->types as $type)
-                    <button wire:click="$set('typeFilter', '{{ $type }}')" @class([
-                        'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
-                        'bg-brand-primary text-brand-primary-content font-medium' =>
-                            $typeFilter === $type,
-                        'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
-                            $typeFilter !== $type,
-                    ])>
+                    <button type="button" wire:click="$set('typeFilter', '{{ $type }}')"
+                        @class([
+                            'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
+                            'bg-brand-primary text-brand-primary-content font-medium' =>
+                                $typeFilter === $type,
+                            'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
+                                $typeFilter !== $type,
+                        ])>
                         {{ ucfirst($type) }}
                     </button>
                 @endforeach
@@ -111,8 +112,8 @@ new #[Title('Tags')] class extends Component {
     @endif
 
     {{-- Tags Table --}}
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
-        <div class="px-5 py-3 border-b dark:border-zinc-600">
+    <flux:card class="p-0 mt-5 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+        <div class="px-5 py-3 border-b border-zinc-100 dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search tags by name..." class="max-w-md" />
         </div>
@@ -131,18 +132,18 @@ new #[Title('Tags')] class extends Component {
                 @forelse ($this->tags as $tag)
                     <flux:table.row :key="$tag->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-medium text-zinc-800 dark:text-white">{{ $tag->name }}</div>
+                            <div class="font-medium text-zinc-800 dark:text-zinc-100">{{ $tag->name }}</div>
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <span class="font-mono text-sm text-zinc-600">{{ $tag->slug }}</span>
+                            <span class="font-mono text-sm text-zinc-600 dark:text-zinc-400">{{ $tag->slug }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell>
                             @if ($tag->type)
                                 <flux:badge size="sm" color="blue">{{ ucfirst($tag->type) }}</flux:badge>
                             @else
-                                <span class="text-zinc-400 text-sm">—</span>
+                                <span class="text-zinc-400 dark:text-zinc-500 text-sm">—</span>
                             @endif
                         </flux:table.cell>
 
@@ -153,7 +154,7 @@ new #[Title('Tags')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            {{ $tag->order_column ?? 0 }}
+                            <span class="text-zinc-700 dark:text-zinc-300">{{ $tag->order_column ?? 0 }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
@@ -161,14 +162,14 @@ new #[Title('Tags')] class extends Component {
                                 href="{{ route('admin.catalog.tags.edit', $tag) }}" wire:navigate />
 
                             <flux:button variant="ghost" size="sm" icon="trash" icon-variant="outline"
-                                class="text-red-500!"
+                                class="text-red-500 dark:text-red-400!"
                                 wire:confirm="Delete this tag? This action cannot be undone if the tag is not used by any products."
                                 wire:click="delete({{ $tag->id }})" />
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="6" class="text-center text-zinc-500 py-8">
+                        <flux:table.cell colspan="6" class="text-center text-zinc-500 dark:text-zinc-400 py-8">
                             No tags found
                         </flux:table.cell>
                     </flux:table.row>

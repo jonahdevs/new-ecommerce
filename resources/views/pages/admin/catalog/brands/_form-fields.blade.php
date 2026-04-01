@@ -2,7 +2,7 @@
     {{-- Left Column --}}
     <div class="md:col-span-2 space-y-5">
         <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">General Information</flux:heading>
             </div>
 
@@ -24,7 +24,7 @@
         </flux:card>
 
         <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">SEO Metadata</flux:heading>
             </div>
 
@@ -40,7 +40,7 @@
     {{-- Right Column --}}
     <div class="space-y-6">
         <flux:card class="p-0">
-            <div class="px-3 py-2 border-b">
+            <div class="px-3 py-2 border-b dark:border-b-zinc-600">
                 <flux:heading size="lg">Status</flux:heading>
             </div>
             <div class="p-5">
@@ -49,7 +49,7 @@
         </flux:card>
 
         <flux:card class="p-0">
-            <div class="border-b px-3 py-2">
+            <div class="px-3 py-2 border-b  dark:border-b-zinc-600">
                 <flux:heading size="lg">Brand Logo</flux:heading>
             </div>
 

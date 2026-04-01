@@ -285,8 +285,10 @@ new #[Title('Quotation Details')] class extends Component {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <flux:breadcrumbs class="mb-2">
-                <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline" wire:navigate />
-                <flux:breadcrumbs.item :href="route('admin.quotations.index')" wire:navigate>Quotations</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item :href="route('admin.dashboard')" icon="home" icon-variant="outline"
+                    wire:navigate />
+                <flux:breadcrumbs.item :href="route('admin.quotations.index')" wire:navigate>Quotations
+                </flux:breadcrumbs.item>
                 <flux:breadcrumbs.item>{{ $quote->reference }}</flux:breadcrumbs.item>
             </flux:breadcrumbs>
 
@@ -309,16 +311,19 @@ new #[Title('Quotation Details')] class extends Component {
         {{-- Primary actions --}}
         <div class="flex items-center gap-3 flex-wrap">
             @if ($quote->document_path)
-                <flux:button variant="outline" icon="eye" size="sm" wire:click="previewPdf" class="cursor-pointer">
+                <flux:button variant="outline" icon="eye" size="sm" wire:click="previewPdf"
+                    class="cursor-pointer">
                     <span wire:loading.remove wire:target="previewPdf">Preview PDF</span>
                     <span wire:loading wire:target="previewPdf">Loading...</span>
                 </flux:button>
-                <flux:button variant="outline" icon="arrow-down-tray" size="sm" wire:click="downloadPdf" class="cursor-pointer">
+                <flux:button variant="outline" icon="arrow-down-tray" size="sm" wire:click="downloadPdf"
+                    class="cursor-pointer">
                     <span wire:loading.remove wire:target="downloadPdf">Download</span>
                     <span wire:loading wire:target="downloadPdf">Downloading...</span>
                 </flux:button>
             @elseif ($quote->isSent())
-                <flux:button variant="outline" icon="document-text" size="sm" wire:click="previewPdf" class="cursor-pointer">
+                <flux:button variant="outline" icon="document-text" size="sm" wire:click="previewPdf"
+                    class="cursor-pointer">
                     <span wire:loading.remove wire:target="previewPdf">Generate & Preview</span>
                     <span wire:loading wire:target="previewPdf">Generating...</span>
                 </flux:button>
@@ -429,14 +434,16 @@ new #[Title('Quotation Details')] class extends Component {
                                     <div class="flex items-center gap-3">
                                         <div class="shrink-0 w-12 h-12 rounded border overflow-hidden bg-zinc-50">
                                             @if ($item->productImageUrl())
-                                                <img src="{{ asset($item->productImageUrl()) }}" alt="{{ $item->productName() }}"
+                                                <img src="{{ asset($item->productImageUrl()) }}"
+                                                    alt="{{ $item->productName() }}"
                                                     class="w-full h-full object-cover" />
                                             @else
                                                 <flux:icon name="photo" class="w-full h-full p-2 text-zinc-300" />
                                             @endif
                                         </div>
                                         <div>
-                                            <flux:text class="text-sm font-medium">{{ $item->productName() }}</flux:text>
+                                            <flux:text class="text-sm font-medium">{{ $item->productName() }}
+                                            </flux:text>
                                             @if ($item->product_snapshot['variant'] ?? null)
                                                 <flux:text class="text-xs text-zinc-400">
                                                     {{ collect($item->product_snapshot['variant'])->map(fn($v, $k) => "$k: $v")->join(', ') }}
@@ -452,7 +459,8 @@ new #[Title('Quotation Details')] class extends Component {
                                 <flux:table.cell>{{ format_currency($item->original_price) }}</flux:table.cell>
                                 <flux:table.cell>
                                     @if ($item->quoted_price_cents)
-                                        <span class="{{ $item->hasCustomPrice() ? 'text-blue-600 font-medium' : '' }}">
+                                        <span
+                                            class="{{ $item->hasCustomPrice() ? 'text-blue-600 dark:text-blue-400 font-medium' : '' }}">
                                             {{ format_currency($item->quoted_price) }}
                                         </span>
                                     @else
@@ -529,11 +537,7 @@ new #[Title('Quotation Details')] class extends Component {
 
                 <div class="p-5">
                     @php
-                        $mainPath = [
-                            QuoteStatus::PENDING,
-                            QuoteStatus::SENT,
-                            QuoteStatus::ACCEPTED,
-                        ];
+                        $mainPath = [QuoteStatus::PENDING, QuoteStatus::SENT, QuoteStatus::ACCEPTED];
                         $isCancelled = $quote->isCancelled();
                         $isRejected = $quote->isRejected();
                         $isExpired = $quote->isExpired();
@@ -566,7 +570,7 @@ new #[Title('Quotation Details')] class extends Component {
                                     <div @class([
                                         'absolute left-4 top-8 bottom-0 w-px z-0',
                                         'bg-green-500' => $nextReached,
-                                        'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
+                                        'bg-zinc-200 dark:bg-zinc-600' => !$nextReached,
                                     ])></div>
                                 @endif
 
@@ -593,7 +597,8 @@ new #[Title('Quotation Details')] class extends Component {
                                         </flux:text>
 
                                         @if ($step === QuoteStatus::SENT && $quote->expires_at && $reached)
-                                            <flux:text class="text-xs mt-0.5
+                                            <flux:text
+                                                class="text-xs mt-0.5
                                                 {{ $quote->expires_at->isPast() ? 'text-rose-500' : 'text-zinc-400' }}">
                                                 {{ $quote->expires_at->isPast() ? 'Expired' : 'Expires' }}
                                                 {{ $quote->expires_at->diffForHumans() }}
@@ -629,12 +634,15 @@ new #[Title('Quotation Details')] class extends Component {
                         @if ($quote->order)
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-green-500 z-0"></div>
-                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-600 text-white">
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-600 text-white">
                                     <flux:icon name="arrow-right-circle" class="size-4" />
                                 </div>
                                 <div class="flex-1 pt-1">
-                                    <flux:text class="text-sm font-medium text-teal-600">Converted to sales order</flux:text>
-                                    <flux:link :href="route('admin.orders.show', $quote->order)" wire:navigate class="text-xs text-teal-500">
+                                    <flux:text class="text-sm font-medium text-teal-600">Converted to sales order
+                                    </flux:text>
+                                    <flux:link :href="route('admin.orders.show', $quote->order)" wire:navigate
+                                        class="text-xs text-teal-500">
                                         {{ $quote->order->reference }} →
                                     </flux:link>
                                 </div>
@@ -646,14 +654,17 @@ new #[Title('Quotation Details')] class extends Component {
                             @php $h = $histories->get(QuoteStatus::REJECTED->value); @endphp
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-300 z-0"></div>
-                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-500 text-white">
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-500 text-white">
                                     <flux:icon name="x-circle" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:text class="text-sm font-medium text-red-600">Rejected by customer</flux:text>
+                                        <flux:text class="text-sm font-medium text-red-600">Rejected by customer
+                                        </flux:text>
                                         @if ($quote->rejection_reason)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $quote->rejection_reason }}</flux:text>
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">
+                                                {{ $quote->rejection_reason }}</flux:text>
                                         @endif
                                     </div>
                                     @if ($h)
@@ -675,7 +686,8 @@ new #[Title('Quotation Details')] class extends Component {
                             @php $h = $histories->get(QuoteStatus::EXPIRED->value); @endphp
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-300 z-0"></div>
-                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-400 text-white">
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-400 text-white">
                                     <flux:icon name="exclamation-circle" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
@@ -699,14 +711,17 @@ new #[Title('Quotation Details')] class extends Component {
                             @php $h = $histories->get(QuoteStatus::CANCELLED->value); @endphp
                             <div class="relative flex gap-4 pt-6">
                                 <div class="absolute left-4 top-0 h-6 w-px bg-zinc-300 z-0"></div>
-                                <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-400 text-white">
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-400 text-white">
                                     <flux:icon name="x-mark" class="size-4" />
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:text class="text-sm font-medium text-zinc-500">Cancelled by admin</flux:text>
+                                        <flux:text class="text-sm font-medium text-zinc-500">Cancelled by admin
+                                        </flux:text>
                                         @if ($h?->notes)
-                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $h->notes }}</flux:text>
+                                            <flux:text class="text-xs text-zinc-400 mt-0.5">{{ $h->notes }}
+                                            </flux:text>
                                         @endif
                                     </div>
                                     @if ($h)
@@ -738,7 +753,8 @@ new #[Title('Quotation Details')] class extends Component {
                 </div>
                 <div class="p-5 space-y-4">
                     <div class="flex items-center gap-3">
-                        <div class="shrink-0 w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                        <div
+                            class="shrink-0 w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                             <flux:icon name="user" class="size-5 text-zinc-400" />
                         </div>
                         <div>
@@ -753,7 +769,8 @@ new #[Title('Quotation Details')] class extends Component {
                         @if ($quote->customerEmail())
                             <div class="flex items-center gap-2">
                                 <flux:icon name="envelope" class="size-4 text-zinc-400" />
-                                <flux:link href="mailto:{{ $quote->customerEmail() }}">{{ $quote->customerEmail() }}</flux:link>
+                                <flux:link href="mailto:{{ $quote->customerEmail() }}">{{ $quote->customerEmail() }}
+                                </flux:link>
                             </div>
                         @endif
                         @if ($quote->customerPhone())
@@ -833,7 +850,8 @@ new #[Title('Quotation Details')] class extends Component {
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Price & Send Quote</flux:heading>
-                <flux:text class="mt-1">Set item prices and shipping, then send the quotation to the customer.</flux:text>
+                <flux:text class="mt-1">Set item prices and shipping, then send the quotation to the customer.
+                </flux:text>
             </div>
 
             <form wire:submit="sendQuote" class="space-y-5">
@@ -844,7 +862,8 @@ new #[Title('Quotation Details')] class extends Component {
                         <div class="flex items-center gap-4 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
                             <div class="flex-1 min-w-0">
                                 <flux:text class="text-sm font-medium truncate">{{ $item->productName() }}</flux:text>
-                                <flux:text class="text-xs text-zinc-400">Qty: {{ $item->quantity }} × Original: {{ format_currency($item->original_price) }}</flux:text>
+                                <flux:text class="text-xs text-zinc-400">Qty: {{ $item->quantity }} × Original:
+                                    {{ format_currency($item->original_price) }}</flux:text>
                             </div>
                             <div class="w-32">
                                 <flux:input type="number" step="0.01" min="0"
@@ -856,7 +875,8 @@ new #[Title('Quotation Details')] class extends Component {
                 </div>
 
                 {{-- Shipping --}}
-                <flux:input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="quotedShipping"
+                <flux:input type="number" step="0.01" min="0"
+                    wire:model.live.debounce.300ms="quotedShipping"
                     label="Shipping Cost ({{ get_currency_symbol() }})" placeholder="0.00" />
 
                 {{-- Validity --}}
@@ -871,7 +891,8 @@ new #[Title('Quotation Details')] class extends Component {
                 <div class="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
                     <div class="flex justify-between items-center">
                         <flux:text class="font-medium">Quoted Total</flux:text>
-                        <flux:heading size="lg" class="font-bold">{{ format_currency($this->quotedTotal) }}</flux:heading>
+                        <flux:heading size="lg" class="font-bold">{{ format_currency($this->quotedTotal) }}
+                        </flux:heading>
                     </div>
                 </div>
 
@@ -919,7 +940,8 @@ new #[Title('Quotation Details')] class extends Component {
                 </div>
 
                 @if ($sapPdfUpload)
-                    <div class="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div
+                        class="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
                         <flux:text class="text-sm text-green-700 dark:text-green-300">
                             <flux:icon name="document" class="size-4 inline mr-1" />
                             {{ $sapPdfUpload->getClientOriginalName() }}
@@ -946,7 +968,8 @@ new #[Title('Quotation Details')] class extends Component {
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Cancel Quotation</flux:heading>
-                <flux:text class="mt-1">Are you sure you want to cancel this quotation? This action cannot be undone.</flux:text>
+                <flux:text class="mt-1">Are you sure you want to cancel this quotation? This action cannot be undone.
+                </flux:text>
             </div>
 
             <form wire:submit="cancelQuotation" class="space-y-5">

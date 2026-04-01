@@ -20,10 +20,19 @@ new #[Title('Dashboard')] class extends Component {
     public string $dateFrom = '';
     public string $dateTo = '';
 
+    // Revenue chart specific date range
+    public string $revenuePreset = 'this_month';
+    public string $revenueDateFrom = '';
+    public string $revenueDateTo = '';
+
     public function mount(): void
     {
         $this->dateFrom = now()->startOfDay()->toDateString();
         $this->dateTo = now()->endOfDay()->toDateString();
+
+        // Initialize revenue chart to this month
+        $this->revenueDateFrom = now()->startOfMonth()->toDateString();
+        $this->revenueDateTo = now()->toDateString();
     }
 
     public function setDateRange(string $preset, string $from, string $to): void
@@ -32,6 +41,14 @@ new #[Title('Dashboard')] class extends Component {
         $this->dateFrom = $from;
         $this->dateTo = $to;
         $this->clearComputedCache();
+    }
+
+    public function setRevenueChartDateRange(string $preset, string $from, string $to): void
+    {
+        $this->revenuePreset = $preset;
+        $this->revenueDateFrom = $from;
+        $this->revenueDateTo = $to;
+        unset($this->revenueChartData);
     }
 
     private function clearComputedCache(): void
@@ -136,7 +153,9 @@ new #[Title('Dashboard')] class extends Component {
     #[Computed]
     public function revenueChartData(): array
     {
-        [$from, $to] = $this->dateRange;
+        // Use revenue-specific date range instead of global dashboard date range
+        $from = Carbon::parse($this->revenueDateFrom)->startOfDay();
+        $to = Carbon::parse($this->revenueDateTo)->endOfDay();
         $daysDiff = $from->diffInDays($to);
 
         if ($daysDiff < 1) {
@@ -332,6 +351,16 @@ new #[Title('Dashboard')] class extends Component {
     }
 
     #[Computed]
+    public function recentActivities()
+    {
+        return \Spatie\Activitylog\Models\Activity::with(['subject', 'causer'])
+            ->whereIn('description', ['order_created', 'order_marked_paid', 'order_cancelled', 'payment_initiated', 'payment_confirmed', 'payment_failed', 'inventory_deducted', 'inventory_reserved', 'sap_sync_success', 'sap_sync_failed', 'quote_requested', 'quote_sent', 'quote_accepted', 'user_registered', 'webhook_received_mpesa', 'webhook_received_pesawise'])
+            ->latest()
+            ->limit(15)
+            ->get();
+    }
+
+    #[Computed]
     public function recentDeliveries()
     {
         return Order::whereIn('status', [OrderStatus::SHIPPED->value, OrderStatus::DELIVERED->value, OrderStatus::PROCESSING->value, OrderStatus::CONFIRMED->value])
@@ -360,16 +389,13 @@ new #[Title('Dashboard')] class extends Component {
             <flux:subheading>{{ $this->periodLabel }}</flux:subheading>
         </div>
         <div class="flex items-center gap-2">
+            <flux:icon.loading wire:loading wire:target="setDateRange" class="dark:text-white! size-3.5" />
+
             <div class="relative" wire:ignore>
                 <input type="text" readonly
                     class="dashboard-date-range w-64 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors" />
                 <flux:icon.calendar-days
                     class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-            </div>
-            <div wire:loading wire:target="setDateRange" class="flex items-center gap-1.5 text-xs text-zinc-400">
-                <div class="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin">
-                </div>
-                Updating...
             </div>
         </div>
     </div>
@@ -490,8 +516,8 @@ new #[Title('Dashboard')] class extends Component {
                 <div class="flex items-center gap-1">
                     @foreach (['today' => 'Today', 'last_7_days' => '7d', 'this_month' => '1M', 'last_6_months' => '6M', 'this_year' => '1Y'] as $key => $label)
                         <button
-                            wire:click="setDateRange('{{ $key }}', '{{ match ($key) {'today' => now()->startOfDay()->toDateString(),'last_7_days' => now()->subDays(6)->toDateString(),'this_month' => now()->startOfMonth()->toDateString(),'last_6_months' => now()->subMonths(5)->startOfMonth()->toDateString(),'this_year' => now()->startOfYear()->toDateString()} }}', '{{ now()->toDateString() }}')"
-                            class="text-xs px-3 py-1 rounded-full transition-colors {{ $preset === $key ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}">
+                            wire:click="setRevenueChartDateRange('{{ $key }}', '{{ match ($key) {'today' => now()->startOfDay()->toDateString(),'last_7_days' => now()->subDays(6)->toDateString(),'this_month' => now()->startOfMonth()->toDateString(),'last_6_months' => now()->subMonths(5)->startOfMonth()->toDateString(),'this_year' => now()->startOfYear()->toDateString()} }}', '{{ now()->toDateString() }}')"
+                            class="text-xs px-3 py-1 rounded-full transition-colors {{ $revenuePreset === $key ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}">
                             {{ $label }}
                         </button>
                     @endforeach
@@ -563,7 +589,7 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:heading size="sm">Top Sales Locations</flux:heading>
                     <flux:text class="text-[10px] text-zinc-400">Distribution by city</flux:text>
                 </div>
-                <flux:button variant="ghost" size="sm" class="text-blue-500 text-xs!">View Report</flux:button>
+                <flux:link href="#" class="text-xs">Report</flux:link>
             </div>
             @php
                 $locations = [
@@ -643,9 +669,114 @@ new #[Title('Dashboard')] class extends Component {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
         {{-- Recent Activity Widget (Left, 1 col) --}}
-        <div class="lg:col-span-1">
-            <livewire:admin.recent-activity-widget />
-        </div>
+        <flux:card class="p-0 h-full flex flex-col">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
+                <flux:heading>Recent Activity</flux:heading>
+                <flux:link :href="route('admin.activity-logs.index')" wire:navigate class="text-xs">View all
+                </flux:link>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    @forelse($this->recentActivities as $activity)
+                        <div
+                            class="flex items-start gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
+                            <div class="shrink-0 mt-0.5">
+                                @php
+                                    $iconClass = match (true) {
+                                        str_contains($activity->description, 'failed') ||
+                                            str_contains($activity->description, 'cancelled')
+                                            => 'text-red-600 dark:text-red-400',
+                                        str_contains($activity->description, 'confirmed') ||
+                                            str_contains($activity->description, 'paid') ||
+                                            str_contains($activity->description, 'success') ||
+                                            str_contains($activity->description, 'accepted')
+                                            => 'text-green-600 dark:text-green-400',
+                                        str_contains($activity->description, 'initiated') ||
+                                            str_contains($activity->description, 'requested')
+                                            => 'text-yellow-600 dark:text-yellow-400',
+                                        default => 'text-blue-600 dark:text-blue-400',
+                                    };
+                                @endphp
+
+                                @if (str_contains($activity->description, 'payment'))
+                                    <flux:icon.currency-dollar class="size-5 {{ $iconClass }}" />
+                                @elseif (str_contains($activity->description, 'order'))
+                                    <flux:icon.shopping-bag class="size-5 {{ $iconClass }}" />
+                                @elseif (str_contains($activity->description, 'inventory'))
+                                    <flux:icon.chart-bar class="size-5 {{ $iconClass }}" />
+                                @elseif (str_contains($activity->description, 'sap'))
+                                    <flux:icon.arrow-path class="size-5 {{ $iconClass }}" />
+                                @elseif (str_contains($activity->description, 'quote'))
+                                    <flux:icon.document-text class="size-5 {{ $iconClass }}" />
+                                @elseif (str_contains($activity->description, 'user'))
+                                    <flux:icon.user class="size-5 {{ $iconClass }}" />
+                                @elseif (str_contains($activity->description, 'webhook'))
+                                    <flux:icon.bell class="size-5 {{ $iconClass }}" />
+                                @else
+                                    <flux:icon.information-circle class="size-5 {{ $iconClass }}" />
+                                @endif
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex-1">
+                                        <p class="text-xs font-medium {{ $iconClass }}">
+                                            {{ str_replace('_', ' ', ucwords($activity->description, '_')) }}
+                                        </p>
+
+                                        @if ($activity->causer)
+                                            <p class="text-[10px] text-zinc-400 mt-0.5">
+                                                by {{ $activity->causer->name ?? 'System' }}
+                                            </p>
+                                        @endif
+
+                                        @if ($activity->subject)
+                                            <p class="text-[10px] text-zinc-500 dark:text-zinc-500 mt-1">
+                                                @if ($activity->subject_type === 'App\Models\Order')
+                                                    Order #{{ $activity->subject->reference ?? 'N/A' }}
+                                                    @if ($activity->properties->has('total'))
+                                                        • {{ format_currency($activity->properties->get('total')) }}
+                                                    @endif
+                                                @elseif($activity->subject_type === 'App\Models\Payment')
+                                                    @if ($activity->properties->has('order_reference'))
+                                                        Order #{{ $activity->properties->get('order_reference') }}
+                                                    @endif
+                                                    @if ($activity->properties->has('amount'))
+                                                        • {{ format_currency($activity->properties->get('amount')) }}
+                                                    @endif
+                                                @elseif($activity->subject_type === 'App\Models\Quote')
+                                                    Quote #{{ $activity->subject->reference ?? 'N/A' }}
+                                                @elseif($activity->subject_type === 'App\Models\User')
+                                                    {{ $activity->subject->email ?? 'User' }}
+                                                @else
+                                                    {{ class_basename($activity->subject_type) }}
+                                                    #{{ $activity->subject_id }}
+                                                @endif
+                                            </p>
+                                        @endif
+                                    </div>
+
+                                    <time class="text-[10px] text-zinc-400 whitespace-nowrap">
+                                        {{ $activity->created_at->diffForHumans() }}
+                                    </time>
+                                </div>
+
+                                @if ($activity->properties->has('reason') || $activity->properties->has('error'))
+                                    <p class="text-[10px] text-red-600 dark:text-red-400 mt-1">
+                                        {{ $activity->properties->get('reason') ?? $activity->properties->get('error') }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="px-5 py-10 text-center text-zinc-400 text-sm">
+                            No recent activity
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </flux:card>
 
         {{-- Recent Orders Table (Right, 2 cols) --}}
         <flux:card class="p-0 lg:col-span-2">
@@ -746,10 +877,8 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0 lg:col-span-2">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Stock report</flux:heading>
-                <a href="{{ route('admin.catalog.products.index') }}" wire:navigate
-                    class="text-xs px-3 py-1 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-                    Manage stock
-                </a>
+                <flux:link :href="route('admin.catalog.products.index')" wire:navigate class="text-xs">Manage stock
+                </flux:link>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -819,7 +948,7 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0 flex flex-col">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Customer satisfaction</flux:heading>
-                <flux:text class="text-xs text-blue-500 cursor-pointer hover:underline">Report</flux:text>
+                <flux:link href="#" class="text-xs">Report</flux:link>
             </div>
 
             <div class="p-4 flex flex-col flex-1">
@@ -899,7 +1028,7 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Top categories</flux:heading>
-                <flux:text class="text-xs text-zinc-400 cursor-pointer hover:text-zinc-600">Report ▾</flux:text>
+                <flux:link href="#" class="text-xs">Report</flux:link>
             </div>
 
             <div class="p-4 flex flex-col items-center gap-4">
@@ -962,7 +1091,7 @@ new #[Title('Dashboard')] class extends Component {
                                 </p>
                                 <p
                                     class="flex items-center justify-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                                    <span class="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                    <span class="inline-block w-2.5 h-2.5 rounded-sm shrink-0"
                                         style="background:{{ $catColors[$i] ?? '#94A3B8' }};"></span>
                                     {{ $cat['name'] }}
                                 </p>
@@ -1007,7 +1136,7 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Top products</flux:heading>
-                <flux:text class="text-xs text-blue-500 cursor-pointer hover:underline">Report</flux:text>
+                <flux:link href="#" class="text-xs">Report</flux:link>
             </div>
             <div class="p-4 flex flex-col gap-3">
                 @php $prodColors = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#F43F5E', '#06B6D4']; @endphp
@@ -1038,12 +1167,11 @@ new #[Title('Dashboard')] class extends Component {
 </div>
 
 @assets
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 @endassets
 
 @script
@@ -1366,25 +1494,24 @@ new #[Title('Dashboard')] class extends Component {
                 endDate: moment($wire.dateTo),
                 opens: 'left',
                 showDropdowns: true,
-                alwaysShowCalendars: true,
+                alwaysShowCalendars: false,
                 ranges: {
                     'Today': [moment(), moment()],
                     'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                    'This Week': [moment().startOf('isoWeek'), moment().endOf('isoWeek')],
                     'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
                     'This Month': [moment().startOf('month'), moment().endOf('month')],
                     'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month')
                         .endOf('month')
-                    ],
-                    'This Year': [moment().startOf('year'), moment().endOf('year')],
-                    'Last Year': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf(
-                        'year')],
+                    ]
                 },
                 locale: {
                     format: 'MMM DD, YYYY',
                     separator: ' – '
                 },
             }, function(start, end, label) {
+                console.log('New date range selected: ' + start.format('YYYY-MM-DD') + ' to ' + end.format(
+                    'YYYY-MM-DD') + ' (predefined range: ' + label + ')');
                 const preset = label === 'Custom Range' ? 'custom' : label.toLowerCase().replace(/\s+/g, '_');
                 $wire.setDateRange(preset, start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
             });
