@@ -16,6 +16,7 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -146,7 +147,7 @@ new #[Layout('layouts.guest')] class extends Component
 
     private function setupSEO(Product $product): void
     {
-        $description = strip_tags($product->short_description ?? $product->name);
+        $description = Str::limit(strip_tags($product->short_description ?? $product->name), 155);
         $keywords = [$product->name, 'commercial kitchen equipment'];
 
         if ($product->brand) {
@@ -157,6 +158,7 @@ new #[Layout('layouts.guest')] class extends Component
         SEOMeta::setTitle($product->name);
         SEOMeta::setDescription($description);
         SEOMeta::addKeyword($keywords);
+        SEOMeta::setCanonical(route('products.show', $product->slug));
 
         // OpenGraph
         OpenGraph::setTitle($product->name);
@@ -196,6 +198,7 @@ new #[Layout('layouts.guest')] class extends Component
             'priceCurrency' => 'KES',
             'availability' => $product->stock_status === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             'url' => route('products.show', $product->slug),
+            'seller' => ['@type' => 'Organization', 'name' => config('app.name')],
         ]);
 
         if ($product->average_rating && $product->reviews_count > 0) {
@@ -802,7 +805,10 @@ new #[Layout('layouts.guest')] class extends Component
                     <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                     Home
                 </flux:breadcrumbs.item>
-                <flux:breadcrumbs.item href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}">
+                <flux:breadcrumbs.item href="{{ route('shop.index') }}" wire:navigate>
+                    Shop
+                </flux:breadcrumbs.item>
+                <flux:breadcrumbs.item href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}" wire:navigate>
                     {{ $this->primaryCategory->name }}
                 </flux:breadcrumbs.item>
                 <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>

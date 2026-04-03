@@ -66,7 +66,7 @@ use App\Services\ProductService;
                 <div class="swiper px-5" id="<?php echo e($type); ?>">
                     <div class="swiper-wrapper  pb-5">
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <div class="swiper-slide h-auto!">
+                            <div class="swiper-slide h-auto!" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'rec-'.e($type).'-'.e($product->id).''; ?>wire:key="rec-<?php echo e($type); ?>-<?php echo e($product->id); ?>">
                                 <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
@@ -75,7 +75,7 @@ $__split = function ($name, $params = []) {
 
 $__keyOuter = $__key ?? null;
 
-$__key = null;
+$__key = 'rec-card-' . $type . '-' . $product->id;
 $__componentSlots = [];
 
 $__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-2137290281-0', $__key);
@@ -165,7 +165,7 @@ $__split = function ($name, $params = []) {
 
 $__keyOuter = $__key ?? null;
 
-$__key = null;
+$__key = 'rec-card-' . $type . '-' . $product->id;
 $__componentSlots = [];
 
 $__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-2137290281-1', $__key);

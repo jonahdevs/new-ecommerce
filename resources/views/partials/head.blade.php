@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"> --}}
 
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="canonical" href="{{ url()->current() }}">
+{{-- Canonical is set per-page via SEOMeta::setCanonical() and output by SEO::generate() above --}}
 <link rel="preconnect" href="https://fonts.bunny.net">
 
 <meta name="color-scheme" content="light only">

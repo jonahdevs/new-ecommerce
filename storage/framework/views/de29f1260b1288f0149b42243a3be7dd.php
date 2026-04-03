@@ -13,7 +13,7 @@
 
 
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="canonical" href="<?php echo e(url()->current()); ?>">
+
 <link rel="preconnect" href="https://fonts.bunny.net">
 
 <meta name="color-scheme" content="light only">

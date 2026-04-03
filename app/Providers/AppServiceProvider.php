@@ -14,6 +14,7 @@ use App\Services\CartService;
 use App\Services\CompareService;
 use App\Services\WishlistService;
 use App\View\Composers\FooterComposer;
+use Artesaos\SEOTools\Facades\OpenGraph;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
@@ -57,6 +58,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Registered::class, SendNewUserNotification::class);
 
         Review::observe(ReviewObserver::class);
+
+        OpenGraph::addProperty('locale', 'en_KE');
+        OpenGraph::setSiteName(config('app.name'));
 
         $this->configureDefaults();
 

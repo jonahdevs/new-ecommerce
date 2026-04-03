@@ -12,8 +12,9 @@ use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\JsonLd;
 use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 
 new #[Layout('layouts.guest')] class extends Component {
@@ -79,17 +80,27 @@ new #[Layout('layouts.guest')] class extends Component {
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
         SEOMeta::addKeyword([$this->category->name, 'commercial kitchen equipment', 'restaurant equipment', $this->category->name . ' Kenya']);
+        SEOMeta::setCanonical(route('shop.category', $this->category->slug));
 
         OpenGraph::setTitle($title);
         OpenGraph::setDescription($description);
         OpenGraph::setUrl(route('shop.category', $this->category->slug));
+        OpenGraph::setType('website');
 
-        if ($this->category->image_path) {
-            OpenGraph::addImage(Storage::url($this->category->image_path));
-        }
+        $ogImage = $this->category->image_path ? Storage::url($this->category->image_path) : asset('images/og-home.jpg');
+        OpenGraph::addImage($ogImage);
 
+        TwitterCard::setType('summary_large_image');
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+        TwitterCard::setImage($ogImage);
+
+        JsonLd::setType('BreadcrumbList');
+        JsonLd::addValue('itemListElement', [
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => 'Shop', 'item' => route('shop.index')],
+            ['@type' => 'ListItem', 'position' => 3, 'name' => $this->category->name, 'item' => route('shop.category', $this->category->slug)],
+        ]);
     }
 
     // -----------------------------------------------------------------------

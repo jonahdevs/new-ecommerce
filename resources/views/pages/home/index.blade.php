@@ -29,6 +29,7 @@ new #[Layout('layouts.guest')] class extends Component {
         SEOMeta::setTitle('Commercial Kitchen Equipment Supplier in East Africa');
         SEOMeta::setDescription('Leading supplier of commercial kitchen equipment in Kenya, Uganda & Rwanda. Restaurant equipment, bakery machines, refrigeration solutions, and professional kitchen supplies.');
         SEOMeta::addKeyword(['commercial kitchen equipment', 'restaurant equipment Kenya', 'bakery equipment East Africa', 'refrigeration solutions', 'kitchen supplies', 'Sheffield Africa', 'commercial kitchen Uganda', 'restaurant equipment Rwanda']);
+        SEOMeta::setCanonical(route('home'));
 
         // OpenGraph
         OpenGraph::setTitle('Sheffield Africa - Commercial Kitchen Equipment Supplier');

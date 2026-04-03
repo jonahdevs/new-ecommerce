@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\JsonLd;
 use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 
 new #[Layout('layouts.guest')] class extends Component {
@@ -47,9 +48,6 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Url(as: 'in_stock')]
     public bool $inStock = false;
 
-    #[Url(as: 'featured')]
-    public bool $featured = false;
-
     #[Url(as: 'on_sale')]
     public bool $onSale = false;
 
@@ -74,13 +72,24 @@ new #[Layout('layouts.guest')] class extends Component {
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
         SEOMeta::addKeyword(['commercial kitchen equipment', 'restaurant equipment', 'bakery equipment', 'kitchen supplies', 'shop kitchen equipment']);
+        SEOMeta::setCanonical(route('shop.index'));
 
         OpenGraph::setTitle($title);
         OpenGraph::setDescription($description);
         OpenGraph::setUrl(route('shop.index'));
+        OpenGraph::setType('website');
+        OpenGraph::addImage(asset('images/og-home.jpg'));
 
+        TwitterCard::setType('summary_large_image');
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+        TwitterCard::setImage(asset('images/og-home.jpg'));
+
+        JsonLd::setType('BreadcrumbList');
+        JsonLd::addValue('itemListElement', [
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => 'Shop', 'item' => route('shop.index')],
+        ]);
     }
 
     // =========================================================================
@@ -151,7 +160,6 @@ new #[Layout('layouts.guest')] class extends Component {
         $query->when($this->minRating, fn(Builder $q) => $q->where('average_rating', '>=', $this->minRating));
 
         $query->when($this->inStock, fn(Builder $q) => $q->where(fn($q2) => $q2->where('stock_quantity', '>', 0)->orWhere('stock_status', 'in_stock')));
-        $query->when($this->featured, fn(Builder $q) => $q->where('is_featured', true));
         $query->when($this->onSale, fn(Builder $q) => $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price')));
 
         match ($this->sortBy) {
@@ -171,7 +179,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function hasActiveFilters(): bool
     {
-        return !empty($this->search) || !empty($this->selectedBrands) || $this->minPriceUrl !== null || $this->maxPriceUrl !== null || $this->minRating || $this->inStock || $this->featured || $this->onSale;
+        return !empty($this->search) || !empty($this->selectedBrands) || $this->minPriceUrl !== null || $this->maxPriceUrl !== null || $this->minRating || $this->inStock || $this->onSale;
     }
 
     #[Computed(persist: true)]
@@ -240,7 +248,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function clearAllFilters(): void
     {
-        $this->reset(['search', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'featured', 'onSale', 'minPriceUrl', 'maxPriceUrl']);
+        $this->reset(['search', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'onSale', 'minPriceUrl', 'maxPriceUrl']);
         $this->clearPriceFilter();
         $this->resetPage();
     }
@@ -250,10 +258,6 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->resetPage();
     }
     public function updatedInStock(): void
-    {
-        $this->resetPage();
-    }
-    public function updatedFeatured(): void
     {
         $this->resetPage();
     }
@@ -524,15 +528,6 @@ new #[Layout('layouts.guest')] class extends Component {
                                 <flux:badge color="zinc" size="sm">
                                     In Stock
                                     <button wire:click="$set('inStock', false)"
-                                        class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
-                                        <flux:icon.x-mark class="w-3 h-3" />
-                                    </button>
-                                </flux:badge>
-                            @endif
-                            @if ($featured)
-                                <flux:badge color="zinc" size="sm">
-                                    Featured
-                                    <button wire:click="$set('featured', false)"
                                         class="ml-1.5 hover:text-red-600 cursor-pointer" type="button">
                                         <flux:icon.x-mark class="w-3 h-3" />
                                     </button>
