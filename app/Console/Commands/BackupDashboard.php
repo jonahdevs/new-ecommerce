@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class BackupDashboard extends Command
 {
     protected $signature = 'backup:dashboard';
+
     protected $description = 'Display backup management dashboard';
 
     public function handle(BackupService $backupService): int
@@ -56,7 +57,7 @@ class BackupDashboard extends Command
                 $backups->map(function ($backup) {
                     return [
                         $backup['disk'],
-                        substr($backup['filename'], 0, 40) . (strlen($backup['filename']) > 40 ? '...' : ''),
+                        substr($backup['filename'], 0, 40).(strlen($backup['filename']) > 40 ? '...' : ''),
                         $backup['size'],
                         $backup['created_at']->format('M j, H:i'),
                     ];

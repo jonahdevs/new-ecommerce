@@ -6,7 +6,7 @@
             <!-- Company Info & Store Locations -->
             <div class="lg:col-span-1">
                 <a href="/" class="inline-block mb-4">
-                    <img src="{{ asset('logo-inverse.png') }}?v={{ time() }}" alt="Company Logo"
+                    <img src="{{ asset('logo-inverse.png') }}" alt="Company Logo"
                         class="h-12 w-auto" />
                 </a>
 

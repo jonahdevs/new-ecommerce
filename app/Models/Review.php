@@ -29,7 +29,6 @@ class Review extends Model
         'moderated_at',
     ];
 
-
     protected function casts(): array
     {
         return [
@@ -38,10 +37,9 @@ class Review extends Model
             'helpful_count' => 'integer',
             'not_helpful_count' => 'integer',
             'moderated_at' => 'datetime',
-            'status' => ReviewStatus::class
+            'status' => ReviewStatus::class,
         ];
     }
-
 
     // ===============================================
     // RELATIONSHIPS

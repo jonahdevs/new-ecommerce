@@ -42,7 +42,7 @@ class OrderReceiptController extends Controller
 
         // Invoice only available after KRA validation
         abort_if(
-            !$order->hasKraReceipt(),
+            ! $order->hasKraReceipt(),
             403,
             'Invoice is pending KRA validation. Please check back shortly.'
         );

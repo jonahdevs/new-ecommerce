@@ -19,6 +19,10 @@ use Artesaos\SEOTools\Facades\TwitterCard;
 new #[Layout('layouts.guest')] class extends Component {
     use WithPagination;
 
+    const TTL_PRODUCTS = 60 * 60 * 2;   // 2 hours
+    const TTL_BRANDS = 60 * 60 * 6;     // 6 hours
+    const TTL_CATEGORIES = 60 * 60 * 6; // 6 hours
+
     // Bound from route: /category/{category:slug}
     public Category $category;
 
@@ -110,7 +114,11 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function subCategories()
     {
-        return $this->category->children()->active()->ordered()->get();
+        return Cache::tags(['categories'])->remember(
+            "category:{$this->category->id}:sub-categories",
+            self::TTL_CATEGORIES,
+            fn() => $this->category->children()->active()->ordered()->get(),
+        );
     }
 
     /**
@@ -137,15 +145,15 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         $catIds = array_merge([$this->category->id], $this->category->children()->pluck('id')->toArray());
 
-        return Cache::remember("category_price_range_{$this->category->id}", 300, fn() => Product::active()->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds))->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
+        return Cache::tags(['products'])->remember("category:{$this->category->id}:price-range", self::TTL_PRODUCTS, fn() => Product::active()->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds))->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
     }
 
     #[Computed(persist: true)]
     public function brands()
     {
-        return Cache::remember(
-            'all_active_brands',
-            300,
+        return Cache::tags(['brands'])->remember(
+            'shop:brands',
+            self::TTL_BRANDS,
             fn() => Brand::active()
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug']),

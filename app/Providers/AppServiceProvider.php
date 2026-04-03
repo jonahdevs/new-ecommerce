@@ -10,6 +10,9 @@ use App\Listeners\SyncRecentViewedOnLogin;
 use App\Listeners\SyncWishlistOnLogin;
 use App\Models\Review;
 use App\Observers\ReviewObserver;
+use App\Services\CartService;
+use App\Services\CompareService;
+use App\Services\WishlistService;
 use App\View\Composers\FooterComposer;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
@@ -30,7 +33,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(CartService::class);
+        $this->app->singleton(WishlistService::class);
+        $this->app->singleton(CompareService::class);
     }
 
     /**
@@ -67,7 +72,7 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(
-            fn(): ?Password => app()->isProduction()
+            fn (): ?Password => app()->isProduction()
             ? Password::min(12)
                 ->mixedCase()
                 ->letters()

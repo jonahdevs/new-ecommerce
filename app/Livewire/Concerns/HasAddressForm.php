@@ -21,7 +21,7 @@ trait HasAddressForm
     #[Computed]
     public function areas()
     {
-        if (!$this->form->county_id) {
+        if (! $this->form->county_id) {
             return collect();
         }
 
@@ -54,8 +54,8 @@ trait HasAddressForm
                 'lat' => $area?->lat_center ?? ($county?->lat_center ?? -1.2921),
                 'lng' => $area?->lng_center ?? ($county?->lng_center ?? 36.8219),
             ],
-            'countyName'       => $county?->name,
-            'boundaryGeojson'  => $county?->boundary?->geojson ?? null,
+            'countyName' => $county?->name,
+            'boundaryGeojson' => $county?->boundary?->geojson ?? null,
         ];
     }
 

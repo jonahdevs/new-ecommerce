@@ -8,15 +8,20 @@ use Livewire\Form;
 class PesapalSettingsForm extends Form
 {
     public bool $enabled = false;
+
     public string $environment = 'sandbox';
+
     public string $ipn_id = '';
+
     public string $callback_url = '';
 
     // Encrypted — user must re-enter to change
     public string $consumer_key = '';
+
     public string $consumer_secret = '';
 
     public bool $has_consumer_key = false;
+
     public bool $has_consumer_secret = false;
 
     public function rules(): array
@@ -38,8 +43,8 @@ class PesapalSettingsForm extends Form
         $this->ipn_id = $settings->ipn_id ?? '';
         $this->callback_url = $settings->callback_url ?? '';
 
-        $this->has_consumer_key = !empty($settings->consumer_key);
-        $this->has_consumer_secret = !empty($settings->consumer_secret);
+        $this->has_consumer_key = ! empty($settings->consumer_key);
+        $this->has_consumer_secret = ! empty($settings->consumer_secret);
     }
 
     public function save(PesapalSettings $settings): void
@@ -51,15 +56,17 @@ class PesapalSettingsForm extends Form
         $settings->ipn_id = $this->ipn_id ?: null;
         $settings->callback_url = $this->callback_url ?: null;
 
-        if ($this->consumer_key)
+        if ($this->consumer_key) {
             $settings->consumer_key = $this->consumer_key;
-        if ($this->consumer_secret)
+        }
+        if ($this->consumer_secret) {
             $settings->consumer_secret = $this->consumer_secret;
+        }
 
         $settings->save();
 
-        $this->has_consumer_key = !empty($settings->consumer_key);
-        $this->has_consumer_secret = !empty($settings->consumer_secret);
+        $this->has_consumer_key = ! empty($settings->consumer_key);
+        $this->has_consumer_secret = ! empty($settings->consumer_secret);
         $this->consumer_key = '';
         $this->consumer_secret = '';
     }

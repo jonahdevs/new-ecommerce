@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ShippingMethodStatus;
+use App\Enums\ShippingRateStatus;
+use App\Enums\VehicleRateStatus;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,7 +63,6 @@ class ShippingMethod extends Model
     // Scope
     // ===============================================
     #[Scope()]
-
     protected function active($query)
     {
         $query->where('status', ShippingMethodStatus::ACTIVE->value);
@@ -92,14 +93,17 @@ class ShippingMethod extends Model
     {
         return $this->type === 'flat';
     }
+
     public function isDistance(): bool
     {
         return $this->type === 'distance';
     }
+
     public function isPus(): bool
     {
         return $this->type === 'pus';
     }
+
     public function isActive(): bool
     {
         return $this->status === ShippingMethodStatus::ACTIVE;
@@ -112,7 +116,7 @@ class ShippingMethod extends Model
     public function activeRates(): HasMany
     {
         return $this->shippingRates()
-            ->where('status', \App\Enums\ShippingRateStatus::ACTIVE->value)
+            ->where('status', ShippingRateStatus::ACTIVE->value)
             ->orderBy('min_weight');
     }
 
@@ -122,6 +126,6 @@ class ShippingMethod extends Model
     public function activeVehicleRates(): HasMany
     {
         return $this->vehicleRates()
-            ->where('status', \App\Enums\VehicleRateStatus::ACTIVE->value);
+            ->where('status', VehicleRateStatus::ACTIVE->value);
     }
 }

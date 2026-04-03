@@ -2,15 +2,17 @@
 
 namespace App\Livewire\Forms\Admin;
 
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 use Spatie\Permission\Models\Role;
-use Illuminate\Validation\Rule;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleForm extends Form
 {
     public ?Role $role = null;
 
     public string $name = '';
+
     public array $permissions = [];
 
     public function rules(): array
@@ -23,7 +25,7 @@ class RoleForm extends Form
                 'regex:/^[a-z0-9_]+$/',
                 Rule::unique('roles', 'name')->ignore($this->role?->id),
             ],
-            'permissions'   => 'array',
+            'permissions' => 'array',
             'permissions.*' => 'string|exists:permissions,name',
         ];
     }
@@ -47,11 +49,11 @@ class RoleForm extends Form
         $this->validateOnly('name');
 
         Role::create([
-            'name'      => $this->name,
+            'name' => $this->name,
             'is_system' => false,
         ]);
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     public function update(): void
@@ -59,12 +61,12 @@ class RoleForm extends Form
         $this->validate();
 
         // Protect system roles from being renamed
-        if (!$this->role->is_system) {
+        if (! $this->role->is_system) {
             $this->role->update(['name' => $this->name]);
         }
 
         $this->role->syncPermissions($this->permissions);
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

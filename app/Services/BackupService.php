@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Service for managing application backups dynamically
@@ -33,25 +33,28 @@ class BackupService
 
             if ($exitCode === 0) {
                 Log::info("Full backup completed successfully in {$duration} seconds");
+
                 return [
                     'success' => true,
                     'message' => "Full backup completed in {$duration} seconds",
                     'duration' => $duration,
-                    'type' => 'full'
+                    'type' => 'full',
                 ];
             } else {
-                throw new \Exception('Backup command failed with exit code: ' . $exitCode);
+                throw new \Exception('Backup command failed with exit code: '.$exitCode);
             }
         } catch (\Exception $e) {
-            Log::error('Full backup failed: ' . $e->getMessage());
+            Log::error('Full backup failed: '.$e->getMessage());
+
             return [
                 'success' => false,
-                'message' => 'Backup failed: ' . $e->getMessage(),
+                'message' => 'Backup failed: '.$e->getMessage(),
                 'duration' => round(microtime(true) - $startTime, 2),
-                'type' => 'full'
+                'type' => 'full',
             ];
         }
     }
+
     /**
      * Create a database-only backup
      */
@@ -70,22 +73,24 @@ class BackupService
 
             if ($exitCode === 0) {
                 Log::info("Database backup completed in {$duration} seconds");
+
                 return [
                     'success' => true,
                     'message' => "Database backup completed in {$duration} seconds",
                     'duration' => $duration,
-                    'type' => 'database'
+                    'type' => 'database',
                 ];
             } else {
-                throw new \Exception('Database backup failed with exit code: ' . $exitCode);
+                throw new \Exception('Database backup failed with exit code: '.$exitCode);
             }
         } catch (\Exception $e) {
-            Log::error('Database backup failed: ' . $e->getMessage());
+            Log::error('Database backup failed: '.$e->getMessage());
+
             return [
                 'success' => false,
-                'message' => 'Database backup failed: ' . $e->getMessage(),
+                'message' => 'Database backup failed: '.$e->getMessage(),
                 'duration' => round(microtime(true) - $startTime, 2),
-                'type' => 'database'
+                'type' => 'database',
             ];
         }
     }
@@ -108,25 +113,28 @@ class BackupService
 
             if ($exitCode === 0) {
                 Log::info("Files backup completed in {$duration} seconds");
+
                 return [
                     'success' => true,
                     'message' => "Files backup completed in {$duration} seconds",
                     'duration' => $duration,
-                    'type' => 'files'
+                    'type' => 'files',
                 ];
             } else {
-                throw new \Exception('Files backup failed with exit code: ' . $exitCode);
+                throw new \Exception('Files backup failed with exit code: '.$exitCode);
             }
         } catch (\Exception $e) {
-            Log::error('Files backup failed: ' . $e->getMessage());
+            Log::error('Files backup failed: '.$e->getMessage());
+
             return [
                 'success' => false,
-                'message' => 'Files backup failed: ' . $e->getMessage(),
+                'message' => 'Files backup failed: '.$e->getMessage(),
                 'duration' => round(microtime(true) - $startTime, 2),
-                'type' => 'files'
+                'type' => 'files',
             ];
         }
     }
+
     /**
      * Get list of all backups across all configured disks
      */
@@ -158,7 +166,7 @@ class BackupService
                     }
                 }
             } catch (\Exception $e) {
-                Log::warning("Could not list backups from disk {$diskName}: " . $e->getMessage());
+                Log::warning("Could not list backups from disk {$diskName}: ".$e->getMessage());
             }
         }
 
@@ -187,6 +195,7 @@ class BackupService
             }),
         ];
     }
+
     /**
      * Clean up old backups
      */
@@ -199,18 +208,20 @@ class BackupService
 
             if ($exitCode === 0) {
                 Log::info('Backup cleanup completed successfully');
+
                 return [
                     'success' => true,
-                    'message' => 'Backup cleanup completed successfully'
+                    'message' => 'Backup cleanup completed successfully',
                 ];
             } else {
-                throw new \Exception('Cleanup command failed with exit code: ' . $exitCode);
+                throw new \Exception('Cleanup command failed with exit code: '.$exitCode);
             }
         } catch (\Exception $e) {
-            Log::error('Backup cleanup failed: ' . $e->getMessage());
+            Log::error('Backup cleanup failed: '.$e->getMessage());
+
             return [
                 'success' => false,
-                'message' => 'Cleanup failed: ' . $e->getMessage()
+                'message' => 'Cleanup failed: '.$e->getMessage(),
             ];
         }
     }
@@ -228,19 +239,20 @@ class BackupService
             if ($exitCode === 0) {
                 return [
                     'success' => true,
-                    'message' => 'All backups are healthy'
+                    'message' => 'All backups are healthy',
                 ];
             } else {
                 return [
                     'success' => false,
-                    'message' => 'Some backups are unhealthy - check logs for details'
+                    'message' => 'Some backups are unhealthy - check logs for details',
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('Backup monitoring failed: ' . $e->getMessage());
+            Log::error('Backup monitoring failed: '.$e->getMessage());
+
             return [
                 'success' => false,
-                'message' => 'Monitoring failed: ' . $e->getMessage()
+                'message' => 'Monitoring failed: '.$e->getMessage(),
             ];
         }
     }
@@ -253,10 +265,10 @@ class BackupService
         try {
             $storage = Storage::disk($disk);
 
-            if (!$storage->exists($path)) {
+            if (! $storage->exists($path)) {
                 return [
                     'success' => false,
-                    'message' => 'Backup file not found'
+                    'message' => 'Backup file not found',
                 ];
             }
 
@@ -266,16 +278,18 @@ class BackupService
 
             return [
                 'success' => true,
-                'message' => 'Backup deleted successfully'
+                'message' => 'Backup deleted successfully',
             ];
         } catch (\Exception $e) {
-            Log::error("Failed to delete backup {$path}: " . $e->getMessage());
+            Log::error("Failed to delete backup {$path}: ".$e->getMessage());
+
             return [
                 'success' => false,
-                'message' => 'Failed to delete backup: ' . $e->getMessage()
+                'message' => 'Failed to delete backup: '.$e->getMessage(),
             ];
         }
     }
+
     /**
      * Format bytes to human readable format
      */
@@ -287,7 +301,7 @@ class BackupService
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 
     /**
@@ -302,7 +316,7 @@ class BackupService
             'type' => 'database',
             'frequency' => 'daily',
             'time' => '02:00',
-            'command' => 'backup:run --only-db'
+            'command' => 'backup:run --only-db',
         ];
 
         // Weekly full backup on Sunday at 3 AM
@@ -311,7 +325,7 @@ class BackupService
             'frequency' => 'weekly',
             'day' => 'sunday',
             'time' => '03:00',
-            'command' => 'backup:run'
+            'command' => 'backup:run',
         ];
 
         // Monthly cleanup on first day at 4 AM
@@ -320,7 +334,7 @@ class BackupService
             'frequency' => 'monthly',
             'day' => 1,
             'time' => '04:00',
-            'command' => 'backup:clean'
+            'command' => 'backup:clean',
         ];
 
         return $schedule;
@@ -338,7 +352,7 @@ class BackupService
             \DB::connection()->getPdo();
             $results['database'] = ['status' => 'ok', 'message' => 'Database connection successful'];
         } catch (\Exception $e) {
-            $results['database'] = ['status' => 'error', 'message' => 'Database connection failed: ' . $e->getMessage()];
+            $results['database'] = ['status' => 'error', 'message' => 'Database connection failed: '.$e->getMessage()];
         }
 
         // Test storage disks
@@ -346,12 +360,12 @@ class BackupService
         foreach ($disks as $disk) {
             try {
                 $storage = Storage::disk($disk);
-                $testFile = 'backup-test-' . time() . '.txt';
+                $testFile = 'backup-test-'.time().'.txt';
                 $storage->put($testFile, 'test');
                 $storage->delete($testFile);
                 $results['disks'][$disk] = ['status' => 'ok', 'message' => 'Disk accessible'];
             } catch (\Exception $e) {
-                $results['disks'][$disk] = ['status' => 'error', 'message' => 'Disk error: ' . $e->getMessage()];
+                $results['disks'][$disk] = ['status' => 'error', 'message' => 'Disk error: '.$e->getMessage()];
             }
         }
 

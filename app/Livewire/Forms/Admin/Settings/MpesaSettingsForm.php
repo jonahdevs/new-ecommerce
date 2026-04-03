@@ -8,23 +8,34 @@ use Livewire\Form;
 class MpesaSettingsForm extends Form
 {
     public bool $enabled = false;
+
     public string $environment = 'sandbox';
+
     public string $shortcode = '';
+
     public string $shortcode_type = 'paybill';
+
     public string $initiator_name = '';
+
     public string $callback_url = '';
 
     // Encrypted fields — never pre-fill from settings for security
     // User must re-enter to change
     public string $consumer_key = '';
+
     public string $consumer_secret = '';
+
     public string $passkey = '';
+
     public string $initiator_password = '';
 
     // Track which encrypted fields are already set in DB
     public bool $has_consumer_key = false;
+
     public bool $has_consumer_secret = false;
+
     public bool $has_passkey = false;
+
     public bool $has_initiator_password = false;
 
     public function rules(): array
@@ -53,10 +64,10 @@ class MpesaSettingsForm extends Form
         $this->callback_url = $settings->callback_url ?? '';
 
         // Track presence of encrypted fields without exposing values
-        $this->has_consumer_key = !empty($settings->consumer_key);
-        $this->has_consumer_secret = !empty($settings->consumer_secret);
-        $this->has_passkey = !empty($settings->passkey);
-        $this->has_initiator_password = !empty($settings->initiator_password);
+        $this->has_consumer_key = ! empty($settings->consumer_key);
+        $this->has_consumer_secret = ! empty($settings->consumer_secret);
+        $this->has_passkey = ! empty($settings->passkey);
+        $this->has_initiator_password = ! empty($settings->initiator_password);
     }
 
     public function save(MpesaSettings $settings): void
@@ -71,22 +82,26 @@ class MpesaSettingsForm extends Form
         $settings->callback_url = $this->callback_url ?: null;
 
         // Only update encrypted fields if the user typed a new value
-        if ($this->consumer_key)
+        if ($this->consumer_key) {
             $settings->consumer_key = $this->consumer_key;
-        if ($this->consumer_secret)
+        }
+        if ($this->consumer_secret) {
             $settings->consumer_secret = $this->consumer_secret;
-        if ($this->passkey)
+        }
+        if ($this->passkey) {
             $settings->passkey = $this->passkey;
-        if ($this->initiator_password)
+        }
+        if ($this->initiator_password) {
             $settings->initiator_password = $this->initiator_password;
+        }
 
         $settings->save();
 
         // Update presence flags, clear typed values
-        $this->has_consumer_key = !empty($settings->consumer_key);
-        $this->has_consumer_secret = !empty($settings->consumer_secret);
-        $this->has_passkey = !empty($settings->passkey);
-        $this->has_initiator_password = !empty($settings->initiator_password);
+        $this->has_consumer_key = ! empty($settings->consumer_key);
+        $this->has_consumer_secret = ! empty($settings->consumer_secret);
+        $this->has_passkey = ! empty($settings->passkey);
+        $this->has_initiator_password = ! empty($settings->initiator_password);
 
         $this->consumer_key = '';
         $this->consumer_secret = '';

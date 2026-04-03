@@ -17,6 +17,10 @@ use Artesaos\SEOTools\Facades\TwitterCard;
 new #[Layout('layouts.guest')] class extends Component {
     use WithPagination;
 
+    const TTL_PRODUCTS = 60 * 60 * 2;   // 2 hours
+    const TTL_BRANDS = 60 * 60 * 6;     // 6 hours
+    const TTL_CATEGORIES = 60 * 60 * 6; // 6 hours
+
     #[Url(as: 'search')]
     public string $search = '';
 
@@ -86,15 +90,15 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function priceRange()
     {
-        return Cache::remember('shop_price_range', 300, fn() => Product::active()->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
+        return Cache::tags(['products'])->remember('shop:price-range', self::TTL_PRODUCTS, fn() => Product::active()->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
     }
 
     #[Computed(persist: true)]
     public function brands()
     {
-        return Cache::remember(
-            'all_active_brands',
-            300,
+        return Cache::tags(['brands'])->remember(
+            'shop:brands',
+            self::TTL_BRANDS,
             fn() => Brand::active()
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug']),
@@ -173,9 +177,9 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function categories()
     {
-        return Cache::remember(
-            'root_active_categories',
-            300,
+        return Cache::tags(['categories'])->remember(
+            'shop:root-categories',
+            self::TTL_CATEGORIES,
             fn() => Category::active()
                 ->whereNull('parent_id')
                 ->orderBy('name')

@@ -9,7 +9,6 @@ enum ProductRelationshipType: string
     case GROUPED = 'grouped';
     case ACCESSORY = 'accessory';
 
-
     public function label()
     {
         return match ($this) {

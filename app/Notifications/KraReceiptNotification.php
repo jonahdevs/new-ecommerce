@@ -14,8 +14,7 @@ class KraReceiptNotification extends Notification
 
     public function __construct(
         public readonly Order $order,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -26,12 +25,12 @@ class KraReceiptNotification extends Notification
     {
         $mail = (new MailMessage)
             ->subject("Your Tax Invoice — Order {$this->order->reference}")
-            ->greeting("Thank you for your order!")
+            ->greeting('Thank you for your order!')
             ->line("Your KRA-validated tax invoice for order **{$this->order->reference}** is attached.")
             ->line("**CU Number:** {$this->order->kra_cu_number}")
             ->line("**KRA Invoice:** {$this->order->kra_invoice_number}")
             ->line("**Validated at:** {$this->order->kra_validated_at?->format('d M Y, H:i')}")
-            ->line("**Order total:** KES " . number_format($this->order->total, 2))
+            ->line('**Order total:** KES '.number_format($this->order->total, 2))
             ->action('View your order', url("/orders/{$this->order->id}"))
             ->line('Please keep this invoice for your records.');
 

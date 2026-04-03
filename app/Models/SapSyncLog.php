@@ -25,7 +25,7 @@ class SapSyncLog extends Model
     protected function casts(): array
     {
         return [
-            'request_payload'  => 'array',
+            'request_payload' => 'array',
             'response_payload' => 'array',
         ];
     }

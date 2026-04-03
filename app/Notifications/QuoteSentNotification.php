@@ -20,9 +20,7 @@ class QuoteSentNotification extends Notification implements ShouldQueue
     //  page, so the action URL must link directly to their quotation.
     // =========================================================================
 
-    public function __construct(public readonly Quote $quote)
-    {
-    }
+    public function __construct(public readonly Quote $quote) {}
 
     public function via(): array
     {
@@ -45,7 +43,8 @@ class QuoteSentNotification extends Notification implements ShouldQueue
             $qty = $item->quantity;
             $price = format_currency(($item->quoted_price_cents ?? $item->original_price_cents) / 100);
             $itemTotal = ($item->quoted_price_cents ?? $item->original_price_cents) * $qty;
-            return "• {$name} × {$qty} @ {$price} = " . format_currency($itemTotal / 100);
+
+            return "• {$name} × {$qty} @ {$price} = ".format_currency($itemTotal / 100);
         })->join("\n");
 
         return (new MailMessage)
@@ -53,7 +52,7 @@ class QuoteSentNotification extends Notification implements ShouldQueue
             ->greeting("Hello {$customerName},")
             ->line('Your quotation from Sheffield Africa is ready for your review.')
             ->line("**Quotation reference:** {$this->quote->reference}")
-            ->line("**Items:**")
+            ->line('**Items:**')
             ->line($itemLines)
             ->line("**Delivery:** {$shipping}")
             ->line("**Total:** {$total}")
@@ -70,7 +69,7 @@ class QuoteSentNotification extends Notification implements ShouldQueue
             'quote_id' => $this->quote->id,
             'reference' => $this->quote->reference,
             'title' => 'Quotation Ready',
-            'message' => "Your quotation {$this->quote->reference} is ready for review. Total: " . format_currency($this->quote->total),
+            'message' => "Your quotation {$this->quote->reference} is ready for review. Total: ".format_currency($this->quote->total),
             'url' => route('customer.quotations.show', $this->quote),
         ];
     }

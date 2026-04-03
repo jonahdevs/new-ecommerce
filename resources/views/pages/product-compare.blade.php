@@ -13,7 +13,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public int $cartQuantity = 1;
     public ?int $cartItemId = null;
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function regionalSettings(): RegionalSettings
     {
         return app(RegionalSettings::class);
@@ -29,15 +29,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public function removeProduct($productId)
     {
         try {
-            $added = app(CompareService::class)->toggle($productId);
-            $this->inCompare = $added;
+            app(CompareService::class)->remove($productId);
 
-            // Dispatch events
             $this->dispatch('compare-updated');
-
-            $this->dispatch('notify', title: $added ? 'Comparison Updated' : 'Comparison Updated', variant: 'success', message: $added ? 'Product added to comparison list' : 'Product removed from comparison list');
+            $this->dispatch('notify', title: 'Comparison Updated', variant: 'success', message: 'Product removed from comparison list');
         } catch (\Exception $e) {
-            $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update comparison');
+            $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $e->getMessage() ?: 'Unable to update comparison');
         }
     }
 
@@ -346,7 +343,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 <tr>
                                     <td class="p-4 font-medium text-zinc-900 dark:text-white text-sm ">
                                         Weight</td>
-                                    @foreach ($products as $product)
+                                    @foreach ($this->products as $product)
                                         <td
                                             class="p-4 text-center text-sm text-zinc-600 dark:text-zinc-400 border-l dark:border-zinc-700">
                                             {{ $product->weight ? $product->weight . ' ' . $this->regionalSettings->weight_unit : 'N/A' }}

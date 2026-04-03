@@ -40,6 +40,7 @@ class CleanupUnusedProductImages extends Command
 
         if (empty($referencedImages)) {
             $this->error('❌ Could not read products.json or no images found in the file.');
+
             return Command::FAILURE;
         }
 
@@ -51,6 +52,7 @@ class CleanupUnusedProductImages extends Command
 
         if (empty($storageImages)) {
             $this->warn('⚠️  No images found in storage/app/public/products/seeder');
+
             return Command::SUCCESS;
         }
 
@@ -62,6 +64,7 @@ class CleanupUnusedProductImages extends Command
 
         if ($unusedImages->isEmpty()) {
             $this->info('✨ No unused images found. All images are being used!');
+
             return Command::SUCCESS;
         }
 
@@ -92,13 +95,15 @@ class CleanupUnusedProductImages extends Command
         if ($isDryRun) {
             $this->warn('🔍 DRY RUN MODE: No files will be deleted.');
             $this->info('Run without --dry-run to actually delete these files.');
+
             return Command::SUCCESS;
         }
 
         // Confirmation
-        if (!$isForce) {
-            if (!$this->confirm('⚠️  Are you sure you want to delete these images? This action cannot be undone.')) {
+        if (! $isForce) {
+            if (! $this->confirm('⚠️  Are you sure you want to delete these images? This action cannot be undone.')) {
                 $this->info('❌ Operation cancelled.');
+
                 return Command::SUCCESS;
             }
         }
@@ -150,13 +155,13 @@ class CleanupUnusedProductImages extends Command
     {
         $jsonPath = database_path('seeders/data/products.json');
 
-        if (!File::exists($jsonPath)) {
+        if (! File::exists($jsonPath)) {
             return collect();
         }
 
         $products = json_decode(File::get($jsonPath), true);
 
-        if (!is_array($products)) {
+        if (! is_array($products)) {
             return collect();
         }
 
@@ -164,7 +169,7 @@ class CleanupUnusedProductImages extends Command
 
         foreach ($products as $product) {
             // Check for 'image' field (single image)
-            if (isset($product['image']) && !empty($product['image'])) {
+            if (isset($product['image']) && ! empty($product['image'])) {
                 $imagePath = $product['image'];
                 // Extract just the filename from the path
                 $filename = basename($imagePath);
@@ -174,7 +179,7 @@ class CleanupUnusedProductImages extends Command
             // Check for 'gallery' field (array of images)
             if (isset($product['gallery']) && is_array($product['gallery'])) {
                 foreach ($product['gallery'] as $imagePath) {
-                    if (!empty($imagePath)) {
+                    if (! empty($imagePath)) {
                         $filename = basename($imagePath);
                         $images->push($filename);
                     }
@@ -184,7 +189,7 @@ class CleanupUnusedProductImages extends Command
             // Check for 'images' array field (if you have multiple images with different key)
             if (isset($product['images']) && is_array($product['images'])) {
                 foreach ($product['images'] as $imagePath) {
-                    if (!empty($imagePath)) {
+                    if (! empty($imagePath)) {
                         $filename = basename($imagePath);
                         $images->push($filename);
                     }
@@ -202,7 +207,7 @@ class CleanupUnusedProductImages extends Command
     {
         $path = 'products/seeder';
 
-        if (!Storage::disk('public')->exists($path)) {
+        if (! Storage::disk('public')->exists($path)) {
             return collect();
         }
 
@@ -213,6 +218,7 @@ class CleanupUnusedProductImages extends Command
         })->filter(function ($filename) {
             // Only include image files
             $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
             return in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
         });
     }
@@ -228,6 +234,6 @@ class CleanupUnusedProductImages extends Command
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

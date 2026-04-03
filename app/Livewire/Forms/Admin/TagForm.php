@@ -2,22 +2,24 @@
 
 namespace App\Livewire\Forms\Admin;
 
-use Livewire\Form;
 use App\Models\Tag;
+use Livewire\Form;
 
 class TagForm extends Form
 {
     public ?Tag $tag = null;
 
     public string $name = '';
+
     public ?string $type = null;
+
     public int $order_column = 0;
 
     public function rules(): array
     {
         return [
-            'name'         => 'required|string|max:255',
-            'type'         => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
             'order_column' => 'nullable|integer|min:0',
         ];
     }

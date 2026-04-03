@@ -43,7 +43,6 @@ class ShippingRateAddon extends Model
     // Scope
     // ===============================================
     #[Scope()]
-
     protected function scopeActive($query)
     {
         $query->where('status', ShippingRateAddonStatus::ACTIVE->value);

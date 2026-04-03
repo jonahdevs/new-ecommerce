@@ -6,12 +6,14 @@ use App\Enums\ProductRelationshipType;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Attribute as ProductAttribute;
+use App\Observers\ProductObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -19,9 +21,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Number;
 use Spatie\Tags\HasTags;
 
+#[ObservedBy([ProductObserver::class])]
 class Product extends Model
 {
-    use HasFactory, SoftDeletes, HasTags;
+    use HasFactory, HasTags, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -134,8 +137,6 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
     }
 
-
-
     /**
      * Get all attributes for the product
      */
@@ -146,7 +147,6 @@ class Product extends Model
             ->withTimestamps()
             ->orderByPivot('sort_order');
     }
-
 
     /**
      * Get the categories for the product
@@ -294,7 +294,7 @@ class Product extends Model
     protected function visibleInCatalog(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC ,
+            ProductVisibility::PUBLIC,
             ProductVisibility::CATALOG,
         ]);
     }
@@ -307,7 +307,7 @@ class Product extends Model
     protected function visibleInSearch(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC ,
+            ProductVisibility::PUBLIC,
             ProductVisibility::SEARCH,
         ]);
     }
@@ -321,7 +321,6 @@ class Product extends Model
     {
         $query->where('products.visibility', '!=', ProductVisibility::HIDDEN);
     }
-
 
     #[Scope()]
     protected function newArrivals(Builder $query): void
@@ -339,21 +338,21 @@ class Product extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_path ? asset('storage/' . $this->image_path) : null,
+            get: fn () => $this->image_path ? asset('storage/'.$this->image_path) : null,
         );
     }
 
     protected function finalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->sale_price && $this->sale_price < $this->price ? $this->sale_price : $this->price,
+            get: fn () => $this->sale_price && $this->sale_price < $this->price ? $this->sale_price : $this->price,
         );
     }
 
     protected function formattedFinalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->final_price !== null
+            get: fn () => $this->final_price !== null
             ? format_currency($this->final_price)
             : null,
         );
@@ -362,14 +361,14 @@ class Product extends Model
     protected function formattedSalePrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->sale_price ? format_currency($this->sale_price ?? 0) : null
+            get: fn () => $this->sale_price ? format_currency($this->sale_price ?? 0) : null
         );
     }
 
     protected function formattedPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => format_currency($this->price)
+            get: fn () => format_currency($this->price)
         );
     }
 
@@ -390,7 +389,7 @@ class Product extends Model
                 }
 
                 // Guard against null type — fall back to simple behaviour
-                if (!$this->type) {
+                if (! $this->type) {
                     return $this->formatted_final_price;
                 }
 
@@ -415,7 +414,7 @@ class Product extends Model
                     return null;
                 }
 
-                if (!$this->type) {
+                if (! $this->type) {
                     return null;
                 }
 
@@ -434,7 +433,7 @@ class Product extends Model
     protected function hasPricePrefix(): Attribute
     {
         return Attribute::make(
-            get: fn() => !is_null($this->display_price_prefix)
+            get: fn () => ! is_null($this->display_price_prefix)
         );
     }
 
@@ -454,19 +453,17 @@ class Product extends Model
             ? $this->variants
             : $this->variants()->where('is_active', true)->whereNotNull('price')->get();
 
-
         $minPrice = $variants
             ->where('is_active', true)
             ->whereNotNull('price')
             ->min(
-                fn($v) => $v->sale_price && $v->sale_price < $v->price
+                fn ($v) => $v->sale_price && $v->sale_price < $v->price
                 ? $v->sale_price
                 : $v->price
             );
 
         return $minPrice !== null ? format_currency($minPrice) : null;
     }
-
 
     /**
      * Calculates the grouped product display price.
@@ -499,8 +496,8 @@ class Product extends Model
 
     public function hasDiscount(): bool
     {
-        return !is_null($this->sale_price)
-            && !is_null($this->price)
+        return ! is_null($this->sale_price)
+            && ! is_null($this->price)
             && $this->sale_price < $this->price;
     }
 
@@ -511,6 +508,7 @@ class Product extends Model
                 round((($this->price - $this->sale_price) / $this->price) * 100, 2)
             );
         }
+
         return null;
     }
 
@@ -539,8 +537,8 @@ class Product extends Model
 
     public function isPhysical(): bool
     {
-        return !$this->isVirtual()
-            && !$this->isDownloadable()
-            && !$this->isGrouped();
+        return ! $this->isVirtual()
+            && ! $this->isDownloadable()
+            && ! $this->isGrouped();
     }
 }

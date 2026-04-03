@@ -35,14 +35,14 @@ class QuoteRequestedNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName  = $this->quote->customerName();
+        $customerName = $this->quote->customerName();
         $customerEmail = $this->quote->customerEmail();
-        $itemCount     = $this->quote->items()->count();
-        $subtotal      = format_currency($this->quote->subtotal);
-        $adminUrl      = route('admin.quotations.show', $this->quote);
+        $itemCount = $this->quote->items()->count();
+        $subtotal = format_currency($this->quote->subtotal);
+        $adminUrl = route('admin.quotations.show', $this->quote);
 
-        $county   = $this->quote->preferred_county ?? 'Not specified';
-        $area     = $this->quote->preferred_area ?? '';
+        $county = $this->quote->preferred_county ?? 'Not specified';
+        $area = $this->quote->preferred_area ?? '';
         $location = $area ? "{$county}, {$area}" : $county;
 
         $mail = (new MailMessage)

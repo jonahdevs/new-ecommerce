@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms\Admin;
 
 use App\Models\Brand;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Livewire\Form;
 
@@ -11,10 +12,15 @@ class BrandForm extends Form
     public ?Brand $brand = null;
 
     public $name = '';
+
     public $slug = '';
+
     public $description = '';
+
     public $website_url = '';
+
     public $is_active = true;
+
     public $sort_order = 0;
 
     // Media
@@ -22,7 +28,9 @@ class BrandForm extends Form
 
     // SEO
     public $meta_title = '';
+
     public $meta_description = '';
+
     public $meta_keywords = '';
 
     public function rules()
@@ -30,15 +38,15 @@ class BrandForm extends Form
         $brandId = $this->brand?->id;
 
         return [
-            "name" => ["required", "string", "min:2", "max:255"],
-            "slug" => ["nullable", "string", "max:255", "unique:brands,slug," . $brandId],
-            "description" => ["nullable", "string"],
-            "website_url" => ["nullable", "url", "max:255"],
-            "is_active" => ["boolean"],
-            "sort_order" => ["integer", "min:0"],
-            "meta_title" => ["nullable", "string", "max:255"],
-            "meta_description" => ["nullable", "string"],
-            "meta_keywords" => ["nullable", "string"],
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:brands,slug,'.$brandId],
+            'description' => ['nullable', 'string'],
+            'website_url' => ['nullable', 'url', 'max:255'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['integer', 'min:0'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string'],
+            'meta_keywords' => ['nullable', 'string'],
         ];
     }
 
@@ -55,6 +63,7 @@ class BrandForm extends Form
         $this->validate();
 
         $data = $this->prepareData();
+
         return Brand::create($data);
     }
 
@@ -64,6 +73,7 @@ class BrandForm extends Form
 
         $data = $this->prepareData();
         $this->brand->update($data);
+
         return $this->brand;
     }
 
@@ -86,7 +96,7 @@ class BrandForm extends Form
     {
         $uploads = [];
 
-        if ($this->logo_path instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->logo_path instanceof UploadedFile) {
             $uploads['logo_path'] = $this->logo_path->store('brands/logos', 'public');
         }
 

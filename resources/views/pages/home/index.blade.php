@@ -5,13 +5,19 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use App\Models\{Category, Product};
 use App\Enums\CategorySection;
+use Illuminate\Support\Facades\Cache;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Artesaos\SEOTools\Facades\JsonLd;
 
 new #[Layout('layouts.guest')] class extends Component {
-    #[Computed(persist: true)]
+    // Cache TTLs (centralised so they're easy to tune)
+    const TTL_CATEGORIES = 60 * 60 * 6; // 6 hours - categories don't change often
+    const TTL_NEW_ARRIVALS = 60 * 60 * 2; // 2 hours - new arrivals change more frequently
+    const TTL_PRODUCTS = 60 * 60 * 3; // 3 hours - sales counts shift slowly
+
+    #[Computed]
     public function heroBanners()
     {
         return config('site.hero_slides');
@@ -60,49 +66,58 @@ new #[Layout('layouts.guest')] class extends Component {
         ]);
     }
 
+    // Top categories
+    // Tagged so flushing 'categories' busts this automatically via the observer.
+
     #[Computed(persist: true)]
     public function topCategories()
     {
-        return Category::inSection(CategorySection::HOME_PAGE_FEATURED)->active()->get();
+        return Cache::tags(['homepage', 'categories'])->remember('homepage:top-categories', self::TTL_CATEGORIES, function () {
+            return Category::inSection(CategorySection::HOME_PAGE_FEATURED)->active()->get();
+        });
     }
 
-    #[Computed(persist: true)]
+    #[Computed]
     public function newArrivals()
     {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'created_at'])
-            ->with([
-                'brand:id,name,slug',
-                'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
-                'variants' => fn($q) => $q
-                    ->where('is_active', true)
-                    ->whereNotNull('price')
-                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-            ])
-            ->active()
-            ->visibleInCatalog()
-            ->newArrivals()
-            ->latest()
-            ->limit(20)
-            ->get();
+        return Cache::tags(['homepage', 'products'])->remember('homepage:new-arrivals', self::TTL_NEW_ARRIVALS, function () {
+            return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'created_at'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
+                ->active()
+                ->visibleInCatalog()
+                ->newArrivals()
+                ->latest()
+                ->limit(20)
+                ->get();
+        });
     }
 
-    #[Computed(persist: true)]
+    #[Computed]
     public function products()
     {
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'sales_count', 'created_at'])
-            ->with([
-                'brand:id,name,slug',
-                'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
-                'variants' => fn($q) => $q
-                    ->where('is_active', true)
-                    ->whereNotNull('price')
-                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-            ])
-            ->active()
-            ->visibleInCatalog()
-            ->orderBy('sales_count', 'desc')
-            ->limit(24)
-            ->get();
+        return Cache::tags(['homepage', 'products'])->remember('homepage:featured-products', self::TTL_PRODUCTS, function () {
+            return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'sales_count', 'created_at'])
+                ->with([
+                    'brand:id,name,slug',
+                    'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
+                    'variants' => fn($q) => $q
+                        ->where('is_active', true)
+                        ->whereNotNull('price')
+                        ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                ])
+                ->active()
+                ->visibleInCatalog()
+                ->orderBy('sales_count', 'desc')
+                ->limit(24)
+                ->get();
+        });
     }
 };
 ?>

@@ -36,8 +36,8 @@ class NewOrderNotification extends Notification implements ShouldQueue
         $adminUrl = route('admin.orders.show', $this->order);
 
         $shippingAddress = $this->order->shipping_address;
-        $location = isset($shippingAddress['county']) 
-            ? $shippingAddress['county'] . (isset($shippingAddress['area']) ? ', ' . $shippingAddress['area'] : '')
+        $location = isset($shippingAddress['county'])
+            ? $shippingAddress['county'].(isset($shippingAddress['area']) ? ', '.$shippingAddress['area'] : '')
             : 'Not specified';
 
         $mail = (new MailMessage)
@@ -65,7 +65,7 @@ class NewOrderNotification extends Notification implements ShouldQueue
             'order_id' => $this->order->id,
             'reference' => $this->order->reference,
             'title' => 'New Order Received',
-            'message' => "New order {$this->order->reference} from {$this->order->customerName()} — " . format_currency($this->order->total),
+            'message' => "New order {$this->order->reference} from {$this->order->customerName()} — ".format_currency($this->order->total),
             'url' => route('admin.orders.show', $this->order),
         ];
     }

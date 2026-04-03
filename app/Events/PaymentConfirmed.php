@@ -5,10 +5,8 @@ namespace App\Events;
 use App\Models\Order;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -28,7 +26,7 @@ class PaymentConfirmed implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {
@@ -37,7 +35,6 @@ class PaymentConfirmed implements ShouldBroadcast
         ];
     }
 
-
     /**
      * Only broadcast the data the frontend needs.
      * Never expose sensitive payment data over the wire.
@@ -45,9 +42,9 @@ class PaymentConfirmed implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'order_id'   => $this->order->id,
-            'reference'  => $this->order->reference,
-            'status'     => $this->order->payment?->status,
+            'order_id' => $this->order->id,
+            'reference' => $this->order->reference,
+            'status' => $this->order->payment?->status,
         ];
     }
 }

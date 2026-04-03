@@ -17,7 +17,7 @@ class CategoryPlacement extends Model
     protected function casts(): array
     {
         return [
-            'section'    => CategorySection::class,
+            'section' => CategorySection::class,
             'sort_order' => 'integer',
         ];
     }

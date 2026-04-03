@@ -13,7 +13,7 @@ class ShippingZone extends Model
         'code',
         'description',
         'status',
-        'is_delivery_available'
+        'is_delivery_available',
     ];
 
     protected $casts = [

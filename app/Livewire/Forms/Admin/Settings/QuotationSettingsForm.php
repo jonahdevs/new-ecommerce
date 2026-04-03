@@ -8,15 +8,25 @@ use Livewire\Form;
 class QuotationSettingsForm extends Form
 {
     public bool $enabled = true;
+
     public string $quote_id_prefix = 'QT-';
+
     public int $default_validity_days = 7;
+
     public int $min_validity_days = 1;
+
     public int $max_validity_days = 30;
+
     public bool $allow_guest_quotes = true;
+
     public bool $require_phone = true;
+
     public bool $auto_expire_enabled = true;
+
     public ?string $admin_notification_email = null;
+
     public ?string $quote_terms = null;
+
     public ?string $quote_footer_note = null;
 
     public function rules(): array

@@ -26,10 +26,10 @@ class NewUserNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("New Customer Registered — {$this->user->name}")
             ->greeting('New customer registration')
-            ->line("A new customer has registered on your store.")
+            ->line('A new customer has registered on your store.')
             ->line("**Name:** {$this->user->name}")
             ->line("**Email:** {$this->user->email}")
-            ->line("**Phone:** " . ($this->user->phone_number ?? 'Not provided'))
+            ->line('**Phone:** '.($this->user->phone_number ?? 'Not provided'))
             ->line("**Registered:** {$this->user->created_at->format('M j, Y g:i A')}")
             ->action('View Customers', $adminUrl)
             ->salutation('Sheffield Africa · Customer Success Team');

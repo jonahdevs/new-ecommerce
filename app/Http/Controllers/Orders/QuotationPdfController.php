@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class QuotationPdfController extends Controller
 {
-    public function __construct(private readonly DocumentService $documents)
-    {
-    }
+    public function __construct(private readonly DocumentService $documents) {}
 
     // =========================================================================
     //  Serve the quotation PDF for a customer.
@@ -34,7 +32,7 @@ class QuotationPdfController extends Controller
 
         // PDF only available once admin has priced and sent the quote
         abort_if(
-            !$quote->quoted_at,
+            ! $quote->quoted_at,
             403,
             'Quotation PDF is not yet available. Please wait for our team to price your request.'
         );
@@ -54,7 +52,7 @@ class QuotationPdfController extends Controller
 
         $path = $this->documents->generateQuotation($quote);
 
-        if (!$path) {
+        if (! $path) {
             abort(500, 'Unable to generate quotation PDF. Please contact support.');
         }
 

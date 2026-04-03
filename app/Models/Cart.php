@@ -21,7 +21,6 @@ class Cart extends Model
     /**
      * Summary of items
      */
-
     public function items(): HasMany
     {
         return $this->hasMany(CartItem::class);
@@ -29,6 +28,7 @@ class Cart extends Model
 
     /**
      * Summary of user
+     *
      * @return BelongsTo<User, Cart>
      */
     public function user(): BelongsTo

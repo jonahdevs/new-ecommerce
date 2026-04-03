@@ -9,33 +9,47 @@ class GeneralSettingsForm extends Form
 {
     // Identity
     public string $company_name = '';
+
     public string $email_address = '';
+
     public string $phone_number = '';
 
     // Images
     public $logo_light = null;
+
     public $logo_dark = null;
+
     public $apple_icon = null;
+
     public $favicon = null;
 
     public ?string $existing_logo_light = null;
+
     public ?string $existing_logo_dark = null;
+
     public ?string $existing_apple_icon = null;
+
     public ?string $existing_favicon = null;
 
     // Address
     public string $address = '';
+
     public string $country = '';
+
     public string $town = '';
+
     public string $postal_code = '';
 
     // Localization
     public string $currency = 'KES';
+
     public string $currency_symbol = 'KSh';
+
     public string $timezone = 'Africa/Nairobi';
 
     // Business
     public string $vat_number = '';
+
     public string $registration_number = '';
 
     public function rules(): array

@@ -10,29 +10,35 @@ class AttributeValueForm extends Form
 {
     public ?AttributeValue $attributeValue = null;
 
-    public $value       = '';
-    public $slug        = '';
+    public $value = '';
+
+    public $slug = '';
+
     public $description = '';
-    public $color_code  = '#000000';
-    public $image_path  = '';
-    public $sort_order  = 0;
-    public $is_active   = true;
+
+    public $color_code = '#000000';
+
+    public $image_path = '';
+
+    public $sort_order = 0;
+
+    public $is_active = true;
 
     public function rules(): array
     {
         return [
-            'value'       => 'required|min:1|max:255',
-            'slug'        => [
+            'value' => 'required|min:1|max:255',
+            'slug' => [
                 'nullable',
                 'max:255',
                 $this->attributeValue
-                    ? 'unique:attribute_values,slug,' . $this->attributeValue->id
+                    ? 'unique:attribute_values,slug,'.$this->attributeValue->id
                     : 'unique:attribute_values,slug',
             ],
             'description' => 'nullable|max:1000',
-            'color_code'  => 'nullable|max:20',
-            'sort_order'  => 'integer|min:0',
-            'is_active'   => 'boolean',
+            'color_code' => 'nullable|max:20',
+            'sort_order' => 'integer|min:0',
+            'is_active' => 'boolean',
         ];
     }
 

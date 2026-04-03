@@ -8,6 +8,7 @@ use Livewire\Form;
 class RegionalSettingsForm extends Form
 {
     public string $weight_unit = 'kg';   // kg | lb | g | oz
+
     public string $dimension_unit = 'cm';   // cm | m | inch | ft
 
     public function rules(): array

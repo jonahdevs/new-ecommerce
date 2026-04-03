@@ -15,7 +15,7 @@ class StripeWebhookController extends Controller
         // Fix 1 — correct gateway label
         Log::info('Webhook received', [
             'gateway' => 'stripe',
-            'ip'      => $request->ip(),
+            'ip' => $request->ip(),
         ]);
 
         // Fix 2 — catch unexpected exceptions
@@ -25,7 +25,7 @@ class StripeWebhookController extends Controller
         } catch (\Throwable $e) {
             Log::error('Stripe webhook handler threw exception', [
                 'error' => $e->getMessage(),
-                'ip'    => $request->ip(),
+                'ip' => $request->ip(),
             ]);
 
             return response('Server Error', 500);

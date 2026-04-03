@@ -9,22 +9,33 @@ class GeneralSettingsForm extends Form
 {
     // Store Identity
     public string $store_name = '';
+
     public string $store_tagline = '';
+
     public $store_logo = null;
+
     public ?string $existing_logo = null;
+
     public $store_favicon = null;
+
     public ?string $existing_favicon = null;
 
     // Contact
     public string $store_email = '';
+
     public string $store_phone = '';
 
     // Address
     public string $store_address = '';
+
     public string $store_address_line_2 = '';
+
     public string $store_city = '';
+
     public string $store_state = '';
+
     public string $store_postal_code = '';
+
     public string $store_country = '';
 
     public function rules(): array

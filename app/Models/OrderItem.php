@@ -17,7 +17,7 @@ class OrderItem extends Model
         'unit_tax_cents',
         'discount_cents',
         'total_cents',
-        'product_snapshot'
+        'product_snapshot',
     ];
 
     protected function casts(): array
@@ -47,43 +47,42 @@ class OrderItem extends Model
         return $this->belongsTo(ProductVariant::class);
     }
 
-
     // ===============================================
     // Accessors
     // ===============================================
     protected function unitPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->unit_price_cents / 100,
+            get: fn () => $this->unit_price_cents / 100,
         );
     }
 
     protected function total(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->total_cents / 100,
+            get: fn () => $this->total_cents / 100,
         );
     }
 
     protected function unitTax(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->unit_tax_cents / 100,
+            get: fn () => $this->unit_tax_cents / 100,
         );
     }
 
     protected function discount(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->discount_cents / 100,
+            get: fn () => $this->discount_cents / 100,
         );
     }
 
     protected function productImageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => isset($this->product_snapshot['image_path']) && $this->product_snapshot['image_path']
-            ? asset('storage/' . $this->product_snapshot['image_path'])
+            get: fn () => isset($this->product_snapshot['image_path']) && $this->product_snapshot['image_path']
+            ? asset('storage/'.$this->product_snapshot['image_path'])
             : null,
         );
     }

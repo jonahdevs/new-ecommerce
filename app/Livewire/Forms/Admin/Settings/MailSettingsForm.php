@@ -8,16 +8,24 @@ use Livewire\Form;
 class MailSettingsForm extends Form
 {
     public string $mailer = 'smtp';
+
     public string $host = '';
+
     public int $port = 587;
+
     public string $username = '';
+
     public string $encryption = 'tls';
+
     public ?string $from_address = null;
+
     public ?string $from_name = null;
+
     public string $reply_to_address = '';
 
     // Encrypted — user must re-enter to change
     public string $password = '';
+
     public bool $has_password = false;
 
     public function rules(): array
@@ -46,7 +54,7 @@ class MailSettingsForm extends Form
         $this->from_name = $settings->from_name ?? '';
         $this->reply_to_address = $settings->reply_to_address ?? '';
 
-        $this->has_password = !empty($settings->password);
+        $this->has_password = ! empty($settings->password);
     }
 
     public function save(MailSettings $settings): void
@@ -68,7 +76,7 @@ class MailSettingsForm extends Form
 
         $settings->save();
 
-        $this->has_password = !empty($settings->password);
+        $this->has_password = ! empty($settings->password);
         $this->password = '';
     }
 }

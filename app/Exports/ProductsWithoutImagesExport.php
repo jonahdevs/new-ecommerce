@@ -4,23 +4,16 @@ namespace App\Exports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProductsWithoutImagesExport implements
-    FromCollection,
-    WithHeadings,
-    WithMapping,
-    WithStyles,
-    WithColumnWidths,
-    WithTitle
+class ProductsWithoutImagesExport implements FromCollection, WithColumnWidths, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected Collection $products;
 
@@ -63,14 +56,14 @@ class ProductsWithoutImagesExport implements
     {
         // Check image status
         $imageStatus = 'Missing';
-        if (isset($product['image']) && !empty(trim($product['image']))) {
+        if (isset($product['image']) && ! empty(trim($product['image']))) {
             $imageStatus = 'Has Image';
         }
 
         // Check gallery status
         $galleryStatus = 'No Gallery';
         if (isset($product['gallery']) && is_array($product['gallery']) && count($product['gallery']) > 0) {
-            $galleryStatus = count($product['gallery']) . ' images';
+            $galleryStatus = count($product['gallery']).' images';
         }
 
         return [

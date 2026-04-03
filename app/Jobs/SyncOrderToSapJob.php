@@ -60,9 +60,9 @@ class SyncOrderToSapJob implements ShouldQueue
     public function handle(SapIntegrationService $sap): void
     {
         Log::info('SAP sync started', [
-            'order_id'  => $this->order->id,
+            'order_id' => $this->order->id,
             'reference' => $this->order->reference,
-            'attempt'   => $this->attempts(),
+            'attempt' => $this->attempts(),
         ]);
 
         $this->order->update([
@@ -74,17 +74,17 @@ class SyncOrderToSapJob implements ShouldQueue
         $result = $sap->syncOrder($this->order);
 
         $this->order->update([
-            'sap_order_number'   => $result->documentEntry ?: $result->documentNumber,
+            'sap_order_number' => $result->documentEntry ?: $result->documentNumber,
             'sap_invoice_number' => $result->documentNumber,
-            'sap_sync_status'    => SapSyncStatus::SYNCED,
-            'sap_synced_at'      => now(),
-            'sap_sync_attempts'  => $this->attempts(),
-            'sap_sync_error'     => null,
+            'sap_sync_status' => SapSyncStatus::SYNCED,
+            'sap_synced_at' => now(),
+            'sap_sync_attempts' => $this->attempts(),
+            'sap_sync_error' => null,
         ]);
 
         Log::info('SAP sync completed', [
-            'order_id'           => $this->order->id,
-            'sap_document'       => $result->documentNumber,
+            'order_id' => $this->order->id,
+            'sap_document' => $result->documentNumber,
         ]);
     }
 
@@ -96,15 +96,15 @@ class SyncOrderToSapJob implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error('SAP sync permanently failed', [
-            'order_id'  => $this->order->id,
+            'order_id' => $this->order->id,
             'reference' => $this->order->reference,
-            'error'     => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
 
         $this->order->update([
-            'sap_sync_status'   => SapSyncStatus::FAILED,
+            'sap_sync_status' => SapSyncStatus::FAILED,
             'sap_sync_attempts' => $this->tries,
-            'sap_sync_error'    => $exception->getMessage(),
+            'sap_sync_error' => $exception->getMessage(),
         ]);
 
         // Alert all admin users so they can manually investigate

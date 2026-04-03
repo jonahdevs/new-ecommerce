@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Enums\QuoteStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasOne};
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Quote extends Model
 {
@@ -79,22 +81,22 @@ class Quote extends Model
 
     protected function subtotal(): Attribute
     {
-        return Attribute::make(get: fn() => $this->subtotal_cents / 100);
+        return Attribute::make(get: fn () => $this->subtotal_cents / 100);
     }
 
     protected function discount(): Attribute
     {
-        return Attribute::make(get: fn() => $this->discount_cents / 100);
+        return Attribute::make(get: fn () => $this->discount_cents / 100);
     }
 
     protected function shipping(): Attribute
     {
-        return Attribute::make(get: fn() => $this->shipping_cents / 100);
+        return Attribute::make(get: fn () => $this->shipping_cents / 100);
     }
 
     protected function total(): Attribute
     {
-        return Attribute::make(get: fn() => $this->total_cents / 100);
+        return Attribute::make(get: fn () => $this->total_cents / 100);
     }
 
     // =====================================================
@@ -211,6 +213,7 @@ class Quote extends Model
     {
         $subtotal = $this->items->sum(function ($item) {
             $price = $item->quoted_price_cents ?? $item->original_price_cents;
+
             return $price * $item->quantity;
         });
 

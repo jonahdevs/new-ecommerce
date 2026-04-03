@@ -96,8 +96,8 @@ new #[Defer] class extends Component {
                 <div class="swiper px-5" id="{{ $type }}">
                     <div class="swiper-wrapper  pb-5">
                         @foreach ($this->products as $product)
-                            <div class="swiper-slide h-auto!">
-                                <livewire:product-card :product="$product" />
+                            <div class="swiper-slide h-auto!" wire:key="rec-{{ $type }}-{{ $product->id }}">
+                                <livewire:product-card :product="$product" :key="'rec-card-' . $type . '-' . $product->id" />
                             </div>
                         @endforeach
                     </div>
@@ -120,7 +120,7 @@ new #[Defer] class extends Component {
         @else
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 @foreach ($this->products as $product)
-                    <livewire:product-card :product="$product" />
+                    <livewire:product-card :product="$product" :key="'rec-card-' . $type . '-' . $product->id" />
                 @endforeach
             </div>
         @endif

@@ -8,10 +8,15 @@ use Livewire\Form;
 class OrderSettingsForm extends Form
 {
     public string $order_id_prefix = 'ORD-';
+
     public ?float $minimum_order_amount = null;
+
     public bool $guest_checkout_enabled = true;
+
     public bool $auto_cancel_unpaid = false;
+
     public int $auto_cancel_hours = 24;
+
     public string $default_order_status = 'pending';
 
     public function rules(): array

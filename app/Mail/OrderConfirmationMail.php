@@ -4,8 +4,8 @@ namespace App\Mail;
 
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -60,7 +60,7 @@ class OrderConfirmationMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {
@@ -71,8 +71,9 @@ class OrderConfirmationMail extends Mailable
     {
         $delivery = $this->order->deliveryOrder;
 
-        if (!$delivery)
+        if (! $delivery) {
             return null;
+        }
 
         $min = $delivery->shippingRate?->estimated_days_min;
         $max = $delivery->shippingRate?->estimated_days_max;
@@ -82,7 +83,7 @@ class OrderConfirmationMail extends Mailable
         }
 
         if ($delivery->estimated_delivery_at) {
-            return 'By ' . $delivery->estimated_delivery_at->format('D, M j');
+            return 'By '.$delivery->estimated_delivery_at->format('D, M j');
         }
 
         return null;

@@ -16,7 +16,7 @@ class ReviewObserver
 
     public function created(Review $review): void
     {
-        if (!$this->notificationSettings->notify_new_review) {
+        if (! $this->notificationSettings->notify_new_review) {
             return;
         }
 

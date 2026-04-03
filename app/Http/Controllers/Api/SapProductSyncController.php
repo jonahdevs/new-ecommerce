@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\Sap\SapProductSyncService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class SapProductSyncController extends Controller
@@ -19,20 +19,18 @@ class SapProductSyncController extends Controller
      *
      * SAP calls this endpoint to update product prices and stock quantities.
      * Validates the secret header, processes all products, and returns detailed results.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function __invoke(Request $request): JsonResponse
     {
         try {
-            if (!$this->validateSignature($request)) {
+            if (! $this->validateSignature($request)) {
                 Log::warning('SAP batch product sync rejected — invalid secret', [
                     'ip' => $request->ip(),
                 ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid webhook secret'
+                    'message' => 'Invalid webhook secret',
                 ], 401);
             }
 
@@ -64,16 +62,13 @@ class SapProductSyncController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Syncing failed: ' . $e->getMessage(),
+                'message' => 'Syncing failed: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Validate signature from SAP
-     *
-     * @param Request $request
-     * @return bool
      */
     private function validateSignature(Request $request): bool
     {
@@ -86,7 +81,7 @@ class SapProductSyncController extends Controller
 
         $providedSecret = $request->header('X-SAP-Secret');
 
-        if (!$providedSecret) {
+        if (! $providedSecret) {
             return false;
         }
 

@@ -88,6 +88,7 @@ class ExpireQuotations extends Command
 
         if ($quotations->isEmpty()) {
             $this->info('No expired quotations found.');
+
             return self::SUCCESS;
         }
 
@@ -95,7 +96,7 @@ class ExpireQuotations extends Command
 
         $this->table(
             ['Reference', 'Customer', 'Expired At'],
-            $quotations->map(fn($q) => [
+            $quotations->map(fn ($q) => [
                 $q->reference,
                 $q->user?->name ?? $q->customerName(),
                 $q->expires_at->format('M d, Y H:i'),

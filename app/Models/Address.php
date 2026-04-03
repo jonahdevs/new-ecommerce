@@ -20,13 +20,12 @@ class Address extends Model
         'shipping_zone_id',
         'is_default',
         'latitude',
-        'longitude'
+        'longitude',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
     ];
-
 
     // ===============================================
     // RELATIONSHIPS

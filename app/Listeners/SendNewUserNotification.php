@@ -21,7 +21,7 @@ class SendNewUserNotification
             return;
         }
 
-        if (!$this->notificationSettings->notify_new_user) {
+        if (! $this->notificationSettings->notify_new_user) {
             return;
         }
 

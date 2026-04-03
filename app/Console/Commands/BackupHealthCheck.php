@@ -5,11 +5,11 @@ namespace App\Console\Commands;
 use App\Services\BackupService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class BackupHealthCheck extends Command
 {
     protected $signature = 'backup:health-check {--alert : Send alerts for issues}';
+
     protected $description = 'Comprehensive backup health check with alerting';
 
     public function handle(BackupService $backupService): int
@@ -60,7 +60,7 @@ class BackupHealthCheck extends Command
         $this->displayResults($issues, $warnings);
 
         // Send alerts if requested
-        if ($this->option('alert') && (!empty($issues) || !empty($warnings))) {
+        if ($this->option('alert') && (! empty($issues) || ! empty($warnings))) {
             $this->sendHealthAlert($issues, $warnings);
         }
 
@@ -100,10 +100,11 @@ class BackupHealthCheck extends Command
     {
         if (empty($issues) && empty($warnings)) {
             $this->info('✅ All backup health checks passed!');
+
             return;
         }
 
-        if (!empty($issues)) {
+        if (! empty($issues)) {
             $this->error('❌ Critical Issues Found:');
             foreach ($issues as $issue) {
                 $this->line("   • {$issue}");
@@ -111,7 +112,7 @@ class BackupHealthCheck extends Command
             $this->newLine();
         }
 
-        if (!empty($warnings)) {
+        if (! empty($warnings)) {
             $this->warn('⚠️  Warnings:');
             foreach ($warnings as $warning) {
                 $this->line("   • {$warning}");
@@ -124,7 +125,7 @@ class BackupHealthCheck extends Command
     {
         $message = "Backup Health Check Alert\n\n";
 
-        if (!empty($issues)) {
+        if (! empty($issues)) {
             $message .= "Critical Issues:\n";
             foreach ($issues as $issue) {
                 $message .= "• {$issue}\n";
@@ -132,7 +133,7 @@ class BackupHealthCheck extends Command
             $message .= "\n";
         }
 
-        if (!empty($warnings)) {
+        if (! empty($warnings)) {
             $message .= "Warnings:\n";
             foreach ($warnings as $warning) {
                 $message .= "• {$warning}\n";
@@ -141,7 +142,7 @@ class BackupHealthCheck extends Command
 
         Log::warning('Backup health check found issues', [
             'issues' => $issues,
-            'warnings' => $warnings
+            'warnings' => $warnings,
         ]);
 
         // You can extend this to send actual notifications

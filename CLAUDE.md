@@ -429,3 +429,120 @@ $pages->assertNoJavascriptErrors()->assertNoConsoleLogs();
 | decoration-slice | box-decoration-slice |
 | decoration-clone | box-decoration-clone |
 </laravel-boost-guidelines>
+
+# Project Progress — Sheffield Africa Ecommerce Platform
+*Last updated: 2026-04-03*
+
+## Overview
+A production-ready B2B/B2C ecommerce platform for Sheffield Africa, built with Laravel 12, Livewire 4, and Flux UI. The platform serves both retail customers and business clients with a comprehensive admin panel, multiple payment gateways, complex shipping logistics, and SAP Business One ERP integration.
+
+---
+
+## Completed Features
+
+### Customer-Facing
+- **Home page** — landing page with top categories
+- **Shop & product catalog** — browsing, filtering by category, search
+- **Product detail pages** — image gallery, variants, attributes, accessories, delivery info, reviews
+- **Product comparison** — side-by-side product comparison
+- **Wishlist** — save items for later
+- **Cart** — session-based shopping cart
+- **Quote basket** — B2B quotation flow
+- **Recently viewed products** — browsing history tracking
+
+### Checkout Flow (6 steps)
+- Shipping address create/edit/select
+- Shipping method selection
+- Payment method selection
+- Order summary & confirmation
+- Payment processing
+- Quote success confirmation
+
+### Customer Account
+- Dashboard, order history, order tracking, order receipts (PDF)
+- Address book (create/edit/delete)
+- Quotations (B2B) — view, PDF export
+- Account settings — profile, password, appearance, two-factor auth
+- Pending reviews — submit product reviews
+- Inbox — notifications/messages
+
+### Authentication & Authorization
+- Local registration & login (Laravel Fortify)
+- Google & Facebook OAuth (Socialite)
+- Two-factor authentication (TOTP)
+- Email verification
+- Role-based access control (spatie/permission) — Admin & Customer roles
+
+### Payments (5 gateways)
+- Stripe (with webhooks & Cashier subscriptions)
+- M-Pesa (with webhooks)
+- PayPal
+- Pesapal
+- Pesawise
+- Cash on Delivery
+
+### Shipping & Logistics
+- Flat-rate engine (zone-based tiers)
+- Vehicle-based rate engine
+- Pickup station (PUS) option
+- Free shipping rules
+- Shipping rate addons/surcharges
+- Geographic zones with counties & sub-areas
+- Multiple logistics provider integration
+- Delivery order tracking
+- Returns management
+
+### B2B Features
+- Quote creation, management, and workflow
+- Quote to order conversion
+- Quote PDF export
+
+### Admin Panel (80+ pages)
+- **Dashboard** — activity widget
+- **Catalog** — Products (CRUD, variants, attributes, images, downloads, SEO), Categories, Brands, Attributes, Tags
+- **Sales** — Orders, Payments, Quotations
+- **Customers** — view, create, edit; Reviews moderation
+- **Logistics** — Shipping methods, zones, rates, addons, free shipping rules; Counties, Areas; Providers, Pickup stations; Delivery orders, Returns, PUS tracker
+- **Access control** — Users, Roles & permissions, Activity logs
+- **Settings** — Store info, Localization, Regional, Inventory, Orders, Quotations, Reviews, Tax, Mail, Notifications, Payment gateways, SEO, Maintenance mode
+
+### Integrations
+- **SAP Business One** — product sync (webhook + API), CU number retrieval, KRA tax receipt generation, sync audit log
+- **Laravel Telescope** — request/query monitoring
+- **spatie/activitylog** — admin activity auditing
+- **spatie/laravel-backup** — daily/weekly/monthly database backups
+- **artesaos/seotools** — SEO metadata & social cards
+
+---
+
+## Database Scale
+- **62 tables** across: products, variants, attributes, categories, brands, tags, carts, orders, quotes, payments, addresses, shipping, logistics, reviews, roles/permissions, settings, notifications, jobs, Telescope, Cashier, and more.
+
+## Key Counts (as of 2026-04-03)
+| Area | Count |
+|------|-------|
+| Blade views | 229 |
+| Models | 37 |
+| Livewire components | 45 |
+| Services | 23+ |
+| Routes | 226 |
+| Database tables | 62 |
+
+---
+
+## Architecture Decisions
+- **Livewire Folio** for file-based page routing (customer & admin pages)
+- **Service layer** — business logic in `app/Services/` (CartService, CheckoutService, OrderService, PaymentService, ShippingCalculatorService, etc.)
+- **Livewire Form Objects** for admin forms (not traditional controllers)
+- **Snapshot pattern** — order items store product name/price at time of purchase
+- **Pluggable payment gateways** via `PaymentGateway` contract
+- **Pluggable shipping engines** — FlatRateEngine, PusEngine; extensible for more
+- **Webhook controllers** — Stripe, M-Pesa, Pesawise, SAP
+
+---
+
+## In Progress / Planned
+- Coming soon page (recently created)
+- Notification classes (recently added)
+- Admin dashboard improvements (ongoing)
+- Dark mode on admin side (ongoing)

@@ -54,7 +54,7 @@ class ProductImage extends Model
     protected function url(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_path ? asset('storage/' . $this->image_path) : null,
+            get: fn () => $this->image_path ? asset('storage/'.$this->image_path) : null,
         );
     }
 }

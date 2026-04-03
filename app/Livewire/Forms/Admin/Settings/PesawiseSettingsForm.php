@@ -8,15 +8,20 @@ use Livewire\Form;
 class PesawiseSettingsForm extends Form
 {
     public bool $enabled = false;
+
     public string $environment = 'sandbox';
+
     public string $account_number = '';
+
     public string $callback_url = '';
 
     // Encrypted — user must re-enter to change
     public string $api_key = '';
+
     public string $api_secret = '';
 
     public bool $has_api_key = false;
+
     public bool $has_api_secret = false;
 
     public function rules(): array
@@ -38,8 +43,8 @@ class PesawiseSettingsForm extends Form
         $this->account_number = $settings->account_number ?? '';
         $this->callback_url = $settings->callback_url ?? '';
 
-        $this->has_api_key = !empty($settings->api_key);
-        $this->has_api_secret = !empty($settings->api_secret);
+        $this->has_api_key = ! empty($settings->api_key);
+        $this->has_api_secret = ! empty($settings->api_secret);
     }
 
     public function save(PesawiseSettings $settings): void
@@ -51,15 +56,17 @@ class PesawiseSettingsForm extends Form
         $settings->account_number = $this->account_number ?: null;
         $settings->callback_url = $this->callback_url ?: null;
 
-        if ($this->api_key)
+        if ($this->api_key) {
             $settings->api_key = $this->api_key;
-        if ($this->api_secret)
+        }
+        if ($this->api_secret) {
             $settings->api_secret = $this->api_secret;
+        }
 
         $settings->save();
 
-        $this->has_api_key = !empty($settings->api_key);
-        $this->has_api_secret = !empty($settings->api_secret);
+        $this->has_api_key = ! empty($settings->api_key);
+        $this->has_api_secret = ! empty($settings->api_secret);
         $this->api_key = '';
         $this->api_secret = '';
     }

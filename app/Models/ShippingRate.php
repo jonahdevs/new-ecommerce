@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ShippingRateAddonStatus;
 use App\Enums\ShippingRateStatus;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
@@ -59,7 +60,6 @@ class ShippingRate extends Model
     // Scope
     // ===============================================
     #[Scope()]
-
     protected function active($query)
     {
         $query->where('status', ShippingRateStatus::ACTIVE->value);
@@ -98,9 +98,9 @@ class ShippingRate extends Model
     public function activeAddons(?int $stationId = null): HasMany
     {
         return $this->addons()
-            ->where('status', \App\Enums\ShippingRateAddonStatus::ACTIVE->value)
+            ->where('status', ShippingRateAddonStatus::ACTIVE->value)
             ->where(
-                fn($q) => $q->whereNull('pickup_station_id')
+                fn ($q) => $q->whereNull('pickup_station_id')
                     ->orWhere('pickup_station_id', $stationId)
             );
     }
@@ -109,6 +109,7 @@ class ShippingRate extends Model
     {
         return $this->status === ShippingRateStatus::ACTIVE;
     }
+
     public function isExpired(): bool
     {
         return $this->status === ShippingRateStatus::EXPIRED;

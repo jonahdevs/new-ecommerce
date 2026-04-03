@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,10 +26,10 @@ class ProductDownload extends Model
     protected function casts(): array
     {
         return [
-            'file_size'        => 'integer',
-            'download_limit'   => 'integer',
-            'download_expiry'  => 'integer',
-            'sort_order'       => 'integer',
+            'file_size' => 'integer',
+            'download_limit' => 'integer',
+            'download_expiry' => 'integer',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -56,7 +57,7 @@ class ProductDownload extends Model
     protected function downloadUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->file_path
+            get: fn () => $this->file_path
                 ? Storage::disk('private')->url($this->file_path)
                 : null,
         );
@@ -69,7 +70,9 @@ class ProductDownload extends Model
     {
         return Attribute::make(
             get: function () {
-                if (!$this->file_size) return null;
+                if (! $this->file_size) {
+                    return null;
+                }
 
                 $units = ['B', 'KB', 'MB', 'GB'];
                 $size = $this->file_size;
@@ -80,7 +83,7 @@ class ProductDownload extends Model
                     $unit++;
                 }
 
-                return round($size, 2) . ' ' . $units[$unit];
+                return round($size, 2).' '.$units[$unit];
             }
         );
     }
@@ -91,14 +94,14 @@ class ProductDownload extends Model
     protected function fileIcon(): Attribute
     {
         return Attribute::make(
-            get: fn() => match (strtolower($this->file_type ?? '')) {
-                'pdf'              => 'document-text',
+            get: fn () => match (strtolower($this->file_type ?? '')) {
+                'pdf' => 'document-text',
                 'zip', 'rar', '7z' => 'archive-box',
-                'xls', 'xlsx'      => 'table-cells',
-                'doc', 'docx'      => 'document',
+                'xls', 'xlsx' => 'table-cells',
+                'doc', 'docx' => 'document',
                 'jpg', 'jpeg',
-                'png', 'gif'       => 'photo',
-                default            => 'document',
+                'png', 'gif' => 'photo',
+                default => 'document',
             }
         );
     }
@@ -110,9 +113,11 @@ class ProductDownload extends Model
     /**
      * Check if download has expired for a given purchase date
      */
-    public function isExpiredFor(\Carbon\Carbon $purchaseDate): bool
+    public function isExpiredFor(Carbon $purchaseDate): bool
     {
-        if (!$this->download_expiry) return false;
+        if (! $this->download_expiry) {
+            return false;
+        }
 
         return $purchaseDate->addDays($this->download_expiry)->isPast();
     }
@@ -122,7 +127,9 @@ class ProductDownload extends Model
      */
     public function isLimitReached(int $downloadCount): bool
     {
-        if (!$this->download_limit) return false;
+        if (! $this->download_limit) {
+            return false;
+        }
 
         return $downloadCount >= $this->download_limit;
     }

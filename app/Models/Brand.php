@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\BrandObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([BrandObserver::class])]
 class Brand extends Model
 {
     use HasFactory;
@@ -57,7 +60,6 @@ class Brand extends Model
             ->orderBy('name');
     }
 
-
     // ==================================================
     // SCOPES
     // ==================================================
@@ -77,7 +79,7 @@ class Brand extends Model
         $query->orderBy('sort_order')->orderBy('name');
     }
 
-        // ===============================================
+    // ===============================================
     // ACCESSORS
     // ===============================================
 
@@ -87,7 +89,7 @@ class Brand extends Model
     protected function logoUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->logo_path ? asset('storage/' . $this->logo_path) : null,
+            get: fn () => $this->logo_path ? asset('storage/'.$this->logo_path) : null,
         );
     }
 }

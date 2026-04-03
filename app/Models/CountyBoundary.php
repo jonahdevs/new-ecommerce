@@ -12,6 +12,6 @@ class CountyBoundary extends Model
         'bbox_min_lat',
         'bbox_max_lat',
         'bbox_min_lng',
-        'bbox_max_lng'
+        'bbox_max_lng',
     ];
 }

@@ -14,16 +14,25 @@ class CustomerAddressForm extends Form
     public ?Address $address = null;
 
     public string $first_name = '';
+
     public string $last_name = '';
+
     public string $phone_number = '';
+
     public ?string $alternative_phone_number = null;
+
     public ?string $county_id = null;
+
     public ?string $area_id = null;
+
     public string $address_text = '';
+
     public ?string $additional_information = null;
+
     public bool $is_default = false;
 
     public ?float $latitude = null;
+
     public ?float $longitude = null;
 
     //  Validation ─
@@ -43,28 +52,29 @@ class CustomerAddressForm extends Form
                 function ($attribute, $value, $fail) {
                     // Validate that the county has a shipping zone configured
                     $zoneId = $this->resolveShippingZone();
-                    if (!$zoneId) {
+                    if (! $zoneId) {
                         $fail('Delivery is not available in this county. Please select a different location or contact support.');
+
                         return;
                     }
-                    
+
                     // Validate the zone is active
                     $zone = ShippingZone::find($zoneId);
-                    if (!$zone || $zone->status->value !== 'active') {
+                    if (! $zone || $zone->status->value !== 'active') {
                         $fail('Delivery is temporarily unavailable in this area. Please try again later or contact support.');
                     }
                 },
             ],
             'area_id' => ['nullable', 'exists:areas,id'],
             'address_text' => [
-                Rule::requiredIf(fn() => !$this->latitude || !$this->longitude),
+                Rule::requiredIf(fn () => ! $this->latitude || ! $this->longitude),
                 'nullable',
                 'string',
-                'max:500'
+                'max:500',
             ],
             'additional_information' => ['nullable', 'string', 'max:1000'],
             'is_default' => ['boolean'],
-            'latitude'  => ['nullable', 'numeric', 'between:-90,90'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
@@ -95,7 +105,7 @@ class CustomerAddressForm extends Form
         $this->address_text = $address->address;
         $this->additional_information = $address->additional_information;
         $this->is_default = $address->is_default;
-        $this->latitude  = $address->latitude  ? (float) $address->latitude  : null;
+        $this->latitude = $address->latitude ? (float) $address->latitude : null;
         $this->longitude = $address->longitude ? (float) $address->longitude : null;
     }
 
@@ -106,7 +116,7 @@ class CustomerAddressForm extends Form
         $this->validate();
 
         // First address is always default regardless of checkbox
-        $isFirstAddress = !auth()->user()->addresses()->exists();
+        $isFirstAddress = ! auth()->user()->addresses()->exists();
         $makeDefault = $isFirstAddress || $this->is_default;
 
         $address = auth()->user()->addresses()->create([
@@ -120,7 +130,7 @@ class CustomerAddressForm extends Form
             'additional_information' => $this->additional_information,
             'shipping_zone_id' => $this->resolveShippingZone(),
             'is_default' => $makeDefault,
-            'latitude'  => $this->latitude,
+            'latitude' => $this->latitude,
             'longitude' => $this->longitude,
         ]);
 
@@ -142,7 +152,7 @@ class CustomerAddressForm extends Form
             ->where('is_default', true)
             ->exists();
 
-        $keepDefault = $this->is_default || !$hasOtherDefault;
+        $keepDefault = $this->is_default || ! $hasOtherDefault;
 
         $this->address->update([
             'first_name' => $this->first_name,
@@ -155,7 +165,7 @@ class CustomerAddressForm extends Form
             'additional_information' => $this->additional_information,
             'shipping_zone_id' => $this->resolveShippingZone(),
             'is_default' => $keepDefault,
-            'latitude'  => $this->latitude,
+            'latitude' => $this->latitude,
             'longitude' => $this->longitude,
         ]);
 
@@ -195,7 +205,6 @@ class CustomerAddressForm extends Form
         return County::where('id', $this->county_id)
             ->value('shipping_zone_id');
     }
-
 
     //  Default management
 

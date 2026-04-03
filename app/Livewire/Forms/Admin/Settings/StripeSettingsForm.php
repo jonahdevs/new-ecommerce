@@ -8,15 +8,19 @@ use Livewire\Form;
 class StripeSettingsForm extends Form
 {
     public bool $enabled = false;
+
     public string $environment = 'sandbox';
+
     public string $public_key = ''; // publishable key — not encrypted, safe to show
 
     // Encrypted — user must re-enter to change
     public string $secret_key = '';
+
     public string $webhook_secret = '';
 
     // Track presence of encrypted fields
     public bool $has_secret_key = false;
+
     public bool $has_webhook_secret = false;
 
     public function rules(): array
@@ -36,8 +40,8 @@ class StripeSettingsForm extends Form
         $this->environment = $settings->environment;
         $this->public_key = $settings->public_key ?? ''; // safe to pre-fill
 
-        $this->has_secret_key = !empty($settings->secret_key);
-        $this->has_webhook_secret = !empty($settings->webhook_secret);
+        $this->has_secret_key = ! empty($settings->secret_key);
+        $this->has_webhook_secret = ! empty($settings->webhook_secret);
     }
 
     public function save(StripeSettings $settings): void
@@ -48,15 +52,17 @@ class StripeSettingsForm extends Form
         $settings->environment = $this->environment;
         $settings->public_key = $this->public_key ?: null;
 
-        if ($this->secret_key)
+        if ($this->secret_key) {
             $settings->secret_key = $this->secret_key;
-        if ($this->webhook_secret)
+        }
+        if ($this->webhook_secret) {
             $settings->webhook_secret = $this->webhook_secret;
+        }
 
         $settings->save();
 
-        $this->has_secret_key = !empty($settings->secret_key);
-        $this->has_webhook_secret = !empty($settings->webhook_secret);
+        $this->has_secret_key = ! empty($settings->secret_key);
+        $this->has_webhook_secret = ! empty($settings->webhook_secret);
         $this->secret_key = '';
         $this->webhook_secret = '';
     }

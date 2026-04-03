@@ -11,9 +11,13 @@ class ShippingZoneForm extends Form
     public ?ShippingZone $zone = null;
 
     public string $name = '';
+
     public string $code = '';
+
     public string $description = '';
+
     public string $status = 'active';
+
     public bool $is_delivery_available = false;
 
     public function rules(): array
@@ -25,10 +29,10 @@ class ShippingZoneForm extends Form
         }
 
         return [
-            'name'        => 'required|string|max:100',
-            'code'        => $uniqueCode,
+            'name' => 'required|string|max:100',
+            'code' => $uniqueCode,
             'description' => 'nullable|string|max:500',
-            'status'      => 'required|string|in:' . implode(',', array_column(ShippingZoneStatus::cases(), 'value')),
+            'status' => 'required|string|in:'.implode(',', array_column(ShippingZoneStatus::cases(), 'value')),
         ];
     }
 
@@ -36,17 +40,17 @@ class ShippingZoneForm extends Form
     {
         return [
             'code.alpha_dash' => 'Code may only contain letters, numbers, dashes and underscores.',
-            'code.unique'     => 'This code is already taken by another zone.',
+            'code.unique' => 'This code is already taken by another zone.',
         ];
     }
 
     public function setZone(ShippingZone $zone): void
     {
-        $this->zone        = $zone;
-        $this->name        = $zone->name;
-        $this->code        = $zone->code ?? '';
+        $this->zone = $zone;
+        $this->name = $zone->name;
+        $this->code = $zone->code ?? '';
         $this->description = $zone->description ?? '';
-        $this->status      = $zone->status instanceof ShippingZoneStatus
+        $this->status = $zone->status instanceof ShippingZoneStatus
             ? $zone->status->value
             : $zone->status;
         $this->is_delivery_available = $zone->is_delivery_available;
@@ -57,11 +61,11 @@ class ShippingZoneForm extends Form
         $this->validate();
 
         ShippingZone::create([
-            'name'        => $this->name,
-            'code'        => $this->code ?: null,
+            'name' => $this->name,
+            'code' => $this->code ?: null,
             'description' => $this->description ?: null,
-            'status'      => $this->status,
-            'is_delivery_available'  => $this->is_delivery_available,
+            'status' => $this->status,
+            'is_delivery_available' => $this->is_delivery_available,
         ]);
     }
 
@@ -70,11 +74,11 @@ class ShippingZoneForm extends Form
         $this->validate();
 
         $this->zone->update([
-            'name'        => $this->name,
-            'code'        => $this->code ?: null,
+            'name' => $this->name,
+            'code' => $this->code ?: null,
             'description' => $this->description ?: null,
-            'status'      => $this->status,
-            'is_delivery_available'  => $this->is_delivery_available,
+            'status' => $this->status,
+            'is_delivery_available' => $this->is_delivery_available,
         ]);
     }
 }

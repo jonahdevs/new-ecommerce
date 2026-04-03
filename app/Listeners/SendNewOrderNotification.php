@@ -16,7 +16,7 @@ class SendNewOrderNotification
 
     public function handle(PaymentConfirmed $event): void
     {
-        if (!$this->notificationSettings->notify_new_order) {
+        if (! $this->notificationSettings->notify_new_order) {
             return;
         }
 

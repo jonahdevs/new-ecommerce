@@ -52,22 +52,22 @@ class QuoteItem extends Model
 
     protected function originalPrice(): Attribute
     {
-        return Attribute::make(get: fn() => $this->original_price_cents / 100);
+        return Attribute::make(get: fn () => $this->original_price_cents / 100);
     }
 
     protected function quotedPrice(): Attribute
     {
-        return Attribute::make(get: fn() => $this->quoted_price_cents ? $this->quoted_price_cents / 100 : null);
+        return Attribute::make(get: fn () => $this->quoted_price_cents ? $this->quoted_price_cents / 100 : null);
     }
 
     protected function effectivePrice(): Attribute
     {
-        return Attribute::make(get: fn() => ($this->quoted_price_cents ?? $this->original_price_cents) / 100);
+        return Attribute::make(get: fn () => ($this->quoted_price_cents ?? $this->original_price_cents) / 100);
     }
 
     protected function total(): Attribute
     {
-        return Attribute::make(get: fn() => $this->total_cents / 100);
+        return Attribute::make(get: fn () => $this->total_cents / 100);
     }
 
     // =====================================================

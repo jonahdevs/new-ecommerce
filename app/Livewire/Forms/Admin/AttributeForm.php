@@ -3,32 +3,39 @@
 namespace App\Livewire\Forms\Admin;
 
 use App\Models\Attribute;
-use Livewire\Form;
 use Illuminate\Support\Str;
+use Livewire\Form;
 
 class AttributeForm extends Form
 {
     public ?Attribute $attribute = null;
 
     public $name = '';
+
     public $slug = '';
+
     public $watch_type = 'select';
+
     public $watch_shape = 'default';
+
     public $watch_size = 24;
+
     public $is_active = true;
+
     public $sort_order = 0;
 
     public function rules(): array
     {
         $attributeId = $this->attribute?->id;
+
         return [
-            'name'       => 'required|min:2|max:255',
-            'slug'       => ['nullable', 'max:255', 'unique:attributes,slug,' . $attributeId],
+            'name' => 'required|min:2|max:255',
+            'slug' => ['nullable', 'max:255', 'unique:attributes,slug,'.$attributeId],
             'watch_type' => 'required|in:select,label,color,image',
             'watch_shape' => 'required|in:default,rounded-corners,circle',
             'watch_size' => 'integer|min:1',
             'sort_order' => 'integer|min:0',
-            'is_active'  => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -26,12 +25,12 @@ class SocialiteController extends Controller
         // Find or create the user
         $user = User::updateOrCreate(
             [
-                'email'          => $socialUser->getEmail(),
+                'email' => $socialUser->getEmail(),
             ],
             [
-                'provider'    => $provider,
+                'provider' => $provider,
                 'provider_id' => $socialUser->getId(),
-                'name'           => $socialUser->getName(),
+                'name' => $socialUser->getName(),
                 'provider_token' => $socialUser->token,
                 'email_verified_at' => now(), // trust OAuth provider's email
             ]

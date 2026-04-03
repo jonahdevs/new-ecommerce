@@ -33,7 +33,7 @@ class TestEvent implements ShouldBroadcast
     {
         return [
             'message' => $this->message,
-            'time'    => now()->toTimeString(),
+            'time' => now()->toTimeString(),
         ];
     }
 }

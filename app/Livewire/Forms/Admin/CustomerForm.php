@@ -3,8 +3,9 @@
 namespace App\Livewire\Forms\Admin;
 
 use App\Enums\UserStatus;
-use App\Models\User;
 use App\Models\Address;
+use App\Models\Area;
+use App\Models\User;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
@@ -17,25 +18,37 @@ class CustomerForm extends Form
     public ?User $customer = null;
 
     // Personal
-    public string $name         = '';
-    public string $email        = '';
+    public string $name = '';
+
+    public string $email = '';
+
     public string $phone_number = '';
-    public bool   $verify_email = true;
-    public $avatar              = null;
+
+    public bool $verify_email = true;
+
+    public $avatar = null;
 
     // Default Address
-    public string $address_first_name       = '';
-    public string $address_last_name        = '';
-    public string $address_phone            = '';
-    public ?int   $county_id                = null;
-    public ?int   $area_id                  = null;
-    public string $address_line             = '';
-    public string $additional_information   = '';
+    public string $address_first_name = '';
+
+    public string $address_last_name = '';
+
+    public string $address_phone = '';
+
+    public ?int $county_id = null;
+
+    public ?int $area_id = null;
+
+    public string $address_line = '';
+
+    public string $additional_information = '';
 
     // Status (edit only)
-    public string  $status           = 'active';
-    public string  $status_reason    = '';
-    public ?string $suspended_until  = null;
+    public string $status = 'active';
+
+    public string $status_reason = '';
+
+    public ?string $suspended_until = null;
 
     public function rules(): array
     {
@@ -43,48 +56,48 @@ class CustomerForm extends Form
 
         return [
             // Personal
-            'name'         => ['required', 'string', 'min:2', 'max:255'],
-            'email'        => ['required', 'email', Rule::unique('users', 'email')->ignore($this->customer?->id)],
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($this->customer?->id)],
             'phone_number' => ['nullable', 'string', 'max:20'],
             'verify_email' => ['boolean'],
-            'avatar'       => ['nullable', 'image', 'max:3072'],
+            'avatar' => ['nullable', 'image', 'max:3072'],
 
             // Address
-            'address_first_name'     => ['nullable', 'string', 'max:100'],
-            'address_last_name'      => ['nullable', 'string', 'max:100'],
-            'address_phone'          => ['nullable', 'string', 'max:20'],
-            'county_id'              => ['nullable', 'exists:counties,id'],
-            'area_id'                => ['nullable', 'exists:areas,id'],
-            'address_line'           => ['nullable', 'string', 'max:255'],
+            'address_first_name' => ['nullable', 'string', 'max:100'],
+            'address_last_name' => ['nullable', 'string', 'max:100'],
+            'address_phone' => ['nullable', 'string', 'max:20'],
+            'county_id' => ['nullable', 'exists:counties,id'],
+            'area_id' => ['nullable', 'exists:areas,id'],
+            'address_line' => ['nullable', 'string', 'max:255'],
             'additional_information' => ['nullable', 'string', 'max:500'],
 
             // Status — only validated on edit
-            'status'          => [$isEdit ? 'required' : 'sometimes', Rule::enum(UserStatus::class)],
-            'status_reason'   => ['nullable', 'string', 'max:500'],
+            'status' => [$isEdit ? 'required' : 'sometimes', Rule::enum(UserStatus::class)],
+            'status_reason' => ['nullable', 'string', 'max:500'],
             'suspended_until' => ['nullable', 'date', 'after:today'],
         ];
     }
 
     public function setCustomer(User $customer): void
     {
-        $this->customer     = $customer;
-        $this->name         = $customer->name;
-        $this->email        = $customer->email;
+        $this->customer = $customer;
+        $this->name = $customer->name;
+        $this->email = $customer->email;
         $this->phone_number = $customer->phone_number ?? '';
-        $this->verify_email = !is_null($customer->email_verified_at);
-        $this->status       = $customer->status->value;
-        $this->status_reason   = $customer->status_reason ?? '';
+        $this->verify_email = ! is_null($customer->email_verified_at);
+        $this->status = $customer->status->value;
+        $this->status_reason = $customer->status_reason ?? '';
         $this->suspended_until = $customer->suspended_until?->format('Y-m-d');
 
         // Load default address if exists
         $address = $customer->defaultAddress;
         if ($address) {
-            $this->address_first_name     = $address->first_name;
-            $this->address_last_name      = $address->last_name;
-            $this->address_phone          = $address->phone_number ?? '';
-            $this->county_id              = $address->county_id;
-            $this->area_id                = $address->area_id;
-            $this->address_line           = $address->address ?? '';
+            $this->address_first_name = $address->first_name;
+            $this->address_last_name = $address->last_name;
+            $this->address_phone = $address->phone_number ?? '';
+            $this->county_id = $address->county_id;
+            $this->area_id = $address->area_id;
+            $this->address_line = $address->address ?? '';
             $this->additional_information = $address->additional_information ?? '';
         }
     }
@@ -94,12 +107,12 @@ class CustomerForm extends Form
         $this->validate();
 
         $customer = User::create([
-            'name'              => $this->name,
-            'email'             => $this->email,
-            'password'          => bcrypt(str()->random(16)),
-            'phone_number'      => $this->phone_number ?: null,
-            'is_staff'          => false,
-            'status'            => UserStatus::ACTIVE,
+            'name' => $this->name,
+            'email' => $this->email,
+            'password' => bcrypt(str()->random(16)),
+            'phone_number' => $this->phone_number ?: null,
+            'is_staff' => false,
+            'status' => UserStatus::ACTIVE,
             'email_verified_at' => $this->verify_email ? now() : null,
         ]);
 
@@ -107,7 +120,7 @@ class CustomerForm extends Form
 
         if ($this->avatar) {
             $customer->update([
-                'avatar' => $this->avatar->store('avatars', 'public')
+                'avatar' => $this->avatar->store('avatars', 'public'),
             ]);
         }
 
@@ -122,12 +135,12 @@ class CustomerForm extends Form
         $this->validate();
 
         $this->customer->update([
-            'name'              => $this->name,
-            'email'             => $this->email,
-            'phone_number'      => $this->phone_number ?: null,
-            'status'            => $this->status,
-            'status_reason'     => in_array($this->status, ['banned', 'suspended']) ? $this->status_reason : null,
-            'suspended_until'   => $this->status === 'suspended' ? $this->suspended_until : null,
+            'name' => $this->name,
+            'email' => $this->email,
+            'phone_number' => $this->phone_number ?: null,
+            'status' => $this->status,
+            'status_reason' => in_array($this->status, ['banned', 'suspended']) ? $this->status_reason : null,
+            'suspended_until' => $this->status === 'suspended' ? $this->suspended_until : null,
             'email_verified_at' => $this->verify_email
                 ? ($this->customer->email_verified_at ?? now())
                 : null,
@@ -137,7 +150,7 @@ class CustomerForm extends Form
 
         if ($this->avatar) {
             $this->customer->update([
-                'avatar' => $this->avatar->store('avatars', 'public')
+                'avatar' => $this->avatar->store('avatars', 'public'),
             ]);
         }
     }
@@ -149,7 +162,7 @@ class CustomerForm extends Form
 
     private function saveAddress(User $user): void
     {
-        $area = \App\Models\Area::with('county')->find($this->area_id);
+        $area = Area::with('county')->find($this->area_id);
 
         // Area is more precise, fall back to county if area has no zone
         $shippingZoneId = $area?->shipping_zone_id ?? $area?->county?->shipping_zone_id;
@@ -157,15 +170,15 @@ class CustomerForm extends Form
         $user->addresses()->updateOrCreate(
             ['is_default' => true],
             [
-                'first_name'             => $this->address_first_name,
-                'last_name'              => $this->address_last_name,
-                'phone_number'           => $this->address_phone,
-                'county_id'              => $this->county_id,
-                'area_id'                => $this->area_id,
-                'address'                => $this->address_line,
-                'shipping_zone_id'       => $shippingZoneId,
+                'first_name' => $this->address_first_name,
+                'last_name' => $this->address_last_name,
+                'phone_number' => $this->address_phone,
+                'county_id' => $this->county_id,
+                'area_id' => $this->area_id,
+                'address' => $this->address_line,
+                'shipping_zone_id' => $shippingZoneId,
                 'additional_information' => $this->additional_information ?: null,
-                'is_default'             => true,
+                'is_default' => true,
             ]
         );
     }

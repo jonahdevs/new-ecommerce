@@ -15,8 +15,7 @@ class BackupStatusNotification extends Notification implements ShouldQueue
         private string $type,
         private array $result,
         private bool $success
-    ) {
-    }
+    ) {}
 
     public function via($notifiable): array
     {
@@ -32,15 +31,15 @@ class BackupStatusNotification extends Notification implements ShouldQueue
         $message = (new MailMessage)
             ->subject($subject)
             ->greeting('Sheffield Backup System')
-            ->line("Backup Type: " . ucfirst($this->type))
-            ->line("Status: " . ($this->success ? 'SUCCESS' : 'FAILED'))
+            ->line('Backup Type: '.ucfirst($this->type))
+            ->line('Status: '.($this->success ? 'SUCCESS' : 'FAILED'))
             ->line("Message: {$this->result['message']}");
 
         if (isset($this->result['duration'])) {
             $message->line("Duration: {$this->result['duration']} seconds");
         }
 
-        if (!$this->success) {
+        if (! $this->success) {
             $message->line('Please check the backup logs for more details.')
                 ->action('View Logs', url('/admin/logs'));
         }

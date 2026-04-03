@@ -33,6 +33,7 @@ class BackupManagement extends Command
                 return $this->testConfiguration($backupService);
             default:
                 $this->error("Unknown action: {$action}");
+
                 return 1;
         }
     }
@@ -51,18 +52,22 @@ class BackupManagement extends Command
 
         if ($result['success']) {
             $this->info($result['message']);
+
             return 0;
         } else {
             $this->error($result['message']);
+
             return 1;
         }
     }
+
     private function listBackups(BackupService $backupService): int
     {
         $backups = $backupService->listBackups();
 
         if ($backups->isEmpty()) {
             $this->info('No backups found.');
+
             return 0;
         }
 
@@ -116,9 +121,11 @@ class BackupManagement extends Command
 
         if ($result['success']) {
             $this->info($result['message']);
+
             return 0;
         } else {
             $this->error($result['message']);
+
             return 1;
         }
     }
@@ -131,9 +138,11 @@ class BackupManagement extends Command
 
         if ($result['success']) {
             $this->info($result['message']);
+
             return 0;
         } else {
             $this->error($result['message']);
+
             return 1;
         }
     }
@@ -146,17 +155,17 @@ class BackupManagement extends Command
 
         // Test database
         if ($results['database']['status'] === 'ok') {
-            $this->info('✓ ' . $results['database']['message']);
+            $this->info('✓ '.$results['database']['message']);
         } else {
-            $this->error('✗ ' . $results['database']['message']);
+            $this->error('✗ '.$results['database']['message']);
         }
 
         // Test disks
         foreach ($results['disks'] as $disk => $result) {
             if ($result['status'] === 'ok') {
-                $this->info("✓ Disk '{$disk}': " . $result['message']);
+                $this->info("✓ Disk '{$disk}': ".$result['message']);
             } else {
-                $this->error("✗ Disk '{$disk}': " . $result['message']);
+                $this->error("✗ Disk '{$disk}': ".$result['message']);
             }
         }
 

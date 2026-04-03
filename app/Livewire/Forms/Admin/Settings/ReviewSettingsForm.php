@@ -8,11 +8,17 @@ use Livewire\Form;
 class ReviewSettingsForm extends Form
 {
     public bool $reviews_enabled = true;
+
     public bool $require_purchase_to_review = true;
+
     public bool $auto_approve_reviews = false;
+
     public bool $allow_anonymous_reviews = false;
+
     public bool $allow_review_images = true;
+
     public int $max_review_images = 5;
+
     public int $min_review_length = 10;
 
     public function rules(): array

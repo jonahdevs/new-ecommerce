@@ -4,6 +4,7 @@ namespace App\View\Composers;
 
 use App\Enums\CategorySection;
 use App\Models\Category;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class FooterComposer
@@ -12,7 +13,9 @@ class FooterComposer
     {
         $view->with(
             'footerCategories',
-            Category::inSection(CategorySection::FOOTER)->take(5)->get()
+            Cache::tags(['footer', 'categories'])->remember('footer:categories', 60 * 60 * 12, function () {
+                return Category::inSection(CategorySection::FOOTER)->take(5)->get();
+            })
         );
     }
 }

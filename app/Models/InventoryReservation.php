@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * InventoryReservation Model
- * 
+ *
  * Tracks temporary stock holds while payment is being processed.
  * Prevents overselling by "reserving" inventory until:
  * 1. Payment is confirmed (reservation deleted, stock deducted)
@@ -43,7 +43,7 @@ class InventoryReservation extends Model
 
     /**
      * Get the reservable item (Product or ProductVariant)
-     * 
+     *
      * This polymorphic relationship allows the same table to track
      * reservations for both simple products and product variants.
      */
@@ -66,7 +66,7 @@ class InventoryReservation extends Model
 
     /**
      * Scope: Get only active (non-expired) reservations
-     * 
+     *
      * Usage: InventoryReservation::active()->get()
      */
     #[Scope]
@@ -77,7 +77,7 @@ class InventoryReservation extends Model
 
     /**
      * Scope: Get expired reservations
-     * 
+     *
      * Usage: InventoryReservation::expired()->get()
      */
     #[Scope]
@@ -88,7 +88,7 @@ class InventoryReservation extends Model
 
     /**
      * Scope: Get reservations for a specific order
-     * 
+     *
      * Usage: InventoryReservation::forOrder($orderId)->get()
      */
     #[Scope]
@@ -114,7 +114,7 @@ class InventoryReservation extends Model
      */
     public function isActive(): bool
     {
-        return !$this->isExpired();
+        return ! $this->isExpired();
     }
 
     /**
@@ -123,6 +123,7 @@ class InventoryReservation extends Model
     public function getDescriptionAttribute(): string
     {
         $productName = $this->reservable?->name ?? 'Unknown Product';
+
         return "{$this->quantity} units of {$productName} reserved for Order #{$this->order_id}";
     }
 }

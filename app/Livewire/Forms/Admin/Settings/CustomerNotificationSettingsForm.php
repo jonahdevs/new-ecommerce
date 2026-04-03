@@ -8,17 +8,29 @@ use Livewire\Form;
 class CustomerNotificationSettingsForm extends Form
 {
     public bool $order_confirmation = true;
+
     public bool $order_processing = true;
+
     public bool $order_shipped = true;
+
     public bool $order_delivered = true;
+
     public bool $order_cancelled = true;
+
     public bool $order_refunded = true;
+
     public bool $abandoned_cart = false;
+
     public int $abandoned_cart_delay = 1;
+
     public bool $review_request = false;
+
     public int $review_request_delay = 3;
+
     public bool $quote_sent = true;
+
     public bool $quote_expiring_reminder = true;
+
     public int $quote_expiring_days = 2;
 
     public function rules(): array

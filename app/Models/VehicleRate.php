@@ -105,8 +105,10 @@ class VehicleRate extends Model
 
     public function canCarryWeight(float $weightKg): bool
     {
-        if ($this->max_weight_kg === null)
+        if ($this->max_weight_kg === null) {
             return true;
+        }
+
         return $weightKg <= $this->max_weight_kg;
     }
 }

@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteStatus;
+use App\Models\Quote;
 use App\Services\QuotationService;
+use App\Settings\CustomerNotificationSettings;
 use Illuminate\Console\Command;
 
 class SendQuoteExpiringReminders extends Command
@@ -60,17 +63,18 @@ class SendQuoteExpiringReminders extends Command
     {
         $this->warn('DRY RUN — no emails will be sent.');
 
-        $settings = app(\App\Settings\CustomerNotificationSettings::class);
+        $settings = app(CustomerNotificationSettings::class);
 
-        if (!$settings->quote_expiring_reminder) {
+        if (! $settings->quote_expiring_reminder) {
             $this->info('Quote expiring reminders are disabled in settings.');
+
             return self::SUCCESS;
         }
 
         $daysBeforeExpiry = $settings->quote_expiring_days;
         $reminderDate = now()->addDays($daysBeforeExpiry);
 
-        $quotes = \App\Models\Quote::where('status', \App\Enums\QuoteStatus::SENT)
+        $quotes = Quote::where('status', QuoteStatus::SENT)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', $reminderDate)
             ->where('expires_at', '>', now())
@@ -80,6 +84,7 @@ class SendQuoteExpiringReminders extends Command
 
         if ($quotes->isEmpty()) {
             $this->info('No quotations need expiring reminders.');
+
             return self::SUCCESS;
         }
 
@@ -87,7 +92,7 @@ class SendQuoteExpiringReminders extends Command
 
         $this->table(
             ['Reference', 'Customer', 'Email', 'Expires At', 'Days Left'],
-            $quotes->map(fn($q) => [
+            $quotes->map(fn ($q) => [
                 $q->reference,
                 $q->customerName(),
                 $q->customerEmail(),

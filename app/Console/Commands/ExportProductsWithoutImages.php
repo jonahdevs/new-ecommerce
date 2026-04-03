@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Exports\ProductsWithoutImagesExport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\ProductsWithoutImagesExport;
 
 class ExportProductsWithoutImages extends Command
 {
@@ -37,6 +37,7 @@ class ExportProductsWithoutImages extends Command
 
         if ($productsWithoutImages->isEmpty()) {
             $this->info('✨ All products have images! No export needed.');
+
             return Command::SUCCESS;
         }
 
@@ -47,20 +48,20 @@ class ExportProductsWithoutImages extends Command
         $this->displaySummary($productsWithoutImages);
 
         // Generate filename
-        $filename = $this->option('output') ?: 'products_without_images_' . date('Y-m-d_His') . '.xlsx';
+        $filename = $this->option('output') ?: 'products_without_images_'.date('Y-m-d_His').'.xlsx';
 
         // Ensure .xlsx extension
-        if (!str_ends_with($filename, '.xlsx')) {
+        if (! str_ends_with($filename, '.xlsx')) {
             $filename .= '.xlsx';
         }
 
         // Create exports directory if it doesn't exist (in private storage)
         $exportsDir = storage_path('app/private/exports');
-        if (!File::exists($exportsDir)) {
+        if (! File::exists($exportsDir)) {
             File::makeDirectory($exportsDir, 0755, true);
         }
 
-        $outputPath = $exportsDir . DIRECTORY_SEPARATOR . $filename;
+        $outputPath = $exportsDir.DIRECTORY_SEPARATOR.$filename;
 
         // Export to Excel
         $this->info('📊 Exporting to Excel...');
@@ -68,7 +69,7 @@ class ExportProductsWithoutImages extends Command
         try {
             Excel::store(
                 new ProductsWithoutImagesExport($productsWithoutImages),
-                'exports/' . $filename
+                'exports/'.$filename
             );
 
             $this->newLine();
@@ -78,7 +79,7 @@ class ExportProductsWithoutImages extends Command
 
             // Check if file exists before getting size
             if (File::exists($outputPath)) {
-                $this->line("📦 File size: " . $this->formatBytes(File::size($outputPath)));
+                $this->line('📦 File size: '.$this->formatBytes(File::size($outputPath)));
             }
 
             $this->newLine();
@@ -89,8 +90,9 @@ class ExportProductsWithoutImages extends Command
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('❌ Export failed: ' . $e->getMessage());
-            $this->error('Stack trace: ' . $e->getTraceAsString());
+            $this->error('❌ Export failed: '.$e->getMessage());
+            $this->error('Stack trace: '.$e->getTraceAsString());
+
             return Command::FAILURE;
         }
     }
@@ -102,21 +104,23 @@ class ExportProductsWithoutImages extends Command
     {
         $jsonPath = database_path('seeders/data/products.json');
 
-        if (!File::exists($jsonPath)) {
-            $this->error('❌ products.json not found at: ' . $jsonPath);
+        if (! File::exists($jsonPath)) {
+            $this->error('❌ products.json not found at: '.$jsonPath);
+
             return collect();
         }
 
         $products = json_decode(File::get($jsonPath), true);
 
-        if (!is_array($products)) {
+        if (! is_array($products)) {
             $this->error('❌ Invalid products.json format');
+
             return collect();
         }
 
         return collect($products)->filter(function ($product) {
             // Check if image field is missing, null, or empty string
-            return !isset($product['image'])
+            return ! isset($product['image'])
                 || $product['image'] === null
                 || $product['image'] === ''
                 || trim($product['image']) === '';
@@ -141,7 +145,7 @@ class ExportProductsWithoutImages extends Command
                 'name' => $product['name'] ?? 'N/A',
                 'sku' => $product['sku'] ?? 'N/A',
                 'category' => $product['category'] ?? 'N/A',
-                'price' => isset($product['price']) ? 'KES ' . number_format($product['price'], 2) : 'N/A',
+                'price' => isset($product['price']) ? 'KES '.number_format($product['price'], 2) : 'N/A',
             ];
 
             $count++;
@@ -171,6 +175,6 @@ class ExportProductsWithoutImages extends Command
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

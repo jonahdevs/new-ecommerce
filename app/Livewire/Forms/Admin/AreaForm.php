@@ -10,16 +10,18 @@ class AreaForm extends Form
     public ?Area $area = null;
 
     public string $name = '';
+
     public string|int $county_id = '';
+
     public string|int $shipping_zone_id = ''; // Optional override
 
     public function rules(): array
     {
         // Name must be unique within the same county
-        $uniqueName = 'required|string|max:150|unique:areas,name,NULL,id,county_id,' . ($this->county_id ?: 'NULL');
+        $uniqueName = 'required|string|max:150|unique:areas,name,NULL,id,county_id,'.($this->county_id ?: 'NULL');
 
         if ($this->area) {
-            $uniqueName = 'required|string|max:150|unique:areas,name,' . $this->area->id . ',id,county_id,' . ($this->county_id ?: 'NULL');
+            $uniqueName = 'required|string|max:150|unique:areas,name,'.$this->area->id.',id,county_id,'.($this->county_id ?: 'NULL');
         }
 
         return [

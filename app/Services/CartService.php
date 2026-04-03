@@ -7,106 +7,158 @@ use App\Models\Product;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Class CartService.
+ * Class CartService
+ *
+ * Singleton service — bind in AppServiceProvider:
+ *   $this->app->singleton(CartService::class);
+ *
+ * The in-memory cache ($resolvedCart, $cachedItemKeys) lives for the
+ * lifetime of a single request, eliminating the N+1 pattern that
+ * previously fired 2 queries per product card on every page render.
  */
 class CartService
 {
+    // -------------------------------------------------------------------------
+    // In-memory request cache
+    // -------------------------------------------------------------------------
+
+    /** @var Cart|null Resolved cart for this request — null until first access. */
+    private ?Cart $resolvedCart = null;
 
     /**
-     * Get or create the cart for the current user/session.
-     * 
-     * @param User|null $user Optional user to get cart for
-     * @param bool $withItems Whether to eager load items with product/variant relationships
-     * @return Cart
+     * @var Collection|null Flat collection of "productId-variantId" strings.
+     *                      Built once from the eager-loaded items and reused for O(1) has() checks.
      */
-    public function getCart($user = null, bool $withItems = false)
+    private ?Collection $cachedItemKeys = null;
+
+    // =========================================================================
+    // Core cart resolution
+    // =========================================================================
+
+    /**
+     * Get (or create) the cart for the current user / guest session.
+     *
+     * The cart is resolved once per request and cached in memory.
+     * Items are always eager-loaded with a minimal select so that has()
+     * and getCartItem() never need to hit the database again.
+     *
+     * @param  User|null  $user  Pass an explicit user to override Auth::user().
+     * @param  bool  $withItems  When true, also loads item.product & item.variant
+     *                           relationships (needed for summary / checkout).
+     */
+    public function getCart(?User $user = null, bool $withItems = false): Cart
     {
-        if (Auth::check() || $user) {
-            $userId = $user?->id ?? Auth::id();
+        if ($this->resolvedCart === null) {
+            $this->resolvedCart = $this->resolveCart($user);
 
-            $cart = Cart::firstOrCreate(
-                ['user_id' => $userId],
-                ['expires_at' => now()->addDays(30)]
-            );
+            // Always load the lightweight item list so has() is query-free.
+            $this->resolvedCart->load([
+                'items' => fn ($q) => $q->select(['id', 'cart_id', 'product_id', 'variant_id', 'quantity']),
+            ]);
 
-            if ($withItems) {
-                $cart->load(['items.product', 'items.variant']);
-            }
-
-            return $cart;
+            session(['cart_count' => $this->resolvedCart->items->sum('quantity')]);
         }
 
-        $sessionId = session()->getId();
-
-
-        $cart = Cart::firstOrCreate(
-            ['session_id' => $sessionId],
-            ['expires_at' => now()->addDays(7)]
-        );
-
-        if ($withItems) {
-            $cart->load(['items.product', 'items.variant']);
+        // Optionally pull in the heavier relationships on demand.
+        if ($withItems && ! $this->resolvedCart->items->first()?->relationLoaded('product')) {
+            $this->resolvedCart->load(['items.product', 'items.variant']);
         }
 
-        session(['guest_cart_id' => $cart->id]);
-        return $cart;
+        return $this->resolvedCart;
     }
 
     /**
-     * Get cart with items eager loaded (convenience method).
-     * Use this when you need to iterate over cart items.
+     * Convenience wrapper — returns a cart with items.product + items.variant loaded.
+     * Use this when you need to iterate over items for display or calculation.
      */
-    public function getCartWithItems($user = null): Cart
+    public function getCartWithItems(?User $user = null): Cart
     {
         return $this->getCart($user, withItems: true);
     }
 
+    // =========================================================================
+    // Read methods (query-free after first getCart() call)
+    // =========================================================================
+
     /**
-     * Check if a product is in cart
+     * Check whether a product (optionally a specific variant) is in the cart.
+     * After the first call the result comes from an in-memory Collection — no DB hit.
      */
     public function has(int $productId, ?int $variantId = null): bool
     {
         try {
-            $cart = $this->getCart();
-
-            return $cart->items()
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->exists();
+            return $this->itemKeys()->contains($this->itemKey($productId, $variantId));
         } catch (\Throwable $th) {
-            Log::error('Error checking if product is in cart', [
+            Log::error('CartService::has() failed', [
                 'product_id' => $productId,
                 'error' => $th->getMessage(),
             ]);
+
             return false;
         }
     }
 
-    public function getCartItem(int $productId, ?int $variantId = null)
+    /**
+     * Return the CartItem model for a product/variant, or null if not in cart.
+     * Uses the already-loaded items collection — no extra query.
+     */
+    public function getCartItem(int $productId, ?int $variantId = null): mixed
     {
         try {
-            $cart = $this->getCart();
-
-            return $cart->items()
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->first();
+            return $this->getCart()->items->first(
+                fn ($item) => $item->product_id === $productId
+                && $item->variant_id === $variantId
+            );
         } catch (Exception $e) {
-            Log::error('Error getting cart item', [
+            Log::error('CartService::getCartItem() failed', [
                 'product_id' => $productId,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
 
-    public function addItem(int $productId, int $quantity = 1, ?int $variantId = null)
+    /**
+     * Return true when the cart has at least one item.
+     */
+    public function hasItems(): bool
+    {
+        return $this->getCart()->items->isNotEmpty();
+    }
+
+    /**
+     * Total quantity of all items in the cart.
+     */
+    public function getCount(): int
+    {
+        try {
+            return (int) $this->getCart()->items->sum('quantity');
+        } catch (Exception $e) {
+            Log::error('CartService::getCount() failed', ['error' => $e->getMessage()]);
+
+            return 0;
+        }
+    }
+
+    // =========================================================================
+    // Write methods (mutate DB, then invalidate in-memory cache)
+    // =========================================================================
+
+    /**
+     * Add a product (or variant) to the cart.
+     *
+     * @throws InvalidArgumentException On bad quantity values.
+     * @throws RuntimeException On stock / not-found errors.
+     */
+    public function addItem(int $productId, int $quantity = 1, ?int $variantId = null): Cart
     {
         try {
             if ($quantity < 1) {
@@ -120,35 +172,36 @@ class CartService
             $cart = $this->getCart();
             $product = Product::findOrFail($productId);
 
-            // Stock check — only for products that manage stock
-            // Skip for virtual, downloadable, and backorder products
-            if ($product->manage_stock && $product->stock_quantity <= 0 && $product->allow_backorder === 'no') {
+            // Stock guard — only for stock-managed products without backorder.
+            if (
+                $product->manage_stock
+                && $product->stock_quantity <= 0
+                && $product->allow_backorder === 'no'
+            ) {
                 throw new RuntimeException('Product is out of stock');
             }
 
-            $cartItem = $cart->items()
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->first();
+            $existing = $this->getCartItem($productId, $variantId);
 
-            if ($cartItem) {
-                $newQuantity = $cartItem->quantity + $quantity;
+            if ($existing) {
+                $newQuantity = $existing->quantity + $quantity;
 
                 if ($product->manage_stock && $newQuantity > $product->stock_quantity) {
                     throw new RuntimeException(
-                        "Cannot add {$quantity} more items. Only {$product->stock_quantity} available (you have {$cartItem->quantity} in cart)"
+                        "Cannot add {$quantity} more items. Only {$product->stock_quantity} available "
+                        ."(you have {$existing->quantity} in cart)."
                     );
                 }
 
                 if ($newQuantity > 100) {
-                    throw new RuntimeException('Cart item quantity cannot exceed 100');
+                    throw new RuntimeException('Cart item quantity cannot exceed 100.');
                 }
 
-                $cartItem->increment('quantity', $quantity);
+                $existing->increment('quantity', $quantity);
             } else {
                 if ($product->manage_stock && $quantity > $product->stock_quantity) {
                     throw new RuntimeException(
-                        "Cannot add {$quantity} items. Only {$product->stock_quantity} available in stock"
+                        "Cannot add {$quantity} items. Only {$product->stock_quantity} available in stock."
                     );
                 }
 
@@ -163,13 +216,15 @@ class CartService
                 'expires_at' => Auth::check() ? now()->addDays(30) : now()->addDays(7),
             ]);
 
+            $this->invalidateCache();
+
             return $cart->fresh();
-        } catch (ModelNotFoundException $e) {
-            throw new RuntimeException('Product not found');
-        } catch (InvalidArgumentException | RuntimeException $e) {
+        } catch (ModelNotFoundException) {
+            throw new RuntimeException('Product not found.');
+        } catch (InvalidArgumentException|RuntimeException $e) {
             throw $e;
         } catch (Exception $e) {
-            Log::error('Error adding item to cart', [
+            Log::error('CartService::addItem() failed', [
                 'product_id' => $productId,
                 'quantity' => $quantity,
                 'error' => $e->getMessage(),
@@ -177,56 +232,55 @@ class CartService
             throw new RuntimeException('Unable to add item to cart. Please try again.');
         }
     }
-    public function hasItems(): bool
-    {
-        $cart = $this->getCart();
 
-        return $cart && $cart->items()->exists();
-    }
-
+    /**
+     * Update the quantity of an existing cart item.
+     * Passing quantity = 0 removes the item.
+     *
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public function updateItemQuantity(int $cartItemId, int $quantity): void
     {
         try {
-            // Validate quantity
             if ($quantity < 0) {
-                throw new InvalidArgumentException('Quantity cannot be negative');
+                throw new InvalidArgumentException('Quantity cannot be negative.');
             }
 
             if ($quantity > 100) {
-                throw new InvalidArgumentException('Quantity cannot exceed 100 items');
+                throw new InvalidArgumentException('Quantity cannot exceed 100 items.');
             }
 
             $cart = $this->getCart();
             $cartItem = $cart->items()->findOrFail($cartItemId);
 
-            // Handle removal
             if ($quantity === 0) {
                 $cartItem->delete();
+                $this->invalidateCache();
 
                 return;
             }
 
-            // Check stock availability
             $product = $cartItem->product;
-            if (!$product) {
-                throw new RuntimeException('Product no longer available');
+
+            if (! $product) {
+                throw new RuntimeException('Product no longer available.');
             }
 
-            if ($quantity > $product->stock_quantity) {
+            if ($product->manage_stock && $quantity > $product->stock_quantity) {
                 throw new RuntimeException(
-                    "Cannot update to {$quantity} items. Only {$product->stock_quantity} available in stock"
+                    "Cannot update to {$quantity} items. Only {$product->stock_quantity} available in stock."
                 );
             }
 
             $cartItem->update(['quantity' => $quantity]);
-        } catch (ModelNotFoundException $e) {
-            throw new RuntimeException('Cart item not found');
-        } catch (InvalidArgumentException $e) {
-            throw $e;
-        } catch (RuntimeException $e) {
+            $this->invalidateCache();
+        } catch (ModelNotFoundException) {
+            throw new RuntimeException('Cart item not found.');
+        } catch (InvalidArgumentException|RuntimeException $e) {
             throw $e;
         } catch (Exception $e) {
-            Log::error('Error updating cart item quantity', [
+            Log::error('CartService::updateItemQuantity() failed', [
                 'cart_item_id' => $cartItemId,
                 'quantity' => $quantity,
                 'error' => $e->getMessage(),
@@ -235,17 +289,22 @@ class CartService
         }
     }
 
-
+    /**
+     * Remove a single item from the cart by its ID.
+     *
+     * @throws RuntimeException
+     */
     public function removeItem(int $cartItemId): void
     {
         try {
             $cart = $this->getCart();
             $cartItem = $cart->items()->findOrFail($cartItemId);
             $cartItem->delete();
-        } catch (ModelNotFoundException $e) {
-            throw new RuntimeException('Cart item not found');
+            $this->invalidateCache();
+        } catch (ModelNotFoundException) {
+            throw new RuntimeException('Cart item not found.');
         } catch (Exception $e) {
-            Log::error('Error removing cart item', [
+            Log::error('CartService::removeItem() failed', [
                 'cart_item_id' => $cartItemId,
                 'error' => $e->getMessage(),
             ]);
@@ -253,151 +312,154 @@ class CartService
         }
     }
 
-    public function clear(User $user = null): void
+    /**
+     * Remove all items from the cart.
+     *
+     * @throws RuntimeException
+     */
+    public function clear(?User $user = null): void
     {
         try {
             if ($user) {
                 $user->cart->items()->delete();
+                $this->invalidateCache();
+
                 return;
             }
 
             $cart = $this->getCart();
 
-            Log::info('Clearing cart', [
+            Log::info('CartService: clearing cart', [
                 'cart_id' => $cart->id,
                 'user_id' => $cart->user_id,
             ]);
+
             $cart->items()->delete();
+            $this->invalidateCache();
         } catch (Exception $e) {
-            Log::error('Error clearing cart', [
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('CartService::clear() failed', ['error' => $e->getMessage()]);
             throw new RuntimeException('Unable to clear cart. Please try again.');
         }
     }
 
-    public function getCount(): int
-    {
-        try {
-            return $this->getCart()->items()->sum('quantity');
-        } catch (Exception $e) {
-            Log::error('Error getting cart count', [
-                'error' => $e->getMessage(),
-            ]);
-
-            // Return 0 as a safe fallback
-            return 0;
-        }
-    }
+    // =========================================================================
+    // Financial / weight calculations
+    // =========================================================================
 
     /**
-     * Cart Summary
-     * 
-     * Note: Expects cart items to be eager loaded with 'product' and 'variant' relationships.
-     * If not loaded, this method will trigger N+1 queries.
+     * Return a summary array with subtotal, discount, and tax figures.
+     *
+     * Expects items to be eager-loaded with product + variant.
+     * Calls getCartWithItems() automatically if they are not already loaded.
      */
-    public function summary(Cart $cart)
+    public function summary(Cart $cart): array
     {
-        // Ensure relationships are loaded to avoid N+1
-        if (!$cart->relationLoaded('items')) {
-            $cart->load(['items.product', 'items.variant']);
-        } elseif ($cart->items->isNotEmpty() && !$cart->items->first()->relationLoaded('product')) {
+        // Ensure the heavy relationships are present.
+        if (
+            ! $cart->relationLoaded('items')
+            || ($cart->items->isNotEmpty() && ! $cart->items->first()->relationLoaded('product'))
+        ) {
             $cart->load(['items.product', 'items.variant']);
         }
 
-        $subtotal = $cart->items->reduce(function ($carry, $item) {
-            // Use variant price if available, fall back to product price
+        $subtotal = $cart->items->reduce(function (float $carry, $item): float {
             $price = $item->variant?->final_price ?? $item->product->final_price;
+
             return $carry + ($price * $item->quantity);
-        }, 0);
+        }, 0.0);
 
-        $discount = $cart->items->reduce(function ($carry, $item) {
-            $regularPrice = $item->variant?->price ?? $item->product->price;
-            $salePrice    = $item->variant?->sale_price ?? $item->product->sale_price;
+        $discount = $cart->items->reduce(function (float $carry, $item): float {
+            $regular = $item->variant?->price ?? $item->product->price;
+            $sale = $item->variant?->sale_price ?? $item->product->sale_price;
 
-            if ($salePrice && $salePrice < $regularPrice) {
-                return $carry + (($regularPrice - $salePrice) * $item->quantity);
+            if ($sale && $sale < $regular) {
+                return $carry + (($regular - $sale) * $item->quantity);
             }
 
             return $carry;
-        }, 0);
+        }, 0.0);
 
-        // Calculate tax for cart display
         $taxService = app(TaxService::class);
-        $taxableAmount = (int) round(($subtotal - $discount) * 100);
-        $taxCents = $taxService->calculateTax($taxableAmount);
+        $taxableAmountCents = (int) round(($subtotal - $discount) * 100);
+        $taxCents = $taxService->calculateTax($taxableAmountCents);
 
         return [
-            'subtotal'      => $subtotal,
-            'discount'      => $discount,
-            'tax'           => $taxCents / 100,
-            'tax_name'      => $taxService->name(),
-            'tax_rate'      => $taxService->rateLabel(),
-            'tax_enabled'   => $taxService->isEnabled(),
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'tax' => $taxCents / 100,
+            'tax_name' => $taxService->name(),
+            'tax_rate' => $taxService->rateLabel(),
+            'tax_enabled' => $taxService->isEnabled(),
             'tax_inclusive' => $taxService->isInclusive(),
         ];
     }
 
     /**
-     * Get the total weight of all items in the cart in kilograms.
-     *
-     * Products store weight in kg (after migration from grams).
-     * Products with no weight set default to 0.5 kg per item.
-     *
-     * Used by ShippingCalculator to find the correct rate bracket.
+     * Total weight of all cart items in kilograms.
+     * Products with no weight default to 0.5 kg per item.
      */
     public function getWeight(?Cart $cart = null): float
     {
         $cart = $cart ?? $this->getCart();
 
-        if (!$cart || !$cart->items()->exists()) {
-            return 0;
+        if ($cart->items->isEmpty()) {
+            return 0.0;
         }
 
-        $totalWeight = $cart->items()
-            ->with('product')
-            ->get()
-            ->reduce(function (float $carry, $item) {
-                // Weight in kg — default 0.5 kg if product has no weight set
-                $weightKg = $item->product?->weight ?? 0.5;
-                return $carry + ($weightKg * $item->quantity);
-            }, 0.0);
+        // Load product weights if not already loaded.
+        if ($cart->items->first()?->relationLoaded('product') === false) {
+            $cart->load(['items.product']);
+        }
 
-        // Round to 3 decimal places (nearest gram)
-        return round($totalWeight, 3);
+        $total = $cart->items->reduce(function (float $carry, $item): float {
+            $weightKg = $item->product?->weight ?? 0.5;
+
+            return $carry + ($weightKg * $item->quantity);
+        }, 0.0);
+
+        return round($total, 3);
     }
 
     /**
-     * Get the cart subtotal (final price after any sale price applied).
-     * Used by ShippingCalculator for free shipping rule checks.
+     * Cart subtotal (after sale prices, before shipping/tax).
+     * Used by ShippingCalculator for free-shipping threshold checks.
      */
     public function getSubtotal(?Cart $cart = null): float
     {
         $cart = $cart ?? $this->getCart();
 
-        if (!$cart || !$cart->items()->exists()) {
+        if ($cart->items->isEmpty()) {
             return 0.0;
         }
 
-        return (float) $cart->items()
-            ->with('product')
-            ->get()
-            ->reduce(function (float $carry, $item) {
-                return $carry + ($item->product->final_price * $item->quantity);
-            }, 0.0);
+        if ($cart->items->first()?->relationLoaded('product') === false) {
+            $cart->load(['items.product']);
+        }
+
+        return (float) $cart->items->reduce(function (float $carry, $item): float {
+            return $carry + ($item->product->final_price * $item->quantity);
+        }, 0.0);
     }
 
+    // =========================================================================
+    // Guest → user cart merge
+    // =========================================================================
+
+    /**
+     * Merge the guest cart into the authenticated user's cart.
+     * Call this immediately after login / registration.
+     */
     public function mergeGuestCart(?string $oldSessionId = null): void
     {
+        if (! Auth::check()) {
+            Log::warning('CartService::mergeGuestCart() aborted — user not authenticated.');
 
-        if (!Auth::check()) {
-            Log::warning('Cart merge aborted: user not authenticated');
             return;
         }
 
         $user = Auth::user();
 
-        // Try to find guest cart
+        // Locate the guest cart.
         $guestCartId = session()->pull('guest_cart_id');
         $guestCart = null;
 
@@ -408,47 +470,106 @@ class CartService
                 ->first();
         }
 
-        if (!$guestCart) {
+        if (! $guestCart) {
             $sessionId = $oldSessionId ?? session()->getId();
-
             $guestCart = Cart::where('session_id', $sessionId)
                 ->whereNull('user_id')
                 ->with('items')
                 ->first();
         }
 
-        if (!$guestCart || $guestCart->items->isEmpty()) {
+        if (! $guestCart || $guestCart->items->isEmpty()) {
             return;
         }
 
-        // Get or create user cart
+        // Get or create the user's cart.
         $userCart = Cart::firstOrCreate(
             ['user_id' => $user->id],
             ['expires_at' => now()->addDays(30)]
         );
 
-
-        // Merge items
         foreach ($guestCart->items as $guestItem) {
-
-            $existingItem = $userCart->items()
+            $existing = $userCart->items()
                 ->where('product_id', $guestItem->product_id)
                 ->where('variant_id', $guestItem->variant_id)
                 ->first();
 
-            if ($existingItem) {
-                // Merge quantities
-                $existingItem->increment('quantity', $guestItem->quantity);
+            if ($existing) {
+                $existing->increment('quantity', $guestItem->quantity);
             } else {
-                // Transfer item to user cart
                 $guestItem->update(['cart_id' => $userCart->id]);
             }
         }
 
-        // Update user cart expiry
         $userCart->update(['expires_at' => now()->addDays(30)]);
-
-        // Delete guest cart
         $guestCart->delete();
+
+        // Bust the cache so the next getCart() call returns the merged user cart.
+        $this->invalidateCache();
+    }
+
+    // =========================================================================
+    // Private helpers
+    // =========================================================================
+
+    /**
+     * Resolve (find or create) the correct cart row without loading relationships.
+     */
+    private function resolveCart(?User $user): Cart
+    {
+        if (Auth::check() || $user) {
+            $userId = $user?->id ?? Auth::id();
+
+            return Cart::firstOrCreate(
+                ['user_id' => $userId],
+                ['expires_at' => now()->addDays(30)]
+            );
+        }
+
+        $sessionId = session()->getId();
+        $cart = Cart::firstOrCreate(
+            ['session_id' => $sessionId],
+            ['expires_at' => now()->addDays(7)]
+        );
+
+        session(['guest_cart_id' => $cart->id]);
+
+        return $cart;
+    }
+
+    /**
+     * Build (or return the cached) collection of item-key strings.
+     * Format: "{product_id}-{variant_id|null}"
+     */
+    private function itemKeys(): Collection
+    {
+        if ($this->cachedItemKeys === null) {
+            $this->cachedItemKeys = $this->getCart()->items
+                ->map(fn ($item) => $this->itemKey($item->product_id, $item->variant_id));
+        }
+
+        return $this->cachedItemKeys;
+    }
+
+    /**
+     * Canonical string key for a product + optional variant combination.
+     */
+    private function itemKey(int $productId, ?int $variantId): string
+    {
+        return $productId.'-'.($variantId ?? 'null');
+    }
+
+    /**
+     * Bust the in-memory cache after any write operation.
+     * The next read will re-query the database and rebuild the cache.
+     */
+    private function invalidateCache(): void
+    {
+        $this->resolvedCart = null;
+        $this->cachedItemKeys = null;
+
+        if (app()->has(self::class)) {
+            session(['cart_count' => $this->getCount()]);
+        }
     }
 }

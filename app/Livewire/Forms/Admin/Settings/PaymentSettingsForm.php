@@ -8,10 +8,15 @@ use Livewire\Form;
 class PaymentSettingsForm extends Form
 {
     public string $gateway_mode = 'individual'; // individual | aggregator
+
     public string $active_aggregator = 'pesapal';    // pesapal | pesawise
+
     public bool $cod_enabled = false;
+
     public string $cod_instructions = '';
+
     public string $payment_instructions = '';
+
     public string $payment_currency = 'KES';
 
     public function rules(): array

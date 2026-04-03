@@ -8,13 +8,21 @@ use Livewire\Form;
 class NotificationSettingsForm extends Form
 {
     public bool $notify_new_order = true;
+
     public bool $notify_low_stock = true;
+
     public bool $notify_new_review = false;
+
     public bool $notify_new_user = false;
+
     public bool $notify_failed_payment = true;
+
     public bool $notify_new_quote = true;
+
     public bool $notify_quote_accepted = true;
+
     public bool $notify_quote_rejected = false;
+
     public string $admin_notification_email = '';
 
     public function rules(): array

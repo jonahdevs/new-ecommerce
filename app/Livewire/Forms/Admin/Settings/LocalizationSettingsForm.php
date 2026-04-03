@@ -8,14 +8,23 @@ use Livewire\Form;
 class LocalizationSettingsForm extends Form
 {
     public string $currency = 'KES';
+
     public string $currency_symbol = 'Ksh';
+
     public string $currency_position = 'before'; // before | after | before_space | after_space
+
     public string $decimal_separator = '.';
+
     public string $thousands_separator = ',';
+
     public int $decimal_places = 2;
+
     public string $timezone = 'Africa/Nairobi';
+
     public string $date_format = 'd/m/Y';
+
     public string $time_format = '12';
+
     public string $language = 'en';
 
     public function rules(): array

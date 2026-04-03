@@ -41,7 +41,7 @@ class ReviewImage extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_path ? (Str::startsWith($this->image_path, 'http') ? $this->image_path : asset('storage/' . $this->image_path)) : null
+            get: fn () => $this->image_path ? (Str::startsWith($this->image_path, 'http') ? $this->image_path : asset('storage/'.$this->image_path)) : null
         );
     }
 }

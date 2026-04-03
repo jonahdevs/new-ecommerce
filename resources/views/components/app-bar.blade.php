@@ -6,6 +6,7 @@ use App\Models\Category;
 use Livewire\Attributes\{Computed, On};
 use App\Enums\CategorySection;
 use App\Services\QuoteBasketService;
+use Illuminate\Support\Facades\Cache;
 
 new class extends Component {
     public int $cartCount = 0;
@@ -15,16 +16,18 @@ new class extends Component {
 
     public function mount(WishlistService $wishlist, CompareService $compareService, CartService $cartService)
     {
-        $this->cartCount = $cartService->getCount();
-        $this->wishlistCount = $wishlist->getCount();
-        $this->compareCount = $compareService->getCount();
-        $this->quoteCount = app(QuoteBasketService::class)->count();
+        $this->cartCount = (int) session('cart_count', 0);
+        $this->wishlistCount = (int) session('wishlist_count', 0);
+        $this->compareCount = (int) session('compare_count', 0);
+        $this->quoteCount = (int) session('quote_count', 0);
     }
 
-    #[Computed(persist: true)]
+    #[Computed]
     public function categories()
     {
-        return Category::inSection(CategorySection::NAVBAR)->get();
+        return Cache::tags(['navbar', 'categories'])->remember('navbar:categories', 60 * 60 * 12, function () {
+            return Category::inSection(CategorySection::NAVBAR)->get();
+        });
     }
 
     #[On('cart-updated')]
@@ -248,8 +251,8 @@ new class extends Component {
                             @auth
                                 <form action="{{ route('logout') }}" method="post">
                                     @csrf
-                                    <flux:navmenu.item type="submit" icon="arrow-right-start-on-rectangle"
-                                        variant="danger" class="cursor-pointer">
+                                    <flux:navmenu.item type="submit" icon="arrow-right-start-on-rectangle" variant="danger"
+                                        class="cursor-pointer">
                                         Logout
                                     </flux:navmenu.item>
                                 </form>
@@ -296,9 +299,13 @@ new class extends Component {
         </section>
 
         {{-- Mobile: horizontal scroll --}}
+
+
+        {{-- Mobile: horizontal scroll + Browse dropdown --}}
         <section x-data="{
             showLeft: false,
             showRight: true,
+            browseOpen: false,
             updateArrows() {
                 const el = this.$refs.scroller;
                 this.showLeft = el.scrollLeft > 10;
@@ -307,8 +314,50 @@ new class extends Component {
             scrollLeft() { this.$refs.scroller.scrollBy({ left: -160, behavior: 'smooth' }); },
             scrollRight() { this.$refs.scroller.scrollBy({ left: 160, behavior: 'smooth' }); }
         }" x-init="updateArrows()" @mouseover="$el.classList.add('hovered')"
-            @mouseleave="$el.classList.remove('hovered')"
+            @mouseleave="$el.classList.remove('hovered')" @click.outside="browseOpen = false"
             class="group relative container mx-auto px-4 lg:hidden flex items-center">
+
+            {{-- Browse Categories button --}}
+            <div class="relative shrink-0">
+                <button @click="browseOpen = !browseOpen" :aria-expanded="browseOpen"
+                    class="flex items-center gap-1.5 py-3 pr-3 text-sm font-medium text-white whitespace-nowrap border-r border-white/20 mr-1"
+                    aria-haspopup="true">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    Browse
+                    <svg class="w-3 h-3 shrink-0 transition-transform duration-200"
+                        :class="browseOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                {{-- Dropdown panel --}}
+                <div x-show="browseOpen" x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="absolute left-0 top-full z-50 w-72 bg-white rounded-b-lg shadow-xl border border-t-0 border-gray-200 overflow-hidden"
+                    @click="browseOpen = false">
+
+                    <ul class="divide-y divide-gray-100">
+                        @foreach ($this->categories as $category)
+                            <li>
+                                <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-gray-50 transition-colors">
+                                    <img src="{{ $category->icon_url }}" alt="" width="20"
+                                        height="20" class="max-w-5 max-h-5 opacity-60">
+                                    {{ $category->name }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
 
             {{-- Left chevron --}}
             <button x-show="showLeft" x-transition:enter="transition ease-out duration-200"

@@ -29,9 +29,9 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'meta'     => 'array',
-            'status'   => PaymentStatus::class,
-            'paid_at'  => 'datetime',
+            'meta' => 'array',
+            'status' => PaymentStatus::class,
+            'paid_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
     }
@@ -56,7 +56,7 @@ class Payment extends Model
     protected function amount(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->amount_cents / 100,
+            get: fn () => $this->amount_cents / 100,
         );
     }
 }

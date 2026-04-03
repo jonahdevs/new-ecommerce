@@ -7,8 +7,8 @@ enum PickupStationStatus: string
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
 
-        // Short-term closure (holiday, renovation, flooding).
-        // Parcels are not routed here until status returns to active.
+    // Short-term closure (holiday, renovation, flooding).
+    // Parcels are not routed here until status returns to active.
     case TEMPORARILY_CLOSED = 'temporarily_closed';
 
     public function label(): string

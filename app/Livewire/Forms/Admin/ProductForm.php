@@ -2,13 +2,20 @@
 
 namespace App\Livewire\Forms\Admin;
 
-use App\Enums\{CategoryStatus, ProductRelationshipType, ProductStatus, ProductType, ProductVisibility};
-use App\Models\{Brand, Category, Product, Tag};
+use App\Enums\CategoryStatus;
+use App\Enums\ProductRelationshipType;
+use App\Enums\ProductStatus;
+use App\Enums\ProductType;
+use App\Enums\ProductVisibility;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Tag;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
-use Illuminate\Support\Str;
 
 /**
  * ProductForm
@@ -390,8 +397,8 @@ class ProductForm extends Form
     public ?string $quotation_notes = null;
 
     // =========================================================================
-// POLICY & DELIVERY INFORMATION
-// =========================================================================
+    // POLICY & DELIVERY INFORMATION
+    // =========================================================================
 
     /**
      * Warranty terms displayed on the product page.
@@ -433,7 +440,7 @@ class ProductForm extends Form
             // ── Basic Information ──────────────────────────────────────────
             'name' => 'required|string|max:255',
             'model_number' => 'nullable|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:products,slug,' . $productId,
+            'slug' => 'nullable|string|max:255|unique:products,slug,'.$productId,
             'short_description' => 'nullable|string|max:500',
 
             // Strip HTML before checking length — rich text editors output <p></p>
@@ -462,7 +469,7 @@ class ProductForm extends Form
                 'nullable',
                 'numeric',
                 'min:0',
-                Rule::when(!is_null($this->price), ['lt:price']),
+                Rule::when(! is_null($this->price), ['lt:price']),
             ],
 
             'cost_price' => 'nullable|numeric|min:0',
@@ -488,7 +495,7 @@ class ProductForm extends Form
 
             'stock_quantity' => [
                 Rule::when(
-                    $this->type !== 'grouped' && !$this->is_virtual && $this->manage_stock,
+                    $this->type !== 'grouped' && ! $this->is_virtual && $this->manage_stock,
                     ['required', 'integer', 'min:0'],
                     ['nullable', 'integer', 'min:0']
                 ),
@@ -496,7 +503,7 @@ class ProductForm extends Form
 
             'allow_backorder' => [
                 Rule::when(
-                    $this->type !== 'grouped' && !$this->is_virtual && $this->manage_stock,
+                    $this->type !== 'grouped' && ! $this->is_virtual && $this->manage_stock,
                     ['required', 'in:no,notify,yes'],
                     ['nullable']
                 ),
@@ -506,7 +513,7 @@ class ProductForm extends Form
 
             'stock_status' => [
                 Rule::when(
-                    $this->type !== 'grouped' && !$this->is_virtual,
+                    $this->type !== 'grouped' && ! $this->is_virtual,
                     ['required_without:manage_stock', 'in:in_stock,out_of_stock,backorder'],
                     ['nullable']
                 ),
@@ -545,7 +552,7 @@ class ProductForm extends Form
             // On create: always required. On edit: required unless an existing image is present.
             'image' => [
                 Rule::when(is_null($this->product), ['required'], ['nullable']),
-                Rule::when(!is_null($this->product), ['required_without:existing_image']),
+                Rule::when(! is_null($this->product), ['required_without:existing_image']),
                 'image',
                 'max:2048',
                 'mimes:jpg,jpeg,png,gif,webp',
@@ -778,7 +785,7 @@ class ProductForm extends Form
         $this->existing_image = $product->image_path;
         $this->existingImages = $product->images()
             ->get()
-            ->map(fn($img) => [
+            ->map(fn ($img) => [
                 'id' => $img->id,
                 'path' => $img->image_path,
                 'url' => Storage::url($img->image_path),
@@ -822,7 +829,7 @@ class ProductForm extends Form
     {
         $tagNames = array_filter(
             array_map('trim', explode(',', $this->newTagInput)),
-            fn($name) => !empty($name)
+            fn ($name) => ! empty($name)
         );
 
         if (empty($tagNames)) {
@@ -843,7 +850,7 @@ class ProductForm extends Form
     public function removeTag(int $tagId): void
     {
         $this->tag_ids = array_values(
-            array_filter($this->tag_ids, fn($id) => $id != $tagId)
+            array_filter($this->tag_ids, fn ($id) => $id != $tagId)
         );
     }
 
@@ -854,7 +861,7 @@ class ProductForm extends Form
     public function addSelectedTags(array $tagIds): void
     {
         foreach ($tagIds as $tagId) {
-            if (!in_array($tagId, $this->tag_ids)) {
+            if (! in_array($tagId, $this->tag_ids)) {
                 $this->tag_ids[] = $tagId;
             }
         }
@@ -898,10 +905,11 @@ class ProductForm extends Form
         $existingCategory = Category::whereRaw('LOWER(name) = ?', [strtolower($this->newCategoryName)])->first();
 
         if ($existingCategory) {
-            if (!in_array($existingCategory->id, $this->category_ids)) {
+            if (! in_array($existingCategory->id, $this->category_ids)) {
                 $this->category_ids[] = $existingCategory->id;
             }
             $this->resetCategoryForm();
+
             return $existingCategory;
         }
 
@@ -911,7 +919,7 @@ class ProductForm extends Form
         $counter = 1;
 
         while (Category::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter++;
+            $slug = $baseSlug.'-'.$counter++;
         }
 
         $category = Category::create([
@@ -922,11 +930,12 @@ class ProductForm extends Form
             'sort_order' => 0,
         ]);
 
-        if (!in_array($category->id, $this->category_ids)) {
+        if (! in_array($category->id, $this->category_ids)) {
             $this->category_ids = array_merge($this->category_ids, [$category->id]);
         }
 
         $this->resetCategoryForm();
+
         return $category;
     }
 
@@ -963,6 +972,7 @@ class ProductForm extends Form
         if ($existingBrand) {
             $this->brand_id = $existingBrand->id;
             $this->resetBrandForm();
+
             return $existingBrand;
         }
 
@@ -972,7 +982,7 @@ class ProductForm extends Form
         $counter = 1;
 
         while (Brand::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter++;
+            $slug = $baseSlug.'-'.$counter++;
         }
 
         $brand = Brand::create([
@@ -985,6 +995,7 @@ class ProductForm extends Form
 
         $this->brand_id = $brand->id;
         $this->resetBrandForm();
+
         return $brand;
     }
 
@@ -1009,6 +1020,7 @@ class ProductForm extends Form
     {
         $product = Product::create($this->productData());
         $this->syncRelationships($product);
+
         return $product;
     }
 
@@ -1107,15 +1119,15 @@ class ProductForm extends Form
         // Categories — sync with is_primary flag on the pivot
         $product->categories()->sync(
             collect($this->category_ids)
-                ->mapWithKeys(fn($id) => [
-                    $id => ['is_primary' => $id == $this->primaryCategoryId]
+                ->mapWithKeys(fn ($id) => [
+                    $id => ['is_primary' => $id == $this->primaryCategoryId],
                 ])
                 ->toArray()
         );
 
         // Tags — detach existing badge-type tags and re-attach the current selection
         $product->detachTags($product->tagsWithType('badge'));
-        if (!empty($this->tag_ids)) {
+        if (! empty($this->tag_ids)) {
             $tags = Tag::whereIn('id', $this->tag_ids)->get();
             $product->attachTags($tags, 'badge');
         }
@@ -1123,12 +1135,12 @@ class ProductForm extends Form
         // Upsells — sync with relationship type and sort order on the pivot
         $product->upsells()->sync(
             collect($this->selected_upsells)
-                ->mapWithKeys(fn($id, $index) => [
+                ->mapWithKeys(fn ($id, $index) => [
                     $id => [
                         'type' => ProductRelationshipType::UP_SELLS->value,
                         'sort_order' => $index,
                         'quantity' => 1,
-                    ]
+                    ],
                 ])
                 ->toArray()
         );
@@ -1136,12 +1148,12 @@ class ProductForm extends Form
         // Cross-sells — sync with relationship type and sort order
         $product->crossSells()->sync(
             collect($this->selected_cross_sells)
-                ->mapWithKeys(fn($id, $index) => [
+                ->mapWithKeys(fn ($id, $index) => [
                     $id => [
                         'type' => ProductRelationshipType::CROSS_SELL->value,
                         'sort_order' => $index,
                         'quantity' => 1,
-                    ]
+                    ],
                 ])
                 ->toArray()
         );
@@ -1150,32 +1162,32 @@ class ProductForm extends Form
         // sync([]) wiping existing accessories when Livewire drops state from snapshot
         $product->accessories()->sync(
             collect($this->accessories)
-                ->mapWithKeys(fn($item, $index) => [
+                ->mapWithKeys(fn ($item, $index) => [
                     $item['id'] => [
                         'type' => ProductRelationshipType::ACCESSORY->value,
                         'quantity' => $item['quantity'] ?? 1,
                         'sort_order' => $index,
-                    ]
+                    ],
                 ])
                 ->toArray()
         );
 
         // Grouped products — same guard as accessories above
-        $groupedToSync = !empty($this->grouped_products)
+        $groupedToSync = ! empty($this->grouped_products)
             ? collect($this->grouped_products)
-            : $product->groupedProducts()->get()->map(fn($p) => [
+            : $product->groupedProducts()->get()->map(fn ($p) => [
                 'id' => $p->id,
                 'quantity' => $p->pivot->quantity ?? 1,
             ]);
 
         $product->groupedProducts()->sync(
             collect($groupedToSync)
-                ->mapWithKeys(fn($item, $index) => [
+                ->mapWithKeys(fn ($item, $index) => [
                     $item['id'] => [
                         'type' => ProductRelationshipType::GROUPED->value,
                         'quantity' => $item['quantity'] ?? 1,
                         'sort_order' => $index,
-                    ]
+                    ],
                 ])
                 ->toArray()
         );
@@ -1213,7 +1225,7 @@ class ProductForm extends Form
         }
 
         // Gallery images — store each new image and create a product_images record
-        if (!empty($this->images)) {
+        if (! empty($this->images)) {
             foreach ($this->images as $image) {
                 $path = $image->store('products/gallery', 'public');
                 if ($path) {
@@ -1223,7 +1235,7 @@ class ProductForm extends Form
         }
 
         // Gallery deletions — run after all additions to avoid partial failure
-        if (!empty($this->imagesToDelete)) {
+        if (! empty($this->imagesToDelete)) {
             foreach ($this->imagesToDelete as $imageId) {
                 $img = $product->images()->find($imageId);
                 if ($img) {
@@ -1254,7 +1266,7 @@ class ProductForm extends Form
 
         $tag = Tag::findOrCreate($normalizedName, 'badge');
 
-        if (!in_array($tag->id, $this->tag_ids)) {
+        if (! in_array($tag->id, $this->tag_ids)) {
             $this->tag_ids[] = $tag->id;
         }
     }
@@ -1265,7 +1277,7 @@ class ProductForm extends Form
      */
     private function isPhysical(): bool
     {
-        return $this->type !== 'grouped' && !$this->is_virtual;
+        return $this->type !== 'grouped' && ! $this->is_virtual;
     }
 
     /**
@@ -1274,7 +1286,7 @@ class ProductForm extends Form
      */
     private function hasStock(): bool
     {
-        return $this->type !== 'grouped' && !$this->is_virtual;
+        return $this->type !== 'grouped' && ! $this->is_virtual;
     }
 
     // =========================================================================

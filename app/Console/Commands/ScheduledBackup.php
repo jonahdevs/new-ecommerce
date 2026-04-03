@@ -65,7 +65,7 @@ class ScheduledBackup extends Command
             //     ->send(new BackupNotification($type, $result, $success));
 
         } catch (\Exception $e) {
-            Log::error('Failed to send backup notification: ' . $e->getMessage());
+            Log::error('Failed to send backup notification: '.$e->getMessage());
         }
     }
 }

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DeliveryOrder extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'order_id',
         'logistics_provider_id',
@@ -148,7 +149,6 @@ class DeliveryOrder extends Model
     {
         return $this->is_return;
     }
-
 
     // ===============================================
     // PUS HELPERS

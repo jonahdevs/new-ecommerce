@@ -8,10 +8,15 @@ use Livewire\Form;
 class TaxSettingsForm extends Form
 {
     public bool $tax_enabled = true;
+
     public string $tax_name = 'VAT';
+
     public float $tax_rate = 16.00;
+
     public string $tax_type = 'exclusive';
+
     public string $tax_registration_number = '';
+
     public bool $taxable_shipping = false;
 
     public function rules(): array

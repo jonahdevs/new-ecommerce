@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PickupStationStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,7 +24,7 @@ class PickupStation extends Model
         'longitude',
         'holding_days',
         'status',
-        'is_primary'
+        'is_primary',
     ];
 
     protected $casts = [
@@ -31,7 +32,7 @@ class PickupStation extends Model
         'longitude' => 'decimal:7',
         'holding_days' => 'integer',
         'status' => PickupStationStatus::class,
-        'is_primary' => 'boolean'
+        'is_primary' => 'boolean',
     ];
 
     // ===============================================
@@ -67,7 +68,6 @@ class PickupStation extends Model
     // Scope
     // ===============================================
     #[Scope()]
-
     protected function active($query)
     {
         $query->where('status', PickupStationStatus::ACTIVE->value);
@@ -102,7 +102,7 @@ class PickupStation extends Model
     /**
      * Calculate the collection deadline for a parcel arriving today.
      */
-    public function collectionDeadline(?\Carbon\Carbon $arrivedAt = null): \Carbon\Carbon
+    public function collectionDeadline(?Carbon $arrivedAt = null): Carbon
     {
         return ($arrivedAt ?? now())->addDays($this->holding_days)->endOfDay();
     }

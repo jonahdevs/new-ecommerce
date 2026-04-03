@@ -37,8 +37,9 @@ class NormalizeProductsJson extends Command
     {
         $jsonPath = database_path('seeders/data/products.json');
 
-        if (!File::exists($jsonPath)) {
-            $this->error('❌ products.json not found at: ' . $jsonPath);
+        if (! File::exists($jsonPath)) {
+            $this->error('❌ products.json not found at: '.$jsonPath);
+
             return Command::FAILURE;
         }
 
@@ -47,8 +48,9 @@ class NormalizeProductsJson extends Command
 
         $products = json_decode(File::get($jsonPath), true);
 
-        if (!is_array($products)) {
+        if (! is_array($products)) {
             $this->error('❌ Invalid products.json format');
+
             return Command::FAILURE;
         }
 
@@ -64,18 +66,20 @@ class NormalizeProductsJson extends Command
         if ($this->option('dry-run')) {
             $this->newLine();
             $this->info('🔍 Dry run completed. No changes were made.');
+
             return Command::SUCCESS;
         }
 
         // Confirm before proceeding
-        if (!$this->confirm('Do you want to proceed with normalizing the products.json?', true)) {
+        if (! $this->confirm('Do you want to proceed with normalizing the products.json?', true)) {
             $this->info('Operation cancelled.');
+
             return Command::SUCCESS;
         }
 
         // Create backup if requested
         if ($this->option('backup')) {
-            $backupPath = database_path('seeders/data/products.json.backup.' . date('Y-m-d_His'));
+            $backupPath = database_path('seeders/data/products.json.backup.'.date('Y-m-d_His'));
             File::copy($jsonPath, $backupPath);
             $this->info("📦 Backup created: {$backupPath}");
         }
@@ -105,8 +109,8 @@ class NormalizeProductsJson extends Command
             }
         }
 
-        $this->line("📊 Found " . count($products) . " products");
-        $this->line("📋 Unique keys found: " . count($allKeys));
+        $this->line('📊 Found '.count($products).' products');
+        $this->line('📋 Unique keys found: '.count($allKeys));
         $this->newLine();
 
         $this->table(
@@ -114,10 +118,11 @@ class NormalizeProductsJson extends Command
             collect($keyFrequency)
                 ->map(function ($count, $key) use ($products) {
                     $missing = count($products) - $count;
+
                     return [
                         'key' => $key,
-                        'frequency' => $count . ' / ' . count($products),
-                        'missing' => $missing > 0 ? $missing . ' products' : 'None',
+                        'frequency' => $count.' / '.count($products),
+                        'missing' => $missing > 0 ? $missing.' products' : 'None',
                     ];
                 })
                 ->sortBy('key')
@@ -140,14 +145,14 @@ class NormalizeProductsJson extends Command
 
             // Add optional keys only if they exist and are not empty
             foreach ($this->optionalKeys as $key => $defaultValue) {
-                if (isset($product[$key]) && !empty($product[$key])) {
+                if (isset($product[$key]) && ! empty($product[$key])) {
                     $normalized[$key] = $product[$key];
                 }
             }
 
             // Add any other keys that might exist (preserve custom fields)
             foreach ($product as $key => $value) {
-                if (!isset($normalized[$key])) {
+                if (! isset($normalized[$key])) {
                     $normalized[$key] = $value;
                 }
             }
@@ -167,7 +172,7 @@ class NormalizeProductsJson extends Command
 
             $addedKeys = array_diff($normalizedKeys, $originalKeys);
 
-            if (!empty($addedKeys)) {
+            if (! empty($addedKeys)) {
                 $changesCount++;
                 foreach ($addedKeys as $key) {
                     $missingKeysAdded[$key] = ($missingKeysAdded[$key] ?? 0) + 1;
@@ -178,12 +183,12 @@ class NormalizeProductsJson extends Command
         if ($changesCount > 0) {
             $this->warn("⚠️  {$changesCount} products will be updated");
             $this->newLine();
-            $this->line("Keys to be added:");
+            $this->line('Keys to be added:');
             foreach ($missingKeysAdded as $key => $count) {
                 $this->line("  • {$key}: will be added to {$count} products");
             }
         } else {
-            $this->info("✨ All products already have consistent structure!");
+            $this->info('✨ All products already have consistent structure!');
         }
 
         $this->newLine();

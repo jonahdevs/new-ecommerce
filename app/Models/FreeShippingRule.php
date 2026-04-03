@@ -46,7 +46,6 @@ class FreeShippingRule extends Model
     // Scope
     // ===============================================
     #[Scope()]
-
     protected function active($query)
     {
         $query->where('status', FreeShippingRuleStatus::ACTIVE->value);
@@ -62,11 +61,11 @@ class FreeShippingRule extends Model
     {
         return $query->where('status', FreeShippingRuleStatus::ACTIVE->value)
             ->where(
-                fn($q) => $q->whereNull('shipping_zone_id')
+                fn ($q) => $q->whereNull('shipping_zone_id')
                     ->orWhere('shipping_zone_id', $zoneId)
             )
             ->where(
-                fn($q) => $q->whereNull('shipping_method_id')
+                fn ($q) => $q->whereNull('shipping_method_id')
                     ->orWhere('shipping_method_id', $methodId)
             );
     }
@@ -85,11 +84,13 @@ class FreeShippingRule extends Model
      */
     public function qualifies(float $orderAmount, ?float $weightKg = null): bool
     {
-        if (!$this->isActive())
+        if (! $this->isActive()) {
             return false;
+        }
 
-        if ($orderAmount < $this->min_order_amount)
+        if ($orderAmount < $this->min_order_amount) {
             return false;
+        }
 
         if ($this->max_weight !== null && $weightKg !== null && $weightKg > $this->max_weight) {
             return false;

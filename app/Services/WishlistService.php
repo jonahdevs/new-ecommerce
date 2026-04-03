@@ -4,14 +4,23 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\WishlistItem;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Class WishlistService.
+ *
+ * Singleton service — registered in AppServiceProvider.
+ *
+ * For authenticated users, wishlist product IDs are loaded from the
+ * database once per request and cached in memory. All has() checks
+ * after the first call are O(1) array lookups with zero DB hits.
  */
 class WishlistService
 {
+    /** @var array<int>|null Cached wishlist product IDs for this request. */
+    private ?array $cachedIds = null;
 
     /**
      * Get Wishlist count
@@ -35,33 +44,34 @@ class WishlistService
     }
 
     /**
-     * Check if product is in wishlist
+     * Check if product is in wishlist.
+     * After the first call the result comes from an in-memory array — no DB hit.
      */
     public function has(int $productId): bool
     {
-        if (Auth::check()) {
-            return WishlistItem::where('user_id', Auth::id())
-                ->where('product_id', $productId)
-                ->exists();
-        }
-
-        $wishlist = session('wishlist', []);
-
-        return in_array($productId, $wishlist);
+        return in_array($productId, $this->ids(), true);
     }
 
     /**
-     * Get all wishlist product IDs for the current user/session
+     * Get all wishlist product IDs for the current user/session.
+     * For authenticated users the DB is queried once and the result is
+     * cached in memory for the lifetime of this request.
      */
     public function ids(): array
     {
-        if (Auth::check()) {
-            return WishlistItem::where('user_id', Auth::id())
-                ->pluck('product_id')
-                ->all();
+        if ($this->cachedIds !== null) {
+            return $this->cachedIds;
         }
 
-        return session('wishlist', []);
+        if (Auth::check()) {
+            $this->cachedIds = WishlistItem::where('user_id', Auth::id())
+                ->pluck('product_id')
+                ->all();
+        } else {
+            $this->cachedIds = session('wishlist', []);
+        }
+
+        return $this->cachedIds;
     }
 
     /**
@@ -97,7 +107,6 @@ class WishlistService
             $product = Product::findOrFail($productId);
 
             if (Auth::check()) {
-                // For authenticated users
                 $existing = WishlistItem::where('user_id', Auth::id())
                     ->where('product_id', $productId)
                     ->exists();
@@ -107,6 +116,8 @@ class WishlistService
                         'user_id' => Auth::id(),
                         'product_id' => $productId,
                     ]);
+
+                    $this->invalidateCache();
 
                     return true;
                 }
@@ -119,13 +130,14 @@ class WishlistService
             if (! \in_array($productId, $wishlist, true)) {
                 $wishlist[] = $productId;
                 session()->put('wishlist', $wishlist);
+                $this->invalidateCache();
 
                 return true;
             }
 
             return false; // Already exists
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             throw new \RuntimeException('Product not found');
         } catch (\Exception $e) {
             Log::error('Error adding to wishlist', [
@@ -147,6 +159,8 @@ class WishlistService
                     ->where('product_id', $productId)
                     ->delete();
 
+                $this->invalidateCache();
+
                 return $deleted > 0;
             }
 
@@ -155,6 +169,7 @@ class WishlistService
             if (\in_array($productId, $wishlist, true)) {
                 $wishlist = array_values(array_diff($wishlist, [$productId]));
                 session()->put('wishlist', $wishlist);
+                $this->invalidateCache();
 
                 return true;
             }
@@ -187,7 +202,6 @@ class WishlistService
         $userId = Auth::id();
 
         foreach ($guestWishlist as $productId) {
-            // Only add if not already in user's wishlist
             $exists = WishlistItem::where('user_id', $userId)
                 ->where('product_id', $productId)
                 ->exists();
@@ -199,5 +213,16 @@ class WishlistService
                 ]);
             }
         }
+
+        $this->invalidateCache();
+    }
+
+    /**
+     * Bust the in-memory cache after any write operation.
+     * The next ids() call will re-query the database.
+     */
+    private function invalidateCache(): void
+    {
+        $this->cachedIds = null;
     }
 }

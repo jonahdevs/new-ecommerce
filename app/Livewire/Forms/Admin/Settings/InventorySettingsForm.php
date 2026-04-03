@@ -8,11 +8,17 @@ use Livewire\Form;
 class InventorySettingsForm extends Form
 {
     public bool $inventory_tracking_enabled = true;
+
     public int $low_stock_threshold = 5;
+
     public string $out_of_stock_behaviour = 'show_with_notice';
+
     public bool $backorders_allowed = false;
+
     public string $backorders_message = 'Available on backorder';
+
     public bool $notify_admin_low_stock = true;
+
     public bool $notify_admin_out_of_stock = true;
 
     public function rules(): array

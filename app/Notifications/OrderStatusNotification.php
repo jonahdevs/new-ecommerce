@@ -63,7 +63,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             ->greeting("Hello {$customerName},")
             ->line($message)
             ->line("**Order reference:** {$this->order->reference}")
-            ->line("**Total:** " . format_currency($this->order->total));
+            ->line('**Total:** '.format_currency($this->order->total));
 
         if ($this->newStatus === OrderStatus::SHIPPED && $this->order->tracking_number) {
             $mail->line("**Tracking number:** {$this->order->tracking_number}");

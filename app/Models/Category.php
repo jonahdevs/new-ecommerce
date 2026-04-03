@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\CategorySection;
 use App\Enums\CategoryStatus;
+use App\Observers\CategoryObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([CategoryObserver::class])]
 class Category extends Model
 {
     use HasFactory;
@@ -36,7 +39,7 @@ class Category extends Model
     {
         return [
             'meta_keywords' => 'array',
-            'status' => CategoryStatus::class
+            'status' => CategoryStatus::class,
         ];
     }
 
@@ -89,7 +92,6 @@ class Category extends Model
         return $this->hasMany(CategoryPlacement::class);
     }
 
-
     // ==================================================
     // SCOPES
     // ==================================================
@@ -124,18 +126,18 @@ class Category extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_path
-                ? asset('storage/' . $this->image_path)
-                : null
+            get: fn () => $this->image_path
+            ? asset('storage/'.$this->image_path)
+            : null
         );
     }
 
     protected function iconUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_icon
-                ? asset('storage/' . $this->image_icon)
-                : null
+            get: fn () => $this->image_icon
+            ? asset('storage/'.$this->image_icon)
+            : null
         );
     }
 }

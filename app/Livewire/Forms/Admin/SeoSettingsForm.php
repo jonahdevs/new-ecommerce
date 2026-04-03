@@ -7,22 +7,29 @@ use Livewire\Form;
 
 class SeoSettingsForm extends Form
 {
-
     // Meta Tags
     public string $meta_title = '';
+
     public string $meta_description = '';
+
     public string $meta_keywords = '';
+
     public string $canonical_url = '';
 
     // Open Graph
     public string $og_title = '';
+
     public string $og_description = '';
+
     public $og_image = null;
+
     public ?string $existing_og_image = null;
 
     // Analytics & Verification
     public string $google_analytics_id = '';
+
     public string $google_tag_manager_id = '';
+
     public string $google_site_verification = '';
 
     // Indexing

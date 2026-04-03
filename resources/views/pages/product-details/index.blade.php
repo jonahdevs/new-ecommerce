@@ -1,41 +1,46 @@
 <?php
 
-use App\Services\WishlistService;
-use App\Services\CompareService;
-use App\Services\CartService;
-use App\Services\ReviewService;
-use App\Services\ProductService;
-use App\Services\ShippingCalculatorService;
+use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\AttributeValue;
-use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Computed;
 use App\Models\ReviewHelpfulness;
+use App\Services\CartService;
+use App\Services\CompareService;
+use App\Services\ProductService;
+use App\Services\QuoteBasketService;
+use App\Services\ReviewService;
+use App\Services\WishlistService;
+use Artesaos\SEOTools\Facades\JsonLd;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Services\QuoteBasketService;
-use Artesaos\SEOTools\Facades\SEOMeta;
-use Artesaos\SEOTools\Facades\OpenGraph;
-use Artesaos\SEOTools\Facades\TwitterCard;
-use Artesaos\SEOTools\Facades\JsonLd;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Layout('layouts.guest')] class extends Component
+{
     public Product $product;
 
     // ── Status flags
     public bool $wishlisted = false;
+
     public bool $inCompare = false;
+
     public bool $inCart = false;
 
     // ── UI state
     public string $accessoriesTab = 'accessories';
+
     public string $selectedTab = 'description';
+
     public int $reviewsToShow = 5;
 
     // ── Cart state ──
     public int $cartQuantity = 1;
+
     public ?int $cartItemId = null;
 
     public bool $inQuoteBasket = false;
@@ -43,6 +48,7 @@ new #[Layout('layouts.guest')] class extends Component {
     // ── Variant state ─
     // selectedAttributeValues: ['Color' => 'Red', 'Size' => 'Large']
     public array $selectedAttributeValues = [];
+
     public ?int $selectedVariantId = null;
 
     /** IDs of selected grouped items — all pre-selected by default */
@@ -62,11 +68,11 @@ new #[Layout('layouts.guest')] class extends Component {
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active()->visible(), 'accessories' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
+        $product->load(['images', 'brand', 'crossSells' => fn ($q) => $q->active()->visible(), 'accessories' => fn ($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
 
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn ($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
 
@@ -77,10 +83,10 @@ new #[Layout('layouts.guest')] class extends Component {
         if ($product->type->value === 'variable') {
             $product->load([
                 // Load ALL variants, not just active — we filter display in the view
-                'variants' => fn($q) => $q->orderBy('sort_order'),
+                'variants' => fn ($q) => $q->orderBy('sort_order'),
                 'variants.attributeValues.attribute',
                 // Only load variation attributes (not display-only attributes)
-                'attributes' => fn($q) => $q->wherePivot('is_variation_attribute', true),
+                'attributes' => fn ($q) => $q->wherePivot('is_variation_attribute', true),
             ]);
 
             // Pre-select the default variant or first available variant
@@ -88,7 +94,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             if ($defaultVariant) {
                 $this->selectedVariantId = $defaultVariant->id;
-                $this->selectedAttributeValues = $defaultVariant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
+                $this->selectedAttributeValues = $defaultVariant->attributeValues->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])->toArray();
             }
         }
 
@@ -97,7 +103,7 @@ new #[Layout('layouts.guest')] class extends Component {
         // Grouped product — load items and pre-select all
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn ($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
 
             // Pre-select all items and set default quantities from pivot
@@ -208,7 +214,7 @@ new #[Layout('layouts.guest')] class extends Component {
     }
 
     // Grouped products
-    #[Computed]
+    #[Computed(persist: true)]
     public function groupedProducts()
     {
         return $this->product->groupedProducts()->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
@@ -217,8 +223,9 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function groupedTotal(): float
     {
-        return $this->groupedProducts->filter(fn($item) => in_array($item->id, $this->selectedGroupedItems))->sum(function ($item) {
+        return $this->groupedProducts->filter(fn ($item) => in_array($item->id, $this->selectedGroupedItems))->sum(function ($item) {
             $qty = $this->groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
+
             return ($item->final_price ?? 0) * $qty;
         });
     }
@@ -233,7 +240,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedVariant(): ?ProductVariant
     {
-        if ($this->product->type->value !== 'variable' || !$this->selectedVariantId) {
+        if ($this->product->type->value !== 'variable' || ! $this->selectedVariantId) {
             return null;
         }
 
@@ -256,7 +263,7 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         // Load all attribute value IDs from pivot in a single query
-        $allValueIds = $this->product->attributes->flatMap(fn($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
+        $allValueIds = $this->product->attributes->flatMap(fn ($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
 
         if (empty($allValueIds)) {
             return [];
@@ -272,7 +279,7 @@ new #[Layout('layouts.guest')] class extends Component {
             foreach ($variant->attributeValues as $av) {
                 $existing = $valueStateMap[$av->id] ?? 'out_of_stock';
 
-                if (!$variant->is_active) {
+                if (! $variant->is_active) {
                     continue;
                 }
 
@@ -288,13 +295,13 @@ new #[Layout('layouts.guest')] class extends Component {
 
         return $this->product->attributes
             ->map(
-                fn($attr) => [
+                fn ($attr) => [
                     'name' => $attr->name,
                     'values' => collect(json_decode($attr->pivot->values ?? '[]', true) ?? [])
-                        ->map(fn($id) => $allValues->get($id))
+                        ->map(fn ($id) => $allValues->get($id))
                         ->filter()
                         ->map(
-                            fn($v) => [
+                            fn ($v) => [
                                 'id' => $v->id,
                                 'value' => $v->value,
                                 'label' => $v->label ?: $v->value,
@@ -328,6 +335,7 @@ new #[Layout('layouts.guest')] class extends Component {
             if ($variant->allow_backorders) {
                 return 'backorder';
             }
+
             return 'out_of_stock';
         }
 
@@ -345,7 +353,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedVariantState(): string
     {
-        if (!$this->selectedVariant) {
+        if (! $this->selectedVariant) {
             return 'none';
         }
 
@@ -370,6 +378,7 @@ new #[Layout('layouts.guest')] class extends Component {
             if ($this->product->allow_backorder !== 'no') {
                 return 'backorder';
             }
+
             return 'out_of_stock';
         }
 
@@ -395,7 +404,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
         // Search ALL active variants — including out-of-stock and backorder
         $matched = $this->product->variants->where('is_active', true)->first(function ($variant) {
-            $variantAttrs = $variant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
+            $variantAttrs = $variant->attributeValues->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])->toArray();
 
             foreach ($this->selectedAttributeValues as $attrName => $attrValue) {
                 if (($variantAttrs[$attrName] ?? null) !== $attrValue) {
@@ -469,11 +478,11 @@ new #[Layout('layouts.guest')] class extends Component {
         // 2. Variant images — skip any path already seen
         if ($this->product->type->value === 'variable') {
             foreach ($this->product->variants->where('is_active', true)->sortBy('sort_order') as $variant) {
-                if ($variant->image_path && !in_array($variant->image_path, $seenPaths, true)) {
+                if ($variant->image_path && ! in_array($variant->image_path, $seenPaths, true)) {
                     $seenPaths[] = $variant->image_path;
                     $slides[] = [
                         'url' => Storage::url($variant->image_path),
-                        'alt' => $variant->attributeValues->map(fn($av) => $av->value)->join(', ') ?: $this->product->name,
+                        'alt' => $variant->attributeValues->map(fn ($av) => $av->value)->join(', ') ?: $this->product->name,
                         'variantId' => $variant->id,
                     ];
                 }
@@ -482,7 +491,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
         // 3. Gallery images — skip any path already used by main image or a variant
         foreach ($this->product->images as $image) {
-            if (!in_array($image->image_path, $seenPaths, true)) {
+            if (! in_array($image->image_path, $seenPaths, true)) {
                 $seenPaths[] = $image->image_path;
                 $slides[] = [
                     'url' => Storage::url($image->image_path),
@@ -495,20 +504,10 @@ new #[Layout('layouts.guest')] class extends Component {
         return $slides;
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function primaryCategory()
     {
         return $this->product->primaryCategory();
-    }
-
-    #[Computed]
-    public function estimatedShipping()
-    {
-        if (!$this->selectedCounty) {
-            return null;
-        }
-
-        return app(ShippingCalculatorService::class)->calculateForProduct(product: $this->product, quantity: $this->cartQuantity, user: auth()->user(), countyId: $this->selectedCounty, areaId: $this->selectedArea, variantId: $this->selectedVariantId);
     }
 
     // =========================================================================
@@ -522,7 +521,7 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->wishlisted = $added;
             $this->dispatch('wishlist-updated');
             $this->dispatch('notify', variant: 'success', title: $added ? 'Wishlist Updated' : 'Wishlist Updated', message: $added ? 'Product added to your wishlist' : 'Product removed from your wishlist');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
         }
     }
@@ -539,7 +538,7 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->dispatch('compare-updated');
 
             $this->dispatch('notify', title: $added ? 'Comparison Updated' : 'Comparison Updated', variant: 'success', message: $added ? 'Product added to comparison list' : 'Product removed from comparison list');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Action Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update comparison');
         }
     }
@@ -554,8 +553,9 @@ new #[Layout('layouts.guest')] class extends Component {
             $variantId = $this->selectedVariantId;
 
             // Variable product requires a variant selection
-            if ($this->product->type->value === 'variable' && !$variantId) {
+            if ($this->product->type->value === 'variable' && ! $variantId) {
                 $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
+
                 return;
             }
 
@@ -564,6 +564,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             if ($state === 'out_of_stock') {
                 $this->dispatch('notify', variant: 'warning', message: 'This product is currently out of stock.');
+
                 return;
             }
 
@@ -579,7 +580,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Product added to your cart');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add product to cart');
         }
     }
@@ -595,6 +596,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             if ($source->manage_stock && $newQuantity > $maxStock) {
                 $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
+
                 return;
             }
 
@@ -604,7 +606,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->cartQuantity = $newQuantity;
             $this->dispatch('cart-updated');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
     }
@@ -616,6 +618,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             if ($newQuantity < 1) {
                 $this->removeFromCart($cartService);
+
                 return;
             }
 
@@ -625,7 +628,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->cartQuantity = $newQuantity;
             $this->dispatch('cart-updated');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
     }
@@ -653,7 +656,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 $this->dispatch('cart-updated');
                 $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Product removed from your cart');
             }
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Remove Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to remove item from cart');
         }
     }
@@ -672,7 +675,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'All accessories have been added to your cart');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add accessories to cart');
         }
     }
@@ -687,7 +690,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Full kit has been added to your cart');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add full kit to cart');
         }
     }
@@ -697,6 +700,7 @@ new #[Layout('layouts.guest')] class extends Component {
         try {
             if (empty($this->selectedGroupedItems)) {
                 $this->dispatch('notify', title: 'No Items Selected', variant: 'warning', message: 'Please select at least one item to add to cart');
+
                 return;
             }
 
@@ -709,8 +713,8 @@ new #[Layout('layouts.guest')] class extends Component {
             }
 
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: count($this->selectedGroupedItems) . ' item(s) added to your cart');
-        } catch (\Throwable $th) {
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: count($this->selectedGroupedItems).' item(s) added to your cart');
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add selected items to cart');
         }
     }
@@ -719,13 +723,13 @@ new #[Layout('layouts.guest')] class extends Component {
     // REVIEWS
     // =========================================================================
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function reviewStats(): array
     {
         return app(ReviewService::class)->getStatistics($this->product);
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function reviews()
     {
         return app(ReviewService::class)->forProductPage($this->product, $this->reviewsToShow);
@@ -740,7 +744,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function userVotes()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return collect();
         }
 
@@ -749,23 +753,23 @@ new #[Layout('layouts.guest')] class extends Component {
             return collect();
         }
 
-        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
+        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn ($vote) => $vote->is_helpful);
     }
 
     // =========================================================================
     // ACCESSORIES
     // =========================================================================
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function accessories()
     {
         return $this->product->accessories()->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function accessoriesTotalPrice(): float
     {
-        return $this->accessories->sum(fn($a) => ($a->final_price ?? 0) * ($a->pivot->quantity ?? 1));
+        return $this->accessories->sum(fn ($a) => ($a->final_price ?? 0) * ($a->pivot->quantity ?? 1));
     }
 
     public function render()
@@ -783,7 +787,7 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->dispatch('quote-basket-updated');
 
             $this->dispatch('notify', title: 'Quote Basket Updated', variant: 'success', message: 'Product has been added to your quote basket');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add product to quote basket');
         }
     }

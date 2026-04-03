@@ -8,12 +8,19 @@ use Livewire\Form;
 class SeoSettingsForm extends Form
 {
     public string $meta_title = '';
+
     public string $meta_description = '';
+
     public string $meta_keywords = '';
+
     public string $og_image = '';
+
     public bool $robots_indexing = true;
+
     public bool $sitemap_enabled = true;
+
     public string $google_site_verification = '';
+
     public string $canonical_url = '';
 
     public function rules(): array
