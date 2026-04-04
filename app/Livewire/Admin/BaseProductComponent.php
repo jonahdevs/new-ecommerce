@@ -202,7 +202,7 @@ abstract class BaseProductComponent extends Component
             $this->validateDownloads();
             $this->validateVariants();
         } catch (ValidationException $e) {
-            $this->dispatch('notify', variant: 'warning', message: 'Please correct the highlighted fields.');
+            $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields.');
             throw $e;
         }
 
@@ -387,11 +387,6 @@ abstract class BaseProductComponent extends Component
             $this->selectedAttributes = [];
             $this->availableAttributes = [];
             $this->selectedExistingAttribute = null;
-
-            // Redirect away from tabs that don't apply to grouped products
-            if (in_array($this->activeTab, ['general', 'inventory', 'shipping', 'variations', 'downloads'])) {
-                $this->activeTab = 'linked-products';
-            }
         }
 
         if ($value !== 'grouped') {
@@ -427,13 +422,35 @@ abstract class BaseProductComponent extends Component
                 $this->variants[$index]['is_active'] = true;
             }
 
-            $this->dispatch('notify', variant: 'success', message: 'Variations restored.');
+            $this->dispatch('notify', title: 'Type Changed', variant: 'success', message: 'Switched to Variable. Variations restored.');
         }
 
         // Switching to grouped — load any existing grouped children that weren't loaded at mount.
         if ($value === 'grouped' && $productId && empty($this->groupedProducts)) {
             $this->loadGroupedProducts(Product::findOrFail($productId));
         }
+
+        // Navigate to the most useful tab for the new type.
+        // For grouped → Linked Products (where child products are added).
+        // For variable → Variations (where variation setup lives).
+        // For everything else → stay on the current tab if it is still valid, otherwise General.
+        $this->activeTab = $this->resolveActiveTabForType($value);
+    }
+
+    /**
+     * Returns the tab the user should land on after switching to $type.
+     * Jumps to the primary tab for grouped/variable; for all other types
+     * keeps the current tab when it is still valid, or falls back to General.
+     */
+    private function resolveActiveTabForType(string $type): string
+    {
+        return match ($type) {
+            'grouped' => 'linked-products',
+            'variable' => 'variations',
+            default => in_array($this->activeTab, ['general', 'inventory', 'shipping', 'linked-products', 'attributes', 'advanced'])
+                ? $this->activeTab
+                : 'general',
+        };
     }
 
     /**
@@ -464,10 +481,11 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->form->type = $this->pendingProductType;
+        $this->activeTab = $this->resolveActiveTabForType($this->pendingProductType);
         $this->pendingProductType = '';
         $this->showTypeChangeModal = false;
 
-        $this->dispatch('notify', variant: 'warning', message: 'Switched to Simple. All variations deactivated.');
+        $this->dispatch('notify', title: 'Type Changed', variant: 'warning', message: 'Switched to Simple. All variations deactivated.');
     }
 
     /**
@@ -525,9 +543,9 @@ abstract class BaseProductComponent extends Component
         }
 
         if ($matched !== null) {
-            $this->dispatch('notify', variant: 'success', message: 'Default variation updated.');
+            $this->dispatch('notify', title: 'Default Variation', variant: 'success', message: 'Default variation updated.');
         } else {
-            $this->dispatch('notify', variant: 'warning', message: 'No variation matches this combination.');
+            $this->dispatch('notify', title: 'No Match Found', variant: 'warning', message: 'No variation matches this combination.');
         }
     }
 
@@ -588,7 +606,7 @@ abstract class BaseProductComponent extends Component
             ->contains((int) $attributeId);
 
         if ($already) {
-            $this->dispatch('notify', variant: 'warning', message: 'Attribute already added.');
+            $this->dispatch('notify', title: 'Duplicate Attribute', variant: 'warning', message: 'Attribute already added.');
 
             return;
         }
@@ -649,14 +667,14 @@ abstract class BaseProductComponent extends Component
         $productId = $this->form->getProductId();
 
         if (! $productId) {
-            $this->dispatch('notify', variant: 'info', message: 'Attributes will be saved when you create the product.');
+            $this->dispatch('notify', title: 'Note', variant: 'info', message: 'Attributes will be saved when you create the product.');
 
             return;
         }
 
         foreach ($this->selectedAttributes as $attr) {
             if (empty(trim($attr['name']))) {
-                $this->dispatch('notify', variant: 'warning', message: 'All attributes must have a name.');
+                $this->dispatch('notify', title: 'Validation', variant: 'warning', message: 'All attributes must have a name.');
 
                 return;
             }
@@ -666,7 +684,7 @@ abstract class BaseProductComponent extends Component
                 : ! empty(trim($attr['values']));
 
             if (! $hasValues) {
-                $this->dispatch('notify', variant: 'warning', message: "Attribute \"{$attr['name']}\" must have at least one value.");
+                $this->dispatch('notify', title: 'Validation', variant: 'warning', message: "Attribute \"{$attr['name']}\" must have at least one value.");
 
                 return;
             }
@@ -678,7 +696,7 @@ abstract class BaseProductComponent extends Component
         );
 
         $this->syncAvailableAttributes();
-        $this->dispatch('notify', variant: 'success', message: 'Attributes saved.');
+        $this->dispatch('notify', title: 'Attributes Saved', variant: 'success', message: 'Attributes saved.');
     }
 
     /**
@@ -781,7 +799,7 @@ abstract class BaseProductComponent extends Component
             ->values();
 
         if ($variationAttributes->isEmpty()) {
-            $this->dispatch('notify', variant: 'warning', message: 'No attributes marked as "Used for variations".');
+            $this->dispatch('notify', title: 'No Variation Attributes', variant: 'warning', message: 'No attributes marked as "Used for variations".');
 
             return;
         }
@@ -807,7 +825,7 @@ abstract class BaseProductComponent extends Component
         }
 
         if (empty($attributeValueGroups)) {
-            $this->dispatch('notify', variant: 'warning', message: 'Please select values for your variation attributes.');
+            $this->dispatch('notify', title: 'Missing Values', variant: 'warning', message: 'Please select values for your variation attributes.');
 
             return;
         }
@@ -833,7 +851,7 @@ abstract class BaseProductComponent extends Component
             $newCount++;
         }
 
-        $this->dispatch('notify', variant: 'success', message: "{$newCount} new variation(s) generated.");
+        $this->dispatch('notify', title: 'Variations Generated', variant: 'success', message: "{$newCount} new variation(s) generated.");
     }
 
     /**
@@ -848,7 +866,7 @@ abstract class BaseProductComponent extends Component
         $after = count($this->variants);
 
         if ($after === $before) {
-            $this->dispatch('notify', variant: 'info', message: 'All variation combinations already exist. Nothing to add.');
+            $this->dispatch('notify', title: 'No New Variations', variant: 'info', message: 'All variation combinations already exist. Nothing to add.');
         }
     }
 
@@ -899,7 +917,7 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->variants = [];
-        $this->dispatch('notify', variant: 'success', message: 'All variations removed. Save to apply.');
+        $this->dispatch('notify', title: 'Variations Cleared', variant: 'success', message: 'All variations removed. Save to apply.');
     }
 
     /** Clears the variant image upload for a given index and nulls its stored path. */
@@ -952,7 +970,7 @@ abstract class BaseProductComponent extends Component
 
         $this->bulkPrice = null;
         Flux::modal('bulk-pricing')->close();
-        $this->dispatch('notify', variant: 'success', message: 'Pricing applied to all variations.');
+        $this->dispatch('notify', title: 'Bulk Pricing Applied', variant: 'success', message: 'Pricing applied to all variations.');
     }
 
     /**
@@ -969,7 +987,7 @@ abstract class BaseProductComponent extends Component
 
         $this->bulkStockQuantity = null;
         Flux::modal('bulk-stock"')->close();
-        $this->dispatch('notify', variant: 'success', message: 'Stock applied to all variations.');
+        $this->dispatch('notify', title: 'Bulk Stock Applied', variant: 'success', message: 'Stock applied to all variations.');
     }
 
     /**
@@ -995,7 +1013,7 @@ abstract class BaseProductComponent extends Component
 
         $this->bulkWeight = $this->bulkLength = $this->bulkWidth = $this->bulkHeight = null;
         Flux::modal('bulk-dimensions')->close();
-        $this->dispatch('notify', variant: 'success', message: 'Dimensions applied to all variations.');
+        $this->dispatch('notify', title: 'Bulk Dimensions Applied', variant: 'success', message: 'Dimensions applied to all variations.');
     }
 
     // =========================================================================
@@ -1074,7 +1092,7 @@ abstract class BaseProductComponent extends Component
         );
 
         if (empty($newIds)) {
-            $this->dispatch('notify', variant: 'warning', message: 'Selected products are already in the kit.');
+            $this->dispatch('notify', title: 'Already Added', variant: 'warning', message: 'Selected products are already in the kit.');
 
             return;
         }
@@ -1092,7 +1110,7 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->selectedGroupedProducts = [];
-        $this->dispatch('notify', variant: 'success', message: count($products).' product(s) added to kit.');
+        $this->dispatch('notify', title: 'Products Added', variant: 'success', message: count($products).' product(s) added to kit.');
     }
 
     /** Removes a grouped product from the kit by index. */
@@ -1149,7 +1167,7 @@ abstract class BaseProductComponent extends Component
         );
 
         if (empty($newIds)) {
-            $this->dispatch('notify', variant: 'warning', message: 'Selected products are already added as accessories.');
+            $this->dispatch('notify', title: 'Already Added', variant: 'warning', message: 'Selected products are already added as accessories.');
 
             return;
         }
@@ -1167,7 +1185,7 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->selectedAccessories = [];
-        $this->dispatch('notify', variant: 'success', message: count($products).' accessory(s) added.');
+        $this->dispatch('notify', title: 'Accessories Added', variant: 'success', message: count($products).' accessory(s) added.');
     }
 
     /** Removes an accessory by index. */
