@@ -1,6 +1,7 @@
 <?php
 
-use App\Enums\{OrderStatus, DeliveryOrderStatus, PaymentStatus};
+use App\Enums\{OrderStatus, DeliveryOrderStatus, PaymentStatus, SapSyncStatus};
+use App\Jobs\SyncOrderToSapJob;
 use App\Models\{Order, DeliveryOrder};
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\{Computed, Title};
@@ -22,6 +23,7 @@ new #[Title('Order Details')] class extends Component {
             'statusHistories.changedBy',
             'items.product',
             'quote', // loaded to show "converted from quote" notice
+            'sapSyncLogs',
         ]);
 
         $allowed = $order->status->allowedTransitions();
@@ -95,6 +97,25 @@ new #[Title('Order Details')] class extends Component {
             ]);
             $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
+    }
+
+    public function retrySapSync(): void
+    {
+        if (!in_array($this->order->sap_sync_status, [SapSyncStatus::FAILED, SapSyncStatus::PENDING])) {
+            $this->dispatch('notify', title: 'Not Applicable', variant: 'warning', message: 'SAP sync retry is only available for failed or pending orders.');
+            return;
+        }
+
+        $this->order->update([
+            'sap_sync_status' => SapSyncStatus::PENDING,
+            'sap_sync_error' => null,
+            'sap_sync_attempts' => 0,
+        ]);
+
+        SyncOrderToSapJob::dispatch($this->order);
+
+        $this->order->refresh()->load('sapSyncLogs');
+        $this->dispatch('notify', title: 'Retry Queued', variant: 'success', message: 'SAP sync job has been re-queued.');
     }
 
     private function createDeliveryOrder(): void
@@ -185,6 +206,22 @@ new #[Title('Order Details')] class extends Component {
     @endif
 
     {{-- ================================================================== --}}
+    {{-- SAP SYNC FAILURE ALERT                                             --}}
+    {{-- Shown when the ERP sync failed — customer order was placed but     --}}
+    {{-- the SAP posting did not go through.                                --}}
+    {{-- ================================================================== --}}
+    @if ($order->sap_sync_status === \App\Enums\SapSyncStatus::FAILED)
+        <flux:callout icon="exclamation-triangle" variant="danger" inline>
+            <flux:callout.heading>ERP sync failed — order not posted to SAP</flux:callout.heading>
+            <x-slot name="actions">
+                <flux:button wire:click="retrySapSync" wire:confirm="Re-queue the SAP sync for this order?"
+                    variant="danger" icon="arrow-path" class="cursor-pointer"> Retry ERP
+                    Sync</flux:button>
+            </x-slot>
+        </flux:callout>
+    @endif
+
+    {{-- ================================================================== --}}
     {{-- MAIN LAYOUT                                                         --}}
     {{-- ================================================================== --}}
     <div class="grid grid-cols-4 gap-5 mt-6">
@@ -231,7 +268,8 @@ new #[Title('Order Details')] class extends Component {
                                             @endif
                                         </div>
                                         <div>
-                                            <flux:heading size="sm" class="font-medium!">{{ $name }}</flux:heading>
+                                            <flux:heading size="sm" class="font-medium!">{{ $name }}
+                                            </flux:heading>
                                             @if ($item->productVariant)
                                                 <flux:subheading class="text-xs!">
                                                     {{ $item->productVariant->name }}
@@ -275,7 +313,8 @@ new #[Title('Order Details')] class extends Component {
                         <div class="w-full max-w-xs space-y-2">
                             <div class="flex justify-between text-sm">
                                 <flux:text>Subtotal</flux:text>
-                                <flux:heading size="sm" class="font-medium!">{{ format_currency($order->subtotal) }}</flux:heading>
+                                <flux:heading size="sm" class="font-medium!">
+                                    {{ format_currency($order->subtotal) }}</flux:heading>
                             </div>
                             @if ($order->discount > 0)
                                 <div class="flex justify-between text-sm">
@@ -436,7 +475,8 @@ new #[Title('Order Details')] class extends Component {
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:heading size="sm" class="font-medium! text-rose-600 dark:text-rose-400">
+                                        <flux:heading size="sm"
+                                            class="font-medium! text-rose-600 dark:text-rose-400">
                                             Order Cancelled
                                         </flux:heading>
                                         @if ($cancelHistory?->notes)
@@ -473,7 +513,8 @@ new #[Title('Order Details')] class extends Component {
                                 </div>
                                 <div class="flex-1 flex items-start justify-between gap-4 pt-1">
                                     <div>
-                                        <flux:heading size="sm" class="font-medium! text-orange-600 dark:text-orange-400">
+                                        <flux:heading size="sm"
+                                            class="font-medium! text-orange-600 dark:text-orange-400">
                                             Order Returned
                                         </flux:heading>
                                         @if ($returnHistory?->notes)
@@ -524,7 +565,8 @@ new #[Title('Order Details')] class extends Component {
                             @endif
                         </div>
                         <div>
-                            <flux:heading size="sm" class="font-medium!">{{ $order->user?->name }}</flux:heading>
+                            <flux:heading size="sm" class="font-medium!">{{ $order->user?->name }}
+                            </flux:heading>
                             <flux:link href="mailto:{{ $order->user?->email }}" class="text-xs">
                                 {{ $order->user?->email }}
                             </flux:link>
@@ -546,7 +588,7 @@ new #[Title('Order Details')] class extends Component {
                                 {{ $order->shipping_address['address'] ?? 'N/A' }}<br>
                                 {{ $order->shipping_address['area'] ?? '' }},
                                 {{ $order->shipping_address['county'] ?? '' }}
-                            </flux:text>
+                                </flux:text>
                         </div>
                     </div>
                 </div>
@@ -562,7 +604,8 @@ new #[Title('Order Details')] class extends Component {
                         @if ($order->courier_name)
                             <div class="flex justify-between">
                                 <flux:text>Courier</flux:text>
-                                <flux:heading size="sm" class="font-medium!">{{ $order->courier_name }}</flux:heading>
+                                <flux:heading size="sm" class="font-medium!">{{ $order->courier_name }}
+                                </flux:heading>
                             </div>
                         @endif
                         <div class="flex justify-between">
@@ -607,6 +650,120 @@ new #[Title('Order Details')] class extends Component {
                             <flux:text class="font-medium">
                                 {{ $order->payment->paid_at->format('M d, Y g:i A') }}
                             </flux:text>
+                        </div>
+                    @endif
+                </div>
+            </flux:card>
+
+            {{-- SAP / ERP Sync --}}
+            <flux:card class="p-0">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
+                    <flux:heading>SAP / ERP Sync</flux:heading>
+                    @if ($order->sap_sync_status)
+                        <flux:badge :color="$order->sap_sync_status->color()" size="sm">
+                            {{ $order->sap_sync_status->label() }}
+                        </flux:badge>
+                    @endif
+                </div>
+                <div class="p-5 space-y-3">
+                    @if ($order->sap_order_number)
+                        <div class="flex justify-between text-sm">
+                            <flux:text>SAP Doc #</flux:text>
+                            <flux:text class="font-mono text-xs">{{ $order->sap_order_number }}</flux:text>
+                        </div>
+                    @endif
+                    @if ($order->sap_synced_at)
+                        <div class="flex justify-between text-sm">
+                            <flux:text>Synced at</flux:text>
+                            <flux:text class="text-xs">{{ $order->sap_synced_at->format('M d, Y g:i A') }}</flux:text>
+                        </div>
+                    @endif
+                    @if ($order->kra_cu_number)
+                        <div class="flex justify-between text-sm">
+                            <flux:text>CU Number</flux:text>
+                            <flux:text class="font-mono text-xs">{{ $order->kra_cu_number }}</flux:text>
+                        </div>
+                    @endif
+                    @if ($order->sap_sync_error)
+                        <div
+                            class="rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 p-3">
+                            <flux:text class="text-xs text-red-700 dark:text-red-400 break-words">
+                                {{ $order->sap_sync_error }}
+                            </flux:text>
+                        </div>
+                    @endif
+                    @if (in_array($order->sap_sync_status, [\App\Enums\SapSyncStatus::FAILED, \App\Enums\SapSyncStatus::PENDING]))
+                        <flux:button wire:click="retrySapSync" wire:confirm="Re-queue SAP sync for this order?"
+                            size="sm" variant="outline" icon="arrow-path" class="w-full cursor-pointer">
+                            Retry SAP Sync
+                        </flux:button>
+                    @endif
+
+                    {{-- Sync log history --}}
+                    @if ($order->sapSyncLogs->isNotEmpty())
+                        <div x-data="{ open: false }">
+                            <button @click="open = !open"
+                                class="w-full flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 pt-2 border-t border-zinc-100 dark:border-zinc-700 mt-2 transition-colors">
+                                <span>Sync history ({{ $order->sapSyncLogs->count() }})</span>
+                                <flux:icon name="chevron-down" class="size-3.5 transition-transform"
+                                    x-bind:class="open && 'rotate-180'" />
+                            </button>
+                            <div x-show="open" x-collapse class="mt-3 space-y-2">
+                                @foreach ($order->sapSyncLogs->sortByDesc('created_at') as $log)
+                                    <div
+                                        class="rounded border border-zinc-100 dark:border-zinc-700 text-xs p-2.5 space-y-1">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span @class([
+                                                'font-medium capitalize',
+                                                'text-green-600 dark:text-green-400' => $log->status === 'success',
+                                                'text-red-600 dark:text-red-400' => $log->status === 'failed',
+                                                'text-amber-600 dark:text-amber-400' => $log->status === 'pending',
+                                            ])>{{ $log->operation }}</span>
+                                            <flux:badge size="sm"
+                                                :color="match($log->status) { 'success' => 'green', 'failed' => 'red', default => 'amber' }">
+                                                {{ $log->http_status_code ?? '—' }}
+                                            </flux:badge>
+                                        </div>
+                                        @if ($log->error_message)
+                                            <p class="text-red-600 dark:text-red-400 break-words">
+                                                {{ $log->error_message }}</p>
+                                        @endif
+                                        <div class="flex justify-between text-zinc-400">
+                                            <span>{{ $log->created_at->format('M d, g:i A') }}</span>
+                                            @if ($log->duration_ms)
+                                                <span>{{ $log->duration_ms }}ms</span>
+                                            @endif
+                                        </div>
+                                        <flux:modal.trigger name="sap-log-{{ $log->id }}">
+                                            <button class="text-blue-500 hover:underline text-[11px]">View
+                                                payload</button>
+                                        </flux:modal.trigger>
+                                    </div>
+
+                                    <flux:modal name="sap-log-{{ $log->id }}" class="max-w-2xl">
+                                        <flux:heading size="lg" class="mb-4">SAP Log — {{ $log->operation }}
+                                        </flux:heading>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+                                                    Request Payload</p>
+                                                <pre class="text-xs bg-zinc-100 dark:bg-zinc-800 p-3 rounded overflow-x-auto max-h-60">{{ json_encode($log->request_payload, JSON_PRETTY_PRINT) }}</pre>
+                                            </div>
+                                            @if ($log->response_payload)
+                                                <div>
+                                                    <p
+                                                        class="text-sm font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+                                                        Response Payload</p>
+                                                    <pre class="text-xs bg-zinc-100 dark:bg-zinc-800 p-3 rounded overflow-x-auto max-h-60">{{ json_encode($log->response_payload, JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="mt-4 flex justify-end">
+                                            <flux:button x-on:click="$dispatch('close-modal')">Close</flux:button>
+                                        </div>
+                                    </flux:modal>
+                                @endforeach
+                            </div>
                         </div>
                     @endif
                 </div>

@@ -6,6 +6,7 @@ use App\Enums\SapSyncStatus;
 use App\Models\Order;
 use App\Models\SapSyncLog;
 use App\Services\Sap\ValueObjects\CuNumberResult;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -13,8 +14,7 @@ class SapWebhookHandler
 {
     public function __construct(
         private readonly KraReceiptService $receiptService,
-    ) {
-    }
+    ) {}
 
     // ================================================================
     // Entry point — called by SapWebhookController
@@ -27,7 +27,7 @@ class SapWebhookHandler
         $this->logWebhookRequest($request, $payload);
 
         // Property 4: reject anything with an invalid or missing secret header
-        if (!$this->validateSignature($request)) {
+        if (! $this->validateSignature($request)) {
             Log::warning('SAP webhook rejected — invalid secret', [
                 'ip' => $request->ip(),
             ]);
@@ -54,7 +54,7 @@ class SapWebhookHandler
 
         $providedSecret = $request->header('X-SAP-Secret');
 
-        if (!$providedSecret) {
+        if (! $providedSecret) {
             return false;
         }
 
@@ -71,6 +71,7 @@ class SapWebhookHandler
 
         if ($event !== 'invoice.cu_number_generated') {
             Log::info('SAP webhook: unhandled event type, ignoring', ['event' => $event]);
+
             return;
         }
 
@@ -78,15 +79,17 @@ class SapWebhookHandler
         $reference = $data['external_reference'] ?? null;
 
         // Property 6: reject webhooks with unknown order references
-        if (!$reference) {
+        if (! $reference) {
             Log::warning('SAP webhook: missing external_reference in payload');
+
             return;
         }
 
         $order = Order::where('reference', $reference)->first();
 
-        if (!$order) {
+        if (! $order) {
             Log::warning('SAP webhook: unknown order reference', ['reference' => $reference]);
+
             return;
         }
 
@@ -98,6 +101,7 @@ class SapWebhookHandler
                 'order_id' => $order->id,
                 'kra_cu_number' => $incomingCuNumber,
             ]);
+
             return;
         }
 
@@ -105,7 +109,7 @@ class SapWebhookHandler
             cuNumber: $incomingCuNumber,
             kraInvoiceNumber: $data['kra_invoice_number'] ?? null,
             validatedAt: isset($data['validated_at'])
-            ? \Carbon\Carbon::parse($data['validated_at'])
+            ? Carbon::parse($data['validated_at'])
             : now(),
         );
 
@@ -156,7 +160,7 @@ class SapWebhookHandler
                 'kra_invoice_number' => $result->kraInvoiceNumber,
                 'kra_validated_at' => $result->validatedAt?->toISOString(),
             ])
-            ->log('kra_cu_number_received');
+            ->log('sap_kra_validated');
     }
 
     private function generateAndSendReceipt(Order $order): void

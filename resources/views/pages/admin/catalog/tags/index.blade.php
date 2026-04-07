@@ -68,16 +68,18 @@ new #[Title('Tags')] class extends Component {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <flux:card>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Tags</div>
-            <div class="text-2xl font-bold text-zinc-900 dark:text-white">{{ Tag::count() }}</div>
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white"
+                x-data="countUp({ to: {{ Tag::count() }} })" x-text="display"></div>
         </flux:card>
         <flux:card>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tag Types</div>
-            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $this->types->count() }}</div>
+            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                x-data="countUp({ to: {{ $this->types->count() }} })" x-text="display"></div>
         </flux:card>
         <flux:card>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Tagged Products</div>
-            <div class="text-2xl font-bold text-zinc-500 dark:text-zinc-400">
-                {{ \DB::table('taggables')->distinct('taggable_id')->count() }}</div>
+            <div class="text-2xl font-bold text-zinc-500 dark:text-zinc-400"
+                x-data="countUp({ to: {{ \DB::table('taggables')->distinct('taggable_id')->count() }} })" x-text="display"></div>
         </flux:card>
     </div>
 

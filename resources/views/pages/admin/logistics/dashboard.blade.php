@@ -7,23 +7,32 @@ use Livewire\Attributes\{Title, Computed};
 use Livewire\Component;
 
 new #[Title('Logistics Overview')] class extends Component {
+    public string $dateFrom = '';
+    public string $dateTo = '';
+
+    public function setDateRange(string $from, string $to): void
+    {
+        $this->dateFrom = $from;
+        $this->dateTo = $to;
+        unset($this->stats, $this->recentOrders);
+    }
+
     #[Computed]
     public function stats(): array
     {
-        $base = DeliveryOrder::query();
-
         $activeStatuses = [DeliveryOrderStatus::PENDING->value, DeliveryOrderStatus::PICKED_UP->value, DeliveryOrderStatus::IN_TRANSIT->value, DeliveryOrderStatus::OUT_FOR_DELIVERY->value];
 
-        // Current month window
-        $monthStart = now()->startOfMonth();
+        // Revenue window: use date range if set, otherwise current month
+        $hasDateRange = $this->dateFrom && $this->dateTo;
+        $rangeStart = $hasDateRange ? \Carbon\Carbon::parse($this->dateFrom)->startOfDay() : now()->startOfMonth();
+        $rangeEnd = $hasDateRange ? \Carbon\Carbon::parse($this->dateTo)->endOfDay() : now()->endOfDay();
+
         $lastMonthStart = now()->subMonth()->startOfMonth();
         $lastMonthEnd = now()->subMonth()->endOfMonth();
 
-        $thisMonthRevenue = DeliveryOrder::where('created_at', '>=', $monthStart)->sum('shipping_cost');
-
+        $periodRevenue = DeliveryOrder::whereBetween('created_at', [$rangeStart, $rangeEnd])->sum('shipping_cost');
         $lastMonthRevenue = DeliveryOrder::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('shipping_cost');
-
-        $revenueChange = $lastMonthRevenue > 0 ? round((($thisMonthRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100, 1) : null;
+        $revenueChange = $lastMonthRevenue > 0 ? round((($periodRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100, 1) : null;
 
         return [
             'active' => DeliveryOrder::whereIn('status', $activeStatuses)->where('is_return', false)->count(),
@@ -32,9 +41,12 @@ new #[Title('Logistics Overview')] class extends Component {
             'delivered_today' => DeliveryOrder::whereDate('delivered_at', today())
                 ->whereIn('status', [DeliveryOrderStatus::DELIVERED->value, DeliveryOrderStatus::COLLECTED->value])
                 ->count(),
-            'this_month_revenue' => $thisMonthRevenue,
+            'this_month_revenue' => $periodRevenue,
             'last_month_revenue' => $lastMonthRevenue,
-            'revenue_change' => $revenueChange,
+            'revenue_change' => $hasDateRange ? null : $revenueChange,
+            'period_label' => $hasDateRange
+                ? $rangeStart->format('M j') . ' – ' . $rangeEnd->format('M j, Y')
+                : now()->format('F Y'),
         ];
     }
 
@@ -54,6 +66,8 @@ new #[Title('Logistics Overview')] class extends Component {
     {
         return DeliveryOrder::with(['shippingMethod', 'shippingZone'])
             ->where('is_return', false)
+            ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
             ->latest()
             ->take(8)
             ->get();
@@ -109,6 +123,15 @@ new #[Title('Logistics Overview')] class extends Component {
             <p class="text-sm text-zinc-500">{{ now()->format('l, d F Y') }}</p>
         </div>
         <div class="flex items-center gap-2">
+            <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
+
+            <div class="relative" wire:ignore>
+                <input type="text" readonly
+                    class="logistics-date-range w-60 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
+                    placeholder="All time" />
+                <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            </div>
+
             <flux:button variant="ghost" size="sm" icon="arrow-path" wire:click="$refresh"
                 class="cursor-pointer text-zinc-400">
                 Refresh
@@ -130,9 +153,8 @@ new #[Title('Logistics Overview')] class extends Component {
                             <flux:icon.truck class="w-4 h-4 text-blue-500" />
                         </div>
                     </div>
-                    <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums">
-                        {{ number_format($this->stats['active']) }}
-                    </p>
+                    <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums"
+                        x-data="countUp({ to: {{ $this->stats['active'] }} })" x-text="display"></p>
                     <p class="text-xs text-zinc-400 mt-1">forward deliveries in progress</p>
                 </flux:card>
             </a>
@@ -147,9 +169,8 @@ new #[Title('Logistics Overview')] class extends Component {
                             <flux:icon.building-storefront class="w-4 h-4 text-orange-500" />
                         </div>
                     </div>
-                    <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums">
-                        {{ number_format($this->stats['at_station']) }}
-                    </p>
+                    <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums"
+                        x-data="countUp({ to: {{ $this->stats['at_station'] }} })" x-text="display"></p>
                     <p class="text-xs text-zinc-400 mt-1">awaiting customer collection</p>
                 </flux:card>
             </a>
@@ -173,26 +194,24 @@ new #[Title('Logistics Overview')] class extends Component {
                             {{ $this->stats['needs_attention'] > 0 ? 'text-red-500' : 'text-zinc-400' }}" />
                         </div>
                     </div>
-                    <p
-                        class="text-3xl font-bold tabular-nums
-                    {{ $this->stats['needs_attention'] > 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-white' }}">
-                        {{ number_format($this->stats['needs_attention']) }}
-                    </p>
+                    <p class="text-3xl font-bold tabular-nums {{ $this->stats['needs_attention'] > 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-white' }}"
+                        x-data="countUp({ to: {{ $this->stats['needs_attention'] }} })" x-text="display"></p>
                     <p class="text-xs text-zinc-400 mt-1">failed or returning</p>
                 </flux:card>
             </a>
 
-            {{-- This Month Revenue --}}
+            {{-- Revenue --}}
             <flux:card class="p-5">
                 <div class="flex items-start justify-between mb-3">
-                    <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider">Revenue (MTD)</p>
+                    <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                        Revenue @if($dateFrom || $dateTo)(filtered)@else (MTD)@endif
+                    </p>
                     <div class="w-7 h-7 rounded-md bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
                         <flux:icon.banknotes class="w-4 h-4 text-green-500" />
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums">
-                    {{ format_currency($this->stats['this_month_revenue']) }}
-                </p>
+                <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums"
+                    x-data="countUp({ to: {{ $this->stats['this_month_revenue'] }}, decimals: 2, prefix: 'KES ' })" x-text="display"></p>
                 <div class="flex items-center gap-1.5 mt-1">
                     @if ($this->stats['revenue_change'] !== null)
                         @php $up = $this->stats['revenue_change'] >= 0; @endphp
@@ -537,3 +556,65 @@ new #[Title('Logistics Overview')] class extends Component {
     </div>
 
 </x-admin.logistics.layout>
+
+@assets
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+@endassets
+
+@script
+<script>
+    function waitForLibraries(cb) {
+        if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !== 'undefined') {
+            cb();
+        } else {
+            setTimeout(() => waitForLibraries(cb), 100);
+        }
+    }
+
+    function initDateRangePicker() {
+        const el = $('.logistics-date-range').first();
+        if (!el.length) return;
+
+        if (el.data('daterangepicker')) {
+            el.data('daterangepicker').remove();
+        }
+
+        el.daterangepicker({
+            autoUpdateInput: false,
+            opens: 'left',
+            showDropdowns: true,
+            alwaysShowCalendars: false,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            },
+            locale: {
+                format: 'MMM DD, YYYY',
+                separator: ' – ',
+                cancelLabel: 'Clear',
+            },
+        }, function(start, end) {
+            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
+        });
+
+        el.on('cancel.daterangepicker', function() {
+            $wire.setDateRange('', '');
+            el.val('');
+        });
+
+        if ($wire.dateFrom && $wire.dateTo) {
+            el.val(moment($wire.dateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.dateTo).format('MMM DD, YYYY'));
+        }
+    }
+
+    waitForLibraries(() => initDateRangePicker());
+</script>
+@endscript

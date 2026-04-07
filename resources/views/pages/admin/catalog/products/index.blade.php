@@ -310,7 +310,8 @@ new #[Title('Products')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="uppercase text-xs font-medium mb-3">Total Products</flux:text>
-                    <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-50">{{ $this->stats['total'] }}</p>
+                    <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-50"
+                        x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display"></p>
                 </div>
                 <div class="p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
                     <flux:icon.inbox class="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -322,7 +323,8 @@ new #[Title('Products')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="uppercase text-xs font-medium mb-3">Published</flux:text>
-                    <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ $this->stats['published'] }}</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400"
+                        x-data="countUp({ to: {{ $this->stats['published'] }} })" x-text="display"></p>
                 </div>
                 <div class="p-3 bg-green-50 dark:bg-green-900 rounded-lg">
                     <flux:icon.check-circle class="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -334,7 +336,8 @@ new #[Title('Products')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="uppercase text-xs font-medium mb-3">Draft</flux:text>
-                    <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ $this->stats['draft'] }}</p>
+                    <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400"
+                        x-data="countUp({ to: {{ $this->stats['draft'] }} })" x-text="display"></p>
                 </div>
                 <div class="p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
                     <flux:icon.pencil-square class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
@@ -346,7 +349,8 @@ new #[Title('Products')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:text class="uppercase text-xs font-medium mb-3">Low Stock</flux:text>
-                    <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ $this->stats['low_stock'] }}</p>
+                    <p class="text-3xl font-bold text-red-600 dark:text-red-400"
+                        x-data="countUp({ to: {{ $this->stats['low_stock'] }} })" x-text="display"></p>
                 </div>
                 <div class="p-3 bg-red-50 dark:bg-red-900 rounded-lg">
                     <flux:icon.exclamation-triangle class="w-6 h-6 text-red-600 dark:text-red-400" />

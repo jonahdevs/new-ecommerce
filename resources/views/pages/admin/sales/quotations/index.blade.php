@@ -165,6 +165,13 @@ new #[Title('Quotations')] class extends Component {
     //  MISC
     // =========================================================================
 
+    public function setDateRange(string $from, string $to): void
+    {
+        $this->dateFrom = $from;
+        $this->dateTo = $to;
+        $this->resetPage();
+    }
+
     public function clearFilters(): void
     {
         $this->search = '';
@@ -205,8 +212,9 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Quotes</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['total']) }}</flux:heading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display">
+                    </flux:heading>
                     <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
                 </div>
                 <div
@@ -220,8 +228,9 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Pending Review</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['pending']) }}</flux:heading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['pending'] }} })" x-text="display">
+                    </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Awaiting pricing</flux:subheading>
                 </div>
                 <div
@@ -235,8 +244,9 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Sent to Customer</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['sent']) }}</flux:heading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['sent'] }} })" x-text="display">
+                    </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Awaiting response</flux:subheading>
                 </div>
                 <div
@@ -250,8 +260,9 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Expiring Soon</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['expiring']) }}</flux:heading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['expiring'] }} })" x-text="display">
+                    </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Within 3 days</flux:subheading>
                 </div>
                 <div
@@ -277,9 +288,15 @@ new #[Title('Quotations')] class extends Component {
 
             <div class="flex items-center gap-2 ms-auto flex-wrap">
 
-                <x-my-datepicker wire:model.live="dateFrom" placeholder="From date" icon="o-calendar"
-                    class="max-w-40" />
-                <x-my-datepicker wire:model.live="dateTo" placeholder="To date" icon="o-calendar" class="max-w-40" />
+                {{-- Date range --}}
+                <div class="relative" wire:ignore>
+                    <input type="text" readonly
+                        class="quotations-date-range w-60 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
+                        placeholder="All dates" />
+                    <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                </div>
+
+                <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
 
                 {{-- Status filter --}}
                 <flux:select wire:model.live="statusFilter" class="w-48">
@@ -440,3 +457,65 @@ new #[Title('Quotations')] class extends Component {
         </flux:table>
     </flux:card>
 </div>
+
+@assets
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+@endassets
+
+@script
+<script>
+    function waitForLibraries(cb) {
+        if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !== 'undefined') {
+            cb();
+        } else {
+            setTimeout(() => waitForLibraries(cb), 100);
+        }
+    }
+
+    function initDateRangePicker() {
+        const el = $('.quotations-date-range').first();
+        if (!el.length) return;
+
+        if (el.data('daterangepicker')) {
+            el.data('daterangepicker').remove();
+        }
+
+        el.daterangepicker({
+            autoUpdateInput: false,
+            opens: 'left',
+            showDropdowns: true,
+            alwaysShowCalendars: false,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            },
+            locale: {
+                format: 'MMM DD, YYYY',
+                separator: ' – ',
+                cancelLabel: 'Clear',
+            },
+        }, function(start, end) {
+            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
+        });
+
+        el.on('cancel.daterangepicker', function() {
+            $wire.setDateRange('', '');
+            el.val('');
+        });
+
+        if ($wire.dateFrom && $wire.dateTo) {
+            el.val(moment($wire.dateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.dateTo).format('MMM DD, YYYY'));
+        }
+    }
+
+    waitForLibraries(() => initDateRangePicker());
+</script>
+@endscript

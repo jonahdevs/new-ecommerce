@@ -197,7 +197,7 @@ new #[Title('Returns')] class extends Component {
 }; ?>
 
 <x-admin.logistics.layout heading="Returns"
-    subheading="Reverse logistics — parcels being returned from customer back to sender. Cossim charges returns at the same rate as forward delivery.">
+    subheading="Reverse logistics — parcels being returned from customer back to sender. Returns are charged at the same rate as forward delivery.">
 
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
@@ -478,12 +478,5 @@ new #[Title('Returns')] class extends Component {
             </div>
         @endif
     </flux:modal>
-
-    <style>
-        [data-flux-pagination] {
-            padding-inline: 1rem;
-            padding-bottom: 1rem;
-        }
-    </style>
 
 </x-admin.logistics.layout>

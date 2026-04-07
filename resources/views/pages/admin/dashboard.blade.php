@@ -346,7 +346,7 @@ new #[Title('Dashboard')] class extends Component {
         return \Spatie\Activitylog\Models\Activity::with(['subject', 'causer'])
             ->whereIn('description', ['order_created', 'order_marked_paid', 'order_cancelled', 'payment_initiated', 'payment_confirmed', 'payment_failed', 'inventory_deducted', 'inventory_reserved', 'sap_sync_success', 'sap_sync_failed', 'quote_requested', 'quote_sent', 'quote_accepted', 'user_registered', 'webhook_received_mpesa', 'webhook_received_pesawise'])
             ->latest()
-            ->limit(15)
+            ->limit(6)
             ->get();
     }
 
@@ -404,8 +404,11 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:icon.banknotes class="size-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
             </div>
-            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5">
-                {{ format_currency($this->salesStats['revenue']) }}</flux:heading>
+            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
+                wire:key="kpi-revenue-{{ $this->salesStats['revenue'] }}"
+                x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
+                x-text="display">
+            </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->salesStats['revenue_trend'] !== null)
                     <span
@@ -427,8 +430,11 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:icon.shopping-bag class="size-4 text-blue-600 dark:text-blue-400" />
                 </div>
             </div>
-            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5">
-                {{ number_format($this->salesStats['order_count']) }}</flux:heading>
+            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
+                wire:key="kpi-orders-{{ $this->salesStats['order_count'] }}"
+                x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })"
+                x-text="display">
+            </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->salesStats['orders_trend'] !== null)
                     <span
@@ -451,8 +457,11 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:icon.users class="size-4 text-violet-600 dark:text-violet-400" />
                 </div>
             </div>
-            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5">
-                {{ number_format($this->customerStats['total']) }}</flux:heading>
+            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
+                wire:key="kpi-customers-{{ $this->customerStats['total'] }}"
+                x-data="countUp({ to: {{ $this->customerStats['total'] }} })"
+                x-text="display">
+            </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->customerStats['new_trend'] !== null)
                     <span
@@ -474,8 +483,11 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:icon.cube class="size-4 text-teal-600 dark:text-teal-400" />
                 </div>
             </div>
-            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5">
-                {{ number_format($this->productStats['active']) }}</flux:heading>
+            <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
+                wire:key="kpi-products-{{ $this->productStats['active'] }}"
+                x-data="countUp({ to: {{ $this->productStats['active'] }} })"
+                x-text="display">
+            </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->productStats['low_stock'] + $this->productStats['out_of_stock'] > 0)
                     <span
@@ -543,32 +555,38 @@ new #[Title('Dashboard')] class extends Component {
 
                     <div class="px-5 py-4">
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Orders</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none">
-                            {{ number_format($this->salesStats['order_count']) }}
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
+                            wire:key="chart-orders-{{ $this->salesStats['order_count'] }}"
+                            x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })"
+                            x-text="display">
                         </p>
                     </div>
 
                     <div class="px-5 py-4">
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Earnings</p>
-                        <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none break-all">
-                            {{ format_currency($this->salesStats['revenue']) }}
+                        <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none break-all"
+                            wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}"
+                            x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
+                            x-text="display">
                         </p>
                     </div>
 
                     <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Paid orders
-                        </p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none">
-                            {{ number_format($this->salesStats['paid_count']) }}
+                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Paid orders</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
+                            wire:key="chart-paid-{{ $this->salesStats['paid_count'] }}"
+                            x-data="countUp({ to: {{ $this->salesStats['paid_count'] }} })"
+                            x-text="display">
                         </p>
                     </div>
 
                     <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Conversion
-                        </p>
+                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Conversion</p>
                         @if ($this->quotationStats['conversion_rate'] !== null)
-                            <p class="text-2xl font-bold text-emerald-500 leading-none">
-                                {{ $this->quotationStats['conversion_rate'] }}%
+                            <p class="text-2xl font-bold text-emerald-500 leading-none"
+                                wire:key="chart-conversion-{{ $this->quotationStats['conversion_rate'] }}"
+                                x-data="countUp({ to: {{ $this->quotationStats['conversion_rate'] }}, decimals: 1, suffix: '%' })"
+                                x-text="display">
                             </p>
                         @else
                             <p class="text-2xl font-bold text-zinc-300 dark:text-zinc-600 leading-none">—</p>
@@ -667,14 +685,14 @@ new #[Title('Dashboard')] class extends Component {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
         {{-- Recent Activity Widget (Left, 1 col) --}}
-        <flux:card class="p-0 h-full flex flex-col">
+        <flux:card class="p-0 flex flex-col">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Recent Activity</flux:heading>
                 <flux:link :href="route('admin.activity-logs.index')" wire:navigate class="text-xs">View all
                 </flux:link>
             </div>
 
-            <div class="flex-1 overflow-y-auto">
+            <div>
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @forelse($this->recentActivities as $activity)
                         <div

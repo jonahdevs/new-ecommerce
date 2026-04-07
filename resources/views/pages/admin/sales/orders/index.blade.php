@@ -5,6 +5,7 @@ use App\Models\Quote;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\QuoteStatus;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\{Title, Computed};
@@ -19,6 +20,8 @@ new #[Title('Orders')] class extends Component {
 
     public string $search = '';
     public string $statusFilter = 'all';
+    public string $dateFrom = '';
+    public string $dateTo = '';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
     public int $perPage = 10;
@@ -41,6 +44,13 @@ new #[Title('Orders')] class extends Component {
         $this->resetPage();
     }
 
+    public function setDateRange(string $from, string $to): void
+    {
+        $this->dateFrom = $from;
+        $this->dateTo = $to;
+        $this->resetPage();
+    }
+
     // =========================================================================
     //  COMPUTED — ORDERS
     // =========================================================================
@@ -58,6 +68,10 @@ new #[Title('Orders')] class extends Component {
             // Status filter
             ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
 
+            // Date range filter
+            ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
+
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate($this->perPage);
     }
@@ -67,16 +81,36 @@ new #[Title('Orders')] class extends Component {
     // =========================================================================
 
     #[Computed]
+    public function periodLabel(): string
+    {
+        if (! $this->dateFrom && ! $this->dateTo) {
+            return 'All time';
+        }
+        $from = $this->dateFrom ? Carbon::parse($this->dateFrom) : null;
+        $to = $this->dateTo ? Carbon::parse($this->dateTo) : null;
+        if ($from && $to && $from->isSameDay($to)) {
+            return $from->format('M j, Y');
+        }
+
+        return ($from ? $from->format('M j') : '…').' – '.($to ? $to->format('M j, Y') : '…');
+    }
+
+    #[Computed]
     public function stats(): array
     {
         $today = now()->toDateString();
-        $base = Order::query();
+
+        // Total and revenue are date-range aware
+        $base = Order::query()
+            ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo));
 
         return [
-            'total' => (clone $base)->count(),
+            'total'   => (clone $base)->count(),
             'revenue' => (clone $base)->where('payment_status', PaymentStatus::PAID->value)->sum('total_cents') / 100,
-            'today' => (clone $base)->whereBetween('created_at', [Carbon::parse($today)->startOfDay(), Carbon::parse($today)->endOfDay()])->count(),
-            'pending' => (clone $base)->whereIn('status', [OrderStatus::PENDING->value, OrderStatus::PROCESSING->value])->count(),
+            // Today and pending are always current-state — not date-filtered
+            'today'   => Order::query()->whereBetween('created_at', [Carbon::parse($today)->startOfDay(), Carbon::parse($today)->endOfDay()])->count(),
+            'pending' => Order::query()->whereIn('status', [OrderStatus::PENDING->value, OrderStatus::PROCESSING->value])->count(),
         ];
     }
 
@@ -232,6 +266,8 @@ new #[Title('Orders')] class extends Component {
     {
         $this->search = '';
         $this->statusFilter = 'all';
+        $this->dateFrom = '';
+        $this->dateTo = '';
         $this->resetPage();
     }
 
@@ -292,14 +328,28 @@ new #[Title('Orders')] class extends Component {
     </flux:breadcrumbs>
 
     {{-- Page header --}}
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-start justify-between mb-6">
         <div>
             <flux:heading size="xl">Orders</flux:heading>
-            <flux:subheading>Manage sales orders and delivery tracking.</flux:subheading>
+            <flux:subheading>
+                {{ $this->periodLabel }} · Manage sales orders and delivery tracking.
+            </flux:subheading>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
+
+            <div class="relative" wire:ignore>
+                <input type="text" readonly
+                    class="orders-date-range w-56 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
+                    placeholder="All time" />
+                <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            </div>
+
             <flux:button icon="arrow-down-tray" variant="ghost" size="sm" @click="runExport()">
                 <span x-text="selected.length > 0 ? 'Export Selected (' + selected.length + ')' : 'Export'"></span>
+            </flux:button>
+            <flux:button :href="route('admin.orders.create')" wire:navigate icon="plus" variant="primary" size="sm">
+                Create Order
             </flux:button>
         </div>
     </div>
@@ -308,17 +358,17 @@ new #[Title('Orders')] class extends Component {
     {{-- STATS CARDS                                                         --}}
     {{-- ================================================================== --}}
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div wire:key="orders-stats-{{ $this->dateFrom }}-{{ $this->dateTo }}" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <flux:card class="p-4 border-l-4 border-l-blue-500 dark:border-l-blue-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Orders</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['total']) }}</flux:heading>
-                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Orders</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">{{ $this->periodLabel }}</flux:subheading>
                 </div>
-                <div
-                    class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.shopping-bag class="size-5 text-blue-500" />
                 </div>
             </div>
@@ -327,13 +377,13 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-emerald-500 dark:border-l-emerald-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Revenue</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ format_currency($this->stats['revenue']) }}</flux:heading>
-                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Revenue</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['revenue'] }}, decimals: 2, prefix: 'KES ' })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">{{ $this->periodLabel }} · paid</flux:subheading>
                 </div>
-                <div
-                    class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.banknotes class="size-5 text-emerald-500" />
                 </div>
             </div>
@@ -343,12 +393,12 @@ new #[Title('Orders')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Orders Today</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['today']) }}</flux:heading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['today'] }} })" x-text="display">
+                    </flux:heading>
                     <flux:subheading class="text-xs! mt-1">{{ now()->format('M j, Y') }}</flux:subheading>
                 </div>
-                <div
-                    class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.calendar-days class="size-5 text-violet-500" />
                 </div>
             </div>
@@ -357,14 +407,13 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-amber-500 dark:border-l-amber-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Needs Attention
-                    </flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!">
-                        {{ number_format($this->stats['pending']) }}</flux:heading>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Needs Attention</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!"
+                        x-data="countUp({ to: {{ $this->stats['pending'] }} })" x-text="display">
+                    </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Pending / Processing</flux:subheading>
                 </div>
-                <div
-                    class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.clock class="size-5 text-amber-500" />
                 </div>
             </div>
@@ -420,7 +469,7 @@ new #[Title('Orders')] class extends Component {
                     </flux:menu>
                 </flux:dropdown>
 
-                @if ($search || $statusFilter !== 'all')
+                @if ($search || $statusFilter !== 'all' || $dateFrom || $dateTo)
                     <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">Clear
                     </flux:button>
                 @endif
@@ -649,9 +698,64 @@ new #[Title('Orders')] class extends Component {
 
 </div>
 
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
+@assets
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+@endassets
+
+@script
+<script>
+    function waitForLibraries(cb) {
+        if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !== 'undefined') {
+            cb();
+        } else {
+            setTimeout(() => waitForLibraries(cb), 100);
+        }
     }
-</style>
+
+    function initDateRangePicker() {
+        const el = $('.orders-date-range').first();
+        if (!el.length) return;
+
+        if (el.data('daterangepicker')) {
+            el.data('daterangepicker').remove();
+        }
+
+        el.daterangepicker({
+            autoUpdateInput: false,
+            opens: 'left',
+            showDropdowns: true,
+            alwaysShowCalendars: false,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            },
+            locale: {
+                format: 'MMM DD, YYYY',
+                separator: ' – ',
+                cancelLabel: 'Clear',
+            },
+        }, function(start, end) {
+            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
+        });
+
+        el.on('cancel.daterangepicker', function() {
+            $wire.setDateRange('', '');
+            el.val('');
+        });
+
+        if ($wire.dateFrom && $wire.dateTo) {
+            el.val(moment($wire.dateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.dateTo).format('MMM DD, YYYY'));
+        }
+    }
+
+    waitForLibraries(() => initDateRangePicker());
+</script>
+@endscript

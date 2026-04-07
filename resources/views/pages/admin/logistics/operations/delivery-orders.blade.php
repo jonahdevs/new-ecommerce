@@ -979,11 +979,4 @@ new #[Title('Delivery Orders')] class extends Component {
             </div>
         </flux:modal>
 
-        <style>
-            [data-flux-pagination] {
-                padding-inline: 1rem;
-                padding-bottom: 1rem;
-            }
-        </style>
-
     </x-admin.logistics.layout>

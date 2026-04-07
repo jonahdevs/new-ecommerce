@@ -92,7 +92,17 @@
 }
 
 /* ============================================================
-   4. DARK MODE TOKEN OVERRIDES — admin panel only
+   4. FLUX COMPONENT UTILITIES
+   ============================================================ */
+
+/* Give Flux's built-in pagination consistent inner spacing */
+[data-flux-pagination] {
+    padding-inline: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* ============================================================
+   5. DARK MODE TOKEN OVERRIDES — admin panel only
    ============================================================ */
 @layer theme {
     .dark {

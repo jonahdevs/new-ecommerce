@@ -71,6 +71,7 @@ new #[Title('Flat Rates')] class extends Component {
         // Fetch all rates (active + expired) for the selected method
         $allRates = ShippingRate::where('shipping_method_id', $this->selectedMethodId)
             ->whereIn('status', [ShippingRateStatus::ACTIVE->value, ShippingRateStatus::EXPIRED->value])
+            ->with(['shippingZone'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -82,7 +83,7 @@ new #[Title('Flat Rates')] class extends Component {
 
         $rows = [];
         foreach ($tiers as $tier) {
-            $tierKey = $tier->min_weight . '-' . ($r->max_weight ?? 'max');
+            $tierKey = $tier->min_weight . '-' . ($tier->max_weight ?? 'max');
 
             $cells = [];
             $history = [];

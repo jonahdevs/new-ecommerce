@@ -97,6 +97,14 @@ class SyncOrderToSapJob implements ShouldQueue
             'sap_sync_error' => null,
         ]);
 
+        activity()
+            ->performedOn($this->order)
+            ->withProperties([
+                'sap_document' => $result->documentNumber,
+                'attempt' => $this->attempts(),
+            ])
+            ->log('sap_sync_completed');
+
         Log::info('SAP sync completed', [
             'order_id' => $this->order->id,
             'sap_document' => $result->documentNumber,
@@ -121,6 +129,14 @@ class SyncOrderToSapJob implements ShouldQueue
             'sap_sync_attempts' => $this->tries,
             'sap_sync_error' => $exception->getMessage(),
         ]);
+
+        activity()
+            ->performedOn($this->order)
+            ->withProperties([
+                'error' => $exception->getMessage(),
+                'attempts' => $this->tries,
+            ])
+            ->log('sap_sync_failed');
 
         // Alert all admin users so they can manually investigate
         Notification::send(

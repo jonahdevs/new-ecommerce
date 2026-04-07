@@ -70,6 +70,17 @@ new #[Title('Reviews')] class extends Component {
     {
         return Review::where('status', 'pending')->count();
     }
+
+    #[Computed]
+    public function stats(): array
+    {
+        return [
+            'total' => Review::count(),
+            'pending' => Review::where('status', 'pending')->count(),
+            'approved' => Review::where('status', 'approved')->count(),
+            'avg_rating' => round((float) (Review::where('status', 'approved')->avg('rating') ?? 0), 1),
+        ];
+    }
 }; ?>
 
 <div>
@@ -93,7 +104,70 @@ new #[Title('Reviews')] class extends Component {
     </div>
 
 
-    <flux:card class="p-0 mt-6 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+    {{-- KPI cards --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 mb-6">
+        <flux:card class="p-4 border-l-4 border-l-blue-500 rounded-l-none! dark:border-l-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Reviews</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.chat-bubble-left-right class="size-5 text-blue-500" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card class="p-4 border-l-4 border-l-amber-500 rounded-l-none! dark:border-l-amber-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Pending</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['pending'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">Awaiting moderation</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.clock class="size-5 text-amber-500" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card class="p-4 border-l-4 border-l-emerald-500 rounded-l-none! dark:border-l-emerald-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Approved</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['approved'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">Published reviews</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.check-badge class="size-5 text-emerald-500" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card class="p-4 border-l-4 border-l-yellow-400 rounded-l-none! dark:border-l-yellow-400">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Avg Rating</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['avg_rating'] }}, decimals: 1 })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">Approved reviews</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-yellow-50 dark:bg-yellow-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.star class="size-5 text-yellow-400" />
+                </div>
+            </div>
+        </flux:card>
+    </div>
+
+    <flux:card class="p-0 mt-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
         <div class="flex items-center gap-4 px-5 py-3 border-b dark:border-zinc-600 ">
             <flux:input wire:model.live="search" icon="magnifying-glass"
@@ -135,7 +209,8 @@ new #[Title('Reviews')] class extends Component {
                     <flux:table.row :key="$review->id">
                         {{-- Product --}}
                         <flux:table.cell class="ps-4!">
-                            <flux:heading size="sm" class="line-clamp-1">{{ $review->product->name }}</flux:heading>
+                            <flux:heading size="sm" class="line-clamp-1">{{ $review->product->name }}
+                            </flux:heading>
                         </flux:table.cell>
 
                         {{-- Review Content --}}
@@ -227,11 +302,3 @@ new #[Title('Reviews')] class extends Component {
         </flux:table>
     </flux:card>
 </div>
-
-
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>

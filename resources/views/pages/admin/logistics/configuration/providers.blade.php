@@ -239,8 +239,8 @@ new #[Title('Logistics Providers')] class extends Component {
         <flux:heading size="lg">{{ $form->provider ? 'Edit Provider' : 'Add New Provider' }}</flux:heading>
 
         <form wire:submit="save" class="space-y-4">
-            <flux:input wire:model="form.name" label="Provider Name" placeholder="e.g. Cossim Logistics" />
-            <flux:input wire:model="form.code" label="Code" placeholder="e.g. cossim"
+            <flux:input wire:model="form.name" label="Provider Name" placeholder="e.g. Express Logistics" />
+            <flux:input wire:model="form.code" label="Code" placeholder="e.g. provider_code"
                 description="Unique identifier. Lowercase, no spaces." />
 
             <flux:select wire:model="form.type" label="Type">
@@ -279,12 +279,5 @@ new #[Title('Logistics Providers')] class extends Component {
             <flux:button wire:click="delete" variant="danger" class="flex-1 cursor-pointer">Delete</flux:button>
         </div>
     </flux:modal>
-
-    <style>
-        [data-flux-pagination] {
-            padding-inline: 1rem;
-            padding-bottom: 1rem;
-        }
-    </style>
 
 </x-admin.logistics.layout>

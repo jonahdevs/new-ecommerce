@@ -41,6 +41,19 @@ new #[Title('Customers')] class extends Component {
             ->paginate($this->perPage);
     }
 
+    #[Computed]
+    public function stats(): array
+    {
+        return [
+            'total' => User::customer()->count(),
+            'active' => User::customer()->where('status', 'active')->count(),
+            'new_this_month' => User::customer()
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->count(),
+            'banned' => User::customer()->where('status', 'banned')->count(),
+        ];
+    }
+
     public function delete(int $id): void
     {
         try {
@@ -74,13 +87,75 @@ new #[Title('Customers')] class extends Component {
         </flux:button>
     </div>
 
+    {{-- KPI cards --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 mb-6">
+        <flux:card class="p-4 border-l-4 border-l-blue-500 rounded-l-none! dark:border-l-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Customers</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.users class="size-5 text-blue-500" />
+                </div>
+            </div>
+        </flux:card>
 
-    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800 mt-6">
+        <flux:card class="p-4 border-l-4 border-l-emerald-500 rounded-l-none! dark:border-l-emerald-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Active</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['active'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">Active accounts</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.user-check class="size-5 text-emerald-500" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card class="p-4 border-l-4 border-l-violet-500 rounded-l-none! dark:border-l-violet-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">New This Month</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['new_this_month'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">{{ now()->format('F Y') }}</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.user-plus class="size-5 text-violet-500" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card class="p-4 border-l-4 border-l-red-500 rounded-l-none! dark:border-l-red-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Banned</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['banned'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">Restricted accounts</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.no-symbol class="size-5 text-red-500" />
+                </div>
+            </div>
+        </flux:card>
+    </div>
+
+    <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Filters --}}
         <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b dark:border-zinc-600">
-            <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass" placeholder="Search customers..."
-                class="max-w-xs" />
+            <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass"
+                placeholder="Search customers..." class="max-w-xs" />
 
             <div class="ms-auto flex items-center gap-3">
                 <flux:select wire:model.live="status" class="w-36">
@@ -200,10 +275,3 @@ new #[Title('Customers')] class extends Component {
     </flux:card>
 
 </div>
-
-<style>
-    [data-flux-pagination] {
-        padding-inline: 1rem;
-        padding-bottom: 1rem;
-    }
-</style>
