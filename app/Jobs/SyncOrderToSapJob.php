@@ -124,7 +124,7 @@ class SyncOrderToSapJob implements ShouldQueue
 
         // Alert all admin users so they can manually investigate
         Notification::send(
-            User::where('role', 'admin')->get(),
+            User::role('admin')->get(),
             new SapSyncFailedNotification($this->order, $exception)
         );
     }

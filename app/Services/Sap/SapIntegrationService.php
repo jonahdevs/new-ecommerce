@@ -44,13 +44,21 @@ class SapIntegrationService
 
         $start = microtime(true);
 
-        $response = Http::withOptions(['verify' => false])
-            ->timeout(60)
-            ->post("{$this->baseUrl}/api/invoice/create", $payload);
+        $http = Http::withOptions(['verify' => false])->timeout(60);
+
+        if ($apiKey = config('sap.api_key')) {
+            $http = $http->withHeaders(['x-api-key' => $apiKey]);
+        }
+
+        $response = $http->post("{$this->baseUrl}/api/invoice/create", $payload);
 
         $durationMs = (int) ((microtime(true) - $start) * 1000);
         $responseData = $response->json() ?? [];
-        $success = $response->successful();
+
+        // SAP returns HTTP 200 even on business logic failures.
+        // We must check both the HTTP status and the `success` flag in the body.
+        $success = $response->successful() && ($responseData['success'] ?? false) === true;
+        $docEntry = $responseData['docEntry'] ?? null;
 
         // Audit log — always written regardless of outcome
         SapSyncLog::create([
@@ -63,7 +71,7 @@ class SapIntegrationService
             'response_payload'    => $responseData,
             'http_status_code'    => $response->status(),
             'error_message'       => $success ? null : ($responseData['message'] ?? $response->body()),
-            'sap_document_number' => $success ? ($responseData['invoice_number'] ?? $responseData['Orderid'] ?? null) : null,
+            'sap_document_number' => $success ? ($docEntry ?: null) : null,
             'duration_ms'         => $durationMs,
         ]);
 
@@ -71,10 +79,10 @@ class SapIntegrationService
             $error = $responseData['message'] ?? "SAP API returned HTTP {$response->status()}";
 
             Log::error('SAP invoice creation failed', [
-                'order_id'   => $order->id,
-                'status'     => $response->status(),
-                'error'      => $error,
-                'duration'   => $durationMs,
+                'order_id' => $order->id,
+                'status'   => $response->status(),
+                'error'    => $error,
+                'duration' => $durationMs,
             ]);
 
             throw new SapApiException(
@@ -85,15 +93,15 @@ class SapIntegrationService
         }
 
         Log::info('SAP invoice created', [
-            'order_id'       => $order->id,
-            'sap_order_id'   => $responseData['Orderid'] ?? null,
-            'duration_ms'    => $durationMs,
+            'order_id'    => $order->id,
+            'doc_entry'   => $docEntry,
+            'duration_ms' => $durationMs,
         ]);
 
         return new SapSyncResult(
-            documentNumber: (string) ($responseData['invoice_number'] ?? $responseData['Orderid'] ?? ''),
-            documentEntry:  (string) ($responseData['Orderid'] ?? ''),
-            rawResponse:    $responseData,
+            documentNumber: (string) ($docEntry ?? ''),
+            documentEntry: (string) ($docEntry ?? ''),
+            rawResponse: $responseData,
         );
     }
 

@@ -19,6 +19,8 @@ return [
     |--------------------------------------------------------------------------
     | HMAC-SHA256 secret used to verify inbound webhook payloads from SAP.
     */
+    'api_key' => env('SAP_API_KEY'),
+
     'webhook_secret' => env('SAP_WEBHOOK_SECRET'),
 
     /*
@@ -28,5 +30,4 @@ return [
     | Your company's KRA PIN displayed on tax receipts.
     */
     'business_pin' => env('KRA_BUSINESS_PIN'),
-
 ];
