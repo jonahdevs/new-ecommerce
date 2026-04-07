@@ -133,49 +133,48 @@ new #[Title('Vehicle Rates')] class extends Component {
 <x-admin.logistics.layout heading="Vehicle Rates"
     subheading="On-demand pricing by vehicle type. Price = base rate + extra KM charges beyond the included distance.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         @if ($selectedMethodId)
-            <div class="flex items-center gap-3">
-                <flux:switch wire:model.live="showHistory" label="Show deprecated" />
-                <flux:button variant="primary" icon="plus" wire:click="openCreate" class="cursor-pointer">
-                    Add Vehicle Rate
-                </flux:button>
-            </div>
+            <flux:switch wire:model.live="showHistory" label="Show deprecated" />
         @endif
-    </div>
+        <flux:button variant="primary" icon="plus" wire:click="openCreate" class="cursor-pointer" :disabled="!$selectedMethodId">
+            Add Vehicle Rate
+        </flux:button>
+    </x-slot:actions>
 
-    {{-- Method selector + status filter --}}
-    <div class="flex flex-col md:flex-row gap-4 mb-6">
-        <flux:select wire:model.live="selectedMethodId" placeholder="Select a shipping method..." class="max-w-sm">
-            @foreach ($this->distanceMethods as $method)
-                <flux:select.option value="{{ $method->id }}">
-                    {{ $method->name }} ({{ $method->logisticsProvider->name }})
-                </flux:select.option>
-            @endforeach
-        </flux:select>
+    <flux:card class="p-0">
 
-        @if ($selectedMethodId)
-            <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="md:w-44">
-                @foreach ($this->statuses as $status)
-                    <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+        {{-- Filters --}}
+        <div class="flex items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200">
+            <flux:select wire:model.live="selectedMethodId" placeholder="Select a shipping method..." class="max-w-sm">
+                @foreach ($this->distanceMethods as $method)
+                    <flux:select.option value="{{ $method->id }}">
+                        {{ $method->name }} ({{ $method->logisticsProvider->name }})
+                    </flux:select.option>
                 @endforeach
             </flux:select>
-        @endif
-    </div>
 
-    @if (!$selectedMethodId)
-        <flux:card class="py-16">
-            <div class="flex flex-col items-center gap-3 text-zinc-400">
-                <flux:icon.calculator class="w-10 h-10 opacity-40" />
-                <div class="text-center">
-                    <flux:heading size="sm">Select a distance method above</flux:heading>
-                    <flux:subheading class="mt-0.5">Only methods with type "Distance" are shown.</flux:subheading>
+            @if ($selectedMethodId)
+                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="w-44">
+                    @foreach ($this->statuses as $status)
+                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            @endif
+        </div>
+
+        @if (!$selectedMethodId)
+            <div class="py-16">
+                <div class="flex flex-col items-center gap-3 text-zinc-400">
+                    <flux:icon.calculator class="w-10 h-10 opacity-40" />
+                    <div class="text-center">
+                        <flux:heading size="sm">Select a distance method above</flux:heading>
+                        <flux:subheading class="mt-0.5">Only methods with type "Distance" are shown.</flux:subheading>
+                    </div>
                 </div>
             </div>
-        </flux:card>
-    @else
-        <flux:card class="p-0">
-            <flux:table>
+        @else
+        <flux:table>
                 <flux:table.columns>
                     <flux:table.column class="ps-4!">Vehicle</flux:table.column>
                     <flux:table.column>Base Rate</flux:table.column>
@@ -257,8 +256,9 @@ new #[Title('Vehicle Rates')] class extends Component {
                     @endforelse
                 </flux:table.rows>
             </flux:table>
-        </flux:card>
-    @endif
+        @endif
+
+    </flux:card>
 
     {{-- Create / Edit Modal --}}
     <flux:modal name="rate-modal" class="md:w-120 space-y-6">

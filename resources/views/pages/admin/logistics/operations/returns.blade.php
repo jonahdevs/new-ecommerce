@@ -184,6 +184,13 @@ new #[Title('Returns')] class extends Component {
         }
     }
 
+    public function setDateRange(string $from, string $to): void
+    {
+        $this->filterDateFrom = $from;
+        $this->filterDateTo = $to;
+        $this->resetPage();
+    }
+
     public function clearFilters(): void
     {
         $this->search = '';
@@ -202,11 +209,22 @@ new #[Title('Returns')] class extends Component {
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row md:justify-between border-b dark:border-zinc-600 px-5 py-2 gap-3">
+        <div class="flex items-center gap-3 border-b dark:border-zinc-600 px-5 py-3">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Order ID, reference..."
-                icon="magnifying-glass" clearable class="col-span-2 md:col-span-1" class="max-w-md" />
+                icon="magnifying-glass" clearable class="max-w-xs" />
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 ms-auto">
+
+                {{-- Date range picker --}}
+                <div class="relative" wire:ignore>
+                    <input type="text" readonly
+                        class="returns-date-range w-56 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
+                        placeholder="All dates" />
+                    <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                </div>
+
+                <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
+
                 <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
                     @foreach ($this->statuses as $status)
                         <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
@@ -216,18 +234,18 @@ new #[Title('Returns')] class extends Component {
                 <flux:dropdown>
                     <flux:button icon="funnel" icon-variant="outline" variant="ghost" size="sm">
                         Filters
-                        @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
+                        @if ($filterMethod || $filterZone)
                             <flux:badge size="sm" class="ms-2" color="blue">
-                                {{ collect([$filterStatus, $filterMethod, $filterZone, $filterDateFrom, $filterDateTo])->filter()->count() }}
+                                {{ collect([$filterMethod, $filterZone])->filter()->count() }}
                             </flux:badge>
                         @endif
                     </flux:button>
 
                     <flux:menu class="min-w-80">
-                        <div class="">
+                        <div>
                             <div class="flex items-center justify-between border-b dark:border-zinc-600 px-4 py-2">
                                 <flux:heading size="sm">Filter Options</flux:heading>
-                                @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
+                                @if ($filterMethod || $filterZone)
                                     <flux:button variant="ghost" size="xs" wire:click="clearFilters"
                                         class="cursor-pointer">
                                         Reset
@@ -255,23 +273,49 @@ new #[Title('Returns')] class extends Component {
                                         @endforeach
                                     </flux:select>
                                 </flux:field>
-
-                                <flux:field>
-                                    <flux:label>Date Range</flux:label>
-                                    <div class="space-y-2">
-                                        <flux:input wire:model.live="filterDateFrom" type="date" size="sm"
-                                            placeholder="From" />
-
-                                        <flux:input wire:model.live="filterDateTo" type="date" size="sm"
-                                            placeholder="To" />
-                                    </div>
-                                </flux:field>
                             </div>
                         </div>
                     </flux:menu>
                 </flux:dropdown>
+
+                @if ($search || $filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
+                    <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">Clear</flux:button>
+                @endif
             </div>
         </div>
+
+        {{-- Active filter tags --}}
+        @if ($filterStatus || $filterMethod || $filterZone || $filterDateFrom || $filterDateTo)
+            <div class="flex flex-wrap gap-2 px-5 py-2 border-b border-zinc-200 dark:border-zinc-600">
+                <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-center me-1">Active:</span>
+
+                @if ($filterStatus)
+                    <flux:badge size="sm" variant="flat" closable wire:click="$set('filterStatus', '')">
+                        Status: {{ \App\Enums\DeliveryOrderStatus::tryFrom($filterStatus)?->label() }}
+                    </flux:badge>
+                @endif
+
+                @if ($filterMethod)
+                    <flux:badge size="sm" variant="flat" closable wire:click="$set('filterMethod', '')">
+                        Method: {{ $this->methods->find($filterMethod)?->name }}
+                    </flux:badge>
+                @endif
+
+                @if ($filterZone)
+                    <flux:badge size="sm" variant="flat" closable wire:click="$set('filterZone', '')">
+                        Zone: {{ $this->zones->find($filterZone)?->name }}
+                    </flux:badge>
+                @endif
+
+                @if ($filterDateFrom || $filterDateTo)
+                    <flux:badge size="sm" variant="flat" closable wire:click="setDateRange('', '')">
+                        {{ $filterDateFrom ? \Carbon\Carbon::parse($filterDateFrom)->format('M d, Y') : '…' }}
+                        –
+                        {{ $filterDateTo ? \Carbon\Carbon::parse($filterDateTo)->format('M d, Y') : '…' }}
+                    </flux:badge>
+                @endif
+            </div>
+        @endif
 
         <flux:table :paginate="$this->returns">
             <flux:table.columns>
@@ -480,3 +524,65 @@ new #[Title('Returns')] class extends Component {
     </flux:modal>
 
 </x-admin.logistics.layout>
+
+@assets
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+@endassets
+
+@script
+<script>
+    function waitForLibraries(cb) {
+        if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !== 'undefined') {
+            cb();
+        } else {
+            setTimeout(() => waitForLibraries(cb), 100);
+        }
+    }
+
+    function initDateRangePicker() {
+        const el = $('.returns-date-range').first();
+        if (!el.length) return;
+
+        if (el.data('daterangepicker')) {
+            el.data('daterangepicker').remove();
+        }
+
+        el.daterangepicker({
+            autoUpdateInput: false,
+            opens: 'left',
+            showDropdowns: true,
+            alwaysShowCalendars: false,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            },
+            locale: {
+                format: 'MMM DD, YYYY',
+                separator: ' – ',
+                cancelLabel: 'Clear',
+            },
+        }, function(start, end) {
+            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
+        });
+
+        el.on('cancel.daterangepicker', function() {
+            $wire.setDateRange('', '');
+            el.val('');
+        });
+
+        if ($wire.filterDateFrom && $wire.filterDateTo) {
+            el.val(moment($wire.filterDateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.filterDateTo).format('MMM DD, YYYY'));
+        }
+    }
+
+    waitForLibraries(() => initDateRangePicker());
+</script>
+@endscript

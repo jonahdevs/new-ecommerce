@@ -344,13 +344,6 @@ new #[Title('Orders')] class extends Component {
                     placeholder="All time" />
                 <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
             </div>
-
-            <flux:button icon="arrow-down-tray" variant="ghost" size="sm" @click="runExport()">
-                <span x-text="selected.length > 0 ? 'Export Selected (' + selected.length + ')' : 'Export'"></span>
-            </flux:button>
-            <flux:button :href="route('admin.orders.create')" wire:navigate icon="plus" variant="primary" size="sm">
-                Create Order
-            </flux:button>
         </div>
     </div>
 
@@ -425,7 +418,17 @@ new #[Title('Orders')] class extends Component {
     {{-- ================================================================== --}}
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
-        {{-- Toolbar --}}
+        {{-- Actions --}}
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200">
+            <flux:button icon="arrow-down-tray" variant="ghost" size="sm" @click="runExport()">
+                <span x-text="selected.length > 0 ? 'Export Selected (' + selected.length + ')' : 'Export'"></span>
+            </flux:button>
+            <flux:button :href="route('admin.orders.create')" wire:navigate icon="plus" variant="primary" size="sm">
+                Create Order
+            </flux:button>
+        </div>
+
+        {{-- Filters --}}
         <div
             class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 

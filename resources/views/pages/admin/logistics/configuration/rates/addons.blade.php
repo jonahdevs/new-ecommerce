@@ -161,15 +161,16 @@ new #[Title('Rate Addons')] class extends Component {
 <x-admin.logistics.layout heading="Rate Addons"
     subheading="Surcharges that stack on top of flat rates. Used primarily for PUS pickup station fees.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Addon
         </flux:button>
-    </div>
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row justify-end gap-4 px-5 py-3 border-b dark:border-zinc-600">
+        <div class="flex items-center gap-4 px-5 py-3 border-b dark:border-zinc-600">
             <flux:dropdown position="bottom" align="end">
                 <flux:button variant="ghost" size="sm" icon="funnel" icon-variant="outline" icon-trailing="chevron-down">
                     Filters

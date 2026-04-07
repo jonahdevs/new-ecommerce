@@ -113,12 +113,11 @@ new #[Title('Shipping Zones')] class extends Component {
 <x-admin.logistics.layout heading="Zones"
     subheading="Define geographic pricing regions. Counties are assigned to zones to determine which rate bracket applies at checkout.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Zone
         </flux:button>
-    </div>
-
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}

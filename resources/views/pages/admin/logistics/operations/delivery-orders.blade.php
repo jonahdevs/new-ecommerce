@@ -305,6 +305,13 @@ new #[Title('Delivery Orders')] class extends Component {
 
     //  Misc ─
 
+    public function setDateRange(string $from, string $to): void
+    {
+        $this->filterDateFrom = $from;
+        $this->filterDateTo = $to;
+        $this->resetPage();
+    }
+
     public function clearFilters(): void
     {
         $this->search = '';
@@ -372,6 +379,16 @@ new #[Title('Delivery Orders')] class extends Component {
 
     {{-- Breadcrumb --}}
     <x-admin.logistics.layout heading="Delivery Orders" subheading="Track and manage all forward deliveries.">
+
+        <x-slot:actions>
+            <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
+            <div class="relative" wire:ignore>
+                <input type="text" readonly
+                    class="delivery-orders-date-range w-56 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
+                    placeholder="All dates" />
+                <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            </div>
+        </x-slot:actions>
 
         {{-- Stats cards --}}
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -454,16 +471,7 @@ new #[Title('Delivery Orders')] class extends Component {
                 <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                     placeholder="Search by order ID, reference..." class="max-w-xs" clearable />
 
-                <div class="flex items-center gap-2 ms-auto flex-wrap">
-
-                    <flux:select wire:model.live="filterStatus" class="w-52">
-                        <flux:select.option value="">All Orders</flux:select.option>
-                        @foreach ($this->statuses as $s)
-                            <flux:select.option value="{{ $s->value }}">
-                                {{ $s->label() }} ({{ $this->statusCounts[$s->value] ?? 0 }})
-                            </flux:select.option>
-                        @endforeach
-                    </flux:select>
+                <div class="flex items-center gap-2 ms-auto">
 
                     {{-- Per page --}}
                     <flux:select wire:model.live="perPage" class="w-24">
@@ -477,9 +485,9 @@ new #[Title('Delivery Orders')] class extends Component {
                     <flux:dropdown>
                         <flux:button icon="funnel" icon-variant="outline" variant="ghost" size="sm">
                             Filters
-                            @if ($filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
+                            @if ($filterStatus || $filterMethod || $filterZone || $filterProvider)
                                 <flux:badge size="sm" class="ms-2" color="blue">
-                                    {{ collect([$filterMethod, $filterZone, $filterProvider, $filterDateFrom, $filterDateTo])->filter()->count() }}
+                                    {{ collect([$filterStatus, $filterMethod, $filterZone, $filterProvider])->filter()->count() }}
                                 </flux:badge>
                             @endif
                         </flux:button>
@@ -488,7 +496,7 @@ new #[Title('Delivery Orders')] class extends Component {
                             <div>
                                 <div class="flex items-center justify-between px-4 py-2 border-b dark:border-zinc-600">
                                     <flux:heading size="sm">Filter Options</flux:heading>
-                                    @if ($filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
+                                    @if ($filterStatus || $filterMethod || $filterZone || $filterProvider)
                                         <flux:button variant="ghost" size="xs" wire:click="clearFilters"
                                             class="cursor-pointer">
                                             Reset
@@ -497,6 +505,17 @@ new #[Title('Delivery Orders')] class extends Component {
                                 </div>
 
                                 <div class="space-y-3 p-5">
+                                    <flux:field>
+                                        <flux:label>Status</flux:label>
+                                        <flux:select wire:model.live="filterStatus" placeholder="All Statuses">
+                                            @foreach ($this->statuses as $s)
+                                                <flux:select.option value="{{ $s->value }}">
+                                                    {{ $s->label() }} ({{ $this->statusCounts[$s->value] ?? 0 }})
+                                                </flux:select.option>
+                                            @endforeach
+                                        </flux:select>
+                                    </flux:field>
+
                                     <flux:field>
                                         <flux:label>Shipping Method</flux:label>
                                         <flux:select wire:model.live="filterMethod" placeholder="All Methods">
@@ -526,16 +545,6 @@ new #[Title('Delivery Orders')] class extends Component {
                                             @endforeach
                                         </flux:select>
                                     </flux:field>
-
-                                    <flux:field>
-                                        <flux:label>Date Range</flux:label>
-                                        <div class="space-y-2">
-                                            <flux:input wire:model.live="filterDateFrom" placeholder="From date"
-                                                type="date" size="sm"  />
-                                            <flux:input wire:model.live="filterDateTo" placeholder="To date"
-                                                type="date" size="sm"  />
-                                        </div>
-                                    </flux:field>
                                 </div>
                             </div>
                         </flux:menu>
@@ -558,21 +567,24 @@ new #[Title('Delivery Orders')] class extends Component {
                         </flux:menu>
                     </flux:dropdown>
 
-                    {{-- Clear filters --}}
+                    {{-- Clear --}}
                     @if ($search || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
-                        <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">
-                            Clear
-                        </flux:button>
+                        <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">Clear</flux:button>
                     @endif
 
                 </div>
             </div>
 
             {{-- Active filter tags --}}
-            @if ($filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
+            @if ($filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
                 <div class="flex flex-wrap gap-2 px-5 py-2 border-b border-zinc-200 dark:border-zinc-600">
-                    <span
-                        class="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-center me-1">Active:</span>
+                    <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-center me-1">Active:</span>
+
+                    @if ($filterStatus)
+                        <flux:badge size="sm" variant="flat" closable wire:click="$set('filterStatus', '')">
+                            Status: {{ DeliveryOrderStatus::tryFrom($filterStatus)?->label() }}
+                        </flux:badge>
+                    @endif
 
                     @if ($filterMethod)
                         <flux:badge size="sm" variant="flat" closable wire:click="$set('filterMethod', '')">
@@ -592,15 +604,11 @@ new #[Title('Delivery Orders')] class extends Component {
                         </flux:badge>
                     @endif
 
-                    @if ($filterDateFrom)
-                        <flux:badge size="sm" variant="flat" closable wire:click="$set('filterDateFrom', '')">
-                            From: {{ \Carbon\Carbon::parse($filterDateFrom)->format('M d, Y') }}
-                        </flux:badge>
-                    @endif
-
-                    @if ($filterDateTo)
-                        <flux:badge size="sm" variant="flat" closable wire:click="$set('filterDateTo', '')">
-                            To: {{ \Carbon\Carbon::parse($filterDateTo)->format('M d, Y') }}
+                    @if ($filterDateFrom || $filterDateTo)
+                        <flux:badge size="sm" variant="flat" closable wire:click="setDateRange('', '')">
+                            {{ $filterDateFrom ? \Carbon\Carbon::parse($filterDateFrom)->format('M d, Y') : '…' }}
+                            –
+                            {{ $filterDateTo ? \Carbon\Carbon::parse($filterDateTo)->format('M d, Y') : '…' }}
                         </flux:badge>
                     @endif
                 </div>
@@ -980,3 +988,67 @@ new #[Title('Delivery Orders')] class extends Component {
         </flux:modal>
 
     </x-admin.logistics.layout>
+
+</div>
+
+@assets
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+@endassets
+
+@script
+<script>
+    function waitForLibraries(cb) {
+        if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !== 'undefined') {
+            cb();
+        } else {
+            setTimeout(() => waitForLibraries(cb), 100);
+        }
+    }
+
+    function initDateRangePicker() {
+        const el = $('.delivery-orders-date-range').first();
+        if (!el.length) return;
+
+        if (el.data('daterangepicker')) {
+            el.data('daterangepicker').remove();
+        }
+
+        el.daterangepicker({
+            autoUpdateInput: false,
+            opens: 'left',
+            showDropdowns: true,
+            alwaysShowCalendars: false,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            },
+            locale: {
+                format: 'MMM DD, YYYY',
+                separator: ' – ',
+                cancelLabel: 'Clear',
+            },
+        }, function(start, end) {
+            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
+        });
+
+        el.on('cancel.daterangepicker', function() {
+            $wire.setDateRange('', '');
+            el.val('');
+        });
+
+        if ($wire.filterDateFrom && $wire.filterDateTo) {
+            el.val(moment($wire.filterDateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.filterDateTo).format('MMM DD, YYYY'));
+        }
+    }
+
+    waitForLibraries(() => initDateRangePicker());
+</script>
+@endscript

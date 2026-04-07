@@ -187,57 +187,54 @@ new #[Title('Flat Rates')] class extends Component {
 <x-admin.logistics.layout heading="Flat Rates"
     subheading="Weight-bracket pricing per shipping zone. Editing a rate archives the old one — history is always preserved.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         @if ($selectedMethodId)
-            <div class="flex items-center gap-3">
-                <flux:switch wire:model.live="showHistory" label="Show history" />
-                <flux:button variant="primary" icon="plus" wire:click="openAddTier" class="cursor-pointer">
-                    Add Weight Tier
-                </flux:button>
-            </div>
+            <flux:switch wire:model.live="showHistory" label="Show history" />
+            <flux:button variant="primary" icon="plus" wire:click="openAddTier" class="cursor-pointer">
+                Add Weight Tier
+            </flux:button>
         @endif
-    </div>
+    </x-slot:actions>
 
-    {{-- Method selector --}}
-    <div class="mb-6 max-w-sm">
-        <flux:select wire:model.live="selectedMethodId" placeholder="Select a shipping method...">
-            @foreach ($this->flatMethods as $method)
-                <flux:select.option value="{{ $method->id }}">
-                    {{ $method->name }}
-                    <span class="text-zinc-400">({{ $method->logisticsProvider->name }})</span>
-                </flux:select.option>
-            @endforeach
-        </flux:select>
-    </div>
+    <flux:card class="p-0">
 
-    {{-- No method selected --}}
-    @if (!$selectedMethodId)
-        <flux:card class="py-16">
-            <div class="flex flex-col items-center gap-3 text-zinc-400">
-                <flux:icon.table-cells class="w-10 h-10 opacity-40" />
-                <div class="text-center">
-                    <flux:heading size="sm">Select a method to view its rate matrix</flux:heading>
-                    <flux:subheading class="mt-0.5">Flat rates and PUS methods are shown above.</flux:subheading>
+        {{-- Filters --}}
+        <div class="flex items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200">
+            <flux:select wire:model.live="selectedMethodId" placeholder="Select a shipping method..." class="max-w-sm">
+                @foreach ($this->flatMethods as $method)
+                    <flux:select.option value="{{ $method->id }}">
+                        {{ $method->name }}
+                        <span class="text-zinc-400">({{ $method->logisticsProvider->name }})</span>
+                    </flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
+
+        @if (!$selectedMethodId)
+            <div class="py-16">
+                <div class="flex flex-col items-center gap-3 text-zinc-400">
+                    <flux:icon.table-cells class="w-10 h-10 opacity-40" />
+                    <div class="text-center">
+                        <flux:heading size="sm">Select a method to view its rate matrix</flux:heading>
+                        <flux:subheading class="mt-0.5">Flat rates and PUS methods are shown above.</flux:subheading>
+                    </div>
                 </div>
             </div>
-        </flux:card>
-
-        {{-- Matrix --}}
-    @elseif (empty($this->matrix['rows']))
-        <flux:card class="py-16">
-            <div class="flex flex-col items-center gap-3 text-zinc-400">
-                <flux:icon.table-cells class="w-10 h-10 opacity-40" />
-                <div class="text-center">
-                    <flux:heading size="sm">No rates configured yet</flux:heading>
-                    <flux:subheading class="mt-0.5">Add a weight tier to start building the rate matrix.</flux:subheading>
+        @elseif (empty($this->matrix['rows']))
+            <div class="py-16">
+                <div class="flex flex-col items-center gap-3 text-zinc-400">
+                    <flux:icon.table-cells class="w-10 h-10 opacity-40" />
+                    <div class="text-center">
+                        <flux:heading size="sm">No rates configured yet</flux:heading>
+                        <flux:subheading class="mt-0.5">Add a weight tier to start building the rate matrix.</flux:subheading>
+                    </div>
+                    <flux:button variant="primary" size="sm" icon="plus" wire:click="openAddTier">
+                        Add Weight Tier
+                    </flux:button>
                 </div>
-                <flux:button variant="primary" size="sm" icon="plus" wire:click="openAddTier">
-                    Add Weight Tier
-                </flux:button>
             </div>
-        </flux:card>
-    @else
-        <flux:card class="p-0 overflow-x-auto">
+        @else
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800">
@@ -328,8 +325,10 @@ new #[Title('Flat Rates')] class extends Component {
                     @endforeach
                 </tbody>
             </table>
-        </flux:card>
-    @endif
+        </div>
+        @endif
+
+    </flux:card>
 
     {{-- Cell edit modal --}}
     <flux:modal name="cell-modal" class="md:w-96 space-y-6">

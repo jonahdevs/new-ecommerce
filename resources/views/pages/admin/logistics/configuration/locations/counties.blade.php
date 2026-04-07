@@ -113,11 +113,11 @@ new #[Title('Counties')] class extends Component {
 <x-admin.logistics.layout heading="Counties"
     subheading="Kenya's 47 counties, each assigned to a shipping zone. The zone determines which rate bracket applies for deliveries to that county.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add County
         </flux:button>
-    </div>
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}

@@ -169,11 +169,11 @@ new #[Title('Pickup Stations')] class extends Component {
 <x-admin.logistics.layout heading="Pickup Stations"
     subheading="Physical collection points for the PUS model. Customers collect parcels here within the holding period.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Station
         </flux:button>
-    </div>
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}

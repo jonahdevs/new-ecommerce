@@ -1,6 +1,7 @@
 @props([
     'heading' => '',
     'subheading' => '',
+    'actions' => null,
 ])
 
 @php
@@ -159,12 +160,17 @@
         {{-- Main content --}}
         <div @class(['flex-1 min-w-0', 'w-full' => $activeTab === 'overview'])>
             @if ($heading || $subheading)
-                <div class="mb-5">
-                    @if ($heading)
-                        <flux:heading size="lg">{{ $heading }}</flux:heading>
-                    @endif
-                    @if ($subheading)
-                        <flux:subheading>{{ $subheading }}</flux:subheading>
+                <div class="flex items-start justify-between mb-5">
+                    <div>
+                        @if ($heading)
+                            <flux:heading size="lg">{{ $heading }}</flux:heading>
+                        @endif
+                        @if ($subheading)
+                            <flux:subheading>{{ $subheading }}</flux:subheading>
+                        @endif
+                    </div>
+                    @if (isset($actions) && !$actions->isEmpty())
+                        <div class="flex items-center gap-2 shrink-0">{{ $actions }}</div>
                     @endif
                 </div>
             @endif

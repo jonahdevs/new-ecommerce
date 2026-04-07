@@ -124,12 +124,11 @@ new #[Title('Free Shipping Rules')] class extends Component {
 <x-admin.logistics.layout heading="Free Shipping Rules"
     subheading="Promotional thresholds that waive shipping at checkout. Scope by zone and method, and schedule with start and end dates.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Rule
         </flux:button>
-    </div>
-
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}

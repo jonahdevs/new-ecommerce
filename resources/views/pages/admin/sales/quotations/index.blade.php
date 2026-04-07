@@ -66,6 +66,25 @@ new #[Title('Quotations')] class extends Component {
     }
 
     // =========================================================================
+    //  COMPUTED — PERIOD LABEL
+    // =========================================================================
+
+    #[Computed]
+    public function periodLabel(): string
+    {
+        if (! $this->dateFrom && ! $this->dateTo) {
+            return 'All time';
+        }
+        $from = $this->dateFrom ? \Carbon\Carbon::parse($this->dateFrom) : null;
+        $to = $this->dateTo ? \Carbon\Carbon::parse($this->dateTo) : null;
+        if ($from && $to && $from->isSameDay($to)) {
+            return $from->format('M j, Y');
+        }
+
+        return ($from ? $from->format('M j') : '…').' – '.($to ? $to->format('M j, Y') : '…');
+    }
+
+    // =========================================================================
     //  COMPUTED — STATS
     // =========================================================================
 
@@ -191,15 +210,22 @@ new #[Title('Quotations')] class extends Component {
     </flux:breadcrumbs>
 
     {{-- Page header --}}
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-start justify-between mb-6">
         <div>
             <flux:heading size="xl">Quotations</flux:heading>
-            <flux:subheading>Manage customer quote requests and pricing.</flux:subheading>
+            <flux:subheading>
+                {{ $this->periodLabel }} · Manage customer quote requests and pricing.
+            </flux:subheading>
         </div>
         <div class="flex items-center gap-2">
-            <flux:button icon="arrow-down-tray" variant="ghost" size="sm" wire:click="exportFiltered">
-                Export
-            </flux:button>
+            <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
+
+            <div class="relative" wire:ignore>
+                <input type="text" readonly
+                    class="quotations-date-range w-56 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
+                    placeholder="All time" />
+                <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            </div>
         </div>
     </div>
 
@@ -279,7 +305,14 @@ new #[Title('Quotations')] class extends Component {
     {{-- ================================================================== --}}
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
-        {{-- Toolbar --}}
+        {{-- Actions --}}
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200">
+            <flux:button icon="arrow-down-tray" variant="ghost" size="sm" wire:click="exportFiltered">
+                Export
+            </flux:button>
+        </div>
+
+        {{-- Filters --}}
         <div
             class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
@@ -287,16 +320,6 @@ new #[Title('Quotations')] class extends Component {
                 placeholder="Search reference, name or email..." class="max-w-xs" clearable />
 
             <div class="flex items-center gap-2 ms-auto flex-wrap">
-
-                {{-- Date range --}}
-                <div class="relative" wire:ignore>
-                    <input type="text" readonly
-                        class="quotations-date-range w-60 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
-                        placeholder="All dates" />
-                    <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-                </div>
-
-                <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
 
                 {{-- Status filter --}}
                 <flux:select wire:model.live="statusFilter" class="w-48">

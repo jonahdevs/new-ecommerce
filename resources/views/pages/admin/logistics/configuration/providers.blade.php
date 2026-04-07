@@ -120,11 +120,11 @@ new #[Title('Logistics Providers')] class extends Component {
 <x-admin.logistics.layout heading="Logistics Providers"
     subheading="Manage the companies that fulfill your deliveries. Start with your own internal operations, add external couriers later.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
             Add Provider
         </flux:button>
-    </div>
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}

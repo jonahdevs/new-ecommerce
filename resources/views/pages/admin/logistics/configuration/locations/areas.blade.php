@@ -129,12 +129,11 @@ new #[Title('Areas & Towns')] class extends Component {
 <x-admin.logistics.layout heading="Areas & Towns"
     subheading="Towns, suburbs, and estates within each county. An area can optionally override its county's shipping zone for more granular pricing.">
 
-    <div class="flex items-center justify-end mb-5">
+    <x-slot:actions>
         <flux:button variant="primary" icon="plus" wire:click="openCreate" class="cursor-pointer">
             Add Area
         </flux:button>
-    </div>
-
+    </x-slot:actions>
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}

@@ -254,23 +254,13 @@ new #[Title('Transactions')] class extends Component {
     {{-- Main card --}}
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
-        {{-- Toolbar --}}
+        {{-- Filters --}}
         <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
 
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 placeholder="Search transaction, order ref, or customer..." class="max-w-xs" clearable />
 
             <div class="flex items-center gap-2 ms-auto flex-wrap">
-
-                {{-- Date range --}}
-                <div class="relative" wire:ignore>
-                    <input type="text" readonly
-                        class="payments-date-range w-60 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
-                        placeholder="All dates" />
-                    <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-                </div>
-
-                <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
 
                 {{-- Gateway filter --}}
                 <flux:select wire:model.live="gatewayFilter" class="w-40">

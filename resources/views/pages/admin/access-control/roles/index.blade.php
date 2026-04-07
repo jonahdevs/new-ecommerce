@@ -188,6 +188,15 @@ new #[Title('Roles')] class extends Component {
 
         {{-- ── Users Table ── --}}
         <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+
+            {{-- Actions --}}
+            <div class="flex items-center justify-end gap-2 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200">
+                <flux:button icon="plus-circle" variant="primary" size="sm" class="cursor-pointer"
+                    :href="route('admin.access-control.users.create')" wire:navigate>
+                    Add User
+                </flux:button>
+            </div>
+
             {{-- Filters --}}
             <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
                 <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass"
@@ -210,11 +219,6 @@ new #[Title('Roles')] class extends Component {
                             </flux:select.option>
                         @endforeach
                     </flux:select>
-
-                    <flux:button icon="plus-circle" variant="primary" size="sm" class="cursor-pointer"
-                        :href="route('admin.access-control.users.create')" wire:navigate>
-                        Add User
-                    </flux:button>
                 </div>
             </div>
 

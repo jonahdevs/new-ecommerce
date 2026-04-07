@@ -1,4 +1,5 @@
 <?php
+use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use Livewire\Component;
 use Livewire\Attributes\{Title, Computed};
@@ -11,16 +12,15 @@ new class extends Component {
     public $refundAmount = 0;
     public $refundReason = '';
 
-    public function mount(Payment $payment)
+    public function mount(Payment $payment): void
     {
-        \Log::info('Payment: ' . $payment);
         $this->payment = $payment->load(['order' => ['user', 'items']]);
         $this->refundAmount = $this->payment->amount;
     }
 
-    public function openRefundModal()
+    public function openRefundModal(): void
     {
-        if ($this->payment->status !== 'completed') {
+        if ($this->payment->status !== PaymentStatus::PAID) {
             $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'Only completed payments can be refunded.');
             return;
         }
@@ -30,7 +30,7 @@ new class extends Component {
         $this->showRefundModal = true;
     }
 
-    public function processRefund()
+    public function processRefund(): void
     {
         $this->validate([
             'refundAmount' => 'required|numeric|min:0.01|max:' . $this->payment->amount,
@@ -167,7 +167,7 @@ new class extends Component {
             </flux:card>
 
             {{-- Refund Information (if refunded) --}}
-            @if ($payment->status === 'refunded' && isset($payment->meta['refund']))
+            @if ($payment->status === PaymentStatus::REFUNDED && isset($payment->meta['refund']))
                 <flux:card class="p-0">
                     <div class="px-5 py-3 border-b dark:border-zinc-600">
                         <flux:heading size="lg" class="mb-4">Refund Information</flux:heading>

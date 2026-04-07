@@ -125,9 +125,7 @@
                 <flux:navlist.item icon="question-mark-circle" wire:navigate :href="route('admin.content.faq.index')"
                     :current="request()->routeIs('admin.content.faq.*')">FAQ Management
                 </flux:navlist.item>
-                <flux:navlist.item icon="document" wire:navigate :href="route('admin.content.pages.index')"
-                    :current="request()->routeIs('admin.content.pages.*')">Pages
-                </flux:navlist.item>
+
             </flux:navlist.group>
 
 
