@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -85,6 +86,8 @@ class Product extends Model
 
         // SAP integration
         'sap_last_synced_at',
+
+        'tax_class_id',
     ];
 
     protected function casts(): array
@@ -123,9 +126,17 @@ class Product extends Model
     /**
      * Get the brand that owns the product
      */
-    public function brand()
+    public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    /**
+     * Get the tax class assigned to this product
+     */
+    public function taxClass(): BelongsTo
+    {
+        return $this->belongsTo(TaxClass::class);
     }
 
     /**

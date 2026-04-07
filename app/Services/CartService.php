@@ -380,8 +380,22 @@ class CartService
         }, 0.0);
 
         $taxService = app(TaxService::class);
-        $taxableAmountCents = (int) round(($subtotal - $discount) * 100);
-        $taxCents = $taxService->calculateTax($taxableAmountCents);
+
+        // Calculate tax per line item so each product's tax class rate is applied correctly.
+        $taxCents = $cart->items->reduce(function (int $carry, $item) use ($taxService, $subtotal, $discount): int {
+            $price = $item->variant?->final_price ?? $item->product->final_price;
+            $lineSubtotalCents = (int) round($price * $item->quantity * 100);
+
+            // Apply proportional discount for sale-priced lines
+            $regularPrice = $item->variant?->price ?? $item->product->price;
+            $salePrice = $item->variant?->sale_price ?? $item->product->sale_price;
+            if ($salePrice && $salePrice < $regularPrice) {
+                $lineSavingCents = (int) round(($regularPrice - $salePrice) * $item->quantity * 100);
+                $lineSubtotalCents = max(0, $lineSubtotalCents - $lineSavingCents);
+            }
+
+            return $carry + $taxService->calculateTax($lineSubtotalCents, $item->product);
+        }, 0);
 
         return [
             'subtotal' => $subtotal,

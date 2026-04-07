@@ -270,6 +270,13 @@ class ProductForm extends Form
     public $brand_id = '';
 
     // =========================================================================
+    // TAX
+    // =========================================================================
+
+    /** ID of the assigned tax class. Null means use the global default rate. */
+    public $tax_class_id = '';
+
+    // =========================================================================
     // INLINE CATEGORY CREATION
     // =========================================================================
 
@@ -570,6 +577,7 @@ class ProductForm extends Form
             'tag_ids.*' => 'exists:tags,id',
 
             'brand_id' => 'nullable|exists:brands,id',
+            'tax_class_id' => 'nullable|exists:tax_classes,id',
 
             // Self-reference prevention — a product cannot upsell or cross-sell itself
             'selected_upsells' => 'nullable|array',
@@ -775,6 +783,9 @@ class ProductForm extends Form
 
         // Brand
         $this->brand_id = $product->brand_id;
+
+        // Tax
+        $this->tax_class_id = $product->tax_class_id;
 
         // Linked products
         $this->selected_upsells = $product->upsells->pluck('id')->toArray();
@@ -1094,6 +1105,7 @@ class ProductForm extends Form
             'published_at' => $this->published_at,
 
             'brand_id' => $this->brand_id ?: null,
+            'tax_class_id' => $this->tax_class_id ?: null,
 
             'is_virtual' => $this->is_virtual,
             'is_downloadable' => $this->is_downloadable,

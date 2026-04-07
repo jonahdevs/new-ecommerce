@@ -11,7 +11,7 @@ class TaxSettingsForm extends Form
 
     public string $tax_name = 'VAT';
 
-    public float $tax_rate = 16.00;
+    public string $default_tax_class_id = '';
 
     public string $tax_type = 'exclusive';
 
@@ -24,7 +24,7 @@ class TaxSettingsForm extends Form
         return [
             'tax_enabled' => ['boolean'],
             'tax_name' => ['required_if:tax_enabled,true', 'string', 'max:30'],
-            'tax_rate' => ['required_if:tax_enabled,true', 'numeric', 'min:0', 'max:100'],
+            'default_tax_class_id' => ['nullable', 'exists:tax_classes,id'],
             'tax_type' => ['required_if:tax_enabled,true', 'in:inclusive,exclusive'],
             'tax_registration_number' => ['nullable', 'string', 'max:50'],
             'taxable_shipping' => ['boolean'],
@@ -35,7 +35,7 @@ class TaxSettingsForm extends Form
     {
         $this->tax_enabled = $settings->tax_enabled;
         $this->tax_name = $settings->tax_name;
-        $this->tax_rate = $settings->tax_rate;
+        $this->default_tax_class_id = (string) ($settings->default_tax_class_id ?? '');
         $this->tax_type = $settings->tax_type;
         $this->tax_registration_number = $settings->tax_registration_number ?? '';
         $this->taxable_shipping = $settings->taxable_shipping;
@@ -47,7 +47,7 @@ class TaxSettingsForm extends Form
 
         $settings->tax_enabled = $this->tax_enabled;
         $settings->tax_name = $this->tax_name;
-        $settings->tax_rate = $this->tax_rate;
+        $settings->default_tax_class_id = $this->default_tax_class_id ? (int) $this->default_tax_class_id : null;
         $settings->tax_type = $this->tax_type;
         $settings->tax_registration_number = $this->tax_registration_number ?: null;
         $settings->taxable_shipping = $this->taxable_shipping;

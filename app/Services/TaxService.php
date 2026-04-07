@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\Product;
+use App\Models\TaxClass;
 use App\Settings\TaxSettings;
 
 /**
  * Calculates tax based on TaxSettings configuration.
  * Supports both inclusive (tax already in price) and exclusive (tax added on top) modes.
+ * Per-product rates are resolved via tax classes; the global default class is the fallback.
  */
 class TaxService
 {
@@ -20,22 +23,6 @@ class TaxService
     public function isEnabled(): bool
     {
         return $this->settings->tax_enabled;
-    }
-
-    /**
-     * Get the tax rate as a decimal (e.g., 0.16 for 16%).
-     */
-    public function rate(): float
-    {
-        return $this->settings->tax_rate / 100;
-    }
-
-    /**
-     * Get the tax rate as a percentage string (e.g., "16%").
-     */
-    public function rateLabel(): string
-    {
-        return rtrim(rtrim(number_format($this->settings->tax_rate, 2), '0'), '.') . '%';
     }
 
     /**
@@ -63,30 +50,91 @@ class TaxService
     }
 
     /**
+     * Resolve the default tax class from settings (the global fallback).
+     */
+    public function defaultTaxClass(): ?TaxClass
+    {
+        if (!$this->settings->default_tax_class_id) {
+            return null;
+        }
+
+        return TaxClass::find($this->settings->default_tax_class_id);
+    }
+
+    /**
+     * Resolve the effective tax class for a product.
+     * Uses the product's own class, falls back to the global default class.
+     */
+    public function effectiveTaxClass(?Product $product = null): ?TaxClass
+    {
+        if ($product?->taxClass) {
+            return $product->taxClass;
+        }
+
+        return $this->defaultTaxClass();
+    }
+
+    /**
+     * Resolve the effective tax rate for a product as a decimal (e.g. 0.16).
+     * Returns 0 if no class is resolved.
+     */
+    public function effectiveRate(?Product $product = null): float
+    {
+        $class = $this->effectiveTaxClass($product);
+
+        return $class ? (float) $class->rate / 100 : 0.0;
+    }
+
+    /**
+     * Get the effective rate as a percentage label (e.g. "16%") for a product.
+     */
+    public function effectiveRateLabel(?Product $product = null): string
+    {
+        $class = $this->effectiveTaxClass($product);
+
+        if (!$class) {
+            return '0%';
+        }
+
+        return $class->rateLabel();
+    }
+
+    /**
+     * Get the default rate as a percentage label for display in the settings UI.
+     */
+    public function rateLabel(): string
+    {
+        return $this->effectiveRateLabel();
+    }
+
+    /**
      * Calculate tax for a given amount in cents.
      *
      * For EXCLUSIVE: tax = amount * rate (added on top)
      * For INCLUSIVE: tax = amount - (amount / (1 + rate)) (extracted from price)
      *
-     * @param int $amountCents The amount in cents (price or subtotal)
+     * Pass a Product to use its tax class rate instead of the global default.
+     *
+     * @param int $amountCents The amount in cents
+     * @param Product|null $product Optional product to resolve effective rate from
      * @return int Tax amount in cents
      */
-    public function calculateTax(int $amountCents): int
+    public function calculateTax(int $amountCents, ?Product $product = null): int
     {
         if (!$this->isEnabled() || $amountCents <= 0) {
             return 0;
         }
 
-        $rate = $this->rate();
+        $rate = $this->effectiveRate($product);
+
+        if ($rate === 0.0) {
+            return 0;
+        }
 
         if ($this->isInclusive()) {
-            // Tax is already included in the price — extract it
-            // Formula: tax = amount - (amount / (1 + rate))
             return (int) round($amountCents - ($amountCents / (1 + $rate)));
         }
 
-        // Tax is exclusive — add on top
-        // Formula: tax = amount * rate
         return (int) round($amountCents * $rate);
     }
 
@@ -95,15 +143,16 @@ class TaxService
      * Only changes the amount for exclusive tax; inclusive returns as-is.
      *
      * @param int $amountCents The base amount in cents
+     * @param Product|null $product Optional product to resolve effective rate from
      * @return int The total including tax in cents
      */
-    public function calculateTotal(int $amountCents): int
+    public function calculateTotal(int $amountCents, ?Product $product = null): int
     {
         if (!$this->isEnabled() || $this->isInclusive()) {
             return $amountCents;
         }
 
-        return $amountCents + $this->calculateTax($amountCents);
+        return $amountCents + $this->calculateTax($amountCents, $product);
     }
 
     /**

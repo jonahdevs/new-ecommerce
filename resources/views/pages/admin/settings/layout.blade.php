@@ -43,7 +43,7 @@
             'icon' => 'shopping-bag',
             'route' => 'settings.orders',
             'permission' => 'manage.settings',
-            'active_on' => ['settings.orders', 'settings.quotations', 'settings.tax', 'settings.reviews', 'settings.inventory'],
+            'active_on' => ['settings.orders', 'settings.quotations', 'settings.tax', 'settings.tax-classes', 'settings.reviews', 'settings.inventory'],
         ],
         'payments' => [
             'label' => __('Payments'),
@@ -104,6 +104,7 @@
             ['label' => __('Orders'), 'route' => 'settings.orders', 'permission' => 'manage.settings'],
             ['label' => __('Quotations'), 'route' => 'settings.quotations', 'permission' => 'manage.settings'],
             ['label' => __('Tax'), 'route' => 'settings.tax', 'permission' => 'manage.settings'],
+            ['label' => __('Tax Classes'), 'route' => 'settings.tax-classes', 'permission' => 'manage.settings'],
             ['label' => __('Reviews'), 'route' => 'settings.reviews', 'permission' => 'manage.settings'],
             ['label' => __('Inventory'), 'route' => 'settings.inventory', 'permission' => 'manage.settings'],
         ],

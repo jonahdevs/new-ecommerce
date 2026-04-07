@@ -1,8 +1,9 @@
 <?php
 
 use App\Livewire\Forms\Admin\Settings\TaxSettingsForm;
+use App\Models\TaxClass;
 use App\Settings\TaxSettings;
-use Livewire\Attributes\Title;
+use Livewire\Attributes\{Title, Computed};
 use Livewire\Component;
 
 new #[Title('Tax')] class extends Component {
@@ -11,6 +12,12 @@ new #[Title('Tax')] class extends Component {
     public function mount(TaxSettings $settings): void
     {
         $this->form->fromSettings($settings);
+    }
+
+    #[Computed]
+    public function taxClasses()
+    {
+        return TaxClass::orderBy('name')->get();
     }
 
     public function save(TaxSettings $settings): void
@@ -52,8 +59,18 @@ new #[Title('Tax')] class extends Component {
                         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <flux:input label="{{ __('Tax name') }}" wire:model="form.tax_name" placeholder="VAT"
                                 description="{{ __('Shown on invoices and checkout e.g. VAT, GST, Sales Tax') }}" />
-                            <flux:input label="{{ __('Tax rate (%)') }}" wire:model="form.tax_rate" type="number"
-                                min="0" max="100" step="0.01" placeholder="16" />
+
+                            <flux:select wire:model="form.default_tax_class_id"
+                                label="{{ __('Default tax class') }}"
+                                placeholder="{{ __('None — no tax applied by default') }}"
+                                description="{{ __('Applied to products with no tax class assigned') }}"
+                                clearable>
+                                @foreach ($this->taxClasses as $taxClass)
+                                    <flux:select.option value="{{ $taxClass->id }}">
+                                        {{ $taxClass->name }} — {{ $taxClass->rateLabel() }}
+                                    </flux:select.option>
+                                @endforeach
+                            </flux:select>
                         </div>
 
                         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">

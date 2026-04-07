@@ -16,6 +16,16 @@
         {{-- Cost Price --}}
         <flux:input label="Cost Price ({{ get_currency_symbol() }})" type="number" step="0.01" min="0" wire:model="form.cost_price"
             placeholder="0.00" />
+
+        {{-- Tax Class --}}
+        <flux:select wire:model="form.tax_class_id" label="Tax Class" placeholder="Use default tax class from settings" clearable
+            description="Override the default tax class for this product. Leave blank to inherit the global default.">
+            @foreach ($this->taxClasses as $taxClass)
+                <flux:select.option value="{{ $taxClass->id }}">
+                    {{ $taxClass->name }} — {{ $taxClass->rateLabel() }}
+                </flux:select.option>
+            @endforeach
+        </flux:select>
     </div>
 
     <flux:separator wire:cloak wire:show="form.is_downloadable" />

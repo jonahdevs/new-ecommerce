@@ -1520,6 +1520,15 @@ abstract class BaseProductComponent extends Component
     }
 
     /**
+     * All tax classes for the tax class selector.
+     */
+    #[Computed]
+    public function taxClasses()
+    {
+        return \App\Models\TaxClass::orderBy('name')->select('id', 'name', 'rate')->get();
+    }
+
+    /**
      * Flattened category tree for the category checkbox list.
      * Persisted — busted explicitly after createCategory().
      */
