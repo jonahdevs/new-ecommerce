@@ -339,7 +339,7 @@ new #[Layout('layouts.guest')] class extends Component {
     </div>
 
     <section class="container mx-auto px-4 mt-5 md:mt-7">
-        <img src="{{ asset('images/home/THIN BANNER.png') }}" alt="banner" class="w-full h-auto" loading="lazy">
+        <img src="{{ asset('images/home/THIN BANNER.webp') }}" alt="banner" class="w-full h-auto" loading="lazy">
     </section>
 
     {{-- New Arrivals --}}
