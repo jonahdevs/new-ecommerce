@@ -355,7 +355,7 @@ class Product extends Model
     protected function finalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->sale_price && $this->sale_price < $this->price ? $this->sale_price : $this->price,
+            get: fn() => $this->sale_price ?? $this->price,
         );
     }
 
@@ -378,7 +378,7 @@ class Product extends Model
     protected function formattedPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => format_currency($this->price)
+            get: fn() => $this->price !== null ? format_currency($this->price) : null
         );
     }
 
@@ -465,12 +465,8 @@ class Product extends Model
 
         $minPrice = $variants
             ->where('is_active', true)
-            ->whereNotNull('price')
-            ->min(
-                fn($v) => $v->sale_price && $v->sale_price < $v->price
-                ? $v->sale_price
-                : $v->price
-            );
+            ->filter(fn($v) => ($v->sale_price ?? $v->price) !== null)
+            ->min(fn($v) => $v->sale_price ?? $v->price);
 
         return $minPrice !== null ? format_currency($minPrice) : null;
     }
@@ -492,10 +488,7 @@ class Product extends Model
         }
 
         $total = $items->sum(function ($item) {
-            $price = $item->sale_price && $item->sale_price < $item->price
-                ? $item->sale_price
-                : ($item->price ?? 0);
-
+            $price = $item->sale_price ?? $item->price ?? 0;
             $qty = $item->pivot->quantity ?? 1;
 
             return $price * $qty;
