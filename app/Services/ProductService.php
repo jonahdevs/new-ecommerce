@@ -34,7 +34,7 @@ class ProductService
                 'images' => fn($q) => $q->limit(1),
                 'variants' => fn($q) => $q
                     ->where('is_active', true)
-                    ->whereNotNull('price')
+                    ->where(fn($q) => $q->whereNotNull('price')->orWhereNotNull('sale_price'))
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
             ])
             ->withAvg('reviews', 'rating')
@@ -70,7 +70,7 @@ class ProductService
                 'images' => fn($q) => $q->limit(1),
                 'variants' => fn($q) => $q
                     ->where('is_active', true)
-                    ->whereNotNull('price')
+                    ->where(fn($q) => $q->whereNotNull('price')->orWhereNotNull('sale_price'))
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
             ])
             ->withAvg('reviews', 'rating')

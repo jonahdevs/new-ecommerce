@@ -50,10 +50,10 @@
                                     class="text-center w-20!" />
                             </div>
                             <div class="col-span-2 text-right text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ format_currency($item['price'] ?? 0) }}
+                                {{ format_currency($item['sale_price'] ?? $item['price'] ?? 0) }}
                             </div>
                             <div class="col-span-2 text-right text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                {{ format_currency(($item['price'] ?? 0) * ($item['quantity'] ?? 1)) }}
+                                {{ format_currency(($item['sale_price'] ?? $item['price'] ?? 0) * ($item['quantity'] ?? 1)) }}
                             </div>
                             <div class="col-span-1 flex justify-end">
                                 <button type="button" wire:click="removeGroupedProduct({{ $index }})"
@@ -86,10 +86,10 @@
                                         class="text-center w-20" />
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xs text-zinc-400">{{ format_currency($item['price'] ?? 0) }}
+                                    <p class="text-xs text-zinc-400">{{ format_currency($item['sale_price'] ?? $item['price'] ?? 0) }}
                                         each</p>
                                     <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                        {{ format_currency(($item['price'] ?? 0) * ($item['quantity'] ?? 1)) }}
+                                        {{ format_currency(($item['sale_price'] ?? $item['price'] ?? 0) * ($item['quantity'] ?? 1)) }}
                                     </p>
                                 </div>
                             </div>
@@ -205,7 +205,7 @@
 
                             {{-- Unit Price --}}
                             <div class="col-span-2 text-right text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ format_currency($item['price'] ?? 0) }}
+                                {{ format_currency($item['sale_price'] ?? $item['price'] ?? 0) }}
                             </div>
 
                             {{-- Remove --}}
@@ -240,7 +240,7 @@
                                         class="text-center w-20" />
                                 </div>
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                                    {{ format_currency($item['price'] ?? 0) }}
+                                    {{ format_currency($item['sale_price'] ?? $item['price'] ?? 0) }}
                                 </p>
                             </div>
                         </div>

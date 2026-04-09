@@ -99,7 +99,7 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function priceRange()
     {
-        return Cache::tags(['products'])->remember('shop:price-range', self::TTL_PRODUCTS, fn() => Product::active()->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first());
+        return Cache::tags(['products'])->remember('shop:price-range', self::TTL_PRODUCTS, fn() => Product::active()->selectRaw('MIN(COALESCE(sale_price, price)) as min_price, MAX(COALESCE(sale_price, price)) as max_price')->first());
     }
 
     #[Computed(persist: true)]
@@ -154,8 +154,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
         $query->when(!empty($this->selectedBrands), fn(Builder $q) => $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands)));
 
-        $query->when($this->minPrice !== null, fn(Builder $q) => $q->where('price', '>=', $this->minPrice));
-        $query->when($this->maxPrice !== null, fn(Builder $q) => $q->where('price', '<=', $this->maxPrice));
+        $query->when($this->minPrice !== null, fn(Builder $q) => $q->whereRaw('COALESCE(sale_price, price) >= ?', [$this->minPrice]));
+        $query->when($this->maxPrice !== null, fn(Builder $q) => $q->whereRaw('COALESCE(sale_price, price) <= ?', [$this->maxPrice]));
 
         $query->when($this->minRating, fn(Builder $q) => $q->where('average_rating', '>=', $this->minRating));
 
@@ -165,8 +165,8 @@ new #[Layout('layouts.guest')] class extends Component {
         match ($this->sortBy) {
             'name_asc' => $query->orderBy('name', 'asc'),
             'name_desc' => $query->orderBy('name', 'desc'),
-            'price_asc' => $query->orderBy('price', 'asc'),
-            'price_desc' => $query->orderBy('price', 'desc'),
+            'price_asc' => $query->orderByRaw('COALESCE(sale_price, price) asc'),
+            'price_desc' => $query->orderByRaw('COALESCE(sale_price, price) desc'),
             'rating' => $query->orderBy('average_rating', 'desc'),
             'newest' => $query->orderBy('created_at', 'desc'),
             'popular' => $query->orderBy('sales_count', 'desc'),

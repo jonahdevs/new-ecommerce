@@ -929,7 +929,7 @@ new #[Title('Dashboard')] class extends Component {
                                 <td class="px-5 py-3 text-xs text-zinc-400 font-mono">
                                     {{ $product->sku ?? '—' }}</td>
                                 <td class="px-5 py-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ format_currency($product->price) }}</td>
+                                    {{ format_currency($product->final_price ?? 0) }}</td>
                                 <td class="px-5 py-3">
                                     @if ($product->stock_quantity === 0)
                                         <span

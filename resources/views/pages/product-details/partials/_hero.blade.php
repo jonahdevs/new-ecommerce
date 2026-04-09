@@ -245,27 +245,28 @@
         <div>
             @php
                 $displaySource = $this->selectedVariant ?? $product;
-                $price = $displaySource->price;
+                $regularPrice = $displaySource->price;
                 $salePrice = $displaySource->sale_price;
-                $hasDiscount = $salePrice && $price && $salePrice < $price;
+                $finalPrice = $salePrice ?? $regularPrice;
+                $hasDiscount = $salePrice && $regularPrice && $salePrice < $regularPrice;
             @endphp
 
-            @if ($price)
+            @if ($finalPrice)
                 @if ($hasDiscount)
                     <div class="flex items-center flex-wrap gap-2">
                         <span class="text-2xl font-bold text-brand-secondary">
                             {{ format_currency($salePrice) }}
                         </span>
                         <span class="text-base text-zinc-400 line-through">
-                            {{ format_currency($price) }}
+                            {{ format_currency($regularPrice) }}
                         </span>
                         <flux:badge color="amber" size="sm">
-                            -{{ number_format((($price - $salePrice) / $price) * 100) }}%
+                            -{{ number_format((($regularPrice - $salePrice) / $regularPrice) * 100) }}%
                         </flux:badge>
                     </div>
                 @else
                     <span class="text-2xl font-bold text-brand-secondary">
-                        {{ format_currency($price) }}
+                        {{ format_currency($finalPrice) }}
                     </span>
                 @endif
             @elseif ($product->type->value === 'variable' && !$selectedVariantId)

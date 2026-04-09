@@ -52,8 +52,8 @@ new #[Title('Inventory Health')] class extends Component {
 
         $totalStockValue = (float) (Product::where('manage_stock', true)
             ->where('stock_quantity', '>', 0)
-            ->whereNotNull('price')
-            ->selectRaw('SUM(stock_quantity * price) as total_value')
+            ->where(fn($q) => $q->whereNotNull('sale_price')->orWhereNotNull('price'))
+            ->selectRaw('SUM(stock_quantity * COALESCE(sale_price, price)) as total_value')
             ->value('total_value') ?? 0);
 
         return compact('outOfStock', 'lowStock', 'deadStockCount', 'totalStockValue');
@@ -75,10 +75,10 @@ new #[Title('Inventory Health')] class extends Component {
                 products.name,
                 products.sku,
                 products.stock_quantity,
-                products.price,
+                COALESCE(products.sale_price, products.price) as price,
                 SUM(order_items.quantity) as units_sold
             ')
-            ->groupBy('products.id', 'products.name', 'products.sku', 'products.stock_quantity', 'products.price')
+            ->groupBy('products.id', 'products.name', 'products.sku', 'products.stock_quantity', 'products.sale_price', 'products.price')
             ->orderByDesc('units_sold')
             ->limit(15)
             ->get()
@@ -105,7 +105,7 @@ new #[Title('Inventory Health')] class extends Component {
         return Product::where('manage_stock', true)
             ->where('stock_quantity', '>', 0)
             ->whereNotIn('id', $activeProductIds)
-            ->select('id', 'name', 'sku', 'stock_quantity', 'price', 'cost_price')
+            ->selectRaw('id, name, sku, stock_quantity, COALESCE(sale_price, price) as price, cost_price')
             ->orderByDesc('stock_quantity')
             ->limit(20)
             ->get();

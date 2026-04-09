@@ -105,7 +105,7 @@ class OrderService
             $variantName = $variant ? " - {$variant->name}" : '';
         }
 
-        $unitPrice = $variant?->price ?? $product->final_price;
+        $unitPrice = $variant?->final_price ?? $product->final_price;
 
         OrderItem::create([
             'order_id' => $order->id,

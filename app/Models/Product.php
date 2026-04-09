@@ -461,7 +461,7 @@ class Product extends Model
         // Use already-loaded variants if available - avoids extra query
         $variants = $this->relationLoaded('variants')
             ? $this->variants
-            : $this->variants()->where('is_active', true)->whereNotNull('price')->get();
+            : $this->variants()->where('is_active', true)->where(fn($q) => $q->whereNotNull('price')->orWhereNotNull('sale_price'))->get();
 
         $minPrice = $variants
             ->where('is_active', true)

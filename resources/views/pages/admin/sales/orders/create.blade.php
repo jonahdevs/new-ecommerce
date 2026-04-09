@@ -231,7 +231,7 @@ new #[Title('Create Order')] class extends Component {
             }
         }
 
-        $unitPrice = (float) ($product->sale_price && $product->sale_price < $product->price ? $product->sale_price : $product->price);
+        $unitPrice = (float) ($product->final_price ?? 0);
 
         $this->items[] = [
             'product_id' => $product->id,
@@ -657,7 +657,7 @@ new #[Title('Create Order')] class extends Component {
                                                 <p class="text-sm font-medium text-zinc-800 dark:text-white truncate">
                                                     {{ $p['name'] }}</p>
                                                 <p class="text-xs text-zinc-500">{{ $p['sku'] ?? '—' }} ·
-                                                    {{ format_currency($p['sale_price'] && $p['sale_price'] < $p['price'] ? $p['sale_price'] : $p['price']) }}
+                                                    {{ format_currency($p['sale_price'] ?? $p['price'] ?? 0) }}
                                                 </p>
                                             </div>
                                             <flux:icon name="plus-circle" class="size-5 text-zinc-400 shrink-0" />
