@@ -26,7 +26,6 @@ class SapWebhookHandler
 
         $this->logWebhookRequest($request, $payload);
 
-        // Property 4: reject anything with an invalid or missing secret header
         if (! $this->validateSignature($request)) {
             Log::warning('SAP webhook rejected — invalid secret', [
                 'ip' => $request->ip(),
@@ -39,15 +38,14 @@ class SapWebhookHandler
 
     // ================================================================
     // Signature validation
-    // SAP sends a simple secret header (X-SAP-Secret) that we compare
-    // with our configured secret using hash_equals to prevent timing attacks.
+    // SAP sends a simple secret header (X-SAP-Secret) compared with
+    // our configured secret using hash_equals to prevent timing attacks.
     // ================================================================
 
     public function validateSignature(Request $request): bool
     {
         $secret = config('sap.webhook_secret');
 
-        // If no secret configured, skip validation (not recommended for production)
         if (empty($secret)) {
             return true;
         }
@@ -63,22 +61,17 @@ class SapWebhookHandler
 
     // ================================================================
     // Payload processing
+    //
+    // Webhook payload shape:
+    //   external_reference  — our order reference (always present)
+    //   cu_number           — KRA CU number (present on KRA validation)
+    //   status              — "returned" when the order is returned in SAP
     // ================================================================
 
     public function processPayload(array $payload): void
     {
-        $event = $payload['event'] ?? null;
+        $reference = $payload['external_reference'] ?? null;
 
-        if ($event !== 'invoice.cu_number_generated') {
-            Log::info('SAP webhook: unhandled event type, ignoring', ['event' => $event]);
-
-            return;
-        }
-
-        $data = $payload['data'] ?? [];
-        $reference = $data['external_reference'] ?? null;
-
-        // Property 6: reject webhooks with unknown order references
         if (! $reference) {
             Log::warning('SAP webhook: missing external_reference in payload');
 
@@ -93,56 +86,63 @@ class SapWebhookHandler
             return;
         }
 
-        // Property 5: idempotency — if we already have this exact CU number, skip
-        $incomingCuNumber = $data['cu_number'] ?? null;
+        $status = $payload['status'] ?? null;
 
-        if ($order->kra_cu_number && $order->kra_cu_number === $incomingCuNumber) {
-            Log::info('SAP webhook: duplicate delivery, CU number already stored', [
+        if ($status === 'returned') {
+            $this->handleReturn($order, $payload);
+
+            return;
+        }
+
+        $this->handleCuNumber($order, $payload);
+    }
+
+    // ================================================================
+    // CU number received — store it and send the receipt
+    // ================================================================
+
+    private function handleCuNumber(Order $order, array $payload): void
+    {
+        $cuNumber = $payload['cu_number'] ?? null;
+
+        if (! $cuNumber) {
+            Log::warning('SAP webhook: missing cu_number in payload', [
                 'order_id' => $order->id,
-                'kra_cu_number' => $incomingCuNumber,
             ]);
 
             return;
         }
 
-        $cuResult = new CuNumberResult(
-            cuNumber: $incomingCuNumber,
-            kraInvoiceNumber: $data['kra_invoice_number'] ?? null,
-            validatedAt: isset($data['validated_at'])
-                ? Carbon::parse($data['validated_at'])
+        // Idempotency — skip if we already have this exact CU number
+        if ($order->kra_cu_number && $order->kra_cu_number === $cuNumber) {
+            Log::info('SAP webhook: duplicate delivery, CU number already stored', [
+                'order_id' => $order->id,
+                'kra_cu_number' => $cuNumber,
+            ]);
+
+            return;
+        }
+
+        $result = new CuNumberResult(
+            cuNumber: $cuNumber,
+            validatedAt: isset($payload['validated_at'])
+                ? Carbon::parse($payload['validated_at'])
                 : now(),
         );
 
-        $this->storeCuNumber($order, $cuResult, $payload);
-        $this->generateAndSendReceipt($order);
-    }
-
-    // ================================================================
-    // Private helpers
-    // ================================================================
-
-    /**
-     * Property 7: stores all three KRA fields atomically and updates
-     * sap_sync_status to cu_received.
-     */
-    private function storeCuNumber(Order $order, CuNumberResult $result, array $rawPayload): void
-    {
         $order->update([
             'kra_cu_number' => $result->cuNumber,
-            'kra_invoice_number' => $result->kraInvoiceNumber,
             'kra_validated_at' => $result->validatedAt,
             'sap_sync_status' => SapSyncStatus::CU_RECEIVED,
-
         ]);
 
-        // Log the webhook as a successful inbound operation
         SapSyncLog::create([
             'order_id' => $order->id,
             'operation' => 'cu_webhook',
             'status' => 'success',
             'endpoint' => '/webhooks/sap',
             'http_method' => 'POST',
-            'request_payload' => $rawPayload,
+            'request_payload' => $payload,
             'response_payload' => null,
             'http_status_code' => 200,
             'duration_ms' => null,
@@ -151,21 +151,17 @@ class SapWebhookHandler
         Log::info('SAP webhook: CU number stored', [
             'order_id' => $order->id,
             'kra_cu_number' => $result->cuNumber,
+            'kra_validated_at' => $result->validatedAt->toISOString(),
         ]);
 
-        // Activity log for audit trail
         activity()
             ->performedOn($order)
             ->withProperties([
                 'kra_cu_number' => $result->cuNumber,
-                'kra_invoice_number' => $result->kraInvoiceNumber,
-                'kra_validated_at' => $result->validatedAt?->toISOString(),
+                'kra_validated_at' => $result->validatedAt->toISOString(),
             ])
             ->log('sap_kra_validated');
-    }
 
-    private function generateAndSendReceipt(Order $order): void
-    {
         try {
             $this->receiptService->generate($order);
             $this->receiptService->sendToCustomer($order);
@@ -179,13 +175,46 @@ class SapWebhookHandler
         }
     }
 
-    /**
-     * Property 13: logs every inbound webhook request for audit purposes,
-     * before any processing so even rejected requests are captured.
-     */
+    // ================================================================
+    // Order returned in SAP
+    // ================================================================
+
+    private function handleReturn(Order $order, array $payload): void
+    {
+        $order->update([
+            'sap_sync_status' => SapSyncStatus::RETURNED,
+        ]);
+
+        SapSyncLog::create([
+            'order_id' => $order->id,
+            'operation' => 'return_webhook',
+            'status' => 'success',
+            'endpoint' => '/webhooks/sap',
+            'http_method' => 'POST',
+            'request_payload' => $payload,
+            'response_payload' => null,
+            'http_status_code' => 200,
+            'duration_ms' => null,
+        ]);
+
+        Log::info('SAP webhook: order marked as returned', [
+            'order_id' => $order->id,
+            'reference' => $order->reference,
+        ]);
+
+        activity()
+            ->performedOn($order)
+            ->log('sap_order_returned');
+    }
+
+    // ================================================================
+    // Audit log — written before any processing so even rejected
+    // requests are captured.
+    // ================================================================
+
     private function logWebhookRequest(Request $request, array $payload): void
     {
-        $reference = $payload['data']['external_reference'] ?? null;
+        $reference = $payload['external_reference'] ?? null;
         $order = $reference ? Order::where('reference', $reference)->first() : null;
 
         if ($order) {

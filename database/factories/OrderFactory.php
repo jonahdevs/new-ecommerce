@@ -57,7 +57,6 @@ class OrderFactory extends Factory
             'customer_notes' => $this->faker->optional(0.2)->sentence(),
             'preferred_county' => $county,
             'preferred_area' => $this->faker->optional()->streetName(),
-            'lpo_number' => $this->faker->optional(0.1)->bothify('LPO-####'),
             'expires_at' => null,
             'created_at' => $createdAt,
             'updated_at' => $createdAt,

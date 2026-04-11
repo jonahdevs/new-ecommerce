@@ -2,16 +2,15 @@
 
 namespace App\Services\Sap\ValueObjects;
 
+use Carbon\Carbon;
+
 /**
- * Returned by SapIntegrationService::pollCuNumber() when the CU number
- * is available. Also used by SapWebhookHandler to pass structured data
- * to the order update logic.
+ * Carries the CU validation data delivered by the SAP webhook.
  */
 readonly class CuNumberResult
 {
     public function __construct(
         public string $cuNumber,
-        public ?string $kraInvoiceNumber,
-        public \Carbon\Carbon $validatedAt,
+        public Carbon $validatedAt,
     ) {}
 }

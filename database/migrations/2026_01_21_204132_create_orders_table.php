@@ -41,43 +41,30 @@ return new class extends Migration
 
             $table->timestamp('expires_at')->nullable();
 
-            $table->string('lpo_number')->nullable()->comment('Customer LPO reference number');
-
             // ---------------------------------------------------------------
-            // SAP Business One — three separate document references
+            // SAP Business One — document references (named as SAP returns them)
             // ---------------------------------------------------------------
-            $table->string('sap_order_number')->nullable()->comment('SAP Sales Order DocNum');
-            $table->string('sap_invoice_number')->nullable()->comment('SAP A/R Invoice DocNum');
-            $table->string('sap_payment_number')->nullable()->comment('SAP Incoming Payment DocNum');
+            $table->string('sap_doc_number')->nullable()->comment('SAP DocNum — human-readable document number');
+            $table->string('sap_doc_entry')->nullable()->comment('SAP DocEntry — internal SAP primary key');
 
             $table->string('sap_sync_status')->default('pending')
-                ->comment('pending | syncing | synced | failed | cu_pending | cu_received');
+                ->comment('pending | syncing | failed | cu_pending | cu_received | returned');
             $table->timestamp('sap_synced_at')->nullable();
             $table->unsignedTinyInteger('sap_sync_attempts')->default(0);
             $table->text('sap_sync_error')->nullable();
 
             // ---------------------------------------------------------------
-            // eTIMS device fields
-            // ---------------------------------------------------------------
-            $table->string('etims_cu_serial_no')->nullable();
-            $table->timestamp('etims_cu_datetime')->nullable();
-            $table->text('etims_qr_code')->nullable();
-            $table->string('etims_status')->nullable()->comment('pending | submitted | accepted | failed');
-
-            // ---------------------------------------------------------------
             // KRA receipt fields
             // ---------------------------------------------------------------
             $table->string('kra_cu_number')->nullable();
-            $table->string('kra_invoice_number')->nullable();
             $table->timestamp('kra_validated_at')->nullable();
-            $table->string('kra_receipt_path')->nullable();
 
             $table->timestamps();
 
             // Single-column indexes
             $table->index('status', 'idx_orders_status');
             $table->index('sap_sync_status', 'idx_orders_sap_sync_status');
-            $table->index('sap_invoice_number', 'idx_orders_sap_invoice_number');
+            $table->index('sap_doc_entry', 'idx_orders_sap_doc_entry');
 
             // Composite indexes for common filter + sort patterns
             $table->index(['status', 'created_at'], 'idx_orders_status_created_at');

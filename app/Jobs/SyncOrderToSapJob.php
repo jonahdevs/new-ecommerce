@@ -45,13 +45,12 @@ class SyncOrderToSapJob implements ShouldQueue
 
     // -------------------------------------------------------
     // Main execution
-    // Runs the full three-step SAP sync:
-    //   Step 1: Create Sales Order   → stores sap_order_number
-    //   Step 2: Create A/R Invoice   → stores sap_invoice_number
-    //   Step 3: Record Payment       → stores sap_payment_number
+    // POSTs the order to the SAP middleware (single call).
+    // The middleware handles Sales Order + A/R Invoice +
+    // Incoming Payment creation internally.
     //
     // On success, status moves to cu_pending — we now wait for
-    // the eTIMS webhook to deliver the CU number.
+    // the KRA webhook to deliver the CU number.
     //
     // On any exception the job throws so Laravel's retry
     // mechanism picks it up at the next backoff interval.
@@ -62,7 +61,7 @@ class SyncOrderToSapJob implements ShouldQueue
         // Idempotency guard — if the job was dispatched more than once (e.g.
         // from both a webhook and a 3DS redirect), skip if already completed.
         $fresh = $this->order->fresh();
-        $completedStatuses = [SapSyncStatus::CU_PENDING, SapSyncStatus::CU_RECEIVED, SapSyncStatus::SYNCED];
+        $completedStatuses = [SapSyncStatus::CU_PENDING, SapSyncStatus::CU_RECEIVED];
         if (in_array($fresh->sap_sync_status, $completedStatuses)) {
             Log::info('SAP sync skipped — already completed', [
                 'order_id' => $this->order->id,
@@ -87,10 +86,10 @@ class SyncOrderToSapJob implements ShouldQueue
         $result = $sap->syncOrder($this->order);
 
         // Move to CU_PENDING — SAP documents are created, now waiting for
-        // the eTIMS/KRA webhook to deliver the CU number and generate the invoice.
+        // the KRA webhook to deliver the CU number and generate the invoice.
         $this->order->update([
-            'sap_order_number' => $result->documentEntry ?: $result->documentNumber,
-            'sap_invoice_number' => $result->documentNumber,
+            'sap_doc_number' => $result->docNumber,
+            'sap_doc_entry' => $result->docEntry,
             'sap_sync_status' => SapSyncStatus::CU_PENDING,
             'sap_synced_at' => now(),
             'sap_sync_attempts' => $this->attempts(),
@@ -100,14 +99,16 @@ class SyncOrderToSapJob implements ShouldQueue
         activity()
             ->performedOn($this->order)
             ->withProperties([
-                'sap_document' => $result->documentNumber,
+                'sap_doc_number' => $result->docNumber,
+                'sap_doc_entry' => $result->docEntry,
                 'attempt' => $this->attempts(),
             ])
             ->log('sap_sync_completed');
 
         Log::info('SAP sync completed', [
             'order_id' => $this->order->id,
-            'sap_document' => $result->documentNumber,
+            'sap_doc_number' => $result->docNumber,
+            'sap_doc_entry' => $result->docEntry,
         ]);
     }
 

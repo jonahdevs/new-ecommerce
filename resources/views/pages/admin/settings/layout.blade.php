@@ -24,30 +24,37 @@
     }
 
     $tabs = [
-        'account' => [
-            'label' => __('Account'),
+        'general' => [
+            'label' => __('General'),
             'icon' => 'user-circle',
             'route' => 'profile.edit',
             'permission' => null,
-            'active_on' => ['profile.edit', 'user-password.edit', 'two-factor.show', 'appearance.edit'],
+            'active_on' => ['profile.edit', 'user-password.edit', 'two-factor.show', 'settings.admin-alerts', 'settings.customer-emails'],
         ],
-        'general' => [
-            'label' => __('General'),
-            'icon' => 'building-storefront',
+        'website' => [
+            'label' => __('Website'),
+            'icon' => 'globe-alt',
             'route' => 'settings.store-info',
             'permission' => 'manage.settings',
-            'active_on' => ['settings.store-info', 'settings.localization', 'settings.regional'],
+            'active_on' => ['settings.store-info', 'settings.localization', 'settings.regional', 'appearance.edit', 'settings.seo', 'settings.social'],
         ],
-        'commerce' => [
-            'label' => __('Commerce'),
-            'icon' => 'shopping-bag',
+        'app' => [
+            'label' => __('App'),
+            'icon' => 'squares-2x2',
             'route' => 'settings.orders',
             'permission' => 'manage.settings',
-            'active_on' => ['settings.orders', 'settings.quotations', 'settings.tax', 'settings.tax-classes', 'settings.reviews', 'settings.inventory'],
+            'active_on' => ['settings.orders', 'settings.quotations', 'settings.inventory', 'settings.reviews'],
         ],
-        'payments' => [
-            'label' => __('Payments'),
-            'icon' => 'credit-card',
+        'system' => [
+            'label' => __('System'),
+            'icon' => 'cog-6-tooth',
+            'route' => 'settings.mail',
+            'permission' => 'manage.settings',
+            'active_on' => ['settings.mail', 'settings.maintenance'],
+        ],
+        'financial' => [
+            'label' => __('Financial'),
+            'icon' => 'banknotes',
             'route' => 'settings.payments.gateways',
             'permission' => 'manage.settings',
             'active_on' => [
@@ -58,33 +65,14 @@
                 'settings.payments.pesapal',
                 'settings.payments.pesawise',
                 'settings.payments.cod',
+                'settings.tax',
+                'settings.tax-classes',
             ],
-        ],
-        'notifications' => [
-            'label' => __('Notifications'),
-            'icon' => 'bell',
-            'route' => 'settings.mail',
-            'permission' => 'manage.settings',
-            'active_on' => ['settings.mail', 'settings.admin-alerts', 'settings.customer-emails'],
-        ],
-        'seo' => [
-            'label' => __('SEO & Marketing'),
-            'icon' => 'magnifying-glass',
-            'route' => 'settings.seo',
-            'permission' => 'manage.settings',
-            'active_on' => ['settings.seo', 'settings.social'],
-        ],
-        'system' => [
-            'label' => __('System'),
-            'icon' => 'cog-6-tooth',
-            'route' => 'settings.maintenance',
-            'permission' => 'manage.settings',
-            'active_on' => ['settings.maintenance'],
         ],
     ];
 
     $subnavs = [
-        'account' => [
+        'general' => [
             ['label' => __('Profile'), 'route' => 'profile.edit', 'permission' => null],
             ['label' => __('Password'), 'route' => 'user-password.edit', 'permission' => null],
             [
@@ -93,41 +81,30 @@
                 'permission' => null,
                 'visible' => Laravel\Fortify\Features::canManageTwoFactorAuthentication(),
             ],
-            ['label' => __('Appearance'), 'route' => 'appearance.edit', 'permission' => null],
+            ['label' => __('Admin alerts'), 'route' => 'settings.admin-alerts', 'permission' => 'manage.settings'],
+            ['label' => __('Customer emails'), 'route' => 'settings.customer-emails', 'permission' => 'manage.settings'],
         ],
-        'general' => [
-            ['label' => __('Store info'), 'route' => 'settings.store-info', 'permission' => 'manage.settings'],
+        'website' => [
+            ['label' => __('Business info'), 'route' => 'settings.store-info', 'permission' => 'manage.settings'],
             ['label' => __('Localization'), 'route' => 'settings.localization', 'permission' => 'manage.settings'],
             ['label' => __('Regional'), 'route' => 'settings.regional', 'permission' => 'manage.settings'],
-        ],
-        'commerce' => [
-            ['label' => __('Orders'), 'route' => 'settings.orders', 'permission' => 'manage.settings'],
-            ['label' => __('Quotations'), 'route' => 'settings.quotations', 'permission' => 'manage.settings'],
-            ['label' => __('Tax'), 'route' => 'settings.tax', 'permission' => 'manage.settings'],
-            ['label' => __('Tax Classes'), 'route' => 'settings.tax-classes', 'permission' => 'manage.settings'],
-            ['label' => __('Reviews'), 'route' => 'settings.reviews', 'permission' => 'manage.settings'],
-            ['label' => __('Inventory'), 'route' => 'settings.inventory', 'permission' => 'manage.settings'],
-        ],
-
-        //  Payments subnav is built dynamically below based on gateway_mode
-        'payments' => [],
-
-        'notifications' => [
-            ['label' => __('Mail config'), 'route' => 'settings.mail', 'permission' => 'manage.settings'],
-            ['label' => __('Admin alerts'), 'route' => 'settings.admin-alerts', 'permission' => 'manage.settings'],
-            [
-                'label' => __('Customer emails'),
-                'route' => 'settings.customer-emails',
-                'permission' => 'manage.settings',
-            ],
-        ],
-        'seo' => [
+            ['label' => __('Appearance'), 'route' => 'appearance.edit', 'permission' => null],
             ['label' => __('SEO'), 'route' => 'settings.seo', 'permission' => 'manage.settings'],
             ['label' => __('Social links'), 'route' => 'settings.social', 'permission' => 'manage.settings'],
         ],
+        'app' => [
+            ['label' => __('Orders'), 'route' => 'settings.orders', 'permission' => 'manage.settings'],
+            ['label' => __('Quotations'), 'route' => 'settings.quotations', 'permission' => 'manage.settings'],
+            ['label' => __('Inventory'), 'route' => 'settings.inventory', 'permission' => 'manage.settings'],
+            ['label' => __('Reviews'), 'route' => 'settings.reviews', 'permission' => 'manage.settings'],
+        ],
         'system' => [
+            ['label' => __('Mail'), 'route' => 'settings.mail', 'permission' => 'manage.settings'],
             ['label' => __('Maintenance'), 'route' => 'settings.maintenance', 'permission' => 'manage.settings'],
         ],
+
+        // Financial subnav — gateway items built dynamically below
+        'financial' => [],
     ];
 
     //  Resolve active tab
@@ -137,34 +114,32 @@
                 return in_array($currentRoute, $tab['active_on']);
             })
             ->keys()
-            ->first() ?? 'account';
+            ->first() ?? 'general';
 
-    //  Build payments subnav dynamically from PaymentSettings
-    // Items shown depend on gateway_mode so the subnav stays consistent
-    // with the Overview page toggle without requiring a page reload.
+    //  Build financial subnav — gateway items depend on gateway_mode,
+    //  tax items are always appended at the end.
     if (auth()->user()->can('manage.settings')) {
         $paymentSettings = app(\App\Settings\PaymentSettings::class);
         $gatewayMode = $paymentSettings->gateway_mode; // individual | aggregator
 
-        $paymentItems = [
-            // Overview is always the first item
+        $financialItems = [
             ['label' => __('Gateways'), 'route' => 'settings.payments.gateways'],
         ];
 
         if ($gatewayMode === 'individual') {
-            $paymentItems[] = ['label' => __('M-Pesa'), 'route' => 'settings.payments.mpesa'];
-            $paymentItems[] = ['label' => __('Stripe'), 'route' => 'settings.payments.stripe'];
-            $paymentItems[] = ['label' => __('PayPal'), 'route' => 'settings.payments.paypal'];
+            $financialItems[] = ['label' => __('M-Pesa'), 'route' => 'settings.payments.mpesa'];
+            $financialItems[] = ['label' => __('Stripe'), 'route' => 'settings.payments.stripe'];
+            $financialItems[] = ['label' => __('PayPal'), 'route' => 'settings.payments.paypal'];
         } else {
-            // Aggregator — show both providers so either can be configured
-            $paymentItems[] = ['label' => __('PesaPal'), 'route' => 'settings.payments.pesapal'];
-            $paymentItems[] = ['label' => __('PesaWise'), 'route' => 'settings.payments.pesawise'];
+            $financialItems[] = ['label' => __('PesaPal'), 'route' => 'settings.payments.pesapal'];
+            $financialItems[] = ['label' => __('PesaWise'), 'route' => 'settings.payments.pesawise'];
         }
 
-        // COD always available — independent of mode
-        $paymentItems[] = ['label' => __('Cash on delivery'), 'route' => 'settings.payments.cod'];
+        $financialItems[] = ['label' => __('Cash on delivery'), 'route' => 'settings.payments.cod'];
+        $financialItems[] = ['label' => __('Tax'), 'route' => 'settings.tax'];
+        $financialItems[] = ['label' => __('Tax classes'), 'route' => 'settings.tax-classes'];
 
-        $subnavs['payments'] = collect($paymentItems)
+        $subnavs['financial'] = collect($financialItems)
             ->map(fn($item) => array_merge($item, ['permission' => 'manage.settings']))
             ->toArray();
     }

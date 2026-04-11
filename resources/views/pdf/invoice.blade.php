@@ -356,9 +356,6 @@
                         @if ($order->kra_cu_number)
                             <strong>KRA CU No:</strong> {{ $order->kra_cu_number }}<br>
                         @endif
-                        @if ($order->kra_invoice_number)
-                            <strong>KRA Invoice:</strong> {{ $order->kra_invoice_number }}<br>
-                        @endif
                     </div>
                 </td>
             </tr>
@@ -526,7 +523,7 @@
         {{-- ================================================================== --}}
         {{-- ETIMS / KRA COMPLIANCE SECTION                                      --}}
         {{-- ================================================================== --}}
-        @if ($order->kra_cu_number || $order->etims_cu_serial_no)
+        @if ($order->kra_cu_number)
             <table style="width: 100%; margin-bottom: 24px; border: 1px solid #d4ddd4; border-radius: 2px;">
                 <tr>
                     <td style="background: #f5f7f5; padding: 8px 14px; border-bottom: 1px solid #d4ddd4;">
@@ -538,30 +535,10 @@
                 <tr>
                     <td style="padding: 10px 14px;">
                         <table style="width: 100%; font-size: 10px; color: #444444;">
-                            @if ($order->kra_cu_number)
-                                <tr>
-                                    <td style="width: 30%; padding: 3px 0;"><strong>CU Number:</strong></td>
-                                    <td style="padding: 3px 0;">{{ $order->kra_cu_number }}</td>
-                                </tr>
-                            @endif
-                            @if ($order->kra_invoice_number)
-                                <tr>
-                                    <td style="padding: 3px 0;"><strong>KRA Invoice No:</strong></td>
-                                    <td style="padding: 3px 0;">{{ $order->kra_invoice_number }}</td>
-                                </tr>
-                            @endif
-                            @if ($order->etims_cu_serial_no)
-                                <tr>
-                                    <td style="padding: 3px 0;"><strong>eTIMS Serial:</strong></td>
-                                    <td style="padding: 3px 0;">{{ $order->etims_cu_serial_no }}</td>
-                                </tr>
-                            @endif
-                            @if ($order->etims_cu_datetime)
-                                <tr>
-                                    <td style="padding: 3px 0;"><strong>eTIMS Date:</strong></td>
-                                    <td style="padding: 3px 0;">{{ $order->etims_cu_datetime->format('d M Y H:i:s') }}</td>
-                                </tr>
-                            @endif
+                            <tr>
+                                <td style="width: 30%; padding: 3px 0;"><strong>CU Number:</strong></td>
+                                <td style="padding: 3px 0;">{{ $order->kra_cu_number }}</td>
+                            </tr>
                             @if ($order->kra_validated_at)
                                 <tr>
                                     <td style="padding: 3px 0;"><strong>Validated:</strong></td>
@@ -569,12 +546,6 @@
                                 </tr>
                             @endif
                         </table>
-                        @if ($order->etims_qr_code)
-                            <div style="margin-top: 10px; text-align: center;">
-                                <img src="data:image/png;base64,{{ $order->etims_qr_code }}" alt="eTIMS QR Code" style="width: 80px; height: 80px;" />
-                                <div style="font-size: 8px; color: #888888; margin-top: 4px;">Scan to verify</div>
-                            </div>
-                        @endif
                     </td>
                 </tr>
             </table>

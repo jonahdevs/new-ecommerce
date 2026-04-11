@@ -40,13 +40,11 @@ class Order extends Model
         'courier_name',
         'preferred_county',
         'preferred_area',
-        'lpo_number',
         'expires_at',
 
-        // SAP document references
-        'sap_order_number',
-        'sap_invoice_number',
-        'sap_payment_number',
+        // SAP document references (named as SAP returns them)
+        'sap_doc_number',
+        'sap_doc_entry',
 
         // SAP sync lifecycle
         'sap_sync_status',
@@ -54,15 +52,8 @@ class Order extends Model
         'sap_sync_attempts',
         'sap_sync_error',
 
-        // eTIMS device fields
-        'etims_cu_serial_no',
-        'etims_cu_datetime',
-        'etims_qr_code',
-        'etims_status',
-
         // KRA receipt fields
         'kra_cu_number',
-        'kra_invoice_number',
         'kra_validated_at',
     ];
 
@@ -75,7 +66,6 @@ class Order extends Model
             'guest_info' => 'array',
             'expires_at' => 'datetime',
             'sap_synced_at' => 'datetime',
-            'etims_cu_datetime' => 'datetime',
             'kra_validated_at' => 'datetime',
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
@@ -183,7 +173,6 @@ class Order extends Model
     public function isSapSynced(): bool
     {
         return in_array($this->sap_sync_status, [
-            SapSyncStatus::SYNCED,
             SapSyncStatus::CU_PENDING,
             SapSyncStatus::CU_RECEIVED,
         ]);

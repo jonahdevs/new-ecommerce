@@ -58,30 +58,31 @@ class SapIntegrationService
         // SAP returns HTTP 200 even on business logic failures.
         // We must check both the HTTP status and the `success` flag in the body.
         $success = $response->successful() && ($responseData['success'] ?? false) === true;
-        $docEntry = $responseData['docEntry'] ?? null;
+        $docEntry = (string) ($responseData['docEntry'] ?? '');
+        $docNumber = isset($responseData['docNumber']) ? (string) $responseData['docNumber'] : null;
 
         // Audit log — always written regardless of outcome
         SapSyncLog::create([
-            'order_id'            => $order->id,
-            'operation'           => 'create_invoice',
-            'status'              => $success ? 'success' : 'failed',
-            'endpoint'            => '/api/invoice/create',
-            'http_method'         => 'POST',
-            'request_payload'     => $payload,
-            'response_payload'    => $responseData,
-            'http_status_code'    => $response->status(),
-            'error_message'       => $success ? null : ($responseData['message'] ?? $response->body()),
+            'order_id' => $order->id,
+            'operation' => 'create_invoice',
+            'status' => $success ? 'success' : 'failed',
+            'endpoint' => '/api/invoice/create',
+            'http_method' => 'POST',
+            'request_payload' => $payload,
+            'response_payload' => $responseData,
+            'http_status_code' => $response->status(),
+            'error_message' => $success ? null : ($responseData['message'] ?? $response->body()),
             'sap_document_number' => $success ? ($docEntry ?: null) : null,
-            'duration_ms'         => $durationMs,
+            'duration_ms' => $durationMs,
         ]);
 
-        if (!$success) {
+        if (! $success) {
             $error = $responseData['message'] ?? "SAP API returned HTTP {$response->status()}";
 
             Log::error('SAP invoice creation failed', [
                 'order_id' => $order->id,
-                'status'   => $response->status(),
-                'error'    => $error,
+                'status' => $response->status(),
+                'error' => $error,
                 'duration' => $durationMs,
             ]);
 
@@ -93,14 +94,15 @@ class SapIntegrationService
         }
 
         Log::info('SAP invoice created', [
-            'order_id'    => $order->id,
-            'doc_entry'   => $docEntry,
+            'order_id' => $order->id,
+            'doc_number' => $docNumber,
+            'doc_entry' => $docEntry,
             'duration_ms' => $durationMs,
         ]);
 
         return new SapSyncResult(
-            documentNumber: (string) ($docEntry ?? ''),
-            documentEntry: (string) ($docEntry ?? ''),
+            docEntry: $docEntry,
+            docNumber: $docNumber,
             rawResponse: $responseData,
         );
     }
@@ -112,33 +114,33 @@ class SapIntegrationService
     private function buildPayload(Order $order): array
     {
         $payment = $order->payment;
-        $user    = $order->user;
-        $meta    = $payment?->meta ?? [];
+        $user = $order->user;
+        $meta = $payment?->meta ?? [];
 
         return [
             // Payment / card details from the gateway response
             'credit_guard_response' => [
-                'authNumber'       => $meta['auth_number'] ?? $meta['authorization_code'] ?? '',
-                'cardBrand'        => $meta['card_brand'] ?? $payment?->card_brand ?? '',
-                'cardExpiration'   => $meta['card_expiration'] ?? '',
-                'cardId'           => $meta['card_id'] ?? '',
-                'cardNo'           => $meta['last4'] ?? $meta['card_last4'] ?? '',
-                'cgUid'            => $meta['cg_uid'] ?? '',
-                'creditCardToken'  => $meta['credit_card_token'] ?? $payment?->gateway_order_id ?? '',
+                'authNumber' => $meta['auth_number'] ?? $meta['authorization_code'] ?? '',
+                'cardBrand' => $meta['card_brand'] ?? $payment?->card_brand ?? '',
+                'cardExpiration' => $meta['card_expiration'] ?? '',
+                'cardId' => $meta['card_id'] ?? '',
+                'cardNo' => $meta['last4'] ?? $meta['card_last4'] ?? '',
+                'cgUid' => $meta['cg_uid'] ?? '',
+                'creditCardToken' => $meta['credit_card_token'] ?? $payment?->gateway_order_id ?? '',
                 'numberOfPayments' => $meta['number_of_payments'] ?? '0',
-                'personalId'       => $meta['personal_id'] ?? '',
-                'uid'              => $meta['transaction_id'] ?? $payment?->transaction_id ?? '',
+                'personalId' => $meta['personal_id'] ?? '',
+                'uid' => $meta['transaction_id'] ?? $payment?->transaction_id ?? '',
             ],
 
             // Customer details
             'customer' => [
-                'created_at'   => $user?->created_at?->toISOString() ?? now()->toISOString(),
-                'email'        => $user?->email ?? $order->guest_info['email'] ?? '',
+                'created_at' => $user?->created_at?->toISOString() ?? now()->toISOString(),
+                'email' => $user?->email ?? $order->guest_info['email'] ?? '',
                 'full_address' => $this->resolveAddress($order),
-                'full_name'    => $user?->name ?? $order->guest_info['name'] ?? '',
+                'full_name' => $user?->name ?? $order->guest_info['name'] ?? '',
                 'mobile_phone' => $this->resolvePhone($order),
-                'note'         => $order->customer_notes,
-                'updated_at'   => $user?->updated_at?->toISOString() ?? now()->toISOString(),
+                'note' => $order->customer_notes,
+                'updated_at' => $user?->updated_at?->toISOString() ?? now()->toISOString(),
             ],
 
             // Order details
@@ -154,10 +156,10 @@ class SapIntegrationService
                     //     'linetotal'    => $item->total_cents / 100,
                     // ])->values()->toArray(),
                 ],
-                'Orderid'        => $order->id,
-                'name'           => $user?->name ?? $order->guest_info['name'] ?? '',
+                'Orderid' => $order->id,
+                'name' => $user?->name ?? $order->guest_info['name'] ?? '',
                 'payment_status' => 'Paid',
-                'phone'          => $this->resolvePhone($order),
+                'phone' => $this->resolvePhone($order),
             ],
         ];
     }
@@ -177,12 +179,14 @@ class SapIntegrationService
     private function resolveAddress(Order $order): ?string
     {
         $addr = $order->shipping_address;
-        if (!$addr) return null;
+        if (! $addr) {
+            return null;
+        }
 
         return implode(', ', array_filter([
             $addr['address'] ?? null,
-            $addr['area']    ?? null,
-            $addr['county']  ?? null,
+            $addr['area'] ?? null,
+            $addr['county'] ?? null,
         ]));
     }
 }

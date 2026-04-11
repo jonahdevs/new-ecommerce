@@ -39,7 +39,7 @@ it('shows the retry button when SAP sync has failed', function () {
 it('does not show the retry button when SAP sync has succeeded', function () {
     $order = Order::factory()->confirmed()->create([
         'sap_sync_status' => SapSyncStatus::CU_RECEIVED,
-        'sap_order_number' => 'SAP-001',
+        'sap_doc_number' => 'SAP-001',
     ]);
 
     $this->get(route('admin.orders.show', $order))
@@ -98,7 +98,7 @@ it('shows SAP sync log history on the order page when logs exist', function () {
 it('shows SAP document number when sync succeeded', function () {
     $order = Order::factory()->confirmed()->create([
         'sap_sync_status' => SapSyncStatus::CU_RECEIVED,
-        'sap_order_number' => 'DOC-00123',
+        'sap_doc_number' => 'DOC-00123',
         'sap_synced_at' => now(),
     ]);
 

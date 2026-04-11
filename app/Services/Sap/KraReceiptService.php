@@ -6,11 +6,13 @@ use App\Models\Order;
 use App\Notifications\KraReceiptNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class KraReceiptService
 {
     private const DISK = 'local';
+
     private const INVOICE_DIR = 'invoices';
 
     // ================================================================
@@ -28,7 +30,7 @@ class KraReceiptService
      */
     public function generate(Order $order): string
     {
-        if (!$this->canGenerate($order)) {
+        if (! $this->canGenerate($order)) {
             throw new \LogicException(
                 "Cannot generate invoice for order {$order->reference}: KRA validation not yet complete."
             );
@@ -43,7 +45,7 @@ class KraReceiptService
             ->setOption('isRemoteEnabled', false);
 
         $filename = "{$order->reference}.pdf";
-        $path = self::INVOICE_DIR . '/' . $filename;
+        $path = self::INVOICE_DIR.'/'.$filename;
 
         Storage::disk(self::DISK)->put($path, $pdf->output());
 
@@ -65,9 +67,7 @@ class KraReceiptService
      */
     public function canGenerate(Order $order): bool
     {
-        return !is_null($order->kra_cu_number)
-            && !is_null($order->kra_invoice_number)
-            && !is_null($order->kra_validated_at);
+        return ! is_null($order->kra_cu_number);
     }
 
     /**
@@ -78,24 +78,26 @@ class KraReceiptService
     {
         $email = $order->customerEmail();
 
-        if (!$email) {
+        if (! $email) {
             Log::warning('Invoice: no customer email, skipping send', [
                 'order_id' => $order->id,
             ]);
+
             return;
         }
 
-        if (!$order->invoice_path || !Storage::disk(self::DISK)->exists($order->invoice_path)) {
+        if (! $order->invoice_path || ! Storage::disk(self::DISK)->exists($order->invoice_path)) {
             Log::warning('Invoice: PDF not found, skipping send', [
                 'order_id' => $order->id,
                 'path' => $order->invoice_path,
             ]);
+
             return;
         }
 
         $order->user
             ? $order->user->notify(new KraReceiptNotification($order))
-            : \Illuminate\Support\Facades\Notification::route('mail', $email)
+            : Notification::route('mail', $email)
                 ->notify(new KraReceiptNotification($order));
 
         Log::info('Invoice emailed to customer', [

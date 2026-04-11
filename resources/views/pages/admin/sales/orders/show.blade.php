@@ -666,10 +666,10 @@ new #[Title('Order Details')] class extends Component {
                     @endif
                 </div>
                 <div class="p-5 space-y-3">
-                    @if ($order->sap_order_number)
+                    @if ($order->sap_doc_number)
                         <div class="flex justify-between text-sm">
                             <flux:text>SAP Doc #</flux:text>
-                            <flux:text class="font-mono text-xs">{{ $order->sap_order_number }}</flux:text>
+                            <flux:text class="font-mono text-xs">{{ $order->sap_doc_number }}</flux:text>
                         </div>
                     @endif
                     @if ($order->sap_synced_at)

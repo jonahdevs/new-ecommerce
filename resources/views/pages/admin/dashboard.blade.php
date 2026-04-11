@@ -20,13 +20,12 @@ new #[Title('Dashboard')] class extends Component {
     public string $dateFrom = '';
     public string $dateTo = '';
 
-    /** @var string 'area'|'bar' */
-    public string $revenueChartType = 'area';
-
     public function mount(): void
     {
-        $this->dateFrom = now()->startOfDay()->toDateString();
-        $this->dateTo = now()->endOfDay()->toDateString();
+        // Read from query parameters if available, otherwise default to today
+        $this->preset = request()->query('preset', 'today');
+        $this->dateFrom = request()->query('from', now()->startOfDay()->toDateString());
+        $this->dateTo = request()->query('to', now()->endOfDay()->toDateString());
     }
 
     public function setDateRange(string $preset, string $from, string $to): void
@@ -35,12 +34,9 @@ new #[Title('Dashboard')] class extends Component {
         $this->dateFrom = $from;
         $this->dateTo = $to;
         $this->clearComputedCache();
-    }
 
-    public function setRevenueChartType(string $type): void
-    {
-        $this->revenueChartType = in_array($type, ['area', 'bar']) ? $type : 'area';
-        unset($this->revenueChartData);
+        // Update URL with query parameters to maintain state on reload
+        $this->js(sprintf("window.history.replaceState({}, '', '?preset=%s&from=%s&to=%s')", urlencode($preset), urlencode($from), urlencode($to)));
     }
 
     private function clearComputedCache(): void
@@ -405,9 +401,7 @@ new #[Title('Dashboard')] class extends Component {
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-revenue-{{ $this->salesStats['revenue'] }}"
-                x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
-                x-text="display">
+                wire:key="kpi-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->salesStats['revenue_trend'] !== null)
@@ -431,9 +425,7 @@ new #[Title('Dashboard')] class extends Component {
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-orders-{{ $this->salesStats['order_count'] }}"
-                x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })"
-                x-text="display">
+                wire:key="kpi-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->salesStats['orders_trend'] !== null)
@@ -458,9 +450,7 @@ new #[Title('Dashboard')] class extends Component {
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-customers-{{ $this->customerStats['total'] }}"
-                x-data="countUp({ to: {{ $this->customerStats['total'] }} })"
-                x-text="display">
+                wire:key="kpi-customers-{{ $this->customerStats['total'] }}" x-data="countUp({ to: {{ $this->customerStats['total'] }} })" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->customerStats['new_trend'] !== null)
@@ -484,9 +474,7 @@ new #[Title('Dashboard')] class extends Component {
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-products-{{ $this->productStats['active'] }}"
-                x-data="countUp({ to: {{ $this->productStats['active'] }} })"
-                x-text="display">
+                wire:key="kpi-products-{{ $this->productStats['active'] }}" x-data="countUp({ to: {{ $this->productStats['active'] }} })" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->productStats['low_stock'] + $this->productStats['out_of_stock'] > 0)
@@ -518,15 +506,22 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:heading>Revenue</flux:heading>
                     <flux:text class="text-[11px] text-zinc-400">{{ $this->periodLabel }}</flux:text>
                 </div>
-                <div class="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                    <button wire:click="setRevenueChartType('area')"
-                        title="Area chart"
-                        class="p-1.5 rounded-md transition-colors {{ $revenueChartType === 'area' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300' }}">
+                <div class="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                    x-data="{ activeType: 'area' }">
+                    <button @click="activeType = 'area'; window.switchRevenueChartType('area')" title="Area chart"
+                        :class="activeType === 'area'
+                            ?
+                            'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100' :
+                            'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'"
+                        class="p-1.5 rounded-md transition-colors">
                         <flux:icon.presentation-chart-line class="size-4" />
                     </button>
-                    <button wire:click="setRevenueChartType('bar')"
-                        title="Bar chart"
-                        class="p-1.5 rounded-md transition-colors {{ $revenueChartType === 'bar' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300' }}">
+                    <button @click="activeType = 'bar'; window.switchRevenueChartType('bar')" title="Bar chart"
+                        :class="activeType === 'bar'
+                            ?
+                            'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100' :
+                            'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'"
+                        class="p-1.5 rounded-md transition-colors">
                         <flux:icon.chart-bar class="size-4" />
                     </button>
                 </div>
@@ -538,12 +533,11 @@ new #[Title('Dashboard')] class extends Component {
                 {{-- Chart — flex-1 so it fills all space the sidebar doesn't take --}}
                 <div
                     class="flex-1 min-w-0 px-5 pt-4 pb-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-zinc-800">
-                    <div id="revenueChartData"
-                        data-labels="{{ json_encode($this->revenueChartData['labels']) }}"
+                    <div id="revenueChartData" data-labels="{{ json_encode($this->revenueChartData['labels']) }}"
                         data-revenue="{{ json_encode($this->revenueChartData['values']) }}"
                         data-orders="{{ json_encode($this->revenueChartData['order_counts']) }}"
                         data-refunds="{{ json_encode($this->revenueChartData['refund_counts']) }}"
-                        data-chart-type="{{ $revenueChartType }}">
+                        data-chart-type="area">
                     </div>
                     <div wire:ignore style="position:relative; height:100%; width:100%;">
                         <canvas id="revenueChart"></canvas>
@@ -556,8 +550,7 @@ new #[Title('Dashboard')] class extends Component {
                     <div class="px-5 py-4">
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Orders</p>
                         <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
-                            wire:key="chart-orders-{{ $this->salesStats['order_count'] }}"
-                            x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })"
+                            wire:key="chart-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })"
                             x-text="display">
                         </p>
                     </div>
@@ -565,28 +558,27 @@ new #[Title('Dashboard')] class extends Component {
                     <div class="px-5 py-4">
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Earnings</p>
                         <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none break-all"
-                            wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}"
-                            x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
+                            wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
                             x-text="display">
                         </p>
                     </div>
 
                     <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Paid orders</p>
+                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Paid orders
+                        </p>
                         <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
-                            wire:key="chart-paid-{{ $this->salesStats['paid_count'] }}"
-                            x-data="countUp({ to: {{ $this->salesStats['paid_count'] }} })"
+                            wire:key="chart-paid-{{ $this->salesStats['paid_count'] }}" x-data="countUp({ to: {{ $this->salesStats['paid_count'] }} })"
                             x-text="display">
                         </p>
                     </div>
 
                     <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Conversion</p>
+                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Conversion
+                        </p>
                         @if ($this->quotationStats['conversion_rate'] !== null)
                             <p class="text-2xl font-bold text-emerald-500 leading-none"
                                 wire:key="chart-conversion-{{ $this->quotationStats['conversion_rate'] }}"
-                                x-data="countUp({ to: {{ $this->quotationStats['conversion_rate'] }}, decimals: 1, suffix: '%' })"
-                                x-text="display">
+                                x-data="countUp({ to: {{ $this->quotationStats['conversion_rate'] }}, decimals: 1, suffix: '%' })" x-text="display">
                             </p>
                         @else
                             <p class="text-2xl font-bold text-zinc-300 dark:text-zinc-600 leading-none">—</p>
@@ -605,7 +597,11 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:heading size="sm">Top Sales Locations</flux:heading>
                     <flux:text class="text-[10px] text-zinc-400">Distribution by city</flux:text>
                 </div>
-                <flux:link :href="route('admin.coming-soon', ['feature' => 'Sales Location Report', 'description' => 'Detailed analytics on sales distribution across different cities and regions.'])" wire:navigate class="text-xs">Report</flux:link>
+                <flux:link
+                    :href="route('admin.coming-soon', ['feature' => 'Sales Location Report', 'description' =>
+                        'Detailed analytics on sales distribution across different cities and regions.'
+                    ])"
+                    wire:navigate class="text-xs">Report</flux:link>
             </div>
             @php
                 $locations = [
@@ -964,7 +960,11 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0 flex flex-col">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Customer satisfaction</flux:heading>
-                <flux:link :href="route('admin.coming-soon', ['feature' => 'Customer Satisfaction Report', 'description' => 'Comprehensive customer satisfaction metrics and trends over time.'])" wire:navigate class="text-xs">Report</flux:link>
+                <flux:link
+                    :href="route('admin.coming-soon', ['feature' => 'Customer Satisfaction Report', 'description' =>
+                        'Comprehensive customer satisfaction metrics and trends over time.'
+                    ])"
+                    wire:navigate class="text-xs">Report</flux:link>
             </div>
 
             <div class="p-4 flex flex-col flex-1">
@@ -1044,7 +1044,11 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Top categories</flux:heading>
-                <flux:link :href="route('admin.coming-soon', ['feature' => 'Category Performance Report', 'description' => 'Detailed breakdown of sales performance by product category.'])" wire:navigate class="text-xs">Report</flux:link>
+                <flux:link
+                    :href="route('admin.coming-soon', ['feature' => 'Category Performance Report', 'description' =>
+                        'Detailed breakdown of sales performance by product category.'
+                    ])"
+                    wire:navigate class="text-xs">Report</flux:link>
             </div>
 
             <div class="p-4 flex flex-col items-center gap-4">
@@ -1152,7 +1156,11 @@ new #[Title('Dashboard')] class extends Component {
         <flux:card class="p-0">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Top products</flux:heading>
-                <flux:link :href="route('admin.coming-soon', ['feature' => 'Product Performance Report', 'description' => 'In-depth analysis of best-selling products and revenue trends.'])" wire:navigate class="text-xs">Report</flux:link>
+                <flux:link
+                    :href="route('admin.coming-soon', ['feature' => 'Product Performance Report', 'description' =>
+                        'In-depth analysis of best-selling products and revenue trends.'
+                    ])"
+                    wire:navigate class="text-xs">Report</flux:link>
             </div>
             <div class="p-4 flex flex-col gap-3">
                 @php $prodColors = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#F43F5E', '#06B6D4']; @endphp
@@ -1427,6 +1435,17 @@ new #[Title('Dashboard')] class extends Component {
         }
 
         // -----------------------------------------------------------------------
+        //  Switch Revenue Chart Type — client-side only, no server round-trip
+        // -----------------------------------------------------------------------
+        window.switchRevenueChartType = function(type) {
+            const bridge = document.getElementById('revenueChartData');
+            if (!bridge) return;
+
+            bridge.dataset.chartType = type;
+            initRevenueChart();
+        };
+
+        // -----------------------------------------------------------------------
         //  Satisfaction — reads from #satisfactionChartData bridge
         // -----------------------------------------------------------------------
         function initSatisfactionChart() {
@@ -1527,7 +1546,7 @@ new #[Title('Dashboard')] class extends Component {
 
         function waitForLibraries(callback) {
             if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !==
-                'undefined') {
+                'undefined' && typeof Chart !== 'undefined') {
                 callback();
             } else {
                 setTimeout(() => waitForLibraries(callback), 100);
@@ -1588,8 +1607,8 @@ new #[Title('Dashboard')] class extends Component {
         }
 
         // Boot - wait for libraries to load before initializing
-        initAllCharts();
         waitForLibraries(() => {
+            initAllCharts();
             initDateRangePicker();
         });
 

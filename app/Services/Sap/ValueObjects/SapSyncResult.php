@@ -3,14 +3,14 @@
 namespace App\Services\Sap\ValueObjects;
 
 /**
- * Returned by each of the three SAP write operations.
- * Carries the SAP DocNum (human-readable) and DocEntry (internal PK).
+ * Returned by SapIntegrationService::syncOrder().
+ * Field names mirror SAP's actual response keys.
  */
 readonly class SapSyncResult
 {
     public function __construct(
-        public string $documentNumber, // DocNum  — stored on the order (e.g. sap_order_number)
-        public string $documentEntry,  // DocEntry — SAP internal PK, used when linking documents
-        public array  $rawResponse,    // Full SAP response payload for debugging
+        public string $docEntry,    // SAP DocEntry — internal SAP primary key (always present)
+        public ?string $docNumber,   // SAP DocNum   — human-readable number (may be absent)
+        public array $rawResponse, // Full SAP response payload for debugging
     ) {}
 }
