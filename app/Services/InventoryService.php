@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Notifications\LowStockNotification;
+use App\Settings\InventorySettings;
 use App\Settings\NotificationSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,30 +19,35 @@ use Illuminate\Support\Facades\Notification;
 class InventoryService
 {
     public function __construct(
-        private readonly NotificationSettings $notificationSettings
+        private readonly NotificationSettings $notificationSettings,
+        private readonly InventorySettings $inventorySettings,
     ) {}
 
     /**
      * Check if all cart items are in stock
-     * 
-     * @param Cart $cart
+     *
      * @return array Array of unavailable items with details
      */
     public function checkAvailability(Cart $cart): array
     {
+        if (! $this->inventorySettings->inventory_tracking_enabled) {
+            return [];
+        }
+
         $unavailable = [];
 
         foreach ($cart->items as $item) {
             // Get the stock item (variant or product)
             $stockItem = $this->getStockItem($item);
 
-            if (!$stockItem) {
+            if (! $stockItem) {
                 $unavailable[] = [
                     'product' => $item->product->name,
                     'requested' => $item->quantity,
                     'available' => 0,
                     'reason' => 'Product not found',
                 ];
+
                 continue;
             }
 
@@ -65,8 +71,7 @@ class InventoryService
     /**
      * Reserve inventory for an order (soft lock)
      * This prevents overselling while payment is being processed
-     * 
-     * @param Order $order
+     *
      * @throws \Exception If stock is insufficient
      */
     public function reserveStock(Order $order): void
@@ -77,7 +82,7 @@ class InventoryService
                     ? ProductVariant::lockForUpdate()->find($item->product_variant_id)
                     : Product::lockForUpdate()->find($item->product_id);
 
-                if (!$stockItem) {
+                if (! $stockItem) {
                     throw new \Exception("Product not found: {$item->getProductName()}");
                 }
 
@@ -106,7 +111,7 @@ class InventoryService
                 ->performedOn($order)
                 ->withProperties([
                     'order_id' => $order->id,
-                    'items' => $order->items->map(fn($item) => [
+                    'items' => $order->items->map(fn ($item) => [
                         'product_id' => $item->product_id,
                         'product_name' => $item->getProductName(),
                         'quantity' => $item->quantity,
@@ -118,8 +123,7 @@ class InventoryService
 
     /**
      * Deduct inventory after successful payment
-     * 
-     * @param Order $order
+     *
      * @throws \Exception If stock changed since reservation
      */
     public function deductStock(Order $order): void
@@ -130,7 +134,7 @@ class InventoryService
                     ? ProductVariant::lockForUpdate()->find($item->product_variant_id)
                     : Product::lockForUpdate()->find($item->product_id);
 
-                if (!$stockItem) {
+                if (! $stockItem) {
                     Log::error('Stock item not found during deduction', [
                         'order_id' => $order->id,
                         'item_id' => $item->id,
@@ -173,7 +177,7 @@ class InventoryService
                 ->performedOn($order)
                 ->withProperties([
                     'order_id' => $order->id,
-                    'items' => $order->items->map(fn($item) => [
+                    'items' => $order->items->map(fn ($item) => [
                         'product_id' => $item->product_id,
                         'product_name' => $item->getProductName(),
                         'quantity_deducted' => $item->quantity,
@@ -185,8 +189,6 @@ class InventoryService
 
     /**
      * Release reserved inventory (on cancellation/expiry)
-     * 
-     * @param Order $order
      */
     public function releaseReservation(Order $order): void
     {
@@ -196,7 +198,7 @@ class InventoryService
                     ? ProductVariant::find($item->product_variant_id)
                     : Product::find($item->product_id);
 
-                if (!$stockItem) {
+                if (! $stockItem) {
                     continue;
                 }
 
@@ -218,9 +220,8 @@ class InventoryService
 
     /**
      * Get available stock (total - reserved)
-     * 
-     * @param Product|ProductVariant $stockItem
-     * @return int
+     *
+     * @param  Product|ProductVariant  $stockItem
      */
     private function getAvailableStock($stockItem): int
     {
@@ -236,8 +237,8 @@ class InventoryService
 
     /**
      * Get the stock item (variant or product) from cart item
-     * 
-     * @param mixed $cartItem
+     *
+     * @param  mixed  $cartItem
      * @return Product|ProductVariant|null
      */
     private function getStockItem($cartItem)
@@ -267,12 +268,13 @@ class InventoryService
 
     /**
      * Check if product stock is low and send notification
-     * 
-     * @param Product|ProductVariant $stockItem
+     *
+     * @param  Product|ProductVariant  $stockItem
      */
     private function checkLowStock($stockItem): void
     {
-        if (!$this->notificationSettings->notify_low_stock) {
+        // Check both InventorySettings and legacy NotificationSettings flags
+        if (! $this->inventorySettings->notify_admin_low_stock && ! $this->notificationSettings->notify_low_stock) {
             return;
         }
 
@@ -282,12 +284,13 @@ class InventoryService
         }
 
         // Only check if product manages stock
-        if (!$stockItem->manage_stock) {
+        if (! $stockItem->manage_stock) {
             return;
         }
 
         $currentStock = $stockItem->stock_quantity;
-        $threshold = $stockItem->low_stock_threshold ?? 10;
+        // Per-product threshold takes priority; fall back to global InventorySettings value
+        $threshold = $stockItem->low_stock_threshold ?? $this->inventorySettings->low_stock_threshold;
 
         // Send notification if stock just hit or went below threshold
         if ($currentStock <= $threshold && $currentStock > 0) {

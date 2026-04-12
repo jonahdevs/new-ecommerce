@@ -2,7 +2,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         {{-- Name --}}
-        <flux:input label="Name" wire:model.live="form.name" placeholder="e.g., New Arrival, Featured, Sale"
+        <flux:input label="Name" wire:model="form.name" placeholder="e.g., New Arrival, Featured, Sale"
             description:trailing="Slug will be auto-generated." />
 
         {{-- Type --}}

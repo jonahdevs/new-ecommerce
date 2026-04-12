@@ -6,33 +6,6 @@
 <form wire:submit="save" class="mt-6 lg:grid lg:grid-cols-12 lg:gap-5 " id="product-form">
     {{-- Sidebar --}}
     <div class="lg:col-span-8 xl:col-span-9 lg:col-start-1 space-y-5">
-        {{-- Unsaved changes guard --}}
-        <div x-data="{ dirty: false }" x-init="$wire.watch('isDirty', (value) => {
-            dirty = value;
-        });
-        
-        $wire.on('product-saved', () => {
-            dirty = false;
-        });
-        
-        const handleNavigate = (e) => {
-            if (e.detail.history) return;
-            if (!dirty) return;
-        
-            if (!confirm('You have unsaved changes. Are you sure you want to leave?')) {
-                e.preventDefault();
-            } else {
-                dirty = false;
-            }
-        };
-        
-        document.addEventListener('livewire:navigate', handleNavigate);
-        
-        $cleanup(() => {
-            document.removeEventListener('livewire:navigate', handleNavigate);
-        });">
-        </div>
-
         {{-- Basic Information --}}
         @include('pages.admin.catalog.products.partials._basic-information')
 
@@ -76,7 +49,7 @@
 
             </div>
 
-            <div x-show="expanded" x-cloak x-collapse class="">
+            <div x-show="expanded" x-collapse class="">
 
                 {{-- ================================================ --}}
                 {{-- MOBILE — Horizontal scrollable pills (< md)      --}}
@@ -366,6 +339,9 @@
         {{-- Product Description --}}
         @include('pages.admin.catalog.products.partials._product-description')
 
+        {{-- Technical Specification --}}
+        @include('pages.admin.catalog.products.partials._specification')
+
         {{-- Product SEO --}}
         @include('pages.admin.catalog.products.partials._seo')
     </div>
@@ -406,33 +382,38 @@
         </div>
     </flux:modal>
 
-    {{-- Type Change Modal --}}
-    <flux:modal wire:model="showTypeChangeModal" class="max-w-md space-y-5">
+
+
+    {{-- Tag Picker Modal --}}
+    <flux:modal wire:model="showTagModal" class="max-w-lg space-y-5" x-data="{ selected: [] }">
         <div>
-            <flux:heading size="lg">Change Product Type?</flux:heading>
-            <flux:subheading class="mt-1">
-                This product has active variations. Switching to Simple will deactivate all of them.
-                Your data will be preserved and can be restored by switching back to Variable.
-            </flux:subheading>
+            <flux:heading size="lg">Most Used Tags</flux:heading>
+            <flux:subheading class="mt-1">Click tags to select them, then click Add.</flux:subheading>
         </div>
 
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-            <div class="flex items-start gap-2">
-                <flux:icon.exclamation-triangle class="size-5 shrink-0 mt-0.5 text-amber-500" />
-                <div>
-                    <p class="font-semibold">What will happen:</p>
-                    <ul class="mt-1 space-y-1 list-disc list-inside">
-                        <li>All variations will be <strong>deactivated</strong> (not deleted)</li>
-                        <li>Product will use <strong>base price & stock</strong></li>
-                        <li>Switch back to Variable anytime to <strong>restore variations</strong></li>
-                    </ul>
-                </div>
-            </div>
+        <div class="flex flex-wrap gap-2">
+            @foreach ($this->mostUsedTags as $tag)
+                <button type="button"
+                    @click="selected.includes({{ $tag->id }}) ? selected = selected.filter(id => id !== {{ $tag->id }}) : selected.push({{ $tag->id }})"
+                    :class="selected.includes({{ $tag->id }}) ?
+                        'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900' :
+                        'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600'"
+                    class="rounded-full px-3 py-1 text-sm font-medium transition-colors cursor-pointer">
+                    {{ $tag->name }}
+                    <span class="ml-1 opacity-60 text-xs">({{ $tag->products_count }})</span>
+                </button>
+            @endforeach
         </div>
+
+        @if ($this->mostUsedTags->isEmpty())
+            <flux:text class="text-center py-4">No tags have been created yet.</flux:text>
+        @endif
 
         <div class="flex gap-3 justify-end">
-            <flux:button wire:click="cancelTypeChange" variant="ghost">Keep as Variable</flux:button>
-            <flux:button wire:click="confirmTypeChange" variant="primary">Yes, Switch to Simple</flux:button>
+            <flux:button wire:click="$set('showTagModal', false)" variant="ghost">Cancel</flux:button>
+            <flux:button variant="primary" x-on:click="$wire.addSelectedTags(selected); selected = [];">
+                Add Selected
+            </flux:button>
         </div>
     </flux:modal>
 
@@ -440,8 +421,8 @@
     <flux:modal name="bulk-pricing" class="max-w-lg space-y-5">
         <flux:heading>{{ $form->name }} Says</flux:heading>
         <flux:text>Add price to all variations that don't have a price</flux:text>
-        <flux:input wire:model.defer="bulkPrice" label="Regular Price ({{ get_currency_symbol() }})" type="number" step="0.01"
-            placeholder="Leave blank to skip" />
+        <flux:input wire:model.defer="bulkPrice" label="Regular Price ({{ get_currency_symbol() }})" type="number"
+            step="0.01" placeholder="Leave blank to skip" />
 
         <div class="flex gap-3 justify-end">
             <flux:button @click="$flux.modal('bulk-pricing').close()">Cancel</flux:button>
@@ -462,8 +443,8 @@
     {{-- Bulk Dimensions Modal --}}
     <flux:modal name="bulk-dimensions" class="max-w-lg space-y-5">
         <flux:heading>Set Dimensions & Weight for All Variations</flux:heading>
-        <flux:input wire:model.defer="bulkWeight" label="Weight ({{ $weightUnit }})" type="number" step="0.01"
-            placeholder="Leave blank to skip" />
+        <flux:input wire:model.defer="bulkWeight" label="Weight ({{ $weightUnit }})" type="number"
+            step="0.01" placeholder="Leave blank to skip" />
         <flux:field>
             <flux:label>Dimensions - L x W x H ({{ $dimensionUnit }})</flux:label>
             <flux:input.group>

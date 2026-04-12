@@ -22,7 +22,7 @@ class MpesaWebhookController extends Controller
             ->log('webhook_received_mpesa');
 
         Log::info('Webhook received', [
-            'gateway' => 'mpesa', // or pesawise/stripe
+            'gateway' => 'mpesa',
             'ip' => $request->ip(),
         ]);
 

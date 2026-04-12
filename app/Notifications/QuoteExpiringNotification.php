@@ -31,25 +31,18 @@ class QuoteExpiringNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName = $this->quote->user?->name ?? 'Customer';
-        $total = format_currency($this->quote->total);
-        $expiresAt = $this->quote->expires_at?->format('M d, Y') ?? 'N/A';
         $daysLeft = $this->quote->expires_at?->diffInDays(now()) ?? 0;
-        $portalUrl = route('customer.quotations.show', $this->quote);
-
         $urgency = $daysLeft <= 1 ? 'expires tomorrow' : "expires in {$daysLeft} days";
 
         return (new MailMessage)
             ->subject("Reminder: Your Quotation {$urgency} — {$this->quote->reference}")
-            ->greeting("Hello {$customerName},")
-            ->line("This is a friendly reminder that your quotation from Sheffield Africa {$urgency}.")
-            ->line("**Quotation reference:** {$this->quote->reference}")
-            ->line("**Total:** {$total}")
-            ->line("**Expires on:** {$expiresAt}")
-            ->line('Please log in to your account to review and respond to this quotation before it expires.')
-            ->action('View Quotation', $portalUrl)
-            ->line('If you have any questions, please reply to this email or contact our sales team.')
-            ->salutation('Sheffield Africa · Sales Team');
+            ->view('mails.quotes.expiring', [
+                'quote' => $this->quote->loadMissing('items'),
+                'customerName' => $this->quote->user?->name ?? 'Customer',
+                'daysLeft' => $daysLeft,
+                'urgency' => $urgency,
+                'portalUrl' => route('customer.quotations.show', $this->quote),
+            ]);
     }
 
     public function toArray(): array

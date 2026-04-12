@@ -57,7 +57,7 @@ new #[Title('Store Info')] class extends Component {
                         <flux:label>{{ __('Store logo') }}</flux:label>
                         <div class="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-800 rounded p-3">
                             <div
-                                class="shrink-0 w-24 h-14 rounded border bg-white dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
+                                class="shrink-0 w-24 h-14 rounded border dark:border-zinc-600 bg-white dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
                                 @if ($form->existing_logo)
                                     <img src="{{ Storage::url($form->existing_logo) }}"
                                         class="w-full h-full object-contain p-1" alt="Logo" />
@@ -100,7 +100,7 @@ new #[Title('Store Info')] class extends Component {
                         <flux:label>{{ __('Favicon') }}</flux:label>
                         <div class="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-800 rounded p-3">
                             <div
-                                class="shrink-0 w-10 h-10 rounded border bg-white dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
+                                class="shrink-0 w-10 h-10 rounded border dark:border-zinc-600 bg-white dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
                                 @if ($form->existing_favicon)
                                     <img src="{{ Storage::url($form->existing_favicon) }}"
                                         class="w-full h-full object-contain" alt="Favicon" />

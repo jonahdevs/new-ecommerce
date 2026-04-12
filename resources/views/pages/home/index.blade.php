@@ -90,6 +90,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         ->where('is_active', true)
                         ->whereNotNull('price')
                         ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                    'tags',
                 ])
                 ->active()
                 ->visibleInCatalog()
@@ -112,6 +113,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         ->where('is_active', true)
                         ->whereNotNull('price')
                         ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                    'tags',
                 ])
                 ->active()
                 ->visibleInCatalog()

@@ -23,7 +23,7 @@
             Specification
         </flux:button>
 
-        @if ($this->product->reviews_enabled)
+        @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
             {{-- Reviews --}}
             <flux:button x-cloak x-show="$wire.selectedTab == 'reviews'" @click="$wire.selectedTab = 'reviews'"
                 variant="primary" class="rounded-none cursor-pointer">

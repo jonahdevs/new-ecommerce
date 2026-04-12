@@ -64,7 +64,7 @@ new #[Title('Brands')] class extends Component {
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
         <div class="px-5 py-3 border-b dark:border-zinc-600">
-            <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search brands..." class="max-w-md"
+            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search brands..." class="max-w-md"
                 clearable />
         </div>
 
@@ -174,4 +174,3 @@ new #[Title('Brands')] class extends Component {
         padding-bottom: 1rem;
     }
 </style>
-f

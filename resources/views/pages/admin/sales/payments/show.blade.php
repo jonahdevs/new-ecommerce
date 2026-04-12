@@ -1,5 +1,5 @@
 <?php
-use App\Enums\PaymentStatus;
+use App\Enums\{OrderStatus, PaymentStatus};
 use App\Models\Payment;
 use Livewire\Component;
 use Livewire\Attributes\{Title, Computed};
@@ -54,14 +54,16 @@ new class extends Component {
 
             // Update order status if needed
             if ($this->payment->order) {
+                $originalStatus = $this->payment->order->status;
+
                 $this->payment->order->update([
-                    'status' => 'cancelled',
+                    'status' => OrderStatus::CANCELLED->value,
                 ]);
 
                 // Add to status history
-                $this->payment->order->statusHistor()->create([
-                    'from_status' => $this->payment->order->status,
-                    'to_status' => 'cancelled',
+                $this->payment->order->statusHistories()->create([
+                    'from_status' => $originalStatus,
+                    'to_status' => OrderStatus::CANCELLED->value,
                     'changed_by' => auth()->id(),
                     'notes' => "Order cancelled due to refund: {$this->refundReason}",
                 ]);
@@ -274,7 +276,7 @@ new class extends Component {
                 </div>
 
                 <div class="space-y-3 p-5">
-                    @if ($payment->status->value === 'paid')
+                    @if ($payment->status === PaymentStatus::PAID)
                         <flux:button wire:click="openRefundModal" variant="danger" icon="arrow-uturn-left"
                             class="w-full">
                             Process Refund

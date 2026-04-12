@@ -62,9 +62,10 @@ new #[Title('Products')] class extends Component {
             COUNT(*) as total,
             SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as published,
             SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as draft,
+            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as scheduled,
             SUM(CASE WHEN manage_stock = 1 AND stock_quantity <= low_stock_threshold THEN 1 ELSE 0 END) as low_stock
         ",
-                [ProductStatus::PUBLISHED->value, ProductStatus::DRAFT->value],
+                [ProductStatus::PUBLISHED->value, ProductStatus::DRAFT->value, ProductStatus::SCHEDULED->value],
             )
             ->first();
 
@@ -72,6 +73,7 @@ new #[Title('Products')] class extends Component {
             'total' => (int) ($row->total ?? 0),
             'published' => (int) ($row->published ?? 0),
             'draft' => (int) ($row->draft ?? 0),
+            'scheduled' => (int) ($row->scheduled ?? 0),
             'low_stock' => (int) ($row->low_stock ?? 0),
         ];
     }
@@ -304,7 +306,7 @@ new #[Title('Products')] class extends Component {
     </div>
 
     {{-- Stats cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 
         <flux:card>
             <div class="flex items-center justify-between">
@@ -341,6 +343,19 @@ new #[Title('Products')] class extends Component {
                 </div>
                 <div class="p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
                     <flux:icon.pencil-square class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card>
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:text class="uppercase text-xs font-medium mb-3">Scheduled</flux:text>
+                    <p class="text-3xl font-bold text-purple-600 dark:text-purple-400"
+                        x-data="countUp({ to: {{ $this->stats['scheduled'] }} })" x-text="display"></p>
+                </div>
+                <div class="p-3 bg-purple-50 dark:bg-purple-900 rounded-lg">
+                    <flux:icon.clock class="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
             </div>
         </flux:card>
@@ -676,14 +691,26 @@ new #[Title('Products')] class extends Component {
                                     <flux:menu.separator />
 
                                     {{-- Quick status change --}}
+                                    {{-- SCHEDULED is intentionally excluded — it requires a publish date,
+                                         which can only be set on the product edit page. --}}
                                     <flux:menu.submenu heading="Set Status">
                                         @foreach ($this->statuses as $s)
-                                            <flux:menu.item
-                                                wire:click="setStatus({{ $product->id }}, '{{ $s->value }}')"
-                                                :icon="$product->status === $s ? 'check' : $s->icon()"
-                                                icon-variant="outline">
-                                                {{ $s->label() }}
-                                            </flux:menu.item>
+                                            @if ($s === \App\Enums\ProductStatus::SCHEDULED)
+                                                <flux:menu.item
+                                                    href="{{ route('admin.catalog.products.edit', $product) }}"
+                                                    wire:navigate
+                                                    icon="clock"
+                                                    icon-variant="outline">
+                                                    Schedule (edit product)
+                                                </flux:menu.item>
+                                            @else
+                                                <flux:menu.item
+                                                    wire:click="setStatus({{ $product->id }}, '{{ $s->value }}')"
+                                                    :icon="$product->status === $s ? 'check' : $s->icon()"
+                                                    icon-variant="outline">
+                                                    {{ $s->label() }}
+                                                </flux:menu.item>
+                                            @endif
                                         @endforeach
                                     </flux:menu.submenu>
 

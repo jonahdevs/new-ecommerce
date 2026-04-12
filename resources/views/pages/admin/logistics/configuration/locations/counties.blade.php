@@ -160,9 +160,13 @@ new #[Title('Counties')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <flux:badge color="blue" variant="flat" size="sm">
-                                {{ $county->shippingZone->name }}
-                            </flux:badge>
+                            @if ($county->shippingZone)
+                                <flux:badge color="blue" variant="flat" size="sm">
+                                    {{ $county->shippingZone->name }}
+                                </flux:badge>
+                            @else
+                                <flux:subheading>—</flux:subheading>
+                            @endif
                         </flux:table.cell>
 
                         <flux:table.cell>

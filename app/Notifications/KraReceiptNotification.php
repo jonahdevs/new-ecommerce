@@ -25,13 +25,11 @@ class KraReceiptNotification extends Notification
     {
         $mail = (new MailMessage)
             ->subject("Your Tax Invoice — Order {$this->order->reference}")
-            ->greeting('Thank you for your order!')
-            ->line("Your KRA-validated tax invoice for order **{$this->order->reference}** is attached.")
-            ->line("**CU Number:** {$this->order->kra_cu_number}")
-            ->line("**Validated at:** {$this->order->kra_validated_at?->format('d M Y, H:i')}")
-            ->line('**Order total:** KES '.number_format($this->order->total, 2))
-            ->action('View your order', url("/orders/{$this->order->id}"))
-            ->line('Please keep this invoice for your records.');
+            ->view('mails.orders.kra-receipt', [
+                'order' => $this->order,
+                'customerName' => $this->order->user?->name ?? 'Customer',
+                'orderUrl' => route('customer.orders.show', $this->order),
+            ]);
 
         // Attach the invoice PDF if it exists on disk
         if ($this->order->invoice_path && Storage::disk('local')->exists($this->order->invoice_path)) {

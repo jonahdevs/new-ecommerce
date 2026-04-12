@@ -120,6 +120,13 @@ new #[Title('Order Details')] class extends Component {
 
     private function createDeliveryOrder(): void
     {
+        // Quote-converted orders have no real shipping method or zone in their snapshot
+        // (method_type = 'quote', method_id = null). Delivery order creation is skipped;
+        // the admin arranges logistics separately for these orders.
+        if ($this->order->wasConvertedFromQuote()) {
+            return;
+        }
+
         $snapshot = $this->order->shipping_snapshot;
 
         if (!$snapshot) {

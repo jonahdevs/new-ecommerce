@@ -1,3 +1,6 @@
+@inject('seoSettings', 'App\Settings\SeoSettings')
+@inject('generalSettings', 'App\Settings\GeneralSettings')
+
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -6,14 +9,21 @@
 
 {{-- Fallback title if SEO not set --}}
 @if (!View::hasSection('seo'))
-    <title>{{ isset($title) ? $title . ' | ' : '' }}{{ config('app.name') }}</title>
+    <title>{{ isset($title) ? $title . ' | ' : '' }}{{ $generalSettings->store_name ?: config('app.name') }}</title>
 @endif
 
-{{-- <link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png"> --}}
+{{-- Favicon: use settings value if configured, otherwise fall back to /favicon.png --}}
+@if ($generalSettings->store_favicon)
+    <link rel="icon" type="image/png" href="{{ asset('storage/' . $generalSettings->store_favicon) }}">
+@else
+    <link rel="icon" type="image/png" href="/favicon.png">
+@endif
 
-<link rel="icon" type="image/png" href="/favicon.png">
+{{-- Google Search Console site verification --}}
+@if ($seoSettings->google_site_verification)
+    <meta name="google-site-verification" content="{{ $seoSettings->google_site_verification }}" />
+@endif
+
 {{-- Canonical is set per-page via SEOMeta::setCanonical() and output by SEO::generate() above --}}
 <link rel="preconnect" href="https://fonts.bunny.net">
 

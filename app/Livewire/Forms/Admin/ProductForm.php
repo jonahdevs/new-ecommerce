@@ -73,6 +73,9 @@ class ProductForm extends Form
      */
     public ?string $description = null;
 
+    /** Technical specifications, shown in the Specifications tab on the product detail page. */
+    public ?string $technical_specification = null;
+
     /**
      * Product type — determines which tabs and fields are shown.
      * One of: simple, variable, grouped, virtual, downloadable.
@@ -450,6 +453,7 @@ class ProductForm extends Form
             'model_number' => 'nullable|string|max:255',
             'slug' => 'nullable|string|max:255|unique:products,slug,'.$productId,
             'short_description' => 'nullable|string|max:500',
+            'technical_specification' => 'nullable|string',
 
             // Strip HTML before checking length — rich text editors output <p></p>
             // for empty content which would otherwise pass a plain 'required' rule
@@ -466,11 +470,10 @@ class ProductForm extends Form
             'type' => ['required', Rule::enum(ProductType::class)],
 
             // ── Pricing ────────────────────────────────────────────────────
-            // Grouped products derive their price from children — price is optional
-            'price' => [
-                Rule::when($this->type !== 'grouped', ['required', 'numeric', 'min:0']),
-                Rule::when($this->type === 'grouped', ['nullable', 'numeric', 'min:0']),
-            ],
+            // price is the admin-managed "was" / original price — always optional.
+            // sale_price is SAP-managed (readonly in the UI) — also nullable here
+            // since it arrives via sync, not form submission.
+            'price' => ['nullable', 'numeric', 'min:0'],
 
             // Use !is_null() instead of !empty() so a price of 0 still triggers the lt check
             'sale_price' => [
@@ -663,7 +666,6 @@ class ProductForm extends Form
             'name.required' => 'Product name is required.',
             'slug.required' => 'Product slug is required.',
             'slug.unique' => 'This slug is already taken.',
-            'price.required' => 'Price is required.',
             'price.min' => 'Price must be at least 0.',
             'sale_price.lt' => 'Sale price must be less than regular price.',
             'sku.required' => 'SKU is required.',
@@ -695,6 +697,7 @@ class ProductForm extends Form
             'name' => 'product name',
             'model_number' => 'model number',
             'short_description' => 'short description',
+            'technical_specification' => 'technical specification',
             'sale_price' => 'sale price',
             'cost_price' => 'cost price',
             'stock_quantity' => 'stock quantity',
@@ -736,6 +739,7 @@ class ProductForm extends Form
         $this->slug = $product->slug;
         $this->short_description = $product->short_description;
         $this->description = $product->description;
+        $this->technical_specification = $product->technical_specification;
         $this->type = $product->type->value ?? ProductType::SIMPLE->value;
 
         // Pricing
@@ -1070,6 +1074,7 @@ class ProductForm extends Form
             'slug' => $this->slug ?: Str::slug($this->name),
             'short_description' => $this->short_description,
             'description' => $this->description,
+            'technical_specification' => $this->technical_specification,
             'type' => $this->type,
 
             // Grouped products have no base price — derived from children

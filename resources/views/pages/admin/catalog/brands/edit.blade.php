@@ -24,7 +24,7 @@ new class extends Component {
 
             $this->dispatch('notify', title: 'Brand Updated', variant: 'success', message: 'The brand has been updated successfully');
 
-            $this->redirectRoute('admin.brands.index', navigate: true);
+            $this->redirectRoute('admin.catalog.brands.index', navigate: true);
         } catch (ValidationException $e) {
             $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields and try again');
 

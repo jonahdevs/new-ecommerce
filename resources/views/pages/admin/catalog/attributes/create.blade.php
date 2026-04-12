@@ -9,7 +9,7 @@ new class extends Component {
     {
         $attribute = $this->form->store();
         session()->flash('status', 'Attribute defined. Now add your values.');
-        return redirect()->route('admin.attributes.edit', $attribute);
+        return redirect()->route('admin.catalog.attributes.values', $attribute);
     }
 }; ?>
 

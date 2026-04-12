@@ -1,4 +1,4 @@
-@if ($this->product->reviews_enabled)
+@if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
     <div wire:cloak wire:show="selectedTab == 'reviews'">
         <h4 class="font-bold mb-6">Customer Ratings</h4>
 

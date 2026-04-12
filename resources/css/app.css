@@ -117,7 +117,7 @@
         --color-surface-alt: var(--color-slate-800);
     }
 
-    .app-layout.dark {
+    .dark .app-layout {
         --color-accent: var(--brand-primary);
         --color-accent-content: var(--brand-primary);
         --color-accent-foreground: var(--brand-primary-content);

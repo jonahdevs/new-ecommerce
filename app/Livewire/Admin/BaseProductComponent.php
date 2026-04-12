@@ -9,6 +9,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
+use App\Models\TaxClass;
 use App\Services\Product\ProductAttributeService;
 use App\Services\Product\ProductDownloadService;
 use App\Services\Product\ProductVariationService;
@@ -52,6 +53,9 @@ abstract class BaseProductComponent extends Component
 
     /** Controls visibility of the type-change confirmation modal. */
     public bool $showTypeChangeModal = false;
+
+    /** Controls visibility of the "most used tags" picker modal. */
+    public bool $showTagModal = false;
 
     /** Holds the pending product type during a type-change confirmation flow. */
     public string $pendingProductType = '';
@@ -164,6 +168,7 @@ abstract class BaseProductComponent extends Component
             'addNewCategory',
             'addNewBrand',
             'showTypeChangeModal',
+            'showTagModal',
             'pendingProductType',
             'selectedExistingAttribute',
             'selectedGroupedProducts',
@@ -207,6 +212,7 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->executeSave();
+        $this->isDirty = false;
     }
 
     /**
@@ -733,7 +739,6 @@ abstract class BaseProductComponent extends Component
             ->get()
             ->map(fn ($variant) => [
                 'id' => $variant->id,
-                'attribute_hash' => $variant->attribute_hash,   // ← ADD THIS
                 'name' => $variant->name,
                 'sku' => $variant->sku,
                 'image_path' => $variant->image_path,
@@ -1305,6 +1310,20 @@ abstract class BaseProductComponent extends Component
         unset($this->selectedTags);
     }
 
+    /** Opens the most-used tags picker modal. */
+    public function openTagModal(): void
+    {
+        $this->showTagModal = true;
+    }
+
+    /** Bulk-adds tags from the picker modal and closes it. */
+    public function addSelectedTags(array $tagIds): void
+    {
+        $this->form->addSelectedTags($tagIds);
+        $this->showTagModal = false;
+        unset($this->selectedTags);
+    }
+
     // =========================================================================
     // CATEGORIES
     // =========================================================================
@@ -1525,7 +1544,7 @@ abstract class BaseProductComponent extends Component
     #[Computed]
     public function taxClasses()
     {
-        return \App\Models\TaxClass::orderBy('name')->select('id', 'name', 'rate')->get();
+        return TaxClass::orderBy('name')->select('id', 'name', 'rate')->get();
     }
 
     /**

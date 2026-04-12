@@ -39,9 +39,7 @@ new #[Title('Maintenance Settings')] class extends Component {
             $settings->maintenance_secret = $this->maintenance_secret ?: null;
             $settings->save();
 
-            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: $this->maintenance_mode
-                ? __('Maintenance mode enabled. Customers will see the maintenance page.')
-                : __('Maintenance mode disabled. Store is live.'));
+            $this->dispatch('notify', variant: 'success', title: __('Settings saved'), message: $this->maintenance_mode ? __('Maintenance mode enabled. Customers will see the maintenance page.') : __('Maintenance mode disabled. Store is live.'));
         } catch (\Throwable $e) {
             logger()->error('Failed to save maintenance settings.', ['exception' => $e->getMessage()]);
             $this->dispatch('notify', variant: 'danger', title: __('Save failed'), message: __('Something went wrong. Please try again.'));
@@ -89,7 +87,7 @@ new #[Title('Maintenance Settings')] class extends Component {
 
             {{-- Message --}}
             <flux:card class="p-0">
-                <div class="px-3 py-2 border-b">
+                <div class="px-3 py-2 border-b dark:border-zinc-600">
                     <flux:heading>{{ __('Maintenance message') }}</flux:heading>
                 </div>
 
@@ -102,7 +100,7 @@ new #[Title('Maintenance Settings')] class extends Component {
 
             {{-- Access --}}
             <flux:card class="p-0">
-                <div class="border-b px-3 py-2">
+                <div class="border-b px-3 py-2 dark:border-zinc-600">
                     <flux:heading>{{ __('Bypass access') }}</flux:heading>
                 </div>
 

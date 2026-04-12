@@ -201,7 +201,6 @@ The handler is **idempotent** — if the same CU number arrives twice for the sa
         {
             "sku": "PROD-12345",
             "price": 1500.0,
-            "sale_price": 1200.0,
             "stock_quantity": 50
         },
         {
@@ -215,13 +214,14 @@ The handler is **idempotent** — if the same CU number arrives twice for the sa
 
 **Per product fields**:
 
-| Field            | Required | Description                                  |
-| ---------------- | -------- | -------------------------------------------- |
-| `sku`            | Yes      | Must match an existing product in the DB     |
-| `price`          | Yes      | Regular price                                |
-| `sale_price`     | No       | Promotional price                            |
-| `stock_quantity` | Yes      | Available stock                              |
-| `manage_stock`   | No       | Defaults to `true`                           |
+| Field            | Required | Description                                                                 |
+| ---------------- | -------- | --------------------------------------------------------------------------- |
+| `sku`            | Yes      | Must match an existing product in the DB                                    |
+| `price`          | Yes      | SAP selling price — stored as `sale_price` on the product                   |
+| `stock_quantity` | Yes      | Available stock                                                             |
+
+> **Note**: SAP sends the current selling price as `price`. It is stored in the `sale_price` column on the product.
+> The `price` column (the original/"was" price) is admin-managed and never modified by SAP sync.
 
 ### Response
 
@@ -241,7 +241,7 @@ The handler is **idempotent** — if the same CU number arrives twice for the sa
 
 **Notes**:
 - Products are matched by `sku` — the product must already exist.
-- Only `price`, `sale_price`, `stock_quantity`, `stock_status`, and `sap_last_synced_at` are updated. Name, description, and images are untouched.
+- Only `sale_price`, `stock_quantity`, `stock_status`, and `sap_last_synced_at` are updated. Name, description, images, and the admin-managed `price` column are untouched.
 - `stock_status` is derived automatically: `in_stock` when `stock_quantity > 0`, otherwise `out_of_stock`.
 - Each product in the batch is processed independently — one failure does not stop the rest.
 - Recommended batch size: 100–500 products per request.
@@ -320,11 +320,8 @@ curl -X POST http://sheffield-ecommerce.test/api/sap/products/sync \
   -H "X-SAP-Secret: your-webhook-secret" \
   -d '{
     "products": [
-      {
-        "sku": "PROD-12345",
-        "price": 1500.00,
-        "stock_quantity": 50
-      }
+      { "sku": "PROD-12345", "price": 1500.00, "stock_quantity": 50 },
+      { "sku": "PROD-67890", "price": 2500.00, "stock_quantity": 30 }
     ]
   }'
 ```

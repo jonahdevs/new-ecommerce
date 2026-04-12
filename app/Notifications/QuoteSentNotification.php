@@ -29,38 +29,13 @@ class QuoteSentNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName = $this->quote->user?->name ?? 'Customer';
-        $total = format_currency($this->quote->total);
-        $shipping = $this->quote->shipping_cents > 0
-            ? format_currency($this->quote->shipping)
-            : 'Free';
-        $expiresAt = $this->quote->expires_at?->format('M d, Y') ?? 'N/A';
-        $portalUrl = route('customer.quotations.show', $this->quote);
-
-        // Build a readable item list for the email body
-        $itemLines = $this->quote->items->map(function ($item) {
-            $name = $item->product_snapshot['name'] ?? 'Product';
-            $qty = $item->quantity;
-            $price = format_currency(($item->quoted_price_cents ?? $item->original_price_cents) / 100);
-            $itemTotal = ($item->quoted_price_cents ?? $item->original_price_cents) * $qty;
-
-            return "• {$name} × {$qty} @ {$price} = ".format_currency($itemTotal / 100);
-        })->join("\n");
-
         return (new MailMessage)
             ->subject("Your Quotation is Ready — {$this->quote->reference}")
-            ->greeting("Hello {$customerName},")
-            ->line('Your quotation from Sheffield Africa is ready for your review.')
-            ->line("**Quotation reference:** {$this->quote->reference}")
-            ->line('**Items:**')
-            ->line($itemLines)
-            ->line("**Delivery:** {$shipping}")
-            ->line("**Total:** {$total}")
-            ->line("**Valid until:** {$expiresAt}")
-            ->line('Please log in to your account to review the full quotation and either accept or reject it.')
-            ->action('View & Respond to Quotation', $portalUrl)
-            ->line('If you have any questions about this quotation, please reply to this email or contact our team.')
-            ->salutation('Sheffield Africa · Sales Team');
+            ->view('mails.quotes.sent', [
+                'quote' => $this->quote->loadMissing('items'),
+                'customerName' => $this->quote->user?->name ?? 'Customer',
+                'portalUrl' => route('customer.quotations.show', $this->quote),
+            ]);
     }
 
     public function toArray(): array

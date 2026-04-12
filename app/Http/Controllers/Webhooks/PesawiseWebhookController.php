@@ -13,7 +13,7 @@ class PesawiseWebhookController extends Controller
     public function __invoke(Request $request, PesawiseGateway $gateway): Response
     {
         Log::info('Webhook received', [
-            'gateway' => 'mpesa', // or pesawise/stripe
+            'gateway' => 'pesawise',
             'ip' => $request->ip(),
         ]);
         $gateway->handleWebhook($request);

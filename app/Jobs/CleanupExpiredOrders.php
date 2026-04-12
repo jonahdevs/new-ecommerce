@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Services\InventoryService;
 use Illuminate\Bus\Queueable;
@@ -41,10 +43,10 @@ class CleanupExpiredOrders implements ShouldQueue
                         // Release inventory reservations
                         $inventoryService->releaseReservation($order);
 
-                        // Mark payment as expired
+                        // Mark payment as abandoned (expired is not a valid PaymentStatus)
                         if ($order->payment) {
                             $order->payment->update([
-                                'status' => 'expired',
+                                'status' => PaymentStatus::ABANDONED,
                                 'meta' => array_merge($order->payment->meta ?? [], [
                                     'expired_at' => now()->toISOString(),
                                     'cleanup_by' => 'scheduled_job',
@@ -52,15 +54,18 @@ class CleanupExpiredOrders implements ShouldQueue
                             ]);
                         }
 
-                        // Update order status
-                        $order->update(['status' => 'expired']);
+                        // Cancel the order and sync its payment_status
+                        $order->update([
+                            'status' => OrderStatus::CANCELLED,
+                            'payment_status' => PaymentStatus::ABANDONED,
+                        ]);
 
                         // Log status change
                         $order->statusHistories()->create([
-                            'from_status' => 'pending',
-                            'to_status' => 'expired',
+                            'from_status' => OrderStatus::PENDING->value,
+                            'to_status' => OrderStatus::CANCELLED->value,
                             'changed_by_type' => 'system',
-                            'notes' => 'Payment link expired - cleaned up by scheduled job',
+                            'notes' => 'Payment link expired — order automatically cancelled.',
                             'metadata' => [
                                 'job' => self::class,
                                 'executed_at' => now()->toISOString(),

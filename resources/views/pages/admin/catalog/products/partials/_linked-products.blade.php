@@ -10,7 +10,7 @@
             <flux:label>Grouped Products</flux:label>
             <div class="flex gap-2">
                 <div class="flex-1">
-                    <x-my-choices wire:model.live="selectedGroupedProducts"
+                    <x-my-choices wire:model="selectedGroupedProducts"
                         :options="$this->products"
                         search-function="searchProducts"
                         placeholder="Search and select products..." option-sub-label="sku" option-avatar="image_url"
@@ -156,7 +156,7 @@
             </flux:description>
             <div class="flex gap-2">
                 <div class="flex-1">
-                    <x-my-choices wire:model.live="selectedAccessories" :options="$this->products"
+                    <x-my-choices wire:model="selectedAccessories" :options="$this->products"
                         search-function="searchProducts"
                         placeholder="Search and select accessories..." option-sub-label="sku" option-avatar="image_url"
                         searchable clearable debounce="300" min-chars="2" />

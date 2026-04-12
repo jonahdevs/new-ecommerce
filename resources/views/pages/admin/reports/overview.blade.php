@@ -379,6 +379,8 @@ new #[Title('Business Overview')] class extends Component {
             [
                 'label'        => 'Revenue',
                 'value'        => format_currency($kpi['revenue']),
+                'raw'          => $kpi['revenue'],
+                'countup'      => "countUp({ to: {$kpi['revenue']}, decimals: 2, prefix: 'KES ' })",
                 'yoy'          => format_currency($kpi['revenue_yoy']),
                 'change'       => $kpi['revenue_change'],
                 'change_suffix'=> '%',
@@ -388,6 +390,8 @@ new #[Title('Business Overview')] class extends Component {
             [
                 'label'        => 'Orders',
                 'value'        => number_format($kpi['orders']),
+                'raw'          => $kpi['orders'],
+                'countup'      => "countUp({ to: {$kpi['orders']} })",
                 'yoy'          => number_format($kpi['orders_yoy']),
                 'change'       => $kpi['orders_change'],
                 'change_suffix'=> '%',
@@ -397,6 +401,8 @@ new #[Title('Business Overview')] class extends Component {
             [
                 'label'        => 'Avg Order Value',
                 'value'        => format_currency($kpi['aov']),
+                'raw'          => $kpi['aov'],
+                'countup'      => "countUp({ to: {$kpi['aov']}, decimals: 2, prefix: 'KES ' })",
                 'yoy'          => format_currency($kpi['aov_yoy']),
                 'change'       => $kpi['aov_change'],
                 'change_suffix'=> '%',
@@ -406,6 +412,8 @@ new #[Title('Business Overview')] class extends Component {
             [
                 'label'        => 'New Customers',
                 'value'        => number_format($kpi['new_customers']),
+                'raw'          => $kpi['new_customers'],
+                'countup'      => "countUp({ to: {$kpi['new_customers']} })",
                 'yoy'          => number_format($kpi['new_customers_yoy']),
                 'change'       => $kpi['new_customers_change'],
                 'change_suffix'=> '%',
@@ -415,6 +423,8 @@ new #[Title('Business Overview')] class extends Component {
             [
                 'label'        => 'Returning Rate',
                 'value'        => $kpi['returning_rate'] . '%',
+                'raw'          => $kpi['returning_rate'],
+                'countup'      => "countUp({ to: {$kpi['returning_rate']}, decimals: 1, suffix: '%' })",
                 'yoy'          => $kpi['returning_rate_yoy'] . '%',
                 'change'       => $kpi['returning_rate_change'],
                 'change_suffix'=> 'pp',
@@ -424,6 +434,10 @@ new #[Title('Business Overview')] class extends Component {
             [
                 'label'        => 'Quote Conversion',
                 'value'        => $kpi['quote_conversion'] !== null ? $kpi['quote_conversion'] . '%' : '—',
+                'raw'          => $kpi['quote_conversion'],
+                'countup'      => $kpi['quote_conversion'] !== null
+                    ? "countUp({ to: {$kpi['quote_conversion']}, decimals: 1, suffix: '%' })"
+                    : null,
                 'yoy'          => $kpi['quote_conversion_yoy'] !== null ? $kpi['quote_conversion_yoy'] . '%' : '—',
                 'change'       => $kpi['quote_conversion_change'],
                 'change_suffix'=> 'pp',
@@ -455,9 +469,16 @@ new #[Title('Business Overview')] class extends Component {
                     </div>
                 </div>
 
-                <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5">
-                    {{ $card['value'] }}
-                </flux:heading>
+                @if ($card['countup'])
+                    <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
+                        wire:key="kpi-{{ $card['color'] }}-{{ $card['raw'] }}"
+                        x-data="{{ $card['countup'] }}" x-text="display">
+                    </flux:heading>
+                @else
+                    <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5">
+                        {{ $card['value'] }}
+                    </flux:heading>
+                @endif
 
                 <div class="flex items-center gap-1.5 flex-wrap">
                     @if ($card['change'] !== null)

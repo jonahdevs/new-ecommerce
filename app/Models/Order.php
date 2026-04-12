@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\SapSyncStatus;
 use App\Notifications\OrderStatusNotification;
+use App\Settings\OrderSettings;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -199,10 +200,11 @@ class Order extends Model
 
     public static function generateReference(): string
     {
+        $prefix = rtrim(app(OrderSettings::class)->order_id_prefix, '-').'-';
         $year = now()->year;
         $count = static::whereYear('created_at', $year)->count();
 
-        return sprintf('SO-%d-%06d', $year, $count + 1);
+        return sprintf('%s%d-%06d', $prefix, $year, $count + 1);
     }
 
     // =====================================================

@@ -245,7 +245,7 @@ new #[Title('Categories')] class extends Component {
 
             {{-- Toolbar --}}
             <div class="px-5 py-3 border-b dark:border-zinc-600 flex items-center gap-3">
-                <flux:input wire:model.live="search" icon="magnifying-glass" placeholder="Search categories..."
+                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search categories..."
                     class="max-w-sm" clearable />
 
                 <div class="ms-auto">

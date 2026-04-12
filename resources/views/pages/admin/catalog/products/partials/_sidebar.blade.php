@@ -50,7 +50,12 @@
 
     <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewBrand }">
         {{-- Brand Select --}}
-        <x-my-choices-offline wire:model="form.brand_id" :options="$this->brands" single clearable searchable />
+        <flux:select wire:model="form.brand_id" placeholder="Select a brand...">
+            <flux:select.option value="">— No brand —</flux:select.option>
+            @foreach ($this->brands as $brand)
+                <flux:select.option :value="$brand->id">{{ $brand->name }}</flux:select.option>
+            @endforeach
+        </flux:select>
 
         {{-- Add New Brand Toggle --}}
         <flux:button @click="$wire.addNewBrand = !$wire.addNewBrand" type="button" icon="plus" variant="ghost"

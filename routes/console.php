@@ -3,12 +3,27 @@
 use App\Jobs\CleanupExpiredOrders;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-
+// ==============================================
+// PRODUCTS: Auto-publish scheduled products
+//
+// Runs every minute. Finds SCHEDULED products whose published_at has
+// passed and transitions them to PUBLISHED.
+//
+// everyMinute() ensures publish times are honoured within a ~1 min window.
+// withoutOverlapping() prevents a second run starting if the previous is
+// still in progress.
+// ==============================================
+Schedule::command('products:publish-scheduled')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/scheduler.log'));
 
 // ==============================================
 // QUOTATIONS: Expire overdure quotes
@@ -30,7 +45,6 @@ Schedule::command('quotations:expire')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/scheduler.log'));
 
-
 // ==============================================
 // QUOTATIONS: Send expiring reminders
 //
@@ -47,6 +61,21 @@ Schedule::command('quotations:remind-expiring')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/scheduler.log'));
 
+// ==============================================
+// ORDERS: Auto-cancel unpaid orders
+//
+// Runs hourly. Cancels PENDING orders that have not been paid within
+// the auto_cancel_hours window configured in OrderSettings.
+//
+// Only executes when auto_cancel_unpaid is enabled in settings — the
+// command itself performs this guard so no wasted runs.
+// ==============================================
+Schedule::command('orders:cancel-unpaid')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/scheduler.log'));
 
 // ==============================================
 // ORDERS: Cleanup expired orders and reservations
@@ -62,7 +91,6 @@ Schedule::job(new CleanupExpiredOrders)
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/scheduler.log'));
-
 
 // ==============================================
 // BACKUPS: Automated backup management

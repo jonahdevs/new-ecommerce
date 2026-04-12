@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Payment\PaymentService;
 use App\Services\Payment\ValueObjects\PaymentResponse;
 use App\Settings\LocalizationSettings;
+use App\Settings\OrderSettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,7 @@ class CheckoutService
         private readonly InventoryService $inventoryService,
         private readonly TaxService $taxService,
         private readonly LocalizationSettings $localization,
+        private readonly OrderSettings $orderSettings,
     ) {}
 
     // =====================================================
@@ -78,6 +80,16 @@ class CheckoutService
 
         if (! $this->checkoutSession->isComplete()) {
             throw new \RuntimeException('Shipping not selected. Please select a shipping method.');
+        }
+
+        // Minimum order amount guard
+        $minimum = $this->orderSettings->minimum_order_amount;
+        if ($minimum !== null && $minimum > 0) {
+            $cartSummaryPreFlight = $this->cartService->summary($cart);
+            if ($cartSummaryPreFlight['subtotal'] < $minimum) {
+                $formatted = number_format($minimum, 2);
+                throw new \RuntimeException("Your order total does not meet the minimum order amount of {$this->localization->currency} {$formatted}.");
+            }
         }
 
         // Pre-flight stock availability check
@@ -151,7 +163,7 @@ class CheckoutService
             $order = Order::create([
                 'user_id' => $user->id,
                 'reference' => Order::generateReference(),
-                'status' => OrderStatus::PENDING,
+                'status' => OrderStatus::from($this->orderSettings->default_order_status),
                 'payment_status' => EnumsPaymentStatus::PENDING,
                 'currency' => $this->localization->currency,
                 'subtotal_cents' => $subtotalCents,

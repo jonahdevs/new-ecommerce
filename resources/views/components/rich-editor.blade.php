@@ -135,7 +135,7 @@
         </div>
 
         {{-- ── Editor Area ── --}}
-        <div x-ref="editor" class="bg-white dark:bg-zinc-900"></div>
+        <div x-ref="editor" wire:ignore class="bg-white dark:bg-zinc-900"></div>
     </div>
 
     @if ($error)

@@ -4,7 +4,7 @@
         'code' => '503',
         'title' => 'Under maintenance',
         'message' =>
-            'We are performing scheduled maintenance to improve your experience. We will be back shortly — thank you for your patience.',
+            $maintenanceMessage ?? 'We are performing scheduled maintenance to improve your experience. We will be back shortly — thank you for your patience.',
         'isAdmin' => $isAdmin,
     ];
 @endphp

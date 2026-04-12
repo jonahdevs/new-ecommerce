@@ -46,9 +46,10 @@
 }
 
 /* ============================================================
-   DARK MODE — scoped to .app-layout.dark only
+   DARK MODE — scoped to .dark .app-layout
+   (.dark is on <html> via Flux, .app-layout is on <body>)
    ============================================================ */
-.app-layout.dark {
+.dark .app-layout {
     /* ── Primary (lightened for dark surfaces) ───────────── */
     --brand-primary: #e0404f;
     --brand-primary-light: #e85060;

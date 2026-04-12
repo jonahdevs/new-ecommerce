@@ -37,9 +37,6 @@ class OrderStatusNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        $customerName = $this->order->user?->name ?? 'Customer';
-        $orderUrl = route('customer.orders.show', $this->order);
-
         $subject = match ($this->newStatus) {
             OrderStatus::CONFIRMED => "Order Confirmed — {$this->order->reference}",
             OrderStatus::PROCESSING => "Order Being Prepared — {$this->order->reference}",
@@ -49,29 +46,13 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             default => "Order Update — {$this->order->reference}",
         };
 
-        $message = match ($this->newStatus) {
-            OrderStatus::CONFIRMED => 'Your order has been confirmed and is being processed.',
-            OrderStatus::PROCESSING => 'Your order is now being prepared for shipment.',
-            OrderStatus::SHIPPED => 'Great news! Your order has been shipped and is on its way.',
-            OrderStatus::DELIVERED => 'Your order has been delivered. We hope you enjoy your purchase!',
-            OrderStatus::CANCELLED => 'Your order has been cancelled. If you have any questions, please contact us.',
-            default => 'Your order status has been updated.',
-        };
-
-        $mail = (new MailMessage)
-            ->subject($subject)
-            ->greeting("Hello {$customerName},")
-            ->line($message)
-            ->line("**Order reference:** {$this->order->reference}")
-            ->line('**Total:** '.format_currency($this->order->total));
-
-        if ($this->newStatus === OrderStatus::SHIPPED && $this->order->tracking_number) {
-            $mail->line("**Tracking number:** {$this->order->tracking_number}");
-        }
-
-        return $mail
-            ->action('View Order', $orderUrl)
-            ->salutation('Sheffield Africa · Orders Team');
+        return (new MailMessage)->subject($subject)->view('mails.orders.status', [
+            'order' => $this->order->loadMissing('items'),
+            'newStatus' => $this->newStatus,
+            'customerName' => $this->order->user?->name ?? 'Customer',
+            'orderUrl' => route('customer.orders.show', $this->order),
+            'subject' => $subject,
+        ]);
     }
 
     public function toArray(): array

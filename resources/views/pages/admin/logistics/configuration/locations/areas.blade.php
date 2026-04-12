@@ -210,7 +210,7 @@ new #[Title('Areas & Towns')] class extends Component {
                                 </div>
                             @else
                                 <flux:subheading>
-                                    Default ({{ $area->county->shippingZone->name ?? 'from county' }})
+                                    Default ({{ $area->county->shippingZone?->name ?? 'from county' }})
                                 </flux:subheading>
                             @endif
                         </flux:table.cell>

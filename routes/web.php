@@ -1,9 +1,14 @@
 <?php
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Orders\OrderReceiptController;
 use App\Http\Controllers\Orders\QuotationPdfController;
 use App\Http\Controllers\Payment\CallbackController;
+use App\Mail\WelcomeMail;
+use App\Models\Order;
+use App\Models\Quote;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================================
@@ -330,10 +335,138 @@ if (app()->isLocal()) {
     Route::get('test-error/{code}', function ($code) {
         abort($code);
     });
+
+    // ── Email previews ────────────────────────────────────────────────────────
+
+    Route::get('dev/mail/welcome', function () {
+        $user = User::where('is_staff', false)->latest()->first()
+            ?? User::factory()->create();
+
+        return new WelcomeMail($user);
+    })->name('dev.mail.welcome');
+
+    Route::get('dev/mail/order-status/{status?}', function (string $status = 'shipped') {
+        $order = Order::with('items', 'payment', 'user')->latest()->first();
+        $newStatus = OrderStatus::from($status);
+
+        return view('mails.orders.status', [
+            'order' => $order,
+            'newStatus' => $newStatus,
+            'customerName' => $order->user?->name ?? 'Customer',
+            'orderUrl' => route('customer.orders.show', $order),
+            'subject' => "Order {$newStatus->label()} — {$order->reference}",
+        ]);
+    })->name('dev.mail.order-status');
+
+    Route::get('dev/mail/kra-receipt', function () {
+        $order = Order::with('payment', 'user')
+            ->whereNotNull('kra_cu_number')
+            ->latest()->first()
+            ?? Order::with('payment', 'user')->latest()->first();
+
+        return view('mails.orders.kra-receipt', [
+            'order' => $order,
+            'customerName' => $order->user?->name ?? 'Customer',
+            'orderUrl' => route('customer.orders.show', $order),
+        ]);
+    })->name('dev.mail.kra-receipt');
+
+    Route::get('dev/mail/quote-sent', function () {
+        $quote = Quote::with('items', 'user')
+            ->whereNotNull('quoted_at')->latest()->first()
+            ?? Quote::factory()->sent()->withItems(3)->create();
+        $quote->load('items', 'user');
+
+        return view('mails.quotes.sent', [
+            'quote' => $quote,
+            'customerName' => $quote->user?->name ?? 'Customer',
+            'portalUrl' => route('customer.quotations.show', $quote),
+        ]);
+    })->name('dev.mail.quote-sent');
+
+    Route::get('dev/mail/quote-expiring/{days?}', function (int $days = 2) {
+        $quote = Quote::with('items', 'user')
+            ->whereNotNull('quoted_at')->latest()->first()
+            ?? Quote::factory()->sent()->withItems(2)->create();
+        $quote->load('items', 'user');
+
+        $urgency = $days <= 1 ? 'expires tomorrow' : "expires in {$days} days";
+
+        return view('mails.quotes.expiring', [
+            'quote' => $quote,
+            'customerName' => $quote->user?->name ?? 'Customer',
+            'daysLeft' => $days,
+            'urgency' => $urgency,
+            'portalUrl' => route('customer.quotations.show', $quote),
+        ]);
+    })->name('dev.mail.quote-expiring');
+
+    Route::get('dev/mail/password-reset', function () {
+        $user = User::where('is_staff', false)->latest()->first();
+
+        return view('mails.auth.password-reset', [
+            'user' => $user,
+            'resetUrl' => url('/reset-password/fake-token-for-preview'),
+        ]);
+    })->name('dev.mail.password-reset');
+
+    Route::get('dev/mail/verify-email', function () {
+        $user = User::where('is_staff', false)->latest()->first();
+
+        return view('mails.auth.verify-email', [
+            'user' => $user,
+            'verificationUrl' => url('/verify-email/fake-id/fake-hash-for-preview'),
+        ]);
+    })->name('dev.mail.verify-email');
+
+    // Preview the quotation Blade template in the browser (no PDF conversion).
+    // Uses the most recent sent quote, or a factory quote if none exists.
+    Route::get('dev/quotation-preview', function () {
+        $quote = Quote::with('items.product', 'user')
+            ->whereNotNull('quoted_at')
+            ->latest()
+            ->first();
+
+        if (! $quote) {
+            $quote = Quote::factory()
+                ->sent()
+                ->withItems(3)
+                ->create();
+
+            $quote->load('items.product', 'user');
+        }
+
+        return view('pdf.quotation', ['quote' => $quote]);
+    })->name('dev.quotation-preview');
+
+    // Preview the invoice Blade template in the browser (no PDF conversion).
+    // Uses the most recent paid order, or a factory order if none exists.
+    Route::get('dev/invoice-preview', function () {
+        $order = Order::with('items.product', 'payment', 'user')
+            ->whereNotNull('kra_cu_number')
+            ->latest()
+            ->first();
+
+        if (! $order) {
+            // Fall back to a factory-built order so the template is always previewable
+            $order = Order::factory()
+                ->confirmed()
+                ->withItems(3)
+                ->withPayment()
+                ->create([
+                    'kra_cu_number' => 'CU-PREVIEW-12345',
+                    'kra_validated_at' => now(),
+                ]);
+
+            $order->load('items.product', 'payment', 'user');
+        }
+
+        return view('pdf.invoice', ['order' => $order]);
+    })->name('dev.invoice-preview');
 }
 
 // ============================================================================
 // ADDITIONAL ROUTE FILES
 // ============================================================================
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

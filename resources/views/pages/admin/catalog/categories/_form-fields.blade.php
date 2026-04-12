@@ -11,7 +11,7 @@
 
             <div class="p-5 space-y-5">
                 <div class="grid grid-cols-2 gap-4">
-                    <flux:input label="Category Name" wire:model.live="form.name" placeholder="e.g. Refrigeration" />
+                    <flux:input label="Category Name" wire:model.live.debounce.300ms="form.name" placeholder="e.g. Refrigeration" />
                     <flux:input label="Slug" wire:model="form.slug" placeholder="auto-generated from name" />
                 </div>
 
