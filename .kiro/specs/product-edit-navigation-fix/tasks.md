@@ -1,0 +1,95 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - Navigation After Save Works
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bug exists
+  - **Scoped PBT Approach**: Scope the property to concrete failing cases: navigation attempts after successful product save
+  - Test that navigation via breadcrumbs and sidebar links works after saving product updates
+  - Test implementation details from Bug Condition in design:
+    - Navigate to product edit page
+    - Save product updates successfully
+    - Attempt navigation using breadcrumbs (Products link, Home icon)
+    - Attempt navigation using sidebar links
+    - Assert no Alpine.js errors in console
+    - Assert navigation completes successfully
+  - The test assertions should match the Expected Behavior Properties from design:
+    - Navigation functionality remains intact after save (Requirement 2.1)
+    - No Alpine.js or Livewire navigation errors thrown (Requirement 2.2)
+    - wire:navigate successfully navigates to requested page (Requirement 2.3)
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bug exists)
+  - Document counterexamples found:
+    - Console error: `Uncaught (in promise) Alpine: no element provided to x-anchor...sendNavigateRequest@livewire.js`
+    - Navigation request does not complete
+    - User remains stuck on edit page
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 2.1, 2.2, 2.3_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Save Functionality Unchanged
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs:
+    - Product save operation successfully persists data to database
+    - Success notification "Product updated successfully!" displays after save
+    - 'product-saved' event is dispatched after save
+    - Initial page load correctly loads all product data
+    - Navigation away from edit page without saving works successfully
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - Test save operation completes and persists data correctly
+    - Test success notification displays after save
+    - Test 'product-saved' event is dispatched
+    - Test initial page load functionality
+    - Test pre-save navigation works correctly
+  - Property-based testing generates many test cases for stronger guarantees
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [x] 3. Fix for product edit navigation failure after save
+
+  - [x] 3.1 Implement the fix
+    - Investigate root cause: DOM replacement during save, Alpine.js cleanup issue, Livewire morph conflict, or event timing issue
+    - Apply appropriate fix based on root cause analysis:
+      - Option 1: Prevent full component re-render using `$this->skipRender()` after successful save
+      - Option 2: Add Alpine.js lifecycle hooks to reinitialize navigation elements after save
+      - Option 3: Isolate notification display to prevent interference with Alpine.js lifecycle
+      - Option 4: Add explicit anchor preservation using `wire:ignore` on elements with x-anchor directives
+      - Option 5: Defer event dispatching using `$this->dispatch()->defer()` to ensure events fire after DOM stabilization
+    - Modify `executeSave()` method in the product edit component
+    - Ensure Alpine.js anchor elements remain valid after save operation
+    - Ensure wire:navigate links remain functional after save
+    - _Bug_Condition: isBugCondition(input) where input.pageContext == 'product-edit' AND input.saveOperationCompleted == true AND input.navigationMethod IN ['breadcrumb-click', 'sidebar-link-click'] AND input.usesWireNavigate == true AND anchorElementMissing(input.navigationTarget)_
+    - _Expected_Behavior: For any navigation attempt where a user has successfully saved product updates and clicks a breadcrumb or sidebar link with wire:navigate, the fixed code SHALL successfully complete the navigation request without throwing Alpine.js errors_
+    - _Preservation: Product save operation, success notification display, 'product-saved' event dispatching, initial page load, and pre-save navigation must remain unchanged_
+    - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 3.5_
+
+  - [x] 3.2 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Navigation After Save Works
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Run bug condition exploration test from step 1
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
+    - Verify no Alpine.js errors in console
+    - Verify navigation completes successfully after save
+    - _Requirements: 2.1, 2.2, 2.3_
+
+  - [x] 3.3 Verify preservation tests still pass
+    - **Property 2: Preservation** - Save Functionality Unchanged
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix:
+      - Product save operation works correctly
+      - Success notification displays
+      - 'product-saved' event is dispatched
+      - Initial page load works correctly
+      - Pre-save navigation works correctly
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [x] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

@@ -1,20 +1,10 @@
 
 
-<?php
-extract(Flux::forwardedAttributes($attributes, [
-    'type',
-    'href',
-    'as',
-]));
-?>
-
 <?php $attributes ??= new \Illuminate\View\ComponentAttributeBag;
 
 $__newAttributes = [];
 $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
-    'type' => 'button',
-    'href' => null,
-    'as' => null,
+    'size' => null,
 ]));
 
 foreach ($attributes->all() as $__key => $__value) {
@@ -31,9 +21,7 @@ unset($__propNames);
 unset($__newAttributes);
 
 foreach (array_filter(([
-    'type' => 'button',
-    'href' => null,
-    'as' => null,
+    'size' => null,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 }
@@ -46,21 +34,19 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
-<?php if ($as === 'div' && ! $href): ?>
-    <div <?php echo e($attributes); ?>>
-        <?php echo e($slot); ?>
+<?php
+$classes = Flux::classes()
+    ->add('[:where(&)]:bg-white dark:[:where(&)]:bg-white/10')
+    ->add('border border-zinc-200 dark:border-white/10')
+    ->add(match ($size) {
+        default => '[:where(&)]:p-6 [:where(&)]:rounded-xl',
+        'sm' => '[:where(&)]:p-4 [:where(&)]:rounded-lg',
+    })
+    ;
+?>
 
-    </div>
-<?php elseif ($as === 'a' || $href): ?>
-    
-    <a href="<?php echo e($href); ?>" <?php echo e($attributes); ?>>
-        <?php echo e($slot); ?>
+<div <?php echo e($attributes->class($classes)); ?> data-flux-card>
+    <?php echo e($slot); ?>
 
-    </a>
-<?php else: ?>
-    <button <?php echo e($attributes->merge(['type' => $type])); ?>>
-        <?php echo e($slot); ?>
-
-    </button>
-<?php endif; ?>
-<?php /**PATH C:\Users\jonah\OneDrive\Desktop\ecommerce\sheffield_ecommerce\vendor\livewire\flux\src/../stubs/resources/views/flux/button-or-link-pure.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Users\jonah\OneDrive\Desktop\ecommerce\sheffield_ecommerce\vendor\livewire\flux\src/../stubs/resources/views/flux/card/index.blade.php ENDPATH**/ ?>

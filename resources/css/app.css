@@ -423,3 +423,13 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
 .dark .tiptap hr {
     border-color: var(--color-zinc-700);
 }
+
+/* In your CSS */
+ui-modal:has(dialog[open])::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.409);
+}

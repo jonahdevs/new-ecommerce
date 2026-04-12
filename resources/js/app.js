@@ -7,46 +7,6 @@
 import './echo';
 import richEditor from './rich-editor';
 
-/**
- * Mary UI Choices components use Alpine x-anchor (Floating UI autoUpdate) to position
- * their dropdown panels. autoUpdate runs continuously via DOM mutation observers —
- * even when the dropdown is visually closed. On every Livewire DOM morph (save, update,
- * wire:navigate, etc.) the mutation observer fires, autoUpdate tries to reposition the
- * panel using $refs.container, but that element has been replaced by the morph and is
- * now detached. This throws "Alpine: no element provided to x-anchor", which corrupts
- * Alpine's execution queue and makes subsequent wire:navigate calls fail.
- *
- * Fix 1 (primary) — Livewire.interceptRequest onSend fires before every HTTP request,
- *   before any DOM morph. We dispatch Escape + body click here to trigger Alpine's
- *   @keydown.escape.window and @click.outside handlers on all open Choices dropdowns,
- *   which sets focused=false and stops autoUpdate before the morph happens.
- *
- * Fix 2 — livewire:navigating fires just before Livewire swaps in new page HTML.
- *   A second pass for the navigation case specifically.
- *
- * Fix 3 (safety net) — suppress any residual x-anchor rejections that slip through.
- */
-document.addEventListener('livewire:init', () => {
-    Livewire.interceptRequest(({ onSend }) => {
-        onSend(() => {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-            document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        });
-    });
-});
-
-document.addEventListener('livewire:navigating', () => {
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-    const msg = event.reason?.message ?? String(event.reason ?? '');
-    if (msg.includes('x-anchor')) {
-        event.preventDefault();
-    }
-});
-
 document.addEventListener('alpine:init', () => {
     Alpine.data('richEditor', richEditor);
 

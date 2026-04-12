@@ -39,9 +39,6 @@ abstract class BaseProductComponent extends Component
     /** The Livewire form object holding all product field values and rules. */
     public ProductForm $form;
 
-    /** Tracks whether the admin has unsaved changes — used for the beforeunload guard. */
-    public bool $isDirty = false;
-
     /** The currently active tab in the Product Data card. */
     public string $activeTab = 'general';
 
@@ -153,44 +150,6 @@ abstract class BaseProductComponent extends Component
     public array $downloadsToDelete = [];
 
     // =========================================================================
-    // DIRTY TRACKING
-    // =========================================================================
-
-    /**
-     * Fires on every Livewire property update.
-     * Marks isDirty = true for any data-bearing property change,
-     * ignoring UI-only properties that don't represent unsaved data.
-     */
-    public function updated(string $property): void
-    {
-        $uiOnlyProperties = [
-            'activeTab',
-            'addNewCategory',
-            'addNewBrand',
-            'showTypeChangeModal',
-            'showTagModal',
-            'pendingProductType',
-            'selectedExistingAttribute',
-            'selectedGroupedProducts',
-            'selectedAccessories',
-            'defaultVariantAttributes',
-            'bulkPrice',
-            'bulkStockQuantity',
-            'bulkWeight',
-            'bulkLength',
-            'bulkWidth',
-            'bulkHeight',
-            'isDirty',
-        ];
-
-        $root = explode('.', $property)[0];
-
-        if (! in_array($root, $uiOnlyProperties)) {
-            $this->isDirty = true;
-        }
-    }
-
-    // =========================================================================
     // SAVE PIPELINE
     // =========================================================================
 
@@ -212,7 +171,6 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->executeSave();
-        $this->isDirty = false;
     }
 
     /**
