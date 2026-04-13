@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('model_number')->nullable();
             $table->string('slug')->unique();
-            $table->string('short_description', 500)->nullable();
+            $table->text('short_description')->nullable();
 
             $table->string('type');
 
