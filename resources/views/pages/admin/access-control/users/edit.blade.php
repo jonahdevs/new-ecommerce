@@ -34,6 +34,7 @@ new #[Title('Edit Staff User')] class extends Component {
         try {
             $this->form->update();
             $this->dispatch('notify', title: 'User Updated', variant: 'success', message: 'Staff user updated successfully!');
+            $this->redirectRoute('admin.access-control.users.edit', ['user' => $this->user], navigate: true);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->dispatch('notify', title: 'Validation Error', variant: 'warning', message: 'Please correct the highlighted fields.');
             throw $e;

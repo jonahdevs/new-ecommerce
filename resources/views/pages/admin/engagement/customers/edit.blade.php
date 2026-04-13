@@ -24,6 +24,7 @@ new #[Title('Edit Customer')] class extends Component {
         try {
             $this->form->update();
             $this->dispatch('notify', title: 'Customer Updated', variant: 'success', message: 'Customer updated successfully.');
+            $this->redirectRoute('admin.customers.index', navigate: true);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {

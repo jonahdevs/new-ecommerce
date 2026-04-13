@@ -3,35 +3,54 @@
     $weightUnit = $regionalSettings->weight_unit;
     $dimensionUnit = $regionalSettings->dimension_unit;
 @endphp
-<form wire:submit="save" class="mt-6 lg:grid lg:grid-cols-12 lg:gap-5 " id="product-form">
-    {{-- Sidebar --}}
+
+<form wire:submit="save" id="product-form" class="mt-6 lg:grid lg:grid-cols-12 lg:gap-5">
+
+    {{-- ============================================================ --}}
+    {{-- MAIN COLUMN                                                  --}}
+    {{-- ============================================================ --}}
     <div class="lg:col-span-8 xl:col-span-9 lg:col-start-1 space-y-5">
+
         {{-- Basic Information --}}
         @include('pages.admin.catalog.products.partials._basic-information')
 
-        {{-- Product Data --}}
+        {{-- ────────────────────────────────────────────────────── --}}
+        {{-- PRODUCT DATA CARD                                       --}}
+        {{-- ────────────────────────────────────────────────────── --}}
         <flux:card class="p-0" x-data="{ expanded: true }">
+
+            {{-- Card header: title + type select + virtual/downloadable checkboxes --}}
             <div class="border-b dark:border-zinc-600 px-3 py-2" :class="{ 'border-b': expanded }">
 
-                {{-- Row 1 — Title + Chevron --}}
                 <div class="flex items-center justify-between">
                     <flux:heading>Product Data</flux:heading>
-                    <flux:button icon="chevron-down" size="xs" variant="ghost"
+                    <flux:button
+                        icon="chevron-down"
+                        size="xs"
+                        variant="ghost"
                         class="cursor-pointer transition-transform duration-300"
-                        x-bind:class="{ 'rotate-180': expanded }" @click="expanded = !expanded" />
+                        x-bind:class="{ 'rotate-180': expanded }"
+                        @click="expanded = !expanded"
+                    />
                 </div>
 
-                {{-- Row 2 — Type + Checkboxes --}}
                 <div class="flex flex-wrap items-center gap-3 mt-2">
-                    <flux:select size="sm" class="w-fit" wire:model.live="form.type">
+                    {{--
+                        Use a native <select> here instead of flux:select.
+                        This select uses wire:model.live to trigger updatedFormType().
+                        A native select does not use Alpine x-anchor, so it never
+                        causes the "no element provided to x-anchor" error when
+                        Livewire re-renders the component on type change.
+                    --}}
+                    <select
+                        wire:model.live="form.type"
+                        class="text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500"
+                    >
                         @foreach (App\Enums\ProductType::cases() as $type)
-                            <flux:select.option value="{{ $type->value }}">
-                                {{ $type->label() }}
-                            </flux:select.option>
+                            <option value="{{ $type->value }}">{{ $type->label() }}</option>
                         @endforeach
-                    </flux:select>
+                    </select>
 
-                    {{-- Virtual & Downloadable --}}
                     <div wire:cloak wire:show="form.type !== 'grouped'" class="flex items-center gap-4">
                         <flux:field variant="inline">
                             <flux:checkbox wire:model.live="form.is_virtual" />
@@ -40,272 +59,208 @@
                         </flux:field>
 
                         <flux:field variant="inline">
-                            <flux:checkbox wire:model.live="form.is_downloadable" />
+                            <flux:checkbox wire:model="form.is_downloadable" />
                             <flux:label size="sm" class="text-xs!">Downloadable</flux:label>
                             <flux:error name="form.is_downloadable" />
                         </flux:field>
                     </div>
                 </div>
-
             </div>
 
-            <div x-show="expanded" x-collapse class="">
+            {{-- Card body --}}
+            <div x-show="expanded" x-collapse>
 
-                {{-- ================================================ --}}
-                {{-- MOBILE — Horizontal scrollable pills (< md)      --}}
-                {{-- ================================================ --}}
-                <div
-                    class="md:hidden border-b dark:border-zinc-700 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    <div class="flex items-center gap-1 p-2 min-w-max">
+                {{--
+                    Single grid: nav column (adaptive) + content column (single DOM instance).
+                    On mobile the nav column spans full width above content; on desktop it is
+                    a vertical sidebar beside the content.
+                    The content partials are included ONCE — never duplicated — eliminating
+                    the duplicate flux:select instances that cause Alpine x-anchor errors.
+                --}}
+                <div class="grid grid-cols-1 md:grid-cols-12">
 
-                        {{-- General --}}
-                        <button wire:cloak wire:show="form.type !== 'grouped'" type="button"
-                            @click="$wire.activeTab = 'general'"
-                            :class="$wire.activeTab === 'general' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.banknotes class="size-3.5" variant="outline" />
-                            General
-                            @if ($this->hasGeneralErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
+                    {{-- ─── Navigation column ─────────────────────── --}}
+                    <div class="md:col-span-2 lg:col-span-3">
 
-                        {{-- Inventory --}}
-                        <button type="button" @click="$wire.activeTab = 'inventory'"
-                            :class="$wire.activeTab === 'inventory' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.archive-box class="size-3.5" variant="outline" />
-                            Inventory
-                            @if ($this->hasInventoryErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
+                        {{-- Mobile: horizontal scrollable pills --}}
+                        <div class="md:hidden border-b dark:border-zinc-700 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            <div class="flex items-center gap-1 p-2 min-w-max">
 
-                        {{-- Shipping --}}
-                        <button wire:cloak wire:show="form.type !== 'grouped' && !form.is_virtual" type="button"
-                            @click="$wire.activeTab = 'shipping'"
-                            :class="$wire.activeTab === 'shipping' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.truck class="size-3.5" variant="outline" />
-                            Shipping
-                            @if ($this->hasShippingErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
+                                <button wire:cloak wire:show="form.type !== 'grouped'" type="button"
+                                    @click="$wire.set('activeTab', 'general')"
+                                    :class="$wire.activeTab === 'general'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.banknotes class="size-3.5" variant="outline" />General
+                                    @if ($this->hasGeneralErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                        {{-- Linked Products --}}
-                        <button type="button" @click="$wire.activeTab = 'linked-products'"
-                            :class="$wire.activeTab === 'linked-products' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.link class="size-3.5" variant="outline" />
-                            Linked
-                            @if ($this->hasLinkedProductsErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
+                                <button type="button"
+                                    @click="$wire.set('activeTab', 'inventory')"
+                                    :class="$wire.activeTab === 'inventory'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.archive-box class="size-3.5" variant="outline" />Inventory
+                                    @if ($this->hasInventoryErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                        {{-- Attributes --}}
-                        <button type="button" @click="$wire.activeTab = 'attributes'"
-                            :class="$wire.activeTab === 'attributes' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.tag class="size-3.5" variant="outline" />
-                            Attributes
-                            @if ($this->hasAttributesErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
+                                <button wire:cloak wire:show="form.type !== 'grouped' && !form.is_virtual" type="button"
+                                    @click="$wire.set('activeTab', 'shipping')"
+                                    :class="$wire.activeTab === 'shipping'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.truck class="size-3.5" variant="outline" />Shipping
+                                    @if ($this->hasShippingErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                        {{-- Variations --}}
-                        <button wire:cloak wire:show="form.type === 'variable'" type="button"
-                            @click="$wire.activeTab = 'variations'"
-                            :class="$wire.activeTab === 'variations' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.squares-2x2 class="size-3.5" variant="outline" />
-                            Variations
-                            @if ($this->hasVariationsErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
+                                <button type="button"
+                                    @click="$wire.set('activeTab', 'linked-products')"
+                                    :class="$wire.activeTab === 'linked-products'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.link class="size-3.5" variant="outline" />Linked
+                                    @if ($this->hasLinkedProductsErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                        {{-- Advanced --}}
-                        <button type="button" @click="$wire.activeTab = 'advanced'"
-                            :class="$wire.activeTab === 'advanced' ?
-                                'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600' :
-                                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">
-                            <flux:icon.cog class="size-3.5" variant="outline" />
-                            Advanced
-                            @if ($this->hasAdvancedErrors())
-                                <span class="size-1.5 rounded-full bg-red-500"></span>
-                            @endif
-                        </button>
-                    </div>
-                </div>
+                                <button type="button"
+                                    @click="$wire.set('activeTab', 'attributes')"
+                                    :class="$wire.activeTab === 'attributes'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.tag class="size-3.5" variant="outline" />Attributes
+                                    @if ($this->hasAttributesErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                {{-- ================================================ --}}
-                {{-- TABLET + DESKTOP — Sidebar layout (md+)          --}}
-                {{-- ================================================ --}}
-                <div class="hidden md:grid md:grid-cols-12">
+                                <button wire:cloak wire:show="form.type === 'variable'" type="button"
+                                    @click="$wire.set('activeTab', 'variations')"
+                                    :class="$wire.activeTab === 'variations'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.squares-2x2 class="size-3.5" variant="outline" />Variations
+                                    @if ($this->hasVariationsErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                    {{-- ── Sidebar ── --}}
-                    <div
-                        class="md:col-span-2 lg:col-span-3 bg-zinc-100 dark:bg-zinc-900/90 border-r dark:border-zinc-600 flex flex-col divide-y dark:divide-zinc-600 overflow-hidden rounded-bl-xl">
+                                <button type="button"
+                                    @click="$wire.set('activeTab', 'advanced')"
+                                    :class="$wire.activeTab === 'advanced'
+                                        ? 'bg-white dark:bg-zinc-800 text-brand-secondary shadow-sm border border-zinc-200 dark:border-zinc-600'
+                                        : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all cursor-pointer">
+                                    <flux:icon.cog class="size-3.5" variant="outline" />Advanced
+                                    @if ($this->hasAdvancedErrors()) <span class="size-1.5 rounded-full bg-red-500"></span> @endif
+                                </button>
 
-                        {{-- General --}}
-                        <button wire:cloak wire:show="form.type !== 'grouped'" type="button"
-                            @click="$wire.activeTab = 'general'"
-                            :class="$wire.activeTab === 'general' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-
-                            <flux:icon.banknotes class="size-4 shrink-0" variant="outline" />
-
-                            {{-- Label — visible on lg, hidden on md --}}
-                            <span class="hidden lg:block">General</span>
-
-                            {{-- Tooltip — visible on md only --}}
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                General
                             </div>
+                        </div>
 
-                            @if ($this->hasGeneralErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                        {{-- Desktop: vertical sidebar --}}
+                        <div class="hidden md:flex flex-col divide-y dark:divide-zinc-600 bg-zinc-100 dark:bg-zinc-900/90 border-r dark:border-zinc-600 h-full rounded-bl-xl overflow-hidden">
 
-                        {{-- Inventory --}}
-                        <button type="button" @click="$wire.activeTab = 'inventory'"
-                            :class="$wire.activeTab === 'inventory' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-                            <flux:icon.archive-box class="size-4 shrink-0" variant="outline" />
-                            <span class="hidden lg:block">Inventory</span>
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                Inventory
-                            </div>
-                            @if ($this->hasInventoryErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                            <button wire:cloak wire:show="form.type !== 'grouped'" type="button"
+                                @click="$wire.set('activeTab', 'general')"
+                                :class="$wire.activeTab === 'general'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.banknotes class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">General</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">General</div>
+                                @if ($this->hasGeneralErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
 
-                        {{-- Shipping --}}
-                        <button wire:cloak wire:show="form.type !== 'grouped' && !form.is_virtual" type="button"
-                            @click="$wire.activeTab = 'shipping'"
-                            :class="$wire.activeTab === 'shipping' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-                            <flux:icon.truck class="size-4 shrink-0" variant="outline" />
-                            <span class="hidden lg:block">Shipping</span>
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                Shipping
-                            </div>
-                            @if ($this->hasShippingErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                            <button type="button"
+                                @click="$wire.set('activeTab', 'inventory')"
+                                :class="$wire.activeTab === 'inventory'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.archive-box class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">Inventory</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Inventory</div>
+                                @if ($this->hasInventoryErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
 
-                        {{-- Linked Products --}}
-                        <button type="button" @click="$wire.activeTab = 'linked-products'"
-                            :class="$wire.activeTab === 'linked-products' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-                            <flux:icon.link class="size-4 shrink-0" variant="outline" />
-                            <span class="hidden lg:block">Linked Products</span>
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                Linked Products
-                            </div>
-                            @if ($this->hasLinkedProductsErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                            <button wire:cloak wire:show="form.type !== 'grouped' && !form.is_virtual" type="button"
+                                @click="$wire.set('activeTab', 'shipping')"
+                                :class="$wire.activeTab === 'shipping'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.truck class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">Shipping</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Shipping</div>
+                                @if ($this->hasShippingErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
 
-                        {{-- Attributes --}}
-                        <button type="button" @click="$wire.activeTab = 'attributes'"
-                            :class="$wire.activeTab === 'attributes' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-                            <flux:icon.tag class="size-4 shrink-0" variant="outline" />
-                            <span class="hidden lg:block">Attributes</span>
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                Attributes
-                            </div>
-                            @if ($this->hasAttributesErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                            <button type="button"
+                                @click="$wire.set('activeTab', 'linked-products')"
+                                :class="$wire.activeTab === 'linked-products'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.link class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">Linked Products</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Linked Products</div>
+                                @if ($this->hasLinkedProductsErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
 
-                        {{-- Variations --}}
-                        <button wire:cloak wire:show="form.type === 'variable'" type="button"
-                            @click="$wire.activeTab = 'variations'"
-                            :class="$wire.activeTab === 'variations' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-                            <flux:icon.squares-2x2 class="size-4 shrink-0" variant="outline" />
-                            <span class="hidden lg:block">Variations</span>
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                Variations
-                            </div>
-                            @if ($this->hasVariationsErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                            <button type="button"
+                                @click="$wire.set('activeTab', 'attributes')"
+                                :class="$wire.activeTab === 'attributes'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.tag class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">Attributes</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Attributes</div>
+                                @if ($this->hasAttributesErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
 
-                        {{-- Advanced --}}
-                        <button type="button" @click="$wire.activeTab = 'advanced'"
-                            :class="$wire.activeTab === 'advanced' ?
-                                'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary' :
-                                'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
-                            class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative">
-                            <flux:icon.cog class="size-4 shrink-0" variant="outline" />
-                            <span class="hidden lg:block">Advanced</span>
-                            <div
-                                class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                Advanced
-                            </div>
-                            @if ($this->hasAdvancedErrors())
-                                <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span>
-                            @endif
-                        </button>
+                            <button wire:cloak wire:show="form.type === 'variable'" type="button"
+                                @click="$wire.set('activeTab', 'variations')"
+                                :class="$wire.activeTab === 'variations'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.squares-2x2 class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">Variations</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Variations</div>
+                                @if ($this->hasVariationsErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
 
+                            <button type="button"
+                                @click="$wire.set('activeTab', 'advanced')"
+                                :class="$wire.activeTab === 'advanced'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-brand-secondary'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'"
+                                class="group flex items-center lg:justify-start justify-center gap-2.5 px-3 py-3 text-sm font-medium transition-all relative cursor-pointer">
+                                <flux:icon.cog class="size-4 shrink-0" variant="outline" />
+                                <span class="hidden lg:block">Advanced</span>
+                                <div class="lg:hidden absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Advanced</div>
+                                @if ($this->hasAdvancedErrors()) <span class="size-1.5 rounded-full bg-red-500 lg:ml-auto shrink-0"></span> @endif
+                            </button>
+
+                        </div>
                     </div>
 
-                    {{-- ── Tab Content ── --}}
-                    <div class="md:col-span-10 lg:col-span-9">
+                    {{-- ─── Tab content column — single DOM instance ── --}}
+                    <div class="col-span-1 md:col-span-10 lg:col-span-9">
                         @include('pages.admin.catalog.products.partials._general')
                         @include('pages.admin.catalog.products.partials._inventory')
                         @include('pages.admin.catalog.products.partials._shipping')
                         @include('pages.admin.catalog.products.partials._linked-products')
 
-
-                        <div wire:cloak wire:show="activeTab == 'attributes'">
+                        <div wire:cloak wire:show="activeTab === 'attributes'">
                             @include('pages.admin.catalog.products.partials._attributes')
                         </div>
 
-                        <div wire:cloak wire:show="activeTab == 'variations'">
+                        <div wire:cloak wire:show="activeTab === 'variations'">
                             @include('pages.admin.catalog.products.partials._variations')
                         </div>
 
@@ -313,27 +268,7 @@
                     </div>
 
                 </div>
-
-                {{-- ── Mobile Tab Content ── --}}
-                <div class="md:hidden p-4">
-                    @include('pages.admin.catalog.products.partials._general')
-                    @include('pages.admin.catalog.products.partials._inventory')
-                    @include('pages.admin.catalog.products.partials._shipping')
-                    @include('pages.admin.catalog.products.partials._linked-products')
-
-
-                    <div wire:cloak wire:show="activeTab == 'attributes'">
-                        @include('pages.admin.catalog.products.partials._attributes')
-                    </div>
-
-                    <div wire:cloak wire:show="activeTab == 'variations'">
-                        @include('pages.admin.catalog.products.partials._variations')
-                    </div>
-
-                    @include('pages.admin.catalog.products.partials._advanced')
-                </div>
             </div>
-
         </flux:card>
 
         {{-- Product Description --}}
@@ -346,13 +281,20 @@
         @include('pages.admin.catalog.products.partials._seo')
     </div>
 
+    {{-- ============================================================ --}}
+    {{-- SIDEBAR COLUMN                                               --}}
+    {{-- ============================================================ --}}
     <div class="lg:col-span-4 xl:col-span-3 lg:col-start-9 space-y-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
             @include('pages.admin.catalog.products.partials._sidebar')
         </div>
     </div>
 
-    {{-- Type Change Modal --}}
+    {{-- ============================================================ --}}
+    {{-- MODALS                                                        --}}
+    {{-- ============================================================ --}}
+
+    {{-- Type Change Confirmation --}}
     <flux:modal wire:model="showTypeChangeModal" class="max-w-md space-y-5">
         <div>
             <flux:heading size="lg">Change Product Type?</flux:heading>
@@ -382,9 +324,7 @@
         </div>
     </flux:modal>
 
-
-
-    {{-- Tag Picker Modal --}}
+    {{-- Most Used Tags Picker --}}
     <flux:modal wire:model="showTagModal" class="max-w-lg space-y-5" x-data="{ selected: [] }">
         <div>
             <flux:heading size="lg">Most Used Tags</flux:heading>
@@ -395,9 +335,9 @@
             @foreach ($this->mostUsedTags as $tag)
                 <button type="button"
                     @click="selected.includes({{ $tag->id }}) ? selected = selected.filter(id => id !== {{ $tag->id }}) : selected.push({{ $tag->id }})"
-                    :class="selected.includes({{ $tag->id }}) ?
-                        'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900' :
-                        'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600'"
+                    :class="selected.includes({{ $tag->id }})
+                        ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600'"
                     class="rounded-full px-3 py-1 text-sm font-medium transition-colors cursor-pointer">
                     {{ $tag->name }}
                     <span class="ml-1 opacity-60 text-xs">({{ $tag->products_count }})</span>
@@ -417,20 +357,18 @@
         </div>
     </flux:modal>
 
-    {{-- Bulk Pricing Modal --}}
+    {{-- Bulk Pricing --}}
     <flux:modal name="bulk-pricing" class="max-w-lg space-y-5">
-        <flux:heading>{{ $form->name }} Says</flux:heading>
+        <flux:heading>Set Price for All Variations</flux:heading>
         <flux:text>Add price to all variations that don't have a price</flux:text>
-        <flux:input wire:model.defer="bulkPrice" label="Regular Price ({{ get_currency_symbol() }})" type="number"
-            step="0.01" placeholder="Leave blank to skip" />
-
+        <flux:input wire:model.defer="bulkPrice" label="Regular Price ({{ get_currency_symbol() }})" type="number" step="0.01" placeholder="Leave blank to skip" />
         <div class="flex gap-3 justify-end">
             <flux:button @click="$flux.modal('bulk-pricing').close()">Cancel</flux:button>
             <flux:button variant="primary" wire:click="applyBulkPricing">Apply</flux:button>
         </div>
     </flux:modal>
 
-    {{-- Bulk Stock Modal --}}
+    {{-- Bulk Stock --}}
     <flux:modal name="bulk-stock" class="max-w-lg space-y-5">
         <flux:heading>Set Stock Quantity for All Variations</flux:heading>
         <flux:input wire:model.defer="bulkStockQuantity" label="Stock Quantity" type="number" min="0" />
@@ -440,11 +378,10 @@
         </div>
     </flux:modal>
 
-    {{-- Bulk Dimensions Modal --}}
+    {{-- Bulk Dimensions --}}
     <flux:modal name="bulk-dimensions" class="max-w-lg space-y-5">
         <flux:heading>Set Dimensions & Weight for All Variations</flux:heading>
-        <flux:input wire:model.defer="bulkWeight" label="Weight ({{ $weightUnit }})" type="number"
-            step="0.01" placeholder="Leave blank to skip" />
+        <flux:input wire:model.defer="bulkWeight" label="Weight ({{ $weightUnit }})" type="number" step="0.01" placeholder="Leave blank to skip" />
         <flux:field>
             <flux:label>Dimensions - L x W x H ({{ $dimensionUnit }})</flux:label>
             <flux:input.group>

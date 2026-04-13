@@ -31,14 +31,18 @@
             placeholder="0.00" />
 
         {{-- Tax Class --}}
-        <flux:select wire:model="form.tax_class_id" label="Tax Class" placeholder="Use default tax class from settings" clearable
-            description="Override the default tax class for this product. Leave blank to inherit the global default.">
-            @foreach ($this->taxClasses as $taxClass)
-                <flux:select.option value="{{ $taxClass->id }}">
-                    {{ $taxClass->name }} — {{ $taxClass->rateLabel() }}
-                </flux:select.option>
-            @endforeach
-        </flux:select>
+        <flux:field>
+            <flux:label>Tax Class</flux:label>
+            <select wire:model="form.tax_class_id"
+                class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <option value="">Use default tax class from settings</option>
+                @foreach ($this->taxClasses as $taxClass)
+                    <option value="{{ $taxClass->id }}">{{ $taxClass->name }} — {{ $taxClass->rateLabel() }}</option>
+                @endforeach
+            </select>
+            <flux:description>Override the default tax class for this product. Leave blank to inherit the global default.</flux:description>
+            <flux:error name="form.tax_class_id" />
+        </flux:field>
     </div>
 
     <flux:separator wire:cloak wire:show="form.is_downloadable" />

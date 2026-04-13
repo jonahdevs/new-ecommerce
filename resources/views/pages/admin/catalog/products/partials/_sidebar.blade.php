@@ -11,11 +11,15 @@
     <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5">
         {{-- Publication Status --}}
 
-        <flux:select wire:model="form.status" label="Publication Status">
-            @foreach (\App\Enums\ProductStatus::cases() as $productStatus)
-                <flux:select.option :value="$productStatus->value">{{ $productStatus->label() }}</flux:select.option>
-            @endforeach
-        </flux:select>
+        <flux:field>
+            <flux:label>Publication Status</flux:label>
+            <select wire:model="form.status"
+                class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                @foreach (\App\Enums\ProductStatus::cases() as $productStatus)
+                    <option value="{{ $productStatus->value }}">{{ $productStatus->label() }}</option>
+                @endforeach
+            </select>
+        </flux:field>
         @php
             $config1 = [
                 'minDate' => now()->addDay()->format('Y-m-d'),
@@ -28,12 +32,15 @@
 
         <flux:separator />
 
-        <flux:select wire:model="form.visibility" label="Visibility">
-            @foreach (\App\Enums\ProductVisibility::cases() as $productVisibility)
-                <flux:select.option :value="$productVisibility->value">{{ $productVisibility->label() }}
-                </flux:select.option>
-            @endforeach
-        </flux:select>
+        <flux:field>
+            <flux:label>Visibility</flux:label>
+            <select wire:model="form.visibility"
+                class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                @foreach (\App\Enums\ProductVisibility::cases() as $productVisibility)
+                    <option value="{{ $productVisibility->value }}">{{ $productVisibility->label() }}</option>
+                @endforeach
+            </select>
+        </flux:field>
     </div>
 </flux:card>
 
@@ -50,12 +57,13 @@
 
     <div x-show="expanded" x-cloak x-collapse class="p-5 space-y-5" :class="{ '-mb-5': !$wire.addNewBrand }">
         {{-- Brand Select --}}
-        <flux:select wire:model="form.brand_id" placeholder="Select a brand...">
-            <flux:select.option value="">— No brand —</flux:select.option>
+        <select wire:model="form.brand_id"
+            class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+            <option value="">— No brand —</option>
             @foreach ($this->brands as $brand)
-                <flux:select.option :value="$brand->id">{{ $brand->name }}</flux:select.option>
+                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
             @endforeach
-        </flux:select>
+        </select>
 
         {{-- Add New Brand Toggle --}}
         <flux:button @click="$wire.addNewBrand = !$wire.addNewBrand" type="button" icon="plus" variant="ghost"
@@ -261,7 +269,7 @@
                             </span>
                         @endif
 
-                        <flux:checkbox wire:model.live="form.category_ids" :value="$category['id']"
+                        <flux:checkbox wire:model="form.category_ids" :value="$category['id']"
                             :label="$category['name']" />
 
                         @if (in_array($category['id'], $form->category_ids))
@@ -304,14 +312,13 @@
         <div wire:show="addNewCategory" wire:cloak class="space-y-5">
             <flux:input wire:model="form.newCategoryName" placeholder="Enter category name" />
 
-            <flux:select wire:model="form.newCategoryParentId">
-                <flux:select.option value="">-- Parent Category --</flux:select.option>
+            <select wire:model="form.newCategoryParentId"
+                class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <option value="">-- Parent Category --</option>
                 @foreach ($this->allCategories as $category)
-                    <flux:select.option :value="$category->id">
-                        {{ $category->name }}
-                    </flux:select.option>
+                    <option value="{{ $category->id }}">{{ $category->name }}</option>
                 @endforeach
-            </flux:select>
+            </select>
 
 
             <div class="flex gap-2">

@@ -26,7 +26,7 @@
     {{-- Manage Stock --}}
     <flux:field>
         <flux:label>Manage Stock</flux:label>
-        <flux:checkbox wire:model.live="form.manage_stock" label="Enable stock management for this product" />
+        <flux:checkbox wire:model="form.manage_stock" label="Enable stock management for this product" />
     </flux:field>
 
     {{-- Stock fields — only when manage_stock is on --}}
@@ -34,11 +34,15 @@
         <flux:input wire:model="form.stock_quantity" label="Stock Quantity" type="number" min="0" />
 
         <div class="grid grid-cols-2 gap-5">
-            <flux:select label="Allow Backorder?" wire:model="form.allow_backorder">
-                <flux:select.option value="no">Do not allow</flux:select.option>
-                <flux:select.option value="notify">Allow, but notify customer</flux:select.option>
-                <flux:select.option value="yes">Allow</flux:select.option>
-            </flux:select>
+            <flux:field>
+                <flux:label>Allow Backorder?</flux:label>
+                <select wire:model="form.allow_backorder"
+                    class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                    <option value="no">Do not allow</option>
+                    <option value="notify">Allow, but notify customer</option>
+                    <option value="yes">Allow</option>
+                </select>
+            </flux:field>
 
             <flux:input wire:model="form.low_stock_threshold" label="Low Stock Threshold" type="number"
                 min="0" />
@@ -47,11 +51,15 @@
 
     {{-- Stock Status — only when manage_stock is off --}}
     <div wire:cloak wire:show="!form.manage_stock">
-        <flux:select wire:model="form.stock_status" label="Stock Status">
-            <flux:select.option value="in_stock">In Stock</flux:select.option>
-            <flux:select.option value="out_of_stock">Out of Stock</flux:select.option>
-            <flux:select.option value="backorder">Backorder</flux:select.option>
-        </flux:select>
+        <flux:field>
+            <flux:label>Stock Status</flux:label>
+            <select wire:model="form.stock_status"
+                class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <option value="in_stock">In Stock</option>
+                <option value="out_of_stock">Out of Stock</option>
+                <option value="backorder">Backorder</option>
+            </select>
+        </flux:field>
     </div>
 
     <flux:separator />

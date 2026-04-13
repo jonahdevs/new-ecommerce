@@ -18,7 +18,7 @@ new #[Title('Create Product')] class extends BaseProductComponent {
 
             $this->dispatch('notify', title: 'Product Created', variant: 'success', message: 'Product created successfully!');
             $this->dispatch('product-saved');
-            $this->redirectRoute('admin.products.index', navigate: true);
+            $this->redirectRoute('admin.catalog.products.index', navigate: true);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {

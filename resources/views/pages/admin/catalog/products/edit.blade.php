@@ -49,11 +49,7 @@ new #[Title('Edit Product')] class extends BaseProductComponent {
             });
 
             $this->dispatch('notify', title: 'Product Updated', variant: 'success', message: 'Product updated successfully!');
-            $this->dispatch('product-saved');
-            
-            // Skip re-render to prevent DOM replacement that breaks Alpine.js anchor references
-            // This preserves wire:navigate functionality after save operations
-            $this->skipRender();
+            $this->redirectRoute('admin.catalog.products.index', navigate: true);
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {

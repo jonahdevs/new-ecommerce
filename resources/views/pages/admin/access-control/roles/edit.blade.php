@@ -31,6 +31,7 @@ new class extends Component {
         try {
             $this->form->update();
             $this->dispatch('notify', title: 'Role Updated', variant: 'success', message: 'Role updated successfully.');
+            $this->redirectRoute('admin.access-control.roles.edit', ['role' => $this->role], navigate: true);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {

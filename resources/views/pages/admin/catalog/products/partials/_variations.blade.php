@@ -17,10 +17,18 @@
         <div class="flex flex-wrap items-center gap-4 border-b px-4 py-2">
             <flux:label>Default Variation</flux:label>
             @foreach ($availableAttributes as $attribute)
-                <flux:select size="sm" class="w-fit"
-                    wire:model.live="defaultVariantAttributes.{{ $attribute['name'] }}">
-                    <flux:select.option value="">No default {{ ucfirst($attribute['name']) }}
-                    </flux:select.option>
+                {{--
+                    Native select instead of flux:select here because this uses wire:model.live
+                    to trigger updatedDefaultVariantAttributes(). A native select does not use
+                    Alpine x-anchor so it cannot cause the "no element provided to x-anchor"
+                    error when Livewire re-renders after a value change.
+                --}}
+                <select
+                    wire:model.live="defaultVariantAttributes.{{ $attribute['name'] }}"
+                    wire:key="default-variant-attr-{{ $loop->index }}"
+                    class="text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500"
+                >
+                    <option value="">No default {{ ucfirst($attribute['name']) }}</option>
                     @foreach ($attribute['values'] as $valueId)
                         @php
                             $val = collect(
@@ -28,12 +36,10 @@
                             )->firstWhere('id', $valueId);
                         @endphp
                         @if ($val)
-                            <flux:select.option value="{{ $val['name'] }}">
-                                {{ $val['name'] }}
-                            </flux:select.option>
+                            <option value="{{ $val['name'] }}">{{ $val['name'] }}</option>
                         @endif
                     @endforeach
-                </flux:select>
+                </select>
             @endforeach
         </div>
     @endif
@@ -296,11 +302,14 @@
                                         <flux:input type="number"
                                             wire:model="variants.{{ $index }}.stock_quantity"
                                             label="Stock Quantity" min="0" />
-                                        <flux:select label="Allow Backorders"
-                                            wire:model="variants.{{ $index }}.allow_backorders">
-                                            <flux:select.option value="">Do not allow</flux:select.option>
-                                            <flux:select.option value="1">Allow</flux:select.option>
-                                        </flux:select>
+                                        <flux:field>
+                                            <flux:label>Allow Backorders</flux:label>
+                                            <select wire:model="variants.{{ $index }}.allow_backorders"
+                                                class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                                                <option value="">Do not allow</option>
+                                                <option value="1">Allow</option>
+                                            </select>
+                                        </flux:field>
                                     </div>
 
                                     {{-- Backorder Settings — shown when backorders are allowed --}}
@@ -330,12 +339,15 @@
 
                                 {{-- Stock status when manage_stock is OFF --}}
                                 <div x-show="!$wire.variants[{{ $index }}].manage_stock" x-cloak>
-                                    <flux:select wire:model="variants.{{ $index }}.stock_status"
-                                        label="Stock Status">
-                                        <flux:select.option value="in_stock">In Stock</flux:select.option>
-                                        <flux:select.option value="out_of_stock">Out of Stock</flux:select.option>
-                                        <flux:select.option value="backorder">Backorder</flux:select.option>
-                                    </flux:select>
+                                    <flux:field>
+                                        <flux:label>Stock Status</flux:label>
+                                        <select wire:model="variants.{{ $index }}.stock_status"
+                                            class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                                            <option value="in_stock">In Stock</option>
+                                            <option value="out_of_stock">Out of Stock</option>
+                                            <option value="backorder">Backorder</option>
+                                        </select>
+                                    </flux:field>
                                 </div>
 
                                 {{-- Shipping --}}

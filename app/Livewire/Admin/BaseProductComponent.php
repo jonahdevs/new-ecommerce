@@ -949,7 +949,7 @@ abstract class BaseProductComponent extends Component
         }
 
         $this->bulkStockQuantity = null;
-        Flux::modal('bulk-stock"')->close();
+        Flux::modal('bulk-stock')->close();
         $this->dispatch('notify', title: 'Bulk Stock Applied', variant: 'success', message: 'Stock applied to all variations.');
     }
 

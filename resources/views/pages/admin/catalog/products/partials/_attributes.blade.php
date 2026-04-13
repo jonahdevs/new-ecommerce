@@ -11,19 +11,14 @@
         </flux:button>
 
         <div x-data>
-            <flux:select x-ref="attrSelect"
-                @change="
-            $wire.addExistingAttribute($event.target.value)
-                .then(() => { $refs.attrSelect.value = '' })
-        "
-                class="max-w-fit">
-                <flux:select.option value="">Add existing...</flux:select.option>
+            <select x-ref="attrSelect"
+                @change="$wire.addExistingAttribute($event.target.value).then(() => { $refs.attrSelect.value = '' })"
+                class="text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <option value="">Add existing...</option>
                 @foreach ($this->productAttributes as $attr)
-                    <flux:select.option :value="$attr->id">
-                        {{ ucfirst($attr->name) }}
-                    </flux:select.option>
+                    <option value="{{ $attr->id }}">{{ ucfirst($attr->name) }}</option>
                 @endforeach
-            </flux:select>
+            </select>
         </div>
 
         @if (!empty($selectedAttributes))
