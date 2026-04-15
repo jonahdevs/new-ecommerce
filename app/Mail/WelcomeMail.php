@@ -20,14 +20,14 @@ class WelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to '.config('app.name').'!',
+            subject: 'Welcome to ' . config('app.name') . '!',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'mails.auth.welcome',
+            markdown: 'mails.auth.welcome',
             with: [
                 'user' => $this->user,
                 'shopUrl' => route('shop.index'),
