@@ -23,8 +23,7 @@ Route::prefix('webhooks')
         Route::post('/pesawise', PesawiseWebhookController::class)->name('pesawise');
         Route::post('/mpesa', MpesaWebhookController::class)->name('mpesa');
         Route::post('/stripe', StripeWebhookController::class)->name('stripe');
-        Route::post('/sap', SapWebhookController::class)
-            ->name('sap');
+        Route::post('/sap', SapWebhookController::class)->name('sap');
     });
 
 // SAP Product Sync API - Batch only

@@ -18,8 +18,6 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     //  Sent to the customer to keep them informed about their order.
     //
     //  Statuses that trigger this notification:
-    //    - CONFIRMED: Order has been confirmed
-    //    - PROCESSING: Order is being prepared
     //    - SHIPPED: Order has been shipped
     //    - DELIVERED: Order has been delivered
     //    - CANCELLED: Order has been cancelled
@@ -38,8 +36,6 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     public function toMail(): MailMessage
     {
         $subject = match ($this->newStatus) {
-            OrderStatus::CONFIRMED => "Order Confirmed — {$this->order->reference}",
-            OrderStatus::PROCESSING => "Order Being Prepared — {$this->order->reference}",
             OrderStatus::SHIPPED => "Order Shipped — {$this->order->reference}",
             OrderStatus::DELIVERED => "Order Delivered — {$this->order->reference}",
             OrderStatus::CANCELLED => "Order Cancelled — {$this->order->reference}",
@@ -58,8 +54,6 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     public function toArray(): array
     {
         $title = match ($this->newStatus) {
-            OrderStatus::CONFIRMED => 'Order Confirmed',
-            OrderStatus::PROCESSING => 'Order Being Prepared',
             OrderStatus::SHIPPED => 'Order Shipped',
             OrderStatus::DELIVERED => 'Order Delivered',
             OrderStatus::CANCELLED => 'Order Cancelled',
@@ -67,8 +61,6 @@ class OrderStatusNotification extends Notification implements ShouldQueue
         };
 
         $message = match ($this->newStatus) {
-            OrderStatus::CONFIRMED => "Your order {$this->order->reference} has been confirmed.",
-            OrderStatus::PROCESSING => "Your order {$this->order->reference} is being prepared.",
             OrderStatus::SHIPPED => "Your order {$this->order->reference} has been shipped.",
             OrderStatus::DELIVERED => "Your order {$this->order->reference} has been delivered.",
             OrderStatus::CANCELLED => "Your order {$this->order->reference} has been cancelled.",

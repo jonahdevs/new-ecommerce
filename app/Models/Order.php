@@ -233,8 +233,6 @@ class Order extends Model
 
         // Notify customer of status change for relevant statuses
         $notifiableStatuses = [
-            OrderStatus::CONFIRMED,
-            OrderStatus::PROCESSING,
             OrderStatus::SHIPPED,
             OrderStatus::DELIVERED,
             OrderStatus::CANCELLED,

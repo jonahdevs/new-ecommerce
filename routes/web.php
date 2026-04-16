@@ -5,11 +5,12 @@ use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Orders\OrderReceiptController;
 use App\Http\Controllers\Orders\QuotationPdfController;
 use App\Http\Controllers\Payment\CallbackController;
-use App\Mail\WelcomeMail;
+
 use App\Models\Order;
 use App\Models\Quote;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 // ============================================================================
 // PUBLIC ROUTES
@@ -338,12 +339,6 @@ if (app()->isLocal()) {
 
     // ── Email previews ────────────────────────────────────────────────────────
 
-    Route::get('dev/mail/welcome', function () {
-        $user = User::where('is_staff', false)->latest()->first()
-            ?? User::factory()->create();
-
-        return new WelcomeMail($user);
-    })->name('dev.mail.welcome');
 
     Route::get('dev/mail/order-status/{status?}', function (string $status = 'shipped') {
         $order = Order::with('items', 'payment', 'user')->latest()->first();
@@ -358,18 +353,41 @@ if (app()->isLocal()) {
         ]);
     })->name('dev.mail.order-status');
 
-    Route::get('dev/mail/kra-receipt', function () {
-        $order = Order::with('payment', 'user')
+    Route::get('dev/mail/order-confirmation', function () {
+        $order = Order::with('items.product', 'payment', 'user', 'deliveryOrder.shippingMethod', 'deliveryOrder.pickupStation')
             ->whereNotNull('kra_cu_number')
             ->latest()->first()
-            ?? Order::with('payment', 'user')->latest()->first();
+            ?? Order::with('items.product', 'payment', 'user', 'deliveryOrder.shippingMethod', 'deliveryOrder.pickupStation')->latest()->first();
 
-        return view('mails.orders.kra-receipt', [
+        $delivery = $order->deliveryOrder;
+        $deliveryWindow = null;
+        if ($delivery) {
+            $min = $delivery->shippingRate?->estimated_days_min;
+            $max = $delivery->shippingRate?->estimated_days_max;
+            if ($min && $max) {
+                $deliveryWindow = $min === $max ? "{$min} business days" : "{$min}–{$max} business days";
+            } elseif ($delivery->estimated_delivery_at) {
+                $deliveryWindow = 'By ' . $delivery->estimated_delivery_at->format('D, M j');
+            }
+        }
+
+        $paymentLabel = match ($order->payment?->gateway) {
+            'mpesa' => 'M-Pesa',
+            'stripe' => 'Card',
+            'pesawise' => 'Pesawise',
+            'pesapal' => 'Pesapal',
+            'paypal' => 'PayPal',
+            default => ucfirst($order->payment?->gateway ?? 'Online'),
+        };
+
+        return view('mails.orders.confirmation', [
             'order' => $order,
             'customerName' => $order->user?->name ?? 'Customer',
             'orderUrl' => route('customer.orders.show', $order),
+            'deliveryWindow' => $deliveryWindow,
+            'paymentLabel' => $paymentLabel,
         ]);
-    })->name('dev.mail.kra-receipt');
+    })->name('dev.mail.order-confirmation');
 
     Route::get('dev/mail/quote-sent', function () {
         $quote = Quote::with('items', 'user')
@@ -442,26 +460,22 @@ if (app()->isLocal()) {
     // Preview the invoice Blade template in the browser (no PDF conversion).
     // Uses the most recent paid order, or a factory order if none exists.
     Route::get('dev/invoice-preview', function () {
-        $order = Order::with('items.product', 'payment', 'user')
-            ->whereNotNull('kra_cu_number')
-            ->latest()
-            ->first();
+        // Always create a new order with many items for multi-page testing
+        $order = Order::factory()
+            ->confirmed()
+            ->withItems(25) // Create 25 items to test multi-page layout
+            ->withPayment()
+            ->create([
+                'kra_cu_number' => 'CU-PREVIEW-' . now()->timestamp,
+                'kra_validated_at' => now(),
+            ]);
 
-        if (!$order) {
-            // Fall back to a factory-built order so the template is always previewable
-            $order = Order::factory()
-                ->confirmed()
-                ->withItems(3)
-                ->withPayment()
-                ->create([
-                    'kra_cu_number' => 'CU-PREVIEW-12345',
-                    'kra_validated_at' => now(),
-                ]);
+        $order->load('items.product', 'payment', 'user');
 
-            $order->load('items.product', 'payment', 'user');
-        }
-
-        return view('pdf.invoice-tailwind', ['order' => $order]);
+        return Pdf::view('pdf.browsershot.invoice', ['order' => $order])
+            ->format('a4')
+            ->footerView('pdf.browsershot.footer', ['order' => $order])
+            ->margins(0, 0, 40, 0);
     })->name('dev.invoice-preview');
 }
 

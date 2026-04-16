@@ -1,0 +1,227 @@
+---
+bodyClass: bg-slate-50
+preheader: Order Confirmation email template
+---
+
+<x-main>
+    <div class="bg-slate-50 sm:px-4 font-inter">
+        <table align="center" class="m-0 mx-auto">
+            <tr>
+                <td class="w-[552px] max-w-full">
+                    <x-spacer height="24px" />
+
+                    <table class="w-full">
+                        <tr>
+                            <td
+                                class="py-6 px-9 sm:p-6 bg-white [border:1px_solid_theme(colors.brand-primary.DEFAULT)] rounded-md">
+
+                                <div class="flex items-center justify-center">
+                                    <a href="https://demo.ecommerce.sheffieldafrica.com">
+                                        <img src="logo.png" src-production="images/logo.png" width="120" height="auto"
+                                            alt="Sheffield logo">
+                                    </a>
+                                </div>
+
+                                <x-divider class="bg-brand-primary" />
+
+                                <p class="m-0 mb-3 text-base/6 text-slate-600">Hi Jonah,</p>
+
+                                <p class="m-0 mb-6 text-base/6 text-slate-600">
+                                    Thank you for your interest! Your formal quotation <span
+                                        class="font-semibold text-slate-800">QT-123456</span> is now ready for your review and approval.
+                                </p>
+
+                                                                <!-- Horizontal Timeline -->
+                                <table class="w-full mb-8" cellpadding="0" cellspacing="0" role="presentation">
+                                    <tr>
+                                        <!-- Step 1: Requested -->
+                                        <td class="w-1/3 text-center align-top">
+                                            <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+                                                <tr>
+                                                    <td class="w-1/2 align-middle"><div class="h-1 bg-transparent w-full"></div></td>
+                                                    <td class="w-10 align-middle">
+                                                        <div class="h-10 w-10 p-2 mx-auto bg-[#f0fdf4] border-[3px] border-[#16a34a] rounded-full text-center shadow-sm flex items-center justify-center">
+                                                            <span class="text-[#16a34a] font-bold text-lg">&#10003;</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="w-1/2 align-middle"><div class="h-1 bg-[#16a34a] w-full"></div></td>
+                                                </tr>
+                                            </table>
+                                            <p class="m-0 mt-3 text-[10px] sm:text-xs font-bold text-[#16a34a] uppercase tracking-wider whitespace-nowrap">
+                                                Requested
+                                            </p>
+                                        </td>
+
+                                        <!-- Step 2: Quoted -->
+                                        <td class="w-1/3 text-center align-top">
+                                            <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+                                                <tr>
+                                                    <td class="w-1/2 align-middle"><div class="h-1 bg-[#16a34a] w-full"></div></td>
+                                                    <td class="w-10 align-middle">
+                                                        <div class="h-10 w-10 p-2 mx-auto bg-[#f0fdf4] border-[3px] border-[#16a34a] rounded-full text-center shadow-sm flex items-center justify-center">
+                                                            <span class="text-[#16a34a] font-bold text-lg">&#10003;</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="w-1/2 align-middle"><div class="h-1 bg-slate-200 w-full"></div></td>
+                                                </tr>
+                                            </table>
+                                            <p class="m-0 mt-3 text-[10px] sm:text-xs font-bold text-[#16a34a] uppercase tracking-wider whitespace-nowrap">
+                                                Quoted
+                                            </p>
+                                        </td>
+
+                                        <!-- Step 3: Accepted -->
+                                        <td class="w-1/3 text-center align-top">
+                                            <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+                                                <tr>
+                                                    <td class="w-1/2 align-middle"><div class="h-1 bg-slate-200 w-full"></div></td>
+                                                    <td class="w-10 align-middle">
+                                                        <div class="h-10 w-10 mx-auto p-2 [border:1px_solid_theme(colors.slate.200)] bg-slate-100 rounded-full text-center flex items-center justify-center">
+                                                            <svg version="1.1" x="0px" y="0px" viewBox="0 0 100 125" fill="currentColor" class="w-4 h-4">
+                                                                <path d="M41.3,78.9c0.1,0.5,0.5,0.8,1.1,0.8H45c0-0.1,0-0.3,0-0.5c0-3.2,2.5-5.7,5.7-5.7c3.2,0,5.7,2.5,5.7,5.7c0,0.2,0,0.3,0,0.5  h18c0-0.1,0-0.3,0-0.5c0-3.2,2.5-5.7,5.7-5.7c3.2,0,5.7,2.5,5.7,5.7c0,0.2,0,0.3,0,0.5h3.2c0.9,0,1.7-0.8,1.5-1.7l-0.6-4.2  c-0.1-0.3-0.1-0.6-0.3-0.9c-1.1-1.9-2.8-3.4-4.9-4.3l-5.3-2.3c-0.2-0.1-0.5-0.2-0.7-0.4l-7.3-5.2c-0.8-0.6-1.9-0.9-2.9-0.9h-17  c-0.1,0-0.1,0-0.1,0h-5.4c-0.6,0-1.1,0.6-0.8,1.1l0.5,1.5c-0.6,0.6-1.1,1.5-1.3,2.3l-2.9,7.6C40.9,74.2,40.9,76.5,41.3,78.9z   M68.1,61.7c0.2,0,0.5,0.1,0.7,0.2l6.3,4.6c0.9,0.7,0.4,2.2-0.7,2.2l-11.5-0.4l-1.2-6.6H68.1z M64.7,70.2l2.9,4.5l-3.2-0.5L67,79  l-7.8-6.5l3.8,0.1l-2.1-2.7L64.7,70.2z M49.4,66.6l1.7-4.2c0.2-0.5,0.6-0.7,1.1-0.7h7.2l0.5,6.5l-9.4-0.3  C49.8,67.9,49.1,67.3,49.4,66.6z"/>
+                                                                <path d="M92.6,83.6H81.1c1.9-0.5,3.3-2.3,3.3-4.3c0-2.5-2-4.5-4.5-4.5s-4.5,2-4.5,4.5c0,2.1,1.4,3.8,3.3,4.3H52  c1.9-0.5,3.3-2.3,3.3-4.3c0-2.5-2-4.5-4.5-4.5s-4.5,2-4.5,4.5c0,2.1,1.4,3.8,3.3,4.3H8.1v3h84.5V83.6z"/>
+                                                                <polygon points="66.2,26.4 66.2,13.4 35.4,13.4 35.4,47.8 6.6,47.8 6.6,77.3 9.6,77.3 9.6,50.8 35.4,50.8 35.4,76.1 38.4,76.1   38.4,16.4 63.2,16.4 63.2,56.3 66.2,56.3 66.2,29.4 90.4,29.3 90.4,65.7 93.4,65.7 93.4,26.3 "/>
+                                                            </svg>
+                                                        </div>
+                                                    </td>
+                                                    <td class="w-1/2 align-middle"><div class="h-1 bg-transparent w-full"></div></td>
+                                                </tr>
+                                            </table>
+                                            <p class="m-0 mt-3 text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                                                Accepted
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <!-- End Horizontal Timeline -->
+
+                                <table class="w-full mb-8" cellpadding="0" cellspacing="0" role="presentation">
+                                    <thead class="bg-brand-primary-light">
+                                        <tr>
+                                            <th
+                                                class="text-left py-2 px-3 text-xs font-bold text-white uppercase tracking-wider">
+                                                Item</th>
+                                            <th
+                                                class="text-center py-2 px-3 text-xs font-bold text-white uppercase tracking-wider">
+                                                Qty</th>
+                                            <th
+                                                class="text-right py-2 px-3 text-xs font-bold text-white uppercase tracking-wider">
+                                                Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Placeholder Item 1 -->
+                                        <tr>
+                                            <td class="py-3 px-3 border-b border-slate-100">
+                                                <div class="flex items-center">
+                                                    <div class="h-12 w-12 bg-slate-100 rounded-md mr-3">
+                                                        <!-- Placeholder for product image -->
+                                                    </div>
+                                                    <div>
+                                                        <p class="m-0 text-sm font-semibold text-slate-800">Commercial
+                                                            Gas Range</p>
+                                                        <p class="m-0 text-xs text-slate-500">6 Burners, 36-inch</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="py-3 px-3 border-b border-slate-100 text-center text-sm text-slate-600">
+                                                1</td>
+                                            <td
+                                                class="py-3 px-3 border-b border-slate-100 text-right text-sm font-semibold text-slate-800">
+                                                KES 145,000</td>
+                                        </tr>
+                                        <!-- Placeholder Item 2 -->
+                                        <tr>
+                                            <td class="py-3 px-3 border-b border-slate-100">
+                                                <div class="flex items-center">
+                                                    <div class="h-12 w-12 bg-slate-100 rounded-md mr-3"></div>
+                                                    <div>
+                                                        <p class="m-0 text-sm font-semibold text-slate-800">Stainless
+                                                            Steel Prep Table</p>
+                                                        <p class="m-0 text-xs text-slate-500">48 x 30 inches</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="py-3 px-3 border-b border-slate-100 text-center text-sm text-slate-600">
+                                                2</td>
+                                            <td
+                                                class="py-3 px-3 border-b border-slate-100 text-right text-sm font-semibold text-slate-800">
+                                                KES 44,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <table class="w-full mb-8" cellpadding="0" cellspacing="0" role="presentation">
+                                    <tr>
+                                        <td class="w-1/2 align-bottom">
+                                            <p
+                                                class="m-0 text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                                Valid Until</p>
+                                            <p class="m-0 text-sm font-semibold text-slate-800">15 Nov 2026</p>
+                                        </td>
+                                        <td class="w-1/2">
+                                            <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+                                                <tr>
+                                                    <td class="py-1 text-sm text-slate-600">Subtotal</td>
+                                                    <td class="py-1 text-sm font-semibold text-slate-800 text-right">KES
+                                                        189,000</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="py-1 text-sm text-slate-600">Tax (16%)</td>
+                                                    <td class="py-1 text-sm font-semibold text-slate-800 text-right">KES
+                                                        30,240</td>
+                                                </tr>
+                                                <tr>
+                                                    <td
+                                                        class="pt-3 border-t border-slate-200 text-base font-bold text-slate-800">
+                                                        Total Quote Amount</td>
+                                                    <td
+                                                        class="pt-3 border-t border-slate-200 text-base font-bold text-brand-primary text-right">
+                                                        KES 221,740</td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <p class="m-0 text-base/6 text-slate-600">
+                                    Please review the pricing and drop us a line if you have any questions or would like to request adjustments before accepting!
+                                </p>
+
+                                <x-spacer height="32px" />
+
+                                <x-button href="https://sheffieldafrica.com"
+                                    class="bg-brand-primary hover:bg-[#c93237] text-center text-white">
+                                    Review & Accept Quote
+                                </x-button>
+
+                                <x-spacer height="24px" />
+
+                                <p class="m-0 text-base/6 text-slate-600">
+                                    Thank you for choosing Sheffield Africa!
+                                    <br>
+                                    <br>
+                                    Best regards,
+                                    <br>
+                                    <span class="font-semibold text-slate-800">Sheffield Africa Support Team</span>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table class="w-full">
+                        <tr>
+                            <td class="py-6 px-9 sm:px-6">
+                                <p class="m-0 text-xs text-slate-500">
+                                    &copy; {{ new Date().getFullYear() }} Sheffieldafrica. All rights reserved.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</x-main>

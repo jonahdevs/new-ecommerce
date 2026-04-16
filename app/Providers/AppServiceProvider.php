@@ -5,7 +5,7 @@ namespace App\Providers;
 use App\Events\PaymentConfirmed;
 use App\Listeners\SendNewOrderNotification;
 use App\Listeners\SendNewUserNotification;
-use App\Listeners\SendWelcomeEmail;
+
 use App\Listeners\SyncCartOnLogin;
 use App\Listeners\SyncRecentViewedOnLogin;
 use App\Listeners\SyncWishlistOnLogin;
@@ -60,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Login::class, SyncRecentViewedOnLogin::class);
         Event::listen(PaymentConfirmed::class, SendNewOrderNotification::class);
         Event::listen(Registered::class, SendNewUserNotification::class);
-        Event::listen(Registered::class, SendWelcomeEmail::class);
+
 
         Review::observe(ReviewObserver::class);
 

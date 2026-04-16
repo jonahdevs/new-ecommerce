@@ -3,7 +3,7 @@
 namespace App\Services\Sap;
 
 use App\Models\Order;
-use App\Notifications\KraReceiptNotification;
+use App\Notifications\OrderConfirmedNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -40,10 +40,19 @@ class KraReceiptService
 
         // Choose template based on PDF driver
         $view = $this->getInvoiceView();
+        $driver = config('laravel-pdf.driver', 'browsershot');
+        $isChromium = in_array($driver, ['browsershot', 'cloudflare', 'gotenberg']);
 
         $pdf = Pdf::view($view, ['order' => $order])
-            ->format('a4')
-            ->name("{$order->reference}.pdf");
+            ->format('a4');
+
+        // Chromium-based drivers support repeating footer via footerView
+        if ($isChromium) {
+            $pdf->footerView('pdf.browsershot.footer', ['order' => $order])
+                ->margins(10, 10, 50, 10); // Reserve 50mm bottom margin for footer
+        }
+
+        $pdf->name("{$order->reference}.pdf");
 
         $filename = "{$order->reference}.pdf";
         $path = self::INVOICE_DIR . '/' . $filename;
@@ -73,11 +82,11 @@ class KraReceiptService
 
         // Use Tailwind version for Chromium-based drivers (better CSS support)
         if (in_array($driver, ['browsershot', 'cloudflare', 'gotenberg'])) {
-            return 'pdf.invoice-tailwind';
+            return 'pdf.browsershot.invoice';
         }
 
         // Use custom CSS version for limited drivers (dompdf, weasyprint)
-        return 'pdf.invoice';
+        return 'pdf.dompdf.invoice';
     }
 
     /**
@@ -115,9 +124,9 @@ class KraReceiptService
         }
 
         $order->user
-            ? $order->user->notify(new KraReceiptNotification($order))
+            ? $order->user->notify(new OrderConfirmedNotification($order))
             : Notification::route('mail', $email)
-                ->notify(new KraReceiptNotification($order));
+                ->notify(new OrderConfirmedNotification($order));
 
         Log::info('Invoice emailed to customer', [
             'order_id' => $order->id,

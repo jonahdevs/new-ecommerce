@@ -83,8 +83,8 @@ class DocumentService
 
         // Use Tailwind version for Chromium-based drivers (better CSS support)
         if (in_array($driver, ['browsershot', 'cloudflare', 'gotenberg'])) {
-            // TODO: Create quotation-tailwind.blade.php when needed
-            return 'pdf.quotation'; // Fallback to original for now
+            // TODO: Create pdf.browsershot.quotation when needed
+            return 'pdf.quotation'; // Fallback to original plain CSS for now
         }
 
         // Use custom CSS version for limited drivers (dompdf, weasyprint)

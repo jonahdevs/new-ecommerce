@@ -3,12 +3,10 @@
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Jobs\SyncOrderToSapJob;
-use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\Payment\PaymentService;
-use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\{Computed, Layout, Locked, On};
 use Livewire\Component;
 
@@ -19,7 +17,6 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Locked]
     public int $orderId;
 
-    public bool $emailSent = false;
     public bool $justConfirmed = false;
 
     public function mount(Order $order): void
@@ -36,10 +33,7 @@ new #[Layout('layouts.guest')] class extends Component {
         // Session-based page invalidation — redirects away if already seen
         $this->handleSessionCheck();
 
-        // Only runs on first legitimate visit after payment confirmed
-        if ($this->isPaid) {
-            $this->sendConfirmationEmailOnce();
-        }
+
     }
 
     // =====================================================
@@ -120,7 +114,6 @@ new #[Layout('layouts.guest')] class extends Component {
         if ($this->isPaid) {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
-            $this->sendConfirmationEmailOnce();
             $this->dispatchSapSyncIfNeeded();
             $this->dispatch('cart-updated');
         }
@@ -149,7 +142,6 @@ new #[Layout('layouts.guest')] class extends Component {
         if ($this->isPaid) {
             $this->justConfirmed = true;
             session()->put($this->sessionKey, true);
-            $this->sendConfirmationEmailOnce();
             $this->dispatchSapSyncIfNeeded();
             $this->dispatch('cart-updated');
         }
@@ -235,35 +227,6 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
-    private function sendConfirmationEmailOnce(): void
-    {
-        if (!$this->isPaid) {
-            return;
-        }
-
-        $meta = $this->order->payment?->meta ?? [];
-        $alreadySent = $meta['confirmation_email_sent'] ?? false;
-
-        if ($alreadySent || !$this->order->user?->email) {
-            return;
-        }
-
-        try {
-            Mail::to($this->order->user->email)->queue(new OrderConfirmationMail($this->order));
-
-            $meta['confirmation_email_sent'] = true;
-            $meta['confirmation_email_sent_at'] = now()->toISOString();
-
-            $this->order->payment->update(['meta' => $meta]);
-
-            $this->emailSent = true;
-        } catch (\Throwable $e) {
-            logger()->error('Failed to queue order confirmation email', [
-                'order_id' => $this->order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
 
     private function resolveCustomPaymentLabel(): string
     {
@@ -329,9 +292,9 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
 
                     <flux:text class="text-zinc-400 text-sm block">
-                        A confirmation email has been sent to
-                        <span class="font-medium text-zinc-600">{{ $order->user?->email }}</span>.
-                        If it doesn't arrive within a few minutes, please check your spam folder.
+                        Your order confirmation and tax invoice will be sent to
+                        <span class="font-medium text-zinc-600">{{ $order->user?->email }}</span>
+                        shortly.
                     </flux:text>
                 </div>
 
