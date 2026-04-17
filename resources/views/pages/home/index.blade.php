@@ -388,7 +388,7 @@ new #[Layout('layouts.guest')] class extends Component {
             <section class="flex items-center justify-between pb-4 ">
                 <h2 class="font-semibold text-xl text-zinc-800">You May Also Like</h2>
 
-                <flux:link :href="route('shop.index')" class="text-sm">View all</flux:link>
+                <flux:link :href="route('shop.index')" wire:navigate class="text-sm">View all</flux:link>
             </section>
             @island(name: 'products', defer: true)
                 @placeholder

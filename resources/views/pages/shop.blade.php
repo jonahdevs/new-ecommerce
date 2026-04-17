@@ -171,7 +171,7 @@ new #[Layout('layouts.guest')] class extends Component {
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        return $query->paginate(100);
+        return $query->paginate(20);
     }
 
     #[Computed]
