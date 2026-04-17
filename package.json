@@ -21,6 +21,7 @@
         "@tiptap/starter-kit": "^3.20.5",
         "autoprefixer": "^10.4.20",
         "axios": "^1.7.4",
+        "chartjs-chart-geo": "^4.3.6",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0",
         "puppeteer": "^24.40.0",

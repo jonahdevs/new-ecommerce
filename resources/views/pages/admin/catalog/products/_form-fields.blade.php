@@ -1060,30 +1060,34 @@
 
                 <div wire:loading.remove wire:target="form.image">
                     @if ($form->image)
-                        <div class="relative group rounded-md overflow-hidden aspect-square border dark:border-zinc-700 cursor-pointer"
-                            @click="document.getElementById('product-image-input').click()">
-                            <img src="{{ $form->image->temporaryUrl() }}" class="w-full h-full object-cover"
-                                alt="Preview" />
-                            <div
-                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <flux:text class="text-white text-sm font-medium">Change image</flux:text>
+                        <div class="max-w-xs mx-auto">
+                            <div class="relative group rounded-md overflow-hidden aspect-square border dark:border-zinc-700 cursor-pointer"
+                                @click="document.getElementById('product-image-input').click()">
+                                <img src="{{ $form->image->temporaryUrl() }}" class="w-full h-full object-cover"
+                                    alt="Preview" />
+                                <div
+                                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <flux:text class="text-white text-sm font-medium">Change image</flux:text>
+                                </div>
+                                <flux:badge color="green" size="sm" class="absolute top-1.5 left-1.5">New
+                                </flux:badge>
                             </div>
-                            <flux:badge color="green" size="sm" class="absolute top-1.5 left-1.5">New
-                            </flux:badge>
                         </div>
                     @elseif ($form->existing_image)
-                        <div class="relative group rounded-md overflow-hidden aspect-square border dark:border-zinc-700 cursor-pointer"
-                            @click="document.getElementById('product-image-input').click()">
-                            <img src="{{ \Storage::url($form->existing_image) }}" class="w-full h-full object-cover"
-                                alt="Product image" />
-                            <div
-                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <flux:text class="text-white text-sm font-medium">Change image</flux:text>
+                        <div class="max-w-xs mx-auto">
+                            <div class="relative group rounded-md overflow-hidden aspect-square border dark:border-zinc-700 cursor-pointer"
+                                @click="document.getElementById('product-image-input').click()">
+                                <img src="{{ \Storage::url($form->existing_image) }}"
+                                    class="w-full h-full object-cover" alt="Product image" />
+                                <div
+                                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <flux:text class="text-white text-sm font-medium">Change image</flux:text>
+                                </div>
                             </div>
                         </div>
                     @else
                         <button type="button" @click="document.getElementById('product-image-input').click()"
-                            class="flex flex-col items-center justify-center w-full aspect-square rounded-md border-2 border-dashed border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors cursor-pointer gap-2 text-zinc-400">
+                            class="flex flex-col items-center justify-center w-full h-48 rounded-md border-2 border-dashed border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors cursor-pointer gap-2 text-zinc-400">
                             <flux:icon.photo class="size-8" variant="outline" />
                             <span class="text-sm">Upload image</span>
                         </button>
