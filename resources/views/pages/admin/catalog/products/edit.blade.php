@@ -30,6 +30,7 @@ new #[Title('Edit Product')] class extends Component {
             'accessories',
             'attributes',
             'variants',
+            'downloads',
         ));
     }
 

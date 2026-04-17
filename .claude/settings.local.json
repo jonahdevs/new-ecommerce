@@ -1,11 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(php vendor/bin/pint --dirty --format agent)"
+    ]
+  },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "laravel-boost"
-  ],
-  "permissions": {
-    "allow": [
-      "Bash(php artisan:*)"
-    ]
-  }
+  ]
 }

@@ -37,6 +37,7 @@ class ProductForm extends Form
     public string $status = 'draft';
 
     public string $visibility = 'public';
+
     public string $published_at = '';
 
     // ── General / Pricing ──────────────────────────────────────────────────────
@@ -54,6 +55,28 @@ class ProductForm extends Form
     public bool $manage_stock = false;
 
     public int $stock_quantity = 0;
+
+    // ── Virtual & Downloadable ────────────────────────────────────────────────
+
+    public bool $is_virtual = false;
+
+    public bool $is_downloadable = false;
+
+    public string $download_limit = '';
+
+    public string $download_expiry = '';
+
+    /** @var array<int, array{id: int, name: string, file_name: string, formatted_file_size: string|null}> */
+    public array $existing_downloads = [];
+
+    /** @var array<int, int> */
+    public array $downloads_to_delete = [];
+
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $new_download_files = [];
+
+    /** @var array<int, string> */
+    public array $new_download_names = [];
 
     // ── Shipping ───────────────────────────────────────────────────────────────
 
@@ -183,17 +206,17 @@ class ProductForm extends Form
         return [
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'model_number' => ['nullable', 'string', 'max:100'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:products,slug,' . $productId],
-            'type' => ['required', 'string', 'in:' . implode(',', array_column(ProductType::cases(), 'value'))],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:products,slug,'.$productId],
+            'type' => ['required', 'string', 'in:'.implode(',', array_column(ProductType::cases(), 'value'))],
             'description' => ['nullable', 'string'],
             'short_description' => ['nullable', 'string'],
-            'status' => ['required', 'string', 'in:' . implode(',', array_column(ProductStatus::cases(), 'value'))],
+            'status' => ['required', 'string', 'in:'.implode(',', array_column(ProductStatus::cases(), 'value'))],
             'published_at' => ['nullable', 'date', 'required_if:status,scheduled'],
-            'visibility' => ['required', 'string', 'in:' . implode(',', array_column(ProductVisibility::cases(), 'value'))],
+            'visibility' => ['required', 'string', 'in:'.implode(',', array_column(ProductVisibility::cases(), 'value'))],
             'price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
             'tax_class_id' => ['nullable', 'integer', 'exists:tax_classes,id'],
-            'sku' => ['nullable', 'string', 'max:255', 'unique:products,sku,' . $productId],
+            'sku' => ['nullable', 'string', 'max:255', 'unique:products,sku,'.$productId],
             'manage_stock' => ['boolean'],
             'stock_quantity' => ['integer', 'min:0'],
             'weight' => ['nullable', 'numeric', 'min:0'],
@@ -237,6 +260,12 @@ class ProductForm extends Form
             'requires_quotation' => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
             'reviews_enabled' => ['boolean'],
+            'is_virtual' => ['boolean'],
+            'is_downloadable' => ['boolean'],
+            'download_limit' => ['nullable', 'integer', 'min:0'],
+            'download_expiry' => ['nullable', 'integer', 'min:0'],
+            'new_download_files.*' => ['nullable', 'file', 'max:51200'],
+            'new_download_names.*' => ['nullable', 'string', 'max:255'],
 
         ];
     }
@@ -297,9 +326,23 @@ class ProductForm extends Form
         $this->warranty_information = $product->warranty_information ?? '';
         $this->return_policy = $product->return_policy ?? '';
 
+        // Virtual & Downloadable
+        $this->is_virtual = (bool) $product->is_virtual;
+        $this->is_downloadable = (bool) $product->is_downloadable;
+        $this->download_limit = $product->download_limit !== null ? (string) $product->download_limit : '';
+        $this->download_expiry = $product->download_expiry !== null ? (string) $product->download_expiry : '';
+        if ($product->relationLoaded('downloads')) {
+            $this->existing_downloads = $product->downloads->map(fn ($d) => [
+                'id' => $d->id,
+                'name' => $d->name,
+                'file_name' => $d->file_name,
+                'formatted_file_size' => $d->formatted_file_size,
+            ])->toArray();
+        }
+
         // Media
         $this->existing_image = $product->image_path;
-        $this->existing_images = $product->images->map(fn(ProductImage $img) => [
+        $this->existing_images = $product->images->map(fn (ProductImage $img) => [
             'id' => $img->id,
             'url' => $img->url,
             'alt_text' => $img->alt_text,
@@ -312,18 +355,18 @@ class ProductForm extends Form
 
         // Linked products
         if ($product->relationLoaded('upsells')) {
-            $this->upsell_products = $product->upsells->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku])->toArray();
+            $this->upsell_products = $product->upsells->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku])->toArray();
         }
         if ($product->relationLoaded('crossSells')) {
-            $this->cross_sell_products = $product->crossSells->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku])->toArray();
+            $this->cross_sell_products = $product->crossSells->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku])->toArray();
         }
         if ($product->relationLoaded('accessories')) {
-            $this->accessory_products = $product->accessories->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku])->toArray();
+            $this->accessory_products = $product->accessories->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku])->toArray();
         }
 
         // Attributes
         if ($product->relationLoaded('attributes')) {
-            $this->product_attributes = $product->attributes->map(fn($attr) => [
+            $this->product_attributes = $product->attributes->map(fn ($attr) => [
                 'attribute_id' => $attr->id,
                 'name' => $attr->name,
                 'values' => is_array($attr->pivot->values)
@@ -337,7 +380,7 @@ class ProductForm extends Form
 
         // Variations
         if ($product->relationLoaded('variants')) {
-            $this->variations = $product->variants->map(fn(ProductVariant $v) => [
+            $this->variations = $product->variants->map(fn (ProductVariant $v) => [
                 'id' => $v->id,
                 'name' => $v->name ?? '',
                 'sku' => $v->sku ?? '',
@@ -430,6 +473,10 @@ class ProductForm extends Form
             'shipping_information' => $this->shipping_information ?: null,
             'warranty_information' => $this->warranty_information ?: null,
             'return_policy' => $this->return_policy ?: null,
+            'is_virtual' => $this->is_virtual,
+            'is_downloadable' => $this->is_downloadable,
+            'download_limit' => $this->download_limit !== '' ? (int) $this->download_limit : null,
+            'download_expiry' => $this->download_expiry !== '' ? (int) $this->download_expiry : null,
             'image_path' => $this->resolveImagePath(),
             'brand_id' => $this->brand_id ?: null,
             'meta_title' => $this->meta_title ?: null,
@@ -451,12 +498,13 @@ class ProductForm extends Form
         $this->syncLinkedProducts($product);
         $this->syncProductAttributes($product);
         $this->syncVariations($product);
+        $this->syncDownloads($product);
     }
 
     protected function syncTags(Product $product): void
     {
         $product->tags()->sync(
-            array_filter($this->tag_ids, fn($id) => $id > 0)
+            array_filter($this->tag_ids, fn ($id) => $id > 0)
         );
     }
 
@@ -476,7 +524,7 @@ class ProductForm extends Form
             if ($attr['is_new'] ?? false) {
                 // Create or reuse attribute + values from pipe-separated input
                 $name = trim($attr['name'] ?? '');
-                if (!$name) {
+                if (! $name) {
                     continue;
                 }
 
@@ -486,7 +534,7 @@ class ProductForm extends Form
                 );
 
                 $valueIds = [];
-                if (!empty($attr['values'])) {
+                if (! empty($attr['values'])) {
                     foreach (array_filter(array_map('trim', explode('|', $attr['values']))) as $rawValue) {
                         $value = AttributeValue::firstOrCreate(
                             ['attribute_id' => $attribute->id, 'slug' => Str::slug($rawValue)],
@@ -522,11 +570,11 @@ class ProductForm extends Form
         $existingIds = array_filter(array_column($this->variations, 'id'));
 
         // Delete removed variants
-        if (!empty($existingIds)) {
+        if (! empty($existingIds)) {
             $product->variants()->whereNotIn('id', $existingIds)->delete();
         } else {
             // All variations are new — only delete if we have variations at all
-            if (!empty($this->variations)) {
+            if (! empty($this->variations)) {
                 $product->variants()->delete();
             }
         }
@@ -568,7 +616,7 @@ class ProductForm extends Form
 
     protected function syncGalleryImages(Product $product): void
     {
-        if (!empty($this->images_to_delete)) {
+        if (! empty($this->images_to_delete)) {
             ProductImage::whereIn('id', $this->images_to_delete)
                 ->where('product_id', $product->id)
                 ->get()
@@ -584,6 +632,38 @@ class ProductForm extends Form
                 $product->images()->create([
                     'image_path' => $path,
                     'sort_order' => $product->images()->count() + $index,
+                ]);
+            }
+        }
+    }
+
+    protected function syncDownloads(Product $product): void
+    {
+        if (! empty($this->downloads_to_delete)) {
+            $product->downloads()->whereIn('id', $this->downloads_to_delete)
+                ->get()
+                ->each(function ($download) {
+                    \Storage::disk('private')->delete($download->file_path);
+                    $download->delete();
+                });
+        }
+
+        foreach ($this->existing_downloads as $dl) {
+            $product->downloads()->where('id', $dl['id'])->update(['name' => $dl['name']]);
+        }
+
+        foreach ($this->new_download_files as $index => $file) {
+            if ($file && is_object($file)) {
+                $path = $file->store('products/downloads', 'private');
+                $product->downloads()->create([
+                    'name' => ! empty($this->new_download_names[$index])
+                        ? $this->new_download_names[$index]
+                        : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientOriginalExtension(),
+                    'file_size' => $file->getSize(),
+                    'sort_order' => $product->downloads()->count() + $index,
                 ]);
             }
         }

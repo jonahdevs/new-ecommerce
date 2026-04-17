@@ -85,17 +85,25 @@
         </flux:card>
 
         {{-- Product Data  --}}
-        <flux:card class="p-0" x-data="{ open: true, tab: 'general' }">
+        <flux:card class="p-0" x-data="{ open: true, tab: 'general' }"
+            x-effect="
+                if (tab === 'shipping' && $wire.form.is_virtual) { tab = 'general'; }
+                if (tab === 'downloads' && !$wire.form.is_downloadable) { tab = 'general'; }
+            ">
 
             {{-- Card header --}}
             <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-600">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3 flex-wrap">
                     <flux:heading class="shrink-0">Product Data</flux:heading>
                     <flux:select wire:model="form.type" size="xs">
                         @foreach (App\Enums\ProductType::cases() as $t)
                             <flux:select.option value="{{ $t->value }}">{{ $t->label() }}</flux:select.option>
                         @endforeach
                     </flux:select>
+                    <div class="flex items-center gap-4 border-l pl-3 dark:border-zinc-600">
+                        <flux:checkbox wire:model.live="form.is_virtual" label="Virtual" />
+                        <flux:checkbox wire:model.live="form.is_downloadable" label="Downloadable" />
+                    </div>
                 </div>
                 <flux:button size="xs" variant="ghost" class="cursor-pointer" @click="open = !open">
                     <x-slot name="icon">
@@ -117,6 +125,7 @@
                                 ['id' => 'general', 'label' => 'General', 'icon' => 'currency-dollar'],
                                 ['id' => 'inventory', 'label' => 'Inventory', 'icon' => 'archive-box'],
                                 ['id' => 'shipping', 'label' => 'Shipping', 'icon' => 'truck'],
+                                ['id' => 'downloads', 'label' => 'Downloadable Files', 'icon' => 'arrow-down-tray'],
                                 ['id' => 'linked', 'label' => 'Linked Products', 'icon' => 'link'],
                                 ['id' => 'attributes', 'label' => 'Attributes', 'icon' => 'tag'],
                                 ['id' => 'variations', 'label' => 'Variations', 'icon' => 'squares-2x2'],
@@ -130,7 +139,10 @@
                                 :class="tab === '{{ $t['id'] }}'
                                     ?
                                     'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium border-r-2 border-zinc-800 dark:border-zinc-200' :
-                                    'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300'">
+                                    'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300'"
+                                @if ($t['id'] === 'shipping') x-show="!$wire.form.is_virtual" @endif
+                                @if ($t['id'] === 'downloads') x-show="$wire.form.is_downloadable" @endif
+                            >
                                 <flux:icon :name="$t['icon']" variant="outline" class="size-4 shrink-0" />
                                 {{ $t['label'] }}
                             </button>
@@ -285,6 +297,111 @@
                                 <flux:textarea wire:model="form.return_policy" rows="3"
                                     placeholder="Return window, conditions, and process..." />
                             </flux:field>
+                        </div>
+
+                        {{-- ── Downloadable Files ── --}}
+                        <div x-show="tab === 'downloads'" x-cloak class="space-y-5">
+
+                            <div class="grid grid-cols-2 gap-5">
+                                <flux:field>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <flux:label>Download Limit</flux:label>
+                                        <flux:tooltip content="Number of times each customer can download. Leave blank for unlimited.">
+                                            <flux:icon.information-circle variant="outline"
+                                                class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                        </flux:tooltip>
+                                    </div>
+                                    <flux:input wire:model="form.download_limit" type="number" min="0"
+                                        placeholder="Unlimited" />
+                                    <flux:error name="form.download_limit" />
+                                </flux:field>
+
+                                <flux:field>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <flux:label>Download Expiry (days)</flux:label>
+                                        <flux:tooltip content="Days after purchase before the download link expires. Leave blank for no expiry.">
+                                            <flux:icon.information-circle variant="outline"
+                                                class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                        </flux:tooltip>
+                                    </div>
+                                    <flux:input wire:model="form.download_expiry" type="number" min="0"
+                                        placeholder="Never expires" />
+                                    <flux:error name="form.download_expiry" />
+                                </flux:field>
+                            </div>
+
+                            {{-- Existing downloads --}}
+                            @if (!empty($form->existing_downloads))
+                                <div class="space-y-2">
+                                    <flux:label>Uploaded Files</flux:label>
+                                    @foreach ($form->existing_downloads as $dIdx => $dl)
+                                        <div class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-md border dark:border-zinc-700"
+                                            wire:key="dl-{{ $dl['id'] }}">
+                                            <flux:icon.document-text variant="outline"
+                                                class="size-5 text-zinc-400 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <flux:input
+                                                    wire:model="form.existing_downloads.{{ $dIdx }}.name"
+                                                    size="sm" />
+                                                <p class="text-xs text-zinc-400 mt-0.5">
+                                                    {{ $dl['file_name'] }}
+                                                    @if ($dl['formatted_file_size'])
+                                                        &bull; {{ $dl['formatted_file_size'] }}
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            <flux:button type="button" icon="trash" variant="ghost" size="xs"
+                                                class="text-red-500! cursor-pointer shrink-0"
+                                                wire:click="removeDownload({{ $dl['id'] }})"
+                                                wire:confirm="Remove this download file?" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Pending new uploads --}}
+                            @if (!empty($form->new_download_files))
+                                <div class="space-y-2">
+                                    <flux:label>Pending Uploads</flux:label>
+                                    @foreach ($form->new_download_files as $nIdx => $nFile)
+                                        <div class="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800"
+                                            wire:key="ndl-{{ $nIdx }}">
+                                            <flux:icon.document variant="outline"
+                                                class="size-5 text-blue-400 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <flux:input
+                                                    wire:model="form.new_download_names.{{ $nIdx }}"
+                                                    size="sm"
+                                                    placeholder="{{ $nFile->getClientOriginalName() }}" />
+                                                <p class="text-xs text-zinc-400 mt-0.5">
+                                                    {{ $nFile->getClientOriginalName() }}
+                                                </p>
+                                            </div>
+                                            <flux:button type="button" icon="x-mark" variant="ghost" size="xs"
+                                                class="text-red-500! cursor-pointer shrink-0"
+                                                wire:click="removeNewDownload({{ $nIdx }})" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Upload button --}}
+                            <input type="file" id="download-files-input" class="hidden"
+                                wire:model="form.new_download_files" multiple />
+
+                            <div wire:loading wire:target="form.new_download_files"
+                                class="flex items-center gap-2 text-sm text-zinc-500">
+                                <flux:icon.loading class="size-4" /> Uploading...
+                            </div>
+
+                            <flux:button wire:loading.remove wire:target="form.new_download_files"
+                                type="button" icon="paper-clip" variant="ghost"
+                                class="cursor-pointer border border-dashed dark:border-zinc-600"
+                                @click="document.getElementById('download-files-input').click()">
+                                Add Downloadable File
+                            </flux:button>
+
+                            <flux:error name="form.new_download_files.*" />
                         </div>
 
                         {{-- ── Linked Products ── --}}
