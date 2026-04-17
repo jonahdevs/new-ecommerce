@@ -1,5 +1,5 @@
 <?php
-use App\Models\{Product, Category};
+use App\Models\{Product, Category, Brand};
 use App\Enums\ProductStatus;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,6 +13,7 @@ new #[Title('Products')] class extends Component {
     public string $search = '';
     public string $status = '';
     public string $category = '';
+    public string $brand = '';
     public string $sortBy = 'created_at';
     public string $sortDirection = 'desc';
     public int $perPage = 10;
@@ -33,6 +34,10 @@ new #[Title('Products')] class extends Component {
     {
         $this->resetPage();
     }
+    public function updatingBrand(): void
+    {
+        $this->resetPage();
+    }
 
     public function updatingPerPage(): void
     {
@@ -45,6 +50,12 @@ new #[Title('Products')] class extends Component {
     public function categories()
     {
         return Category::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function brands()
+    {
+        return Brand::orderBy('name')->get();
     }
 
     #[Computed]
@@ -93,6 +104,7 @@ new #[Title('Products')] class extends Component {
             })
             ->when($this->status, fn($q) => $q->where('status', $this->status))
             ->when($this->category, fn($q) => $q->whereHas('categories', fn($q) => $q->where('categories.id', $this->category)))
+            ->when($this->brand, fn($q) => $q->where('brand_id', $this->brand))
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate($this->perPage);
     }
@@ -394,6 +406,13 @@ new #[Title('Products')] class extends Component {
                     <flux:select.option value="">All Categories</flux:select.option>
                     @foreach ($this->categories as $cat)
                         <flux:select.option value="{{ $cat->id }}">{{ $cat->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="brand" class="w-40">
+                    <flux:select.option value="">All Brands</flux:select.option>
+                    @foreach ($this->brands as $b)
+                        <flux:select.option value="{{ $b->id }}">{{ $b->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
 
