@@ -90,10 +90,10 @@
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
                 </h4>
                 <ul class="space-y-3">
-                    <li><a href="#"
+                    <li><a href="{{ route('privacy') }}"
                             class="text-brand-footer-text hover:text-white transition-colors text-sm">Privacy Policy</a>
                     </li>
-                    <li><a href="#"
+                    <li><a href="{{ route('terms') }}"
                             class="text-brand-footer-text hover:text-white transition-colors text-sm">Terms &
                             Conditions</a></li>
                     <li><a href="#"

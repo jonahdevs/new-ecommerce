@@ -2524,11 +2524,7 @@
         "quantity": 4,
         "image": "products/1776407851_Under-Counter-Commercial-Freezer-–-Air-Cooled.jpg",
         "short_description": "",
-        "description": "<ul><li><strong>Enhanced Air-Cooled Version</strong>&nbsp;– Meets stricter refrigeration requirements for optimal performance.</li><li><strong>High-End Compressors &amp; Eco-Friendly Refrigerants</strong>&nbsp;– Improves cooling efficiency while reducing environmental impact.</li><li><strong>Durable SUS201 Stainless Steel Construction</strong>&nbsp;– Strong inner liner and outer casing for long-lasting use.</li><li><strong>Circulating Air Duct System</strong>&nbsp;– Ensures uniform cooling and optimal temperature distribution.</li><li><strong>Automatic Defrost System</strong>&nbsp;– Maintains peak performance and hassle-free maintenance.</li><li><strong>Optimized Freezing Environment</strong>&nbsp;– Designed for professional and commercial use.</li><li><strong>Dimensions</strong>- 1500x600x800</li></ul>",
-        "technical_specification": "<p>Temperature <span style=\"color: rgb(51, 65, 85);\">≤18</span></p><p>Power <span style=\"color: rgb(51, 65, 85);\">398</span></p><p>Dimensions 1500x600x800</p><p><br></p>",
-        "length": 1500,
-        "width": 600,
-        "height": 800
+        "description": ""
     },
     {
         "sku": "IMG/REF/00202",
@@ -2538,13 +2534,9 @@
         "category": "Refrigeration",
         "price": 501250,
         "quantity": 1,
-        "image": "products/1776410579__gallery_unnamed.jpg",
+        "image": "",
         "short_description": "",
-        "description": "<ul><li>Fashionable design with LED Lighting, CFC-free insulation &amp; refrigerant, Low-energy consumption, High cooling efficiency, Illuminated canopy</li><li>Vertical fluorescent lamp, Easy adjustable shelves, Self-closing glass doors with locks</li><li>External door handle, Double glazed doors, White powder coated steel plate, Automatics defrost and condensate evaporation</li><li>Heavy duty castors with brake, Digital temp. control &amp; read-out, Self-evaporating drainage</li><li>Lock &amp; key, Light box, 5 levels of display</li><li><strong>Capacity:</strong>&nbsp;1430 Litres (approximately 50.5 cu. ft.).</li><li><strong>Temperature Range:</strong>&nbsp;Maintains consistent temperatures between&nbsp;-18 ~ -22°C</li></ul><p><img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==\"><img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==\"></p><ul><li><strong>Dimensions:</strong>&nbsp;1820mm (W) x 805mm (D) x 1950mm (H).</li><li><strong>Tray Capacity:</strong>&nbsp;Equipped with a vertical tray configuration that can hold up to 40 trays.</li><li><strong>Refrigerant:</strong>&nbsp;Uses eco-friendly&nbsp;<strong>R290</strong>&nbsp;hydrocarbon refrigerant.</li><li><strong>Compressor:</strong>&nbsp;High-performance&nbsp;<strong>Cubigel</strong>&nbsp;compressor.</li></ul><p><br></p>",
-        "technical_specification": "<ul><li><strong>Capacity:</strong>&nbsp;1430 Litres (approximately 50.5 cu. ft.).</li><li><strong>Temperature Range:</strong>&nbsp;Maintains consistent temperatures between&nbsp;-18 ~ -22°C</li></ul><p><img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==\"><img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==\"></p><ul><li><strong>Dimensions:</strong>&nbsp;1820mm (W) x 805mm (D) x 1950mm (H).</li><li><strong>Tray Capacity:</strong>&nbsp;Equipped with a vertical tray configuration that can hold up to 40 trays.</li><li><strong>Refrigerant:</strong>&nbsp;Uses eco-friendly&nbsp;<strong>R290</strong>&nbsp;hydrocarbon refrigerant.</li><li><strong>Compressor:</strong>&nbsp;High-performance&nbsp;<strong>Cubigel</strong>&nbsp;compressor.</li></ul><p><br></p>",
-        "length": 1820,
-        "width": 805,
-        "height": 1950
+        "description": ""
     },
     {
         "sku": "IMG/REF/00204",
@@ -3254,13 +3246,9 @@
         "category": "Ovens",
         "price": 114250,
         "quantity": 2,
-        "image": "products/1776413057__gallery_Capture.png",
+        "image": null,
         "short_description": "Compact electric convection oven by HK-Redline. Affordable commercial baking oven for small cafes and food outlets in Kenya.",
-        "description": "<p>62L capacity&nbsp;360°C&nbsp;hi-limit ensures safety operation</p><p>Stainless steel cavity or ceramic coating cavity 120 minutes timer with bell</p><p>Steel handle fixed by Bakelite base</p><p>Dual round heaters plus two high speed motors </p><p>Stainless steel baffle to generate heat more evenly Timing and heating indicators</p><p>Chamber light for better view of cooking process Nickel coating pan support</p><p>Four aluminum baking trays 325x450mm </p><p>Good insulation at 5 sides</p><p>Door latch opens at 90°for easy access to the cavity Level distance is 75mm</p><p>Double toughened visual glass for better view and to keep cool to touch</p>",
-        "technical_specification": "<h3><strong>Convection oven Specifications</strong></h3><p>220V,50HZ,2.67kw</p><p>Temperature:50-300℃</p><p>Capacity：3x454x327mm Trays</p><p>Description:Inner Chamber Enamel</p><p>Net Weight:38kg</p><p>Size:25L Food Mixer</p><p>Material:Enamel</p><p><strong>Overall Dimensions:</strong>Length: 530mm Width:595mm Height:570mm</p>",
-        "length": 530,
-        "width": 595,
-        "height": 570
+        "description": null
     },
     {
         "name": "ELEC. CONVECTION OVEN YXD-8A-3",
@@ -3270,13 +3258,9 @@
         "category": "Ovens",
         "price": 163750,
         "quantity": 2,
-        "image": "products/1776413463__gallery_Capture.png",
+        "image": null,
         "short_description": "Professional electric convection oven by HK-Redline. Multi-tray commercial baking oven for restaurants and bakeries in Kenya.",
-        "description": "<h3><strong>Features:</strong></h3><p>●&nbsp;Heavy duty fan blade and silicon protective switch.</p><p>●&nbsp;A glass cover allows the user to keep an eye on the cooking process.</p><p>●&nbsp;Double glass door, anti-slip feet and a ceramic coated chamber.</p><p>●&nbsp;Round cornered chamber for easy cleaning</p><p>●&nbsp;Special baffle plate to control temperature evenness</p><p>●&nbsp;Suitable for all type of bakery, meal cooking<strong style=\"color: rgb(255, 0, 0);\">：</strong></p><p>YXD Convection Oven</p><p>220V,50HZ,6.4kw</p><p>Temperature:50-300℃</p><p>Capacity：4x400x600mm Trays</p><p>Description:Inner Chamber S/S，Spray</p><p>Net Weight:67kg</p><p>Material:Stainless Steel</p><p>Overall Dimensions:834x765x572mm</p>",
-        "technical_specification": "<p>YXD Convection Oven</p><p>220V,50HZ,6.4kw</p><p>Temperature:50-300℃</p><p>Capacity：4x400x600mm Trays</p><p>Description:Inner Chamber S/S，Spray</p><p>Net Weight:67kg</p><p>Material:Stainless Steel</p><p>Overall Dimensions:834x765x572mm</p>",
-        "length": 834,
-        "width": 765,
-        "height": 572
+        "description": null
     },
     {
         "name": "LUXURIOUS ELECTRIC DECK OVEN NFD-20F",

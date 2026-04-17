@@ -43,6 +43,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'status_reason',
         'suspended_until',
         'preferred_shipping_method_id',
+        'terms_accepted_at',
+        'terms_accepted_ip',
+        'provider',
+        'provider_id',
+        'provider_token',
     ];
 
     /**
@@ -66,6 +71,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
             'password' => 'hashed',
             'status' => UserStatus::class,
         ];

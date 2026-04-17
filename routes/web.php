@@ -19,6 +19,13 @@ use Spatie\LaravelPdf\Facades\Pdf;
 Route::livewire('/', 'pages::home.index')->name('home');
 
 // ----------------------------------------------------------------------------
+// Legal Pages
+// ----------------------------------------------------------------------------
+
+Route::view('/terms-of-service', 'pages.legal.terms')->name('terms');
+Route::view('/privacy-policy', 'pages.legal.privacy')->name('privacy');
+
+// ----------------------------------------------------------------------------
 // Catalog — Shop, Categories, Products
 // ----------------------------------------------------------------------------
 

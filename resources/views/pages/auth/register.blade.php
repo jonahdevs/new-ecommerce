@@ -6,7 +6,8 @@
         <x-auth-session-status class="text-center" :status="session('status')" />
 
         @error('social')
-            <div class="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            <div
+                class="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-600 dark:text-red-400">
                 {{ $message }}
             </div>
         @enderror
@@ -31,6 +32,15 @@
             <flux:input name="password_confirmation" :label="__('Confirm password')" type="password" required
                 autocomplete="new-password" :placeholder="__('Confirm password')" viewable />
 
+            <!-- Terms and Conditions -->
+            <flux:field variant="inline">
+                <flux:checkbox wire:model="terms" required />
+                <flux:label>{{ __('I agree to the') }} <flux:link :href="route('terms')" class="ms-2">terms and
+                        conditions</flux:link>
+                </flux:label>
+                <flux:error name="terms" />
+            </flux:field>
+
             <div class="flex items-center justify-end">
                 <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
                     {{ __('Create account') }}
@@ -41,7 +51,8 @@
         <flux:separator text="or register with" />
 
         <div class="grid grid-cols-2 gap-3">
-            <flux:button class="w-full cursor-pointer" :href="route('socialite.redirect', ['provider' => 'google', 'intent' => 'register'])">
+            <flux:button class="w-full cursor-pointer"
+                :href="route('socialite.redirect', ['provider' => 'google', 'intent' => 'register'])">
                 <x-slot name="icon">
                     <svg width="25" height="24" viewBox="0 0 25 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg" class="shrink-0">
@@ -62,7 +73,8 @@
                 Google
             </flux:button>
 
-            <flux:button class="w-full cursor-pointer" :href="route('socialite.redirect', ['provider' => 'facebook', 'intent' => 'register'])">
+            <flux:button class="w-full cursor-pointer"
+                :href="route('socialite.redirect', ['provider' => 'facebook', 'intent' => 'register'])">
                 <x-slot name="icon">
                     <svg width="25" height="24" class="text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
                         <path

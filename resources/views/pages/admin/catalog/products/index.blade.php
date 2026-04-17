@@ -117,7 +117,7 @@ new #[Title('Products')] class extends Component {
         $product = Product::findOrFail($id);
         $this->authorize('delete', $product);
         $product->delete();
-        $this->flushStatCache();
+        unset($this->stats);
         $this->dispatch('notify', title: 'Product Trashed', variant: 'success', message: 'Product moved to trash.');
     }
 
@@ -161,7 +161,7 @@ new #[Title('Products')] class extends Component {
             'status' => $status,
             'published_at' => $status === ProductStatus::PUBLISHED->value ? now() : $product->published_at,
         ]);
-        $this->flushStatCache();
+        unset($this->stats);
         $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: "Status updated to {$product->fresh()->status->label()}.");
     }
 
@@ -190,7 +190,7 @@ new #[Title('Products')] class extends Component {
             default => null,
         };
 
-        $this->flushStatCache();
+        unset($this->stats);
         unset($this->products);
         $this->dispatch('notify', title: 'Bulk Update Complete', variant: 'success', message: count($ids) . ' products updated successfully.');
     }

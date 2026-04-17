@@ -32,7 +32,8 @@ class QuotationService
         private readonly NotificationSettings $notificationSettings,
         private readonly CustomerNotificationSettings $customerNotificationSettings,
         private readonly PaymentService $paymentService,
-    ) {}
+    ) {
+    }
 
     // =========================================================================
     // ADMIN NOTIFICATION ROUTING
@@ -48,7 +49,16 @@ class QuotationService
 
     private function notifyAdmin(mixed $notification): void
     {
-        Notification::route('mail', $this->adminEmail())
+        $email = $this->adminEmail();
+
+        if (!$email) {
+            Log::warning('Admin notification skipped: no admin email configured', [
+                'notification' => get_class($notification),
+            ]);
+            return;
+        }
+
+        Notification::route('mail', $email)
             ->notify($notification);
     }
 
@@ -124,30 +134,30 @@ class QuotationService
         $quote = DB::transaction(function () use ($items, $subtotalCents, $data) {
 
             $quote = Quote::create([
-                'user_id'          => Auth::id(),
-                'reference'        => Quote::generateReference(),
-                'status'           => QuoteStatus::PENDING,
-                'currency'         => $this->localization->currency,
-                'subtotal_cents'   => $subtotalCents,
-                'discount_cents'   => 0,
-                'shipping_cents'   => 0,
-                'tax_cents'        => 0,
-                'total_cents'      => $subtotalCents,
+                'user_id' => Auth::id(),
+                'reference' => Quote::generateReference(),
+                'status' => QuoteStatus::PENDING,
+                'currency' => $this->localization->currency,
+                'subtotal_cents' => $subtotalCents,
+                'discount_cents' => 0,
+                'shipping_cents' => 0,
+                'tax_cents' => 0,
+                'total_cents' => $subtotalCents,
                 'preferred_county' => $data['preferred_county'] ?? null,
-                'preferred_area'   => $data['preferred_area'] ?? null,
-                'customer_notes'   => $data['customer_notes'] ?? null,
-                'guest_info'       => Auth::check() ? null : [
-                    'name'  => $data['name'] ?? null,
+                'preferred_area' => $data['preferred_area'] ?? null,
+                'customer_notes' => $data['customer_notes'] ?? null,
+                'guest_info' => Auth::check() ? null : [
+                    'name' => $data['name'] ?? null,
                     'email' => $data['email'] ?? null,
                     'phone' => $data['phone'] ?? null,
                 ],
             ]);
 
             $quote->statusHistories()->create([
-                'from_status'     => null,
-                'to_status'       => QuoteStatus::PENDING->value,
+                'from_status' => null,
+                'to_status' => QuoteStatus::PENDING->value,
                 'changed_by_type' => 'user',
-                'notes'           => 'Quotation request submitted by customer.',
+                'notes' => 'Quotation request submitted by customer.',
             ]);
 
             foreach ($items as $item) {
@@ -157,20 +167,20 @@ class QuotationService
                 $unitPriceCents = (int) round($item['unit_price'] * 100);
 
                 $quote->items()->create([
-                    'product_id'           => $product->id,
-                    'product_variant_id'   => $variant?->id,
-                    'quantity'             => $item['quantity'],
+                    'product_id' => $product->id,
+                    'product_variant_id' => $variant?->id,
+                    'quantity' => $item['quantity'],
                     'original_price_cents' => $unitPriceCents,
-                    'quoted_price_cents'   => null,
-                    'product_snapshot'     => [
-                        'name'      => $product->name,
-                        'sku'       => $variant?->sku ?? $product->sku,
+                    'quoted_price_cents' => null,
+                    'product_snapshot' => [
+                        'name' => $product->name,
+                        'sku' => $variant?->sku ?? $product->sku,
                         'image_url' => $product->image_url,
-                        'brand'     => $product->brand?->name,
-                        'variant'   => $variant
+                        'brand' => $product->brand?->name,
+                        'variant' => $variant
                             ? $variant->attributeValues
-                            ->mapWithKeys(fn($av) => [$av->attribute->name => $av->label ?: $av->value])
-                            ->toArray()
+                                ->mapWithKeys(fn($av) => [$av->attribute->name => $av->label ?: $av->value])
+                                ->toArray()
                             : null,
                     ],
                 ]);
@@ -201,7 +211,7 @@ class QuotationService
         } catch (\Throwable $e) {
             Log::error('Failed to send QuoteRequestedNotification.', [
                 'quote_id' => $quote->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -224,9 +234,9 @@ class QuotationService
     public function prepare(Quote $quote, array $pricing): Quote
     {
         $shippingCents = (int) round((float) ($pricing['shipping'] ?? 0) * 100);
-        $validityDays  = max(1, (int) ($pricing['validity_days'] ?? 7));
-        $note          = $pricing['note'] ?? null;
-        $itemPrices    = $pricing['item_prices'] ?? [];
+        $validityDays = max(1, (int) ($pricing['validity_days'] ?? 7));
+        $note = $pricing['note'] ?? null;
+        $itemPrices = $pricing['item_prices'] ?? [];
 
         DB::transaction(function () use ($quote, $shippingCents, $validityDays, $note, $itemPrices) {
 
@@ -250,7 +260,7 @@ class QuotationService
                 $quote->update([
                     'subtotal_cents' => $subtotalCents,
                     'shipping_cents' => $shippingCents,
-                    'total_cents'    => $totalCents,
+                    'total_cents' => $totalCents,
                 ]);
             } else {
                 $totalCents = max(
@@ -260,7 +270,7 @@ class QuotationService
 
                 $quote->update([
                     'shipping_cents' => $shippingCents,
-                    'total_cents'    => $totalCents,
+                    'total_cents' => $totalCents,
                 ]);
             }
 
@@ -290,9 +300,9 @@ class QuotationService
     public function send(Quote $quote, array $pricing): Quote
     {
         $shippingCents = (int) round((float) ($pricing['shipping'] ?? 0) * 100);
-        $validityDays  = max(1, (int) ($pricing['validity_days'] ?? 7));
-        $note          = $pricing['note'] ?? null;
-        $itemPrices    = $pricing['item_prices'] ?? [];
+        $validityDays = max(1, (int) ($pricing['validity_days'] ?? 7));
+        $note = $pricing['note'] ?? null;
+        $itemPrices = $pricing['item_prices'] ?? [];
 
         DB::transaction(function () use ($quote, $shippingCents, $validityDays, $note, $itemPrices) {
 
@@ -316,7 +326,7 @@ class QuotationService
                 $quote->update([
                     'subtotal_cents' => $subtotalCents,
                     'shipping_cents' => $shippingCents,
-                    'total_cents'    => $totalCents,
+                    'total_cents' => $totalCents,
                 ]);
             } else {
                 $totalCents = max(
@@ -326,13 +336,13 @@ class QuotationService
 
                 $quote->update([
                     'shipping_cents' => $shippingCents,
-                    'total_cents'    => $totalCents,
+                    'total_cents' => $totalCents,
                 ]);
             }
 
             $quote->update([
                 'expires_at' => now()->addDays($validityDays),
-                'quoted_at'  => now(),
+                'quoted_at' => now(),
             ]);
 
             $quote->transitionTo(
@@ -351,14 +361,18 @@ class QuotationService
             try {
                 if ($quote->user) {
                     $quote->user->notify(new QuoteSentNotification($quote));
-                } else {
-                    Notification::route('mail', $quote->customerEmail())
+                } elseif ($email = $quote->customerEmail()) {
+                    Notification::route('mail', $email)
                         ->notify(new QuoteSentNotification($quote));
+                } else {
+                    Log::warning('QuoteSentNotification: no customer email available', [
+                        'quote_id' => $quote->id,
+                    ]);
                 }
             } catch (\Throwable $e) {
                 Log::error('Failed to send QuoteSentNotification.', [
                     'quote_id' => $quote->id,
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -392,7 +406,7 @@ class QuotationService
                 Log::error('Failed to send QuoteAcceptedNotification.', [
                     'quote_id' => $quote->id,
                     'order_id' => $order->id,
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -416,87 +430,87 @@ class QuotationService
             ?? $user?->addresses()->with(['county', 'area', 'shippingZone'])->oldest()->first();
 
         $addressSnapshot = $address ? [
-            'first_name'   => $address->first_name,
-            'last_name'    => $address->last_name,
-            'full_name'    => $address->full_name,
+            'first_name' => $address->first_name,
+            'last_name' => $address->last_name,
+            'full_name' => $address->full_name,
             'phone_number' => $address->phone_number,
-            'address'      => $address->address,
-            'area'         => $address->area?->name,
-            'county'       => $address->county?->name,
-            'zone'         => $address->shippingZone?->name,
+            'address' => $address->address,
+            'area' => $address->area?->name,
+            'county' => $address->county?->name,
+            'zone' => $address->shippingZone?->name,
         ] : [
-            'full_name'    => $quote->customerName(),
+            'full_name' => $quote->customerName(),
             'phone_number' => $quote->customerPhone(),
-            'address'      => $quote->preferred_area . ', ' . $quote->preferred_county,
-            'area'         => $quote->preferred_area,
-            'county'       => $quote->preferred_county,
+            'address' => $quote->preferred_area . ', ' . $quote->preferred_county,
+            'area' => $quote->preferred_area,
+            'county' => $quote->preferred_county,
         ];
 
         // Shipping snapshot — quote has shipping cost but no method details
         $shippingSnapshot = [
-            'method_id'       => null,
-            'method_name'     => 'As per quotation',
-            'method_code'     => 'quote',
-            'method_type'     => 'quote',
-            'zone_id'         => null,
-            'rate_id'         => null,
-            'station_id'      => null,
-            'station_name'    => null,
-            'cost'            => $quote->shipping,
-            'cost_breakdown'  => null,
+            'method_id' => null,
+            'method_name' => 'As per quotation',
+            'method_code' => 'quote',
+            'method_type' => 'quote',
+            'zone_id' => null,
+            'rate_id' => null,
+            'station_id' => null,
+            'station_name' => null,
+            'cost' => $quote->shipping,
+            'cost_breakdown' => null,
             'delivery_window' => null,
-            'weight_kg'       => null,
+            'weight_kg' => null,
         ];
 
         $order = Order::create([
-            'user_id'           => $quote->user_id,
-            'quote_id'          => $quote->id,
-            'reference'         => Order::generateReference(),
-            'status'            => OrderStatus::PENDING,
-            'payment_status'    => PaymentStatus::PENDING,
-            'currency'          => $quote->currency,
-            'subtotal_cents'    => $quote->subtotal_cents,
-            'discount_cents'    => $quote->discount_cents,
-            'shipping_cents'    => $quote->shipping_cents,
-            'tax_cents'         => $quote->tax_cents,
-            'total_cents'       => $quote->total_cents,
-            'shipping_address'  => $addressSnapshot,
-            'billing_address'   => $addressSnapshot,
+            'user_id' => $quote->user_id,
+            'quote_id' => $quote->id,
+            'reference' => Order::generateReference(),
+            'status' => OrderStatus::PENDING,
+            'payment_status' => PaymentStatus::PENDING,
+            'currency' => $quote->currency,
+            'subtotal_cents' => $quote->subtotal_cents,
+            'discount_cents' => $quote->discount_cents,
+            'shipping_cents' => $quote->shipping_cents,
+            'tax_cents' => $quote->tax_cents,
+            'total_cents' => $quote->total_cents,
+            'shipping_address' => $addressSnapshot,
+            'billing_address' => $addressSnapshot,
             'shipping_snapshot' => $shippingSnapshot,
-            'sap_sync_status'   => SapSyncStatus::PENDING,
+            'sap_sync_status' => SapSyncStatus::PENDING,
             'sap_sync_attempts' => 0,
-            'expires_at'        => now()->addMinutes(30),
+            'expires_at' => now()->addMinutes(30),
         ]);
 
         foreach ($quote->items as $quoteItem) {
             $order->items()->create([
-                'product_id'         => $quoteItem->product_id,
+                'product_id' => $quoteItem->product_id,
                 'product_variant_id' => $quoteItem->product_variant_id,
-                'quantity'           => $quoteItem->quantity,
-                'unit_price_cents'   => $quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents,
-                'unit_tax_cents'     => 0,
-                'discount_cents'     => 0,
-                'total_cents'        => ($quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents) * $quoteItem->quantity,
-                'product_snapshot'   => $quoteItem->product_snapshot,
+                'quantity' => $quoteItem->quantity,
+                'unit_price_cents' => $quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents,
+                'unit_tax_cents' => 0,
+                'discount_cents' => 0,
+                'total_cents' => ($quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents) * $quoteItem->quantity,
+                'product_snapshot' => $quoteItem->product_snapshot,
             ]);
         }
 
         $order->statusHistories()->create([
-            'from_status'     => null,
-            'to_status'       => OrderStatus::PENDING->value,
+            'from_status' => null,
+            'to_status' => OrderStatus::PENDING->value,
             'changed_by_type' => 'system',
-            'notes'           => "Order created from accepted quotation {$quote->reference}.",
+            'notes' => "Order created from accepted quotation {$quote->reference}.",
         ]);
 
         // Create the payment record so checkout.pay can initiate the gateway
         Payment::create([
-            'order_id'     => $order->id,
+            'order_id' => $order->id,
             'amount_cents' => $quote->total_cents,
-            'currency'     => $quote->currency,
-            'status'       => PaymentStatus::PENDING,
-            'gateway'      => $this->paymentService->activeGateway(),
-            'expires_at'   => now()->addMinutes(30),
-            'meta'         => ['payment_method' => 'card'],
+            'currency' => $quote->currency,
+            'status' => PaymentStatus::PENDING,
+            'gateway' => $this->paymentService->activeGateway(),
+            'expires_at' => now()->addMinutes(30),
+            'meta' => ['payment_method' => 'card'],
         ]);
 
         return $order;
@@ -516,7 +530,7 @@ class QuotationService
             );
 
             $quote->update([
-                'rejected_at'      => now(),
+                'rejected_at' => now(),
                 'rejection_reason' => $reason,
             ]);
         });
@@ -528,7 +542,7 @@ class QuotationService
             } catch (\Throwable $e) {
                 Log::error('Failed to send QuoteRejectedNotification.', [
                     'quote_id' => $quote->id,
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -579,7 +593,7 @@ class QuotationService
             } catch (\Throwable $e) {
                 Log::error('Failed to expire quotation.', [
                     'quote_id' => $quote->id,
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -618,9 +632,14 @@ class QuotationService
             try {
                 if ($quote->user) {
                     $quote->user->notify(new QuoteExpiringNotification($quote));
-                } else {
-                    Notification::route('mail', $quote->customerEmail())
+                } elseif ($email = $quote->customerEmail()) {
+                    Notification::route('mail', $email)
                         ->notify(new QuoteExpiringNotification($quote));
+                } else {
+                    Log::warning('QuoteExpiringNotification: no customer email available', [
+                        'quote_id' => $quote->id,
+                    ]);
+                    continue;
                 }
 
                 $quote->update(['reminder_sent_at' => now()]);
@@ -628,7 +647,7 @@ class QuotationService
             } catch (\Throwable $e) {
                 Log::error('Failed to send QuoteExpiringNotification.', [
                     'quote_id' => $quote->id,
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -653,7 +672,7 @@ class QuotationService
 
         foreach ($orphaned as $quote) {
             $quote->update([
-                'user_id'    => $userId,
+                'user_id' => $userId,
                 'guest_info' => null,
             ]);
             $count++;

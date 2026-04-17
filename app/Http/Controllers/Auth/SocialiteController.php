@@ -23,7 +23,7 @@ class SocialiteController extends Controller
         return Socialite::driver($provider)->redirect();
     }
 
-    public function callback(string $provider)
+    public function callback(string $provider, Request $request)
     {
         try {
             $socialUser = Socialite::driver($provider)->user();
@@ -37,19 +37,21 @@ class SocialiteController extends Controller
 
         if ($intent === 'register') {
             // Registration flow — create account if it doesn't exist yet.
-            if (! $user) {
+            if (!$user) {
                 $user = User::create([
-                    'name'              => $socialUser->getName(),
-                    'email'             => $socialUser->getEmail(),
-                    'provider'          => $provider,
-                    'provider_id'       => $socialUser->getId(),
-                    'provider_token'    => $socialUser->token,
+                    'name' => $socialUser->getName(),
+                    'email' => $socialUser->getEmail(),
+                    'provider' => $provider,
+                    'provider_id' => $socialUser->getId(),
+                    'provider_token' => $socialUser->token,
                     'email_verified_at' => now(),
+                    'terms_accepted_at' => now(),
+                    'terms_accepted_ip' => $request->ip(),
                 ]);
             }
         } else {
             // Login flow — only allow existing accounts.
-            if (! $user) {
+            if (!$user) {
                 return redirect()->route('login')->withErrors([
                     'social' => 'No account found for ' . $socialUser->getEmail() . '. Please register first.',
                 ]);
@@ -58,9 +60,9 @@ class SocialiteController extends Controller
 
         // Link / refresh the social provider on the account.
         $user->update([
-            'provider'          => $provider,
-            'provider_id'       => $socialUser->getId(),
-            'provider_token'    => $socialUser->token,
+            'provider' => $provider,
+            'provider_id' => $socialUser->getId(),
+            'provider_token' => $socialUser->token,
             'email_verified_at' => $user->email_verified_at ?? now(),
         ]);
 
