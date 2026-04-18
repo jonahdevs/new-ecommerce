@@ -467,7 +467,7 @@ new #[Title('Quotations')] class extends Component {
 
                                     {{-- Change Log --}}
                                     <flux:menu.item icon="clock" icon-variant="outline"
-                                        href="{{ route('admin.changelog.quote', $quote) }}" wire:navigate>
+                                        href="{{ route('admin.changelog', ['modelType' => 'quote', 'id' => $quote->id]) }}" wire:navigate>
                                         Change Log
                                     </flux:menu.item>
                                 </flux:menu>

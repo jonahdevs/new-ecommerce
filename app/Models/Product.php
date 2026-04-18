@@ -65,9 +65,8 @@ class Product extends Model
         'visibility',
         'brand_id',
         'image_path',
+        'image_webp',
         'technical_specification',
-
-        'purchase_note',
         'sort_order',
         'reviews_enabled',
 
@@ -327,7 +326,7 @@ class Product extends Model
     protected function visibleInCatalog(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC ,
+            ProductVisibility::PUBLIC,
             ProductVisibility::CATALOG,
         ]);
     }
@@ -340,7 +339,7 @@ class Product extends Model
     protected function visibleInSearch(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC ,
+            ProductVisibility::PUBLIC,
             ProductVisibility::SEARCH,
         ]);
     }
@@ -371,21 +370,28 @@ class Product extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_path ? asset('storage/' . $this->image_path) : null,
+            get: fn () => $this->image_path ? asset('storage/'.$this->image_path) : null,
+        );
+    }
+
+    protected function webpImageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->image_webp ? asset('storage/'.$this->image_webp) : null,
         );
     }
 
     protected function finalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->sale_price ?? $this->price,
+            get: fn () => $this->sale_price ?? $this->price,
         );
     }
 
     protected function formattedFinalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->final_price !== null
+            get: fn () => $this->final_price !== null
             ? format_currency($this->final_price)
             : null,
         );
@@ -394,14 +400,14 @@ class Product extends Model
     protected function formattedSalePrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->sale_price ? format_currency($this->sale_price ?? 0) : null
+            get: fn () => $this->sale_price ? format_currency($this->sale_price ?? 0) : null
         );
     }
 
     protected function formattedPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->price !== null ? format_currency($this->price) : null
+            get: fn () => $this->price !== null ? format_currency($this->price) : null
         );
     }
 
@@ -422,7 +428,7 @@ class Product extends Model
                 }
 
                 // Guard against null type — fall back to simple behaviour
-                if (!$this->type) {
+                if (! $this->type) {
                     return $this->formatted_final_price;
                 }
 
@@ -447,7 +453,7 @@ class Product extends Model
                     return null;
                 }
 
-                if (!$this->type) {
+                if (! $this->type) {
                     return null;
                 }
 
@@ -466,7 +472,7 @@ class Product extends Model
     protected function hasPricePrefix(): Attribute
     {
         return Attribute::make(
-            get: fn() => !is_null($this->display_price_prefix)
+            get: fn () => ! is_null($this->display_price_prefix)
         );
     }
 
@@ -484,12 +490,12 @@ class Product extends Model
         // Use already-loaded variants if available - avoids extra query
         $variants = $this->relationLoaded('variants')
             ? $this->variants
-            : $this->variants()->where('is_active', true)->where(fn($q) => $q->whereNotNull('price')->orWhereNotNull('sale_price'))->get();
+            : $this->variants()->where('is_active', true)->where(fn ($q) => $q->whereNotNull('price')->orWhereNotNull('sale_price'))->get();
 
         $minPrice = $variants
             ->where('is_active', true)
-            ->filter(fn($v) => ($v->sale_price ?? $v->price) !== null)
-            ->min(fn($v) => $v->sale_price ?? $v->price);
+            ->filter(fn ($v) => ($v->sale_price ?? $v->price) !== null)
+            ->min(fn ($v) => $v->sale_price ?? $v->price);
 
         return $minPrice !== null ? format_currency($minPrice) : null;
     }
@@ -522,8 +528,8 @@ class Product extends Model
 
     public function hasDiscount(): bool
     {
-        return !is_null($this->sale_price)
-            && !is_null($this->price)
+        return ! is_null($this->sale_price)
+            && ! is_null($this->price)
             && $this->sale_price < $this->price;
     }
 
@@ -563,8 +569,8 @@ class Product extends Model
 
     public function isPhysical(): bool
     {
-        return !$this->isVirtual()
-            && !$this->isDownloadable()
-            && !$this->isGrouped();
+        return ! $this->isVirtual()
+            && ! $this->isDownloadable()
+            && ! $this->isGrouped();
     }
 }

@@ -485,9 +485,7 @@ new #[Title('Create Order')] class extends Component {
                     <div
                         class="px-6 py-3 border-b border-zinc-200 dark:border-zinc-600 flex items-center justify-between">
                         <flux:heading size="lg" class="font-semibold!">Customer</flux:heading>
-                        @if (app(\App\Settings\OrderSettings::class)->guest_checkout_enabled)
-                            <flux:switch wire:model.live="isGuest" label="Guest order" />
-                        @endif
+                        <flux:switch wire:model.live="isGuest" label="Guest order" />
                     </div>
 
                     <div class="p-6 space-y-4">

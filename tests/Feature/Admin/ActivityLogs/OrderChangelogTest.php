@@ -1,24 +1,12 @@
 <?php
 
-use App\Models\Order;
-use App\Models\User;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Order;
+use App\Models\User;
 use Spatie\Activitylog\Models\Activity;
 
-/**
- * Integration tests for Order model changelog tracking
- * 
- * **Validates: Requirements 1.3, 1.8, 1.9**
- * 
- * Tests that the Order model correctly tracks changes to:
- * - status
- * - payment_status
- * - customer_notes
- */
-
 beforeEach(function () {
-    // Create a staff user for testing
     $this->admin = User::factory()->create([
         'email' => 'admin@test.com',
         'is_staff' => true,
@@ -35,7 +23,7 @@ test('order model logs status changes', function () {
 
     $order->update(['status' => OrderStatus::PROCESSING]);
 
-    $activity = Activity::forSubject($order)->first();
+    $activity = Activity::forSubject($order)->where('event', 'updated')->first();
 
     expect($activity)->not->toBeNull()
         ->and($activity->properties['old']['status'])->toBe(OrderStatus::PENDING->value)
@@ -51,7 +39,7 @@ test('order model logs payment_status changes', function () {
 
     $order->update(['payment_status' => PaymentStatus::PAID]);
 
-    $activity = Activity::forSubject($order)->first();
+    $activity = Activity::forSubject($order)->where('event', 'updated')->first();
 
     expect($activity)->not->toBeNull()
         ->and($activity->properties['old']['payment_status'])->toBe(PaymentStatus::PENDING->value)
@@ -67,7 +55,7 @@ test('order model logs customer_notes changes', function () {
 
     $order->update(['customer_notes' => 'Updated notes']);
 
-    $activity = Activity::forSubject($order)->first();
+    $activity = Activity::forSubject($order)->where('event', 'updated')->first();
 
     expect($activity)->not->toBeNull()
         ->and($activity->properties['old']['customer_notes'])->toBe('Original notes')
@@ -89,7 +77,7 @@ test('order model logs multiple field changes in single update', function () {
         'customer_notes' => 'Updated notes',
     ]);
 
-    $activity = Activity::forSubject($order)->first();
+    $activity = Activity::forSubject($order)->where('event', 'updated')->first();
 
     expect($activity)->not->toBeNull()
         ->and($activity->properties['old'])->toHaveKeys(['status', 'payment_status', 'customer_notes'])
@@ -109,10 +97,8 @@ test('order model does not log changes to non-tracked fields', function () {
 
     $order->update(['tracking_number' => 'TRACK123']);
 
-    $activity = Activity::forSubject($order)->first();
-
-    // No activity should be logged for non-tracked fields
-    expect($activity)->toBeNull();
+    // No updated event — only the created log exists
+    expect(Activity::forSubject($order)->where('event', 'updated')->count())->toBe(0);
 });
 
 test('order model does not create log entry when no tracked fields change', function () {
@@ -121,13 +107,9 @@ test('order model does not create log entry when no tracked fields change', func
         'status' => OrderStatus::PENDING,
     ]);
 
-    // Update only non-tracked field
     $order->update(['tracking_number' => 'TRACK456']);
 
-    $activity = Activity::forSubject($order)->first();
-
-    // No activity should be logged
-    expect($activity)->toBeNull();
+    expect(Activity::forSubject($order)->where('event', 'updated')->count())->toBe(0);
 });
 
 test('order model uses correct log name', function () {
@@ -138,13 +120,12 @@ test('order model uses correct log name', function () {
 
     $order->update(['status' => OrderStatus::PROCESSING]);
 
-    $activity = Activity::forSubject($order)->first();
+    $activity = Activity::forSubject($order)->where('event', 'updated')->first();
 
     expect($activity->log_name)->toBe('order');
 });
 
 test('order model logs changes without causer when not authenticated', function () {
-    // Log out to simulate system change
     auth()->logout();
 
     $order = Order::factory()->create([
@@ -154,7 +135,7 @@ test('order model logs changes without causer when not authenticated', function 
 
     $order->update(['status' => OrderStatus::PROCESSING]);
 
-    $activity = Activity::forSubject($order)->first();
+    $activity = Activity::forSubject($order)->where('event', 'updated')->first();
 
     expect($activity)->not->toBeNull()
         ->and($activity->causer_id)->toBeNull()

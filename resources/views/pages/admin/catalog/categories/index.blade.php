@@ -341,7 +341,7 @@ new #[Title('Categories')] class extends Component {
 
                                         {{-- Change Log --}}
                                         <flux:menu.item icon="clock" icon-variant="outline"
-                                            href="{{ route('admin.changelog.category', $category) }}" wire:navigate>
+                                            href="{{ route('admin.changelog', ['modelType' => 'category', 'id' => $category->id]) }}" wire:navigate>
                                             Change Log
                                         </flux:menu.item>
 

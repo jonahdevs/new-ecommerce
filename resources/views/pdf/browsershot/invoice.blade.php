@@ -213,4 +213,15 @@
             </div>
         </div>
     @endif
+
+    {{-- ================================================================== --}}
+    {{-- PURCHASE NOTE                                                        --}}
+    {{-- ================================================================== --}}
+    @php $purchaseNote = app(\App\Settings\OrderSettings::class)->purchase_note; @endphp
+    @if ($purchaseNote)
+        <div class="px-10 py-4 border-t border-gray-200">
+            <div class="text-xs font-bold text-gray-500 uppercase mb-1">Note</div>
+            <div class="text-xs text-gray-600">{{ $purchaseNote }}</div>
+        </div>
+    @endif
 @endsection

@@ -310,7 +310,7 @@ new #[Title('Roles')] class extends Component {
 
                                         {{-- Change Log --}}
                                         <flux:menu.item icon="clock" icon-variant="outline"
-                                            href="{{ route('admin.changelog.user', $user) }}" wire:navigate>
+                                            href="{{ route('admin.changelog', ['modelType' => 'user', 'id' => $user->id]) }}" wire:navigate>
                                             Change Log
                                         </flux:menu.item>
 

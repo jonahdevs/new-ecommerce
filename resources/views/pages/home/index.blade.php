@@ -365,7 +365,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 <flux:text class="text-white/75 text-xs! sm:text-sm! md:text-base! leading-relaxed mb-5">
                     Discover what's just dropped
                 </flux:text>
-                <a href="#"
+                <a href="{{ route('shop.index', ['sort' => 'newest']) }}" wire:navigate
                     class="inline-flex items-center gap-1.5 w-fit text-[10px] sm:text-xs md:text-sm font-semibold
                         text-white border border-white/30 hover:border-white hover:bg-white/10
                         px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-all duration-200 group focus:outline-none">

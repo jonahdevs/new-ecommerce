@@ -2,8 +2,8 @@
 
 use App\Services\ImageService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -11,7 +11,7 @@ beforeEach(function () {
 });
 
 test('storeWithWebP returns both original and WebP paths', function () {
-    $service = new ImageService();
+    $service = new ImageService;
     $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
     $result = $service->storeWithWebP($file, 'products');
@@ -23,7 +23,7 @@ test('storeWithWebP returns both original and WebP paths', function () {
 });
 
 test('WebP file is created with correct extension', function () {
-    $service = new ImageService();
+    $service = new ImageService;
     $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
     $result = $service->storeWithWebP($file, 'products');
@@ -33,7 +33,7 @@ test('WebP file is created with correct extension', function () {
 });
 
 test('WebP file is stored in same directory as original', function () {
-    $service = new ImageService();
+    $service = new ImageService;
     $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
     $result = $service->storeWithWebP($file, 'products');
@@ -45,7 +45,7 @@ test('WebP file is stored in same directory as original', function () {
 });
 
 test('both original and WebP files exist in storage', function () {
-    $service = new ImageService();
+    $service = new ImageService;
     $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
     $result = $service->storeWithWebP($file, 'products');
@@ -55,7 +55,7 @@ test('both original and WebP files exist in storage', function () {
 });
 
 test('generateWebP creates WebP from existing image', function () {
-    $service = new ImageService();
+    $service = new ImageService;
     $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
     // Store original first
@@ -74,7 +74,7 @@ test('generateWebP creates WebP from existing image', function () {
 });
 
 test('service handles invalid image gracefully', function () {
-    $service = new ImageService();
+    $service = new ImageService;
     // Create a fake text file instead of image
     $file = UploadedFile::fake()->create('invalid.txt', 100, 'text/plain');
 
@@ -85,14 +85,14 @@ test('service handles invalid image gracefully', function () {
     expect($result['original'])->toBeString();
     expect($result['webp'])->toBeNull();
 
-    // Should log an error
-    Log::shouldHaveReceived('error')->once();
+    // Should log a warning (WebP conversion failed gracefully, original still stored)
+    Log::shouldHaveReceived('warning')->once();
 });
 
 test('service works with different storage disks', function () {
     Storage::fake('local');
 
-    $service = new ImageService();
+    $service = new ImageService;
     $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
     $result = $service->storeWithWebP($file, 'products', 'local');

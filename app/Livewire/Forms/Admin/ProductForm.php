@@ -10,6 +10,7 @@ use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
+use App\Services\ImageService;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Form;
@@ -189,8 +190,6 @@ class ProductForm extends Form
 
     // ── Advanced ───────────────────────────────────────────────────────────────
 
-    public string $purchase_note = '';
-
     public bool $requires_quotation = false;
 
     public int $sort_order = 0;
@@ -256,7 +255,6 @@ class ProductForm extends Form
             'meta_description' => ['nullable', 'string', 'max:500'],
             'meta_keywords' => ['nullable', 'string', 'max:500'],
             'specifications' => ['nullable', 'string'],
-            'purchase_note' => ['nullable', 'string'],
             'requires_quotation' => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
             'reviews_enabled' => ['boolean'],
@@ -418,7 +416,6 @@ class ProductForm extends Form
         $this->specifications = $product->technical_specification ?? '';
 
         // Advanced
-        $this->purchase_note = $product->purchase_note ?? '';
         $this->requires_quotation = (bool) $product->requires_quotation;
         $this->sort_order = $product->sort_order ?? 0;
         $this->reviews_enabled = (bool) $product->reviews_enabled;
@@ -448,6 +445,8 @@ class ProductForm extends Form
 
     protected function productData(): array
     {
+        $imagePaths = $this->resolveImagePaths();
+
         return [
             'name' => $this->name,
             'model_number' => $this->model_number ?: null,
@@ -477,13 +476,13 @@ class ProductForm extends Form
             'is_downloadable' => $this->is_downloadable,
             'download_limit' => $this->download_limit !== '' ? (int) $this->download_limit : null,
             'download_expiry' => $this->download_expiry !== '' ? (int) $this->download_expiry : null,
-            'image_path' => $this->resolveImagePath(),
+            'image_path' => $imagePaths['image_path'],
+            'image_webp' => $imagePaths['image_webp'],
             'brand_id' => $this->brand_id ?: null,
             'meta_title' => $this->meta_title ?: null,
             'meta_description' => $this->meta_description ?: null,
             'meta_keywords' => $this->meta_keywords ? array_map('trim', explode(',', $this->meta_keywords)) : null,
             'technical_specification' => $this->specifications ?: null,
-            'purchase_note' => $this->purchase_note ?: null,
             'requires_quotation' => $this->requires_quotation,
             'sort_order' => $this->sort_order,
             'reviews_enabled' => $this->reviews_enabled,
@@ -622,15 +621,19 @@ class ProductForm extends Form
                 ->get()
                 ->each(function (ProductImage $image) {
                     \Storage::disk('public')->delete($image->image_path);
+                    if ($image->webp_path) {
+                        \Storage::disk('public')->delete($image->webp_path);
+                    }
                     $image->delete();
                 });
         }
 
         foreach ($this->new_images as $index => $file) {
             if ($file) {
-                $path = $file->store('products/gallery', 'public');
+                $paths = app(ImageService::class)->storeWithWebP($file, 'products/gallery');
                 $product->images()->create([
-                    'image_path' => $path,
+                    'image_path' => $paths['original'],
+                    'webp_path' => $paths['webp'],
                     'sort_order' => $product->images()->count() + $index,
                 ]);
             }
@@ -669,12 +672,17 @@ class ProductForm extends Form
         }
     }
 
-    protected function resolveImagePath(): ?string
+    /**
+     * @return array{image_path: string|null, image_webp: string|null}
+     */
+    protected function resolveImagePaths(): array
     {
         if ($this->image && is_object($this->image)) {
-            return $this->image->store('products/images', 'public');
+            $paths = app(ImageService::class)->storeWithWebP($this->image, 'products/images');
+
+            return ['image_path' => $paths['original'], 'image_webp' => $paths['webp']];
         }
 
-        return $this->existing_image;
+        return ['image_path' => $this->existing_image, 'image_webp' => $this->product?->image_webp];
     }
 }

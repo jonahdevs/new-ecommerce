@@ -473,6 +473,7 @@ new #[Layout('layouts.guest')] class extends Component
             $seenPaths[] = $this->product->image_path;
             $slides[] = [
                 'url' => $this->product->image_url,
+                'webp' => $this->product->webp_image_url,
                 'alt' => $this->product->name,
                 'variantId' => null,
             ];
@@ -485,6 +486,7 @@ new #[Layout('layouts.guest')] class extends Component
                     $seenPaths[] = $variant->image_path;
                     $slides[] = [
                         'url' => Storage::url($variant->image_path),
+                        'webp' => null,
                         'alt' => $variant->attributeValues->map(fn ($av) => $av->value)->join(', ') ?: $this->product->name,
                         'variantId' => $variant->id,
                     ];
@@ -498,6 +500,7 @@ new #[Layout('layouts.guest')] class extends Component
                 $seenPaths[] = $image->image_path;
                 $slides[] = [
                     'url' => Storage::url($image->image_path),
+                    'webp' => $image->webp_url,
                     'alt' => $image->alt_text ?? $this->product->name,
                     'variantId' => null,
                 ];

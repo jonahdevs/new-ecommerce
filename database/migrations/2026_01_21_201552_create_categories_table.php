@@ -18,7 +18,9 @@ return new class extends Migration {
             $table->text('description')->nullable();
 
             $table->string('image_path', 500)->nullable();
+            $table->string('image_webp', 500)->nullable();
             $table->string('image_icon', 500)->nullable();
+            $table->string('icon_webp', 500)->nullable();
             $table->text('icon_svg')->nullable();
 
             $table->string('status')->default('draft');

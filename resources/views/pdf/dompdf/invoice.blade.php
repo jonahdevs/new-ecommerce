@@ -249,6 +249,18 @@
     @endif
 
     {{-- ================================================================== --}}
+    {{-- PURCHASE NOTE                                                       --}}
+    {{-- ================================================================== --}}
+    @php $purchaseNote = app(\App\Settings\OrderSettings::class)->purchase_note; @endphp
+    @if ($purchaseNote)
+        <div style="padding: 16px 40px; border-top: 1px solid #e5e7eb;">
+            <div style="font-size: 10px; font-weight: bold; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">
+                Note</div>
+            <div style="font-size: 11px; color: #4b5563;">{{ $purchaseNote }}</div>
+        </div>
+    @endif
+
+    {{-- ================================================================== --}}
     {{-- FOOTER                                                              --}}
     {{-- ================================================================== --}}
     <div

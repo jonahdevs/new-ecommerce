@@ -23,6 +23,7 @@ class Brand extends Model
         'description',
         'slug',
         'logo_path',
+        'logo_webp',
         'website_url',
         'is_active',
         'sort_order',
@@ -91,7 +92,14 @@ class Brand extends Model
     protected function logoUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->logo_path ? asset('storage/' . $this->logo_path) : null,
+            get: fn () => $this->logo_path ? asset('storage/'.$this->logo_path) : null,
+        );
+    }
+
+    protected function logoWebpUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->logo_webp ? asset('storage/'.$this->logo_webp) : null,
         );
     }
 

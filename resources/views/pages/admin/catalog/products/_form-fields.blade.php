@@ -956,19 +956,6 @@
 
                             <flux:field>
                                 <div class="flex items-center gap-1.5 mb-1">
-                                    <flux:label>Purchase Note</flux:label>
-                                    <flux:tooltip
-                                        content="Sent to customers in their order confirmation email after purchasing this product.">
-                                        <flux:icon.information-circle variant="outline"
-                                            class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
-                                    </flux:tooltip>
-                                </div>
-                                <flux:textarea wire:model="form.purchase_note" rows="3"
-                                    placeholder="e.g. Thank you for your purchase! Assembly instructions are included in the box." />
-                            </flux:field>
-
-                            <flux:field>
-                                <div class="flex items-center gap-1.5 mb-1">
                                     <flux:label>Sort Order</flux:label>
                                     <flux:tooltip content="Lower numbers appear first in product listings.">
                                         <flux:icon.information-circle variant="outline"

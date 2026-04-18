@@ -58,8 +58,8 @@
                         @foreach ($this->imageSlides as $slide)
                             <div class="swiper-slide">
                                 <div class="aspect-square flex items-center justify-center p-2">
-                                    <img src="{{ $slide['url'] }}" alt="{{ $slide['alt'] }}"
-                                        class="w-full h-full object-contain" />
+                                    <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
+                                        alt="{{ $slide['alt'] }}" class="w-full h-full object-contain" />
                                 </div>
                             </div>
                         @endforeach
@@ -99,8 +99,8 @@
                                     :class="activeIndex === {{ $index }} ?
                                         'border-brand-secondary' :
                                         'border-zinc-200 hover:border-zinc-300'">
-                                    <img src="{{ $slide['url'] }}" alt="{{ $slide['alt'] }}"
-                                        class="w-full h-full object-contain" />
+                                    <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
+                                        alt="{{ $slide['alt'] }}" class="w-full h-full object-contain" />
                                 </div>
                             </div>
                         @endforeach
@@ -440,14 +440,6 @@
 
         </div>
 
-
-        {{-- Purchase note for downloadable --}}
-        @if ($product->is_downloadable && $product->purchase_note)
-            <div
-                class="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800 rounded-md px-3 py-2 border border-zinc-200 dark:border-zinc-700">
-                {{ $product->purchase_note }}
-            </div>
-        @endif
 
     </div>
 

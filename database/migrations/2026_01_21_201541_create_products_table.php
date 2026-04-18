@@ -72,11 +72,11 @@ return new class extends Migration
 
             // Primary Image
             $table->string('image_path')->nullable();
+            $table->string('image_webp')->nullable();
 
             // properties
             $table->text('technical_specification')->nullable();
 
-            $table->text('purchase_note')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('reviews_enabled')->default(true);
 
@@ -223,6 +223,7 @@ return new class extends Migration
             $table->foreignId('variant_id')->nullable()->constrained('product_variants')->cascadeOnDelete();
 
             $table->string('image_path');
+            $table->string('webp_path')->nullable();
             $table->string('thumbnail_path')->nullable();
             $table->string('alt_text')->nullable();
 

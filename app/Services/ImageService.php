@@ -5,17 +5,17 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Format;
+use Intervention\Image\ImageManager;
 
 class ImageService
 {
     /**
      * Store image and generate WebP variant
      *
-     * @param UploadedFile $file
-     * @param string $directory Storage directory path
-     * @param string $disk Storage disk name (default: 'public')
+     * @param  string  $directory  Storage directory path
+     * @param  string  $disk  Storage disk name (default: 'public')
      * @return array ['original' => string, 'webp' => string|null]
      */
     public function storeWithWebP(
@@ -54,8 +54,6 @@ class ImageService
     /**
      * Generate WebP variant from existing image
      *
-     * @param string $originalPath
-     * @param string $disk
      * @return string|null WebP path or null on failure
      */
     protected function generateWebP(
@@ -67,14 +65,14 @@ class ImageService
             $fullPath = Storage::disk($disk)->path($originalPath);
 
             // Create ImageManager with GD driver and read image
-            $manager = ImageManager::gd();
-            $image = $manager->read($fullPath);
+            $manager = new ImageManager(new Driver);
+            $image = $manager->decodePath($fullPath);
 
             // Generate WebP path (replace extension with .webp)
             $webpPath = preg_replace('/\.[^.]+$/', '.webp', $originalPath);
 
             // Convert to WebP with 85% quality
-            $encoded = $image->toWebp(quality: 85);
+            $encoded = $image->encodeUsingFormat(Format::WEBP, quality: 85);
 
             // Store WebP content
             Storage::disk($disk)->put($webpPath, $encoded);

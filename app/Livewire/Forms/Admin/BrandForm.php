@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms\Admin;
 
 use App\Models\Brand;
+use App\Services\ImageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Livewire\Form;
@@ -94,12 +95,15 @@ class BrandForm extends Form
 
     protected function handleLogoUpload(): array
     {
-        $uploads = [];
-
-        if ($this->logo_path instanceof UploadedFile) {
-            $uploads['logo_path'] = $this->logo_path->store('brands/logos', 'public');
+        if (! ($this->logo_path instanceof UploadedFile)) {
+            return [];
         }
 
-        return $uploads;
+        $paths = app(ImageService::class)->storeWithWebP($this->logo_path, 'brands/logos');
+
+        return [
+            'logo_path' => $paths['original'],
+            'logo_webp' => $paths['webp'],
+        ];
     }
 }

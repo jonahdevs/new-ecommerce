@@ -1,20 +1,19 @@
 <?php
 
+use App\Enums\QuoteStatus;
 use App\Models\Quote;
 use App\Models\User;
-use App\Enums\QuoteStatus;
 use Spatie\Activitylog\Models\Activity;
 
 /**
  * Integration tests for Quote model changelog tracking
- * 
+ *
  * **Validates: Requirements 1.4, 1.8, 1.9**
- * 
+ *
  * Tests that the Quote model correctly tracks changes to:
  * - status
  * - admin_notes
  */
-
 beforeEach(function () {
     // Create a staff user for testing
     $this->admin = User::factory()->create([
@@ -85,12 +84,10 @@ test('quote model does not log changes to non-tracked fields', function () {
         'reference' => 'QT-2026-000004',
     ]);
 
-    $quote->update(['customer_notes' => 'Customer notes']);
+    $quote->update(['expires_at' => now()->addDays(30)]);
 
-    $activity = Activity::forSubject($quote)->where('event', 'updated')->first();
-
-    // No activity should be logged for non-tracked fields
-    expect($activity)->toBeNull();
+    // No updated event for non-tracked field
+    expect(Activity::forSubject($quote)->where('event', 'updated')->count())->toBe(0);
 });
 
 test('quote model does not create log entry when no tracked fields change', function () {
@@ -99,13 +96,9 @@ test('quote model does not create log entry when no tracked fields change', func
         'status' => QuoteStatus::PENDING,
     ]);
 
-    // Update only non-tracked field
-    $quote->update(['customer_notes' => 'Some customer notes']);
+    $quote->update(['expires_at' => now()->addDays(14)]);
 
-    $activity = Activity::forSubject($quote)->where('event', 'updated')->first();
-
-    // No activity should be logged
-    expect($activity)->toBeNull();
+    expect(Activity::forSubject($quote)->where('event', 'updated')->count())->toBe(0);
 });
 
 test('quote model uses correct log name', function () {

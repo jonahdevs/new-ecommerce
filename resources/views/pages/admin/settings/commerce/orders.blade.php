@@ -60,11 +60,6 @@ new #[Title('Orders')] class extends Component {
                 </div>
 
                 <div class="p-5 space-y-5">
-                    <flux:checkbox wire:model="form.guest_checkout_enabled" label="{{ __('Allow guest checkout') }}"
-                        description="{{ __('Let customers complete purchases without creating an account') }}" />
-
-                    <flux:separator />
-
                     <flux:checkbox wire:model.live="form.auto_cancel_unpaid"
                         label="{{ __('Auto-cancel unpaid orders') }}"
                         description="{{ __('Automatically cancel orders that have not been paid within the set window') }}" />
@@ -76,6 +71,20 @@ new #[Title('Orders')] class extends Component {
                                 description="{{ __('Between 1 and 720 hours (30 days)') }}" />
                         </div>
                     @endif
+                </div>
+            </flux:card>
+
+            {{-- Invoice Purchase Note --}}
+            <flux:card class="p-0">
+                <div class="border-b border-zinc-200 dark:border-zinc-600 px-4 py-3">
+                    <flux:heading>{{ __('Invoice') }}</flux:heading>
+                </div>
+
+                <div class="p-5">
+                    <flux:textarea wire:model="form.purchase_note" rows="3"
+                        label="{{ __('Purchase note') }}"
+                        description="{{ __('This note will be printed on all invoices.') }}"
+                        placeholder="{{ __('e.g. Thank you for your purchase! All goods remain the property of Sheffield Africa until full payment is received.') }}" />
                 </div>
             </flux:card>
 

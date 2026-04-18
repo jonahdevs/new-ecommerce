@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->string('slug')->unique();
             $table->string('logo_path', 500)->nullable();
+            $table->string('logo_webp', 500)->nullable();
             $table->string('website_url', 500)->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);

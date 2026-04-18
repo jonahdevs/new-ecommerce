@@ -12,6 +12,7 @@ class ProductImage extends Model
         'product_id',
         'variant_id',
         'image_path',
+        'webp_path',
         'thumbnail_path',
         'alt_text',
         'sort_order',
@@ -55,6 +56,13 @@ class ProductImage extends Model
     {
         return Attribute::make(
             get: fn () => $this->image_path ? asset('storage/'.$this->image_path) : null,
+        );
+    }
+
+    protected function webpUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->webp_path ? asset('storage/'.$this->webp_path) : null,
         );
     }
 }

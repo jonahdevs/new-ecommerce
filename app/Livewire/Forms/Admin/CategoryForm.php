@@ -6,6 +6,7 @@ use App\Enums\CategorySection;
 use App\Enums\CategoryStatus;
 use App\Models\Category;
 use App\Models\CategoryPlacement;
+use App\Services\ImageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Livewire\Form;
@@ -159,13 +160,17 @@ class CategoryForm extends Form
 
         // Handle image uploads
         if ($this->image_path instanceof UploadedFile) {
-            $data['image_path'] = $this->image_path->store('categories/banners', 'public');
+            $paths = app(ImageService::class)->storeWithWebP($this->image_path, 'categories/banners');
+            $data['image_path'] = $paths['original'];
+            $data['image_webp'] = $paths['webp'];
         } else {
             $data['image_path'] = $this->existingBanner;
         }
 
         if ($this->image_icon instanceof UploadedFile) {
-            $data['image_icon'] = $this->image_icon->store('categories/icons', 'public');
+            $paths = app(ImageService::class)->storeWithWebP($this->image_icon, 'categories/icons');
+            $data['image_icon'] = $paths['original'];
+            $data['icon_webp'] = $paths['webp'];
         } else {
             $data['image_icon'] = $this->existingImageIcon;
         }

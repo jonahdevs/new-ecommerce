@@ -2,35 +2,21 @@
 
 use App\Models\Category;
 use App\Models\User;
-use Spatie\Activitylog\Models\Activity;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
-
-/**
- * Integration tests for Category changelog page
- * 
- * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8**
- * 
- * Tests that the Category changelog page correctly:
- * - Displays activities in reverse chronological order
- * - Paginates results with 20 entries per page
- * - Shows timestamp, causer name, and field changes
- * - Displays "—" for null/missing values
- * - Enforces authorization
- */
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
-    // Create the permission if it doesn't exist
-    if (!\Spatie\Permission\Models\Permission::where('name', 'edit.categories')->exists()) {
-        \Spatie\Permission\Models\Permission::create(['name' => 'edit.categories', 'guard_name' => 'web']);
+    if (! Permission::where('name', 'edit.categories')->exists()) {
+        Permission::create(['name' => 'edit.categories', 'guard_name' => 'web']);
     }
 
-    // Create a staff user with category edit permission
     $this->admin = User::factory()->create([
         'email' => 'admin@test.com',
         'is_staff' => true,
     ]);
 
-    // Give the admin permission to edit categories
     $this->admin->givePermissionTo('edit.categories');
 
     $this->actingAs($this->admin);
@@ -39,12 +25,10 @@ beforeEach(function () {
 test('category changelog page displays activities in reverse chronological order', function () {
     $category = Category::factory()->create(['name' => 'Test Category']);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
-    // Create multiple changes
     sleep(1);
     $category->update(['sort_order' => 10]);
     sleep(1);
@@ -52,7 +36,7 @@ test('category changelog page displays activities in reverse chronological order
     sleep(1);
     $category->update(['sort_order' => 30]);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $activities = $component->get('activities');
 
@@ -64,17 +48,15 @@ test('category changelog page displays activities in reverse chronological order
 test('category changelog page paginates results with 20 entries per page', function () {
     $category = Category::factory()->create(['name' => 'Test Category']);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
-    // Create 25 changes
     for ($i = 1; $i <= 25; $i++) {
         $category->update(['sort_order' => $i]);
     }
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $activities = $component->get('activities');
 
@@ -85,14 +67,13 @@ test('category changelog page paginates results with 20 entries per page', funct
 test('category changelog page shows timestamp, causer name, and field changes', function () {
     $category = Category::factory()->create(['name' => 'Original Name', 'sort_order' => 10]);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
     $category->update(['name' => 'Updated Name', 'sort_order' => 20]);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('Updated Name')
         ->assertSee($this->admin->name)
@@ -107,14 +88,13 @@ test('category changelog page displays dash for null values', function () {
     $parentCategory = Category::factory()->create(['name' => 'Parent']);
     $category = Category::factory()->create(['parent_id' => $parentCategory->id]);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
     $category->update(['parent_id' => null]);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('Parent Category:')
         ->assertSee('—');
@@ -123,20 +103,17 @@ test('category changelog page displays dash for null values', function () {
 test('category changelog page displays System when causer is null', function () {
     $category = Category::factory()->create(['name' => 'Test Category']);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
-    // Log out to simulate system change
     auth()->logout();
 
     $category->update(['sort_order' => 10]);
 
-    // Log back in to view the changelog
     $this->actingAs($this->admin);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('System');
 });
@@ -144,12 +121,11 @@ test('category changelog page displays System when causer is null', function () 
 test('category changelog page shows empty state when no changes exist', function () {
     $category = Category::factory()->create(['name' => 'Test Category']);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('No changes recorded')
         ->assertSee('Changes to this category will appear here');
@@ -158,7 +134,6 @@ test('category changelog page shows empty state when no changes exist', function
 test('category changelog page enforces authorization', function () {
     $category = Category::factory()->create(['name' => 'Test Category']);
 
-    // Create a user without edit permission
     $unauthorizedUser = User::factory()->create([
         'email' => 'unauthorized@test.com',
         'is_staff' => true,
@@ -166,14 +141,14 @@ test('category changelog page enforces authorization', function () {
 
     $this->actingAs($unauthorizedUser);
 
-    Livewire::test('admin.changelog.category-changelog', ['id' => $category->id])
+    Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id])
         ->assertForbidden();
 });
 
 test('category changelog page returns 404 for non-existent category', function () {
-    $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    $this->expectException(ModelNotFoundException::class);
 
-    Livewire::test('admin.changelog.category-changelog', ['id' => 99999]);
+    Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => 99999]);
 });
 
 test('category changelog page formats field labels correctly', function () {
@@ -185,7 +160,6 @@ test('category changelog page formats field labels correctly', function () {
         'sort_order' => 10,
     ]);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
@@ -198,7 +172,7 @@ test('category changelog page formats field labels correctly', function () {
         'sort_order' => 20,
     ]);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('Name:')
         ->assertSee('Parent Category:')
@@ -209,14 +183,13 @@ test('category changelog page formats field labels correctly', function () {
 test('category changelog page formats status values correctly', function () {
     $category = Category::factory()->create(['status' => 'draft']);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
     $category->update(['status' => 'active']);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('Status:')
         ->assertSee('Draft')
@@ -228,14 +201,13 @@ test('category changelog page displays parent category names', function () {
     $newParentCategory = Category::factory()->create(['name' => 'New Parent Category']);
     $category = Category::factory()->create(['parent_id' => $parentCategory->id]);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
 
     $category->update(['parent_id' => $newParentCategory->id]);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('Parent Category:')
         ->assertSee('Parent Category')
@@ -251,7 +223,6 @@ test('category changelog page displays multiple field changes in single activity
         'sort_order' => 10,
     ]);
 
-    // Clear any initial activity logs from category creation
     Activity::where('subject_type', Category::class)
         ->where('subject_id', $category->id)
         ->delete();
@@ -264,7 +235,7 @@ test('category changelog page displays multiple field changes in single activity
         'sort_order' => 20,
     ]);
 
-    $component = Livewire::test('admin.changelog.category-changelog', ['id' => $category->id]);
+    $component = Livewire::test('pages::admin.changelog.model-changelog', ['modelType' => 'category', 'id' => $category->id]);
 
     $component->assertSee('Name:')
         ->assertSee('Parent Category:')

@@ -27,7 +27,9 @@ class Category extends Model
         'parent_id',
         'description',
         'image_path',
+        'image_webp',
         'image_icon',
+        'icon_webp',
         'icon_svg',
         'status',
         'sort_order',
@@ -128,18 +130,32 @@ class Category extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_path
-            ? asset('storage/' . $this->image_path)
+            get: fn () => $this->image_path
+            ? asset('storage/'.$this->image_path)
             : null
+        );
+    }
+
+    protected function imageWebpUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->image_webp ? asset('storage/'.$this->image_webp) : null,
         );
     }
 
     protected function iconUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->image_icon
-            ? asset('storage/' . $this->image_icon)
+            get: fn () => $this->image_icon
+            ? asset('storage/'.$this->image_icon)
             : null
+        );
+    }
+
+    protected function iconWebpUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->icon_webp ? asset('storage/'.$this->icon_webp) : null,
         );
     }
 

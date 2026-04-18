@@ -199,9 +199,12 @@ new class extends Component {
                 <figure
                     class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-50 flex items-center justify-center">
                     @if ($product->image_url)
-                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
+                        <x-webp-image
+                            :src="$product->image_url"
+                            :webp="$product->webp_image_url"
+                            alt="{{ $product->name }}"
                             class="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
-                            loading="lazy">
+                            loading="lazy" />
                     @else
                         <flux:icon.photo class="w-16 h-16 text-zinc-400 stroke-1" />
                     @endif

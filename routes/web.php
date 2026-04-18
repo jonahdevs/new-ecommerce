@@ -5,7 +5,6 @@ use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Orders\OrderReceiptController;
 use App\Http\Controllers\Orders\QuotationPdfController;
 use App\Http\Controllers\Payment\CallbackController;
-
 use App\Models\Order;
 use App\Models\Quote;
 use App\Models\User;
@@ -160,14 +159,7 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
     // Changelog
     // --------------------------------------------------------------------
 
-    Route::prefix('changelog')->name('changelog.')->group(function () {
-        Route::livewire('/product/{id}', 'admin.changelog.product-changelog')->name('product');
-        Route::livewire('/order/{id}', 'admin.changelog.order-changelog')->name('order');
-        Route::livewire('/quote/{id}', 'admin.changelog.quote-changelog')->name('quote');
-        Route::livewire('/user/{id}', 'admin.changelog.user-changelog')->name('user');
-        Route::livewire('/category/{id}', 'admin.changelog.category-changelog')->name('category');
-        Route::livewire('/brand/{id}', 'admin.changelog.brand-changelog')->name('brand');
-    });
+    Route::livewire('/changelog/{modelType}/{id}', 'pages::admin.changelog.model-changelog')->name('changelog');
 
     // --------------------------------------------------------------------
     // Sales
@@ -359,7 +351,6 @@ if (app()->isLocal()) {
 
     // ── Email previews ────────────────────────────────────────────────────────
 
-
     Route::get('dev/mail/order-status/{status?}', function (string $status = 'shipped') {
         $order = Order::with('items', 'payment', 'user')->latest()->first();
         $newStatus = OrderStatus::from($status);
@@ -387,7 +378,7 @@ if (app()->isLocal()) {
             if ($min && $max) {
                 $deliveryWindow = $min === $max ? "{$min} business days" : "{$min}–{$max} business days";
             } elseif ($delivery->estimated_delivery_at) {
-                $deliveryWindow = 'By ' . $delivery->estimated_delivery_at->format('D, M j');
+                $deliveryWindow = 'By '.$delivery->estimated_delivery_at->format('D, M j');
             }
         }
 
@@ -465,7 +456,7 @@ if (app()->isLocal()) {
             ->latest()
             ->first();
 
-        if (!$quote) {
+        if (! $quote) {
             $quote = Quote::factory()
                 ->sent()
                 ->withItems(3)
@@ -492,13 +483,13 @@ if (app()->isLocal()) {
             ->first();
 
         // If no suitable order exists, create one
-        if (!$order) {
+        if (! $order) {
             $order = Order::factory()
                 ->confirmed()
                 ->withItems(25) // Create 25 items to test multi-page layout
                 ->withPayment()
                 ->create([
-                    'kra_cu_number' => 'CU-PREVIEW-' . now()->timestamp,
+                    'kra_cu_number' => 'CU-PREVIEW-'.now()->timestamp,
                     'kra_validated_at' => now(),
                 ]);
 
@@ -516,4 +507,4 @@ if (app()->isLocal()) {
 // ADDITIONAL ROUTE FILES
 // ============================================================================
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

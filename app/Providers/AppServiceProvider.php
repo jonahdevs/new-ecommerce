@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 use App\Events\PaymentConfirmed;
+use App\Listeners\BroadcastNotificationToUser;
 use App\Listeners\SendNewOrderNotification;
 use App\Listeners\SendNewUserNotification;
-
 use App\Listeners\SyncCartOnLogin;
 use App\Listeners\SyncRecentViewedOnLogin;
 use App\Listeners\SyncWishlistOnLogin;
@@ -22,6 +22,7 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -60,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Login::class, SyncRecentViewedOnLogin::class);
         Event::listen(PaymentConfirmed::class, SendNewOrderNotification::class);
         Event::listen(Registered::class, SendNewUserNotification::class);
-
+        Event::listen(NotificationSent::class, BroadcastNotificationToUser::class);
 
         Review::observe(ReviewObserver::class);
 

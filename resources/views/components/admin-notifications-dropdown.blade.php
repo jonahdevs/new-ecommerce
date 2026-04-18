@@ -1,9 +1,17 @@
 <?php
 
-use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 new class extends Component {
+    public int $userId;
+
+    public function mount(): void
+    {
+        $this->userId = auth()->id();
+    }
+
     #[Computed]
     public function notifications()
     {
@@ -16,18 +24,24 @@ new class extends Component {
         return auth()->user()->unreadNotifications()->count();
     }
 
+    #[On('echo-private:App.Models.User.{userId},NotificationReceived')]
+    public function refreshNotifications(): void
+    {
+        unset($this->notifications, $this->unreadCount);
+    }
+
     public function markAsRead(string $id): void
     {
         $notification = auth()->user()->notifications()->find($id);
         $notification?->markAsRead();
-        
+
         unset($this->notifications, $this->unreadCount);
     }
 
     public function markAllAsRead(): void
     {
         auth()->user()->unreadNotifications->markAsRead();
-        
+
         unset($this->notifications, $this->unreadCount);
     }
 

@@ -10,9 +10,18 @@ new #[Layout('layouts.customer')] class extends Component {
 
     public string $selectedTab = 'unread';
 
+    public int $userId;
+
     public function mount(): void
     {
         SEOMeta::setRobots('noindex,nofollow');
+        $this->userId = auth()->id();
+    }
+
+    #[On('echo-private:App.Models.User.{userId},NotificationReceived')]
+    public function refreshInbox(): void
+    {
+        unset($this->unreadNotifications, $this->readNotifications, $this->unreadCount, $this->hasNotifications);
     }
 
     #[Computed]
