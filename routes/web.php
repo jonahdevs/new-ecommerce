@@ -157,6 +157,19 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
     });
 
     // --------------------------------------------------------------------
+    // Changelog
+    // --------------------------------------------------------------------
+
+    Route::prefix('changelog')->name('changelog.')->group(function () {
+        Route::livewire('/product/{id}', 'admin.changelog.product-changelog')->name('product');
+        Route::livewire('/order/{id}', 'admin.changelog.order-changelog')->name('order');
+        Route::livewire('/quote/{id}', 'admin.changelog.quote-changelog')->name('quote');
+        Route::livewire('/user/{id}', 'admin.changelog.user-changelog')->name('user');
+        Route::livewire('/category/{id}', 'admin.changelog.category-changelog')->name('category');
+        Route::livewire('/brand/{id}', 'admin.changelog.brand-changelog')->name('brand');
+    });
+
+    // --------------------------------------------------------------------
     // Sales
     // --------------------------------------------------------------------
 

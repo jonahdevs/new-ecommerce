@@ -1,6 +1,6 @@
 @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
     <div wire:cloak wire:show="selectedTab == 'reviews'">
-        <h4 class="font-bold mb-6">Customer Ratings</h4>
+        <flux:heading level="4" class="font-bold! mb-6 text-base! sm:text-lg!">Customer Ratings</flux:heading>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-7">
 
@@ -8,7 +8,7 @@
             <div class="col-span-1">
                 <div class="sticky top-44">
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-brand-secondary">
+                        <div class="text-2xl sm:text-3xl font-bold text-brand-secondary">
                             {{ $this->reviewStats['average'] }}
                         </div>
 
@@ -33,7 +33,7 @@
                             @endfor
                         </div>
 
-                        <div class="text-sm text-zinc-600 mt-1">
+                        <div class="text-xs sm:text-sm text-zinc-600 mt-1">
                             {{ $this->reviewStats['total'] }}
                             {{ Str::plural('review', $this->reviewStats['total']) }}
                         </div>

@@ -198,7 +198,8 @@ new #[Title('Roles')] class extends Component {
             </div>
 
             {{-- Filters --}}
-            <div class="flex items-center flex-wrap gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
+            <div
+                class="flex items-center flex-wrap gap-3 px-5 py-3 border-b dark:border-zinc-600 border-zinc-200 dark:border-zinc-600">
                 <flux:input wire:model.live.debounce.400ms="search" icon="magnifying-glass"
                     placeholder="Search users..." class="max-w-xs" />
 
@@ -294,12 +295,33 @@ new #[Title('Roles')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell class="pe-4! flex items-center justify-end gap-1">
-                                <flux:button icon="pencil-square" icon-variant="outline" variant="ghost" size="sm" tooltip="Edit"
-                                    :href="route('admin.access-control.users.edit', $user)" class="cursor-pointer"
-                                    wire:navigate />
+                                <flux:dropdown position="left" align="end">
+                                    <flux:button icon="ellipsis-horizontal" icon-variant="outline" variant="ghost"
+                                        size="sm" inset="top bottom" />
 
-                                <flux:button icon="trash" icon-variant="outline" variant="ghost" tooltip="Delete"
-                                    size="sm" class="text-red-500! cursor-pointer" />
+                                    <flux:menu>
+                                        {{-- Edit --}}
+                                        <flux:menu.item icon="pencil-square" icon-variant="outline"
+                                            :href="route('admin.access-control.users.edit', $user)" wire:navigate>
+                                            Edit
+                                        </flux:menu.item>
+
+                                        <flux:menu.separator />
+
+                                        {{-- Change Log --}}
+                                        <flux:menu.item icon="clock" icon-variant="outline"
+                                            href="{{ route('admin.changelog.user', $user) }}" wire:navigate>
+                                            Change Log
+                                        </flux:menu.item>
+
+                                        <flux:menu.separator />
+
+                                        {{-- Delete --}}
+                                        <flux:menu.item icon="trash" icon-variant="outline" variant="danger">
+                                            Delete
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
                             </flux:table.cell>
                         </flux:table.row>
 

@@ -18,8 +18,8 @@
                 @if ($general->store_phone)
                     <div class="hidden md:flex items-center gap-3 lg:gap-4">
                         <div class="flex items-center gap-2">
-                            <flux:icon.phone class="w-4.5 h-4.5 shrink-0" />
-                            <span class="text-xs lg:text-sm">{{ $general->store_phone }}</span>
+                            <flux:icon.phone class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 shrink-0" />
+                            <span class="text-xs sm:text-sm">{{ $general->store_phone }}</span>
                         </div>
                     </div>
                 @else
@@ -83,8 +83,8 @@
                 {{-- Support link — hidden on mobile --}}
                 <div class="hidden md:flex items-center gap-4">
                     <a href="" class="flex items-center gap-2 group hover:opacity-90 transition-opacity">
-                        <flux:icon.question-mark-circle class="size-5 shrink-0" />
-                        <span class="group-hover:underline text-xs lg:text-sm">Support</span>
+                        <flux:icon.question-mark-circle class="size-4 sm:size-5 shrink-0" />
+                        <span class="group-hover:underline text-xs sm:text-sm">Support</span>
                     </a>
                 </div>
 

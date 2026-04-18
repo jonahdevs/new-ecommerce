@@ -50,8 +50,8 @@ new #[Layout('layouts.customer')] class extends Component {
                 <flux:icon.heart class="w-5 h-5" />
             </div>
             <div>
-                <flux:text class="text-zinc-500" size="sm">Favorite Products</flux:text>
-                <flux:heading class="text-xl font-semibold">
+                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Favorite Products</flux:text>
+                <flux:heading class="text-lg! sm:text-xl! font-semibold">
                     {{ $this->favoriteProductsCount }}
                 </flux:heading>
             </div>
@@ -65,8 +65,8 @@ new #[Layout('layouts.customer')] class extends Component {
                 <flux:icon.package class="w-5 h-5" />
             </div>
             <div>
-                <flux:text class="text-zinc-500" size="sm">Total Orders</flux:text>
-                <flux:heading class="text-xl font-semibold">
+                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Total Orders</flux:text>
+                <flux:heading class="text-lg! sm:text-xl! font-semibold">
                     {{ $this->totalOrders }}
                 </flux:heading>
             </div>
@@ -80,8 +80,8 @@ new #[Layout('layouts.customer')] class extends Component {
                 <flux:icon.star class="w-5 h-5" />
             </div>
             <div>
-                <flux:text class="text-zinc-500" size="sm">Total Reviews</flux:text>
-                <flux:heading class="text-xl font-semibold">
+                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Total Reviews</flux:text>
+                <flux:heading class="text-lg! sm:text-xl! font-semibold">
                     {{ $this->totalReviews }}
                 </flux:heading>
             </div>
@@ -95,8 +95,8 @@ new #[Layout('layouts.customer')] class extends Component {
                 <flux:icon.arrow-path-rounded-square class="w-5 h-5" />
             </div>
             <div>
-                <flux:text class="text-zinc-500" size="sm">Product Returns</flux:text>
-                <flux:heading class="text-xl font-semibold">
+                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Product Returns</flux:text>
+                <flux:heading class="text-lg! sm:text-xl! font-semibold">
                     {{ $this->productReturns }}
                 </flux:heading>
             </div>
@@ -106,14 +106,14 @@ new #[Layout('layouts.customer')] class extends Component {
 
     <flux:card class="p-0 rounded-md">
         <div class="border-b px-3 py-2">
-            <flux:heading size="lg">Account Overview</flux:heading>
+            <flux:heading size="lg" class="text-base! sm:text-lg!">Account Overview</flux:heading>
         </div>
         <div class="p-5 grid grid-cols-2 gap-4">
             <div class="border rounded-md">
                 <div class="px-4 py-2 border-b">
-                    <flux:heading class="font-medium text-zinc-600">Account Details</flux:heading>
+                    <flux:heading class="font-medium text-zinc-600 text-xs! sm:text-sm!">Account Details</flux:heading>
                 </div>
-                <div class="p-4 text-sm space-y-1">
+                <div class="p-4 text-xs! sm:text-sm! space-y-1">
                     <flux:text>{{ $this->user->name }}</flux:text>
                     <flux:text>{{ $this->user->email }}</flux:text>
                     <flux:text>{{ $this->user->phone_number }}</flux:text>
@@ -122,15 +122,15 @@ new #[Layout('layouts.customer')] class extends Component {
 
             <div class="border rounded-md">
                 <div class="px-4 py-2 border-b flex justify-between items-center">
-                    <flux:heading class="font-medium text-zinc-600">Address Book</flux:heading>
+                    <flux:heading class="font-medium text-zinc-600 text-xs! sm:text-sm!">Address Book</flux:heading>
 
                     <flux:button icon="pencil" size="xs" class="cursor-pointer"
                         href="{{ $user->defaultAddress ? route('customer.address-book.edit', $user->defaultAddress?->id) : route('customer.address-book.create') }}">
                     </flux:button>
                 </div>
-                <div class="p-4 text-sm space-y-1">
+                <div class="p-4 text-xs! sm:text-sm! space-y-1">
                     @if ($user->defaultAddress)
-                        <flux:heading>Default Shipping Address</flux:heading>
+                        <flux:heading class="text-xs! sm:text-sm!">Default Shipping Address</flux:heading>
 
                         <flux:text class="mt-2">{{ $this->user->defaultAddress?->full_name }}
                         </flux:text>
@@ -150,10 +150,11 @@ new #[Layout('layouts.customer')] class extends Component {
 
             <div class="border rounded-md">
                 <div class="px-4 py-2 border-b">
-                    <flux:heading class="font-medium text-zinc-600">Newsletter preference</flux:heading>
+                    <flux:heading class="font-medium text-zinc-600 text-xs! sm:text-sm!">Newsletter preference
+                    </flux:heading>
                 </div>
 
-                <div class="p-4 text-sm ">
+                <div class="p-4 text-xs! sm:text-sm!">
                     <flux:text class="mb-3">Manage your email communications to stay updated with the latest news and
                         offers.
                     </flux:text>

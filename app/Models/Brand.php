@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsModelChanges;
 use App\Observers\BrandObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Brand extends Model
 {
     use HasFactory;
+    use LogsModelChanges;
 
     protected $fillable = [
         'name',
@@ -89,7 +91,24 @@ class Brand extends Model
     protected function logoUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->logo_path ? asset('storage/'.$this->logo_path) : null,
+            get: fn() => $this->logo_path ? asset('storage/' . $this->logo_path) : null,
         );
+    }
+
+    // ==================================================
+    // CHANGELOG TRACKING
+    // ==================================================
+
+    /**
+     * Get the attributes that should be logged when changed.
+     *
+     * @return array<int, string>
+     */
+    protected function getLoggedAttributes(): array
+    {
+        return [
+            'name',
+            'is_active',
+        ];
     }
 }

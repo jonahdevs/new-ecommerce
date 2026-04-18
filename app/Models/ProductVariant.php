@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsModelChanges;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class ProductVariant extends Model
 {
+    use LogsModelChanges;
     protected $fillable = [
         'product_id',
         'attribute_hash',
@@ -107,5 +109,32 @@ class ProductVariant extends Model
     public function downloads(): HasMany
     {
         return $this->hasMany(ProductDownload::class, 'variant_id')->orderBy('sort_order');
+    }
+
+    // ===============================================
+    // CHANGELOG TRACKING
+    // ===============================================
+
+    /**
+     * Get the attributes that should be logged when changed.
+     * 
+     * Tracks critical business fields for ProductVariant:
+     * - sku: Product variant identifier
+     * - price: Base price
+     * - sale_price: Promotional price
+     * - stock_quantity: Inventory level
+     * - is_active: Availability status
+     * 
+     * @return array<int, string>
+     */
+    protected function getLoggedAttributes(): array
+    {
+        return [
+            'sku',
+            'price',
+            'sale_price',
+            'stock_quantity',
+            'is_active',
+        ];
     }
 }

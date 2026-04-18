@@ -208,7 +208,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
     <section class="container mx-auto px-4 py-4 min-h-[80svh]">
         <div class="flex items-center justify-between mb-6">
-            <flux:heading level="1" class="text-2xl! font-bold! text-zinc-900">
+            <flux:heading level="1"
+                class="text-xl! sm:text-2xl! lg:text-3xl! font-bold! text-zinc-900 dark:text-zinc-100">
                 Customer Reviews
             </flux:heading>
         </div>
@@ -219,7 +220,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <div class="lg:col-span-1">
                 <flux:card class="lg:sticky lg:top-44 space-y-6">
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-brand-secondary">
+                        <div class="text-2xl sm:text-3xl font-bold text-brand-secondary">
                             {{ $this->reviewStats['average'] }}
                         </div>
 
@@ -244,7 +245,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             @endfor
                         </div>
 
-                        <div class="text-sm text-zinc-600 mt-1">
+                        <div class="text-xs sm:text-sm text-zinc-600 mt-1">
                             {{ $this->reviewStats['total'] }} {{ Str::plural('review', $this->reviewStats['total']) }}
                         </div>
                     </div>
@@ -286,7 +287,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                 {{-- Sort and Filter Controls --}}
                 <div class="flex items-center justify-between mb-5 pb-4 border-b">
-                    <div class="text-sm text-zinc-600">
+                    <div class="text-xs sm:text-sm text-zinc-600">
                         @if ($filterRating)
                             Showing {{ $filterRating }}-star reviews
                         @else
@@ -324,13 +325,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 {{-- Reviews Content --}}
                 @if ($this->reviews->isEmpty())
                     <div class="text-center py-12">
-                        <svg class="w-16 h-16 mx-auto text-zinc-300 mb-4" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-zinc-300 mb-4" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                         </svg>
-                        <p class="text-zinc-500 text-lg mb-2">No reviews found</p>
-                        <p class="text-zinc-400 text-sm">
+                        <p class="text-zinc-500 text-base sm:text-lg mb-2">No reviews found</p>
+                        <p class="text-zinc-400 text-xs sm:text-sm">
                             @if ($filterRating)
                                 No {{ $filterRating }}-star reviews found. Try adjusting your filters.
                             @else

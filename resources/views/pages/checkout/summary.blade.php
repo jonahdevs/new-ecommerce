@@ -102,8 +102,8 @@ new #[Layout('layouts.checkout')] class extends Component {
 
         <div class="px-4 py-4">
             @if ($this->address)
-                <flux:heading>{{ $this->address->full_name }}</flux:heading>
-                <div class="mt-2 space-y-1 text-sm text-zinc-500">
+                <flux:heading class="text-sm! sm:text-base!">{{ $this->address->full_name }}</flux:heading>
+                <div class="mt-2 space-y-1 text-xs! sm:text-sm! text-zinc-500">
                     <flux:text>{{ $this->address->address }}</flux:text>
                     <flux:text>
                         {{ implode(', ', array_filter([$this->address->area?->name, $this->address->county?->name])) }}
@@ -130,17 +130,17 @@ new #[Layout('layouts.checkout')] class extends Component {
             @if ($this->shipping)
                 <div class="flex items-center justify-between">
                     <div>
-                        <flux:heading>{{ $this->shipping['method_name'] }}</flux:heading>
-                        <flux:text class="text-sm text-zinc-500 mt-1">
+                        <flux:heading class="text-sm! sm:text-base!">{{ $this->shipping['method_name'] }}</flux:heading>
+                        <flux:text class="text-xs! sm:text-sm! text-zinc-500 mt-1">
                             {{ $this->shipping['delivery_window'] }}
                             @if ($this->shipping['station_name'])
                                 · Pickup: {{ $this->shipping['station_name'] }}
                             @endif
                         </flux:text>
                     </div>
-                    <span class="font-semibold text-sm">
+                    <span class="font-semibold text-xs! sm:text-sm!">
                         @if ($this->shipping['cost'] == 0)
-                            <span class="text-green-600 font-medium text-sm">Free</span>
+                            <span class="text-green-600 font-medium text-xs! sm:text-sm!">Free</span>
                         @else
                             {{ format_currency($this->shipping['cost']) }}
                         @endif
@@ -163,10 +163,10 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </flux:link>
             </div>
             <div class="px-4 py-4">
-                <flux:heading>
+                <flux:heading class="text-sm! sm:text-base!">
                     {{ app(\App\Services\CheckoutSession::class)->getPaymentMethod() === 'card' ? 'Card' : 'M-Pesa' }}
                 </flux:heading>
-                <flux:text class="text-sm text-zinc-500 mt-1">
+                <flux:text class="text-xs! sm:text-sm! text-zinc-500 mt-1">
                     {{ app(\App\Services\CheckoutSession::class)->getPaymentMethod() === 'card'
                         ? 'Visa, Mastercard, Amex'
                         : 'STK push to your phone' }}

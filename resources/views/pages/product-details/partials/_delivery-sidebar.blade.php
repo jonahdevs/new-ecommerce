@@ -15,7 +15,7 @@
                     <flux:icon.arrow-uturn-left class="size-5 text-zinc-500" variant="outline" />
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">Return policy</p>
+                    <p class="text-xs sm:text-sm font-medium text-zinc-800 dark:text-zinc-100">Return policy</p>
                     @if ($product->return_policy)
                         <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">
                             {{ $product->return_policy }}
@@ -34,7 +34,7 @@
                     <flux:icon.shield-check class="size-5 text-zinc-500" variant="outline" />
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">Warranty</p>
+                    <p class="text-xs sm:text-sm font-medium text-zinc-800 dark:text-zinc-100">Warranty</p>
                     @if ($product->warranty_information)
                         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
                             {{ $product->warranty_information }}

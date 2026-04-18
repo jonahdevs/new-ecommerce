@@ -252,7 +252,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
         {{-- Cart Header --}}
         <div class="flex items-center justify-between mb-4 gap-4">
-            <flux:heading level="1" class="font-bold! text-2xl!">Cart</flux:heading>
+            <flux:heading level="1" class="font-bold! text-xl! sm:text-2xl! lg:text-3xl!">Cart</flux:heading>
             @if ($this->cartItems->isNotEmpty())
                 <flux:button variant="filled" wire:click="clearCart" class="cursor-pointer" size="sm">
                     Clear Cart
@@ -271,9 +271,10 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                 class="w-72 h-72 mx-auto" />
                         </div>
 
-                        <flux:heading size="xl" class="mb-3">Your cart is empty</flux:heading>
+                        <flux:heading size="xl" class="mb-3 text-lg! sm:text-xl! md:text-2xl!">Your cart is empty
+                        </flux:heading>
 
-                        <flux:text class="mb-8 max-w-md">
+                        <flux:text class="mb-8 max-w-md text-xs! sm:text-sm!">
                             Looks like you haven't added anything to your cart yet.
                         </flux:text>
 
@@ -327,7 +328,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                     {{-- Details --}}
                                     <div class="flex-1 min-w-0">
                                         <a href="{{ route('products.show', $item->product) }}" wire:navigate
-                                            class="font-medium hover:underline truncate block text-sm">
+                                            class="font-medium hover:underline truncate block text-xs sm:text-sm">
                                             {{ $item->product->name }}
                                         </a>
 
@@ -373,14 +374,14 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                         @endphp
 
                                         @if ($hasDiscount)
-                                            <p class="font-semibold text-brand-secondary">
+                                            <p class="text-sm sm:text-base font-semibold text-brand-secondary">
                                                 {{ format_currency($salePrice) }}
                                             </p>
                                             <p class="text-xs text-zinc-400 line-through">
                                                 {{ format_currency($regularPrice) }}
                                             </p>
                                         @else
-                                            <p class="font-semibold text-brand-secondary">
+                                            <p class="text-sm sm:text-base font-semibold text-brand-secondary">
                                                 {{ format_currency($unitPrice) }}
                                             </p>
                                         @endif
@@ -459,7 +460,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                     {{-- Line total --}}
                                     <div class="ms-auto flex items-center gap-1">
                                         <p class="text-zinc-500 text-xs">Total:</p>
-                                        <span class="font-medium text-sm text-zinc-800 dark:text-zinc-100">
+                                        <span class="font-medium text-xs sm:text-sm text-zinc-800 dark:text-zinc-100">
                                             {{ format_currency($lineTotal) }}
                                         </span>
                                     </div>
@@ -474,8 +475,11 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
             @if ($this->cartItems->isNotEmpty())
                 <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0 lg:sticky lg:top-44">
                     <div class="bg-white rounded-sm border">
-                        <h3 class="font-medium text-sm uppercase px-3 py-2 border-b">Cart Summary</h3>
-                        <div class="p-3 py-4 space-y-2">
+                        <flux:heading level="3"
+                            class="font-medium! text-xs! sm:text-sm! uppercase px-3 py-2 border-b">
+                            Cart Summary
+                        </flux:heading>
+                        <div class="p-3 py-4 space-y-2 text-xs sm:text-sm">
                             <div class="flex items-center justify-between">
                                 <flux:text>Subtotal:</flux:text>
                                 <flux:heading>{{ format_currency($this->cartSummary['subtotal']) }}</flux:heading>

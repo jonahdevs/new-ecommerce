@@ -339,14 +339,14 @@ new #[Layout('layouts.guest')] class extends Component {
         {{-- Mobile: filter toggle + sort --}}
         <div class="lg:hidden flex items-center justify-between mb-4 gap-3">
             <button wire:click="$set('showMobileFilters', true)" type="button"
-                class="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-zinc-200 rounded-md text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                 </svg>
                 Filters
                 @if ($this->hasActiveFilters)
-                    <span class="w-2 h-2 rounded-full bg-brand-secondary"></span>
+                    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brand-secondary"></span>
                 @endif
             </button>
 
@@ -379,17 +379,19 @@ new #[Layout('layouts.guest')] class extends Component {
                     class="relative w-64 md:w-80 max-w-[85vw] bg-white h-full overflow-y-auto flex flex-col shadow-xl">
 
                     <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
-                        <h2 class="font-semibold text-zinc-900">Filters</h2>
+                        <flux:heading size="base" level="2" class="text-base! sm:text-lg!">Filters
+                        </flux:heading>
                         <div class="flex items-center gap-3">
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-brand-secondary hover:underline font-medium">
+                                    class="text-[10px] sm:text-xs text-brand-secondary hover:underline font-medium">
                                     Clear all
                                 </button>
                             @endif
                             <button wire:click="$set('showMobileFilters', false)" type="button"
                                 class="text-zinc-500 hover:text-zinc-900 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -403,7 +405,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                     <div class="sticky bottom-0 bg-white border-t px-4 py-3">
                         <button wire:click="$set('showMobileFilters', false)" type="button"
-                            class="w-full py-2.5 bg-brand-secondary text-white font-medium rounded-md text-sm cursor-pointer">
+                            class="w-full py-2.5 bg-brand-secondary text-white font-medium rounded-md text-xs sm:text-sm cursor-pointer">
                             View {{ $this->products->total() }} Results
                         </button>
                     </div>
@@ -418,10 +420,11 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="sticky top-44">
                     <div class="bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b flex items-center justify-between">
-                            <h2 class="font-medium text-lg">Filters</h2>
+                            <flux:heading size="base" level="2" class="text-base! sm:text-lg!">Filters
+                            </flux:heading>
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-xs text-brand-secondary hover:underline font-medium cursor-pointer">
+                                    class="text-[10px] sm:text-xs text-brand-secondary hover:underline font-medium cursor-pointer">
                                     Clear all
                                 </button>
                             @endif
@@ -439,14 +442,14 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="mb-4">
                     <div class="hidden lg:flex items-center justify-between mb-2">
                         <div>
-                            <h1 class="text-2xl lg:text-3xl font-bold text-zinc-900">
+                            <flux:heading size="xl" level="1" class="text-xl! sm:text-2xl! lg:text-3xl!">
                                 @if (!empty($search))
                                     Results for "{{ $search }}"
                                 @else
                                     Products
                                 @endif
-                            </h1>
-                            <p class="text-sm text-zinc-600 mt-1">
+                            </flux:heading>
+                            <flux:text class="text-xs! sm:text-sm! text-zinc-600 mt-1">
                                 @if ($this->products->total() > 0)
                                     <span class="font-medium">{{ number_format($this->products->total()) }}</span>
                                     {{ Str::plural('product', $this->products->total()) }} found
@@ -460,7 +463,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                 @else
                                     No products found
                                 @endif
-                            </p>
+                            </flux:text>
                         </div>
                         <flux:select wire:model.live="sortBy" class="w-fit">
                             <option value="">Sort By: Default</option>
@@ -474,10 +477,10 @@ new #[Layout('layouts.guest')] class extends Component {
                         </flux:select>
                     </div>
 
-                    <p class="lg:hidden text-sm text-zinc-500 mb-3">
+                    <flux:text class="lg:hidden text-xs! sm:text-sm! text-zinc-500 mb-3">
                         <span class="font-medium text-zinc-900">{{ number_format($this->products->total()) }}</span>
                         {{ Str::plural('product', $this->products->total()) }} found
-                    </p>
+                    </flux:text>
 
                     {{-- Active filter pills --}}
                     @if ($this->hasActiveFilters)
@@ -553,8 +556,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     @empty
                         <section class="flex flex-col items-center justify-center min-h-100 text-center col-span-full">
                             <div class="text-zinc-300">
-                                <svg class="w-32 h-32 mx-auto" fill="currentColor" stroke-width="1" version="1.1"
-                                    viewBox="-5.0 -10.0 110.0 135.0">
+                                <svg class="w-24 h-24 sm:w-32 sm:h-32 mx-auto" fill="currentColor" stroke-width="1"
+                                    version="1.1" viewBox="-5.0 -10.0 110.0 135.0">
                                     <g>
                                         <path
                                             d="m96.504 50.293-9.2812-13.922c-0.15234-0.22656-0.36719-0.38672-0.60938-0.47656v-0.003906l-19.035-7.0039c1.4141-2.7266 2.2148-5.8164 2.2148-9.0938 0.003906-10.914-8.8789-19.793-19.793-19.793s-19.797 8.8789-19.797 19.797c0 3.2773 0.80078 6.375 2.2188 9.1016l-19.004 6.9961v0.003907c-0.24219 0.089843-0.45703 0.25-0.60938 0.47656l-9.3164 13.906c-0.45313 0.64062-0.13672 1.6172 0.60547 1.8672l6.4414 2.3711v30.188c0 0.52344 0.32813 0.99219 0.81641 1.1719l38.164 14.047c0.28125 0.10156 0.58594 0.10156 0.86328-0.003906v0.003906l38.164-14.047c0.49219-0.17969 0.81641-0.64844 0.81641-1.1719l0.011719-30.148 6.5195-2.3984c0.74219-0.25 1.0586-1.2266 0.60938-1.8672zm-46.504-47.793c9.5391 0 17.297 7.7578 17.297 17.297 0 9.5352-7.7578 17.297-17.297 17.297s-17.297-7.7578-17.297-17.297 7.7578-17.297 17.297-17.297zm0 37.094c6.7305 0 12.684-3.375 16.262-8.5234l16.301 5.9961-32.543 11.973-32.547-11.973 16.27-5.9922c3.5781 5.1445 9.5312 8.5195 16.258 8.5195zm-35.656-1.0156 33.73 12.41-7.8477 11.781-33.766-12.422zm-1.2969 45.254v-28.395l27.242 10.023c0.53125 0.19922 1.1523 0.003906 1.4727-0.48047l6.9492-10.434v42.414zm73.828 0-35.664 13.129v-42.539l7.0703 10.559c0.32031 0.48438 0.9375 0.67578 1.4688 0.47656l27.121-9.9766zm-27.062-21.059-7.8828-11.77 33.762-12.422 7.8555 11.781z" />
@@ -563,11 +566,12 @@ new #[Layout('layouts.guest')] class extends Component {
                                     </g>
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-semibold text-zinc-800 mb-2">No Products Found</h3>
-                            <p class="text-zinc-600 mb-6 max-w-md">
+                            <flux:heading size="lg" level="3" class="text-lg! sm:text-xl! mb-2">No Products
+                                Found</flux:heading>
+                            <flux:text class="text-zinc-600 mb-6 max-w-md text-xs! sm:text-sm! md:text-base!">
                                 We couldn't find any products matching your criteria. Try adjusting your filters or
                                 search terms.
-                            </p>
+                            </flux:text>
                             <flux:button wire:click="clearAllFilters" variant="primary">
                                 Clear Filters
                             </flux:button>

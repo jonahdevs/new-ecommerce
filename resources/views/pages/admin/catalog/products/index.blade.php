@@ -705,6 +705,14 @@ new #[Title('Products')] class extends Component {
 
                                     <flux:menu.separator />
 
+                                    {{-- Change Log --}}
+                                    <flux:menu.item icon="clock" icon-variant="outline"
+                                        href="{{ route('admin.changelog.product', $product) }}" wire:navigate>
+                                        Change Log
+                                    </flux:menu.item>
+
+                                    <flux:menu.separator />
+
                                     {{-- Quick status change --}}
                                     {{-- SCHEDULED is intentionally excluded — it requires a publish date,
                                          which can only be set on the product edit page. --}}

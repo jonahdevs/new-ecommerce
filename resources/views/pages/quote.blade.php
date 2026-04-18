@@ -190,7 +190,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         {{-- Header --}}
         <div class="flex items-center justify-between mb-6 gap-4">
-            <flux:heading level="1" class="font-bold! text-2xl!">Request Quote</flux:heading>
+            <flux:heading level="1" class="font-bold! text-xl! sm:text-2xl! lg:text-3xl!">Request Quote
+            </flux:heading>
             @if (!$this->isEmpty)
                 <flux:button variant="filled" wire:click="clearBasket" size="sm" class="cursor-pointer">
                     Clear all
@@ -200,13 +201,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         @if ($this->isEmpty)
             <div class="flex flex-col items-center justify-center py-20 text-center">
-                <flux:icon.document-text class="w-20 h-20 text-zinc-300 stroke-1 mb-4" />
-                <h2 class="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mb-2">
+                <flux:icon.document-text class="w-16 h-16 sm:w-20 sm:h-20 text-zinc-300 stroke-1 mb-4" />
+                <flux:heading level="2"
+                    class="text-lg! sm:text-xl! font-semibold! text-zinc-800 dark:text-zinc-100 mb-2">
                     Your quote basket is empty
-                </h2>
-                <p class="text-zinc-500 mb-8 max-w-md text-sm">
+                </flux:heading>
+                <flux:text class="text-zinc-500 mb-8 max-w-md text-xs! sm:text-sm!">
                     Browse our products and click "Add to Quote" on any item that requires custom pricing.
-                </p>
+                </flux:text>
                 <flux:button href="{{ route('shop.index') }}" wire:navigate variant="primary">
                     Browse Products
                 </flux:button>
@@ -316,7 +318,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 <div class="col-span-12 lg:col-span-5 space-y-4 lg:sticky lg:top-44">
 
                     <div class="flex items-center justify-between">
-                        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        <p class="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             {{ $this->basketItems->count() }}
                             {{ Str::plural('item', $this->basketItems->count()) }} in your quote
                         </p>

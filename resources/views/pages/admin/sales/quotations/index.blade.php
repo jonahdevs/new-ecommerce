@@ -72,7 +72,7 @@ new #[Title('Quotations')] class extends Component {
     #[Computed]
     public function periodLabel(): string
     {
-        if (! $this->dateFrom && ! $this->dateTo) {
+        if (!$this->dateFrom && !$this->dateTo) {
             return 'All time';
         }
         $from = $this->dateFrom ? \Carbon\Carbon::parse($this->dateFrom) : null;
@@ -81,7 +81,7 @@ new #[Title('Quotations')] class extends Component {
             return $from->format('M j, Y');
         }
 
-        return ($from ? $from->format('M j') : '…').' – '.($to ? $to->format('M j, Y') : '…');
+        return ($from ? $from->format('M j') : '…') . ' – ' . ($to ? $to->format('M j, Y') : '…');
     }
 
     // =========================================================================
@@ -224,7 +224,8 @@ new #[Title('Quotations')] class extends Component {
                 <input type="text" readonly
                     class="quotations-date-range w-56 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
                     placeholder="All time" />
-                <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                <flux:icon.calendar-days
+                    class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
             </div>
         </div>
     </div>
@@ -238,8 +239,7 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Total Quotes</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!"
-                        x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display">
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['total'] }} })" x-text="display">
                     </flux:heading>
                     <flux:subheading class="text-xs! mt-1">All time</flux:subheading>
                 </div>
@@ -254,8 +254,7 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Pending Review</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!"
-                        x-data="countUp({ to: {{ $this->stats['pending'] }} })" x-text="display">
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['pending'] }} })" x-text="display">
                     </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Awaiting pricing</flux:subheading>
                 </div>
@@ -270,8 +269,7 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Sent to Customer</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!"
-                        x-data="countUp({ to: {{ $this->stats['sent'] }} })" x-text="display">
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['sent'] }} })" x-text="display">
                     </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Awaiting response</flux:subheading>
                 </div>
@@ -286,8 +284,7 @@ new #[Title('Quotations')] class extends Component {
             <div class="flex items-center justify-between">
                 <div>
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Expiring Soon</flux:subheading>
-                    <flux:heading size="xl" class="text-2xl! font-bold!"
-                        x-data="countUp({ to: {{ $this->stats['expiring'] }} })" x-text="display">
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['expiring'] }} })" x-text="display">
                     </flux:heading>
                     <flux:subheading class="text-xs! mt-1">Within 3 days</flux:subheading>
                 </div>
@@ -424,7 +421,8 @@ new #[Title('Quotations')] class extends Component {
                         <flux:table.cell>
                             <flux:text class="text-sm truncate max-w-[180px]">{{ $productName }}</flux:text>
                             @if ($quote->items_count > 1)
-                                <flux:subheading class="text-xs!">+{{ $quote->items_count - 1 }} more</flux:subheading>
+                                <flux:subheading class="text-xs!">+{{ $quote->items_count - 1 }} more
+                                </flux:subheading>
                             @endif
                         </flux:table.cell>
 
@@ -455,10 +453,25 @@ new #[Title('Quotations')] class extends Component {
 
                         {{-- Actions --}}
                         <flux:table.cell align="end" class="pe-5!">
-                            <flux:button :href="route('admin.quotations.show', $quote)" wire:navigate variant="ghost"
-                                size="sm" icon="eye" icon-variant="outline">
-                                View
-                            </flux:button>
+                            <flux:dropdown align="end">
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+
+                                <flux:menu>
+                                    {{-- View --}}
+                                    <flux:menu.item icon="eye" icon-variant="outline"
+                                        href="{{ route('admin.quotations.show', $quote) }}" wire:navigate>
+                                        View
+                                    </flux:menu.item>
+
+                                    <flux:menu.separator />
+
+                                    {{-- Change Log --}}
+                                    <flux:menu.item icon="clock" icon-variant="outline"
+                                        href="{{ route('admin.changelog.quote', $quote) }}" wire:navigate>
+                                        Change Log
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
 
                     </flux:table.row>
@@ -489,56 +502,59 @@ new #[Title('Quotations')] class extends Component {
 @endassets
 
 @script
-<script>
-    function waitForLibraries(cb) {
-        if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !== 'undefined') {
-            cb();
-        } else {
-            setTimeout(() => waitForLibraries(cb), 100);
-        }
-    }
-
-    function initDateRangePicker() {
-        const el = $('.quotations-date-range').first();
-        if (!el.length) return;
-
-        if (el.data('daterangepicker')) {
-            el.data('daterangepicker').remove();
+    <script>
+        function waitForLibraries(cb) {
+            if (typeof jQuery !== 'undefined' && typeof moment !== 'undefined' && typeof jQuery.fn.daterangepicker !==
+                'undefined') {
+                cb();
+            } else {
+                setTimeout(() => waitForLibraries(cb), 100);
+            }
         }
 
-        el.daterangepicker({
-            autoUpdateInput: false,
-            opens: 'left',
-            showDropdowns: true,
-            alwaysShowCalendars: false,
-            ranges: {
-                'Today': [moment(), moment()],
-                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-                'This Month': [moment().startOf('month'), moment().endOf('month')],
-                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-            },
-            locale: {
-                format: 'MMM DD, YYYY',
-                separator: ' – ',
-                cancelLabel: 'Clear',
-            },
-        }, function(start, end) {
-            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
-            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
-        });
+        function initDateRangePicker() {
+            const el = $('.quotations-date-range').first();
+            if (!el.length) return;
 
-        el.on('cancel.daterangepicker', function() {
-            $wire.setDateRange('', '');
-            el.val('');
-        });
+            if (el.data('daterangepicker')) {
+                el.data('daterangepicker').remove();
+            }
 
-        if ($wire.dateFrom && $wire.dateTo) {
-            el.val(moment($wire.dateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.dateTo).format('MMM DD, YYYY'));
+            el.daterangepicker({
+                autoUpdateInput: false,
+                opens: 'left',
+                showDropdowns: true,
+                alwaysShowCalendars: false,
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month')
+                        .endOf('month')
+                    ],
+                },
+                locale: {
+                    format: 'MMM DD, YYYY',
+                    separator: ' – ',
+                    cancelLabel: 'Clear',
+                },
+            }, function(start, end) {
+                $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+                el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
+            });
+
+            el.on('cancel.daterangepicker', function() {
+                $wire.setDateRange('', '');
+                el.val('');
+            });
+
+            if ($wire.dateFrom && $wire.dateTo) {
+                el.val(moment($wire.dateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.dateTo).format('MMM DD, YYYY'));
+            }
         }
-    }
 
-    waitForLibraries(() => initDateRangePicker());
-</script>
+        waitForLibraries(() => initDateRangePicker());
+    </script>
 @endscript

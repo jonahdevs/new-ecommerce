@@ -116,16 +116,17 @@
     <div class="lg:col-span-3 space-y-4">
 
         {{-- Name --}}
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+        <flux:heading level="1"
+            class="text-xl! sm:text-2xl! lg:text-3xl! font-bold! text-zinc-900 dark:text-zinc-100 leading-tight">
             {{ $product->name }}
-        </h1>
+        </flux:heading>
 
         {{-- Brand + Rating --}}
         <div class="flex items-center justify-between flex-wrap gap-3">
             @if ($product->brand)
                 <div class="flex items-center gap-2">
-                    <span class="text-zinc-500 text-sm">Brand:</span>
-                    <span class="text-brand-secondary font-medium text-sm">{{ $product->brand->name }}</span>
+                    <span class="text-zinc-500 text-xs sm:text-sm">Brand:</span>
+                    <span class="text-brand-secondary font-medium text-xs sm:text-sm">{{ $product->brand->name }}</span>
                 </div>
             @endif
             @island('reviews')
@@ -147,9 +148,9 @@
                             @endif
                         @endfor
                     </div>
-                    <span class="text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
+                    <span class="text-xs sm:text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
                     <a href="{{ route('products.reviews', $product) }}" wire:navigate
-                        class="text-sm text-brand-secondary hover:underline">
+                        class="text-xs sm:text-sm text-brand-secondary hover:underline">
                         {{ $this->reviewStats['total'] }} reviews
                     </a>
                 </div>
@@ -169,7 +170,7 @@
             <div class="space-y-3">
                 @foreach ($this->variationAttributes as $attribute)
                     <div class="space-y-1.5">
-                        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        <p class="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             {{ $attribute['name'] }}
                             @if (!empty($selectedAttributeValues[$attribute['name']]))
                                 <span class="font-normal text-zinc-500">
@@ -236,7 +237,7 @@
 
         {{-- SHORT DESCRIPTION --}}
         @if ($product->short_description)
-            <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 {!! $product->short_description !!}
             </div>
         @endif
@@ -255,10 +256,10 @@
                 @if ($finalPrice)
                     @if ($hasDiscount)
                         <div class="flex items-center flex-wrap gap-2">
-                            <span class="text-2xl font-bold text-brand-secondary">
+                            <span class="text-xl sm:text-2xl font-bold text-brand-secondary">
                                 {{ format_currency($salePrice) }}
                             </span>
-                            <span class="text-base text-zinc-400 line-through">
+                            <span class="text-sm sm:text-base text-zinc-400 line-through">
                                 {{ format_currency($regularPrice) }}
                             </span>
                             <flux:badge color="amber" size="sm">
@@ -266,12 +267,12 @@
                             </flux:badge>
                         </div>
                     @else
-                        <span class="text-2xl font-bold text-brand-secondary">
+                        <span class="text-xl sm:text-2xl font-bold text-brand-secondary">
                             {{ format_currency($finalPrice) }}
                         </span>
                     @endif
                 @elseif ($product->type->value === 'variable' && !$selectedVariantId)
-                    <span class="text-base text-zinc-400">Select options to see price</span>
+                    <span class="text-sm sm:text-base text-zinc-400">Select options to see price</span>
                 @endif
 
                 {{-- STOCK STATUS --}}
@@ -283,9 +284,9 @@
                 @endphp
 
                 @if ($state === 'none')
-                    <p class="text-sm text-zinc-400 mt-1">Select options to see availability</p>
+                    <p class="text-xs sm:text-sm text-zinc-400 mt-1">Select options to see availability</p>
                 @elseif ($state === 'available')
-                    <p class="text-sm text-green-600 mt-1 flex items-center gap-1">
+                    <p class="text-xs sm:text-sm text-green-600 mt-1 flex items-center gap-1">
                         <flux:icon.check-circle class="size-4" />
                         In Stock
                         @if ($source->manage_stock && $source->stock_quantity > 0)
@@ -293,7 +294,7 @@
                         @endif
                     </p>
                 @elseif ($state === 'backorder')
-                    <p class="text-sm text-amber-600 mt-1 flex items-center gap-1">
+                    <p class="text-xs sm:text-sm text-amber-600 mt-1 flex items-center gap-1">
                         <flux:icon.clock class="size-4" />
                         Available on backorder
                     </p>
@@ -306,7 +307,7 @@
                     @endphp
                     @if ($backorderMsg || $restockDate)
                         <div
-                            class="mt-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2.5 text-sm text-amber-800">
+                            class="mt-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2.5 text-xs sm:text-sm text-amber-800">
                             @if ($backorderMsg)
                                 <p>{{ $backorderMsg }}</p>
                             @endif
@@ -319,7 +320,7 @@
                         </div>
                     @endif
                 @else
-                    <p class="text-sm text-red-500 mt-1 flex items-center gap-1">
+                    <p class="text-xs sm:text-sm text-red-500 mt-1 flex items-center gap-1">
                         <flux:icon.x-circle class="size-4" />
                         Out of Stock
                     </p>
@@ -334,7 +335,7 @@
                 onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' }); return false;"
                 class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-brand-secondary rounded-r-md no-underline group">
                 <flux:icon.wrench-screwdriver class="size-3.5 text-brand-secondary shrink-0" variant="outline" />
-                <span class="text-sm text-blue-900 dark:text-blue-200">
+                <span class="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
                     {{ $this->accessories->count() }}
                     {{ Str::plural('accessory', $this->accessories->count()) }} available for this product
                 </span>

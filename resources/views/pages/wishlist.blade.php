@@ -81,7 +81,10 @@ new #[Layout('layouts.guest')] class extends Component {
         <!-- Wishlist Header -->
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h1 class="text-2xl font-bold text-zinc-900">Wishlist</h1>
+                <flux:heading level="1"
+                    class="text-xl! sm:text-2xl! lg:text-3xl! font-bold! text-zinc-900 dark:text-zinc-100">
+                    Wishlist
+                </flux:heading>
             </div>
         </div>
 
@@ -100,12 +103,12 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
 
                     <!-- Heading -->
-                    <flux:heading size="xl" class="mb-3">
+                    <flux:heading size="xl" class="mb-3 text-lg! sm:text-xl! md:text-2xl!">
                         Your wishlist is empty
                     </flux:heading>
 
                     <!-- Description -->
-                    <flux:text class="mb-8 max-w-md">
+                    <flux:text class="mb-8 max-w-md text-xs! sm:text-sm!">
                         Save your favorite products here to keep track of items you love. Start browsing and add
                         products to your wishlist!
                     </flux:text>

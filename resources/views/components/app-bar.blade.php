@@ -95,22 +95,22 @@ new class extends Component {
                     <a href="{{ route('wishlist') }}" wire:navigate class="hidden lg:flex items-center gap-2 group">
                         <div class="relative">
                             <flux:icon.heart
-                                class="size-6 text-zinc-800 group-hover:text-brand-primary transition-colors" />
+                                class="size-5 lg:size-6 text-zinc-800 group-hover:text-brand-primary transition-colors" />
                             @if ($wishlistCount > 0)
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-medium">
                                     {{ $wishlistCount }}
                                 </span>
                             @endif
                         </div>
-                        <span class="text-sm font-medium text-zinc-800">Wishlist</span>
+                        <span class="text-xs lg:text-sm font-medium text-zinc-800">Wishlist</span>
                     </a>
 
                     {{-- Compare — desktop only --}}
                     <a href="{{ route('products.compare') }}" wire:navigate
                         class="hidden lg:flex items-center gap-2 group">
                         <div class="relative">
-                            <svg class="w-6 h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
                                 viewBox="0 0 24 24" fill="none">
                                 <g clip-path="url(#clip0_105_1836)">
                                     <path
@@ -127,30 +127,30 @@ new class extends Component {
                             </svg>
                             @if ($compareCount > 0)
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs font-medium rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
                                     {{ $compareCount }}
                                 </span>
                             @endif
                         </div>
-                        <span class="text-sm font-medium text-zinc-800">Compare</span>
+                        <span class="text-xs lg:text-sm font-medium text-zinc-800">Compare</span>
                     </a>
 
                     {{-- Cart — always visible --}}
                     <a href="{{ route('cart') }}" wire:navigate class="flex items-center gap-2 group">
                         <div class="relative">
-                            <svg class="w-6 h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             @if ($cartCount > 0)
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
+                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs font-medium rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                                     {{ $cartCount }}
                                 </span>
                             @endif
                         </div>
-                        <span class="hidden lg:inline text-sm font-medium text-zinc-800">Cart</span>
+                        <span class="hidden lg:inline text-xs lg:text-sm font-medium text-zinc-800">Cart</span>
                     </a>
 
                     {{-- Account Dropdown --}}
@@ -166,7 +166,7 @@ new class extends Component {
                                     @endif
 
                                     {{-- Name — md+ only --}}
-                                    <span class="hidden md:block text-sm font-medium text-zinc-800">
+                                    <span class="hidden md:block text-xs lg:text-sm font-medium text-zinc-800">
                                         {{ auth()->user()->name }}
                                     </span>
 
@@ -183,14 +183,16 @@ new class extends Component {
                         @else
                             <button type="button"
                                 class="flex items-center gap-2 hover:text-brand-secondary transition-colors">
-                                <svg class="w-6 h-6 text-zinc-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                                 <div class="hidden lg:block">
-                                    <div class="text-sm font-medium text-zinc-800">Account</div>
+                                    <div class="text-xs lg:text-sm font-medium text-zinc-800">Account</div>
                                 </div>
-                                <svg class="w-4 h-4 hidden lg:block text-zinc-600" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 hidden lg:block text-zinc-600" fill="currentColor"
+                                    viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
                                         d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                                         clip-rule="evenodd" />
@@ -290,7 +292,8 @@ new class extends Component {
                                 <img alt="" loading="eager" width="26" height="26" decoding="async"
                                     class="duration-300 max-h-6.5 max-w-6.5 max-md:hidden invert"
                                     style="color:transparent" src="{{ $category->icon_url }}">
-                                <span class="ml-2 truncate text-sm text-zinc-50">{{ $category->name }}</span>
+                                <span
+                                    class="ml-2 truncate text-xs lg:text-sm text-zinc-50">{{ $category->name }}</span>
                             </a>
                         </div>
                     </li>
@@ -318,14 +321,15 @@ new class extends Component {
             {{-- Browse Categories button --}}
             <div class="relative shrink-0">
                 <button @click="browseOpen = !browseOpen" :aria-expanded="browseOpen"
-                    class="flex items-center gap-1.5 py-3 pr-3 text-sm font-medium text-white whitespace-nowrap border-r border-white/20 mr-1"
+                    class="flex items-center gap-1.5 py-3 pr-3 text-xs sm:text-sm font-medium text-white whitespace-nowrap border-r border-white/20 mr-1"
                     aria-haspopup="true">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                             d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                     Browse
-                    <svg class="w-3 h-3 shrink-0 transition-transform duration-200"
+                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0 transition-transform duration-200"
                         :class="browseOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
@@ -347,7 +351,7 @@ new class extends Component {
                         @foreach ($this->categories as $category)
                             <li>
                                 <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-800 hover:bg-zinc-50 transition-colors">
+                                    class="flex items-center gap-3 px-4 py-2.5 text-xs sm:text-sm text-zinc-800 hover:bg-zinc-50 transition-colors">
                                     <img src="{{ $category->icon_url }}" alt="" width="20"
                                         height="20" class="max-w-5 max-h-5 opacity-60">
                                     {{ $category->name }}
@@ -375,7 +379,7 @@ new class extends Component {
                 class="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full">
                 @foreach ($this->categories as $category)
                     <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
-                        class="shrink-0 px-4 py-3 text-sm hover:opacity-80 transition-opacity duration-500 whitespace-nowrap">
+                        class="shrink-0 px-3 sm:px-4 py-3 text-xs sm:text-sm hover:opacity-80 transition-opacity duration-500 whitespace-nowrap">
                         {{ $category->name }}
                     </a>
                 @endforeach

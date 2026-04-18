@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsModelChanges;
 use App\Enums\QuoteStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Quote extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsModelChanges;
 
     protected $fillable = [
         'user_id',
@@ -84,22 +85,22 @@ class Quote extends Model
 
     protected function subtotal(): Attribute
     {
-        return Attribute::make(get: fn () => $this->subtotal_cents / 100);
+        return Attribute::make(get: fn() => $this->subtotal_cents / 100);
     }
 
     protected function discount(): Attribute
     {
-        return Attribute::make(get: fn () => $this->discount_cents / 100);
+        return Attribute::make(get: fn() => $this->discount_cents / 100);
     }
 
     protected function shipping(): Attribute
     {
-        return Attribute::make(get: fn () => $this->shipping_cents / 100);
+        return Attribute::make(get: fn() => $this->shipping_cents / 100);
     }
 
     protected function total(): Attribute
     {
-        return Attribute::make(get: fn () => $this->total_cents / 100);
+        return Attribute::make(get: fn() => $this->total_cents / 100);
     }
 
     // =====================================================
@@ -224,5 +225,14 @@ class Quote extends Model
             'subtotal_cents' => $subtotal,
             'total_cents' => max(0, $subtotal - $this->discount_cents + $this->shipping_cents),
         ]);
+    }
+
+    // =====================================================
+    // Activity Log Configuration
+    // =====================================================
+
+    protected function getLoggedAttributes(): array
+    {
+        return ['status', 'admin_notes'];
     }
 }

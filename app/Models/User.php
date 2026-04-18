@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Concerns\LogsModelChanges;
 use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -22,7 +23,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasFactory, HasRoles, LogsModelChanges, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -170,5 +171,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getDefaultAddress(): ?Address
     {
         return $this->addresses()->where('is_default', true)->first();
+    }
+
+    // ===============================================
+    // ACTIVITY LOG
+    // ===============================================
+
+    /**
+     * Get the attributes that should be logged when changed.
+     * 
+     * Tracks changes to: name, email, status
+     * 
+     * @return array<int, string>
+     */
+    protected function getLoggedAttributes(): array
+    {
+        return ['name', 'email', 'status'];
     }
 }

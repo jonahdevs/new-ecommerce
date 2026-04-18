@@ -245,8 +245,8 @@ new #[Title('Categories')] class extends Component {
 
             {{-- Toolbar --}}
             <div class="px-5 py-3 border-b dark:border-zinc-600 flex items-center gap-3">
-                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search categories..."
-                    class="max-w-sm" clearable />
+                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+                    placeholder="Search categories..." class="max-w-sm" clearable />
 
                 <div class="ms-auto">
                     <flux:select wire:model.live="statusFilter" class="w-40">
@@ -326,14 +326,36 @@ new #[Title('Categories')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell align="end" class="pe-4!">
-                                <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                    :href="route('admin.catalog.categories.edit', $category->id)" wire:navigate
-                                    icon-variant="outline" class="cursor-pointer " tooltip="Edit Category" />
+                                <flux:dropdown align="end">
+                                    <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
+                                        class="cursor-pointer" />
+                                    <flux:menu>
 
-                                <flux:button variant="ghost" size="sm" icon="trash"
-                                    wire:click="confirmDelete({{ $category->id }}, '{{ addslashes($category->name) }}')"
-                                    icon-variant="outline" class="text-red-500! cursor-pointer"
-                                    tooltip="Delete Category" />
+                                        {{-- Edit --}}
+                                        <flux:menu.item icon="pencil-square" icon-variant="outline"
+                                            :href="route('admin.catalog.categories.edit', $category->id)" wire:navigate>
+                                            Edit Category
+                                        </flux:menu.item>
+
+                                        <flux:menu.separator />
+
+                                        {{-- Change Log --}}
+                                        <flux:menu.item icon="clock" icon-variant="outline"
+                                            href="{{ route('admin.changelog.category', $category) }}" wire:navigate>
+                                            Change Log
+                                        </flux:menu.item>
+
+                                        <flux:menu.separator />
+
+                                        {{-- Delete --}}
+                                        <flux:menu.item icon="trash" icon-variant="outline"
+                                            wire:click="confirmDelete({{ $category->id }}, '{{ addslashes($category->name) }}')"
+                                            class="text-red-500!">
+                                            Delete Category
+                                        </flux:menu.item>
+
+                                    </flux:menu>
+                                </flux:dropdown>
                             </flux:table.cell>
 
                         </flux:table.row>

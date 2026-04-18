@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsModelChanges;
 use App\Enums\CategorySection;
 use App\Enums\CategoryStatus;
 use App\Observers\CategoryObserver;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Category extends Model
 {
     use HasFactory;
+    use LogsModelChanges;
 
     protected $fillable = [
         'name',
@@ -126,8 +128,8 @@ class Category extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->image_path
-            ? asset('storage/'.$this->image_path)
+            get: fn() => $this->image_path
+            ? asset('storage/' . $this->image_path)
             : null
         );
     }
@@ -135,9 +137,28 @@ class Category extends Model
     protected function iconUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->image_icon
-            ? asset('storage/'.$this->image_icon)
+            get: fn() => $this->image_icon
+            ? asset('storage/' . $this->image_icon)
             : null
         );
+    }
+
+    // ==================================================
+    // CHANGELOG TRACKING
+    // ==================================================
+
+    /**
+     * Get the attributes that should be logged when changed.
+     *
+     * @return array<int, string>
+     */
+    protected function getLoggedAttributes(): array
+    {
+        return [
+            'name',
+            'parent_id',
+            'status',
+            'sort_order',
+        ];
     }
 }

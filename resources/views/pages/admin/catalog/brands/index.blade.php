@@ -64,8 +64,8 @@ new #[Title('Brands')] class extends Component {
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
         <div class="px-5 py-3 border-b dark:border-zinc-600">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search brands..." class="max-w-md"
-                clearable />
+            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search brands..."
+                class="max-w-md" clearable />
         </div>
 
         <flux:table :paginate="$this->brands">
@@ -127,13 +127,33 @@ new #[Title('Brands')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
-                            <flux:button variant="ghost" size="sm" icon="pencil-square"
-                                :href="route('admin.catalog.brands.edit', $brand->id)" wire:navigate
-                                icon-variant="outline" class="cursor-pointer" tooltip="Edit Brand" />
+                            <flux:dropdown align="end">
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
 
-                            <flux:button variant="ghost" size="sm" icon="trash" color="red"
-                                wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')"
-                                icon-variant="outline" class="cursor-pointer text-red-500!" tooltip="Delete Brand" />
+                                <flux:menu>
+                                    {{-- Edit --}}
+                                    <flux:menu.item icon="pencil-square" icon-variant="outline"
+                                        href="{{ route('admin.catalog.brands.edit', $brand->id) }}" wire:navigate>
+                                        Edit
+                                    </flux:menu.item>
+
+                                    <flux:menu.separator />
+
+                                    {{-- Change Log --}}
+                                    <flux:menu.item icon="clock" icon-variant="outline"
+                                        href="{{ route('admin.changelog.brand', $brand) }}" wire:navigate>
+                                        Change Log
+                                    </flux:menu.item>
+
+                                    <flux:menu.separator />
+
+                                    {{-- Delete --}}
+                                    <flux:menu.item icon="trash" icon-variant="outline" color="red"
+                                        wire:click="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')">
+                                        Delete
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach

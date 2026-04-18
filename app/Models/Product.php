@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsModelChanges;
 use App\Enums\ProductRelationshipType;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
@@ -25,7 +26,7 @@ use Spatie\Tags\HasTags;
 #[ObservedBy([ProductObserver::class])]
 class Product extends Model
 {
-    use HasFactory, HasTags, SoftDeletes;
+    use HasFactory, HasTags, LogsModelChanges, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -83,6 +84,7 @@ class Product extends Model
         'reviews_count',
 
         'sold_individually',
+        'is_active',
 
         // SAP integration
         'sap_last_synced_at',
@@ -99,6 +101,7 @@ class Product extends Model
             'is_virtual' => 'boolean',
             'is_downloadable' => 'boolean',
             'requires_quotation' => 'boolean',
+            'is_active' => 'boolean',
             'weight' => 'decimal:2',
             'height' => 'decimal:2',
             'width' => 'decimal:2',
@@ -116,6 +119,26 @@ class Product extends Model
             'type' => ProductType::class,
             'reviews_enabled' => 'boolean',
             'sort_order' => 'integer',
+        ];
+    }
+
+    /**
+     * Get the attributes that should be logged when changed.
+     *
+     * @return array<int, string>
+     */
+    protected function getLoggedAttributes(): array
+    {
+        return [
+            'name',
+            'price',
+            'sale_price',
+            'sku',
+            'stock_quantity',
+            'is_active',
+            'status',
+            'category_id',
+            'brand_id',
         ];
     }
 
@@ -304,7 +327,7 @@ class Product extends Model
     protected function visibleInCatalog(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC,
+            ProductVisibility::PUBLIC ,
             ProductVisibility::CATALOG,
         ]);
     }
@@ -317,7 +340,7 @@ class Product extends Model
     protected function visibleInSearch(Builder $query): void
     {
         $query->whereIn('products.visibility', [
-            ProductVisibility::PUBLIC,
+            ProductVisibility::PUBLIC ,
             ProductVisibility::SEARCH,
         ]);
     }
@@ -363,8 +386,8 @@ class Product extends Model
     {
         return Attribute::make(
             get: fn() => $this->final_price !== null
-                ? format_currency($this->final_price)
-                : null,
+            ? format_currency($this->final_price)
+            : null,
         );
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsModelChanges;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\SapSyncStatus;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsModelChanges;
 
     protected $fillable = [
         'user_id',
@@ -274,5 +275,22 @@ class Order extends Model
     public function customerPhone(): string
     {
         return $this->user?->phone ?? $this->guest_info['phone'] ?? '';
+    }
+
+    // =====================================================
+    // Changelog tracking
+    // =====================================================
+
+    /**
+     * Get the attributes that should be logged when changed.
+     * 
+     * Tracks changes to order status, payment status, and customer notes
+     * for audit trail purposes.
+     * 
+     * @return array<int, string>
+     */
+    protected function getLoggedAttributes(): array
+    {
+        return ['status', 'payment_status', 'customer_notes'];
     }
 }

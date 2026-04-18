@@ -92,16 +92,17 @@
     <div class="lg:col-span-3 space-y-4">
 
         {{-- Name --}}
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+        <flux:heading level="1"
+            class="text-xl! sm:text-2xl! lg:text-3xl! font-bold! text-zinc-900 dark:text-zinc-100 leading-tight">
             {{ $product->name }}
-        </h1>
+        </flux:heading>
 
         {{-- Brand + Rating --}}
         <div class="flex items-center justify-between flex-wrap gap-3">
             @if ($product->brand)
                 <div class="flex items-center gap-2">
-                    <span class="text-zinc-500 text-sm">Brand:</span>
-                    <span class="text-brand-secondary font-medium text-sm">{{ $product->brand->name }}</span>
+                    <span class="text-zinc-500 text-xs sm:text-sm">Brand:</span>
+                    <span class="text-brand-secondary font-medium text-xs sm:text-sm">{{ $product->brand->name }}</span>
                 </div>
             @endif
 
@@ -123,9 +124,9 @@
                         @endif
                     @endfor
                 </div>
-                <span class="text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
+                <span class="text-xs sm:text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
                 <a href="{{ route('products.reviews', $product) }}" wire:navigate
-                    class="text-sm text-brand-secondary hover:underline">
+                    class="text-xs sm:text-sm text-brand-secondary hover:underline">
                     {{ $this->reviewStats['total'] }} reviews
                 </a>
             </div>
@@ -133,7 +134,7 @@
 
         {{-- Short description --}}
         @if ($product->short_description)
-            <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 {!! $product->short_description !!}
             </div>
         @endif
@@ -175,7 +176,7 @@
                                 <flux:checkbox wire:model.live="selectedGroupedItems" value="{{ $item->id }}"
                                     wire:click.stop />
                                 <a href="{{ route('products.show', $item) }}" wire:navigate wire:click.stop
-                                    class="text-sm font-medium text-brand-secondary hover:underline truncate">
+                                    class="text-xs sm:text-sm font-medium text-brand-secondary hover:underline truncate">
                                     {{ $item->name }}
                                 </a>
                             </div>
@@ -202,14 +203,13 @@
                                 </div>
                             </div>
 
-                            {{-- Price --}}
                             <div class="col-span-4 text-right">
                                 @if ($isSelected)
-                                    <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                                    <span class="text-xs sm:text-sm font-medium text-zinc-800 dark:text-zinc-100">
                                         {{ $itemPrice > 0 ? format_currency($itemPrice * $itemQty) : '—' }}
                                     </span>
                                 @else
-                                    <span class="text-sm text-zinc-400 dark:text-zinc-600">—</span>
+                                    <span class="text-xs sm:text-sm text-zinc-400 dark:text-zinc-600">—</span>
                                 @endif
                             </div>
                         </div>
@@ -224,7 +224,7 @@
                     </span>
                     <div class="text-right">
                         <span class="text-xs text-zinc-500 dark:text-zinc-400 mr-1">Total</span>
-                        <span class="text-base font-semibold text-brand-secondary">
+                        <span class="text-sm sm:text-base font-semibold text-brand-secondary">
                             {{ format_currency($this->groupedTotal) }}
                         </span>
                     </div>
