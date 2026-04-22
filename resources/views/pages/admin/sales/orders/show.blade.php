@@ -3,6 +3,7 @@
 use App\Enums\{OrderStatus, DeliveryOrderStatus, PaymentStatus, SapSyncStatus};
 use App\Jobs\SyncOrderToSapJob;
 use App\Models\{Order, DeliveryOrder};
+use App\Settings\TaxSettings;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\{Computed, Title};
 use Livewire\Component;
@@ -34,6 +35,12 @@ new #[Title('Order Details')] class extends Component {
     public function allowedTransitions(): array
     {
         return $this->order->status->allowedTransitions();
+    }
+
+    #[Computed]
+    public function taxSettings(): TaxSettings
+    {
+        return app(TaxSettings::class);
     }
 
     public function updateStatus(): void
@@ -341,6 +348,14 @@ new #[Title('Order Details')] class extends Component {
                                     @endif
                                 </flux:heading>
                             </div>
+                            @if ($this->taxSettings->tax_enabled && $this->taxSettings->tax_type !== 'inclusive' && $order->tax_cents > 0)
+                                <div class="flex justify-between text-sm">
+                                    <flux:text>{{ $this->taxSettings->tax_name }}</flux:text>
+                                    <flux:heading size="sm" class="font-medium!">
+                                        {{ format_currency($order->tax) }}
+                                    </flux:heading>
+                                </div>
+                            @endif
                             <div class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-600">
                                 <flux:heading size="lg">Total Amount</flux:heading>
                                 <flux:heading size="lg" class="font-bold!">
@@ -732,7 +747,7 @@ new #[Title('Order Details')] class extends Component {
                                             </flux:badge>
                                         </div>
                                         @if ($log->error_message)
-                                            <p class="text-red-600 dark:text-red-400 break-words">
+                                            <p class="text-red-600 dark:text-red-400 wrap-break-words">
                                                 {{ $log->error_message }}</p>
                                         @endif
                                         <div class="flex justify-between text-zinc-400">
@@ -764,9 +779,6 @@ new #[Title('Order Details')] class extends Component {
                                                     <pre class="text-xs bg-zinc-100 dark:bg-zinc-800 p-3 rounded overflow-x-auto max-h-60">{{ json_encode($log->response_payload, JSON_PRETTY_PRINT) }}</pre>
                                                 </div>
                                             @endif
-                                        </div>
-                                        <div class="mt-4 flex justify-end">
-                                            <flux:button x-on:click="$dispatch('close-modal')">Close</flux:button>
                                         </div>
                                     </flux:modal>
                                 @endforeach

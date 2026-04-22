@@ -5,6 +5,7 @@ use App\Models\Order;
 use App\Services\Payment\Gateways\MpesaGateway;
 use App\Services\Payment\Gateways\StripeGateway;
 use App\Settings\StripeSettings;
+use App\Settings\TaxSettings;
 use Livewire\Attributes\{Computed, Layout, Locked};
 use Livewire\Component;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -69,6 +70,12 @@ new #[Layout('layouts.guest')] class extends Component {
     public function returnUrl(): string
     {
         return route('customer.orders.confirmation', ['order' => $this->order]);
+    }
+
+    #[Computed]
+    public function taxSettings(): TaxSettings
+    {
+        return app(TaxSettings::class);
     }
 
     public function initiateMpesa(): void
@@ -339,6 +346,16 @@ new #[Layout('layouts.guest')] class extends Component {
                                 {{ $this->order->shipping == 0 ? 'Free' : format_currency($this->order->shipping) }}
                             </span>
                         </div>
+
+                        @if ($this->taxSettings->tax_enabled && $this->taxSettings->tax_type !== 'inclusive' && $this->order->tax_cents > 0)
+                            <div class="flex justify-between text-xs text-zinc-500">
+                                <span class="flex items-center gap-1.5">
+                                    <flux:icon.receipt-percent class="size-3.5 shrink-0" />
+                                    {{ $this->taxSettings->tax_name }}
+                                </span>
+                                <span>{{ format_currency($this->order->tax) }}</span>
+                            </div>
+                        @endif
 
                         <div class="flex justify-between font-semibold text-sm border-t pt-2 mt-1">
                             <span>Total</span>
