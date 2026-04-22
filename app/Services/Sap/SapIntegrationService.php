@@ -147,14 +147,14 @@ class SapIntegrationService
             'order' => [
                 'cart' => [
                     'debit_total_price' => $order->total_cents / 100,
-                    // 'lines'             => $order->items->map(fn($item) => [
-                    //     'code'         => $item->product_snapshot['sku'] ?? $item->product?->sku ?? 'UNKNOWN',
-                    //     'item_id'      => $item->product_id,
-                    //     'line_item_id' => $item->id,
-                    //     'price'        => $item->unit_price_cents / 100,
-                    //     'quantity'     => $item->quantity,
-                    //     'linetotal'    => $item->total_cents / 100,
-                    // ])->values()->toArray(),
+                    'lines'             => $order->items->map(fn($item) => [
+                        'code'         => $item->product_snapshot['sku'] ?? $item->product?->sku ?? 'UNKNOWN',
+                        'item_id'      => $item->product_id,
+                        'line_item_id' => $item->id,
+                        'price'        => $item->unit_price_cents / 100,
+                        'quantity'     => $item->quantity,
+                        'linetotal'    => $item->total_cents / 100,
+                    ])->values()->toArray(),
                 ],
                 'Orderid' => $order->id,
                 'name' => $user?->name ?? $order->guest_info['name'] ?? '',
