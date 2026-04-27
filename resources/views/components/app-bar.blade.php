@@ -61,6 +61,7 @@ new class extends Component {
          Main Header
          Mobile:  Logo | [search icon] | ♡ ⚖ 🛒 | Account
          Desktop: Logo | [Search bar ................] | ♡ ⚖ 🛒 | Account
+         
          ===================================================================== --}}
     <nav class="w-full bg-cover bg-center bg-no-repeat"
         style="background-image: url('{{ asset('images/stainless_steel.jpg') }}')">
