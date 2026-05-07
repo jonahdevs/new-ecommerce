@@ -25,7 +25,7 @@
         <div class="max-h-64 overflow-y-auto space-y-1">
             <button type="button" wire:click="clearSubCategory" @class([
                 'flex items-center gap-2 px-2 py-2 rounded text-sm w-full text-left',
-                'text-brand-secondary font-medium bg-brand-secondary/10' => !$subCategorySlug,
+                'text-secondary font-medium bg-secondary/10' => !$subCategorySlug,
                 'text-zinc-700 hover:bg-zinc-50' => $subCategorySlug,
             ])>
                 <flux:icon.squares-2x2 variant="micro" class="text-zinc-400" />
@@ -35,7 +35,7 @@
                 <button type="button" wire:click="selectSubCategory('{{ $sub->slug }}')"
                     @class([
                         'flex items-center gap-2 px-2 py-2 rounded text-sm w-full text-left',
-                        'text-brand-secondary font-medium bg-brand-secondary/10' =>
+                        'text-secondary font-medium bg-secondary/10' =>
                             $subCategorySlug === $sub->slug,
                         'text-zinc-700 hover:bg-zinc-50' => $subCategorySlug !== $sub->slug,
                     ])>
@@ -81,7 +81,7 @@
                 class="text-zinc-500 text-xs hover:text-zinc-700 cursor-pointer font-medium" type="button">
                 Reset
             </button>
-            <button @click="apply" class="text-brand-secondary text-sm hover:underline cursor-pointer font-medium"
+            <button @click="apply" class="text-secondary text-sm hover:underline cursor-pointer font-medium"
                 type="button">
                 Apply
             </button>
@@ -94,7 +94,7 @@
         </div>
         <div class="relative">
             <div class="relative w-full h-2 bg-zinc-200 rounded pointer-events-none">
-                <div class="absolute h-2 bg-brand-secondary rounded"
+                <div class="absolute h-2 bg-secondary rounded"
                     :style="`left: ${((localMin - absoluteMin) / (absoluteMax - absoluteMin)) * 100}%; right: ${100 - ((localMax - absoluteMin) / (absoluteMax - absoluteMin)) * 100}%`">
                 </div>
             </div>
@@ -104,7 +104,7 @@
                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
                     [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white"
-                style="z-index: 1; --tw-thumb-bg: var(--brand-secondary);">
+                style="z-index: 1; --tw-thumb-bg: var(--secondary);">
             <input type="range" x-model.number="localMin" @input="updateMin" :min="absoluteMin"
                 :max="absoluteMax" step="1000"
                 class="absolute inset-0 top-1/2 -translate-y-1/2 w-full h-2 bg-transparent appearance-none cursor-pointer
@@ -116,12 +116,12 @@
         <div class="flex items-center gap-2 text-sm">
             <input type="number" x-model.number="localMin" @blur="updateMin" :min="absoluteMin"
                 :max="absoluteMax" step="1000"
-                class="w-full px-2 py-1.5 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary/50"
+                class="w-full px-2 py-1.5 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50"
                 placeholder="Min">
             <span class="text-zinc-400 shrink-0">—</span>
             <input type="number" x-model.number="localMax" @blur="updateMax" :min="absoluteMin"
                 :max="absoluteMax" step="1000"
-                class="w-full px-2 py-1.5 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary/50"
+                class="w-full px-2 py-1.5 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50"
                 placeholder="Max">
         </div>
     </div>
@@ -129,11 +129,11 @@
 
 <style>
     input[type="range"]::-webkit-slider-thumb {
-        background-color: var(--brand-secondary) !important;
+        background-color: var(--secondary) !important;
     }
 
     input[type="range"]::-moz-range-thumb {
-        background-color: var(--brand-secondary) !important;
+        background-color: var(--secondary) !important;
     }
 </style>
 

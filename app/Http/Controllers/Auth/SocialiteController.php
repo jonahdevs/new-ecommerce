@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Socialite;
 
 class SocialiteController extends Controller
 {
@@ -20,7 +21,18 @@ class SocialiteController extends Controller
     {
         session(['socialite_intent' => $request->query('intent', 'login')]);
 
-        return Socialite::driver($provider)->redirect();
+        if ($provider === 'facebook') {
+            return Socialite::driver($provider)
+                ->scopes(['email'])
+                ->with([
+                    'fields'    => 'name,email,id',
+                    'auth_type' => 'rerequest',
+                ])
+                ->redirect();
+        }
+
+        return Socialite::driver($provider)
+            ->redirect();
     }
 
     public function callback(string $provider, Request $request)
@@ -30,14 +42,23 @@ class SocialiteController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors(['social' => 'Authentication failed. Please try again.']);
         }
+        Log::info('social User:' . json_encode($socialUser, JSON_PRETTY_PRINT));
+
+        // Require email from provider
+        if (empty($socialUser->getEmail())) {
+            return redirect()->route('login')->withErrors([
+                'social' => 'Your social account did not provide an email address. Please use a provider that shares your email or contact support.',
+            ]);
+        }
 
         $intent = session()->pull('socialite_intent', 'login');
+
 
         $user = User::where('email', $socialUser->getEmail())->first();
 
         if ($intent === 'register') {
             // Registration flow — create account if it doesn't exist yet.
-            if (!$user) {
+            if (! $user) {
                 $user = User::create([
                     'name' => $socialUser->getName(),
                     'email' => $socialUser->getEmail(),
@@ -51,7 +72,7 @@ class SocialiteController extends Controller
             }
         } else {
             // Login flow — only allow existing accounts.
-            if (!$user) {
+            if (! $user) {
                 return redirect()->route('login')->withErrors([
                     'social' => 'No account found for ' . $socialUser->getEmail() . '. Please register first.',
                 ]);

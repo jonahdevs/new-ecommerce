@@ -374,14 +374,14 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                         @endphp
 
                                         @if ($hasDiscount)
-                                            <p class="text-sm sm:text-base font-semibold text-brand-secondary">
+                                            <p class="text-sm sm:text-base font-semibold text-secondary">
                                                 {{ format_currency($salePrice) }}
                                             </p>
                                             <p class="text-xs text-zinc-400 line-through">
                                                 {{ format_currency($regularPrice) }}
                                             </p>
                                         @else
-                                            <p class="text-sm sm:text-base font-semibold text-brand-secondary">
+                                            <p class="text-sm sm:text-base font-semibold text-secondary">
                                                 {{ format_currency($unitPrice) }}
                                             </p>
                                         @endif

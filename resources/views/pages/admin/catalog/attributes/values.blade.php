@@ -182,7 +182,7 @@ new class extends Component {
                                 <div
                                     class="flex items-center divide-x mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out">
                                     <button type="button" wire:click="editValue({{ $val->id }})"
-                                        class="text-sm pe-2 text-brand-secondary hover:underline dark:text-brand-secondary-light cursor-pointer">
+                                        class="text-sm pe-2 text-secondary hover:underline dark:text-secondary-hover cursor-pointer">
                                         Edit
                                     </button>
 

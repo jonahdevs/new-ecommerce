@@ -24,7 +24,7 @@ return new class extends Migration {
 
                 $table->string('provider')->nullable()->after('email');
                 $table->string('provider_id')->nullable()->after('provider');
-                $table->string('provider_token')->nullable()->after('provider_id');
+                $table->text('provider_token')->nullable()->after('provider_id');
                 $table->string('password')->nullable()->change();
                 $table->softDeletes();
             });

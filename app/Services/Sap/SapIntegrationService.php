@@ -155,6 +155,27 @@ class SapIntegrationService
                     //     'quantity'     => $item->quantity,
                     //     'linetotal'    => $item->total_cents / 100,
                     // ])->values()->toArray(),
+
+                    'lines' => [
+                        [
+                            'code' => 'FAB/SPE/00468',
+                            'item_id' => 8813071,
+                            'line_item_id' => 164693573,
+                            'price' => 449,
+                            'quantity' => 100,
+                            'linetotal' => 44900,
+                        ],
+                        [
+                            'code' => 'IMG/REF/00044',
+                            'item_id' => 8813071,
+                            'line_item_id' => 164693573,
+                            'price' => 1000,
+                            'quantity' => 3,
+                            'linetotal' => 1000,
+                        ],
+
+                    ],
+
                 ],
                 'Orderid' => $order->id,
                 'name' => $user?->name ?? $order->guest_info['name'] ?? '',

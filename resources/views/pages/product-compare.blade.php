@@ -228,7 +228,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                                             <!-- Product Name -->
                                             <a href="{{ route('products.show', $product) }}" wire:navigate
-                                                class="block font-medium text-xs sm:text-sm text-zinc-900 dark:text-white hover:text-brand-secondary hover:underline">
+                                                class="block font-medium text-xs sm:text-sm text-zinc-900 dark:text-white hover:text-secondary hover:underline">
                                                 {{ $product->name }}
                                             </a>
                                         </div>
@@ -287,13 +287,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         <div class="pt-2 mt-auto">
                                             @if ($product->hasDiscount())
                                                 <div class="flex items-center justify-center flex-wrap gap-x-2">
-                                                    <p class="text-base sm:text-lg font-semibold text-brand-secondary">
+                                                    <p class="text-base sm:text-lg font-semibold text-secondary">
                                                         {{ $product->formatted_final_price }}</p>
                                                     <p class="text-xs sm:text-sm text-zinc-500 line-through">
                                                         {{ $product->formatted_price }}</p>
                                                 </div>
                                             @else
-                                                <p class="text-base sm:text-lg font-semibold text-brand-secondary">
+                                                <p class="text-base sm:text-lg font-semibold text-secondary">
                                                     {{ $product->formatted_final_price }}</p>
                                             @endif
                                         </div>

@@ -394,7 +394,7 @@ new #[Title('Quotations')] class extends Component {
                         {{-- Reference --}}
                         <flux:table.cell class="ps-5!">
                             <a href="{{ route('admin.quotations.show', $quote) }}" wire:navigate
-                                class="font-semibold text-zinc-800 dark:text-white hover:text-brand-primary transition-colors">
+                                class="font-semibold text-zinc-800 dark:text-white hover:text-primary transition-colors">
                                 {{ $quote->reference }}
                             </a>
                             @if ($quote->expires_at && $quote->isSent())

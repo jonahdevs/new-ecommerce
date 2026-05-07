@@ -122,7 +122,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
                         wire:click="$set('filter', 'unread')"
                         @class([
                             'px-3 py-2 text-sm transition-colors',
-                            'bg-brand-primary text-white font-medium' => $filter === 'unread',
+                            'bg-primary text-white font-medium' => $filter === 'unread',
                             'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100' => $filter !== 'unread',
                         ])
                     >
@@ -139,7 +139,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
                         wire:click="$set('filter', 'read')"
                         @class([
                             'px-3 py-2 text-sm transition-colors',
-                            'bg-brand-primary text-white font-medium' => $filter === 'read',
+                            'bg-primary text-white font-medium' => $filter === 'read',
                             'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100' => $filter !== 'read',
                         ])
                     >
@@ -149,7 +149,7 @@ new #[Layout('layouts.app.sidebar')] #[Title('Notifications')] class extends Com
                         wire:click="$set('filter', 'all')"
                         @class([
                             'px-3 py-2 text-sm transition-colors',
-                            'bg-brand-primary text-white font-medium' => $filter === 'all',
+                            'bg-primary text-white font-medium' => $filter === 'all',
                             'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100' => $filter !== 'all',
                         ])
                     >

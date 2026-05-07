@@ -8,6 +8,6 @@
     {{-- Override Livewire's NProgress bar color for the admin layout --}}
     <style>
         [x-cloak] { display: none !important; }
-        :root { --livewire-progress-bar-color: var(--brand-primary); }
+        :root { --livewire-progress-bar-color: var(--primary); }
     </style>
 </x-layouts::app.sidebar>

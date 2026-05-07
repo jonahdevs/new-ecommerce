@@ -594,7 +594,7 @@ new #[Title('Orders')] class extends Component {
                         {{-- Reference --}}
                         <flux:table.cell>
                             <a href="{{ route('admin.orders.show', $order) }}" wire:navigate
-                                class="font-semibold text-zinc-800 dark:text-white hover:text-brand-primary transition-colors">
+                                class="font-semibold text-zinc-800 dark:text-white hover:text-primary transition-colors">
                                 {{ $order->reference }}
                             </a>
                         </flux:table.cell>

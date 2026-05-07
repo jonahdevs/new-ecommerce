@@ -61,6 +61,7 @@ new class extends Component {
          Main Header
          Mobile:  Logo | [search icon] | ♡ ⚖ 🛒 | Account
          Desktop: Logo | [Search bar ................] | ♡ ⚖ 🛒 | Account
+         
          ===================================================================== --}}
     <nav class="w-full bg-cover bg-center bg-no-repeat"
         style="background-image: url('{{ asset('images/stainless_steel.jpg') }}')">
@@ -95,10 +96,10 @@ new class extends Component {
                     <a href="{{ route('wishlist') }}" wire:navigate class="hidden lg:flex items-center gap-2 group">
                         <div class="relative">
                             <flux:icon.heart
-                                class="size-5 lg:size-6 text-zinc-800 group-hover:text-brand-primary transition-colors" />
+                                class="size-5 lg:size-6 text-zinc-800 group-hover:text-primary transition-colors" />
                             @if ($wishlistCount > 0)
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-medium">
+                                    class="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-medium">
                                     {{ $wishlistCount }}
                                 </span>
                             @endif
@@ -110,7 +111,7 @@ new class extends Component {
                     <a href="{{ route('products.compare') }}" wire:navigate
                         class="hidden lg:flex items-center gap-2 group">
                         <div class="relative">
-                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-zinc-800 group-hover:text-primary transition-colors"
                                 viewBox="0 0 24 24" fill="none">
                                 <g clip-path="url(#clip0_105_1836)">
                                     <path
@@ -127,7 +128,7 @@ new class extends Component {
                             </svg>
                             @if ($compareCount > 0)
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs font-medium rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                                    class="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] sm:text-xs font-medium rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
                                     {{ $compareCount }}
                                 </span>
                             @endif
@@ -138,14 +139,14 @@ new class extends Component {
                     {{-- Cart — always visible --}}
                     <a href="{{ route('cart') }}" wire:navigate class="flex items-center gap-2 group">
                         <div class="relative">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800 group-hover:text-primary transition-colors"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             @if ($cartCount > 0)
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs font-medium rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                                    class="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] sm:text-xs font-medium rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                                     {{ $cartCount }}
                                 </span>
                             @endif
@@ -182,7 +183,7 @@ new class extends Component {
                             @endauth
                         @else
                             <button type="button"
-                                class="flex items-center gap-2 hover:text-brand-secondary transition-colors">
+                                class="flex items-center gap-2 hover:text-secondary transition-colors">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -231,7 +232,7 @@ new class extends Component {
                                     Wishlist
                                     @if ($wishlistCount > 0)
                                         <span
-                                            class="ms-auto bg-brand-primary text-brand-primary-content text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                                            class="ms-auto bg-primary text-on-primary text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
                                             {{ $wishlistCount }}
                                         </span>
                                     @endif
@@ -243,7 +244,7 @@ new class extends Component {
                                     Compare
                                     @if ($compareCount > 0)
                                         <span
-                                            class="ms-auto bg-brand-primary text-brand-primary-content text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                                            class="ms-auto bg-primary text-on-primary text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
                                             {{ $compareCount }}
                                         </span>
                                     @endif
@@ -277,14 +278,14 @@ new class extends Component {
          Desktop: 6-column grid
          Mobile:  horizontal scroll with fade chevrons
          ===================================================================== --}}
-    <nav class="bg-brand-primary text-white">
+    <nav class="bg-primary text-white">
 
         {{-- Desktop --}}
         <section class="container mx-auto px-4 hidden lg:block">
             <ul class="m-0 flex flex-wrap border-r border-white/20 p-0" data-language="en" role="menubar"
                 aria-label="Main navigation menu">
                 @foreach ($this->categories->take(12) as $category)
-                    <li class="w-[16.66666666666667%] cursor-pointer hover:bg-brand-primary-dark" tabindex="0"
+                    <li class="w-[16.66666666666667%] cursor-pointer hover:bg-primary-hover" tabindex="0"
                         role="menuitem" aria-expanded="false">
                         <div class="relative h-9.25">
                             <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
@@ -367,7 +368,7 @@ new class extends Component {
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0" @click="scrollLeft(); setTimeout(() => updateArrows(), 300)"
-                class="invisible group-hover:visible absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-r from-brand-primary via-brand-primary/90 to-transparent text-white shrink-0 cursor-pointer"
+                class="invisible group-hover:visible absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-r from-primary via-primary/90 to-transparent text-white shrink-0 cursor-pointer"
                 aria-label="Scroll left">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -390,7 +391,7 @@ new class extends Component {
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0" @click="scrollRight(); setTimeout(() => updateArrows(), 300)"
-                class="invisible group-hover:visible absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-l from-brand-primary via-brand-primary/90 to-transparent text-white shrink-0 cursor-pointer"
+                class="invisible group-hover:visible absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-l from-primary via-primary/90 to-transparent text-white shrink-0 cursor-pointer"
                 aria-label="Scroll right">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />

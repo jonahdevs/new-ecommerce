@@ -1,5 +1,5 @@
 <!-- ====== Footer Section Start -->
-<footer class="relative z-10 bg-brand-footer text-brand-footer-text pb-10 pt-20">
+<footer class="relative z-10 bg-inverse-surface text-inverse-on-surface pb-10 pt-20">
     <div class="container mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8">
 
@@ -29,7 +29,7 @@
                                 <flux:heading size="base" level="4"
                                     class="text-white! text-base! sm:text-lg! md:text-xl! mb-3">Our Store Location
                                 </flux:heading>
-                                <div class="space-y-1 text-xs sm:text-sm text-brand-footer-text">
+                                <div class="space-y-1 text-xs sm:text-sm text-inverse-on-surface">
                                     <flux:text class="text-xs! sm:text-sm!">{{ $general->store_address }}</flux:text>
                                     @if ($general->store_address_line_2)
                                         <flux:text class="text-xs! sm:text-sm!">{{ $general->store_address_line_2 }}
@@ -52,14 +52,14 @@
                 <flux:heading size="base" level="4"
                     class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
                     Top Categories
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
                 <ul class="space-y-3">
                     @foreach ($footerCategories as $category)
                         <li>
                             <flux:link href="{{ route('shop.category', ['category' => $category->slug]) }}"
                                 wire:navigate
-                                class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                                class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                                 {{ $category->name }}
                             </flux:link>
                         </li>
@@ -72,36 +72,36 @@
                 <flux:heading size="base" level="4"
                     class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
                     Important Links
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
                 <ul class="space-y-3">
                     <li>
                         <flux:link href="www.sheffieldafrica.com/about-us"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             About us
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Contact Us
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Faq
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Latest Posts
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Order Track
                         </flux:link>
                     </li>
@@ -113,42 +113,42 @@
                 <flux:heading size="base" level="4"
                     class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
                     Legal Documents
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
                 <ul class="space-y-3">
                     <li>
                         <flux:link href="{{ route('privacy') }}"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Privacy Policy
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="{{ route('terms') }}"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Terms & Conditions
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Warranty Policy
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Return Policy
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Shipping Policy
                         </flux:link>
                     </li>
                     <li>
                         <flux:link href="#"
-                            class="text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!">
+                            class="text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!">
                             Refund Policy
                         </flux:link>
                     </li>
@@ -160,16 +160,16 @@
                 <flux:heading size="base" level="4"
                     class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
                     Newsletter
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
-                <flux:text class="text-xs! sm:text-sm! md:text-base! text-brand-footer-text mb-6">
+                <flux:text class="text-xs! sm:text-sm! md:text-base! text-inverse-on-surface mb-6">
                     Enter your email to receive our latest updates about our products.
                 </flux:text>
                 <div class="flex gap-2 flex-wrap">
                     <input type="email" placeholder="Email address"
-                        class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-brand-footer-border rounded text-xs sm:text-sm text-white placeholder-brand-footer-muted focus:outline-none focus:ring-2 focus:ring-brand-primary" />
+                        class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-inverse-outline rounded text-xs sm:text-sm text-white placeholder-inverse-on-surface-muted focus:outline-none focus:ring-2 focus:ring-primary" />
                     <button type="button"
-                        class="px-4 sm:px-6 py-2 sm:py-3 bg-brand-primary hover:bg-brand-primary-dark text-brand-primary-content rounded font-medium text-xs sm:text-sm transition-colors">
+                        class="px-4 sm:px-6 py-2 sm:py-3 bg-primary hover:bg-primary-hover text-on-primary rounded font-medium text-xs sm:text-sm transition-colors">
                         Subscribe
                     </button>
                 </div>
@@ -177,11 +177,11 @@
         </div>
 
         <!-- Bottom Bar -->
-        <div class="mt-12 pt-8 border-t border-brand-footer-border">
+        <div class="mt-12 pt-8 border-t border-inverse-outline">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
 
                 <!-- Copyright -->
-                <flux:text class="text-xs! sm:text-sm! text-brand-footer-muted">
+                <flux:text class="text-xs! sm:text-sm! text-inverse-on-surface-muted">
                     © {{ date('Y') }} {{ $general->store_name }}. All Rights Reserved.
                 </flux:text>
 
@@ -210,11 +210,11 @@
                 @endphp
                 @if (!empty($socialLinks))
                     <div class="flex items-center gap-4">
-                        <flux:text class="text-xs! sm:text-sm! text-brand-footer-muted mr-2">Follow Us:</flux:text>
+                        <flux:text class="text-xs! sm:text-sm! text-inverse-on-surface-muted mr-2">Follow Us:</flux:text>
 
                         @if ($social->facebook_url)
                             <a href="{{ $social->facebook_url }}" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="Facebook">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -225,7 +225,7 @@
 
                         @if ($social->twitter_url)
                             <a href="{{ $social->twitter_url }}" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="X / Twitter">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -236,7 +236,7 @@
 
                         @if ($social->instagram_url)
                             <a href="{{ $social->instagram_url }}" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="Instagram">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -247,7 +247,7 @@
 
                         @if ($social->linkedin_url)
                             <a href="{{ $social->linkedin_url }}" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="LinkedIn">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -258,7 +258,7 @@
 
                         @if ($social->tiktok_url)
                             <a href="{{ $social->tiktok_url }}" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="TikTok">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -269,7 +269,7 @@
 
                         @if ($social->youtube_url)
                             <a href="{{ $social->youtube_url }}" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="YouTube">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path

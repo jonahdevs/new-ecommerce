@@ -73,7 +73,7 @@
                             <div class="swiper-slide cursor-pointer">
                                 <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
                                     :class="activeIndex === {{ $index }} ?
-                                        'border-brand-secondary' :
+                                        'border-secondary' :
                                         'border-zinc-200 hover:border-zinc-300'">
                                     <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
                                         alt="{{ $slide['alt'] }}" class="w-full h-full object-contain" />
@@ -102,7 +102,7 @@
             @if ($product->brand)
                 <div class="flex items-center gap-2">
                     <span class="text-zinc-500 text-xs sm:text-sm">Brand:</span>
-                    <span class="text-brand-secondary font-medium text-xs sm:text-sm">{{ $product->brand->name }}</span>
+                    <span class="text-secondary font-medium text-xs sm:text-sm">{{ $product->brand->name }}</span>
                 </div>
             @endif
 
@@ -126,7 +126,7 @@
                 </div>
                 <span class="text-xs sm:text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
                 <a href="{{ route('products.reviews', $product) }}" wire:navigate
-                    class="text-xs sm:text-sm text-brand-secondary hover:underline">
+                    class="text-xs sm:text-sm text-secondary hover:underline">
                     {{ $this->reviewStats['total'] }} reviews
                 </a>
             </div>
@@ -176,7 +176,7 @@
                                 <flux:checkbox wire:model.live="selectedGroupedItems" value="{{ $item->id }}"
                                     wire:click.stop />
                                 <a href="{{ route('products.show', $item) }}" wire:navigate wire:click.stop
-                                    class="text-xs sm:text-sm font-medium text-brand-secondary hover:underline truncate">
+                                    class="text-xs sm:text-sm font-medium text-secondary hover:underline truncate">
                                     {{ $item->name }}
                                 </a>
                             </div>
@@ -224,7 +224,7 @@
                     </span>
                     <div class="text-right">
                         <span class="text-xs text-zinc-500 dark:text-zinc-400 mr-1">Total</span>
-                        <span class="text-sm sm:text-base font-semibold text-brand-secondary">
+                        <span class="text-sm sm:text-base font-semibold text-secondary">
                             {{ format_currency($this->groupedTotal) }}
                         </span>
                     </div>
@@ -256,7 +256,7 @@
                     @class(['cursor-pointer', 'text-red-500!' => $wishlisted]) />
 
                 <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
-                    icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-brand-secondary!' => $inCompare]) />
+                    icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-secondary!' => $inCompare]) />
 
                 <flux:button icon="share" icon-variant="outline" title="Share" class="cursor-pointer" />
             </div>
