@@ -10,7 +10,7 @@
     @inject('general', 'App\Settings\GeneralSettings')
 
     {{-- Announcement / Promo Bar --}}
-    <div class="bg-brand-primary text-brand-primary-content">
+    <div class="bg-primary text-on-primary">
         <section class="container mx-auto px-4">
             <div class="flex items-center justify-between py-2 text-sm gap-4">
 
@@ -136,7 +136,7 @@
         }
 
         :root {
-            --livewire-progress-bar-color: var(--brand-secondary);
+            --livewire-progress-bar-color: var(--secondary);
         }
     </style>
 

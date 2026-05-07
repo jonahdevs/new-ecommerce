@@ -1,5 +1,5 @@
 <!-- ====== Footer Section Start -->
-<footer class="relative z-10 bg-brand-footer text-brand-footer-text pb-10 pt-20">
+<footer class="relative z-10 bg-inverse-surface text-inverse-on-surface pb-10 pt-20">
     <div class="container mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8">
 
@@ -48,7 +48,7 @@ Our Store Location
 <?php $component = $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
 <?php unset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
 <?php endif; ?>
-                                <div class="space-y-1 text-xs sm:text-sm text-brand-footer-text">
+                                <div class="space-y-1 text-xs sm:text-sm text-inverse-on-surface">
                                     <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -143,7 +143,7 @@ Our Store Location
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Top Categories
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
@@ -159,14 +159,14 @@ Our Store Location
                         <li>
                             <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => ''.e(route('shop.category', ['category' => $category->slug])).'','wire:navigate' => true,'class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => ''.e(route('shop.category', ['category' => $category->slug])).'','wire:navigate' => true,'class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => ''.e(route('shop.category', ['category' => $category->slug])).'','wire:navigate' => true,'class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => ''.e(route('shop.category', ['category' => $category->slug])).'','wire:navigate' => true,'class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                 <?php echo e($category->name); ?>
@@ -201,7 +201,7 @@ Our Store Location
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Important Links
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
@@ -216,14 +216,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'www.sheffieldafrica.com/about-us','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'www.sheffieldafrica.com/about-us','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => 'www.sheffieldafrica.com/about-us','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => 'www.sheffieldafrica.com/about-us','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             About us
@@ -241,14 +241,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Contact Us
@@ -266,14 +266,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Faq
@@ -291,14 +291,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Latest Posts
@@ -316,14 +316,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Order Track
@@ -356,7 +356,7 @@ Our Store Location
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Legal Documents
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
@@ -371,14 +371,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => ''.e(route('privacy')).'','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => ''.e(route('privacy')).'','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => ''.e(route('privacy')).'','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => ''.e(route('privacy')).'','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Privacy Policy
@@ -396,14 +396,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => ''.e(route('terms')).'','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => ''.e(route('terms')).'','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => ''.e(route('terms')).'','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => ''.e(route('terms')).'','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Terms & Conditions
@@ -421,14 +421,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Warranty Policy
@@ -446,14 +446,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Return Policy
@@ -471,14 +471,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Shipping Policy
@@ -496,14 +496,14 @@ Our Store Location
                     <li>
                         <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => '#','class' => 'text-brand-footer-text hover:text-white transition-colors text-xs sm:text-sm!']); ?>
+<?php $component->withAttributes(['href' => '#','class' => 'text-inverse-on-surface hover:text-white transition-colors text-xs sm:text-sm!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Refund Policy
@@ -536,7 +536,7 @@ Our Store Location
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Newsletter
-                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-brand-primary"></span>
+                    <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
@@ -549,14 +549,14 @@ Our Store Location
 <?php endif; ?>
                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! md:text-base! text-brand-footer-text mb-6']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! md:text-base! text-inverse-on-surface mb-6']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! md:text-base! text-brand-footer-text mb-6']); ?>
+<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! md:text-base! text-inverse-on-surface mb-6']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Enter your email to receive our latest updates about our products.
@@ -572,9 +572,9 @@ Our Store Location
 <?php endif; ?>
                 <div class="flex gap-2 flex-wrap">
                     <input type="email" placeholder="Email address"
-                        class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-brand-footer-border rounded text-xs sm:text-sm text-white placeholder-brand-footer-muted focus:outline-none focus:ring-2 focus:ring-brand-primary" />
+                        class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-inverse-outline rounded text-xs sm:text-sm text-white placeholder-inverse-on-surface-muted focus:outline-none focus:ring-2 focus:ring-primary" />
                     <button type="button"
-                        class="px-4 sm:px-6 py-2 sm:py-3 bg-brand-primary hover:bg-brand-primary-dark text-brand-primary-content rounded font-medium text-xs sm:text-sm transition-colors">
+                        class="px-4 sm:px-6 py-2 sm:py-3 bg-primary hover:bg-primary-hover text-on-primary rounded font-medium text-xs sm:text-sm transition-colors">
                         Subscribe
                     </button>
                 </div>
@@ -582,20 +582,20 @@ Our Store Location
         </div>
 
         <!-- Bottom Bar -->
-        <div class="mt-12 pt-8 border-t border-brand-footer-border">
+        <div class="mt-12 pt-8 border-t border-inverse-outline">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
 
                 <!-- Copyright -->
                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! text-brand-footer-muted']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! text-inverse-on-surface-muted']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! text-brand-footer-muted']); ?>
+<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! text-inverse-on-surface-muted']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     © <?php echo e(date('Y')); ?> <?php echo e($general->store_name); ?>. All Rights Reserved.
@@ -637,14 +637,14 @@ Our Store Location
                     <div class="flex items-center gap-4">
                         <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! text-brand-footer-muted mr-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! text-inverse-on-surface-muted mr-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! text-brand-footer-muted mr-2']); ?>
+<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! text-inverse-on-surface-muted mr-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 Follow Us: <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -659,7 +659,7 @@ Follow Us: <?php echo $__env->renderComponent(); ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($social->facebook_url): ?>
                             <a href="<?php echo e($social->facebook_url); ?>" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="Facebook">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -670,7 +670,7 @@ Follow Us: <?php echo $__env->renderComponent(); ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($social->twitter_url): ?>
                             <a href="<?php echo e($social->twitter_url); ?>" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="X / Twitter">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -681,7 +681,7 @@ Follow Us: <?php echo $__env->renderComponent(); ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($social->instagram_url): ?>
                             <a href="<?php echo e($social->instagram_url); ?>" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="Instagram">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -692,7 +692,7 @@ Follow Us: <?php echo $__env->renderComponent(); ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($social->linkedin_url): ?>
                             <a href="<?php echo e($social->linkedin_url); ?>" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="LinkedIn">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -703,7 +703,7 @@ Follow Us: <?php echo $__env->renderComponent(); ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($social->tiktok_url): ?>
                             <a href="<?php echo e($social->tiktok_url); ?>" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="TikTok">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -714,7 +714,7 @@ Follow Us: <?php echo $__env->renderComponent(); ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($social->youtube_url): ?>
                             <a href="<?php echo e($social->youtube_url); ?>" target="_blank" rel="noopener noreferrer"
-                                class="text-brand-footer-muted hover:text-white transition-colors"
+                                class="text-inverse-on-surface-muted hover:text-white transition-colors"
                                 aria-label="YouTube">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path

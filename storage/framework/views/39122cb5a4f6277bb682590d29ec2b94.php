@@ -94,14 +94,14 @@ unset($__split);
                         <div class="relative">
                             <?php if (isset($component)) { $__componentOriginalfcc604edd6e541ab058ff166c8353443 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfcc604edd6e541ab058ff166c8353443 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.heart','data' => ['class' => 'size-5 lg:size-6 text-zinc-800 group-hover:text-brand-primary transition-colors']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.heart','data' => ['class' => 'size-5 lg:size-6 text-zinc-800 group-hover:text-primary transition-colors']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.heart'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-5 lg:size-6 text-zinc-800 group-hover:text-brand-primary transition-colors']); ?>
+<?php $component->withAttributes(['class' => 'size-5 lg:size-6 text-zinc-800 group-hover:text-primary transition-colors']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -116,7 +116,7 @@ unset($__split);
 <?php endif; ?>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($wishlistCount > 0): ?>
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-medium">
+                                    class="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-medium">
                                     <?php echo e($wishlistCount); ?>
 
                                 </span>
@@ -129,7 +129,7 @@ unset($__split);
                     <a href="<?php echo e(route('products.compare')); ?>" wire:navigate
                         class="hidden lg:flex items-center gap-2 group">
                         <div class="relative">
-                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-zinc-800 group-hover:text-primary transition-colors"
                                 viewBox="0 0 24 24" fill="none">
                                 <g clip-path="url(#clip0_105_1836)">
                                     <path
@@ -146,7 +146,7 @@ unset($__split);
                             </svg>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($compareCount > 0): ?>
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs font-medium rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                                    class="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] sm:text-xs font-medium rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
                                     <?php echo e($compareCount); ?>
 
                                 </span>
@@ -158,14 +158,14 @@ unset($__split);
                     
                     <a href="<?php echo e(route('cart')); ?>" wire:navigate class="flex items-center gap-2 group">
                         <div class="relative">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800 group-hover:text-brand-primary transition-colors"
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800 group-hover:text-primary transition-colors"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($cartCount > 0): ?>
                                 <span
-                                    class="absolute -top-2 -right-2 bg-brand-primary text-brand-primary-content text-[10px] sm:text-xs font-medium rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                                    class="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] sm:text-xs font-medium rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                                     <?php echo e($cartCount); ?>
 
                                 </span>
@@ -257,7 +257,7 @@ unset($__split);
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         <?php else: ?>
                             <button type="button"
-                                class="flex items-center gap-2 hover:text-brand-secondary transition-colors">
+                                class="flex items-center gap-2 hover:text-secondary transition-colors">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -389,7 +389,7 @@ unset($__split);
                                     Wishlist
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($wishlistCount > 0): ?>
                                         <span
-                                            class="ms-auto bg-brand-primary text-brand-primary-content text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                                            class="ms-auto bg-primary text-on-primary text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
                                             <?php echo e($wishlistCount); ?>
 
                                         </span>
@@ -421,7 +421,7 @@ unset($__split);
                                     Compare
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($compareCount > 0): ?>
                                         <span
-                                            class="ms-auto bg-brand-primary text-brand-primary-content text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                                            class="ms-auto bg-primary text-on-primary text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
                                             <?php echo e($compareCount); ?>
 
                                         </span>
@@ -538,14 +538,14 @@ unset($__split);
     </nav>
 
     
-    <nav class="bg-brand-primary text-white">
+    <nav class="bg-primary text-white">
 
         
         <section class="container mx-auto px-4 hidden lg:block">
             <ul class="m-0 flex flex-wrap border-r border-white/20 p-0" data-language="en" role="menubar"
                 aria-label="Main navigation menu">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->categories->take(12); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <li class="w-[16.66666666666667%] cursor-pointer hover:bg-brand-primary-dark" tabindex="0"
+                    <li class="w-[16.66666666666667%] cursor-pointer hover:bg-primary-hover" tabindex="0"
                         role="menuitem" aria-expanded="false">
                         <div class="relative h-9.25">
                             <a href="<?php echo e(route('shop.category', ['category' => $category->slug])); ?>" wire:navigate
@@ -629,7 +629,7 @@ unset($__split);
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0" @click="scrollLeft(); setTimeout(() => updateArrows(), 300)"
-                class="invisible group-hover:visible absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-r from-brand-primary via-brand-primary/90 to-transparent text-white shrink-0 cursor-pointer"
+                class="invisible group-hover:visible absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-r from-primary via-primary/90 to-transparent text-white shrink-0 cursor-pointer"
                 aria-label="Scroll left">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -653,7 +653,7 @@ unset($__split);
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0" @click="scrollRight(); setTimeout(() => updateArrows(), 300)"
-                class="invisible group-hover:visible absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-l from-brand-primary via-brand-primary/90 to-transparent text-white shrink-0 cursor-pointer"
+                class="invisible group-hover:visible absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-linear-to-l from-primary via-primary/90 to-transparent text-white shrink-0 cursor-pointer"
                 aria-label="Scroll right">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />

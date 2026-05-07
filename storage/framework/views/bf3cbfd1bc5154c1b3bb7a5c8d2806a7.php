@@ -5,14 +5,14 @@
 
         
         <p
-            class="text-8xl font-bold tracking-tight leading-none <?php echo e($isAdmin ? 'text-brand-secondary dark:text-brand-secondary-light' : 'text-brand-primary'); ?>">
+            class="text-8xl font-bold tracking-tight leading-none <?php echo e($isAdmin ? 'text-secondary dark:text-secondary-hover' : 'text-primary'); ?>">
             <?php echo e($code); ?>
 
         </p>
 
         
         <div
-            class="w-12 h-1 rounded-full mx-auto my-5 <?php echo e($isAdmin ? 'bg-brand-secondary dark:bg-brand-secondary-light' : 'bg-brand-primary'); ?>">
+            class="w-12 h-1 rounded-full mx-auto my-5 <?php echo e($isAdmin ? 'bg-secondary dark:bg-secondary-hover' : 'bg-primary'); ?>">
         </div>
 
         
@@ -33,7 +33,7 @@
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($code === '419'): ?>
                 
                 <button onclick="window.location.reload()"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-md transition-colors cursor-pointer <?php echo e($isAdmin ? 'bg-brand-secondary hover:bg-brand-secondary-dark' : 'bg-brand-primary hover:bg-brand-primary-dark'); ?>">
+                    class="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-md transition-colors cursor-pointer <?php echo e($isAdmin ? 'bg-secondary hover:bg-secondary-hover' : 'bg-primary hover:bg-primary-hover'); ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -51,12 +51,12 @@
                 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isAdmin): ?>
                     <a href="<?php echo e(route('admin.dashboard')); ?>"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-secondary hover:bg-brand-secondary-dark text-white text-sm font-medium rounded-md transition-colors">
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary hover:bg-secondary-hover text-white text-sm font-medium rounded-md transition-colors">
                         Back to dashboard
                     </a>
                 <?php else: ?>
                     <a href="<?php echo e(url('/')); ?>"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-medium rounded-md transition-colors">
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-md transition-colors">
                         Back to homepage
                     </a>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
