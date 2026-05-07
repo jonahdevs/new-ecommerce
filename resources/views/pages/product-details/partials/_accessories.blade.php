@@ -90,7 +90,7 @@
 
     #accessories-pagination .swiper-pagination-bullet-active {
         width: 16px;
-        background: var(--color-brand-secondary, #1d4ed8);
+        background: var(--color-secondary, #1d4ed8);
         border-radius: 9999px;
     }
 

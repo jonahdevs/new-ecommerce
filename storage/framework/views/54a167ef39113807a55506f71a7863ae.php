@@ -100,18 +100,18 @@ use Artesaos\SEOTools\Facades\JsonLd;
                             <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(0, 0, 0, 0.1)"
                                 stroke-width="2.5" />
                             <circle cx="24" cy="24" r="18" fill="none"
-                                style="stroke: var(--brand-primary)" stroke-width="2.5" stroke-linecap="round"
+                                style="stroke: var(--primary)" stroke-width="2.5" stroke-linecap="round"
                                 :stroke-dasharray="progressCircumference" :stroke-dashoffset="progressOffset"
                                 class="transition-all duration-100 ease-linear" />
                         </svg>
                         <div class="absolute inset-0 flex items-center justify-center">
                             <svg x-show="isPaused"
-                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-primary ml-0.5 transition-transform group-hover:scale-110"
+                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary ml-0.5 transition-transform group-hover:scale-110"
                                 fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z" />
                             </svg>
                             <svg x-show="!isPaused"
-                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-primary transition-transform group-hover:scale-110"
+                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary transition-transform group-hover:scale-110"
                                 fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                             </svg>
@@ -188,7 +188,7 @@ use Artesaos\SEOTools\Facades\JsonLd;
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-zinc-100">
 
                 <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
-                    <div class="mb-3 text-brand-primary">
+                    <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
@@ -240,7 +240,7 @@ In Kitchen Equipment <?php echo $__env->renderComponent(); ?>
                 </div>
 
                 <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
-                    <div class="mb-3 text-brand-primary">
+                    <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
@@ -292,7 +292,7 @@ Quality Assurance <?php echo $__env->renderComponent(); ?>
                 </div>
 
                 <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
-                    <div class="mb-3 text-brand-primary">
+                    <div class="mb-3 text-primary">
                         <?php if (isset($component)) { $__componentOriginald247533b0158ad1b5720129b2b0e6515 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald247533b0158ad1b5720129b2b0e6515 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.arrows-pointing-out','data' => ['class' => 'size-8']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -362,7 +362,7 @@ Bespoke Solutions <?php echo $__env->renderComponent(); ?>
                 </div>
 
                 <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
-                    <div class="mb-3 text-brand-primary">
+                    <div class="mb-3 text-primary">
                         <svg class="size-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -414,7 +414,7 @@ Countrywide Shipping <?php echo $__env->renderComponent(); ?>
                 </div>
 
                 <div class="hidden lg:flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
-                    <div class="mb-3 text-brand-primary">
+                    <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -526,7 +526,7 @@ Discover our most popular shopping
 
     
     <div class="container mx-auto px-0 sm:px-4 mt-5 md:mt-7">
-        <div class="bg-brand-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 lg:grid-cols-6">
+        <div class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 lg:grid-cols-6">
             
             <div
                 class="lg:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 lg:py-8
@@ -858,7 +858,7 @@ From local hubs to a continental presence.
                             
                             <div class="flex items-start gap-3">
                                 <div
-                                    class="shrink-0 mt-0.5 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-brand-secondary/10 text-brand-secondary ring-1 ring-brand-secondary/20 flex items-center justify-center">
+                                    class="shrink-0 mt-0.5 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <?php if (isset($component)) { $__componentOriginal0d48bd54d72df81b49ee07c1a3735f04 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0d48bd54d72df81b49ee07c1a3735f04 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.map-pin','data' => ['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -909,7 +909,7 @@ From local hubs to a continental presence.
                             
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-brand-secondary/10 text-brand-secondary ring-1 ring-brand-secondary/20 flex items-center justify-center">
+                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <?php if (isset($component)) { $__componentOriginal3b273e6b331c9518de08da49e1886441 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b273e6b331c9518de08da49e1886441 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.phone','data' => ['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -935,14 +935,14 @@ From local hubs to a continental presence.
                                 </div>
                                 <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-brand-primary transition-colors duration-150 font-medium']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-primary transition-colors duration-150 font-medium']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-brand-primary transition-colors duration-150 font-medium']); ?>
+<?php $component->withAttributes(['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-primary transition-colors duration-150 font-medium']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                     <?php echo e($location['phone']); ?>
@@ -962,7 +962,7 @@ From local hubs to a continental presence.
                             
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-brand-secondary/10 text-brand-secondary ring-1 ring-brand-secondary/20 flex items-center justify-center">
+                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <?php if (isset($component)) { $__componentOriginalb2620669e6f3f9a8ec8b91c4a73fca6f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalb2620669e6f3f9a8ec8b91c4a73fca6f = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.envelope','data' => ['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -988,14 +988,14 @@ From local hubs to a continental presence.
                                 </div>
                                 <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-brand-primary transition-colors duration-150 font-medium break-all']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-primary transition-colors duration-150 font-medium break-all']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-brand-primary transition-colors duration-150 font-medium break-all']); ?>
+<?php $component->withAttributes(['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! sm:text-sm! md:text-base! text-zinc-600 hover:text-primary transition-colors duration-150 font-medium break-all']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                     <?php echo e($location['email']); ?>

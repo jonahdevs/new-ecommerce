@@ -8,7 +8,7 @@
             <div class="col-span-1">
                 <div class="sticky top-44">
                     <div class="text-center">
-                        <div class="text-2xl sm:text-3xl font-bold text-brand-secondary">
+                        <div class="text-2xl sm:text-3xl font-bold text-secondary">
                             {{ $this->reviewStats['average'] }}
                         </div>
 
@@ -54,10 +54,10 @@
                                     @endfor
                                 </div>
                                 <div class="w-full bg-zinc-200 rounded-full h-2.5">
-                                    <div class="bg-brand-secondary h-2.5 rounded-full"
+                                    <div class="bg-secondary h-2.5 rounded-full"
                                         style="width: {{ $data['percentage'] }}%"></div>
                                 </div>
-                                <span class="text-sm font-semibold text-brand-secondary min-w-11.25">
+                                <span class="text-sm font-semibold text-secondary min-w-11.25">
                                     {{ $data['percentage'] }}%
                                 </span>
                             </div>

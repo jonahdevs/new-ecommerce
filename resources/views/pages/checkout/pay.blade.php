@@ -218,7 +218,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         {{-- Pay button --}}
                         <button @click="submitPayment()" :disabled="loading || !ready"
-                            class="w-full flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary-light disabled:bg-brand-primary-dark/50 disabled:cursor-not-allowed text-brand-primary-content font-semibold py-3 px-4 rounded-md transition-colors text-sm">
+                            class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-primary-hover/50 disabled:cursor-not-allowed text-on-primary font-semibold py-3 px-4 rounded-md transition-colors text-sm">
                             <span x-show="!loading">
                                 Pay {{ format_currency($this->order->total) }}
                             </span>

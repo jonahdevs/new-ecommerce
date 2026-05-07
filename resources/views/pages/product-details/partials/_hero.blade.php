@@ -97,7 +97,7 @@
                             <div class="swiper-slide cursor-pointer">
                                 <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
                                     :class="activeIndex === {{ $index }} ?
-                                        'border-brand-secondary' :
+                                        'border-secondary' :
                                         'border-zinc-200 hover:border-zinc-300'">
                                     <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
                                         alt="{{ $slide['alt'] }}" class="w-full h-full object-contain" />
@@ -126,7 +126,7 @@
             @if ($product->brand)
                 <div class="flex items-center gap-2">
                     <span class="text-zinc-500 text-xs sm:text-sm">Brand:</span>
-                    <span class="text-brand-secondary font-medium text-xs sm:text-sm">{{ $product->brand->name }}</span>
+                    <span class="text-secondary font-medium text-xs sm:text-sm">{{ $product->brand->name }}</span>
                 </div>
             @endif
             @island('reviews')
@@ -150,7 +150,7 @@
                     </div>
                     <span class="text-xs sm:text-sm text-zinc-500">({{ number_format($avgRating, 1) }})</span>
                     <a href="{{ route('products.reviews', $product) }}" wire:navigate
-                        class="text-xs sm:text-sm text-brand-secondary hover:underline">
+                        class="text-xs sm:text-sm text-secondary hover:underline">
                         {{ $this->reviewStats['total'] }} reviews
                     </a>
                 </div>
@@ -195,7 +195,7 @@
                                         wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
                                         @class([
                                             'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
-                                            'border-brand-secondary bg-brand-secondary/5 text-brand-secondary font-medium' => $isSelected,
+                                            'border-secondary bg-secondary/5 text-secondary font-medium' => $isSelected,
                                             'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' => !$isSelected,
                                         ])>
                                         {{ $value['label'] }}
@@ -256,7 +256,7 @@
                 @if ($finalPrice)
                     @if ($hasDiscount)
                         <div class="flex items-center flex-wrap gap-2">
-                            <span class="text-xl sm:text-2xl font-bold text-brand-secondary">
+                            <span class="text-xl sm:text-2xl font-bold text-secondary">
                                 {{ format_currency($salePrice) }}
                             </span>
                             <span class="text-sm sm:text-base text-zinc-400 line-through">
@@ -267,7 +267,7 @@
                             </flux:badge>
                         </div>
                     @else
-                        <span class="text-xl sm:text-2xl font-bold text-brand-secondary">
+                        <span class="text-xl sm:text-2xl font-bold text-secondary">
                             {{ format_currency($finalPrice) }}
                         </span>
                     @endif
@@ -333,14 +333,14 @@
         @if ($this->accessories->count() > 0)
             <a href="#accessories"
                 onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' }); return false;"
-                class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-brand-secondary rounded-r-md no-underline group">
-                <flux:icon.wrench-screwdriver class="size-3.5 text-brand-secondary shrink-0" variant="outline" />
+                class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-secondary rounded-r-md no-underline group">
+                <flux:icon.wrench-screwdriver class="size-3.5 text-secondary shrink-0" variant="outline" />
                 <span class="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
                     {{ $this->accessories->count() }}
                     {{ Str::plural('accessory', $this->accessories->count()) }} available for this product
                 </span>
                 <span
-                    class="text-xs text-brand-secondary ml-auto group-hover:translate-y-0.5 transition-transform flex items-center gap-2">
+                    class="text-xs text-secondary ml-auto group-hover:translate-y-0.5 transition-transform flex items-center gap-2">
                     View
                     <flux:icon.arrow-long-down class="size-4" />
                 </span>
@@ -416,7 +416,7 @@
 
             {{-- Compare --}}
             <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
-                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-brand-secondary!' => $inCompare]) />
+                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-secondary!' => $inCompare]) />
 
             {{-- Share --}}
             <div x-data="{

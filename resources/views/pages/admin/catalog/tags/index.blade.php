@@ -89,7 +89,7 @@ new #[Title('Tags')] class extends Component {
             <nav class="flex gap-1 overflow-x-auto">
                 <button type="button" wire:click="$set('typeFilter', null)" @class([
                     'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                    'bg-brand-primary text-brand-primary-content font-medium' =>
+                    'bg-primary text-on-primary font-medium' =>
                         $typeFilter === null,
                     'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
                         $typeFilter !== null,
@@ -100,7 +100,7 @@ new #[Title('Tags')] class extends Component {
                     <button type="button" wire:click="$set('typeFilter', '{{ $type }}')"
                         @class([
                             'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                            'bg-brand-primary text-brand-primary-content font-medium' =>
+                            'bg-primary text-on-primary font-medium' =>
                                 $typeFilter === $type,
                             'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
                                 $typeFilter !== $type,

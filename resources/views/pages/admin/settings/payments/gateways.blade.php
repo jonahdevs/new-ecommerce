@@ -69,13 +69,13 @@ new #[Title('Payment Gateways')] class extends Component {
                         {{-- Individual --}}
                         <label @class([
                             'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                            'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' =>
+                            'border-[var(--primary)] bg-[var(--primary)]/5' =>
                                 $form->gateway_mode === 'individual',
                             'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300' =>
                                 $form->gateway_mode !== 'individual',
                         ])>
                             <input type="radio" wire:model.live="form.gateway_mode" value="individual"
-                                class="mt-0.5 accent-[var(--brand-primary)]" />
+                                class="mt-0.5 accent-[var(--primary)]" />
                             <div>
                                 <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                     {{ __('Individual gateways') }}</p>
@@ -88,13 +88,13 @@ new #[Title('Payment Gateways')] class extends Component {
                         {{-- Aggregator --}}
                         <label @class([
                             'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                            'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' =>
+                            'border-[var(--primary)] bg-[var(--primary)]/5' =>
                                 $form->gateway_mode === 'aggregator',
                             'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300' =>
                                 $form->gateway_mode !== 'aggregator',
                         ])>
                             <input type="radio" wire:model.live="form.gateway_mode" value="aggregator"
-                                class="mt-0.5 accent-[var(--brand-primary)]" />
+                                class="mt-0.5 accent-[var(--primary)]" />
                             <div>
                                 <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                     {{ __('Aggregator gateway') }}</p>
@@ -120,7 +120,7 @@ new #[Title('Payment Gateways')] class extends Component {
                         {{-- PesaPal --}}
                         <label class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                             <input type="radio" wire:model.live="form.active_aggregator" value="pesapal"
-                                class="shrink-0 accent-[var(--brand-primary)]" />
+                                class="shrink-0 accent-[var(--primary)]" />
                             <div class="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">PP</div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">PesaPal</p>
@@ -136,7 +136,7 @@ new #[Title('Payment Gateways')] class extends Component {
                         {{-- PesaWise --}}
                         <label class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                             <input type="radio" wire:model.live="form.active_aggregator" value="pesawise"
-                                class="shrink-0 accent-[var(--brand-primary)]" />
+                                class="shrink-0 accent-[var(--primary)]" />
                             <div class="w-9 h-9 rounded-lg bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">PW</div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">PesaWise</p>

@@ -250,7 +250,7 @@ new class extends Component {
                 @endif
 
                 @if ($product->type === ProductType::VARIABLE)
-                    <span class="rounded-e-full bg-brand-secondary px-2 py-1 text-xs font-medium text-white tracking-wide">
+                    <span class="rounded-e-full bg-secondary px-2 py-1 text-xs font-medium text-white tracking-wide">
                         Options
                     </span>
                 @elseif ($product->type === ProductType::GROUPED)
@@ -284,7 +284,7 @@ new class extends Component {
                 </flux:modal.trigger>
 
                 <flux:button wire:click.stop="toggleCompare" size="sm" icon-variant="outline"
-                    icon="{{ $inCompare ? 'x-mark' : 'scale' }}" title="Compare" @class(['cursor-pointer', 'text-brand-secondary!' => $inCompare]) />
+                    icon="{{ $inCompare ? 'x-mark' : 'scale' }}" title="Compare" @class(['cursor-pointer', 'text-secondary!' => $inCompare]) />
 
                 @if ($product->requires_quotation)
                     <flux:button wire:click="goToProduct" icon="document-text" size="sm" icon-variant="outline"
@@ -308,7 +308,7 @@ new class extends Component {
 
             {{-- Name --}}
             <a href="{{ route('products.show', $product) }}" wire:click.prevent="goToProduct"
-                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-brand-secondary">
+                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-secondary">
                 {{ $product->name }}
             </a>
 
@@ -327,7 +327,7 @@ new class extends Component {
                         @if ($product->has_price_prefix)
                             <span class="text-xs text-zinc-400">{{ $product->display_price_prefix }}</span>
                         @endif
-                        <span class="font-semibold text-brand-secondary">{{ $product->display_price }}</span>
+                        <span class="font-semibold text-secondary">{{ $product->display_price }}</span>
                         @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                             <span class="text-xs text-zinc-400 line-through">{{ $product->formatted_price }}</span>
                         @endif
@@ -391,7 +391,7 @@ new class extends Component {
                                 @foreach ($this->imageSlides as $index => $slide)
                                     <div class="swiper-slide cursor-pointer">
                                         <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
-                                            :class="activeIndex === {{ $index }} ? 'border-brand-secondary' :
+                                            :class="activeIndex === {{ $index }} ? 'border-secondary' :
                                                 'border-zinc-200'">
                                             <img src="{{ $slide['url'] }}" alt="{{ $slide['alt'] }}"
                                                 class="w-full h-full object-contain" />
@@ -406,7 +406,7 @@ new class extends Component {
                 {{-- Details --}}
                 <div class="col-span-1 md:col-span-2 pt-5 md:pt-0 md:pl-6">
                     <a href="{{ route('products.show', $product) }}" wire:navigate
-                        class="text-xl font-bold mt-2 mb-1 text-zinc-800 hover:text-brand-secondary hover:underline transition-colors">
+                        class="text-xl font-bold mt-2 mb-1 text-zinc-800 hover:text-secondary hover:underline transition-colors">
                         {{ $product->name }}
                     </a>
 
@@ -426,7 +426,7 @@ new class extends Component {
                                 <span class="text-sm text-zinc-400">{{ $product->display_price_prefix }}</span>
                             @endif
                             <span
-                                class="text-lg font-semibold text-brand-secondary">{{ $product->display_price }}</span>
+                                class="text-lg font-semibold text-secondary">{{ $product->display_price }}</span>
                             @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                                 <span class="text-sm text-zinc-400 line-through">{{ $product->formatted_price }}</span>
                                 <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}

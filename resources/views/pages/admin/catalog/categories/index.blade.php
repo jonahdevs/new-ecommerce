@@ -206,7 +206,7 @@ new #[Title('Categories')] class extends Component {
             {{-- All tab --}}
             <button type="button" wire:click="selectTab('all')" @class([
                 'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                'bg-brand-primary text-brand-primary-content font-medium' => $tab === 'all',
+                'bg-primary text-on-primary font-medium' => $tab === 'all',
                 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
                     $tab !== 'all',
             ])>
@@ -217,7 +217,7 @@ new #[Title('Categories')] class extends Component {
             @foreach (\App\Enums\CategorySection::cases() as $section)
                 <button type="button" wire:click="selectTab('{{ $section->value }}')" @class([
                     'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                    'bg-brand-primary text-brand-primary-content font-medium' =>
+                    'bg-primary text-on-primary font-medium' =>
                         $tab === $section->value,
                     'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
                         $tab !== $section->value,

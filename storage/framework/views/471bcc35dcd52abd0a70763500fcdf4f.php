@@ -119,7 +119,7 @@ Products <?php echo $__env->renderComponent(); ?>
                 </svg>
                 Filters
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->hasActiveFilters): ?>
-                    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brand-secondary"></span>
+                    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary"></span>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </button>
 
@@ -197,7 +197,7 @@ Filters
                         <div class="flex items-center gap-3">
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->hasActiveFilters): ?>
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-[10px] sm:text-xs text-brand-secondary hover:underline font-medium">
+                                    class="text-[10px] sm:text-xs text-secondary hover:underline font-medium">
                                     Clear all
                                 </button>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -218,7 +218,7 @@ Filters
 
                     <div class="sticky bottom-0 bg-white border-t px-4 py-3">
                         <button wire:click="$set('showMobileFilters', false)" type="button"
-                            class="w-full py-2.5 bg-brand-secondary text-white font-medium rounded-md text-xs sm:text-sm cursor-pointer">
+                            class="w-full py-2.5 bg-secondary text-white font-medium rounded-md text-xs sm:text-sm cursor-pointer">
                             View <?php echo e($this->products->total()); ?> Results
                         </button>
                     </div>
@@ -257,7 +257,7 @@ Filters
 <?php endif; ?>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->hasActiveFilters): ?>
                                 <button wire:click="clearAllFilters" type="button"
-                                    class="text-[10px] sm:text-xs text-brand-secondary hover:underline font-medium cursor-pointer">
+                                    class="text-[10px] sm:text-xs text-secondary hover:underline font-medium cursor-pointer">
                                     Clear all
                                 </button>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -320,7 +320,7 @@ Filters
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->hasActiveFilters): ?>
                                         <span class="text-zinc-400 mx-1">•</span>
                                         <button wire:click="clearAllFilters"
-                                            class="text-brand-secondary hover:underline">
+                                            class="text-secondary hover:underline">
                                             Clear all filters
                                         </button>
                                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>

@@ -160,7 +160,7 @@ new #[Layout('layouts.customer')] class extends Component {
                     </flux:text>
 
                     <flux:link href="{{ route('customer.settings.preferences') }}" wire:navigate
-                        class="text-brand-secondary hover:underline ">Edit
+                        class="text-secondary hover:underline ">Edit
                         newsletter
                         preference
                     </flux:link>

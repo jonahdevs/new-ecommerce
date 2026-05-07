@@ -98,7 +98,7 @@ new #[Layout('layouts.customer')] class extends Component {
                             wire:click="$set('selectedTab', 'ongoing')"
                             @class([
                                 'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                                'bg-brand-secondary text-brand-secondary-content font-medium' => $selectedTab === 'ongoing',
+                                'bg-secondary text-on-secondary font-medium' => $selectedTab === 'ongoing',
                                 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => $selectedTab !== 'ongoing',
                             ])
                         >
@@ -116,7 +116,7 @@ new #[Layout('layouts.customer')] class extends Component {
                             wire:click="$set('selectedTab', 'cancelled')"
                             @class([
                                 'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                                'bg-brand-secondary text-brand-secondary-content font-medium' => $selectedTab === 'cancelled',
+                                'bg-secondary text-on-secondary font-medium' => $selectedTab === 'cancelled',
                                 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => $selectedTab !== 'cancelled',
                             ])
                         >

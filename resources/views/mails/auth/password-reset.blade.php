@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" media="screen">
   <style>
-    .hover-bg-brand-secondary-dark:hover {
+    .hover-bg-secondary-hover:hover {
       background-color: #2d3c7b !important;
     }
     @media (max-width: 600px) {
@@ -70,7 +70,7 @@
                     account.
                   </p>
                   <div>
-                    <a href="{{$resetUrl}}" style="display: inline-block; text-decoration: none; padding: 16px 24px; font-size: 16px; line-height: 1; border-radius: 4px; color: #fffffe; background-color: #304296;" class="hover-bg-brand-secondary-dark">
+                    <a href="{{$resetUrl}}" style="display: inline-block; text-decoration: none; padding: 16px 24px; font-size: 16px; line-height: 1; border-radius: 4px; color: #fffffe; background-color: #304296;" class="hover-bg-secondary-hover">
                       <!--[if mso]><i style="mso-font-width: 150%; mso-text-raise: 31px;" hidden>&emsp;</i><![endif]-->
                       <span style="mso-text-raise: 16px">Reset Password</span>
                       <!--[if mso]><i hidden style="mso-font-width: 150%;">&emsp;&#8203;</i><![endif]-->

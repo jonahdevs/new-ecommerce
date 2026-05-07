@@ -76,13 +76,13 @@ new class extends Component {
 
             {{-- Name --}}
             <a wire:navigate href="{{ route('products.show', $product) }}"
-                class="text-sm font-medium text-zinc-800 leading-snug line-clamp-2 hover:text-brand-secondary transition-colors mn-1.5">
+                class="text-sm font-medium text-zinc-800 leading-snug line-clamp-2 hover:text-secondary transition-colors mn-1.5">
                 {{ $product->name }}
             </a>
 
             {{-- Price --}}
             <div class="flex items-baseline gap-2 mb-1.5">
-                <span class="text-base font-semibold text-brand-secondary">
+                <span class="text-base font-semibold text-secondary">
                     {{ $product->formatted_final_price }}
                 </span>
                 @if ($product->hasDiscount())

@@ -703,7 +703,7 @@ new class extends Component {
                         </div>
                     @else
                         <flux:link @click="document.getElementById('product-image-input').click()"
-                            class="text-sm text-brand-secondary cursor-pointer">Set product image
+                            class="text-sm text-secondary cursor-pointer">Set product image
                         </flux:link>
                     @endif
 
@@ -778,7 +778,7 @@ new class extends Component {
                     @endif
 
                     <flux:link @click="document.getElementById('product-gallery-input').click()"
-                        class="text-sm text-brand-secondary cursor-pointer">
+                        class="text-sm text-secondary cursor-pointer">
                         {{ !empty($form->images) || !empty($form->existingImages) ? 'Add more images' : 'Set product gallery images' }}
                     </flux:link>
 

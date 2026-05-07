@@ -118,7 +118,7 @@
 
                 <a href="{{ route($tab['route']) }}" wire:navigate @class([
                     'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150',
-                    'bg-brand-primary text-brand-primary-content font-medium' => $isActive,
+                    'bg-primary text-on-primary font-medium' => $isActive,
                     'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' => !$isActive,
                 ])>
                     <flux:icon :name="$tab['icon']" class="size-4 shrink-0" variant="outline" />

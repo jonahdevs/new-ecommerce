@@ -20,7 +20,7 @@
                 </div>
 
                 <p
-                    class="mt-3 text-center text-sm font-semibold text-zinc-800 group-hover:text-brand-secondary transition-colors line-clamp-1">
+                    class="mt-3 text-center text-sm font-semibold text-zinc-800 group-hover:text-secondary transition-colors line-clamp-1">
                     {{ $category->name }}
                 </p>
             </a>
