@@ -3,16 +3,36 @@
  | Sheffield Africa — Brand Theme
  |--------------------------------------------------------------------------
  |
+ | This is the ONLY file you edit to change the look of the site.
+ |
  | To create a new client theme:
  |   1. Copy this file → themes/client-name.css
- |   2. Change the hex values below (nothing else)
+ |   2. Change the hex/hsl values below — nothing else
  |   3. Update the @import in app.css to point to your new file
- |   4. Done.
  |
- | Token reference:
- |   --brand-primary-*    Main brand color (navbar, CTAs, buttons, badges)
- |   --brand-secondary-*  Supporting color (admin sidebar, info states)
- |   --brand-footer-*     Footer colors
+ | ── HOW TO READ THESE TOKENS ────────────────────────────────────────────
+ |
+ |  Every color role has two layers:
+ |
+ |    Solid   →  --primary            Strong, high-emphasis surface
+ |    Content →  --on-primary         Text/icons ON that solid surface
+ |
+ |    Soft    →  --primary-container  Low-emphasis tonal surface (chips, badges)
+ |    Content →  --on-primary-container  Text/icons ON that soft surface
+ |
+ |  The same pattern repeats for secondary, success, warning, and error.
+ |
+ | ── TOKEN REFERENCE ─────────────────────────────────────────────────────
+ |
+ |  --primary-*          Main brand color → CTAs, add-to-cart, active states
+ |  --secondary-*        Supporting brand color → secondary actions, B2B, info
+ |  --surface-*          Page & component backgrounds → cards, modals, inputs
+ |  --outline-*          Borders and dividers
+ |  --success-*          Positive states → in stock, confirmed, delivered
+ |  --warning-*          Caution states → low stock, pending, awaiting payment
+ |  --error-*            Error states → validation, out of stock, destructive
+ |  --inverse-*          Dark element on a light page → footer, dark banners
+ |  --radius             Controls ALL border radii across the app
  |
  */
 
@@ -20,45 +40,175 @@
    LIGHT MODE (default)
    ============================================================ */
 :root {
-    /* ── Primary ────────────────────────────────────────────
-     * Sheffield: Red  |
-     * ─────────────────────────────────────────────────────── */
-    --brand-primary: #c02434;
-    --brand-primary-light: #d02e3a;
-    --brand-primary-dark: #931e2d;
-    --brand-primary-content: #ffffff;
+    /* ── Primary ────────────────────────────────────────────────
+     * The main brand action color. Use it when you want the user
+     * to DO something — the most important CTA on any screen.
+     *
+     * Solid:     Add to Cart, Checkout, Buy Now, active nav indicator
+     * Container: Discount badges, active filter pills, selected options
+     * ─────────────────────────────────────────────────────────── */
+    --primary: hsl(354, 68%, 45%);
+    --primary-hover: hsl(354, 68%, 37%);
+    --primary-container: hsl(354, 68%, 93%);
+    --on-primary: #ffffff;
+    --on-primary-container: hsl(354, 68%, 20%);
 
-    /* ── Secondary ──────────────────────────────────────────
-     * Sheffield: Blue  |
-     * ─────────────────────────────────────────────────────── */
-    --brand-secondary: #304296;
-    --brand-secondary-light: #3652bf;
-    --brand-secondary-dark: #2d3c7b;
-    --brand-secondary-content: #ffffff;
+    /* ── Secondary ──────────────────────────────────────────────
+     * Supporting brand color. Complements primary without competing.
+     *
+     * Solid:     Admin sidebar, "Request a Quote" button, "New" badge,
+     *            B2B/Trade account indicator, secondary flow active step
+     * Container: Quote status chips, B2B feature callouts, info highlights
+     * ─────────────────────────────────────────────────────────── */
+    --secondary: hsl(229, 52%, 39%);
+    --secondary-hover: hsl(229, 52%, 32%);
+    --secondary-container: hsl(229, 52%, 93%);
+    --on-secondary: #ffffff;
+    --on-secondary-container: hsl(229, 52%, 20%);
 
-    /* ── Footer ─────────────────────────────────────────────
-     * Dark neutral footer. Change if client wants a colored footer.
-     * ─────────────────────────────────────────────────────── */
-    --brand-footer-bg: #0f172a; /* slate-900 */
-    --brand-footer-text: #cbd5e1; /* slate-300 */
-    --brand-footer-muted: #64748b; /* slate-500 */
-    --brand-footer-border: #334155; /* slate-700 */
+    /* ── Surface ────────────────────────────────────────────────
+     * background:      Body/page canvas — slightly off-white so
+     *                  cards (surface) visually lift off the page.
+     * surface:         Cards, modals, dropdowns, panels — pure white.
+     * surface-variant: Input backgrounds, alt table rows, skeletons.
+     * on-surface:      All main body text and headings.
+     * on-surface-variant: Captions, metadata, helper text, placeholders.
+     * ─────────────────────────────────────────────────────────── */
+    --background: hsl(0 0% 98%);
+    --on-background: hsl(0 0% 10%);
+    --surface: #ffffff;
+    --surface-variant: hsl(0 0% 94%);
+    --on-surface: hsl(0 0% 10%);
+    --on-surface-variant: hsl(0 0% 45%);
+
+    /* ── Outline ────────────────────────────────────────────────
+     * outline:         Input borders (unfocused), checkbox borders
+     * outline-variant: Table dividers, section separators
+     * ─────────────────────────────────────────────────────────── */
+    --outline: hsl(0 0% 62%);
+    --outline-variant: hsl(0 0% 89%);
+
+    /* ── Success ────────────────────────────────────────────────
+     * Solid:     "Order Confirmed" banner, "Payment Successful" state
+     * Container: "In Stock" label, "Delivered" chip, success toasts
+     * ─────────────────────────────────────────────────────────── */
+    --success: hsl(142, 60%, 40%);
+    --success-container: hsl(142, 60%, 92%);
+    --on-success: #ffffff;
+    --on-success-container: hsl(142, 60%, 15%);
+
+    /* ── Warning ────────────────────────────────────────────────
+     * Container: "Only 3 left", "Low Stock", "Pending", "Awaiting Payment"
+     * ─────────────────────────────────────────────────────────── */
+    --warning: hsl(38, 92%, 48%);
+    --warning-container: hsl(38, 92%, 93%);
+    --on-warning: #ffffff;
+    --on-warning-container: hsl(38, 92%, 18%);
+
+    /* ── Error ──────────────────────────────────────────────────
+     * Solid:     Destructive action buttons, critical banners
+     * Container: "Out of Stock" chip, form field error state
+     * ─────────────────────────────────────────────────────────── */
+    --error: hsl(0, 84%, 60%);
+    --error-container: hsl(0, 84%, 93%);
+    --on-error: #ffffff;
+    --on-error-container: hsl(0, 84%, 20%);
+
+    /* ── Inverse surface ────────────────────────────────────────
+     * inverse-surface:          Footer background, dark promotional banners
+     * inverse-on-surface:       Text on those dark surfaces
+     * inverse-on-surface-muted: Copyright, secondary footer text
+     * inverse-outline:          Footer top border, dividers within dark areas
+     * ─────────────────────────────────────────────────────────── */
+    --inverse-surface: hsl(222, 47%, 11%);
+    --inverse-on-surface: #cbd5e1;
+    --inverse-on-surface-muted: #64748b;
+    --inverse-outline: #334155;
+
+    /* ── Shape ──────────────────────────────────────────────────
+     * Controls ALL rounded corners across the app via a single value.
+     *   0rem   → fully sharp   |   0.5rem → balanced (default)
+     *   1rem   → friendly      |   9999px → pill-shaped
+     * ─────────────────────────────────────────────────────────── */
+    --radius: 0.5rem;
+
+    /* ── Backward-compat aliases ────────────────────────────────
+     * app.css still references --brand-* names.
+     * These keep everything working during Step 1.
+     * Removed in Step 2 when app.css is updated.
+     * ─────────────────────────────────────────────────────────── */
+    --brand-primary: var(--primary);
+    --brand-primary-light: var(--primary-hover);
+    --brand-primary-dark: hsl(354, 68%, 37%);
+    --brand-primary-content: var(--on-primary);
+
+    --brand-secondary: var(--secondary);
+    --brand-secondary-light: var(--secondary-hover);
+    --brand-secondary-dark: hsl(229, 52%, 32%);
+    --brand-secondary-content: var(--on-secondary);
+
+    --brand-footer-bg: var(--inverse-surface);
+    --brand-footer-text: var(--inverse-on-surface);
+    --brand-footer-muted: var(--inverse-on-surface-muted);
+    --brand-footer-border: var(--inverse-outline);
 }
 
 /* ============================================================
-   DARK MODE — scoped to .dark .app-layout
-   (.dark is on <html> via Flux, .app-layout is on <body>)
+   DARK MODE — admin panel only
+   (.dark is toggled on <html> by Flux, .app-layout is on <body>)
+   Only the admin layout uses dark mode — public pages stay light.
    ============================================================ */
 .dark .app-layout {
-    /* ── Primary (lightened for dark surfaces) ───────────── */
-    --brand-primary: #e0404f;
-    --brand-primary-light: #e85060;
-    --brand-primary-dark: #c02434;
-    --brand-primary-content: #ffffff;
+    /* Primary — lightened so it reads on dark surfaces */
+    --primary: hsl(354, 72%, 58%);
+    --primary-hover: hsl(354, 72%, 65%);
+    --primary-container: hsl(354, 60%, 20%);
+    --on-primary: #ffffff;
+    --on-primary-container: hsl(354, 68%, 90%);
 
-    /* ── Secondary (lightened for dark surfaces) ─────────── */
-    --brand-secondary: #4a5db8;
-    --brand-secondary-light: #5a6ec8;
-    --brand-secondary-dark: #304296;
-    --brand-secondary-content: #ffffff;
+    /* Secondary — lightened for dark surfaces */
+    --secondary: hsl(229, 55%, 52%);
+    --secondary-hover: hsl(229, 55%, 45%);
+    --secondary-container: hsl(229, 45%, 20%);
+    --on-secondary: #ffffff;
+    --on-secondary-container: hsl(229, 52%, 90%);
+
+    /* Surface */
+    --surface: hsl(0 0% 7%);
+    --surface-variant: hsl(0 0% 13%);
+    --on-surface: hsl(0 0% 93%);
+    --on-surface-variant: hsl(0 0% 63%);
+
+    /* Outline */
+    --outline: hsl(0 0% 50%);
+    --outline-variant: hsl(0 0% 20%);
+
+    /* Success */
+    --success: hsl(142, 55%, 52%);
+    --success-container: hsl(142, 55%, 18%);
+    --on-success: #ffffff;
+    --on-success-container: hsl(142, 60%, 88%);
+
+    /* Warning */
+    --warning: hsl(38, 90%, 58%);
+    --warning-container: hsl(38, 80%, 18%);
+    --on-warning: hsl(38, 92%, 10%);
+    --on-warning-container: hsl(38, 92%, 88%);
+
+    /* Error */
+    --error: hsl(0, 84%, 68%);
+    --error-container: hsl(0, 60%, 20%);
+    --on-error: #ffffff;
+    --on-error-container: hsl(0, 84%, 90%);
+
+    /* Backward-compat aliases for dark mode */
+    --brand-primary: var(--primary);
+    --brand-primary-light: var(--primary-hover);
+    --brand-primary-dark: hsl(354, 72%, 50%);
+    --brand-primary-content: var(--on-primary);
+
+    --brand-secondary: var(--secondary);
+    --brand-secondary-light: var(--secondary-hover);
+    --brand-secondary-dark: hsl(229, 52%, 39%);
+    --brand-secondary-content: var(--on-secondary);
 }
