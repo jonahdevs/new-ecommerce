@@ -38,14 +38,15 @@ new #[Defer] class extends Component {
 
 <div @class(['pt-10' => $this->products->isNotEmpty()])>
     @if ($this->products->isNotEmpty())
-        <h3 class="text-lg font-semibold mb-4">
+        <flux:heading size="lg" level="2"
+            class="text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold! mb-4!">
             {{ match ($type) {
                 'similar' => 'Similar Products',
                 'bought_together' => 'Frequently Bought Together',
                 'recently_viewed' => 'Recently Viewed Items',
                 default => 'You may also like',
             } }}
-        </h3>
+        </flux:heading>
 
         @if ($slider)
             <div x-data="{
@@ -54,7 +55,7 @@ new #[Defer] class extends Component {
                     if (this.swiper) {
                         this.swiper.destroy(true, true);
                     }
-            
+
                     this.swiper = new Swiper('#{{ $type }}', {
                         slidesPerView: 2,
                         spaceBetween: 12,
@@ -86,11 +87,11 @@ new #[Defer] class extends Component {
                             },
                         },
                     });
-            
+
                     this.$nextTick(() => {
                         document.getElementById('{{ $type }}').classList.remove('opacity-0');
                     });
-            
+
                 }
             }" class="relative">
                 <div class="swiper px-5" id="{{ $type }}">

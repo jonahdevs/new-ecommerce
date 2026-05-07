@@ -7,7 +7,18 @@ use App\Services\ProductService;
 
 <div class="<?php echo \Illuminate\Support\Arr::toCssClasses(['pt-10' => $this->products->isNotEmpty()]); ?>">
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->products->isNotEmpty()): ?>
-        <h3 class="text-lg font-semibold mb-4">
+        <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'lg','level' => '2','class' => 'text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold! mb-4!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::heading'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['size' => 'lg','level' => '2','class' => 'text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold! mb-4!']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
             <?php echo e(match ($type) {
                 'similar' => 'Similar Products',
                 'bought_together' => 'Frequently Bought Together',
@@ -15,7 +26,16 @@ use App\Services\ProductService;
                 default => 'You may also like',
             }); ?>
 
-        </h3>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
+<?php $attributes = $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
+<?php unset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
+<?php $component = $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
+<?php unset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
+<?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($slider): ?>
             <div x-data="{
@@ -24,7 +44,7 @@ use App\Services\ProductService;
                     if (this.swiper) {
                         this.swiper.destroy(true, true);
                     }
-            
+
                     this.swiper = new Swiper('#<?php echo e($type); ?>', {
                         slidesPerView: 2,
                         spaceBetween: 12,
@@ -56,11 +76,11 @@ use App\Services\ProductService;
                             },
                         },
                     });
-            
+
                     this.$nextTick(() => {
                         document.getElementById('<?php echo e($type); ?>').classList.remove('opacity-0');
                     });
-            
+
                 }
             }" class="relative">
                 <div class="swiper px-5" id="<?php echo e($type); ?>">
