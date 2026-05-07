@@ -7,8 +7,8 @@
             <a href="<?php echo e(route('shop.category', ['category' => $category['slug']])); ?>" wire:navigate
                 <?php if($mobileOpen): ?> wire:click="closeMobile" <?php endif; ?>
                 class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
-                    bg-zinc-100 text-zinc-600 hover:bg-brand-secondary hover:text-white
-                    border border-zinc-200 hover:border-brand-secondary transition-colors duration-150">
+                    bg-zinc-100 text-zinc-600 hover:bg-secondary hover:text-white
+                    border border-zinc-200 hover:border-secondary transition-colors duration-150">
                 <?php if (isset($component)) { $__componentOriginal9d0b0e731f78867d90e05462d3b99106 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal9d0b0e731f78867d90e05462d3b99106 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.squares-2x2','data' => ['class' => 'w-3 h-3']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -82,7 +82,7 @@
                 
                 <div class="flex-1 min-w-0">
                     <p
-                        class="text-sm font-medium text-zinc-800 truncate group-hover:text-brand-secondary transition-colors">
+                        class="text-sm font-medium text-zinc-800 truncate group-hover:text-secondary transition-colors">
                         <?php echo e($product['name']); ?>
 
                     </p>
@@ -96,14 +96,14 @@
 
                 <?php if (isset($component)) { $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-right','data' => ['class' => 'size-4 text-zinc-300 group-hover:text-brand-secondary group-hover:translate-x-0.5 transition-all duration-150 shrink-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-right','data' => ['class' => 'size-4 text-zinc-300 group-hover:text-secondary group-hover:translate-x-0.5 transition-all duration-150 shrink-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.chevron-right'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-4 text-zinc-300 group-hover:text-brand-secondary group-hover:translate-x-0.5 transition-all duration-150 shrink-0']); ?>
+<?php $component->withAttributes(['class' => 'size-4 text-zinc-300 group-hover:text-secondary group-hover:translate-x-0.5 transition-all duration-150 shrink-0']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -126,7 +126,7 @@
     <div class="border-t border-zinc-100 px-4 py-2.5">
         <a href="<?php echo e(route('shop.index')); ?>?search=<?php echo e(urlencode($search)); ?>" wire:navigate
             <?php if($mobileOpen): ?> wire:click="closeMobile" <?php endif; ?>
-            class="flex items-center justify-between text-xs font-medium text-brand-secondary hover:underline">
+            class="flex items-center justify-between text-xs font-medium text-secondary hover:underline">
             <span>See all results for "<?php echo e($search); ?>"</span>
             <?php if (isset($component)) { $__componentOriginal5c84e1af936cb00c34687173a7f14ca8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal5c84e1af936cb00c34687173a7f14ca8 = $attributes; } ?>
@@ -182,7 +182,7 @@
         <p class="text-sm font-medium text-zinc-500">No results for "<?php echo e($search); ?>"</p>
         <p class="text-xs text-zinc-400 mt-1">Try a different keyword or browse all products</p>
         <a href="<?php echo e(route('shop.index')); ?>" wire:navigate
-            class="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-brand-secondary hover:underline">
+            class="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-secondary hover:underline">
             Browse all products
             <?php if (isset($component)) { $__componentOriginal5c84e1af936cb00c34687173a7f14ca8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal5c84e1af936cb00c34687173a7f14ca8 = $attributes; } ?>
