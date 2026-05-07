@@ -5,7 +5,7 @@
     <?php echo $__env->make('partials.head', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </head>
 
-<body class="bg-zinc-50 text-zinc-700 font-sans min-h-screen">
+<body class="bg-surface text-on-surface font-sans min-h-screen">
 
     <?php $general = app('App\Settings\GeneralSettings'); ?>
 

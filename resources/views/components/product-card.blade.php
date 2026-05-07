@@ -190,7 +190,7 @@ new class extends Component {
 ?>
 
 <flux:card
-    {{ $attributes->class(['p-0 overflow-hidden h-full hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group ']) }}>
+    {{ $attributes->class(['p-0 overflow-hidden h-full hover:shadow-[0px_0px_6px_2px_rgba(0,_0,_0,_0.1)] transition-all duration-300 ease-in-out group hover:border-zinc-200']) }}>
     <div class="h-full flex flex-col">
 
         {{-- ── IMAGE ── --}}
@@ -199,10 +199,7 @@ new class extends Component {
                 <figure
                     class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-50 flex items-center justify-center">
                     @if ($product->image_url)
-                        <x-webp-image
-                            :src="$product->image_url"
-                            :webp="$product->webp_image_url"
-                            alt="{{ $product->name }}"
+                        <x-webp-image :src="$product->image_url" :webp="$product->webp_image_url" alt="{{ $product->name }}"
                             class="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                             loading="lazy" />
                     @else
@@ -214,28 +211,28 @@ new class extends Component {
             {{-- Left-side badges — top-left stack: discount, type, tags --}}
             @php
                 $tagPriority = [
-                    'sale'            => 0,
-                    'clearance'       => 1,
-                    'new arrival'     => 2,
-                    'best seller'     => 3,
-                    'trending'        => 4,
-                    'featured'        => 5,
+                    'sale' => 0,
+                    'clearance' => 1,
+                    'new arrival' => 2,
+                    'best seller' => 3,
+                    'trending' => 4,
+                    'featured' => 5,
                     'limited edition' => 6,
-                    'exclusive'       => 7,
-                    'premium'         => 8,
-                    'eco friendly'    => 9,
+                    'exclusive' => 7,
+                    'premium' => 8,
+                    'eco friendly' => 9,
                 ];
                 $tagColors = [
-                    'sale'            => 'bg-red-500',
-                    'clearance'       => 'bg-orange-500',
-                    'new arrival'     => 'bg-emerald-500',
-                    'best seller'     => 'bg-amber-500',
-                    'trending'        => 'bg-sky-500',
-                    'featured'        => 'bg-blue-500',
+                    'sale' => 'bg-red-500',
+                    'clearance' => 'bg-orange-500',
+                    'new arrival' => 'bg-emerald-500',
+                    'best seller' => 'bg-amber-500',
+                    'trending' => 'bg-sky-500',
+                    'featured' => 'bg-blue-500',
                     'limited edition' => 'bg-purple-500',
-                    'exclusive'       => 'bg-violet-500',
-                    'premium'         => 'bg-slate-600',
-                    'eco friendly'    => 'bg-green-600',
+                    'exclusive' => 'bg-violet-500',
+                    'premium' => 'bg-slate-600',
+                    'eco friendly' => 'bg-green-600',
                 ];
                 $sortedTags = $product->tags
                     ->sortBy(fn($t) => $tagPriority[strtolower($t->name)] ?? 99)
@@ -261,7 +258,8 @@ new class extends Component {
 
                 @foreach ($sortedTags as $tag)
                     @php $color = $tagColors[strtolower($tag->name)] ?? 'bg-zinc-500'; @endphp
-                    <span class="rounded-e-full px-2.5 py-0.5 text-xs font-semibold text-white tracking-wide {{ $color }}">
+                    <span
+                        class="rounded-e-full px-2.5 py-0.5 text-xs font-semibold text-white tracking-wide {{ $color }}">
                         {{ $tag->name }}
                     </span>
                 @endforeach
@@ -353,7 +351,7 @@ new class extends Component {
                     activeIndex: 0,
                     init() {
                         const thumbEl = this.$refs.thumbSwiper;
-                
+
                         if (thumbEl && {{ count($this->imageSlides) }} > 1) {
                             this.thumbSwiper = new Swiper(thumbEl, {
                                 spaceBetween: 10,
@@ -362,7 +360,7 @@ new class extends Component {
                                 watchSlidesProgress: true,
                             });
                         }
-                
+
                         this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
                             spaceBetween: 10,
                             thumbs: { swiper: this.thumbSwiper ?? null },
@@ -425,8 +423,7 @@ new class extends Component {
                             @if ($product->has_price_prefix)
                                 <span class="text-sm text-zinc-400">{{ $product->display_price_prefix }}</span>
                             @endif
-                            <span
-                                class="text-lg font-semibold text-secondary">{{ $product->display_price }}</span>
+                            <span class="text-lg font-semibold text-secondary">{{ $product->display_price }}</span>
                             @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                                 <span class="text-sm text-zinc-400 line-through">{{ $product->formatted_price }}</span>
                                 <flux:badge color="amber" size="sm">-{{ $product->discountPercentage() }}

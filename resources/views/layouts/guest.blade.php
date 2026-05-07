@@ -5,7 +5,7 @@
     @include('partials.head')
 </head>
 
-<body class="bg-zinc-50 text-zinc-700 font-sans min-h-screen">
+<body class="bg-surface text-on-surface font-sans min-h-screen">
 
     @inject('general', 'App\Settings\GeneralSettings')
 
