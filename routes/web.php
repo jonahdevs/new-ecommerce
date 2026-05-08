@@ -134,7 +134,8 @@ Route::middleware(['auth', 'customer', 'verified'])->name('customer.')->group(fu
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::livewire('/', 'pages::customer.settings.profile')->name('profile');
         Route::livewire('/security', 'pages::customer.settings.security')->name('security');
-        Route::livewire('/preferences', 'pages::customer.settings.preferences')->name('preferences');
+        Route::livewire('/notifications', 'pages::customer.settings.notifications')->name('notifications');
+        Route::livewire('/privacy', 'pages::customer.settings.privacy')->name('privacy');
     });
 });
 

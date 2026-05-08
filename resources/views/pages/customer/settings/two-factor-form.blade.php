@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Computed;
+use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
 
-new class extends Component {
+new #[Layout('layouts.customer-settings'), Title('Password & Security')] class extends Component {
     #[Computed]
     public function enabled(): bool
     {
@@ -53,7 +53,7 @@ new class extends Component {
     @else
         <div class="space-y-4">
             <flux:badge color="zinc" size="sm">{{ __('Not enabled') }}</flux:badge>
-            
+
             <flux:text>
                 {{ __('Two-factor authentication adds an extra layer of security by requiring a code from your authenticator app.') }}
             </flux:text>
