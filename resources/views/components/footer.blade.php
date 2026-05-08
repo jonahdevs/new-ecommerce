@@ -210,7 +210,8 @@
                 @endphp
                 @if (!empty($socialLinks))
                     <div class="flex items-center gap-4">
-                        <flux:text class="text-xs! sm:text-sm! text-inverse-on-surface-muted mr-2">Follow Us:</flux:text>
+                        <flux:text class="text-xs! sm:text-sm! text-inverse-on-surface-muted mr-2">Follow Us:
+                        </flux:text>
 
                         @if ($social->facebook_url)
                             <a href="{{ $social->facebook_url }}" target="_blank" rel="noopener noreferrer"

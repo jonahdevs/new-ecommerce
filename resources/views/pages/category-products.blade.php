@@ -433,7 +433,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     class="absolute inset-0 w-full h-full object-cover opacity-30" />
             @endif
             <div class="relative container mx-auto px-4 py-8 sm:py-10">
-                <flux:heading size="xl" level="1" class="text-2xl! sm:text-3xl! md:text-4xl! text-white mb-2">
+                <flux:heading size="xl" level="1"
+                    class="text-2xl! sm:text-3xl! md:text-4xl! text-white mb-2 font-serif! font-semibold!">
                     {{ $this->activeSubCategory?->name ?? $category->name }}
                 </flux:heading>
                 @if ($category->description)
@@ -518,7 +519,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     class="relative w-80 max-w-[85vw] bg-white h-full overflow-y-auto flex flex-col shadow-xl">
 
                     <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
-                        <flux:heading size="base" level="2" class="text-base! sm:text-lg!">Filters
+                        <flux:heading size="base" level="2"
+                            class="text-base! sm:text-lg! font-serif font-semibold">Filters
                         </flux:heading>
                         <div class="flex items-center gap-3">
                             @if ($this->hasActiveFilters)
@@ -559,7 +561,8 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="sticky top-44">
                     <div class="bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b flex items-center justify-between">
-                            <flux:heading size="base" level="2" class="text-base! sm:text-lg!">Filters
+                            <flux:heading size="base" level="2"
+                                class="text-base! sm:text-lg! font-serif font-semibold">Filters
                             </flux:heading>
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
@@ -600,8 +603,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                     {{ Str::plural('product', $this->products->total()) }} found
                                     @if ($this->hasActiveFilters)
                                         <span class="text-zinc-400 mx-1">•</span>
-                                        <button wire:click="clearAllFilters"
-                                            class="text-secondary hover:underline">
+                                        <button wire:click="clearAllFilters" class="text-secondary hover:underline">
                                             Clear all filters
                                         </button>
                                     @endif

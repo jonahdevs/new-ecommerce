@@ -168,8 +168,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     <section class="container mx-auto px-4 py-4 min-h-[80svh]">
         <!-- Wishlist Header -->
         <div class="flex items-center justify-between mb-4">
-            <flux:heading level="1"
-                class="text-xl! sm:text-2xl! lg:text-3xl! font-bold! text-zinc-900 dark:text-zinc-100">
+            <flux:heading level="1" class="text-xl! sm:text-2xl! lg:text-3xl! font-semibold! font-serif!">
                 Product Compare
             </flux:heading>
         </div>

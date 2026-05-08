@@ -306,7 +306,7 @@ new class extends Component {
 
             {{-- Name --}}
             <a href="{{ route('products.show', $product) }}" wire:click.prevent="goToProduct"
-                class="text-sm text-zinc-700 line-clamp-2 group-hover:underline group-hover:text-secondary">
+                class="text-sm text-zinc-700 line-clamp-2 font-medium tracking-wide">
                 {{ $product->name }}
             </a>
 
@@ -325,7 +325,7 @@ new class extends Component {
                         @if ($product->has_price_prefix)
                             <span class="text-xs text-zinc-400">{{ $product->display_price_prefix }}</span>
                         @endif
-                        <span class="font-semibold text-secondary">{{ $product->display_price }}</span>
+                        <span class="font-extrabold text-primary tracking-wide">{{ $product->display_price }}</span>
                         @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
                             <span class="text-xs text-zinc-400 line-through">{{ $product->formatted_price }}</span>
                         @endif
@@ -351,7 +351,7 @@ new class extends Component {
                     activeIndex: 0,
                     init() {
                         const thumbEl = this.$refs.thumbSwiper;
-
+                
                         if (thumbEl && {{ count($this->imageSlides) }} > 1) {
                             this.thumbSwiper = new Swiper(thumbEl, {
                                 spaceBetween: 10,
@@ -360,7 +360,7 @@ new class extends Component {
                                 watchSlidesProgress: true,
                             });
                         }
-
+                
                         this.mainSwiper = new Swiper(this.$refs.mainSwiper, {
                             spaceBetween: 10,
                             thumbs: { swiper: this.thumbSwiper ?? null },

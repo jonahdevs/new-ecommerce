@@ -252,7 +252,8 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
         {{-- Cart Header --}}
         <div class="flex items-center justify-between mb-4 gap-4">
-            <flux:heading level="1" class="font-bold! text-xl! sm:text-2xl! lg:text-3xl!">Cart</flux:heading>
+            <flux:heading level="1" class="font-semibold! text-xl! sm:text-2xl! lg:text-3xl! font-serif!">Cart
+            </flux:heading>
             @if ($this->cartItems->isNotEmpty())
                 <flux:button variant="filled" wire:click="clearCart" class="cursor-pointer" size="sm">
                     Clear Cart

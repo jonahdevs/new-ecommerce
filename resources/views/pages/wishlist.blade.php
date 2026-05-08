@@ -81,8 +81,7 @@ new #[Layout('layouts.guest')] class extends Component {
         <!-- Wishlist Header -->
         <div class="flex items-center justify-between mb-4">
             <div>
-                <flux:heading level="1"
-                    class="text-xl! sm:text-2xl! lg:text-3xl! font-bold! text-zinc-900 dark:text-zinc-100">
+                <flux:heading level="1" class="text-xl! sm:text-2xl! lg:text-3xl! font-semibold! font-serif!">
                     Wishlist
                 </flux:heading>
             </div>

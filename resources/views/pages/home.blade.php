@@ -140,7 +140,7 @@ new #[Layout('layouts.guest')] class extends Component {
             autoplayDelay: 5000,
             progressCircumference: 2 * Math.PI * 18,
             progressOffset: 0,
-
+        
             init() {
                 this.swiper = new Swiper('#heroSwiper', {
                     loop: true,
@@ -488,7 +488,7 @@ new #[Layout('layouts.guest')] class extends Component {
                             if (this.swiper) {
                                 this.swiper.destroy(true, true);
                             }
-
+                    
                             this.swiper = new Swiper('#youMayAlsoLike', {
                                 slidesPerView: 2,
                                 slidesPerGroup: 1,
@@ -664,7 +664,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                     <flux:icon.phone class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 </div>
                                 <flux:link href="tel:{{ $location['tel'] }}"
-                                    class="text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150">
+                                    class="text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!">
                                     {{ $location['phone'] }}
                                 </flux:link>
                             </div>
@@ -676,7 +676,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                     <flux:icon.envelope class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 </div>
                                 <flux:link href="mailto:{{ $location['email'] }}"
-                                    class="text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all">
+                                    class="text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!">
                                     {{ $location['email'] }}
                                 </flux:link>
                             </div>

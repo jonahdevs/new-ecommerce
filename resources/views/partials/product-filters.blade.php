@@ -4,13 +4,12 @@
 
 {{-- Categories — Shop page: navigates to category route --}}
 @if (isset($this->categories) && $this->categories->isNotEmpty())
-    <div class="p-4">
-        <flux:heading size="sm" class="mb-3">Categories</flux:heading>
-        <div class="max-h-64 overflow-y-auto space-y-1">
+    <div class="py-4">
+        <flux:heading size="sm" class="mb-3 px-4">Categories</flux:heading>
+        <div class="max-h-64 overflow-y-auto space-y-1 px-y">
             @foreach ($this->categories as $category)
                 <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
-                    class="flex items-center gap-2 px-2 py-2 rounded text-sm text-zinc-700 hover:bg-zinc-50 w-full">
-                    <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
+                    class="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 w-full">
                     {{ $category->name }}
                 </a>
             @endforeach
@@ -34,12 +33,11 @@
             @foreach ($this->subCategories as $sub)
                 <button type="button" wire:click="selectSubCategory('{{ $sub->slug }}')"
                     @class([
-                        'flex items-center gap-2 px-2 py-2 rounded text-sm w-full text-left',
+                        'block px-2 py-2 rounded text-sm w-full text-left',
                         'text-secondary font-medium bg-secondary/10' =>
                             $subCategorySlug === $sub->slug,
                         'text-zinc-700 hover:bg-zinc-50' => $subCategorySlug !== $sub->slug,
                     ])>
-                    <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
                     {{ $sub->name }}
                 </button>
             @endforeach
@@ -89,8 +87,10 @@
     </div>
     <div class="space-y-4">
         <div class="flex items-center justify-between text-sm">
-            <span class="text-zinc-600">{{ get_currency_symbol() }} <span x-text="Math.round(localMin).toLocaleString()"></span></span>
-            <span class="text-zinc-600">{{ get_currency_symbol() }} <span x-text="Math.round(localMax).toLocaleString()"></span></span>
+            <span class="text-zinc-600">{{ get_currency_symbol() }} <span
+                    x-text="Math.round(localMin).toLocaleString()"></span></span>
+            <span class="text-zinc-600">{{ get_currency_symbol() }} <span
+                    x-text="Math.round(localMax).toLocaleString()"></span></span>
         </div>
         <div class="relative">
             <div class="relative w-full h-2 bg-zinc-200 rounded pointer-events-none">
@@ -127,15 +127,7 @@
     </div>
 </div>
 
-<style>
-    input[type="range"]::-webkit-slider-thumb {
-        background-color: var(--secondary) !important;
-    }
 
-    input[type="range"]::-moz-range-thumb {
-        background-color: var(--secondary) !important;
-    }
-</style>
 
 {{-- Rating filter --}}
 <div class="p-4">
@@ -171,7 +163,7 @@
                 <flux:checkbox wire:key="brand-{{ $brand->slug }}" value="{{ $brand->slug }}"
                     :checked="in_array($brand->slug, $selectedBrands)"
                     wire:click="toggleBrand('{{ $brand->slug }}')" />
-                <flux:label class="font-normal cursor-pointer">{{ $brand->name }}</flux:label>
+                <flux:label class="font-normal cursor-pointer ">{{ ucfirst($brand->name) }}</flux:label>
             </flux:field>
         @empty
             <flux:text size="sm" class="px-2 py-2 text-zinc-500">No brands found</flux:text>
@@ -199,3 +191,14 @@
         </flux:field>
     </div>
 </div>
+
+
+<style>
+    input[type="range"]::-webkit-slider-thumb {
+        background-color: var(--secondary) !important;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        background-color: var(--secondary) !important;
+    }
+</style>

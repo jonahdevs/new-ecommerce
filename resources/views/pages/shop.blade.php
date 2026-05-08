@@ -379,7 +379,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     class="relative w-64 md:w-80 max-w-[85vw] bg-white h-full overflow-y-auto flex flex-col shadow-xl">
 
                     <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
-                        <flux:heading size="base" level="2" class="text-base! sm:text-lg!">Filters
+                        <flux:heading size="base" level="2"
+                            class="text-base! sm:text-lg! font-serif font-semibold">Filters
                         </flux:heading>
                         <div class="flex items-center gap-3">
                             @if ($this->hasActiveFilters)
@@ -420,7 +421,9 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="sticky top-44">
                     <div class="bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b flex items-center justify-between">
-                            <flux:heading size="base" level="2" class="text-base! sm:text-lg!">Filters
+                            <flux:heading size="base" level="2"
+                                class="text-base! sm:text-lg! font-serif font-semibold">
+                                Filters
                             </flux:heading>
                             @if ($this->hasActiveFilters)
                                 <button wire:click="clearAllFilters" type="button"
@@ -442,7 +445,8 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="mb-4">
                     <div class="hidden lg:flex items-center justify-between mb-2">
                         <div>
-                            <flux:heading size="xl" level="1" class="text-xl! sm:text-2xl! lg:text-3xl!">
+                            <flux:heading size="xl" level="1"
+                                class="text-xl! sm:text-2xl! lg:text-3xl! font-serif font-semibold">
                                 @if (!empty($search))
                                     Results for "{{ $search }}"
                                 @else
@@ -455,8 +459,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                     {{ Str::plural('product', $this->products->total()) }} found
                                     @if ($this->hasActiveFilters)
                                         <span class="text-zinc-400 mx-1">•</span>
-                                        <button wire:click="clearAllFilters"
-                                            class="text-secondary hover:underline">
+                                        <button wire:click="clearAllFilters" class="text-secondary hover:underline">
                                             Clear all filters
                                         </button>
                                     @endif
