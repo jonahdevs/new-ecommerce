@@ -92,7 +92,7 @@
         </section>
     </div>
 
-    <div class="sticky top-0 left-0 z-100 w-full">
+    <div class="sticky top-0 left-0 z-20 w-full">
         {{-- App Bar (logo + search + nav categories) --}}
         @persist('app-bar')
             <livewire:app-bar />

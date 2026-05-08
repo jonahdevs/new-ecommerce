@@ -6,8 +6,7 @@ use Livewire\Attributes\{Layout, Title};
 use Livewire\Component;
 use Artesaos\SEOTools\Facades\SEOMeta;
 
-new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extends Component
-{
+new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extends Component {
     /**
      * Per-flag privacy preferences. Persisted as JSON on users.privacy_preferences.
      *
@@ -38,11 +37,11 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
 
     public function togglePref(string $key): void
     {
-        if (! array_key_exists($key, $this->prefs)) {
+        if (!array_key_exists($key, $this->prefs)) {
             return;
         }
 
-        $this->prefs[$key] = ! $this->prefs[$key];
+        $this->prefs[$key] = !$this->prefs[$key];
 
         Auth::user()->update(['privacy_preferences' => $this->prefs]);
 
@@ -60,10 +59,7 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
 
         $payload = [
             'exported_at' => now()->toIso8601String(),
-            'user' => $user->only([
-                'id', 'name', 'display_name', 'email', 'phone_number',
-                'date_of_birth', 'created_at', 'newsletter_subscribed',
-            ]),
+            'user' => $user->only(['id', 'name', 'display_name', 'email', 'phone_number', 'date_of_birth', 'created_at', 'newsletter_subscribed']),
             'addresses' => $user->addresses->toArray(),
             'orders' => $user->orders->toArray(),
             'reviews' => $user->reviews->toArray(),
@@ -74,24 +70,23 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
             ],
         ];
 
-        $filename = "shopsmart-data-export-{$user->id}-".now()->format('Ymd-His').'.json';
+        $filename = "shopsmart-data-export-{$user->id}-" . now()->format('Ymd-His') . '.json';
 
-        return response()->streamDownload(
-            fn () => print json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-            $filename,
-            ['Content-Type' => 'application/json']
-        );
+        return response()->streamDownload(fn() => print json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), $filename, ['Content-Type' => 'application/json']);
     }
 
     public function deleteAccount()
     {
-        $this->validate([
-            'delete_password' => ['required', 'string', 'current_password'],
-            'confirm_delete' => ['accepted'],
-        ], [
-            'delete_password.current_password' => __('The password you entered is incorrect.'),
-            'confirm_delete.accepted' => __('Please confirm that you want to delete your account.'),
-        ]);
+        $this->validate(
+            [
+                'delete_password' => ['required', 'string', 'current_password'],
+                'confirm_delete' => ['accepted'],
+            ],
+            [
+                'delete_password.current_password' => __('The password you entered is incorrect.'),
+                'confirm_delete.accepted' => __('Please confirm that you want to delete your account.'),
+            ],
+        );
 
         $user = Auth::user();
 
@@ -122,9 +117,27 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
 
         @php
             $rows = [
-                ['key' => 'profile_public', 'title' => 'Profile Visibility', 'description' => 'Control who can see your profile information and reviews', 'on' => 'Public', 'off' => 'Private'],
-                ['key' => 'search_indexable', 'title' => 'Search Engine Indexing', 'description' => 'Allow search engines to index your public profile and reviews', 'on' => 'Indexable', 'off' => 'Hidden'],
-                ['key' => 'activity_visible', 'title' => 'Activity Status', 'description' => 'Show when you\'re active on the platform', 'on' => 'Visible', 'off' => 'Hidden'],
+                [
+                    'key' => 'profile_public',
+                    'title' => 'Profile Visibility',
+                    'description' => 'Control who can see your profile information and reviews',
+                    'on' => 'Public',
+                    'off' => 'Private',
+                ],
+                [
+                    'key' => 'search_indexable',
+                    'title' => 'Search Engine Indexing',
+                    'description' => 'Allow search engines to index your public profile and reviews',
+                    'on' => 'Indexable',
+                    'off' => 'Hidden',
+                ],
+                [
+                    'key' => 'activity_visible',
+                    'title' => 'Activity Status',
+                    'description' => 'Show when you\'re active on the platform',
+                    'on' => 'Visible',
+                    'off' => 'Hidden',
+                ],
             ];
         @endphp
 
@@ -134,10 +147,10 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
                 <span @class([
                     'text-[10px] font-bold px-2 py-0.5 border tracking-wider uppercase',
                     'bg-green-100 text-green-700 border-green-200' => $on,
-                    'bg-zinc-100 text-zinc-500 border-zinc-200' => ! $on,
+                    'bg-zinc-100 text-zinc-500 border-zinc-200' => !$on,
                 ])>{{ $on ? $row['on'] : $row['off'] }}</span>
                 <button type="button" wire:click="togglePref('{{ $row['key'] }}')"
-                    class="border-[1.5px] border-zinc-200 px-3 py-1 font-barlow-condensed text-[11px] font-extrabold tracking-wider uppercase transition-all hover:border-zinc-950 hover:bg-zinc-950 hover:text-white cursor-pointer">
+                    class="border-[1.5px] border-zinc-200 px-3 py-1 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:border-zinc-950 hover:bg-zinc-950 hover:text-white cursor-pointer">
                     {{ $on ? 'Disable' : 'Enable' }}
                 </button>
             </x-customer.privacy-row>
@@ -150,16 +163,20 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
             <flux:icon.cube />
         </x-slot:icon>
 
-        <x-customer.privacy-row title="Download Your Data" description="Download a JSON export of your personal data, orders, addresses, reviews and preferences.">
+        <x-customer.privacy-row title="Download Your Data"
+            description="Download a JSON export of your personal data, orders, addresses, reviews and preferences.">
             <button type="button" wire:click="downloadData"
-                class="border-[1.5px] border-zinc-950 px-3.5 py-1.5 font-barlow-condensed text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-zinc-950 hover:text-white cursor-pointer">
+                class="border-[1.5px] border-zinc-950 px-3.5 py-1.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-zinc-950 hover:text-white cursor-pointer">
                 <span wire:loading.remove wire:target="downloadData">Download</span>
                 <span wire:loading wire:target="downloadData">Preparing...</span>
             </button>
         </x-customer.privacy-row>
 
-        <x-customer.privacy-row title="Data Retention" description="Your data is retained for 7 years after account closure as required by law" :lastItem="true">
-            <span class="text-[10px] font-bold px-2 py-0.5 bg-zinc-100 text-zinc-500 border border-zinc-200 tracking-wider uppercase">7 Years</span>
+        <x-customer.privacy-row title="Data Retention"
+            description="Your data is retained for 7 years after account closure as required by law" :lastItem="true">
+            <span
+                class="text-[10px] font-bold px-2 py-0.5 bg-zinc-100 text-zinc-500 border border-zinc-200 tracking-wider uppercase">7
+                Years</span>
         </x-customer.privacy-row>
     </x-customer.settings-card>
 
@@ -176,7 +193,8 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
 
             <form wire:submit="deleteAccount" class="space-y-3">
                 <div>
-                    <label class="block text-[10px] font-bold tracking-[0.1em] uppercase text-zinc-500 mb-1.5">{{ __('Confirm your password') }}</label>
+                    <label
+                        class="block text-[10px] font-bold tracking-[0.1em] uppercase text-zinc-500 mb-1.5">{{ __('Confirm your password') }}</label>
                     <input type="password" wire:model="delete_password" placeholder="••••••••"
                         class="w-full max-w-md border-[1.5px] border-red-300 px-3 py-2.5 text-[13px] font-medium outline-none transition-all focus:border-red-500 focus:ring-[3px] focus:ring-red-500/8">
                     @error('delete_password')
@@ -193,7 +211,7 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
                 @enderror
 
                 <button type="submit" wire:confirm="This will sign you out and disable your account. Are you sure?"
-                    class="border-[1.5px] border-red-500 bg-red-500 text-white px-4 py-2 font-barlow-condensed text-[12px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-600 hover:border-red-600 cursor-pointer">
+                    class="border-[1.5px] border-red-500 bg-red-500 text-white px-4 py-2 font-serif text-[12px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-600 hover:border-red-600 cursor-pointer">
                     <span wire:loading.remove wire:target="deleteAccount">Delete My Account</span>
                     <span wire:loading wire:target="deleteAccount">Deleting...</span>
                 </button>

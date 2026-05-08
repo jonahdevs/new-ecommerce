@@ -35,28 +35,6 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 <?php $component->withAttributes(['href' => ''.e(route('home')).'','wire:navigate' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <?php if (isset($component)) { $__componentOriginal9f5e9841a29fcda640625c969c766980 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal9f5e9841a29fcda640625c969c766980 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.home','data' => ['class' => 'w-4 h-4 me-1.5 inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.home'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-4 h-4 me-1.5 inline-block']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal9f5e9841a29fcda640625c969c766980)): ?>
-<?php $attributes = $__attributesOriginal9f5e9841a29fcda640625c969c766980; ?>
-<?php unset($__attributesOriginal9f5e9841a29fcda640625c969c766980); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal9f5e9841a29fcda640625c969c766980)): ?>
-<?php $component = $__componentOriginal9f5e9841a29fcda640625c969c766980; ?>
-<?php unset($__componentOriginal9f5e9841a29fcda640625c969c766980); ?>
-<?php endif; ?>
                 Home
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

@@ -513,6 +513,22 @@ ui-modal:has(dialog[open])::before {
     background: rgba(0, 0, 0, 0.409);
 }
 
+/* ============================================================
+   14a. ANIMATIONS
+   ============================================================ */
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 @keyframes fadeInUp {
     from {
         transform: translateY(10px);

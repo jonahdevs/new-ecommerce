@@ -136,7 +136,7 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
 
         <x-slot:footer>
             <button type="button" wire:click="save"
-                class="inline-flex items-center gap-1.5 bg-primary text-white px-6 py-2.5 font-barlow-condensed text-[13px] font-extrabold tracking-wider uppercase transition-colors hover:bg-[#e03d00] cursor-pointer">
+                class="inline-flex items-center gap-1.5 bg-primary text-white px-6 py-2.5 font-serif text-[13px] font-extrabold tracking-wider uppercase transition-colors hover:bg-[#e03d00] cursor-pointer">
                 <span wire:loading.remove wire:target="save">Save Preferences</span>
                 <span wire:loading wire:target="save">Saving...</span>
             </button>

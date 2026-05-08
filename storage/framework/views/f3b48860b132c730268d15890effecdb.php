@@ -4,7 +4,7 @@
 
 $__newAttributes = [];
 $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
-    'as' => null,
+    'value' => null,
 ]));
 
 foreach ($attributes->all() as $__key => $__value) {
@@ -21,7 +21,7 @@ unset($__propNames);
 unset($__newAttributes);
 
 foreach (array_filter(([
-    'as' => null,
+    'value' => null,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 }
@@ -34,15 +34,9 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
-<?php if ($as === 'button'): ?>
-    <button <?php echo e($attributes->merge(['type' => 'button'])); ?>>
-        <?php echo e($slot); ?>
+<option
+    <?php echo e($attributes); ?>
 
-    </button>
-<?php else: ?>
-    <div <?php echo e($attributes); ?>>
-        <?php echo e($slot); ?>
-
-    </div>
-<?php endif; ?>
-<?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\vendor\livewire\flux\src/../stubs/resources/views/flux/button-or-div.blade.php ENDPATH**/ ?>
+    <?php if(isset($value)): ?> value="<?php echo e($value); ?>" <?php endif; ?>
+    <?php if(isset($value)): ?> <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = ''.e($value).''; ?>wire:key="<?php echo e($value); ?>" <?php endif; ?>
+><?php echo e($slot); ?></option><?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\vendor\livewire\flux\src/../stubs/resources/views/flux/select/option/variants/default.blade.php ENDPATH**/ ?>

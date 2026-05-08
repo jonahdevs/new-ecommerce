@@ -182,8 +182,7 @@ new class extends Component {
                                 ...
                             @endauth
                         @else
-                            <button type="button"
-                                class="flex items-center gap-2 hover:text-secondary transition-colors">
+                            <button type="button" class="flex items-center gap-2 hover:text-secondary transition-colors">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-zinc-800" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

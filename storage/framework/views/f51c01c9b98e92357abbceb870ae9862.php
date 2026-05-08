@@ -137,7 +137,7 @@ use App\Models\User;
 
                 <div class="flex items-center gap-2">
                     <label for="avatarInput"
-                        class="inline-flex items-center gap-1.5 border-[1.5px] border-zinc-950 px-3.5 py-1.5 font-barlow-condensed text-[12px] font-extrabold tracking-wider uppercase transition-all hover:bg-zinc-950 hover:text-white cursor-pointer">
+                        class="inline-flex items-center gap-1.5 border-[1.5px] border-zinc-950 px-3.5 py-1.5 font-serif text-[12px] font-extrabold tracking-wider uppercase transition-all hover:bg-zinc-950 hover:text-white cursor-pointer">
                         <?php if (isset($component)) { $__componentOriginal85dd2b36d9d92722bb4a9b898e37dffe = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal85dd2b36d9d92722bb4a9b898e37dffe = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.arrow-up-tray','data' => ['class' => 'w-3.5 h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -165,7 +165,7 @@ use App\Models\User;
                     </label>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->avatar): ?>
                         <button type="button" wire:click="removeAvatar"
-                            class="inline-flex items-center gap-1.5 border-[1.5px] border-red-500 text-red-500 px-3.5 py-1.5 font-barlow-condensed text-[12px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer">
+                            class="inline-flex items-center gap-1.5 border-[1.5px] border-red-500 text-red-500 px-3.5 py-1.5 font-serif text-[12px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer">
                             Remove
                         </button>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -361,7 +361,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
             <div class="flex items-center gap-2.5 mt-5 pt-4 border-t border-zinc-200">
                 <button type="submit"
-                    class="inline-flex items-center gap-1.5 bg-primary text-white px-6 py-2.5 font-barlow-condensed text-[13px] font-extrabold tracking-wider uppercase transition-colors hover:bg-[#e03d00] cursor-pointer">
+                    class="inline-flex items-center gap-1.5 bg-primary text-white px-6 py-2.5 font-serif text-[13px] font-extrabold tracking-wider uppercase transition-colors hover:bg-[#e03d00] cursor-pointer">
                     <span wire:loading.remove wire:target="save"><?php echo e(__('Save Changes')); ?></span>
                     <span wire:loading wire:target="save"><?php echo e(__('Saving...')); ?></span>
                 </button>

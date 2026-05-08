@@ -8,8 +8,7 @@ use Laravel\Fortify\Features;
 use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
 
-new #[Layout('layouts.customer-settings'), Title('Password & Security')] class extends Component
-{
+new #[Layout('layouts.customer-settings'), Title('Password & Security')] class extends Component {
     use PasswordValidationRules;
 
     public string $current_password = '';
@@ -48,22 +47,24 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
     #[Computed]
     public function twoFactorEnabled(): bool
     {
-        return ! is_null(Auth::user()->two_factor_secret);
+        return !is_null(Auth::user()->two_factor_secret);
     }
 
     #[Computed]
     public function twoFactorConfirmed(): bool
     {
-        return ! is_null(Auth::user()->two_factor_confirmed_at);
+        return !is_null(Auth::user()->two_factor_confirmed_at);
     }
 
     public function enableTwoFactor(): void
     {
-        Auth::user()->forceFill([
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null,
-        ])->save();
+        Auth::user()
+            ->forceFill([
+                'two_factor_secret' => null,
+                'two_factor_recovery_codes' => null,
+                'two_factor_confirmed_at' => null,
+            ])
+            ->save();
 
         Auth::user()->enableTwoFactorAuthentication();
 
@@ -106,11 +107,14 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
 
     public function logoutOtherDevices(): void
     {
-        $this->validate([
-            'logout_password' => ['required', 'string', 'current_password'],
-        ], [
-            'logout_password.current_password' => __('The password you entered is incorrect.'),
-        ]);
+        $this->validate(
+            [
+                'logout_password' => ['required', 'string', 'current_password'],
+            ],
+            [
+                'logout_password.current_password' => __('The password you entered is incorrect.'),
+            ],
+        );
 
         Auth::logoutOtherDevices($this->logout_password);
 
@@ -174,9 +178,11 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
 }; ?>
 
 @php
-    $inputClass = 'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 pr-10 text-[13px] font-medium outline-none transition-all focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary/8';
+    $inputClass =
+        'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 pr-10 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8';
     $labelClass = 'block text-[10px] font-bold tracking-[0.1em] uppercase text-zinc-500 mb-1.5';
-    $eyeBtnClass = 'absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer';
+    $eyeBtnClass =
+        'absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer';
 @endphp
 
 <div class="flex flex-col gap-5">
@@ -190,9 +196,10 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             <div class="mb-3.5">
                 <label class="{{ $labelClass }}">Current Password *</label>
                 <div class="relative">
-                    <input :type="$wire.showCurrentPassword ? 'text' : 'password'"
-                        wire:model="current_password" placeholder="Enter current password" class="{{ $inputClass }}" required>
-                    <button type="button" @click="$wire.showCurrentPassword = !$wire.showCurrentPassword" class="{{ $eyeBtnClass }}">
+                    <input :type="$wire.showCurrentPassword ? 'text' : 'password'" wire:model="current_password"
+                        placeholder="Enter current password" class="{{ $inputClass }}" required>
+                    <button type="button" @click="$wire.showCurrentPassword = !$wire.showCurrentPassword"
+                        class="{{ $eyeBtnClass }}">
                         <flux:icon.eye class="w-4 h-4" />
                     </button>
                 </div>
@@ -204,9 +211,10 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             <div class="mb-3.5">
                 <label class="{{ $labelClass }}">New Password *</label>
                 <div class="relative">
-                    <input :type="$wire.showNewPassword ? 'text' : 'password'"
-                        wire:model.live="password" placeholder="Min. 8 characters" class="{{ $inputClass }}" required>
-                    <button type="button" @click="$wire.showNewPassword = !$wire.showNewPassword" class="{{ $eyeBtnClass }}">
+                    <input :type="$wire.showNewPassword ? 'text' : 'password'" wire:model.live="password"
+                        placeholder="Min. 8 characters" class="{{ $inputClass }}" required>
+                    <button type="button" @click="$wire.showNewPassword = !$wire.showNewPassword"
+                        class="{{ $eyeBtnClass }}">
                         <flux:icon.eye class="w-4 h-4" />
                     </button>
                 </div>
@@ -215,9 +223,11 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
                     <div class="mt-2">
                         <div class="h-[3px] bg-zinc-200 rounded-full overflow-hidden mb-1">
                             <div class="h-full rounded-full transition-all duration-300"
-                                style="width: {{ $strength['strength'] }}%; background-color: {{ $strength['color'] }}"></div>
+                                style="width: {{ $strength['strength'] }}%; background-color: {{ $strength['color'] }}">
+                            </div>
                         </div>
-                        <div class="text-[10px] font-bold tracking-wider uppercase" style="color: {{ $strength['color'] }}">
+                        <div class="text-[10px] font-bold tracking-wider uppercase"
+                            style="color: {{ $strength['color'] }}">
                             {{ $strength['label'] }}
                         </div>
                     </div>
@@ -230,9 +240,10 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             <div>
                 <label class="{{ $labelClass }}">Confirm New Password *</label>
                 <div class="relative">
-                    <input :type="$wire.showConfirmPassword ? 'text' : 'password'"
-                        wire:model="password_confirmation" placeholder="Repeat new password" class="{{ $inputClass }}" required>
-                    <button type="button" @click="$wire.showConfirmPassword = !$wire.showConfirmPassword" class="{{ $eyeBtnClass }}">
+                    <input :type="$wire.showConfirmPassword ? 'text' : 'password'" wire:model="password_confirmation"
+                        placeholder="Repeat new password" class="{{ $inputClass }}" required>
+                    <button type="button" @click="$wire.showConfirmPassword = !$wire.showConfirmPassword"
+                        class="{{ $eyeBtnClass }}">
                         <flux:icon.eye class="w-4 h-4" />
                     </button>
                 </div>
@@ -243,7 +254,7 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
 
             <div class="flex items-center gap-2.5 mt-5 pt-4 border-t border-zinc-200">
                 <button type="submit"
-                    class="inline-flex items-center gap-1.5 bg-brand-primary text-white px-6 py-2.5 font-barlow-condensed text-[13px] font-extrabold tracking-wider uppercase transition-colors hover:bg-[#e03d00] cursor-pointer">
+                    class="inline-flex items-center gap-1.5 bg-primary text-white px-6 py-2.5 font-serif text-[13px] font-extrabold tracking-wider uppercase transition-colors hover:bg-[#e03d00] cursor-pointer">
                     <span wire:loading.remove wire:target="updatePassword">Update Password</span>
                     <span wire:loading wire:target="updatePassword">Updating...</span>
                 </button>
@@ -262,24 +273,30 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
                 <div class="flex items-start justify-between gap-4 mb-4">
                     <div class="flex-1">
                         <div class="text-[13px] font-bold text-zinc-950 mb-0.5">Authenticator App</div>
-                        <div class="text-[12px] text-zinc-500">Use Google Authenticator, Authy, or 1Password to generate one-time codes when signing in.</div>
+                        <div class="text-[12px] text-zinc-500">Use Google Authenticator, Authy, or 1Password to generate
+                            one-time codes when signing in.</div>
                     </div>
                     <div class="shrink-0">
                         @if ($this->twoFactorConfirmed)
-                            <span class="text-[10px] font-extrabold px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 tracking-wider uppercase">Enabled</span>
+                            <span
+                                class="text-[10px] font-extrabold px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 tracking-wider uppercase">Enabled</span>
                         @elseif ($this->twoFactorEnabled)
-                            <span class="text-[10px] font-extrabold px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 tracking-wider uppercase">Pending</span>
+                            <span
+                                class="text-[10px] font-extrabold px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 tracking-wider uppercase">Pending</span>
                         @else
-                            <span class="text-[10px] font-extrabold px-2 py-0.5 bg-zinc-100 text-zinc-500 border border-zinc-200 tracking-wider uppercase">Disabled</span>
+                            <span
+                                class="text-[10px] font-extrabold px-2 py-0.5 bg-zinc-100 text-zinc-500 border border-zinc-200 tracking-wider uppercase">Disabled</span>
                         @endif
                     </div>
                 </div>
 
                 @if ($this->twoFactorEnabled)
                     {{-- QR code & secret (shown until confirmed, and on demand after) --}}
-                    @if (! $this->twoFactorConfirmed)
+                    @if (!$this->twoFactorConfirmed)
                         <div class="bg-amber-50 border border-amber-200 p-4 mb-4">
-                            <div class="text-[12px] text-amber-900 font-semibold mb-3">{{ __('Scan this QR code in your authenticator app, then enter the generated code on your next sign-in to confirm setup.') }}</div>
+                            <div class="text-[12px] text-amber-900 font-semibold mb-3">
+                                {{ __('Scan this QR code in your authenticator app, then enter the generated code on your next sign-in to confirm setup.') }}
+                            </div>
                             <div class="flex items-start gap-4 flex-wrap">
                                 <div class="bg-white p-3 inline-block border border-zinc-200">
                                     {!! auth()->user()->twoFactorQrCodeSvg() !!}
@@ -294,32 +311,37 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
 
                     <div class="mb-4">
                         <details class="group">
-                            <summary class="cursor-pointer text-[12px] font-bold text-zinc-700 hover:text-brand-primary inline-flex items-center gap-1.5">
-                                <flux:icon.chevron-right class="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
+                            <summary
+                                class="cursor-pointer text-[12px] font-bold text-zinc-700 hover:text-primary inline-flex items-center gap-1.5">
+                                <flux:icon.chevron-right
+                                    class="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
                                 Show recovery codes
                             </summary>
-                            <div class="mt-3 bg-zinc-50 border border-zinc-200 p-3 grid grid-cols-2 gap-2 font-mono text-[11px]">
+                            <div
+                                class="mt-3 bg-zinc-50 border border-zinc-200 p-3 grid grid-cols-2 gap-2 font-mono text-[11px]">
                                 @foreach (json_decode(decrypt(auth()->user()->two_factor_recovery_codes), true) as $code)
                                     <div class="text-zinc-700">{{ $code }}</div>
                                 @endforeach
                             </div>
-                            <div class="text-[11px] text-zinc-500 mt-2">{{ __('Each code can only be used once. Store them somewhere safe.') }}</div>
+                            <div class="text-[11px] text-zinc-500 mt-2">
+                                {{ __('Each code can only be used once. Store them somewhere safe.') }}</div>
                         </details>
                     </div>
 
                     <div class="flex items-center gap-2 flex-wrap">
                         <button type="button" wire:click="regenerateRecoveryCodes"
-                            class="border-[1.5px] border-zinc-200 px-3.5 py-1.5 font-barlow-condensed text-[11px] font-extrabold tracking-wider uppercase transition-all hover:border-zinc-950 hover:bg-zinc-950 hover:text-white cursor-pointer">
+                            class="border-[1.5px] border-zinc-200 px-3.5 py-1.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:border-zinc-950 hover:bg-zinc-950 hover:text-white cursor-pointer">
                             Regenerate Recovery Codes
                         </button>
-                        <button type="button" wire:click="disableTwoFactor" wire:confirm="Disable two-factor authentication?"
-                            class="border-[1.5px] border-red-500 text-red-500 px-3.5 py-1.5 font-barlow-condensed text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer">
+                        <button type="button" wire:click="disableTwoFactor"
+                            wire:confirm="Disable two-factor authentication?"
+                            class="border-[1.5px] border-red-500 text-red-500 px-3.5 py-1.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer">
                             Disable
                         </button>
                     </div>
                 @else
                     <button type="button" wire:click="enableTwoFactor"
-                        class="border-[1.5px] border-zinc-950 px-3.5 py-1.5 font-barlow-condensed text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-zinc-950 hover:text-white cursor-pointer">
+                        class="border-[1.5px] border-zinc-950 px-3.5 py-1.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-zinc-950 hover:text-white cursor-pointer">
                         Enable
                     </button>
                 @endif
@@ -339,10 +361,14 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
                 <flux:icon.computer-desktop class="w-[18px] h-[18px] text-zinc-500" />
             </div>
             <div class="flex-1 min-w-0">
-                <div class="text-[13px] font-bold text-zinc-950">{{ $this->currentSession['browser'] }} on {{ $this->currentSession['platform'] }}</div>
-                <div class="text-[11px] text-zinc-500 mt-0.5">{{ $this->currentSession['ip'] ?: 'Unknown IP' }} · Active now</div>
+                <div class="text-[13px] font-bold text-zinc-950">{{ $this->currentSession['browser'] }} on
+                    {{ $this->currentSession['platform'] }}</div>
+                <div class="text-[11px] text-zinc-500 mt-0.5">{{ $this->currentSession['ip'] ?: 'Unknown IP' }} ·
+                    Active now</div>
             </div>
-            <span class="text-[10px] font-extrabold px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 tracking-wider uppercase shrink-0">This Device</span>
+            <span
+                class="text-[10px] font-extrabold px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 tracking-wider uppercase shrink-0">This
+                Device</span>
         </div>
 
         {{-- Sign out elsewhere --}}
@@ -352,9 +378,9 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             </div>
             <form wire:submit="logoutOtherDevices" class="flex items-stretch gap-2">
                 <input type="password" wire:model="logout_password" placeholder="Confirm your password"
-                    class="flex-1 border-[1.5px] border-zinc-200 px-3 py-2 text-[13px] font-medium outline-none transition-all focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary/8">
+                    class="flex-1 border-[1.5px] border-zinc-200 px-3 py-2 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8">
                 <button type="submit"
-                    class="border-[1.5px] border-red-500 text-red-500 px-3.5 font-barlow-condensed text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer whitespace-nowrap">
+                    class="border-[1.5px] border-red-500 text-red-500 px-3.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer whitespace-nowrap">
                     Sign Out Everywhere Else
                 </button>
             </form>
