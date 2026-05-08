@@ -139,11 +139,6 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
     public function proceedToCheckout(): void
     {
-        if ($this->hasAvailableAccessories) {
-            Flux::modal('accessories-confirmation')->show();
-            return;
-        }
-
         $this->redirect(route('checkout.summary'), navigate: true);
     }
 

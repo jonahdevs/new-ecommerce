@@ -1,0 +1,2821 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopSmart – Checkout</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        /* ── MAP MODAL OVERRIDE — wider ── */
+        #addressCreateModal .modal {
+            max-width: 680px;
+        }
+
+        #addressCreateModal .modal-body {
+            padding: 0;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* Leaflet overrides to match brand */
+        .leaflet-container {
+            font-family: 'Barlow', sans-serif !important;
+        }
+
+        .leaflet-control-zoom a {
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-weight: 800 !important;
+            color: var(--black) !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+            color: var(--orange) !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 0 !important;
+            border: 2px solid var(--orange) !important;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, .15) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: var(--orange) !important;
+        }
+
+        .leaflet-popup-content {
+            font-family: 'Barlow', sans-serif !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            margin: 8px 12px !important;
+        }
+    </style>
+    <style>
+        /* ── TOKENS ── */
+        :root {
+            --orange: #FF4500;
+            --black: #111111;
+            --white: #ffffff;
+            --light-gray: #f5f5f5;
+            --mid-gray: #e0e0e0;
+            --text-gray: #666666;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --nav-h: 64px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--white);
+            color: var(--black);
+            font-size: 14px;
+            overflow-x: hidden;
+        }
+
+        /* ── ANNOUNCEMENT ── */
+        .announcement {
+            background: var(--orange);
+            color: var(--white);
+            text-align: center;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* ── NAV ── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: var(--nav-h);
+            border-bottom: 1px solid var(--mid-gray);
+            position: sticky;
+            top: 0;
+            background: var(--white);
+            z-index: 200;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .05);
+        }
+
+        .logo {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: var(--black);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--orange);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--black);
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--orange);
+        }
+
+        .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .nav-icons svg {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transition: color .2s;
+        }
+
+        .nav-icons svg:hover {
+            color: var(--orange);
+        }
+
+        .cart-badge {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .cart-badge .badge {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            background: var(--orange);
+            color: var(--white);
+            font-size: 9px;
+            font-weight: 800;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--black);
+        }
+
+        /* Mobile drawer */
+        .mobile-menu {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--white);
+            z-index: 300;
+            padding: 32px;
+            transform: translateX(-100%);
+            transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-close {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 32px;
+        }
+
+        .mobile-menu ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .mobile-menu ul a {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 40px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: var(--black);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+            display: block;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--mid-gray);
+            transition: color .2s;
+        }
+
+        .mobile-menu ul a:hover {
+            color: var(--orange);
+        }
+
+        /* ── BREADCRUMB ── */
+        .breadcrumb {
+            padding: 12px 48px;
+            font-size: 12px;
+            color: var(--text-gray);
+            border-bottom: 1px solid var(--mid-gray);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .breadcrumb a {
+            color: var(--text-gray);
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--orange);
+        }
+
+        .breadcrumb strong {
+            color: var(--black);
+            font-weight: 600;
+        }
+
+        /* ── PROGRESS STEPPER ── */
+        .progress-bar {
+            padding: 20px 48px;
+            border-bottom: 1px solid var(--mid-gray);
+            background: var(--light-gray);
+        }
+
+        .steps {
+            display: flex;
+            align-items: center;
+            max-width: 520px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            flex-shrink: 0;
+            transition: all .3s;
+        }
+
+        .step-circle.done {
+            background: var(--green);
+            color: var(--white);
+            border: 2px solid var(--green);
+        }
+
+        .step-circle.active {
+            background: var(--orange);
+            color: var(--white);
+            border: 2px solid var(--orange);
+        }
+
+        .step-circle.pending {
+            background: var(--white);
+            color: var(--text-gray);
+            border: 2px solid var(--mid-gray);
+        }
+
+        .step-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .step-label.done {
+            color: var(--green);
+        }
+
+        .step-label.active {
+            color: var(--orange);
+        }
+
+        .step-label.pending {
+            color: var(--text-gray);
+        }
+
+        .step-connector {
+            flex: 1;
+            height: 2px;
+            background: var(--mid-gray);
+            margin: 0 12px;
+            min-width: 20px;
+        }
+
+        .step-connector.done {
+            background: var(--green);
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            padding: 36px 48px 20px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--black);
+        }
+
+        .page-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 52px;
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        .page-title em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-gray);
+            font-weight: 500;
+            padding-bottom: 4px;
+        }
+
+        .page-subtitle strong {
+            color: var(--black);
+        }
+
+        /* ── CHECKOUT LAYOUT ── */
+        .checkout-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 0;
+            padding: 0 48px;
+            align-items: start;
+        }
+
+        /* ── LEFT: REVIEW SECTIONS ── */
+        .review-sections {
+            padding-right: 40px;
+            border-right: 1px solid var(--mid-gray);
+            padding-top: 8px;
+        }
+
+        /* Section card */
+        .review-section {
+            border: 1.5px solid var(--mid-gray);
+            margin-top: 20px;
+            transition: border-color .2s;
+        }
+
+        .review-section:hover {
+            border-color: var(--black);
+        }
+
+        .review-section:first-child {
+            margin-top: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--mid-gray);
+            cursor: default;
+        }
+
+        .section-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Status icon */
+        .status-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .status-icon.complete {
+            background: var(--green);
+        }
+
+        .status-icon.complete svg {
+            color: var(--white);
+        }
+
+        .status-icon svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* Change button */
+        .change-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--orange);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity .2s;
+            padding: 4px 0;
+        }
+
+        .change-btn:hover {
+            opacity: .7;
+        }
+
+        .change-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .section-body {
+            padding: 20px;
+        }
+
+        /* Address detail */
+        .address-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .address-detail {
+            font-size: 13px;
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+
+        .address-tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            background: var(--black);
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        /* Shipping method */
+        .shipping-method {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .shipping-left {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .shipping-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .shipping-icon svg {
+            width: 20px;
+            height: 20px;
+            color: var(--black);
+        }
+
+        .shipping-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .shipping-desc {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .shipping-price {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .shipping-price.free {
+            color: var(--green);
+        }
+
+        /* Payment method */
+        .payment-method {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .payment-icon-box {
+            width: 52px;
+            height: 34px;
+            border: 1.5px solid var(--mid-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            color: var(--text-gray);
+            flex-shrink: 0;
+        }
+
+        .payment-icon-box.active {
+            border-color: var(--black);
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .payment-info .payment-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .payment-info .payment-sub {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        /* Payment method icons row */
+        .payment-accepted {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--mid-gray);
+        }
+
+        .pay-chip {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border: 1px solid var(--mid-gray);
+            color: var(--text-gray);
+            background: var(--light-gray);
+        }
+
+        .pay-chip.active {
+            border-color: var(--black);
+            color: var(--black);
+            background: var(--white);
+        }
+
+        /* Continue shopping */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--black);
+            text-decoration: none;
+            border-bottom: 1.5px solid var(--black);
+            padding-bottom: 2px;
+            margin: 28px 0 32px;
+            transition: color .2s, border-color .2s;
+        }
+
+        .back-link:hover {
+            color: var(--orange);
+            border-color: var(--orange);
+        }
+
+        /* ── RIGHT: ORDER SUMMARY ── */
+        .order-summary {
+            padding: 24px 0 32px 36px;
+            position: sticky;
+            top: calc(var(--nav-h) + 8px);
+        }
+
+        .summary-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--black);
+        }
+
+        /* Order items in summary */
+        .order-items {
+            margin-bottom: 0;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--mid-gray);
+        }
+
+        .order-item-img {
+            width: 56px;
+            height: 56px;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .order-item-img img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+        }
+
+        .item-qty-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--black);
+            color: var(--white);
+            font-size: 9px;
+            font-weight: 800;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .order-item-brand {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            margin-bottom: 2px;
+        }
+
+        .order-item-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--black);
+            line-height: 1.3;
+        }
+
+        .order-item-price {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--black);
+            flex-shrink: 0;
+        }
+
+        /* Summary lines */
+        .summary-lines {
+            padding-top: 4px;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--mid-gray);
+            font-size: 13px;
+        }
+
+        .summary-line .label {
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .summary-line .value {
+            font-weight: 700;
+        }
+
+        .summary-line .value.free {
+            color: var(--green);
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 18px;
+            border-bottom: 3px solid var(--black);
+        }
+
+        .summary-total .label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .summary-total .value {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--orange);
+        }
+
+        /* CTA */
+        .place-order-btn {
+            display: block;
+            width: 100%;
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            padding: 16px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background .2s, transform .1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .place-order-btn:hover {
+            background: #e03d00;
+            transform: translateY(-1px);
+        }
+
+        .place-order-btn:active {
+            transform: translateY(0);
+        }
+
+        .place-order-btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .place-order-btn .btn-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .place-order-btn .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, .3);
+            border-top-color: var(--white);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            display: none;
+        }
+
+        .place-order-btn.loading .spinner {
+            display: block;
+        }
+
+        .place-order-btn.loading .btn-text {
+            opacity: .7;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .secure-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .secure-line svg {
+            width: 12px;
+            height: 12px;
+            color: var(--green);
+        }
+
+        /* Payment icons at bottom */
+        .summary-pay-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding-top: 12px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .summary-pay-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .pay-icon {
+            background: var(--light-gray);
+            border: 1px solid var(--mid-gray);
+            padding: 3px 9px;
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--text-gray);
+        }
+
+        /* Trust row */
+        .trust-row {
+            margin-top: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            color: var(--text-gray);
+        }
+
+        .trust-item svg {
+            width: 13px;
+            height: 13px;
+            flex-shrink: 0;
+            color: var(--orange);
+        }
+
+        /* ── MODAL (Change overlay) ── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .5);
+            z-index: 400;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--white);
+            width: 100%;
+            max-width: 560px;
+            padding: 0;
+            animation: slideUp .25s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 3px solid var(--black);
+        }
+
+        .modal-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+        }
+
+        .modal-title em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-gray);
+            transition: color .2s, transform .2s;
+        }
+
+        .modal-close:hover {
+            color: var(--black);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--mid-gray);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Form elements inside modal */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            border: 1.5px solid var(--mid-gray);
+            padding: 10px 12px;
+            font-size: 13px;
+            font-family: 'Barlow', sans-serif;
+            font-weight: 500;
+            outline: none;
+            transition: border-color .2s;
+            color: var(--black);
+            background: var(--white);
+        }
+
+        .form-input:focus {
+            border-color: var(--orange);
+        }
+
+        .form-input::placeholder {
+            color: #bbb;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Shipping option picker */
+        .shipping-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .shipping-option {
+            border: 1.5px solid var(--mid-gray);
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: border-color .2s, background .2s;
+            position: relative;
+        }
+
+        .shipping-option:hover {
+            border-color: var(--black);
+        }
+
+        .shipping-option.selected {
+            border-color: var(--orange);
+            background: #fff8f6;
+        }
+
+        .shipping-option.selected::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--orange);
+        }
+
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-radio {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--mid-gray);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shipping-option.selected .option-radio {
+            border-color: var(--orange);
+        }
+
+        .shipping-option.selected .option-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--orange);
+        }
+
+        .option-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .option-desc {
+            font-size: 11px;
+            color: var(--text-gray);
+            margin-top: 2px;
+        }
+
+        .option-price {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .option-price.free {
+            color: var(--green);
+        }
+
+        /* Payment option picker */
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .payment-option {
+            border: 1.5px solid var(--mid-gray);
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: border-color .2s, background .2s;
+            position: relative;
+        }
+
+        .payment-option:hover {
+            border-color: var(--black);
+        }
+
+        .payment-option.selected {
+            border-color: var(--orange);
+            background: #fff8f6;
+        }
+
+        .payment-option.selected::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--orange);
+        }
+
+        .payment-option .option-radio {
+            flex-shrink: 0;
+        }
+
+        .payment-option.selected .option-radio {
+            border-color: var(--orange);
+        }
+
+        .payment-option.selected .option-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--orange);
+        }
+
+        .payment-logo {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border: 1.5px solid var(--mid-gray);
+            letter-spacing: 0.04em;
+            min-width: 52px;
+            text-align: center;
+        }
+
+        /* Modal buttons */
+        .btn-primary {
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            padding: 11px 24px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .btn-primary:hover {
+            background: #e03d00;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--black);
+            border: 1.5px solid var(--black);
+            padding: 11px 20px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--black);
+            color: var(--white);
+            padding: 12px 22px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            z-index: 999;
+            white-space: nowrap;
+            transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast svg {
+            width: 16px;
+            height: 16px;
+            color: var(--green);
+            flex-shrink: 0;
+        }
+
+        /* ── MOBILE STICKY CTA ── */
+        .mobile-cta-bar {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-top: 2px solid var(--black);
+            padding: 12px 16px;
+            z-index: 150;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .mobile-total-label {
+            font-size: 11px;
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .mobile-total-val {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--orange);
+        }
+
+        .mobile-place-btn {
+            background: var(--orange);
+            color: var(--white);
+            border: none;
+            padding: 12px 20px;
+            flex: 1;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        /* ── FOOTER ── */
+        .footer-bar {
+            background: var(--black);
+            color: var(--white);
+            padding: 12px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 48px;
+        }
+
+        .footer-bar a {
+            color: rgba(255, 255, 255, .5);
+            text-decoration: none;
+            margin-left: 14px;
+        }
+
+        .footer-bar a:hover {
+            color: var(--orange);
+        }
+
+        /* ── ADDRESS BOOK CARDS ── */
+        .addr-card {
+            border: 1.5px solid var(--mid-gray);
+            padding: 16px 18px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: border-color .2s, background .2s;
+            position: relative;
+        }
+
+        .addr-card:hover {
+            border-color: var(--black);
+        }
+
+        .addr-card.selected {
+            border-color: var(--orange);
+            background: #fff8f6;
+        }
+
+        .addr-card.selected::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--orange);
+        }
+
+        .addr-card .option-radio {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .addr-card.selected .option-radio {
+            border-color: var(--orange);
+        }
+
+        .addr-card.selected .option-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--orange);
+        }
+
+        .addr-card-tag {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 2px 7px;
+            background: var(--black);
+            color: var(--white);
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .addr-card-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .addr-card-detail {
+            font-size: 12px;
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+
+        /* Add new address row */
+        .add-new-addr-btn {
+            width: 100%;
+            border: 1.5px dashed var(--mid-gray);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            background: none;
+            cursor: pointer;
+            transition: border-color .2s, color .2s;
+            margin-top: 4px;
+        }
+
+        .add-new-addr-btn:hover {
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+
+        .add-new-addr-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Address label tag buttons */
+        .addr-tag-btn {
+            padding: 5px 14px;
+            border: 1.5px solid var(--mid-gray);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: var(--white);
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: border-color .2s, color .2s, background .2s;
+            font-family: 'Barlow', sans-serif;
+        }
+
+        .addr-tag-btn:hover {
+            border-color: var(--black);
+            color: var(--black);
+        }
+
+        .addr-tag-btn.selected {
+            border-color: var(--orange);
+            background: var(--orange);
+            color: var(--white);
+        }
+
+        /* Demo toggle strip */
+        .demo-strip {
+            background: var(--black);
+            color: var(--white);
+            padding: 10px 48px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .demo-strip span {
+            opacity: .6;
+        }
+
+        .demo-toggle {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, .3);
+            color: var(--white);
+            padding: 4px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-family: 'Barlow', sans-serif;
+            transition: background .2s, border-color .2s;
+        }
+
+        .demo-toggle.active {
+            background: var(--orange);
+            border-color: var(--orange);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1024px) {
+            nav {
+                padding: 0 24px;
+            }
+
+            .breadcrumb,
+            .progress-bar,
+            .page-header {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .checkout-layout {
+                grid-template-columns: 1fr 320px;
+                padding: 0 24px;
+            }
+
+            .review-sections {
+                padding-right: 24px;
+            }
+
+            .order-summary {
+                padding-left: 20px;
+            }
+
+            .footer-bar {
+                padding: 12px 24px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .breadcrumb,
+            .progress-bar,
+            .page-header {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .page-title {
+                font-size: 38px;
+            }
+
+            .steps {
+                gap: 0;
+            }
+
+            .step-label {
+                display: none;
+            }
+
+            .checkout-layout {
+                grid-template-columns: 1fr;
+                padding: 0 16px;
+            }
+
+            .review-sections {
+                padding-right: 0;
+                border-right: none;
+            }
+
+            .order-summary {
+                padding: 24px 0;
+                border-top: 1px solid var(--mid-gray);
+                position: static;
+                padding-bottom: 100px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bar {
+                padding: 12px 16px;
+                margin-top: 24px;
+            }
+
+            .mobile-cta-bar {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ANNOUNCEMENT -->
+    <div class="announcement">⚡ FLASH SALE – UP TO 60% OFF SELECTED ITEMS &nbsp;·&nbsp; ENDS SUNDAY</div>
+
+    <!-- NAV -->
+    <nav>
+        <a href="#" class="logo">SHOP<span>SMART</span></a>
+        <ul class="nav-links">
+            <li><a href="#">Women</a></li>
+            <li><a href="#">Men</a></li>
+            <li><a href="#">Kids</a></li>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Beauty</a></li>
+        </ul>
+        <div class="nav-icons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <div class="cart-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.5">
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                <span class="badge">3</span>
+            </div>
+            <button class="hamburger" id="hamburgerBtn">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MOBILE MENU -->
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="mobile-menu-close" id="mobileMenuClose">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+        <ul>
+            <li><a href="#">Women</a></li>
+            <li><a href="#">Men</a></li>
+            <li><a href="#">Kids</a></li>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Beauty</a></li>
+            <li><a href="#">Electronics</a></li>
+        </ul>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">
+        <a href="#">Home</a>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6" />
+        </svg>
+        <a href="#">Cart</a>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6" />
+        </svg>
+        <strong>Checkout</strong>
+    </div>
+
+    <!-- PROGRESS STEPPER -->
+    <div class="progress-bar">
+        <div class="steps">
+            <div class="step">
+                <div class="step-circle done">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+                <span class="step-label done">Cart</span>
+            </div>
+            <div class="step-connector done"></div>
+            <div class="step">
+                <div class="step-circle done">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+                <span class="step-label done">Address</span>
+            </div>
+            <div class="step-connector done"></div>
+            <div class="step">
+                <div class="step-circle done">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+                <span class="step-label done">Shipping</span>
+            </div>
+            <div class="step-connector done"></div>
+            <div class="step">
+                <div class="step-circle done">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+                <span class="step-label done">Payment</span>
+            </div>
+            <div class="step-connector done"></div>
+            <div class="step">
+                <div class="step-circle active">5</div>
+                <span class="step-label active">Review</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEMO TOGGLE (for mockup purposes) -->
+    <div class="demo-strip">
+        <span>🎛 DEMO — Simulate address book:</span>
+        <button class="demo-toggle active" id="toggleHasAddresses" onclick="setAddressMode(true)">Has Saved
+            Addresses</button>
+        <button class="demo-toggle" id="toggleNoAddresses" onclick="setAddressMode(false)">No Addresses</button>
+    </div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div class="page-title">CHECKOUT <em>SUMMARY</em></div>
+        <div class="page-subtitle">Review your order before placing</div>
+    </div>
+
+    <!-- CHECKOUT LAYOUT -->
+    <div class="checkout-layout">
+
+        <!-- ── LEFT: REVIEW SECTIONS ── -->
+        <div class="review-sections">
+
+            <!-- 1. DELIVERY ADDRESS -->
+            <div class="review-section" id="addressSection">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <div class="status-icon complete">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <span class="section-title">Delivery Address</span>
+                    </div>
+                    <button class="change-btn" onclick="handleAddressChange()">
+                        Change
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="section-body">
+                    <span class="address-tag">Home</span>
+                    <div class="address-name" id="displayName">John Kamau</div>
+                    <div class="address-detail" id="displayAddress">
+                        14 Westlands Road, Apt 3B<br>
+                        Nairobi, 00100<br>
+                        +254 712 345 678
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SHIPPING METHOD -->
+            <div class="review-section" id="shippingSection">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <div class="status-icon complete">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <span class="section-title">Shipping Method</span>
+                    </div>
+                    <button class="change-btn" onclick="openModal('shippingModal')">
+                        Change
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="shipping-method">
+                        <div class="shipping-left">
+                            <div class="shipping-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="1" y="3" width="15" height="13" />
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                                    <circle cx="5.5" cy="18.5" r="2.5" />
+                                    <circle cx="18.5" cy="18.5" r="2.5" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="shipping-name" id="displayShippingName">Standard Delivery</div>
+                                <div class="shipping-desc" id="displayShippingDesc">3–5 business days · Delivered to
+                                    your door</div>
+                            </div>
+                        </div>
+                        <div class="shipping-price" id="displayShippingPrice">KES 299</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PAYMENT METHOD -->
+            <div class="review-section" id="paymentSection">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <div class="status-icon complete">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <span class="section-title">Payment Method</span>
+                    </div>
+                    <button class="change-btn" onclick="openModal('paymentModal')">
+                        Change
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="payment-method">
+                        <div class="payment-icon-box active" id="displayPaymentIcon">CARD</div>
+                        <div class="payment-info">
+                            <div class="payment-name" id="displayPaymentName">Credit / Debit Card</div>
+                            <div class="payment-sub" id="displayPaymentSub">Visa, Mastercard, Amex accepted</div>
+                        </div>
+                    </div>
+                    <div class="payment-accepted">
+                        <span class="pay-chip active">VISA</span>
+                        <span class="pay-chip active">MASTERCARD</span>
+                        <span class="pay-chip">MPESA</span>
+                        <span class="pay-chip">PAYPAL</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BACK LINK -->
+            <a href="#" class="back-link">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="15 18 9 12 15 6" />
+                </svg>
+                Back to Cart
+            </a>
+
+        </div>
+
+        <!-- ── RIGHT: ORDER SUMMARY ── -->
+        <div class="order-summary">
+            <div class="summary-title">Order Summary</div>
+
+            <!-- Items -->
+            <div class="order-items">
+                <div class="order-item">
+                    <div class="order-item-img">
+                        <img src="https://images.unsplash.com/photo-1548171915-e78b4e053c3e?w=200&q=80" alt="Watch">
+                        <span class="item-qty-badge">1</span>
+                    </div>
+                    <div class="order-item-info">
+                        <div class="order-item-brand">Rolex</div>
+                        <div class="order-item-name">Rolex Datejust Women</div>
+                    </div>
+                    <div class="order-item-price">KES 10,999.99</div>
+                </div>
+                <div class="order-item">
+                    <div class="order-item-img">
+                        <img src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=200&q=80" alt="Shoes">
+                        <span class="item-qty-badge">2</span>
+                    </div>
+                    <div class="order-item-info">
+                        <div class="order-item-brand">Fashion Express</div>
+                        <div class="order-item-name">Red Shoes</div>
+                    </div>
+                    <div class="order-item-price">KES 69.98</div>
+                </div>
+                <div class="order-item">
+                    <div class="order-item-img">
+                        <img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?w=200&q=80"
+                            alt="Earring">
+                        <span class="item-qty-badge">1</span>
+                    </div>
+                    <div class="order-item-info">
+                        <div class="order-item-brand">Accessory Co.</div>
+                        <div class="order-item-name">Tropical Earring</div>
+                    </div>
+                    <div class="order-item-price">KES 19.99</div>
+                </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="summary-lines">
+                <div class="summary-line">
+                    <span class="label">Subtotal (4 items)</span>
+                    <span class="value">KES 11,089.96</span>
+                </div>
+                <div class="summary-line">
+                    <span class="label">Shipping</span>
+                    <span class="value" id="summaryShipping">KES 299.00</span>
+                </div>
+                <div class="summary-line">
+                    <span class="label">Tax (16% VAT)</span>
+                    <span class="value">KES 1,742.39</span>
+                </div>
+            </div>
+
+            <div class="summary-total">
+                <span class="label">Total</span>
+                <span class="value">KES 13,131.35</span>
+            </div>
+
+            <!-- CTA -->
+            <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()">
+                <div class="btn-inner">
+                    <div class="spinner"></div>
+                    <span class="btn-text">Place Order →</span>
+                </div>
+            </button>
+
+            <div class="secure-line">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                SSL Encrypted &amp; Secure Checkout
+            </div>
+
+            <div class="summary-pay-icons">
+                <div class="summary-pay-label">We accept</div>
+                <span class="pay-icon">VISA</span>
+                <span class="pay-icon">MPESA</span>
+                <span class="pay-icon">MASTERCARD</span>
+                <span class="pay-icon">PAYPAL</span>
+            </div>
+
+            <div class="trust-row">
+                <div class="trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-4" />
+                    </svg>
+                    30-Day Easy Returns
+                </div>
+                <div class="trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="3" width="15" height="13" />
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                        <circle cx="5.5" cy="18.5" r="2.5" />
+                        <circle cx="18.5" cy="18.5" r="2.5" />
+                    </svg>
+                    Free delivery on orders over KES 5,000
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer-bar">
+        <span>© 2026 ShopSmart. All Rights Reserved.</span>
+        <div>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Cookie Policy</a>
+        </div>
+    </div>
+
+    <!-- MOBILE CTA BAR -->
+    <div class="mobile-cta-bar">
+        <div>
+            <div class="mobile-total-label">Total</div>
+            <div class="mobile-total-val">KES 13,131.35</div>
+        </div>
+        <button class="mobile-place-btn" onclick="placeOrder()">Place Order →</button>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span id="toastMsg">Done!</span>
+    </div>
+
+    <!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
+
+    <!-- ADDRESS MODAL — PICKER (shown when user has saved addresses) -->
+    <div class="modal-backdrop" id="addressPickerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">SELECT <em>ADDRESS</em></div>
+                <button class="modal-close" onclick="closeModal('addressPickerModal')">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="addressPickerBody">
+                <!-- Address cards injected by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('addressPickerModal')">Cancel</button>
+                <button class="btn-primary" onclick="confirmAddressPick()">Use This Address</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDRESS MODAL — CREATE FORM (shown when no saved addresses) -->
+    <div class="modal-backdrop" id="addressCreateModal">
+        <div class="modal">
+            <div class="modal-header" id="createModalHeader">
+                <div class="modal-title" id="createModalTitle">NEW <em>ADDRESS</em></div>
+                <button class="modal-close" id="createModalClose" onclick="closeCreateModal()">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:0;">
+
+                <!-- MAP STEP -->
+                <div id="mapStep">
+                    <!-- Search bar over map -->
+                    <div style="padding:16px 20px 0;">
+                        <div class="form-label" style="margin-bottom:6px;">
+                            📍 Pin your exact delivery location
+                        </div>
+                        <div style="display:flex;gap:0;margin-bottom:10px;">
+                            <input class="form-input" id="mapSearchInput" type="text"
+                                placeholder="Search for a place or area…" style="flex:1;border-right:none;"
+                                onkeydown="if(event.key==='Enter')mapSearch()">
+                            <button onclick="mapSearch()"
+                                style="background:var(--black);color:var(--white);border:1.5px solid var(--black);padding:0 16px;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:'Barlow',sans-serif;white-space:nowrap;transition:background .2s;"
+                                onmouseover="this.style.background='var(--orange)'"
+                                onmouseout="this.style.background='var(--black)'">Search</button>
+                        </div>
+                        <!-- Pinned location display -->
+                        <div id="pinnedLocDisplay"
+                            style="display:none;background:var(--light-gray);border-left:3px solid var(--orange);padding:8px 12px;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--black);display:flex;align-items:flex-start;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)"
+                                stroke-width="2.5" style="flex-shrink:0;margin-top:1px;">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <span id="pinnedLocText">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Map container -->
+                    <div id="deliveryMap"
+                        style="width:100%;height:300px;background:var(--light-gray);position:relative;cursor:crosshair;">
+                    </div>
+
+                    <!-- Map hint -->
+                    <div
+                        style="padding:10px 20px;background:var(--light-gray);border-top:1px solid var(--mid-gray);font-size:11px;color:var(--text-gray);display:flex;align-items:center;gap:6px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        Click anywhere on the map to drop a delivery pin. Drag the pin to adjust.
+                    </div>
+
+                    <!-- Step footer -->
+                    <div
+                        style="padding:14px 20px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--mid-gray);">
+                        <button class="btn-secondary" id="mapStepBack" onclick="backToPickerFromCreate()"
+                            style="display:none;">← Back</button>
+                        <button class="btn-secondary" id="mapStepCancel" onclick="closeCreateModal()">Cancel</button>
+                        <button class="btn-primary" id="mapStepNext" onclick="proceedToForm()" disabled
+                            style="opacity:.4;cursor:not-allowed;">
+                            Continue to Details →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FORM STEP (hidden initially) -->
+                <div id="formStep" style="display:none;padding:20px;">
+
+                    <!-- Pinned location summary bar -->
+                    <div
+                        style="background:var(--light-gray);border-left:3px solid var(--orange);padding:10px 14px;margin-bottom:18px;font-size:12px;font-weight:600;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                        <div style="display:flex;align-items:flex-start;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)"
+                                stroke-width="2.5" style="flex-shrink:0;margin-top:1px;">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <span id="formPinnedText">—</span>
+                        </div>
+                        <button onclick="goBackToMap()"
+                            style="background:none;border:none;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--orange);white-space:nowrap;padding:0;">Change
+                            Pin</button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">First Name *</label>
+                            <input class="form-input" id="addrFirstName" type="text" placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input class="form-input" id="addrLastName" type="text" placeholder="Kamau">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Street / Area *</label>
+                        <input class="form-input" id="addrStreet" type="text" placeholder="Auto-filled from map pin">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City *</label>
+                            <input class="form-input" id="addrCity" type="text" placeholder="Nairobi">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Postcode</label>
+                            <input class="form-input" id="addrPostcode" type="text" placeholder="00100">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Delivery Instructions <span
+                                style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+                        <input class="form-input" id="addrInstructions" type="text"
+                            placeholder="e.g. Green gate, 2nd floor, call on arrival">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input class="form-input" id="addrPhone" type="text" placeholder="+254 712 345 678">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Label</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="addrTagRow">
+                            <button type="button" class="addr-tag-btn selected" data-tag="Home"
+                                onclick="selectTag(this)">Home</button>
+                            <button type="button" class="addr-tag-btn" data-tag="Work"
+                                onclick="selectTag(this)">Work</button>
+                            <button type="button" class="addr-tag-btn" data-tag="Other"
+                                onclick="selectTag(this)">Other</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer" id="formStepFooter" style="display:none;">
+                <button class="btn-secondary" onclick="goBackToMap()">← Back to Map</button>
+                <button class="btn-primary" onclick="saveNewAddress()">Save &amp; Use</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHIPPING MODAL -->
+    <div class="modal-backdrop" id="shippingModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">SELECT <em>SHIPPING</em></div>
+                <button class="modal-close" onclick="closeModal('shippingModal')">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shipping-options">
+                    <div class="shipping-option" id="ship_pickup"
+                        onclick="selectShipping('pickup','Pickup Station','2–3 days · Nairobi Pickup — Syokimau','FREE',0)">
+                        <div class="option-left">
+                            <div class="option-radio"></div>
+                            <div>
+                                <div class="option-name">Pickup Station</div>
+                                <div class="option-desc">2–3 days · Nairobi Pickup — Syokimau</div>
+                            </div>
+                        </div>
+                        <span class="option-price free">FREE</span>
+                    </div>
+                    <div class="shipping-option selected" id="ship_standard"
+                        onclick="selectShipping('standard','Standard Delivery','3–5 business days · Delivered to your door','KES 299',299)">
+                        <div class="option-left">
+                            <div class="option-radio"></div>
+                            <div>
+                                <div class="option-name">Standard Delivery</div>
+                                <div class="option-desc">3–5 business days · Delivered to your door</div>
+                            </div>
+                        </div>
+                        <span class="option-price">KES 299</span>
+                    </div>
+                    <div class="shipping-option" id="ship_express"
+                        onclick="selectShipping('express','Express Delivery','Next business day · Priority handling','KES 799',799)">
+                        <div class="option-left">
+                            <div class="option-radio"></div>
+                            <div>
+                                <div class="option-name">Express Delivery</div>
+                                <div class="option-desc">Next business day · Priority handling</div>
+                            </div>
+                        </div>
+                        <span class="option-price">KES 799</span>
+                    </div>
+                    <div class="shipping-option" id="ship_sameday"
+                        onclick="selectShipping('sameday','Same-Day Delivery','By 9 PM today · Nairobi CBD only','KES 1,299',1299)">
+                        <div class="option-left">
+                            <div class="option-radio"></div>
+                            <div>
+                                <div class="option-name">Same-Day Delivery</div>
+                                <div class="option-desc">By 9 PM today · Nairobi CBD only</div>
+                            </div>
+                        </div>
+                        <span class="option-price">KES 1,299</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('shippingModal')">Cancel</button>
+                <button class="btn-primary" onclick="confirmShipping()">Confirm Method</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div class="modal-backdrop" id="paymentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">SELECT <em>PAYMENT</em></div>
+                <button class="modal-close" onclick="closeModal('paymentModal')">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-options">
+                    <div class="payment-option selected" id="pay_card"
+                        onclick="selectPayment('card','Credit / Debit Card','Visa, Mastercard, Amex accepted','CARD')">
+                        <div class="option-radio"></div>
+                        <div class="payment-logo">CARD</div>
+                        <div>
+                            <div class="option-name">Credit / Debit Card</div>
+                            <div class="option-desc">Visa, Mastercard, Amex accepted</div>
+                        </div>
+                    </div>
+                    <div class="payment-option" id="pay_mpesa"
+                        onclick="selectPayment('mpesa','M-Pesa','Pay via Safaricom M-Pesa STK Push','M-PESA')">
+                        <div class="option-radio"></div>
+                        <div class="payment-logo">M-PESA</div>
+                        <div>
+                            <div class="option-name">M-Pesa</div>
+                            <div class="option-desc">Pay via Safaricom M-Pesa STK Push</div>
+                        </div>
+                    </div>
+                    <div class="payment-option" id="pay_paypal"
+                        onclick="selectPayment('paypal','PayPal','Pay securely with your PayPal account','PAYPAL')">
+                        <div class="option-radio"></div>
+                        <div class="payment-logo">PAYPAL</div>
+                        <div>
+                            <div class="option-name">PayPal</div>
+                            <div class="option-desc">Pay securely with your PayPal account</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('paymentModal')">Cancel</button>
+                <button class="btn-primary" onclick="confirmPayment()">Confirm Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════
+                                                    STATE
+                                                    ══════════════════════════════════════════ */
+        let selectedShipping = { id: 'standard', name: 'Standard Delivery', desc: '3–5 business days · Delivered to your door', price: 'KES 299', amount: 299 };
+        let selectedPayment = { id: 'card', name: 'Credit / Debit Card', sub: 'Visa, Mastercard, Amex accepted', icon: 'CARD' };
+        let pendingShipping = { ...selectedShipping };
+        let pendingPayment = { ...selectedPayment };
+
+        /* Address book — simulate two modes */
+        let addressBook = [
+            { id: 1, tag: 'Home', name: 'John Kamau', street: '14 Westlands Road, Apt 3B', city: 'Nairobi', postcode: '00100', phone: '+254 712 345 678' },
+            { id: 2, tag: 'Work', name: 'John Kamau', street: 'Upper Hill, Rahimtulla Tower', city: 'Nairobi', postcode: '00200', phone: '+254 712 345 678' },
+            { id: 3, tag: 'Other', name: 'Mary Kamau', street: '45 Thika Road, Suite 12', city: 'Nairobi', postcode: '00300', phone: '+254 723 456 789' },
+        ];
+        let hasAddresses = true;   /* toggled by demo strip */
+        let selectedAddressId = 1; /* currently checked-out address */
+        let pendingAddressId = 1;
+        let selectedAddrTag = 'Home';
+
+        /* ══════════════════════════════════════════
+           DEMO TOGGLE
+        ══════════════════════════════════════════ */
+        function setAddressMode(hasAddr) {
+            hasAddresses = hasAddr;
+            document.getElementById('toggleHasAddresses').classList.toggle('active', hasAddr);
+            document.getElementById('toggleNoAddresses').classList.toggle('active', !hasAddr);
+
+            if (hasAddr) {
+                /* Restore a default address into the display */
+                const addr = addressBook.find(a => a.id === selectedAddressId) || addressBook[0];
+                selectedAddressId = addr.id;
+                renderSelectedAddressOnPage(addr);
+            } else {
+                /* Show "no address" placeholder */
+                document.getElementById('displayName').textContent = 'No address saved';
+                document.getElementById('displayAddress').innerHTML = '<span style="color:var(--text-gray)">Add a delivery address to continue.</span>';
+                document.querySelector('.address-tag').textContent = '—';
+                document.querySelector('.address-tag').style.background = 'var(--text-gray)';
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           ADDRESS CHANGE ROUTING
+        ══════════════════════════════════════════ */
+        function handleAddressChange() {
+            if (hasAddresses) {
+                openAddressPicker();
+            } else {
+                openAddressCreate({ fromPicker: false });
+            }
+        }
+
+        /* ── PICKER (has addresses) ── */
+        function openAddressPicker() {
+            pendingAddressId = selectedAddressId;
+            renderAddressPickerCards();
+            openModal('addressPickerModal');
+        }
+
+        function renderAddressPickerCards() {
+            const body = document.getElementById('addressPickerBody');
+            body.innerHTML = addressBook.map(addr => `
+                                            <div class="addr-card ${addr.id === pendingAddressId ? 'selected' : ''}"
+                                                id="addrCard_${addr.id}"
+                                                onclick="pickAddress(${addr.id})">
+                                                <div class="option-radio" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--mid-gray);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;"></div>
+                                                <div style="flex:1;">
+                                                    <span class="addr-card-tag">${addr.tag}</span>
+                                                    <div class="addr-card-name">${addr.name}</div>
+                                                    <div class="addr-card-detail">${addr.street}<br>${addr.city}${addr.postcode ? ', ' + addr.postcode : ''}<br>${addr.phone}</div>
+                                                    </div>
+                                                </div>
+                                                `).join('') + `
+                                                <button class="add-new-addr-btn" onclick="openAddressCreate({ fromPicker: true })">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                                    Add New Address
+                                                </button>`;
+
+            /* Re-apply radio dot styling */
+            highlightPickedAddress(pendingAddressId);
+        }
+
+        function pickAddress(id) {
+            pendingAddressId = id;
+            document.querySelectorAll('.addr-card').forEach(c => c.classList.remove('selected'));
+            const card = document.getElementById('addrCard_' + id);
+            if (card) card.classList.add('selected');
+            highlightPickedAddress(id);
+        }
+
+        function highlightPickedAddress(id) {
+            document.querySelectorAll('.addr-card .option-radio').forEach(r => {
+                r.style.borderColor = 'var(--mid-gray)';
+                r.innerHTML = '';
+            });
+            const card = document.getElementById('addrCard_' + id);
+            if (card) {
+                const radio = card.querySelector('.option-radio');
+                radio.style.borderColor = 'var(--orange)';
+                radio.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:var(--orange);"></div>';
+            }
+        }
+
+        function confirmAddressPick() {
+            selectedAddressId = pendingAddressId;
+            const addr = addressBook.find(a => a.id === selectedAddressId);
+            if (addr) renderSelectedAddressOnPage(addr);
+            closeModal('addressPickerModal');
+            showToast('Delivery address updated!');
+        }
+
+        function closeCreateModal() {
+            closeModal('addressCreateModal');
+        }
+
+        function backToPickerFromCreate() {
+            closeModal('addressCreateModal');
+            openAddressPicker();
+        }
+
+        function selectTag(btn) {
+            document.querySelectorAll('.addr-tag-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedAddrTag = btn.dataset.tag;
+        }
+
+        /* ══════════════════════════════════════════
+           MAP STATE
+        ══════════════════════════════════════════ */
+        let deliveryMap = null;
+        let deliveryMarker = null;
+        let pinnedLatLng = null;
+        let pinnedAddress = { street: '', city: '', postcode: '' };
+        let openedFromPicker = false;
+
+        /* ── CREATE FORM ── */
+        function openAddressCreate({ fromPicker }) {
+            openedFromPicker = fromPicker;
+
+            /* Reset form fields */
+            ['addrFirstName', 'addrLastName', 'addrStreet', 'addrCity', 'addrPostcode', 'addrPhone', 'addrInstructions'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            selectedAddrTag = 'Home';
+            document.querySelectorAll('.addr-tag-btn').forEach(b => b.classList.toggle('selected', b.dataset.tag === 'Home'));
+
+            /* Show map step, hide form step */
+            document.getElementById('mapStep').style.display = '';
+            document.getElementById('formStep').style.display = 'none';
+            document.getElementById('formStepFooter').style.display = 'none';
+            document.getElementById('mapSearchInput').value = '';
+            document.getElementById('pinnedLocDisplay').style.display = 'none';
+
+            /* Back/Cancel button visibility */
+            const mapBack = document.getElementById('mapStepBack');
+            const mapCancel = document.getElementById('mapStepCancel');
+            if (fromPicker) {
+                mapBack.style.display = '';
+                mapCancel.style.display = 'none';
+            } else {
+                mapBack.style.display = 'none';
+                mapCancel.style.display = '';
+            }
+
+            /* Reset pin state */
+            pinnedLatLng = null;
+            pinnedAddress = { street: '', city: '', postcode: '' };
+            const nextBtn = document.getElementById('mapStepNext');
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '.4';
+            nextBtn.style.cursor = 'not-allowed';
+
+            /* If opened from picker, close picker first */
+            if (fromPicker) closeModal('addressPickerModal');
+
+            openModal('addressCreateModal');
+
+            /* Init map after modal is visible */
+            setTimeout(() => initMap(), 120);
+        }
+
+        /* ── MAP INIT ── */
+        function initMap() {
+            const mapEl = document.getElementById('deliveryMap');
+            if (!mapEl) return;
+
+            /* Default center: Nairobi */
+            const defaultCenter = [-1.2921, 36.8219];
+
+            if (deliveryMap) {
+                deliveryMap.remove();
+                deliveryMap = null;
+                deliveryMarker = null;
+            }
+
+            deliveryMap = L.map('deliveryMap', { zoomControl: true }).setView(defaultCenter, 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19,
+            }).addTo(deliveryMap);
+
+            /* Custom orange pin icon */
+            const pinIcon = L.divIcon({
+                className: '',
+                html: `<div style="
+      width:32px;height:40px;position:relative;
+      filter:drop-shadow(0 3px 6px rgba(0,0,0,.35));
+    ">
+                                                    <svg viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24S32 26 32 16C32 7.163 24.837 0 16 0z" fill="#FF4500" />
+                                                        <circle cx="16" cy="16" r="7" fill="white" />
+                                                        <circle cx="16" cy="16" r="4" fill="#FF4500" />
+                                                    </svg>
+                                                </div>`,
+                iconSize: [32, 40],
+                iconAnchor: [16, 40],
+                popupAnchor: [0, -42],
+            });
+
+            /* Click map to drop pin */
+            deliveryMap.on('click', (e) => {
+                placePin(e.latlng, pinIcon);
+            });
+
+            /* Try browser geolocation */
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                        deliveryMap.setView(latlng, 15);
+                    },
+                    () => { /* denied — stay on Nairobi */ }
+                );
+            }
+        }
+
+        /* ── PLACE PIN ── */
+        function placePin(latlng, icon) {
+            pinnedLatLng = latlng;
+
+            if (deliveryMarker) {
+                deliveryMarker.setLatLng(latlng);
+            } else {
+                const pinIcon = icon || L.divIcon({
+                    className: '',
+                    html: `<div style="width:32px;height:40px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35));">
+                                                    <svg viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24S32 26 32 16C32 7.163 24.837 0 16 0z" fill="#FF4500" />
+                                                        <circle cx="16" cy="16" r="7" fill="white" />
+                                                        <circle cx="16" cy="16" r="4" fill="#FF4500" />
+                                                    </svg>
+                                                </div>`,
+                    iconSize: [32, 40], iconAnchor: [16, 40], popupAnchor: [0, -42],
+                });
+                deliveryMarker = L.marker(latlng, { icon: pinIcon, draggable: true }).addTo(deliveryMap);
+                deliveryMarker.on('dragend', (e) => {
+                    placePin(e.target.getLatLng());
+                });
+            }
+
+            /* Reverse geocode via Nominatim */
+            reverseGeocode(latlng);
+        }
+
+        /* ── REVERSE GEOCODE ── */
+        function reverseGeocode(latlng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json`;
+            fetch(url, { headers: { 'Accept-Language': 'en' } })
+                .then(r => r.json())
+                .then(data => {
+                    const a = data.address || {};
+                    const road = a.road || a.pedestrian || a.footway || '';
+                    const suburb = a.suburb || a.neighbourhood || a.quarter || '';
+                    const city = a.city || a.town || a.village || a.county || '';
+                    const postcode = a.postcode || '';
+                    const street = [road, suburb].filter(Boolean).join(', ');
+                    const display = data.display_name || `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+                    const shortDisp = [street || suburb, city].filter(Boolean).join(', ') || display;
+
+                    pinnedAddress = { street: street || suburb || city, city, postcode };
+
+                    /* Show pinned location bar */
+                    const bar = document.getElementById('pinnedLocDisplay');
+                    bar.style.display = 'flex';
+                    document.getElementById('pinnedLocText').textContent = shortDisp;
+
+                    /* Popup on marker */
+                    if (deliveryMarker) {
+                        deliveryMarker.bindPopup(`<b>📍 Delivery here</b><br>${shortDisp}`).openPopup();
+                    }
+
+                    /* Enable next button */
+                    const nextBtn = document.getElementById('mapStepNext');
+                    nextBtn.disabled = false;
+                    nextBtn.style.opacity = '1';
+                    nextBtn.style.cursor = 'pointer';
+                })
+                .catch(() => {
+                    /* Fallback: use coordinates */
+                    const shortDisp = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+                    pinnedAddress = { street: shortDisp, city: '', postcode: '' };
+                    document.getElementById('pinnedLocDisplay').style.display = 'flex';
+                    document.getElementById('pinnedLocText').textContent = shortDisp;
+                    const nextBtn = document.getElementById('mapStepNext');
+                    nextBtn.disabled = false;
+                    nextBtn.style.opacity = '1';
+                    nextBtn.style.cursor = 'pointer';
+                });
+        }
+
+        /* ── MAP SEARCH ── */
+        function mapSearch() {
+            const q = document.getElementById('mapSearchInput').value.trim();
+            if (!q) return;
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, {
+                headers: { 'Accept-Language': 'en' }
+            })
+                .then(r => r.json())
+                .then(results => {
+                    if (!results.length) { showToast('Location not found. Try a different search.', false); return; }
+                    const r = results[0];
+                    const latlng = L.latLng(parseFloat(r.lat), parseFloat(r.lon));
+                    deliveryMap.setView(latlng, 16);
+                    placePin(latlng);
+                })
+                .catch(() => showToast('Search failed. Check your connection.', false));
+        }
+
+        /* ── STEP NAVIGATION ── */
+        function proceedToForm() {
+            if (!pinnedLatLng) return;
+            /* Pre-fill form from geocode result */
+            document.getElementById('addrStreet').value = pinnedAddress.street || '';
+            document.getElementById('addrCity').value = pinnedAddress.city || '';
+            document.getElementById('addrPostcode').value = pinnedAddress.postcode || '';
+
+            const pinText = document.getElementById('pinnedLocText').textContent;
+            document.getElementById('formPinnedText').textContent = pinText;
+
+            document.getElementById('mapStep').style.display = 'none';
+            document.getElementById('formStep').style.display = '';
+            document.getElementById('formStepFooter').style.display = '';
+        }
+
+        function goBackToMap() {
+            document.getElementById('formStep').style.display = 'none';
+            document.getElementById('formStepFooter').style.display = 'none';
+            document.getElementById('mapStep').style.display = '';
+            setTimeout(() => { if (deliveryMap) deliveryMap.invalidateSize(); }, 80);
+        }
+
+        /* ── SAVE ADDRESS ── */
+        function saveNewAddress() {
+            const first = document.getElementById('addrFirstName').value.trim();
+            const last = document.getElementById('addrLastName').value.trim();
+            const street = document.getElementById('addrStreet').value.trim();
+            const city = document.getElementById('addrCity').value.trim();
+            const post = document.getElementById('addrPostcode').value.trim();
+            const phone = document.getElementById('addrPhone').value.trim();
+            const instr = document.getElementById('addrInstructions') ? document.getElementById('addrInstructions').value.trim() : '';
+
+            if (!first || !street || !city) {
+                showToast('Please fill in required fields.', false);
+                return;
+            }
+
+            const newAddr = {
+                id: Date.now(),
+                tag: selectedAddrTag,
+                name: first + (last ? ' ' + last : ''),
+                street: street + (instr ? ` (${instr})` : ''),
+                city, postcode: post, phone,
+                lat: pinnedLatLng ? pinnedLatLng.lat : null,
+                lng: pinnedLatLng ? pinnedLatLng.lng : null,
+            };
+
+            addressBook.push(newAddr);
+            hasAddresses = true;
+            selectedAddressId = newAddr.id;
+            renderSelectedAddressOnPage(newAddr);
+            closeModal('addressCreateModal');
+            showToast('Address saved & selected!');
+        }
+
+        /* ── Render chosen address on the page ── */
+        function renderSelectedAddressOnPage(addr) {
+            const tagEl = document.querySelector('.address-tag');
+            tagEl.textContent = addr.tag;
+            tagEl.style.background = 'var(--black)';
+            document.getElementById('displayName').textContent = addr.name;
+            document.getElementById('displayAddress').innerHTML =
+                addr.street + '<br>' +
+                addr.city + (addr.postcode ? ', ' + addr.postcode : '') +
+                '<br>' + addr.phone;
+        }
+
+        /* ══════════════════════════════════════════
+           MODAL CONTROL
+        ══════════════════════════════════════════ */
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        document.querySelectorAll('.modal-backdrop').forEach(bd => {
+            bd.addEventListener('click', e => { if (e.target === bd) closeModal(bd.id); });
+        });
+
+        /* ══════════════════════════════════════════
+           SHIPPING
+        ══════════════════════════════════════════ */
+        function selectShipping(id, name, desc, price, amount) {
+            document.querySelectorAll('.shipping-option').forEach(o => o.classList.remove('selected'));
+            document.getElementById('ship_' + id).classList.add('selected');
+            pendingShipping = { id, name, desc, price, amount };
+        }
+        function confirmShipping() {
+            selectedShipping = { ...pendingShipping };
+            document.getElementById('displayShippingName').textContent = selectedShipping.name;
+            document.getElementById('displayShippingDesc').textContent = selectedShipping.desc;
+            const priceEl = document.getElementById('displayShippingPrice');
+            priceEl.textContent = selectedShipping.price;
+            priceEl.className = 'shipping-price' + (selectedShipping.amount === 0 ? ' free' : '');
+            const summaryShip = document.getElementById('summaryShipping');
+            summaryShip.textContent = selectedShipping.amount === 0 ? 'FREE' : selectedShipping.price + '.00';
+            summaryShip.className = 'value' + (selectedShipping.amount === 0 ? ' free' : '');
+            closeModal('shippingModal');
+            showToast('Shipping method updated!');
+        }
+
+        /* ══════════════════════════════════════════
+           PAYMENT
+        ══════════════════════════════════════════ */
+        function selectPayment(id, name, sub, icon) {
+            document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+            document.getElementById('pay_' + id).classList.add('selected');
+            pendingPayment = { id, name, sub, icon };
+        }
+        function confirmPayment() {
+            selectedPayment = { ...pendingPayment };
+            document.getElementById('displayPaymentName').textContent = selectedPayment.name;
+            document.getElementById('displayPaymentSub').textContent = selectedPayment.sub;
+            document.getElementById('displayPaymentIcon').textContent = selectedPayment.icon;
+            closeModal('paymentModal');
+            showToast('Payment method updated!');
+        }
+
+        /* ══════════════════════════════════════════
+           PLACE ORDER
+        ══════════════════════════════════════════ */
+        function placeOrder() {
+            const btn = document.getElementById('placeOrderBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btn.querySelector('.btn-text').textContent = '✓ Order Placed!';
+                btn.style.background = 'var(--green)';
+                showToast('Order placed successfully! 🎉');
+                setTimeout(() => {
+                    btn.querySelector('.btn-text').textContent = 'Place Order →';
+                    btn.style.background = '';
+                }, 3000);
+            }, 2000);
+        }
+
+        /* ══════════════════════════════════════════
+           MOBILE MENU
+        ══════════════════════════════════════════ */
+        document.getElementById('hamburgerBtn').addEventListener('click', () => {
+            document.getElementById('mobileMenu').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        });
+        document.getElementById('mobileMenuClose').addEventListener('click', () => {
+            document.getElementById('mobileMenu').classList.remove('open');
+            document.body.style.overflow = '';
+        });
+
+        /* ══════════════════════════════════════════
+           TOAST
+        ══════════════════════════════════════════ */
+        let toastTimer;
+        function showToast(msg, success = true) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.querySelector('svg').style.color = success ? 'var(--green)' : 'var(--red)';
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+    </script>
+</body>
+
+</html>
+setTimeout(() => {
+btn.querySelector('.btn-text').textContent = 'Place Order →';
+btn.style.background = '';
+}, 3000);
+}, 2000);
+}
+
+/* ── MOBILE MENU ── */
+document.getElementById('hamburgerBtn').addEventListener('click', () => {
+document.getElementById('mobileMenu').classList.add('open');
+document.body.style.overflow = 'hidden';
+});
+document.getElementById('mobileMenuClose').addEventListener('click', () => {
+document.getElementById('mobileMenu').classList.remove('open');
+document.body.style.overflow = '';
+});
+
+/* ── TOAST ── */
+let toastTimer;
+function showToast(msg, success = true) {
+const toast = document.getElementById('toast');
+const icon = toast.querySelector('svg');
+document.getElementById('toastMsg').textContent = msg;
+icon.style.color = success ? 'var(--green)' : 'var(--red)';
+toast.classList.add('show');
+clearTimeout(toastTimer);
+toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+</script>
+</body>
+
+</html>

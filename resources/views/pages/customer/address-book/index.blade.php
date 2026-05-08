@@ -33,6 +33,7 @@ new #[Layout('layouts.customer')] class extends Component {
         $this->form->label = 'Home';
         $this->isEditing = false;
         $this->showModal = true;
+        $this->dispatch('address-modal-opened');
     }
 
     public function openEdit(int $addressId): void
@@ -41,6 +42,7 @@ new #[Layout('layouts.customer')] class extends Component {
         $this->form->setAddress($address);
         $this->isEditing = true;
         $this->showModal = true;
+        $this->dispatch('address-modal-opened');
     }
 
     public function closeModal(): void

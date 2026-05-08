@@ -4,7 +4,7 @@
     </div>
 
     <div class="mx-auto container px-4 py-4 min-h-[80svh]">
-        <flux:heading level="1" class="text-2xl! font-bold!">
+        <flux:heading level="1" class="text-2xl! font-bold! font-serif">
             {{ $heading ?? 'Checkout' }}
         </flux:heading>
 
