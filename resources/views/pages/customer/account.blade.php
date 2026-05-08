@@ -41,131 +41,145 @@ new #[Layout('layouts.customer')] class extends Component {
 ?>
 
 <div class="space-y-4">
-    <flux:card class="grid grid-cols-2 md:grid-cols-4 gap-6 rounded-md">
-        {{-- Favorite Products --}}
-        <div class="flex items-center gap-4 group">
-            <div
-                class="shrink-0 p-3 rounded-md bg-rose-100 text-rose-600 
-                    group-hover:scale-105 transition">
-                <flux:icon.heart class="w-5 h-5" />
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {{-- Account Details (Read-only) --}}
+        <x-customer.card title="Account" titleEm="Details">
+            <x-slot:icon>
+                <flux:icon.user />
+            </x-slot:icon>
+            <x-slot:action>
+                <a href="{{ route('customer.settings.profile') }}" wire:navigate
+                    class="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-primary transition-opacity hover:opacity-70">
+                    <flux:icon.cog-6-tooth class="w-3.5 h-3.5" />
+                    Edit in Settings
+                </a>
+            </x-slot:action>
+
+            {{-- Avatar + Name --}}
+            <div class="flex items-center gap-3.5 pb-4 mb-4 border-b border-zinc-200">
+                @if ($this->user->avatar)
+                    <flux:avatar circle class="size-12 shrink-0" src="{{ $this->user->avatar }}" />
+                @else
+                    <flux:avatar circle class="size-12 shrink-0" name="{{ $this->user->name }}" />
+                @endif
+
+                <div>
+                    <div class="text-[15px] font-bold text-zinc-950 mb-0.5">{{ $user->name }}</div>
+                    <div class="text-[11px] text-zinc-500">Member since {{ $user->created_at->format('F Y') }}</div>
+                </div>
+            </div>
+
+            {{-- Details --}}
+            <div class="mb-4">
+                <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1">Email Address</div>
+                <div class="text-[14px] font-semibold text-zinc-950">{{ $user->email }}</div>
             </div>
             <div>
-                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Favorite Products</flux:text>
-                <flux:heading class="text-lg! sm:text-xl! font-semibold">
-                    {{ $this->favoriteProductsCount }}
-                </flux:heading>
+                <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1">Phone Number</div>
+                <div class="text-[14px] font-semibold text-zinc-950">{{ $user->phone_number ?? 'Not set' }}</div>
             </div>
-        </div>
+        </x-customer.card>
 
-        {{-- Total Orders --}}
-        <div class="flex items-center gap-4 group">
-            <div
-                class="shrink-0 p-3 rounded-md bg-blue-100 text-blue-600 
-                    group-hover:scale-105 transition">
-                <flux:icon.package class="w-5 h-5" />
-            </div>
-            <div>
-                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Total Orders</flux:text>
-                <flux:heading class="text-lg! sm:text-xl! font-semibold">
-                    {{ $this->totalOrders }}
-                </flux:heading>
-            </div>
-        </div>
+        {{-- Address Book Preview --}}
+        <x-customer.card title="Address" titleEm="Book">
+            <x-slot:icon>
+                <flux:icon.map-pin />
+            </x-slot:icon>
+            <x-slot:action>
+                <a href="{{ route('customer.address-book.index') }}" wire:navigate
+                    class="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-brand-primary transition-opacity hover:opacity-70">
+                    <flux:icon.chevron-right class="w-3.5 h-3.5" />
+                    Manage
+                </a>
+            </x-slot:action>
 
-        {{-- Total Reviews --}}
-        <div class="flex items-center gap-4 group">
-            <div
-                class="shrink-0 p-3 rounded-md bg-amber-100 text-amber-600 
-                    group-hover:scale-105 transition">
-                <flux:icon.star class="w-5 h-5" />
-            </div>
-            <div>
-                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Total Reviews</flux:text>
-                <flux:heading class="text-lg! sm:text-xl! font-semibold">
-                    {{ $this->totalReviews }}
-                </flux:heading>
-            </div>
-        </div>
-
-        {{-- Product Returns --}}
-        <div class="flex items-center gap-4 group">
-            <div
-                class="shrink-0 p-3 rounded-md bg-zinc-100 text-zinc-600 
-                    group-hover:scale-105 transition">
-                <flux:icon.arrow-path-rounded-square class="w-5 h-5" />
-            </div>
-            <div>
-                <flux:text class="text-zinc-500 text-xs! sm:text-sm!" size="sm">Product Returns</flux:text>
-                <flux:heading class="text-lg! sm:text-xl! font-semibold">
-                    {{ $this->productReturns }}
-                </flux:heading>
-            </div>
-        </div>
-
-    </flux:card>
-
-    <flux:card class="p-0 rounded-md">
-        <div class="border-b px-3 py-2">
-            <flux:heading size="lg" class="text-base! sm:text-lg!">Account Overview</flux:heading>
-        </div>
-        <div class="p-5 grid grid-cols-2 gap-4">
-            <div class="border rounded-md">
-                <div class="px-4 py-2 border-b">
-                    <flux:heading class="font-medium text-zinc-600 text-xs! sm:text-sm!">Account Details</flux:heading>
+            @if ($user->defaultAddress)
+                <div class="mb-1.5">
+                    <span
+                        class="inline-block text-[9px] font-extrabold tracking-widest uppercase px-2 py-0.5 bg-brand-primary text-white">Default</span>
                 </div>
-                <div class="p-4 text-xs! sm:text-sm! space-y-1">
-                    <flux:text>{{ $this->user->name }}</flux:text>
-                    <flux:text>{{ $this->user->email }}</flux:text>
-                    <flux:text>{{ $this->user->phone_number }}</flux:text>
+                <div class="mb-4">
+                    <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1">Shipping Address
+                    </div>
+                    <div class="text-[14px] font-semibold text-zinc-950">{{ $user->defaultAddress->full_name }}</div>
+                </div>
+                <div class="text-[12px] text-zinc-500 leading-[1.7]">
+                    {{ $user->defaultAddress->address }}<br>
+                    {{ $user->defaultAddress->area?->name }}, {{ $user->defaultAddress->county?->name }}<br>
+                    {{ $user->defaultAddress->phone_number }}
+                </div>
+            @else
+                <div class="text-[13px] text-zinc-500 italic mb-4">No default address set.</div>
+                {{-- <x-ui.button tag="a" href="{{ route('customer.address-book.index') }}" wire:navigate
+                    size="sm">
+                    <flux:icon.plus class="w-3.5 h-3.5" />
+                    Add Address
+                </x-ui.button> --}}
+            @endif
+        </x-customer.card>
+    </div>
+
+    {{-- Quick Settings Links --}}
+    <x-customer.card title="Settings" titleEm="Quick Links">
+        <x-slot:icon>
+            <flux:icon.cog-6-tooth />
+        </x-slot:icon>
+
+        <a href="#" wire:navigate
+            class="flex items-center justify-between px-5 py-3.5 border-b border-zinc-200 transition-colors hover:bg-zinc-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-zinc-100 flex items-center justify-center shrink-0">
+                    <flux:icon.user class="w-4 h-4 text-zinc-500" />
+                </div>
+                <div>
+                    <div class="text-[13px] font-bold text-zinc-950">Profile Settings</div>
+                    <div class="text-[11px] text-zinc-500">Update your personal information</div>
                 </div>
             </div>
+        </a>
 
-            <div class="border rounded-md">
-                <div class="px-4 py-2 border-b flex justify-between items-center">
-                    <flux:heading class="font-medium text-zinc-600 text-xs! sm:text-sm!">Address Book</flux:heading>
-
-                    <flux:button icon="pencil" size="xs" class="cursor-pointer"
-                        href="{{ $user->defaultAddress ? route('customer.address-book.edit', $user->defaultAddress?->id) : route('customer.address-book.create') }}">
-                    </flux:button>
+        <a href="#" wire:navigate
+            class="flex items-center justify-between px-5 py-3.5 border-b border-zinc-200 transition-colors hover:bg-zinc-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-zinc-100 flex items-center justify-center shrink-0">
+                    <flux:icon.lock-closed class="w-4 h-4 text-zinc-500" />
                 </div>
-                <div class="p-4 text-xs! sm:text-sm! space-y-1">
-                    @if ($user->defaultAddress)
-                        <flux:heading class="text-xs! sm:text-sm!">Default Shipping Address</flux:heading>
-
-                        <flux:text class="mt-2">{{ $this->user->defaultAddress?->full_name }}
-                        </flux:text>
-
-                        <flux:text>{{ $this->user->defaultAddress?->address }}</flux:text>
-
-                        <flux:text>
-                            {{ $this->user->defaultAddress?->area?->name . ', ' . $this->user->defaultAddress?->county?->name }}
-                        </flux:text>
-
-                        <flux:text>
-                            {{ implode(' / ', array_filter([$this->user->defaultAddress?->phone_number, $this->user->defaultAddress?->alternative_phone_number])) }}
-                        </flux:text>
-                    @endif
+                <div>
+                    <div class="text-[13px] font-bold text-zinc-950">Password & Security</div>
+                    <div class="text-[11px] text-zinc-500">Change password and manage 2FA</div>
                 </div>
             </div>
+            @if (!$user->two_factor_confirmed_at)
+                <span
+                    class="text-[9px] font-extrabold tracking-wider uppercase px-2 py-0.5 bg-orange-100 text-brand-primary border border-orange-200">Action
+                    Needed</span>
+            @endif
+        </a>
 
-            <div class="border rounded-md">
-                <div class="px-4 py-2 border-b">
-                    <flux:heading class="font-medium text-zinc-600 text-xs! sm:text-sm!">Newsletter preference
-                    </flux:heading>
+        <a href="#" wire:navigate
+            class="flex items-center justify-between px-5 py-3.5 border-b border-zinc-200 transition-colors hover:bg-zinc-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-zinc-100 flex items-center justify-center shrink-0">
+                    <flux:icon.bell class="w-4 h-4 text-zinc-500" />
                 </div>
-
-                <div class="p-4 text-xs! sm:text-sm!">
-                    <flux:text class="mb-3">Manage your email communications to stay updated with the latest news and
-                        offers.
-                    </flux:text>
-
-                    <flux:link href="{{ route('customer.settings.preferences') }}" wire:navigate
-                        class="text-secondary hover:underline ">Edit
-                        newsletter
-                        preference
-                    </flux:link>
+                <div>
+                    <div class="text-[13px] font-bold text-zinc-950">Notifications</div>
+                    <div class="text-[11px] text-zinc-500">Manage email, SMS and push preferences</div>
                 </div>
             </div>
-        </div>
-    </flux:card>
+        </a>
+
+        <a href="#" wire:navigate
+            class="flex items-center justify-between px-5 py-3.5 border-b-0 transition-colors hover:bg-zinc-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-zinc-100 flex items-center justify-center shrink-0">
+                    <flux:icon.shield-check class="w-4 h-4 text-zinc-500" />
+                </div>
+                <div>
+                    <div class="text-[13px] font-bold text-zinc-950">Privacy & Data</div>
+                    <div class="text-[11px] text-zinc-500">Control your data and privacy settings</div>
+                </div>
+            </div>
+        </a>
+    </x-customer.card>
 </div>

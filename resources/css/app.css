@@ -6,8 +6,6 @@
 @import "../../vendor/livewire/flux/dist/flux.css";
 @plugin "@tailwindcss/typography";
 
-
-
 /*
  |--------------------------------------------------------------------------
  | ACTIVE THEME
@@ -151,52 +149,52 @@
    ============================================================ */
 :root {
     /* ── MD3 colors re-asserted ──────────────────────────────── */
-    --color-primary:              var(--primary);
-    --color-primary-hover:        var(--primary-hover);
-    --color-primary-container:    var(--primary-container);
-    --color-on-primary:           var(--on-primary);
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-container: var(--primary-container);
+    --color-on-primary: var(--on-primary);
     --color-on-primary-container: var(--on-primary-container);
 
-    --color-secondary:              var(--secondary);
-    --color-secondary-hover:        var(--secondary-hover);
-    --color-secondary-container:    var(--secondary-container);
-    --color-on-secondary:           var(--on-secondary);
+    --color-secondary: var(--secondary);
+    --color-secondary-hover: var(--secondary-hover);
+    --color-secondary-container: var(--secondary-container);
+    --color-on-secondary: var(--on-secondary);
     --color-on-secondary-container: var(--on-secondary-container);
 
-    --color-surface:            var(--surface);
-    --color-surface-variant:    var(--surface-variant);
-    --color-on-surface:         var(--on-surface);
+    --color-surface: var(--surface);
+    --color-surface-variant: var(--surface-variant);
+    --color-on-surface: var(--on-surface);
     --color-on-surface-variant: var(--on-surface-variant);
 
-    --color-outline:         var(--outline);
+    --color-outline: var(--outline);
     --color-outline-variant: var(--outline-variant);
 
-    --color-success:              var(--success);
-    --color-success-container:    var(--success-container);
-    --color-on-success:           var(--on-success);
+    --color-success: var(--success);
+    --color-success-container: var(--success-container);
+    --color-on-success: var(--on-success);
     --color-on-success-container: var(--on-success-container);
 
-    --color-warning:              var(--warning);
-    --color-warning-container:    var(--warning-container);
-    --color-on-warning:           var(--on-warning);
+    --color-warning: var(--warning);
+    --color-warning-container: var(--warning-container);
+    --color-on-warning: var(--on-warning);
     --color-on-warning-container: var(--on-warning-container);
 
-    --color-error:              var(--error);
-    --color-error-container:    var(--error-container);
-    --color-on-error:           var(--on-error);
+    --color-error: var(--error);
+    --color-error-container: var(--error-container);
+    --color-on-error: var(--on-error);
     --color-on-error-container: var(--on-error-container);
 
-    --color-inverse-surface:          var(--inverse-surface);
-    --color-inverse-on-surface:       var(--inverse-on-surface);
+    --color-inverse-surface: var(--inverse-surface);
+    --color-inverse-on-surface: var(--inverse-on-surface);
     --color-inverse-on-surface-muted: var(--inverse-on-surface-muted);
-    --color-inverse-outline:          var(--inverse-outline);
+    --color-inverse-outline: var(--inverse-outline);
 
     /* ── Flux accent bridge ──────────────────────────────────── */
-    --color-accent:            var(--primary);
-    --color-accent-content:    var(--primary);
+    --color-accent: var(--primary);
+    --color-accent-content: var(--primary);
     --color-accent-foreground: var(--on-primary);
 
-    --color-input-ring:        #64748b; /* slate-500 — neutral, never primary */
+    --color-input-ring: #64748b; /* slate-500 — neutral, never primary */
     --color-input-ring-offset: #ffffff;
 
     --color-surface-alt: var(--surface-variant);
@@ -393,8 +391,8 @@ select:focus[data-flux-control] {
     @apply text-white;
 }
 
-[data-flux-sidebar] [data-flux-navlist-group]>div,
-[data-flux-sidebar] [data-flux-navlist-group]>ul {
+[data-flux-sidebar] [data-flux-navlist-group] > div,
+[data-flux-sidebar] [data-flux-navlist-group] > ul {
     @apply bg-transparent;
 }
 
@@ -442,7 +440,6 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
-
 
 /* ============================================================
    14. TIPTAP RICH EDITOR
@@ -497,10 +494,24 @@ flux-sidebar:hover::-webkit-scrollbar-thumb,
 
 /* In your CSS */
 ui-modal:has(dialog[open])::before {
-    content: '';
+    content: "";
     position: fixed;
     inset: 0;
     z-index: 10;
     backdrop-filter: blur(4px);
     background: rgba(0, 0, 0, 0.409);
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(10px);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.page-transition {
+    animation: fadeInUp 0.5s ease;
 }
