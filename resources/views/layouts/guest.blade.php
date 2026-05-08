@@ -5,7 +5,7 @@
     @include('partials.head')
 </head>
 
-<body class="bg-surface text-on-surface font-sans min-h-screen">
+<body {{ $attributes->merge(['class' => 'bg-white text-on-surface font-sans min-h-screen']) }}>
 
     @inject('general', 'App\Settings\GeneralSettings')
 

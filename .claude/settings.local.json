@@ -4,7 +4,8 @@
       "Bash(php artisan:*)",
       "Bash(php vendor/bin/pint --dirty --format agent)",
       "mcp__laravel-boost__tinker",
-      "Bash(\"/c/Users/jonah/.config/herd/bin/php83/php.exe\" \"D:/websites/sheffieldafrica_ecommerce/vendor/bin/pest\" tests/Feature/Admin/ActivityLogs/AdminDropdownChangelogLinksTest.php --compact)"
+      "Bash(\"/c/Users/jonah/.config/herd/bin/php83/php.exe\" \"D:/websites/sheffieldafrica_ecommerce/vendor/bin/pest\" tests/Feature/Admin/ActivityLogs/AdminDropdownChangelogLinksTest.php --compact)",
+      "PowerShell(php artisan view:clear)"
     ]
   },
   "enableAllProjectMcpServers": true,

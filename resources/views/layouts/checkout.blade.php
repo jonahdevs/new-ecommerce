@@ -1,4 +1,4 @@
-<x-layouts::guest>
+<x-layouts::guest class="bg-surface">
     <div class="bg-zinc-100">
         {{ $breadcrumbs ?? '' }}
     </div>
@@ -15,9 +15,13 @@
                 {{ $slot }}
             </div>
 
-            {{-- Order summary sidebar --}}
+            {{-- Order summary sidebar — pages can override via <x-slot:sidebar> --}}
             <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0 lg:sticky lg:top-28">
-                <livewire:order-summary />
+                @isset($sidebar)
+                    {{ $sidebar }}
+                @else
+                    <livewire:order-summary />
+                @endisset
             </div>
 
         </div>

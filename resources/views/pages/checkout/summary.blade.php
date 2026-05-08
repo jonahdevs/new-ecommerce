@@ -169,6 +169,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         $this->isEditingAddress = false;
         $this->showAddressPickerModal = false;
         $this->showAddressFormModal = true;
+        $this->dispatch('address-modal-opened');
     }
 
     public function startEditAddress(int $id): void
@@ -178,6 +179,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         $this->isEditingAddress = true;
         $this->showAddressPickerModal = false;
         $this->showAddressFormModal = true;
+        $this->dispatch('address-modal-opened');
     }
 
     public function saveAddress(): void
@@ -280,6 +282,19 @@ new #[Layout('layouts.checkout')] class extends Component {
 }; ?>
 
 <div>
+    <x-slot:breadcrumbs>
+        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
+            <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
+                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
+                Home
+            </flux:breadcrumbs.item>
+            <flux:breadcrumbs.item href="{{ route('cart') }}" wire:navigate>Cart</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>Checkout</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    </x-slot:breadcrumbs>
+
+    <x-slot:heading>Checkout</x-slot:heading>
+
     {{-- 1. DELIVERY ADDRESS --}}
     <div class="bg-white border border-zinc-200 mb-5">
         <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
@@ -308,7 +323,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         <div class="p-5">
             @if ($this->address)
                 <span
-                    class="inline-block text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-zinc-950 text-white mb-2">{{ $this->address->label ?? 'Home' }}</span>
+                    class="inline-block text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-secondary text-white mb-2">{{ $this->address->label ?? 'Home' }}</span>
                 <div class="text-[15px] font-semibold text-zinc-950 mb-1">{{ $this->address->full_name }}</div>
                 <div class="text-[13px] text-zinc-500 font-medium leading-relaxed">
                     {!! nl2br(e($this->address->address)) !!}<br>
@@ -317,7 +332,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
             @else
                 <div class="">
-                    <div class="bg-zinc-500 text-zinc-50 flex items-center px-1.5 py-[0.5px] mb-2 w-fit">
+                    <div class="bg-secondary text-white flex items-center px-1.5 py-[0.5px] mb-2 w-fit">
                         <flux:icon.minus class="size-5" />
                     </div>
 
@@ -448,19 +463,19 @@ new #[Layout('layouts.checkout')] class extends Component {
                 <span @class([
                     'text-[9px] font-black px-2 py-1 border',
                     $paymentMethod === 'card'
-                        ? 'bg-zinc-950 border-zinc-950 text-white'
+                        ? 'bg-secondary border-secondary text-white'
                         : 'bg-zinc-50 border-zinc-200 text-zinc-400',
                 ])>VISA</span>
                 <span @class([
                     'text-[9px] font-black px-2 py-1 border',
                     $paymentMethod === 'card'
-                        ? 'bg-zinc-950 border-zinc-950 text-white'
+                        ? 'bg-secondary border-secondary text-white'
                         : 'bg-zinc-50 border-zinc-200 text-zinc-400',
                 ])>MASTERCARD</span>
                 <span @class([
                     'text-[9px] font-black px-2 py-1 border',
                     $paymentMethod === 'mpesa'
-                        ? 'bg-zinc-950 border-zinc-950 text-white'
+                        ? 'bg-secondary border-secondary text-white'
                         : 'bg-zinc-50 border-zinc-200 text-zinc-400',
                 ])>MPESA</span>
             </div>

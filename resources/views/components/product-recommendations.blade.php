@@ -55,7 +55,7 @@ new #[Defer] class extends Component {
                     if (this.swiper) {
                         this.swiper.destroy(true, true);
                     }
-
+            
                     this.swiper = new Swiper('#{{ $type }}', {
                         slidesPerView: 2,
                         spaceBetween: 12,
@@ -87,11 +87,11 @@ new #[Defer] class extends Component {
                             },
                         },
                     });
-
+            
                     this.$nextTick(() => {
                         document.getElementById('{{ $type }}').classList.remove('opacity-0');
                     });
-
+            
                 }
             }" class="relative">
                 <div class="swiper px-5" id="{{ $type }}">
@@ -106,13 +106,13 @@ new #[Defer] class extends Component {
 
                 {{-- Nav Buttons — inside container, no overflow bleed --}}
                 <button type="button" @click="swiper?.slidePrev()"
-                    class="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                    class="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 z-1 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
                     <flux:icon.chevron-left class="size-3.5 text-white" />
                     <span class="sr-only">Previous</span>
                 </button>
 
                 <button type="button" @click="swiper?.slideNext()"
-                    class="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                    class="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-1 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
                     <flux:icon.chevron-right class="size-3.5 text-white" />
                     <span class="sr-only">Next</span>
                 </button>

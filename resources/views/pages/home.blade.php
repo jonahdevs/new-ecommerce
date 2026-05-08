@@ -234,7 +234,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 {{-- Prev / Next controls --}}
                 <button type="button" @click="swiper.slidePrev()"
-                    class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
+                    class="absolute top-0 start-0 z-1 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
                     <span
                         class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30 dark:bg-zinc-800/30 hover:bg-white/50 dark:hover:bg-zinc-800/60 focus:ring-4 focus:ring-white dark:focus:ring-zinc-800/70 focus:outline-none">
                         <flux:icon.arrow-long-left class="size-4 text-white" />
@@ -242,7 +242,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     </span>
                 </button>
                 <button type="button" @click="swiper.slideNext()"
-                    class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
+                    class="absolute top-0 end-0 z-1 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none">
                     <span
                         class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30 dark:bg-zinc-800/30 hover:bg-white/50 dark:hover:bg-zinc-800/60 focus:ring-4 focus:ring-white dark:focus:ring-zinc-800/70 focus:outline-none">
                         <flux:icon.arrow-long-right class="size-4 text-white" />
@@ -443,13 +443,13 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         {{-- Nav Buttons — inside container, no overflow bleed --}}
                         <button type="button" @click="swiper?.slidePrev()"
-                            class="absolute top-1/2 left-1 -translate-y-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                            class="absolute top-1/2 left-1 -translate-y-1/2 z-1 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
                             <flux:icon.chevron-left class="size-3.5 text-white" />
                             <span class="sr-only">Previous</span>
                         </button>
 
                         <button type="button" @click="swiper?.slideNext()"
-                            class="absolute top-1/2 right-1 -translate-y-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                            class="absolute top-1/2 right-1 -translate-y-1/2 z-1 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
                             <flux:icon.chevron-right class="size-3.5 text-white" />
                             <span class="sr-only">Next</span>
                         </button>
@@ -544,13 +544,13 @@ new #[Layout('layouts.guest')] class extends Component {
 
                         {{-- Nav Buttons — inside container, no overflow bleed --}}
                         <button type="button" @click="swiper?.slidePrev()"
-                            class="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                            class="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 z-1 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
                             <flux:icon.chevron-left class="size-3.5 text-white" />
                             <span class="sr-only">Previous</span>
                         </button>
 
                         <button type="button" @click="swiper?.slideNext()"
-                            class="absolute top-1/2 right-0 -translate-y-1/2  translate-x-1/2  z-30 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
+                            class="absolute top-1/2 right-0 -translate-y-1/2  translate-x-1/2  z-1 w-7 h-7 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
                             <flux:icon.chevron-right class="size-3.5 text-white" />
                             <span class="sr-only">Next</span>
                         </button>
