@@ -1,4 +1,4 @@
-<x-layouts::guest class="bg-surface">
+<x-layouts::guest>
     {{-- BREADCRUMB --}}
     <div class="bg-white border-b border-zinc-200 py-3">
         <flux:breadcrumbs class="container mx-auto px-4">

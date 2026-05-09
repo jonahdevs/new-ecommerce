@@ -1,4 +1,4 @@
-<x-layouts::guest class="bg-surface">
+<x-layouts::guest>
     <div class="bg-zinc-100">
         {{ $breadcrumbs ?? '' }}
     </div>
