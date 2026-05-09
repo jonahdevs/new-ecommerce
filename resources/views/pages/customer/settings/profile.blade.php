@@ -124,11 +124,6 @@ new #[Layout('layouts.customer-settings'), Title('Profile Settings')] class exte
     }
 }; ?>
 
-@php
-    $inputClass =
-        'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8';
-    $labelClass = 'block text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1.5';
-@endphp
 
 <div class="flex flex-col gap-5">
     {{-- Profile Photo --}}
@@ -204,52 +199,31 @@ new #[Layout('layouts.customer-settings'), Title('Profile Settings')] class exte
             </div>
         @endif
 
-        <form wire:submit="save" class="px-5 py-5">
-            <div class="mb-3.5">
-                <label class="{{ $labelClass }}">{{ __('Full Name') }} *</label>
-                <input type="text" wire:model="name" class="{{ $inputClass }}" required placeholder="John Doe">
-                @error('name')
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                @enderror
-            </div>
+        <form wire:submit="save" class="px-5 py-5 flex flex-col gap-3.5">
+            <x-customer.form-field label="{{ __('Full Name') }}" name="name" :required="true">
+                <input type="text" wire:model="name" class="customer-input" placeholder="John Doe" required>
+            </x-customer.form-field>
 
-            <div class="mb-3.5">
-                <label class="{{ $labelClass }}">{{ __('Display Name') }}</label>
-                <input type="text" wire:model="display_name" class="{{ $inputClass }}" placeholder="Optional">
-                <div class="text-[11px] text-zinc-500 mt-1">
-                    {{ __('How your name appears on reviews. Defaults to your full name when blank.') }}</div>
-                @error('display_name')
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                @enderror
-            </div>
+            <x-customer.form-field label="{{ __('Display Name') }}" name="display_name"
+                hint="{{ __('How your name appears on reviews. Defaults to your full name when blank.') }}">
+                <input type="text" wire:model="display_name" class="customer-input" placeholder="Optional">
+            </x-customer.form-field>
 
-            <div class="mb-3.5">
-                <label class="{{ $labelClass }}">{{ __('Email Address') }} *</label>
-                <input type="email" wire:model="email" class="{{ $inputClass }}" required>
-                <div class="text-[11px] text-zinc-500 mt-1">
-                    {{ __('A verification email will be sent if you change this.') }}</div>
-                @error('email')
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                @enderror
-            </div>
+            <x-customer.form-field label="{{ __('Email Address') }}" name="email" :required="true"
+                hint="{{ __('A verification email will be sent if you change this.') }}">
+                <input type="email" wire:model="email" class="customer-input" required>
+            </x-customer.form-field>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <div>
-                    <label class="{{ $labelClass }}">{{ __('Phone Number') }}</label>
-                    <input type="tel" wire:model="phone_number" class="{{ $inputClass }}"
+                <x-customer.form-field label="{{ __('Phone Number') }}" name="phone_number">
+                    <input type="tel" wire:model="phone_number" class="customer-input"
                         placeholder="+254 712 345 678">
-                    @error('phone_number')
-                        <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="{{ $labelClass }}">{{ __('Date of Birth') }}</label>
-                    <input type="date" wire:model="date_of_birth" class="{{ $inputClass }}"
+                </x-customer.form-field>
+
+                <x-customer.form-field label="{{ __('Date of Birth') }}" name="date_of_birth">
+                    <input type="date" wire:model="date_of_birth" class="customer-input"
                         max="{{ now()->format('Y-m-d') }}">
-                    @error('date_of_birth')
-                        <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
+                </x-customer.form-field>
             </div>
 
             <div class="flex items-center gap-2.5 mt-5 pt-4 border-t border-zinc-200">
@@ -262,26 +236,4 @@ new #[Layout('layouts.customer-settings'), Title('Profile Settings')] class exte
         </form>
     </x-customer.settings-card>
 
-    {{-- Account Info --}}
-    <x-customer.settings-card title="Account" titleEm="Info">
-        <x-slot:icon>
-            <flux:icon.calendar />
-        </x-slot:icon>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 px-5 py-5">
-            <div class="py-2.5 md:pr-5 md:border-r md:border-zinc-200">
-                <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500">Member Since</div>
-                <div class="text-[14px] font-bold text-zinc-950 mt-1">{{ auth()->user()->created_at->format('F Y') }}
-                </div>
-            </div>
-            <div class="py-2.5 md:pl-5">
-                <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500">Account Type</div>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[14px] font-bold text-zinc-950">Standard</span>
-                    <span
-                        class="text-[10px] font-extrabold px-2 py-0.5 bg-zinc-100 text-zinc-500 border border-zinc-200 tracking-wider uppercase">Free</span>
-                </div>
-            </div>
-        </div>
-    </x-customer.settings-card>
 </div>

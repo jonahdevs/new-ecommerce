@@ -1,0 +1,1 @@
+<x-customer.form-field hint="Some helpful text" />

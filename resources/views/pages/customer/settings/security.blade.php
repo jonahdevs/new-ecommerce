@@ -177,13 +177,6 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
     }
 }; ?>
 
-@php
-    $inputClass =
-        'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 pr-10 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8';
-    $labelClass = 'block text-[10px] font-bold tracking-[0.1em] uppercase text-zinc-500 mb-1.5';
-    $eyeBtnClass =
-        'absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer';
-@endphp
 
 <div class="flex flex-col gap-5">
     {{-- Change Password --}}
@@ -192,65 +185,56 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             <flux:icon.lock-closed />
         </x-slot:icon>
 
-        <form wire:submit="updatePassword" class="px-5 py-5">
-            <div class="mb-3.5">
-                <label class="{{ $labelClass }}">Current Password *</label>
-                <div class="relative">
-                    <input :type="$wire.showCurrentPassword ? 'text' : 'password'" wire:model="current_password"
-                        placeholder="Enter current password" class="{{ $inputClass }}" required>
+        <form wire:submit="updatePassword" class="px-5 py-5 flex flex-col gap-3.5">
+            <x-customer.form-field label="Current Password" name="current_password" :required="true">
+                <x-slot:suffix>
                     <button type="button" @click="$wire.showCurrentPassword = !$wire.showCurrentPassword"
-                        class="{{ $eyeBtnClass }}">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer">
                         <flux:icon.eye class="w-4 h-4" />
                     </button>
-                </div>
-                @error('current_password')
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                @enderror
-            </div>
+                </x-slot:suffix>
+                <input :type="$wire.showCurrentPassword ? 'text' : 'password'" wire:model="current_password"
+                    placeholder="Enter current password" class="customer-input pr-10" required>
+            </x-customer.form-field>
 
-            <div class="mb-3.5">
-                <label class="{{ $labelClass }}">New Password *</label>
-                <div class="relative">
-                    <input :type="$wire.showNewPassword ? 'text' : 'password'" wire:model.live="password"
-                        placeholder="Min. 8 characters" class="{{ $inputClass }}" required>
+            <x-customer.form-field label="New Password" name="password" :required="true">
+                <x-slot:suffix>
                     <button type="button" @click="$wire.showNewPassword = !$wire.showNewPassword"
-                        class="{{ $eyeBtnClass }}">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer">
                         <flux:icon.eye class="w-4 h-4" />
                     </button>
-                </div>
-                @if ($password)
-                    @php $strength = $this->getPasswordStrength(); @endphp
-                    <div class="mt-2">
-                        <div class="h-[3px] bg-zinc-200 rounded-full overflow-hidden mb-1">
-                            <div class="h-full rounded-full transition-all duration-300"
-                                style="width: {{ $strength['strength'] }}%; background-color: {{ $strength['color'] }}">
-                            </div>
-                        </div>
-                        <div class="text-[10px] font-bold tracking-wider uppercase"
-                            style="color: {{ $strength['color'] }}">
-                            {{ $strength['label'] }}
+                </x-slot:suffix>
+                <input :type="$wire.showNewPassword ? 'text' : 'password'" wire:model.live="password"
+                    placeholder="Min. 8 characters" class="customer-input pr-10" required>
+            </x-customer.form-field>
+            @if ($password)
+                @php $strength = $this->getPasswordStrength(); @endphp
+                <div class="-mt-2">
+                    <div class="h-[3px] bg-zinc-200 rounded-full overflow-hidden mb-1">
+                        <div class="h-full rounded-full transition-all duration-300"
+                            style="width: {{ $strength['strength'] }}%; background-color: {{ $strength['color'] }}">
                         </div>
                     </div>
-                @endif
-                @error('password')
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                @enderror
-            </div>
+                    <div class="text-[10px] font-bold tracking-wider uppercase"
+                        style="color: {{ $strength['color'] }}">
+                        {{ $strength['label'] }}
+                    </div>
+                </div>
+            @endif
 
-            <div>
-                <label class="{{ $labelClass }}">Confirm New Password *</label>
-                <div class="relative">
-                    <input :type="$wire.showConfirmPassword ? 'text' : 'password'" wire:model="password_confirmation"
-                        placeholder="Repeat new password" class="{{ $inputClass }}" required>
+            <x-customer.form-field label="Confirm New Password" :required="true">
+                <x-slot:suffix>
                     <button type="button" @click="$wire.showConfirmPassword = !$wire.showConfirmPassword"
-                        class="{{ $eyeBtnClass }}">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer">
                         <flux:icon.eye class="w-4 h-4" />
                     </button>
-                </div>
-                @if ($password && $password_confirmation && $password !== $password_confirmation)
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">Passwords do not match.</span>
-                @endif
-            </div>
+                </x-slot:suffix>
+                <input :type="$wire.showConfirmPassword ? 'text' : 'password'" wire:model="password_confirmation"
+                    placeholder="Repeat new password" class="customer-input pr-10" required>
+            </x-customer.form-field>
+            @if ($password && $password_confirmation && $password !== $password_confirmation)
+                <span class="text-[11px] text-red-500 font-semibold -mt-2 block">Passwords do not match.</span>
+            @endif
 
             <div class="flex items-center gap-2.5 mt-5 pt-4 border-t border-zinc-200">
                 <button type="submit"
@@ -376,17 +360,18 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             <div class="text-[12px] text-zinc-600 mb-3">
                 {{ __('Signing in on another device or browser creates a separate session. To revoke them, confirm your password below — you\'ll stay signed in here.') }}
             </div>
-            <form wire:submit="logoutOtherDevices" class="flex items-stretch gap-2">
-                <input type="password" wire:model="logout_password" placeholder="Confirm your password"
-                    class="flex-1 border-[1.5px] border-zinc-200 px-3 py-2 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8">
-                <button type="submit"
-                    class="border-[1.5px] border-red-500 text-red-500 px-3.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer whitespace-nowrap">
-                    Sign Out Everywhere Else
-                </button>
+            <form wire:submit="logoutOtherDevices">
+                <x-customer.form-field name="logout_password">
+                    <x-slot:append>
+                        <button type="submit"
+                            class="border-[1.5px] border-red-500 text-red-500 px-3.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer whitespace-nowrap">
+                            Sign Out Everywhere Else
+                        </button>
+                    </x-slot:append>
+                    <input type="password" wire:model="logout_password" placeholder="Confirm your password"
+                        class="customer-input flex-1">
+                </x-customer.form-field>
             </form>
-            @error('logout_password')
-                <span class="text-[11px] text-red-500 font-semibold mt-1.5 block">{{ $message }}</span>
-            @enderror
         </div>
     </x-customer.settings-card>
 </div>

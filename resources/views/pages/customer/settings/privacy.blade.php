@@ -192,15 +192,10 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
             </p>
 
             <form wire:submit="deleteAccount" class="space-y-3">
-                <div>
-                    <label
-                        class="block text-[10px] font-bold tracking-[0.1em] uppercase text-zinc-500 mb-1.5">{{ __('Confirm your password') }}</label>
+                <x-customer.form-field label="{{ __('Confirm your password') }}" name="delete_password">
                     <input type="password" wire:model="delete_password" placeholder="••••••••"
-                        class="w-full max-w-md border-[1.5px] border-red-300 px-3 py-2.5 text-[13px] font-medium outline-none transition-all focus:border-red-500 focus:ring-[3px] focus:ring-red-500/8">
-                    @error('delete_password')
-                        <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
+                        class="customer-input max-w-md border-red-300 focus:border-red-500 focus:ring-red-500/8">
+                </x-customer.form-field>
 
                 <label class="flex items-start gap-2 text-[12px] text-zinc-700 cursor-pointer">
                     <input type="checkbox" wire:model="confirm_delete" class="mt-0.5 accent-red-500">

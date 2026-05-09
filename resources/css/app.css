@@ -273,7 +273,16 @@ select:focus[data-flux-control] {
 }
 
 /* ============================================================
-   9. CUSTOMER SIDEBAR
+   9. CUSTOMER FORM FIELDS
+   ============================================================ */
+@layer components {
+    .customer-input {
+        @apply w-full border-[1.5px] border-zinc-200 px-3 py-2.5 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8;
+    }
+}
+
+/* ============================================================
+   9b. CUSTOMER SIDEBAR
    ============================================================ */
 .customer-sidebar [data-flux-navlist-item] {
     @apply rounded-none py-5! font-normal!;

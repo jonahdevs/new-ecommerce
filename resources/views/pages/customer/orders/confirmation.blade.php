@@ -32,8 +32,6 @@ new #[Layout('layouts.guest')] class extends Component {
 
         // Session-based page invalidation — redirects away if already seen
         $this->handleSessionCheck();
-
-
     }
 
     // =====================================================
@@ -227,7 +225,6 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
-
     private function resolveCustomPaymentLabel(): string
     {
         $method = $this->order->payment?->meta['payment_method'] ?? null;
@@ -252,10 +249,9 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
     {{-- Breadcrumb --}}
-    <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
+    <div class="bg-white border-b border-zinc-200 py-3">
+        <flux:breadcrumbs class="container mx-auto px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
             <flux:breadcrumbs.item>Order Confirmation</flux:breadcrumbs.item>

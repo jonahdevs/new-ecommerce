@@ -133,7 +133,6 @@ new #[Layout('layouts.checkout')] class extends Component {
     <x-slot:breadcrumbs>
         <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
             <flux:breadcrumbs.item :href="route('checkout.summary')" wire:navigate>
@@ -148,143 +147,140 @@ new #[Layout('layouts.checkout')] class extends Component {
     {{-- ── Payment options ── --}}
     <div class="space-y-3">
 
-                {{-- ── Card option ── --}}
+        {{-- ── Card option ── --}}
 
-                <flux:card wire:ignore x-data="stripePayment" class="p-0 overflow-hidden">
-                    {{-- Radio header --}}
-                    <label class="flex items-center gap-3 px-4 py-3.5 cursor-pointer bg-white"
-                        @click="$wire.set('paymentMethod', 'card')">
-                        <input type="radio" :checked="$wire.paymentMethod === 'card'" class="accent-zinc-800" />
-                        <flux:icon.credit-card class="size-4 text-zinc-500" />
-                        <span class="font-medium text-sm">Card Payment</span>
-                        <div class="ml-auto flex items-center gap-1.5">
-                            @foreach (['Visa', 'MC', 'Amex'] as $card)
-                                <span class="px-1.5 py-0.5 bg-zinc-100 rounded text-xs text-zinc-500 font-medium">
-                                    {{ $card }}
-                                </span>
-                            @endforeach
-                        </div>
+        <flux:card wire:ignore x-data="stripePayment" class="p-0 overflow-hidden">
+            {{-- Radio header --}}
+            <label class="flex items-center gap-3 px-4 py-3.5 cursor-pointer bg-white"
+                @click="$wire.set('paymentMethod', 'card')">
+                <input type="radio" :checked="$wire.paymentMethod === 'card'" class="accent-zinc-800" />
+                <flux:icon.credit-card class="size-4 text-zinc-500" />
+                <span class="font-medium text-sm">Card Payment</span>
+                <div class="ml-auto flex items-center gap-1.5">
+                    @foreach (['Visa', 'MC', 'Amex'] as $card)
+                        <span class="px-1.5 py-0.5 bg-zinc-100 rounded text-xs text-zinc-500 font-medium">
+                            {{ $card }}
+                        </span>
+                    @endforeach
+                </div>
+            </label>
+
+            {{-- Card fields — always in DOM (x-show not @if), Stripe stays mounted --}}
+            <div x-show="$wire.paymentMethod === 'card'" x-cloak class="px-5 pb-5 border-t bg-white">
+
+                {{-- Error alert --}}
+                <div x-show="errorMessage" x-transition
+                    class="mt-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-md px-3 py-2.5 text-sm text-red-700">
+                    <flux:icon.exclamation-circle class="size-4 shrink-0 mt-0.5" />
+                    <span x-text="errorMessage"></span>
+                </div>
+
+                {{-- Cardholder name --}}
+                <div class="mt-4 mb-4">
+
+                    <flux:input label="Cardholder Name" x-model="cardholderName" type="text"
+                        placeholder="Name on card" autocomplete="cc-name" />
+                </div>
+
+                {{-- Card number --}}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700 mb-1.5">
+                        Card Number
                     </label>
 
-                    {{-- Card fields — always in DOM (x-show not @if), Stripe stays mounted --}}
-                    <div x-show="$wire.paymentMethod === 'card'" x-cloak class="px-5 pb-5 border-t bg-white">
+                    <div id="stripe-card-number"
+                        class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
+                    </div>
+                </div>
 
-                        {{-- Error alert --}}
-                        <div x-show="errorMessage" x-transition
-                            class="mt-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-md px-3 py-2.5 text-sm text-red-700">
-                            <flux:icon.exclamation-circle class="size-4 shrink-0 mt-0.5" />
-                            <span x-text="errorMessage"></span>
-                        </div>
-
-                        {{-- Cardholder name --}}
-                        <div class="mt-4 mb-4">
-
-                            <flux:input label="Cardholder Name" x-model="cardholderName" type="text"
-                                placeholder="Name on card" autocomplete="cc-name" />
-                        </div>
-
-                        {{-- Card number --}}
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-zinc-700 mb-1.5">
-                                Card Number
-                            </label>
-
-                            <div id="stripe-card-number"
-                                class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
-                            </div>
-                        </div>
-
-                        {{-- Expiry + CVC --}}
-                        <div class="grid grid-cols-2 gap-3 mb-5">
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-700 mb-1.5">
-                                    Expiry Date
-                                </label>
-                                <div id="stripe-card-expiry"
-                                    class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-700 mb-1.5">
-                                    CVC
-                                </label>
-                                <div id="stripe-card-cvc"
-                                    class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Pay button --}}
-                        <button @click="submitPayment()" :disabled="loading || !ready"
-                            class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-primary-hover/50 disabled:cursor-not-allowed text-on-primary font-semibold py-3 px-4 rounded-md transition-colors text-sm">
-                            <span x-show="!loading">
-                                Pay {{ format_currency($this->order->total) }}
-                            </span>
-                            <span x-show="loading" class="flex items-center gap-2">
-                                <svg class="animate-spin size-4" viewBox="0 0 24 24" fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10"
-                                        stroke="currentColor" stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                Processing...
-                            </span>
-                        </button>
-
-                        <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
-                            <flux:icon.lock-closed class="size-3" />
-                            <span>Payments secured by Stripe. We never store your card details.</span>
+                {{-- Expiry + CVC --}}
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700 mb-1.5">
+                            Expiry Date
+                        </label>
+                        <div id="stripe-card-expiry"
+                            class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
                         </div>
                     </div>
-                </flux:card>
-
-                {{-- ── M-Pesa option ── --}}
-                <flux:card class="p-0 overflow-hidden">
-                    {{-- Radio header --}}
-                    <label class="flex items-center gap-3 px-4 py-3.5 cursor-pointer"
-                        wire:click="$set('paymentMethod', 'mpesa')">
-                        <input type="radio" wire:model.live="paymentMethod" value="mpesa" class="accent-zinc-800" />
-                        <flux:icon.device-phone-mobile class="size-4 text-zinc-500" />
-                        <span class="font-medium text-sm">M-Pesa</span>
-                        <span class="ml-auto text-xs text-zinc-400">Safaricom</span>
-                    </label>
-
-                    <div x-show="$wire.paymentMethod === 'mpesa'" x-cloak class="px-5 pb-5 border-t">
-                        <div class="mt-4 mb-5">
-                            <flux:text class="text-sm text-zinc-500 mb-4">
-                                Enter the M-Pesa number you want to pay with. You will receive a
-                                prompt on your phone to enter your PIN.
-                            </flux:text>
-
-                            <label class="block text-sm font-medium text-zinc-700 mb-1.5">
-                                M-Pesa Phone Number
-                            </label>
-                            <flux:input wire:model="mpesaPhone" type="tel" placeholder="e.g. 0712 345 678"
-                                class="w-full" />
-                            @error('mpesaPhone')
-                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <flux:button wire:click="initiateMpesa" wire:loading.attr="disabled" wire:target="initiateMpesa"
-                            :disabled="$isProcessing" variant="primary" class="w-full cursor-pointer"
-                            icon="device-phone-mobile">
-                            <span wire:loading.remove wire:target="initiateMpesa">
-                                Pay {{ format_currency($this->order->total) }}
-                            </span>
-                            <span wire:loading wire:target="initiateMpesa" class="flex items-center gap-2">
-                                <flux:icon.arrow-path class="size-4 animate-spin" />
-                                Sending request...
-                            </span>
-                        </flux:button>
-
-                        <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
-                            <flux:icon.lock-closed class="size-3" />
-                            <span>Secure payment via Safaricom M-Pesa</span>
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700 mb-1.5">
+                            CVC
+                        </label>
+                        <div id="stripe-card-cvc"
+                            class="w-full border border-zinc-300 rounded-md px-3 py-2.5 text-sm focus-within:ring-1 focus-within:ring-zinc-800 focus-within:border-zinc-800 transition-colors bg-white">
                         </div>
                     </div>
-                </flux:card>
+                </div>
+
+                {{-- Pay button --}}
+                <button @click="submitPayment()" :disabled="loading || !ready"
+                    class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-primary-hover/50 disabled:cursor-not-allowed text-on-primary font-semibold py-3 px-4 rounded-md transition-colors text-sm">
+                    <span x-show="!loading">
+                        Pay {{ format_currency($this->order->total) }}
+                    </span>
+                    <span x-show="loading" class="flex items-center gap-2">
+                        <svg class="animate-spin size-4" viewBox="0 0 24 24" fill="none">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Processing...
+                    </span>
+                </button>
+
+                <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+                    <flux:icon.lock-closed class="size-3" />
+                    <span>Payments secured by Stripe. We never store your card details.</span>
+                </div>
             </div>
+        </flux:card>
+
+        {{-- ── M-Pesa option ── --}}
+        <flux:card class="p-0 overflow-hidden">
+            {{-- Radio header --}}
+            <label class="flex items-center gap-3 px-4 py-3.5 cursor-pointer"
+                wire:click="$set('paymentMethod', 'mpesa')">
+                <input type="radio" wire:model.live="paymentMethod" value="mpesa" class="accent-zinc-800" />
+                <flux:icon.device-phone-mobile class="size-4 text-zinc-500" />
+                <span class="font-medium text-sm">M-Pesa</span>
+                <span class="ml-auto text-xs text-zinc-400">Safaricom</span>
+            </label>
+
+            <div x-show="$wire.paymentMethod === 'mpesa'" x-cloak class="px-5 pb-5 border-t">
+                <div class="mt-4 mb-5">
+                    <flux:text class="text-sm text-zinc-500 mb-4">
+                        Enter the M-Pesa number you want to pay with. You will receive a
+                        prompt on your phone to enter your PIN.
+                    </flux:text>
+
+                    <flux:input wire:model="mpesaPhone" type="tel" placeholder="e.g. 0712 345 678"
+                        label="M-Pesa Phone Number" class="w-full" />
+                    @error('mpesaPhone')
+                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <flux:button wire:click="initiateMpesa" wire:loading.attr="disabled" wire:target="initiateMpesa"
+                    :disabled="$isProcessing" variant="primary" class="w-full cursor-pointer"
+                    icon="device-phone-mobile">
+                    <span wire:loading.remove wire:target="initiateMpesa">
+                        Pay {{ format_currency($this->order->total) }}
+                    </span>
+                    <span wire:loading wire:target="initiateMpesa" class="flex items-center gap-2">
+                        <flux:icon.arrow-path class="size-4 animate-spin" />
+                        Sending request...
+                    </span>
+                </flux:button>
+
+                <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+                    <flux:icon.lock-closed class="size-3" />
+                    <span>Secure payment via Safaricom M-Pesa</span>
+                </div>
+            </div>
+        </flux:card>
+    </div>
 
     {{-- ── Order summary sidebar — overrides layout default ── --}}
     <x-slot:sidebar>

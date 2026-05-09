@@ -1,9 +1,8 @@
 <x-layouts::guest title="Privacy Policy">
     {{-- Breadcrumb --}}
-    <div class="bg-zinc-100">
-        <flux:breadcrumbs class="container mx-auto px-4 py-2.5">
+    <div class="bg-white border-b border-zinc-200 py-3">
+        <flux:breadcrumbs class="container mx-auto px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
             <flux:breadcrumbs.item>Privacy Policy</flux:breadcrumbs.item>

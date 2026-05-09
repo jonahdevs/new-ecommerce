@@ -1,0 +1,22 @@
+<?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => 'Full Name']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'Full Name']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?><?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\storage\framework\views/4318cfa7be0a21c4d81bf578b5f3b2fb.blade.php ENDPATH**/ ?>

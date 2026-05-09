@@ -1,0 +1,1 @@
+<x-customer.form-field label="Phone"><x-slot:prefix>+254</x-slot:prefix><input type="text"></x-customer.form-field>

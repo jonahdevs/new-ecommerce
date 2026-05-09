@@ -9,12 +9,6 @@ use Livewire\WithFileUploads;
 use App\Models\User;
 ?>
 
-<?php
-    $inputClass =
-        'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8';
-    $labelClass = 'block text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1.5';
-?>
-
 <div class="flex flex-col gap-5">
     
     <?php if (isset($component)) { $__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb = $component; } ?>
@@ -276,87 +270,129 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             </div>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-        <form wire:submit="save" class="px-5 py-5">
-            <div class="mb-3.5">
-                <label class="<?php echo e($labelClass); ?>"><?php echo e(__('Full Name')); ?> *</label>
-                <input type="text" wire:model="name" class="<?php echo e($inputClass); ?>" required placeholder="John Doe">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['name'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </div>
+        <form wire:submit="save" class="px-5 py-5 flex flex-col gap-3.5">
+            <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => ''.e(__('Full Name')).'','name' => 'name','required' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => ''.e(__('Full Name')).'','name' => 'name','required' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-            <div class="mb-3.5">
-                <label class="<?php echo e($labelClass); ?>"><?php echo e(__('Display Name')); ?></label>
-                <input type="text" wire:model="display_name" class="<?php echo e($inputClass); ?>" placeholder="Optional">
-                <div class="text-[11px] text-zinc-500 mt-1">
-                    <?php echo e(__('How your name appears on reviews. Defaults to your full name when blank.')); ?></div>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['display_name'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </div>
+                <input type="text" wire:model="name" class="customer-input" placeholder="John Doe" required>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
 
-            <div class="mb-3.5">
-                <label class="<?php echo e($labelClass); ?>"><?php echo e(__('Email Address')); ?> *</label>
-                <input type="email" wire:model="email" class="<?php echo e($inputClass); ?>" required>
-                <div class="text-[11px] text-zinc-500 mt-1">
-                    <?php echo e(__('A verification email will be sent if you change this.')); ?></div>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['email'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </div>
+            <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => ''.e(__('Display Name')).'','name' => 'display_name','hint' => ''.e(__('How your name appears on reviews. Defaults to your full name when blank.')).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => ''.e(__('Display Name')).'','name' => 'display_name','hint' => ''.e(__('How your name appears on reviews. Defaults to your full name when blank.')).'']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                <input type="text" wire:model="display_name" class="customer-input" placeholder="Optional">
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+
+            <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => ''.e(__('Email Address')).'','name' => 'email','required' => true,'hint' => ''.e(__('A verification email will be sent if you change this.')).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => ''.e(__('Email Address')).'','name' => 'email','required' => true,'hint' => ''.e(__('A verification email will be sent if you change this.')).'']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                <input type="email" wire:model="email" class="customer-input" required>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <div>
-                    <label class="<?php echo e($labelClass); ?>"><?php echo e(__('Phone Number')); ?></label>
-                    <input type="tel" wire:model="phone_number" class="<?php echo e($inputClass); ?>"
+                <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => ''.e(__('Phone Number')).'','name' => 'phone_number']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => ''.e(__('Phone Number')).'','name' => 'phone_number']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                    <input type="tel" wire:model="phone_number" class="customer-input"
                         placeholder="+254 712 345 678">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['phone_number'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                </div>
-                <div>
-                    <label class="<?php echo e($labelClass); ?>"><?php echo e(__('Date of Birth')); ?></label>
-                    <input type="date" wire:model="date_of_birth" class="<?php echo e($inputClass); ?>"
+                 <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+
+                <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => ''.e(__('Date of Birth')).'','name' => 'date_of_birth']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => ''.e(__('Date of Birth')).'','name' => 'date_of_birth']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                    <input type="date" wire:model="date_of_birth" class="customer-input"
                         max="<?php echo e(now()->format('Y-m-d')); ?>">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['date_of_birth'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                </div>
+                 <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
             </div>
 
             <div class="flex items-center gap-2.5 mt-5 pt-4 border-t border-zinc-200">
@@ -378,68 +414,4 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php unset($__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb); ?>
 <?php endif; ?>
 
-    
-    <?php if (isset($component)) { $__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.settings-card','data' => ['title' => 'Account','titleEm' => 'Info']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('customer.settings-card'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['title' => 'Account','titleEm' => 'Info']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-         <?php $__env->slot('icon', null, []); ?> 
-            <?php if (isset($component)) { $__componentOriginalf48bb55ce6fd23a8de595ceefa5f14db = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf48bb55ce6fd23a8de595ceefa5f14db = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.calendar','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.calendar'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalf48bb55ce6fd23a8de595ceefa5f14db)): ?>
-<?php $attributes = $__attributesOriginalf48bb55ce6fd23a8de595ceefa5f14db; ?>
-<?php unset($__attributesOriginalf48bb55ce6fd23a8de595ceefa5f14db); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalf48bb55ce6fd23a8de595ceefa5f14db)): ?>
-<?php $component = $__componentOriginalf48bb55ce6fd23a8de595ceefa5f14db; ?>
-<?php unset($__componentOriginalf48bb55ce6fd23a8de595ceefa5f14db); ?>
-<?php endif; ?>
-         <?php $__env->endSlot(); ?>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 px-5 py-5">
-            <div class="py-2.5 md:pr-5 md:border-r md:border-zinc-200">
-                <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500">Member Since</div>
-                <div class="text-[14px] font-bold text-zinc-950 mt-1"><?php echo e(auth()->user()->created_at->format('F Y')); ?>
-
-                </div>
-            </div>
-            <div class="py-2.5 md:pl-5">
-                <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-500">Account Type</div>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[14px] font-bold text-zinc-950">Standard</span>
-                    <span
-                        class="text-[10px] font-extrabold px-2 py-0.5 bg-zinc-100 text-zinc-500 border border-zinc-200 tracking-wider uppercase">Free</span>
-                </div>
-            </div>
-        </div>
-     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb)): ?>
-<?php $attributes = $__attributesOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb; ?>
-<?php unset($__attributesOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb)): ?>
-<?php $component = $__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb; ?>
-<?php unset($__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb); ?>
-<?php endif; ?>
 </div><?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\storage\framework/views/livewire/views/2a3924c0.blade.php ENDPATH**/ ?>

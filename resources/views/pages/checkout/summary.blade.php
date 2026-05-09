@@ -285,7 +285,6 @@ new #[Layout('layouts.checkout')] class extends Component {
     <x-slot:breadcrumbs>
         <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
             <flux:breadcrumbs.item href="{{ route('cart') }}" wire:navigate>Cart</flux:breadcrumbs.item>
@@ -661,16 +660,15 @@ new #[Layout('layouts.checkout')] class extends Component {
                         @if ($option->isPus() && $isSelected && $option->pickupStations?->isNotEmpty())
                             <div class="mb-2 mt-[-8px] p-4 bg-zinc-50 border-x-[1.5px] border-b-[1.5px] border-primary"
                                 wire:click.stop>
-                                <label
-                                    class="text-[11px] font-bold uppercase tracking-widest text-zinc-950 mb-2 block">Choose
-                                    Pickup Station</label>
-                                <select wire:model.live="selectedStationId"
-                                    class="w-full border-[1.5px] border-zinc-200 p-2.5 text-[13px] font-medium outline-none focus:border-primary appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%226%22%3E%3Cpath_d=%22M0_0l5_6_5-6z%22_fill=%22%2318181b%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center]">
-                                    <option value="">Choose a station...</option>
-                                    @foreach ($option->pickupStations as $station)
-                                        <option value="{{ $station->id }}">{{ $station->name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-customer.form-field label="Choose Pickup Station">
+                                    <select wire:model.live="selectedStationId"
+                                        class="customer-input appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%226%22%3E%3Cpath_d=%22M0_0l5_6_5-6z%22_fill=%22%2318181b%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center]">
+                                        <option value="">Choose a station...</option>
+                                        @foreach ($option->pickupStations as $station)
+                                            <option value="{{ $station->id }}">{{ $station->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-customer.form-field>
                             </div>
                         @endif
                     @endforeach

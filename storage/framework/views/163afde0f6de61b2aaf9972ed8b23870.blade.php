@@ -1,0 +1,1 @@
+<x-customer.form-field label="Email" :required="true" />

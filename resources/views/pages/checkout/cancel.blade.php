@@ -44,7 +44,6 @@ new #[Layout('layouts.checkout')] class extends Component {
     <x-slot:breadcrumbs>
         <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                 Home
             </flux:breadcrumbs.item>
             <flux:breadcrumbs.item>Payment Cancelled</flux:breadcrumbs.item>
@@ -98,7 +97,8 @@ new #[Layout('layouts.checkout')] class extends Component {
                     Return to Cart
                 </flux:button>
 
-                <flux:button variant="ghost" :href="route('customer.orders.index')" wire:navigate class="w-full sm:w-auto">
+                <flux:button variant="ghost" :href="route('customer.orders.index')" wire:navigate
+                    class="w-full sm:w-auto">
                     <flux:icon.clipboard-document-list class="size-4 me-2" />
                     View Orders
                 </flux:button>

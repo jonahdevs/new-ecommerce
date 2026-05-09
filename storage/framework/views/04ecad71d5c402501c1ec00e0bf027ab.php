@@ -8,14 +8,6 @@ use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
 ?>
 
-<?php
-    $inputClass =
-        'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 pr-10 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8';
-    $labelClass = 'block text-[10px] font-bold tracking-[0.1em] uppercase text-zinc-500 mb-1.5';
-    $eyeBtnClass =
-        'absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer';
-?>
-
 <div class="flex flex-col gap-5">
     
     <?php if (isset($component)) { $__componentOriginal0c8ec7f6f390e4e14bf1dbac51ec15eb = $component; } ?>
@@ -55,14 +47,22 @@ use Livewire\Component;
 <?php endif; ?>
          <?php $__env->endSlot(); ?>
 
-        <form wire:submit="updatePassword" class="px-5 py-5">
-            <div class="mb-3.5">
-                <label class="<?php echo e($labelClass); ?>">Current Password *</label>
-                <div class="relative">
-                    <input :type="$wire.showCurrentPassword ? 'text' : 'password'" wire:model="current_password"
-                        placeholder="Enter current password" class="<?php echo e($inputClass); ?>" required>
+        <form wire:submit="updatePassword" class="px-5 py-5 flex flex-col gap-3.5">
+            <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => 'Current Password','name' => 'current_password','required' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'Current Password','name' => 'current_password','required' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                 <?php $__env->slot('suffix', null, []); ?> 
                     <button type="button" @click="$wire.showCurrentPassword = !$wire.showCurrentPassword"
-                        class="<?php echo e($eyeBtnClass); ?>">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer">
                         <?php if (isset($component)) { $__componentOriginal2e57535a42d25d5415c31aa83132341b = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal2e57535a42d25d5415c31aa83132341b = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.eye','data' => ['class' => 'w-4 h-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -86,26 +86,35 @@ use Livewire\Component;
 <?php unset($__componentOriginal2e57535a42d25d5415c31aa83132341b); ?>
 <?php endif; ?>
                     </button>
-                </div>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['current_password'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </div>
+                 <?php $__env->endSlot(); ?>
+                <input :type="$wire.showCurrentPassword ? 'text' : 'password'" wire:model="current_password"
+                    placeholder="Enter current password" class="customer-input pr-10" required>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
 
-            <div class="mb-3.5">
-                <label class="<?php echo e($labelClass); ?>">New Password *</label>
-                <div class="relative">
-                    <input :type="$wire.showNewPassword ? 'text' : 'password'" wire:model.live="password"
-                        placeholder="Min. 8 characters" class="<?php echo e($inputClass); ?>" required>
+            <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => 'New Password','name' => 'password','required' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'New Password','name' => 'password','required' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                 <?php $__env->slot('suffix', null, []); ?> 
                     <button type="button" @click="$wire.showNewPassword = !$wire.showNewPassword"
-                        class="<?php echo e($eyeBtnClass); ?>">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer">
                         <?php if (isset($component)) { $__componentOriginal2e57535a42d25d5415c31aa83132341b = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal2e57535a42d25d5415c31aa83132341b = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.eye','data' => ['class' => 'w-4 h-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -129,41 +138,50 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php unset($__componentOriginal2e57535a42d25d5415c31aa83132341b); ?>
 <?php endif; ?>
                     </button>
-                </div>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($password): ?>
-                    <?php $strength = $this->getPasswordStrength(); ?>
-                    <div class="mt-2">
-                        <div class="h-[3px] bg-zinc-200 rounded-full overflow-hidden mb-1">
-                            <div class="h-full rounded-full transition-all duration-300"
-                                style="width: <?php echo e($strength['strength']); ?>%; background-color: <?php echo e($strength['color']); ?>">
-                            </div>
-                        </div>
-                        <div class="text-[10px] font-bold tracking-wider uppercase"
-                            style="color: <?php echo e($strength['color']); ?>">
-                            <?php echo e($strength['label']); ?>
-
+                 <?php $__env->endSlot(); ?>
+                <input :type="$wire.showNewPassword ? 'text' : 'password'" wire:model.live="password"
+                    placeholder="Min. 8 characters" class="customer-input pr-10" required>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($password): ?>
+                <?php $strength = $this->getPasswordStrength(); ?>
+                <div class="-mt-2">
+                    <div class="h-[3px] bg-zinc-200 rounded-full overflow-hidden mb-1">
+                        <div class="h-full rounded-full transition-all duration-300"
+                            style="width: <?php echo e($strength['strength']); ?>%; background-color: <?php echo e($strength['color']); ?>">
                         </div>
                     </div>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['password'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block"><?php echo e($message); ?></span>
-                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </div>
+                    <div class="text-[10px] font-bold tracking-wider uppercase"
+                        style="color: <?php echo e($strength['color']); ?>">
+                        <?php echo e($strength['label']); ?>
 
-            <div>
-                <label class="<?php echo e($labelClass); ?>">Confirm New Password *</label>
-                <div class="relative">
-                    <input :type="$wire.showConfirmPassword ? 'text' : 'password'" wire:model="password_confirmation"
-                        placeholder="Repeat new password" class="<?php echo e($inputClass); ?>" required>
+                    </div>
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+            <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['label' => 'Confirm New Password','required' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'Confirm New Password','required' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                 <?php $__env->slot('suffix', null, []); ?> 
                     <button type="button" @click="$wire.showConfirmPassword = !$wire.showConfirmPassword"
-                        class="<?php echo e($eyeBtnClass); ?>">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer">
                         <?php if (isset($component)) { $__componentOriginal2e57535a42d25d5415c31aa83132341b = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal2e57535a42d25d5415c31aa83132341b = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.eye','data' => ['class' => 'w-4 h-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -187,11 +205,22 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php unset($__componentOriginal2e57535a42d25d5415c31aa83132341b); ?>
 <?php endif; ?>
                     </button>
-                </div>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($password && $password_confirmation && $password !== $password_confirmation): ?>
-                    <span class="text-[11px] text-red-500 font-semibold mt-1 block">Passwords do not match.</span>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </div>
+                 <?php $__env->endSlot(); ?>
+                <input :type="$wire.showConfirmPassword ? 'text' : 'password'" wire:model="password_confirmation"
+                    placeholder="Repeat new password" class="customer-input pr-10" required>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($password && $password_confirmation && $password !== $password_confirmation): ?>
+                <span class="text-[11px] text-red-500 font-semibold -mt-2 block">Passwords do not match.</span>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             <div class="flex items-center gap-2.5 mt-5 pt-4 border-t border-zinc-200">
                 <button type="submit"
@@ -444,24 +473,38 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 <?php echo e(__('Signing in on another device or browser creates a separate session. To revoke them, confirm your password below — you\'ll stay signed in here.')); ?>
 
             </div>
-            <form wire:submit="logoutOtherDevices" class="flex items-stretch gap-2">
-                <input type="password" wire:model="logout_password" placeholder="Confirm your password"
-                    class="flex-1 border-[1.5px] border-zinc-200 px-3 py-2 text-[13px] font-medium outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/8">
-                <button type="submit"
-                    class="border-[1.5px] border-red-500 text-red-500 px-3.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer whitespace-nowrap">
-                    Sign Out Everywhere Else
-                </button>
+            <form wire:submit="logoutOtherDevices">
+                <?php if (isset($component)) { $__componentOriginal071cba40201c8f65242f69b169ef9aaa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal071cba40201c8f65242f69b169ef9aaa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.customer.form-field','data' => ['name' => 'logout_password']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('customer.form-field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'logout_password']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                     <?php $__env->slot('append', null, []); ?> 
+                        <button type="submit"
+                            class="border-[1.5px] border-red-500 text-red-500 px-3.5 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:bg-red-500 hover:text-white cursor-pointer whitespace-nowrap">
+                            Sign Out Everywhere Else
+                        </button>
+                     <?php $__env->endSlot(); ?>
+                    <input type="password" wire:model="logout_password" placeholder="Confirm your password"
+                        class="customer-input flex-1">
+                 <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $attributes = $__attributesOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__attributesOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal071cba40201c8f65242f69b169ef9aaa)): ?>
+<?php $component = $__componentOriginal071cba40201c8f65242f69b169ef9aaa; ?>
+<?php unset($__componentOriginal071cba40201c8f65242f69b169ef9aaa); ?>
+<?php endif; ?>
             </form>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['logout_password'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                <span class="text-[11px] text-red-500 font-semibold mt-1.5 block"><?php echo e($message); ?></span>
-            <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

@@ -1,0 +1,1 @@
+<x-customer.form-field label="Password" name="delete_password"><input type="password" class="customer-input border-red-300"></x-customer.form-field>

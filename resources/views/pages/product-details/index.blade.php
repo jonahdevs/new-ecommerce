@@ -21,8 +21,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new #[Layout('layouts.guest')] class extends Component
-{
+new #[Layout('layouts.guest')] class extends Component {
     public Product $product;
 
     // ── Status flags
@@ -69,11 +68,11 @@ new #[Layout('layouts.guest')] class extends Component
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'crossSells' => fn ($q) => $q->active()->visible(), 'accessories' => fn ($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
+        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active()->visible(), 'accessories' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
 
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn ($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
 
@@ -84,10 +83,10 @@ new #[Layout('layouts.guest')] class extends Component
         if ($product->type->value === 'variable') {
             $product->load([
                 // Load ALL variants, not just active — we filter display in the view
-                'variants' => fn ($q) => $q->orderBy('sort_order'),
+                'variants' => fn($q) => $q->orderBy('sort_order'),
                 'variants.attributeValues.attribute',
                 // Only load variation attributes (not display-only attributes)
-                'attributes' => fn ($q) => $q->wherePivot('is_variation_attribute', true),
+                'attributes' => fn($q) => $q->wherePivot('is_variation_attribute', true),
             ]);
 
             // Pre-select the default variant or first available variant
@@ -95,7 +94,7 @@ new #[Layout('layouts.guest')] class extends Component
 
             if ($defaultVariant) {
                 $this->selectedVariantId = $defaultVariant->id;
-                $this->selectedAttributeValues = $defaultVariant->attributeValues->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])->toArray();
+                $this->selectedAttributeValues = $defaultVariant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
             }
         }
 
@@ -104,7 +103,7 @@ new #[Layout('layouts.guest')] class extends Component
         // Grouped product — load items and pre-select all
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn ($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
 
             // Pre-select all items and set default quantities from pivot
@@ -226,7 +225,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[Computed]
     public function groupedTotal(): float
     {
-        return $this->groupedProducts->filter(fn ($item) => in_array($item->id, $this->selectedGroupedItems))->sum(function ($item) {
+        return $this->groupedProducts->filter(fn($item) => in_array($item->id, $this->selectedGroupedItems))->sum(function ($item) {
             $qty = $this->groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
 
             return ($item->final_price ?? 0) * $qty;
@@ -243,7 +242,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[Computed]
     public function selectedVariant(): ?ProductVariant
     {
-        if ($this->product->type->value !== 'variable' || ! $this->selectedVariantId) {
+        if ($this->product->type->value !== 'variable' || !$this->selectedVariantId) {
             return null;
         }
 
@@ -266,7 +265,7 @@ new #[Layout('layouts.guest')] class extends Component
         }
 
         // Load all attribute value IDs from pivot in a single query
-        $allValueIds = $this->product->attributes->flatMap(fn ($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
+        $allValueIds = $this->product->attributes->flatMap(fn($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
 
         if (empty($allValueIds)) {
             return [];
@@ -282,7 +281,7 @@ new #[Layout('layouts.guest')] class extends Component
             foreach ($variant->attributeValues as $av) {
                 $existing = $valueStateMap[$av->id] ?? 'out_of_stock';
 
-                if (! $variant->is_active) {
+                if (!$variant->is_active) {
                     continue;
                 }
 
@@ -298,13 +297,13 @@ new #[Layout('layouts.guest')] class extends Component
 
         return $this->product->attributes
             ->map(
-                fn ($attr) => [
+                fn($attr) => [
                     'name' => $attr->name,
                     'values' => collect(json_decode($attr->pivot->values ?? '[]', true) ?? [])
-                        ->map(fn ($id) => $allValues->get($id))
+                        ->map(fn($id) => $allValues->get($id))
                         ->filter()
                         ->map(
-                            fn ($v) => [
+                            fn($v) => [
                                 'id' => $v->id,
                                 'value' => $v->value,
                                 'label' => $v->label ?: $v->value,
@@ -356,7 +355,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[Computed]
     public function selectedVariantState(): string
     {
-        if (! $this->selectedVariant) {
+        if (!$this->selectedVariant) {
             return 'none';
         }
 
@@ -407,7 +406,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         // Search ALL active variants — including out-of-stock and backorder
         $matched = $this->product->variants->where('is_active', true)->first(function ($variant) {
-            $variantAttrs = $variant->attributeValues->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])->toArray();
+            $variantAttrs = $variant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
 
             foreach ($this->selectedAttributeValues as $attrName => $attrValue) {
                 if (($variantAttrs[$attrName] ?? null) !== $attrValue) {
@@ -482,12 +481,12 @@ new #[Layout('layouts.guest')] class extends Component
         // 2. Variant images — skip any path already seen
         if ($this->product->type->value === 'variable') {
             foreach ($this->product->variants->where('is_active', true)->sortBy('sort_order') as $variant) {
-                if ($variant->image_path && ! in_array($variant->image_path, $seenPaths, true)) {
+                if ($variant->image_path && !in_array($variant->image_path, $seenPaths, true)) {
                     $seenPaths[] = $variant->image_path;
                     $slides[] = [
                         'url' => Storage::url($variant->image_path),
                         'webp' => null,
-                        'alt' => $variant->attributeValues->map(fn ($av) => $av->value)->join(', ') ?: $this->product->name,
+                        'alt' => $variant->attributeValues->map(fn($av) => $av->value)->join(', ') ?: $this->product->name,
                         'variantId' => $variant->id,
                     ];
                 }
@@ -496,7 +495,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         // 3. Gallery images — skip any path already used by main image or a variant
         foreach ($this->product->images as $image) {
-            if (! in_array($image->image_path, $seenPaths, true)) {
+            if (!in_array($image->image_path, $seenPaths, true)) {
                 $seenPaths[] = $image->image_path;
                 $slides[] = [
                     'url' => Storage::url($image->image_path),
@@ -559,7 +558,7 @@ new #[Layout('layouts.guest')] class extends Component
             $variantId = $this->selectedVariantId;
 
             // Variable product requires a variant selection
-            if ($this->product->type->value === 'variable' && ! $variantId) {
+            if ($this->product->type->value === 'variable' && !$variantId) {
                 $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
 
                 return;
@@ -719,7 +718,7 @@ new #[Layout('layouts.guest')] class extends Component
             }
 
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: count($this->selectedGroupedItems).' item(s) added to your cart');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: count($this->selectedGroupedItems) . ' item(s) added to your cart');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add selected items to cart');
         }
@@ -750,7 +749,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[Computed]
     public function userVotes()
     {
-        if (! Auth::check()) {
+        if (!Auth::check()) {
             return collect();
         }
 
@@ -759,7 +758,7 @@ new #[Layout('layouts.guest')] class extends Component
             return collect();
         }
 
-        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn ($vote) => $vote->is_helpful);
+        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
     }
 
     // =========================================================================
@@ -775,7 +774,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[Computed(persist: true)]
     public function accessoriesTotalPrice(): float
     {
-        return $this->accessories->sum(fn ($a) => ($a->final_price ?? 0) * ($a->pivot->quantity ?? 1));
+        return $this->accessories->sum(fn($a) => ($a->final_price ?? 0) * ($a->pivot->quantity ?? 1));
     }
 
     public function render()
@@ -801,17 +800,17 @@ new #[Layout('layouts.guest')] class extends Component
 ?>
 
 <div>
-    <div class="bg-zinc-100">
-        <div class="container mx-auto py-2.5 px-4 overflow-x-auto scrollbar-none">
+    <div class="bg-white border-b border-zinc-200 py-3">
+        <div class="container mx-auto px-4 overflow-x-auto scrollbar-none">
             <flux:breadcrumbs class="flex-nowrap whitespace-nowrap min-w-max">
                 <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
-                    <flux:icon.home class="w-4 h-4 me-1.5 inline-block" />
                     Home
                 </flux:breadcrumbs.item>
                 <flux:breadcrumbs.item href="{{ route('shop.index') }}" wire:navigate>
                     Shop
                 </flux:breadcrumbs.item>
-                <flux:breadcrumbs.item href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}" wire:navigate>
+                <flux:breadcrumbs.item href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}"
+                    wire:navigate>
                     {{ $this->primaryCategory->name }}
                 </flux:breadcrumbs.item>
                 <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>

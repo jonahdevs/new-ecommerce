@@ -2,10 +2,7 @@
     $cancelHref = $cancelHref ?? null;
     $submitLabel = $submitLabel ?? 'Save Address';
 
-    $inputClass =
-        'w-full border-[1.5px] border-zinc-200 px-3 py-2.5 text-[13px] font-medium font-barlow transition-colors outline-none text-zinc-950 bg-white placeholder:text-zinc-300 focus:border-brand-primary';
-    $labelClass = 'block text-[11px] font-bold tracking-[0.08em] uppercase text-zinc-500 mb-1.5';
-    $errorClass = 'text-red-500 text-[11px] font-medium mt-1';
+    $inputClass = 'customer-input font-barlow text-zinc-950 bg-white placeholder:text-zinc-300';
     $selectArrow =
         "appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%226%22%3E%3Cpath_d=%22M0_0l5_6_5-6z%22_fill=%22%23888%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center]";
 
@@ -41,25 +38,24 @@ countyName = {{ $countyNameInit }};"
         <div class="p-6 space-y-5">
 
             {{-- Search input --}}
-            <div>
-                <label class="{{ $labelClass }}">Search location</label>
-                <div class="flex">
-                    <input type="text" id="map-search-input" placeholder="e.g. Westlands, Nairobi…"
-                        class="{{ $inputClass }} flex-1" @keydown.enter.prevent="$dispatch('do-map-search')">
+            <x-customer.form-field label="Search location">
+                <x-slot:append>
                     <button type="button"
                         class="px-4 bg-zinc-950 text-white hover:bg-primary transition-colors shrink-0 border-[1.5px] border-l-0 border-zinc-950"
                         @click="$dispatch('do-map-search')" title="Search">
                         <flux:icon.magnifying-glass class="size-4" />
                     </button>
-                </div>
-                <p x-show="searchNotFound" x-cloak class="{{ $errorClass }} mt-1.5">
-                    Location not found. Try a different search.
-                </p>
-            </div>
+                </x-slot:append>
+                <input type="text" id="map-search-input" placeholder="e.g. Westlands, Nairobi…"
+                    class="{{ $inputClass }} flex-1" @keydown.enter.prevent="$dispatch('do-map-search')">
+            </x-customer.form-field>
+            <p x-show="searchNotFound" x-cloak class="text-red-500 text-[11px] font-medium -mt-4">
+                Location not found. Try a different search.
+            </p>
 
             {{-- Map --}}
             <div>
-                <label class="{{ $labelClass }}">📍 Pin your exact delivery location</label>
+                <label class="block text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1.5">📍 Pin your exact delivery location</label>
                 <p class="text-[12px] text-zinc-500 mb-3 leading-relaxed">
                     Search or click anywhere on the map. Your county is detected automatically from the pin.
                 </p>
@@ -69,12 +65,7 @@ countyName = {{ $countyNameInit }};"
 
                 <div
                     class="bg-zinc-50 border-x-[1.5px] border-b-[1.5px] border-zinc-200 p-2.5 flex items-center gap-2 text-[11px] text-zinc-500">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
+                    <flux:icon.information-circle class="size-3 shrink-0" />
                     Click anywhere on the map to drop a delivery pin. Drag the pin to adjust.
                 </div>
             </div>
@@ -82,21 +73,14 @@ countyName = {{ $countyNameInit }};"
             {{-- Detecting in-flight --}}
             <div x-show="countyResolving" x-cloak
                 class="flex items-center gap-2.5 px-4 py-3 bg-zinc-50 border-l-[3px] border-zinc-300">
-                <svg class="w-4 h-4 text-zinc-400 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2">
-                    <path
-                        d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                </svg>
+                <flux:icon.arrow-path class="w-4 h-4 text-zinc-400 shrink-0 animate-spin" />
                 <span class="text-[12px] font-medium text-zinc-500">Detecting location…</span>
             </div>
 
             {{-- County resolved — success bar --}}
             <div x-show="hasPinned && countyResolved && !countyResolving" x-cloak
                 class="bg-green-50 border-l-[3px] border-green-500 px-4 py-3 flex items-start gap-2.5">
-                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12" />
-                </svg>
+                <flux:icon.check class="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                 <div class="min-w-0">
                     <p x-text="pinnedText" class="text-[12px] font-semibold text-zinc-700 truncate"></p>
                     <p class="text-[11px] text-green-700 font-bold mt-0.5">
@@ -108,20 +92,13 @@ countyName = {{ $countyNameInit }};"
             {{-- County NOT resolved — amber warning + fallback select --}}
             <div x-show="hasPinned && !countyResolved && !countyResolving" x-cloak class="space-y-3">
                 <div class="bg-amber-50 border-l-[3px] border-amber-500 px-4 py-3 flex items-start gap-2.5">
-                    <svg class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <path
-                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                        <line x1="12" y1="9" x2="12" y2="13" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                    </svg>
+                    <flux:icon.exclamation-triangle class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                     <div class="min-w-0">
                         <p x-text="pinnedText" class="text-[12px] font-semibold text-zinc-700 truncate mb-0.5"></p>
                         <p class="text-[11px] text-amber-700">County not detected — please select it below.</p>
                     </div>
                 </div>
-                <div>
-                    <label class="{{ $labelClass }}">County *</label>
+                <x-customer.form-field label="County" name="form.county_id" :required="true">
                     <select id="addr-county-select" wire:model.live="form.county_id"
                         class="{{ $inputClass }} {{ $selectArrow }}"
                         @change="countyResolved = !!$el.value; countyName = $el.options[$el.selectedIndex]?.text || ''">
@@ -130,10 +107,7 @@ countyName = {{ $countyNameInit }};"
                             <option value="{{ $county->id }}">{{ $county->name }}</option>
                         @endforeach
                     </select>
-                    @error('form.county_id')
-                        <p class="{{ $errorClass }}">{{ $message }}</p>
-                    @enderror
-                </div>
+                </x-customer.form-field>
             </div>
 
         </div>
@@ -168,11 +142,7 @@ countyName = {{ $countyNameInit }};"
             <div
                 class="bg-zinc-100 border-l-[3px] border-primary px-3.5 py-2.5 flex items-start justify-between gap-3">
                 <div class="flex items-start gap-2 min-w-0">
-                    <svg class="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                    </svg>
+                    <flux:icon.map-pin class="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                     <span x-text="pinnedText || 'Location pinned'"
                         class="text-[12px] font-semibold text-zinc-700 leading-snug"></span>
                 </div>
@@ -185,77 +155,49 @@ countyName = {{ $countyNameInit }};"
 
             {{-- Name --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                    <label class="{{ $labelClass }}">First Name *</label>
+                <x-customer.form-field label="First Name" name="form.first_name" :required="true">
                     <input type="text" wire:model="form.first_name" placeholder="John"
                         class="{{ $inputClass }}{{ $errors->has('form.first_name') ? ' border-red-500' : '' }}">
-                    @error('form.first_name')
-                        <p class="{{ $errorClass }}">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label class="{{ $labelClass }}">Last Name</label>
+                </x-customer.form-field>
+
+                <x-customer.form-field label="Last Name" name="form.last_name">
                     <input type="text" wire:model="form.last_name" placeholder="Doe"
                         class="{{ $inputClass }}{{ $errors->has('form.last_name') ? ' border-red-500' : '' }}">
-                    @error('form.last_name')
-                        <p class="{{ $errorClass }}">{{ $message }}</p>
-                    @enderror
-                </div>
+                </x-customer.form-field>
             </div>
 
             {{-- Phone --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                    <label class="{{ $labelClass }}">Phone Number *</label>
-                    <div class="flex">
-                        <span
-                            class="flex items-center px-3 border-y-[1.5px] border-l-[1.5px] border-zinc-200 bg-zinc-50 text-[13px] font-bold text-zinc-500">+254</span>
-                        <input type="text" wire:model="form.phone_number" placeholder="712 345 678"
-                            class="{{ $inputClass }} border-l-0{{ $errors->has('form.phone_number') ? ' border-red-500' : '' }}">
-                    </div>
-                    @error('form.phone_number')
-                        <p class="{{ $errorClass }}">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label class="{{ $labelClass }}">Alternative Phone (Optional)</label>
-                    <div class="flex">
-                        <span
-                            class="flex items-center px-3 border-y-[1.5px] border-l-[1.5px] border-zinc-200 bg-zinc-50 text-[13px] font-bold text-zinc-500">+254</span>
-                        <input type="text" wire:model="form.alternative_phone_number" placeholder="722 000 000"
-                            class="{{ $inputClass }} border-l-0{{ $errors->has('form.alternative_phone_number') ? ' border-red-500' : '' }}">
-                    </div>
-                    @error('form.alternative_phone_number')
-                        <p class="{{ $errorClass }}">{{ $message }}</p>
-                    @enderror
-                </div>
+                <x-customer.form-field label="Phone Number" name="form.phone_number" :required="true">
+                    <x-slot:prefix>+254</x-slot:prefix>
+                    <input type="text" wire:model="form.phone_number" placeholder="712 345 678"
+                        class="{{ $inputClass }} border-l-0{{ $errors->has('form.phone_number') ? ' border-red-500' : '' }}">
+                </x-customer.form-field>
+
+                <x-customer.form-field label="Alternative Phone (Optional)" name="form.alternative_phone_number">
+                    <x-slot:prefix>+254</x-slot:prefix>
+                    <input type="text" wire:model="form.alternative_phone_number" placeholder="722 000 000"
+                        class="{{ $inputClass }} border-l-0{{ $errors->has('form.alternative_phone_number') ? ' border-red-500' : '' }}">
+                </x-customer.form-field>
             </div>
 
             {{-- Address --}}
-            <div>
-                <label class="{{ $labelClass }}">Street / Apartment / Office *</label>
+            <x-customer.form-field label="Street / Apartment / Office" name="form.address_text" :required="true">
                 <input type="text" wire:model="form.address_text" placeholder="e.g. Westlands Road, Apartment 3B"
                     class="{{ $inputClass }}{{ $errors->has('form.address_text') ? ' border-red-500' : '' }}">
-                @error('form.address_text')
-                    <p class="{{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
+            </x-customer.form-field>
 
             {{-- Delivery instructions --}}
-            <div>
-                <label class="{{ $labelClass }}">Delivery Instructions (Optional)</label>
+            <x-customer.form-field label="Delivery Instructions (Optional)" name="form.additional_information">
                 <textarea wire:model="form.additional_information" rows="3"
                     placeholder="e.g. Green gate, 2nd floor, call on arrival"
                     class="{{ $inputClass }} h-24{{ $errors->has('form.additional_information') ? ' border-red-500' : '' }}"></textarea>
-                @error('form.additional_information')
-                    <p class="{{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
+            </x-customer.form-field>
 
             {{-- Label + default --}}
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-2">
-                    <label class="{{ $labelClass }} !mb-0">Label:</label>
+                    <label class="block text-[10px] font-bold tracking-widest uppercase text-zinc-500">Label:</label>
                     <div class="flex gap-2">
                         @foreach (['Home', 'Work', 'Other'] as $addrLabel)
                             <button type="button"
