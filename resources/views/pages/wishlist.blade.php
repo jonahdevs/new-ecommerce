@@ -113,16 +113,17 @@ new #[Layout('layouts.guest')] class extends Component {
 
                     <!-- Primary CTA -->
                     <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        <flux:button href="{{ route('shop.index') }}" wire:navigate variant="primary"
-                            class="w-full sm:w-auto">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <flux:button href="{{ route('shop.index') }}" wire:navigate variant="customer-primary"
+                            size="customer-lg" class="w-full sm:w-auto cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                             Browse Products
                         </flux:button>
 
-                        <flux:button href="{{ route('home') }}" wire:navigate variant="ghost" class="w-full sm:w-auto">
+                        <flux:button href="{{ route('home') }}" wire:navigate variant="customer-outline"
+                            size="customer-lg" class="w-full sm:w-auto cursor-pointer">
                             Back to Home
                         </flux:button>
                     </div>

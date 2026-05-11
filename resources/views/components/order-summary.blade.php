@@ -125,18 +125,18 @@ new class extends Component {
 };
 ?>
 
-<flux:card class="p-0">
+<div class="bg-white border border-zinc-200 rounded-sm overflow-hidden">
 
     {{-- Header --}}
-    <div class="px-4 py-2.5 border-b">
-        <flux:heading>Order Summary</flux:heading>
+    <div class="px-5 py-4 border-b border-zinc-200 bg-white">
+        <h3 class="text-[13px] font-bold uppercase tracking-widest text-zinc-950 font-serif">Order Summary</h3>
     </div>
 
     {{-- Items list --}}
-    <div class="divide-y max-h-52 overflow-y-auto">
+    <div class="divide-y divide-zinc-200 max-h-52 overflow-y-auto">
         @foreach ($this->cartItems as $item)
             <div class="flex items-center gap-2.5 px-4 py-3">
-                <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
+                <div class="w-10 h-10 rounded border border-zinc-200 bg-zinc-50 overflow-hidden shrink-0">
                     @if ($item->product?->image_path)
                         <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}"
                             class="w-full h-full object-cover" />
@@ -145,11 +145,11 @@ new class extends Component {
                     @endif
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium truncate">{{ $item->product->name }}</p>
-                    <p class="text-xs text-zinc-400">× {{ $item->quantity }}</p>
+                    <p class="text-[11px] font-semibold truncate text-zinc-950">{{ $item->product->name }}</p>
+                    <p class="text-[10px] text-zinc-400 font-medium">× {{ $item->quantity }}</p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-xs font-semibold">
+                    <span class="text-[12px] font-bold text-zinc-950">
                         {{ format_currency($item->product->final_price * $item->quantity) }}
                     </span>
                     <button wire:click="removeItem({{ $item->id }})" wire:confirm="Remove this item from your cart?"
@@ -162,71 +162,68 @@ new class extends Component {
     </div>
 
     {{-- Totals --}}
-    <div class="px-4 py-3 border-t space-y-1.5">
+    <div class="px-5 py-4 bg-zinc-50 border-t border-zinc-200 space-y-3">
 
-        <div class="flex justify-between text-sm text-zinc-500">
-            <span class="flex items-center gap-1.5">
-                <flux:icon.receipt class="size-3.5 shrink-0" />
-                Subtotal
-            </span>
-            <span>{{ format_currency($this->summary['subtotal']) }}</span>
+        <div class="flex justify-between text-[13px]">
+            <span class="text-zinc-500 font-medium">Subtotal</span>
+            <span class="text-zinc-950 font-bold">{{ format_currency($this->summary['subtotal']) }}</span>
         </div>
 
         @if ($this->summary['discount'] > 0)
-            <div class="flex justify-between text-sm text-green-600">
-                <span class="flex items-center gap-1.5">
-                    <flux:icon.badge-percent class="size-3.5 shrink-0" />
-                    Discount
-                </span>
-                <span>− {{ format_currency($this->summary['discount']) }}</span>
+            <div class="flex justify-between text-[13px]">
+                <span class="text-green-600 font-medium">Discount</span>
+                <span class="text-green-600 font-bold">− {{ format_currency($this->summary['discount']) }}</span>
             </div>
         @endif
 
-        <div class="flex justify-between text-sm text-zinc-500">
-            <span class="flex items-center gap-1.5">
-                <flux:icon.truck class="size-3.5 shrink-0" />
-                Shipping
-            </span>
+        <div class="flex justify-between text-[13px]">
+            <span class="text-zinc-500 font-medium">Shipping</span>
             @if (!$this->summary['shipping_selected'])
-                <flux:link :href="route('checkout.shipping')" wire:navigate class="text-amber-500">
-                    Select <flux:icon.arrow-long-right class="size-3.5 inline-block ms-0.5" />
+                <flux:link :href="route('checkout.shipping')" wire:navigate
+                    class="text-amber-500 text-[11px] font-bold uppercase tracking-wider">
+                    Select <flux:icon.arrow-long-right class="size-3 inline-block ms-0.5" />
                 </flux:link>
             @elseif ($this->summary['shipping_cost'] == 0)
-                <span class="text-green-600 font-medium">Free</span>
+                <span class="text-green-600 font-bold">FREE</span>
             @else
-                <span>{{ format_currency($this->summary['shipping_cost']) }}</span>
+                <span class="text-zinc-950 font-bold">{{ format_currency($this->summary['shipping_cost']) }}</span>
             @endif
         </div>
 
         @if ($this->summary['tax_enabled'] && !$this->summary['tax_inclusive'] && $this->summary['tax'] > 0)
-            <div class="flex justify-between text-sm text-zinc-500">
-                <span class="flex items-center gap-1.5">
-                    <flux:icon.receipt-percent class="size-3.5 shrink-0" />
+            <div class="flex justify-between text-[13px]">
+                <span class="text-zinc-500 font-medium">
                     {{ $this->summary['tax_name'] }} ({{ $this->summary['tax_rate'] }})
                 </span>
-                <span>{{ format_currency($this->summary['tax']) }}</span>
+                <span class="text-zinc-950 font-bold">{{ format_currency($this->summary['tax']) }}</span>
             </div>
         @endif
 
-        <div class="flex justify-between font-semibold text-sm border-t pt-2 mt-1">
-            <span>Total</span>
-            <span>{{ format_currency($this->summary['total']) }}</span>
+        <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
+            <span class="text-[14px] font-bold uppercase tracking-widest text-zinc-950">Total</span>
+            <span class="text-[24px] font-black text-primary font-barlow-condensed leading-none">
+                {{ format_currency($this->summary['total']) }}
+            </span>
         </div>
     </div>
 
     {{-- Place order button --}}
-    <div class="p-3 border-t">
+    <div class="p-4 border-t border-zinc-200 bg-white">
         <flux:button wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder"
-            class="w-full group cursor-pointer" variant="primary"
+            class="w-full group cursor-pointer" variant="customer-primary" size="customer-lg"
             :disabled="!$this->summary['shipping_selected'] || $isProcessing">
-            Place Order
+            <span wire:loading.remove wire:target="completeOrder">Place Order</span>
+            <span wire:loading wire:target="completeOrder" class="flex items-center gap-2">
+                <flux:icon.arrow-path class="size-3.5 animate-spin" />
+                Processing...
+            </span>
             <x-slot name="iconTrailing">
-                <flux:icon.chevron-right class="size-4 ms-3 group-hover:translate-x-1 transition-transform"
+                <flux:icon.chevron-right class="size-3.5 group-hover:translate-x-1 transition-transform"
                     wire:loading.class="hidden" wire:target="completeOrder" />
             </x-slot>
         </flux:button>
 
-        <div class="mt-2 flex items-center justify-center gap-1 text-xs text-zinc-400">
+        <div class="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 font-medium">
             <flux:icon.lock-closed class="size-3" />
             <span>Secure checkout</span>
         </div>
@@ -282,4 +279,4 @@ new class extends Component {
         </div>
     </flux:modal>
 
-</flux:card>
+</div>

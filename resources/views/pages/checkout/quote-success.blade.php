@@ -84,12 +84,13 @@ new #[Layout('layouts.guest')] class extends Component {
         {{-- Actions --}}
         <div class="flex items-center justify-center gap-3">
             {{-- Links to quotations page — not orders page --}}
-            <flux:button :href="route('customer.quotations.index')" wire:navigate variant="primary"
-                class="cursor-pointer">
+            <flux:button :href="route('customer.quotations.index')" wire:navigate variant="customer-primary"
+                size="customer-lg" class="cursor-pointer">
                 View My Quotations
             </flux:button>
 
-            <flux:button :href="route('shop.index')" wire:navigate variant="ghost" class="cursor-pointer">
+            <flux:button :href="route('shop.index')" wire:navigate variant="customer-outline" size="customer-lg"
+                class="cursor-pointer">
                 Continue Shopping
             </flux:button>
         </div>

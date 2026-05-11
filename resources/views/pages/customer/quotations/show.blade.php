@@ -111,28 +111,21 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 ?>
 
 <div>
-    <flux:card class="rounded-md p-0">
-
-        {{-- Header --}}
-        <div class="flex items-center gap-3 px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
-            <flux:button size="customer" icon="arrow-long-left" variant="customer-outline" class="cursor-pointer"
-                :href="route('customer.quotations.index')" wire:navigate />
-
-            <flux:heading size="lg">Quotation Details</flux:heading>
-
-            @if ($quote->quoted_at)
-                <flux:button size="customer" variant="customer-outline" icon="arrow-down-tray" class="cursor-pointer"
-                    :href="route('customer.quotations.pdf', $quote)" target="_blank">
-                    PDF
-                </flux:button>
-            @endif
-
-            <flux:badge :color="$quote->status->color()" variant="solid" size="sm" class="ml-auto">
-                {{ $quote->status->label() }}
+    <div class="bg-white border border-zinc-200">
+        <div class="p-4 bg-white border-b border-zinc-200 flex items-center justify-between flex-wrap gap-3">
+            <a href="{{ route('customer.quotations.index') }}" wire:navigate
+                class="flex items-center gap-1.5 text-[12px] font-bold tracking-widest uppercase text-zinc-500 transition-colors hover:text-primary cursor-pointer">
+                <flux:icon.chevron-left class="w-3.5 h-3.5" />
+                Back to Quotations
+            </a>
+            <div class="font-serif text-[18px] font-black text-zinc-950">
+                QUOTATION <em class="text-primary not-italic">#{{ $quote->reference }}</em>
+            </div>
+            <flux:badge :color="$quote->status->color()">{{ $quote->status->label() }}
             </flux:badge>
         </div>
 
-        <section class="p-5">
+        <div class="p-5 flex flex-col gap-5">
 
             {{-- ============================================================ --}}
             {{-- CONTEXT BANNERS                                               --}}
@@ -224,292 +217,313 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             <flux:separator class="my-5" />
 
-            {{-- ============================================================ --}}
-            {{-- ITEMS                                                          --}}
-            {{-- ============================================================ --}}
-            <flux:heading class="text-lg mb-4">Items in Your Quotation</flux:heading>
+            {{-- Items List --}}
+            <div>
+                <h3 class="text-base font-bold uppercase tracking-wider text-zinc-900 mb-4 font-serif">Items in Your
+                    Quotation
+                </h3>
 
-            <div class="space-y-4">
-                @foreach ($quote->items as $item)
-                    <div class="border rounded-md p-4">
-                        <div class="flex gap-4">
-                            <div class="shrink-0">
+                <div class="flex flex-col border border-zinc-200">
+                    @foreach ($quote->items as $item)
+                        <div class="flex items-center gap-3.5 p-3.5 border-b border-zinc-200 last:border-b-0">
+                            <div class="w-14 h-14 bg-zinc-50 flex items-center justify-center shrink-0 relative">
                                 @if ($item->productImageUrl())
                                     <img src="{{ asset($item->productImageUrl()) }}" alt="{{ $item->productName() }}"
-                                        class="w-20 h-20 object-contain rounded" />
+                                        class="w-[90%] h-[90%] object-contain">
                                 @else
-                                    <div class="w-20 h-20 bg-zinc-100 rounded flex items-center justify-center">
-                                        <flux:icon.photo class="w-8 h-8 text-zinc-300" />
+                                    <flux:icon.photo class="w-8 h-8 text-zinc-200" />
+                                @endif
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                @if ($item->productSku())
+                                    <div class="text-[9px] font-bold tracking-widest uppercase text-zinc-500 mb-0.5">
+                                        SKU: {{ $item->productSku() }}
                                     </div>
                                 @endif
+                                <div class="text-[13px] font-semibold text-zinc-950 mb-0.5 truncate">
+                                    {{ $item->productName() }}
+                                </div>
+                                <div class="text-[11px] text-zinc-500">Qty: {{ $item->quantity }}</div>
                             </div>
-
-                            <div class="flex-1">
-                                <flux:heading size="sm">{{ $item->productName() }}</flux:heading>
-                                @if ($item->productSku())
-                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $item->productSku() }}
-                                    </flux:text>
-                                @endif
-                                <flux:text size="sm" class="text-zinc-500 mt-1">
-                                    Qty: {{ $item->quantity }}
-                                </flux:text>
+                            <div class="flex flex-col items-end gap-1">
                                 @if ($this->showPrices)
-                                    <flux:text size="sm" class="text-zinc-500">
-                                        {{ $item->quantity }} × {{ format_currency($item->effective_price) }}
-                                    </flux:text>
-                                    <flux:text size="sm" class="font-semibold mt-1">
+                                    <div class="text-[13px] font-bold text-zinc-950 shrink-0">
                                         {{ format_currency($item->effective_price * $item->quantity) }}
-                                    </flux:text>
+                                    </div>
+                                    <div class="text-[10px] text-zinc-400">
+                                        {{ $item->quantity }} × {{ format_currency($item->effective_price) }}
+                                    </div>
+                                @else
+                                    <div class="text-[11px] text-amber-500 font-medium">Pricing pending</div>
                                 @endif
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
 
 
-            {{-- ============================================================ --}}
-            {{-- TOTALS (only shown when prices are available)                  --}}
-            {{-- ============================================================ --}}
-            @if ($this->showPrices)
-                <div class="mt-6 space-y-1.5 max-w-xs ml-auto">
-                    <div class="flex justify-between text-sm">
-                        <flux:text>Subtotal</flux:text>
-                        <span>{{ format_currency($quote->subtotal) }}</span>
-                    </div>
-
-                    @if ($quote->discount > 0)
-                        <div class="flex justify-between text-sm text-green-600">
-                            <span>Discount</span>
-                            <span>− {{ format_currency($quote->discount) }}</span>
+                {{-- ============================================================ --}}
+                {{-- TOTALS (only shown when prices are available)                  --}}
+                {{-- ============================================================ --}}
+                @if ($this->showPrices)
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
+                        {{-- Quote Totals --}}
+                        <div class="bg-zinc-50 border border-zinc-200 rounded-sm overflow-hidden">
+                            <div class="px-5 py-4 border-b border-zinc-200 bg-white">
+                                <h3 class="text-[13px] font-bold uppercase tracking-widest text-zinc-950 font-serif">
+                                    Quote Summary</h3>
+                            </div>
+                            <div class="p-5 space-y-3">
+                                <div class="flex justify-between text-[13px]">
+                                    <span class="text-zinc-500 font-medium">Subtotal</span>
+                                    <span
+                                        class="text-zinc-950 font-bold">{{ format_currency($quote->subtotal) }}</span>
+                                </div>
+                                @if ($quote->discount > 0)
+                                    <div class="flex justify-between text-[13px]">
+                                        <span class="text-green-600 font-medium">Discount</span>
+                                        <span class="text-green-600 font-bold">−
+                                            {{ format_currency($quote->discount) }}</span>
+                                    </div>
+                                @endif
+                                <div class="flex justify-between text-[13px]">
+                                    <span class="text-zinc-500 font-medium">Delivery</span>
+                                    <span class="text-zinc-950 font-bold">
+                                        @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
+                                            <span class="text-amber-500">TBD</span>
+                                        @elseif ($quote->shipping_cents === 0)
+                                            FREE
+                                        @else
+                                            {{ format_currency($quote->shipping) }}
+                                        @endif
+                                    </span>
+                                </div>
+                                <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
+                                    <span
+                                        class="text-[14px] font-bold uppercase tracking-widest text-zinc-950">Total</span>
+                                    <div class="text-right">
+                                        <span
+                                            class="text-[24px] font-black text-primary font-barlow-condensed leading-none">
+                                            {{ format_currency($quote->total) }}
+                                        </span>
+                                        @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
+                                            <div class="text-[9px] text-amber-500 font-normal mt-1">Excludes delivery
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    @endif
-
-                    <div class="flex justify-between text-sm">
-                        <flux:text>Delivery</flux:text>
-                        <span>
-                            @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
-                                <span class="text-amber-500">TBD</span>
-                            @elseif ($quote->shipping_cents === 0)
-                                <span class="text-green-600">Free</span>
-                            @else
-                                {{ format_currency($quote->shipping) }}
-                            @endif
-                        </span>
                     </div>
-
-                    <div class="flex justify-between font-semibold border-t pt-2">
-                        <span>Total</span>
-                        <div class="text-right">
-                            <span>{{ format_currency($quote->total) }}</span>
-                            @if ($quote->shipping_cents === 0 && !$quote->status->isTerminal())
-                                <p class="text-xs text-amber-500 font-normal">Excludes delivery</p>
-                            @endif
+                @else
+                    <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-sm">
+                        <div class="flex items-start gap-2">
+                            <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-amber-500" />
+                            <div class="text-sm text-amber-700">
+                                Pricing is being prepared by our team. You'll be notified once your quotation is ready.
+                            </div>
                         </div>
                     </div>
-                </div>
-            @else
-                <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <flux:text class="text-sm text-amber-700">
-                        <flux:icon name="clock" class="size-4 inline mr-1" />
-                        Pricing is being prepared by our team. You'll be notified once your quotation is ready.
-                    </flux:text>
-                </div>
-            @endif
+                @endif
 
-            <flux:separator class="my-8" />
+                <flux:separator class="my-8" />
 
-            {{-- ============================================================ --}}
-            {{-- ACCEPT / REJECT ACTIONS                                        --}}
-            {{-- ============================================================ --}}
-            @if ($this->canRespond)
-                <div
-                    class="flex flex-col sm:flex-row items-center gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-8">
-                    <div class="flex-1 text-sm">
-                        <p class="font-medium text-zinc-800">Ready to decide?</p>
-                        <p class="text-zinc-500 mt-0.5">
-                            Accept to proceed to payment, or reject if you'd like to pass on this quote.
-                        </p>
+                {{-- ============================================================ --}}
+                {{-- ACCEPT / REJECT ACTIONS                                        --}}
+                {{-- ============================================================ --}}
+                @if ($this->canRespond)
+                    <div
+                        class="flex flex-col sm:flex-row items-center gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-sm mt-6">
+                        <div class="flex-1 text-sm">
+                            <p class="font-medium text-zinc-800">Ready to decide?</p>
+                            <p class="text-zinc-500 mt-0.5">
+                                Accept to proceed to payment, or reject if you'd like to pass on this quote.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <flux:modal.trigger name="reject-quote">
+                                <flux:button variant="customer-danger" size="customer" class="cursor-pointer px-5!">
+                                    <flux:icon.x-circle class="w-3.5 h-3.5" />
+                                    Reject
+                                </flux:button>
+                            </flux:modal.trigger>
+
+                            <flux:modal.trigger name="accept-quote">
+                                <flux:button variant="customer-primary" size="customer" class="cursor-pointer px-5!">
+                                    <flux:icon.check-circle class="w-3.5 h-3.5" />
+                                    Accept Quote
+                                </flux:button>
+                            </flux:modal.trigger>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 shrink-0">
-                        <flux:modal.trigger name="reject-quote">
-                            <flux:button variant="customer-outline" icon="x-circle"
-                                class="cursor-pointer text-red-500!">
-                                Reject
-                            </flux:button>
-                        </flux:modal.trigger>
+                @endif
 
-                        <flux:modal.trigger name="accept-quote">
-                            <flux:button variant="customer-primary" icon="check-circle" class="cursor-pointer">
-                                Accept Quote
-                            </flux:button>
-                        </flux:modal.trigger>
-                    </div>
-                </div>
-            @endif
+                {{-- ============================================================ --}}
+                {{-- TIMELINE                                                       --}}
+                {{-- ============================================================ --}}
+                <div class="mt-8">
+                    <h3 class="text-base font-bold uppercase tracking-wider text-zinc-900 mb-4 font-serif">Quotation
+                        History</h3>
 
-            {{-- ============================================================ --}}
-            {{-- TIMELINE                                                       --}}
-            {{-- ============================================================ --}}
-            <flux:heading class="text-lg mb-4">Quotation History</flux:heading>
-
-            @php
-                $mainPath = [QuoteStatus::PENDING, QuoteStatus::SENT, QuoteStatus::ACCEPTED];
-
-                $isCancelled = $quote->isCancelled();
-                $isRejected = $quote->isRejected();
-                $isExpiredS = $quote->isExpired();
-                $isTerminal = $isCancelled || $isRejected || $isExpiredS;
-                $histories = $quote->statusHistories->keyBy('to_status');
-
-                // Find the current active step (last reached step)
-                $currentStepIndex = -1;
-                foreach ($mainPath as $idx => $step) {
-                    if ($histories->has($step->value)) {
-                        $currentStepIndex = $idx;
-                    }
-                }
-
-                $stepLabels = [
-                    'pending' => ['label' => 'Quote Requested', 'desc' => 'Your quote request was submitted.'],
-                    'sent' => ['label' => 'Quote Ready', 'desc' => 'Sheffield Africa has priced your request.'],
-                    'accepted' => ['label' => 'Quote Accepted', 'desc' => 'You accepted this quotation.'],
-                ];
-            @endphp
-
-            <div class="relative">
-                @foreach ($mainPath as $index => $step)
                     @php
-                        $history = $histories->get($step->value);
-                        $reached = (bool) $history;
-                        $isActive = $index === $currentStepIndex && !$isTerminal;
-                        $isLast = $index === count($mainPath) - 1;
-                        $next = $mainPath[$index + 1] ?? null;
-                        $nextReached = $next && $histories->has($next->value);
-                        $dimmed = $isTerminal && !$reached;
-                        $meta = $stepLabels[$step->value];
+                        $mainPath = [QuoteStatus::PENDING, QuoteStatus::SENT, QuoteStatus::ACCEPTED];
+
+                        $isCancelled = $quote->isCancelled();
+                        $isRejected = $quote->isRejected();
+                        $isExpiredS = $quote->isExpired();
+                        $isTerminal = $isCancelled || $isRejected || $isExpiredS;
+                        $histories = $quote->statusHistories->keyBy('to_status');
+
+                        // Find the current active step (last reached step)
+                        $currentStepIndex = -1;
+                        foreach ($mainPath as $idx => $step) {
+                            if ($histories->has($step->value)) {
+                                $currentStepIndex = $idx;
+                            }
+                        }
+
+                        $stepLabels = [
+                            'pending' => ['label' => 'Quote Requested', 'desc' => 'Your quote request was submitted.'],
+                            'sent' => ['label' => 'Quote Ready', 'desc' => 'Sheffield Africa has priced your request.'],
+                            'accepted' => ['label' => 'Quote Accepted', 'desc' => 'You accepted this quotation.'],
+                        ];
                     @endphp
 
-                    <div class="relative flex gap-5 {{ $isLast ? 'pb-0' : 'pb-8' }}">
-                        @if (!$isLast)
-                            <div @class([
-                                'absolute left-4 top-8 bottom-0 w-0.5 z-0',
-                                'bg-green-500' => $nextReached,
-                                'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
-                            ])></div>
-                        @endif
+                    <div class="relative">
+                        @foreach ($mainPath as $index => $step)
+                            @php
+                                $history = $histories->get($step->value);
+                                $reached = (bool) $history;
+                                $isActive = $index === $currentStepIndex && !$isTerminal;
+                                $isLast = $index === count($mainPath) - 1;
+                                $next = $mainPath[$index + 1] ?? null;
+                                $nextReached = $next && $histories->has($next->value);
+                                $dimmed = $isTerminal && !$reached;
+                                $meta = $stepLabels[$step->value];
+                            @endphp
 
-                        <div @class([
-                            'relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors',
-                            'bg-green-500 text-white ring-4 ring-green-100 dark:ring-green-900' => $isActive,
-                            'bg-green-500 text-white' => $reached && !$isActive,
-                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600' => $dimmed,
-                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' => !$reached && !$dimmed,
-                        ])>
-                            <flux:icon name="{{ $step->icon() }}" class="size-4" />
-                        </div>
+                            <div class="relative flex gap-5 {{ $isLast ? 'pb-0' : 'pb-8' }}">
+                                @if (!$isLast)
+                                    <div @class([
+                                        'absolute left-4 top-8 bottom-0 w-0.5 z-0',
+                                        'bg-green-500' => $nextReached,
+                                        'bg-zinc-200 dark:bg-zinc-700' => !$nextReached,
+                                    ])></div>
+                                @endif
 
-                        <div class="flex-1 pt-1">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <flux:text @class([
-                                        'text-sm',
-                                        'font-semibold text-green-600 dark:text-green-400' => $isActive,
-                                        'font-semibold text-zinc-900 dark:text-white' => $reached && !$isActive,
-                                        'text-zinc-300 dark:text-zinc-600' => $dimmed,
-                                        'text-zinc-400' => !$reached && !$dimmed,
-                                    ])>
-                                        {{ $meta['label'] }}
-                                    </flux:text>
-                                    <flux:text
-                                        class="text-xs mt-0.5
-                                        {{ $reached ? 'text-zinc-500' : 'text-zinc-300 dark:text-zinc-600' }}">
-                                        {{ $reached ? $meta['desc'] : 'Pending' }}
-                                    </flux:text>
+                                <div @class([
+                                    'relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                                    'bg-green-500 text-white ring-4 ring-green-100 dark:ring-green-900' => $isActive,
+                                    'bg-green-500 text-white' => $reached && !$isActive,
+                                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' => !$reached && !$dimmed,
+                                ])>
+                                    <flux:icon name="{{ $step->icon() }}" class="size-4" />
                                 </div>
 
-                                @if ($history)
-                                    <div class="text-right shrink-0">
-                                        <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                            {{ $history->created_at->format('M j, Y') }}
-                                        </flux:text>
-                                        <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                            {{ $history->created_at->format('g:i A') }}
-                                        </flux:text>
+                                <div class="flex-1 pt-1">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div>
+                                            <div @class([
+                                                'text-sm',
+                                                'font-semibold text-green-600 dark:text-green-400' => $isActive,
+                                                'font-semibold text-zinc-900 dark:text-white' => $reached && !$isActive,
+                                                'text-zinc-300 dark:text-zinc-600' => $dimmed,
+                                                'text-zinc-400' => !$reached && !$dimmed,
+                                            ])>
+                                                {{ $meta['label'] }}
+                                            </div>
+                                            <div
+                                                class="text-xs mt-0.5
+                                        {{ $reached ? 'text-zinc-500' : 'text-zinc-300 dark:text-zinc-600' }}">
+                                                {{ $reached ? $meta['desc'] : 'Pending' }}
+                                            </div>
+                                        </div>
+
+                                        @if ($history)
+                                            <div class="text-right shrink-0">
+                                                <div class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                    {{ $history->created_at->format('M j, Y') }}
+                                                </div>
+                                                <div class="text-xs text-zinc-400 mt-0.5">
+                                                    {{ $history->created_at->format('g:i A') }}
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                @endforeach
+                        @endforeach
 
-                @if ($isRejected)
-                    <div class="relative flex gap-5 pt-6">
-                        <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-500">
-                            <flux:icon name="{{ QuoteStatus::REJECTED->icon() }}" class="size-4" />
-                        </div>
-                        <div class="flex-1 pt-1">
-                            <flux:text class="text-sm font-semibold text-red-600">You rejected this quote</flux:text>
-                            <flux:text class="text-xs text-zinc-500 mt-0.5">
-                                Contact us if you'd like a revised quotation.
-                            </flux:text>
-                        </div>
-                    </div>
-                @endif
+                        @if ($isRejected)
+                            <div class="relative flex gap-5 pt-6">
+                                <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-500">
+                                    <flux:icon name="{{ QuoteStatus::REJECTED->icon() }}" class="size-4" />
+                                </div>
+                                <div class="flex-1 pt-1">
+                                    <div class="text-sm font-semibold text-red-600">You rejected this quote
+                                    </div>
+                                    <div class="text-xs text-zinc-500 mt-0.5">
+                                        Contact us if you'd like a revised quotation.
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
-                @if ($isExpiredS)
-                    <div class="relative flex gap-5 pt-6">
-                        <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-400">
-                            <flux:icon name="{{ QuoteStatus::EXPIRED->icon() }}" class="size-4" />
-                        </div>
-                        <div class="flex-1 pt-1">
-                            <flux:text class="text-sm font-semibold text-zinc-500">Quote expired</flux:text>
-                            <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                The validity period ended without a response.
-                            </flux:text>
-                        </div>
-                    </div>
-                @endif
+                        @if ($isExpiredS)
+                            <div class="relative flex gap-5 pt-6">
+                                <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-400">
+                                    <flux:icon name="{{ QuoteStatus::EXPIRED->icon() }}" class="size-4" />
+                                </div>
+                                <div class="flex-1 pt-1">
+                                    <div class="text-sm font-semibold text-zinc-500">Quote expired</div>
+                                    <div class="text-xs text-zinc-400 mt-0.5">
+                                        The validity period ended without a response.
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
-                @if ($isCancelled)
-                    <div class="relative flex gap-5 pt-6">
-                        <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div
-                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-500">
-                            <flux:icon name="{{ QuoteStatus::CANCELLED->icon() }}" class="size-4" />
-                        </div>
-                        <div class="flex-1 pt-1">
-                            <flux:text class="text-sm font-semibold text-rose-600">Quotation cancelled</flux:text>
-                            <flux:text class="text-xs text-zinc-400 mt-0.5">
-                                This quotation was cancelled. Please contact us for assistance.
-                            </flux:text>
-                        </div>
+                        @if ($isCancelled)
+                            <div class="relative flex gap-5 pt-6">
+                                <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
+                                <div
+                                    class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-500">
+                                    <flux:icon name="{{ QuoteStatus::CANCELLED->icon() }}" class="size-4" />
+                                </div>
+                                <div class="flex-1 pt-1">
+                                    <div class="text-sm font-semibold text-rose-600">Quotation cancelled</div>
+                                    <div class="text-xs text-zinc-400 mt-0.5">
+                                        This quotation was cancelled. Please contact us for assistance.
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
-                @endif
+                </div>
+
+                {{-- Footer --}}
+                <div class="flex flex-col items-center gap-3 mt-8">
+                    @if ($quote->quoted_at)
+                        <flux:button variant="customer-outline" size="customer" class="cursor-pointer px-5!"
+                            :href="route('customer.quotations.pdf', $quote)" target="_blank">
+                            <flux:icon.arrow-down-tray class="w-3.5 h-3.5" />
+                            Download Quotation PDF
+                        </flux:button>
+                    @endif
+
+                    <div class="text-[13px] text-zinc-500">
+                        Need help? <a href="#" class="text-primary font-bold hover:underline">Contact
+                            Support</a>
+                    </div>
+                </div>
             </div>
-
-            <flux:separator class="my-8" />
-
-            {{-- Footer --}}
-            <div class="flex flex-col items-center gap-3">
-                @if ($quote->quoted_at)
-                    <flux:button variant="customer-outline" icon="arrow-down-tray" size="sm"
-                        class="cursor-pointer" :href="route('customer.quotations.pdf', $quote)" target="_blank">
-                        Download Quotation PDF
-                    </flux:button>
-                @endif
-
-                <flux:text>
-                    Need help?
-                    <flux:link>Contact Support</flux:link>
-                </flux:text>
-            </div>
-        </section>
-    </flux:card>
+        </div>
+    </div>
 
 
     {{-- ================================================================== --}}
@@ -524,29 +538,32 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 </flux:subheading>
             </div>
 
-            <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-sm space-y-1.5">
+            <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-sm text-sm space-y-1.5">
                 <div class="flex justify-between">
-                    <flux:text class="text-zinc-500">Reference</flux:text>
-                    <flux:text class="font-medium">{{ $quote->reference }}</flux:text>
+                    <span class="text-zinc-500">Reference</span>
+                    <span class="font-medium">{{ $quote->reference }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <flux:text class="text-zinc-500">Total</flux:text>
-                    <flux:text class="font-medium">{{ format_currency($quote->total) }}</flux:text>
+                    <span class="text-zinc-500">Total</span>
+                    <span class="font-medium">{{ format_currency($quote->total) }}</span>
                 </div>
                 @if ($quote->expires_at)
                     <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Valid until</flux:text>
-                        <flux:text class="font-medium">{{ $quote->expires_at->format('M d, Y') }}</flux:text>
+                        <span class="text-zinc-500">Valid until</span>
+                        <span class="font-medium">{{ $quote->expires_at->format('M d, Y') }}
+                        </span>
                     </div>
                 @endif
             </div>
 
             <div class="flex justify-end gap-3 pt-2">
                 <flux:modal.close>
-                    <flux:button variant="customer-outline" class="cursor-pointer">Cancel</flux:button>
+                    <flux:button variant="customer-outline" size="customer" class="cursor-pointer px-5!">Cancel
+                    </flux:button>
                 </flux:modal.close>
-                <flux:button wire:click="acceptQuote" variant="customer-primary" icon="check-circle"
-                    class="cursor-pointer">
+                <flux:button wire:click="acceptQuote" variant="customer-primary" size="customer"
+                    class="cursor-pointer px-5!">
+                    <flux:icon.check-circle class="w-3.5 h-3.5" />
                     Yes, Accept & Pay
                 </flux:button>
             </div>
@@ -570,9 +587,12 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             <div class="flex justify-end gap-3 pt-2">
                 <flux:modal.close>
-                    <flux:button variant="customer-outline" class="cursor-pointer">Keep</flux:button>
+                    <flux:button variant="customer-outline" size="customer" class="cursor-pointer px-5!">Keep
+                    </flux:button>
                 </flux:modal.close>
-                <flux:button wire:click="rejectQuote" variant="customer-danger" class="cursor-pointer">
+                <flux:button wire:click="rejectQuote" variant="customer-danger" size="customer"
+                    class="cursor-pointer px-5! text-white!">
+                    <flux:icon.x-circle class="w-3.5 h-3.5" />
                     Reject Quotation
                 </flux:button>
             </div>

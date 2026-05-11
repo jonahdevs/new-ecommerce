@@ -249,7 +249,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
             <flux:heading level="1" class="font-semibold! text-xl! sm:text-2xl! lg:text-3xl! font-serif!">Cart
             </flux:heading>
             @if ($this->cartItems->isNotEmpty())
-                <flux:button variant="filled" wire:click="clearCart" class="cursor-pointer" size="sm">
+                <flux:button variant="customer-outline" wire:click="clearCart" class="cursor-pointer" size="customer">
                     Clear Cart
                 </flux:button>
             @endif
@@ -274,12 +274,13 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                         </flux:text>
 
                         <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                            <flux:button href="{{ route('shop.index') }}" wire:navigate variant="primary"
-                                icon="shopping-bag" class="w-full sm:w-auto">
+                            <flux:button href="{{ route('shop.index') }}" wire:navigate variant="customer-primary"
+                                size="customer-lg" class="w-full sm:w-auto cursor-pointer">
+                                <flux:icon.shopping-bag class="w-3.5 h-3.5" />
                                 Start Shopping
                             </flux:button>
-                            <flux:button href="{{ route('home') }}" wire:navigate variant="ghost"
-                                class="w-full sm:w-auto">
+                            <flux:button href="{{ route('home') }}" wire:navigate variant="customer-outline"
+                                size="customer-lg" class="w-full sm:w-auto cursor-pointer">
                                 Back to Home
                             </flux:button>
                         </div>
@@ -394,8 +395,9 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
                                         {{-- Remove --}}
                                         <flux:modal.trigger name="remove-item-{{ $item->id }}">
-                                            <flux:button variant="ghost" size="xs" icon="trash"
-                                                icon-variant="outline" class="cursor-pointer">
+                                            <flux:button variant="customer-outline" size="xs"
+                                                class="cursor-pointer">
+                                                <flux:icon.trash variant="outline" class="size-3.5" />
                                                 <span class="max-md:hidden">
                                                     Remove
                                                 </span>
@@ -420,19 +422,21 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                                     <flux:modal.close>
                                                         <flux:button
                                                             wire:click="toggleWishlist({{ $item->product->id }})"
+                                                            variant="customer-outline" size="customer"
                                                             class="cursor-pointer">
                                                             <x-slot name="icon">
                                                                 <flux:icon.heart
                                                                     variant="{{ $wishlisted ? 'solid' : 'outline' }}"
-                                                                    @class(['size-4', 'text-red-500' => $wishlisted]) />
+                                                                    @class(['size-3.5', 'text-red-500' => $wishlisted]) />
                                                             </x-slot>
                                                             {{ $wishlisted ? 'Remove from Wishlist' : 'Save for later' }}
                                                         </flux:button>
                                                     </flux:modal.close>
                                                     <flux:spacer />
-                                                    <flux:button type="button" variant="danger" icon="trash"
-                                                        class="cursor-pointer"
+                                                    <flux:button type="button" variant="customer-danger"
+                                                        size="customer" class="cursor-pointer text-white!"
                                                         wire:click="removeItem({{ $item->id }})">
+                                                        <flux:icon.trash class="w-3.5 h-3.5" />
                                                         Remove Item
                                                     </flux:button>
                                                 </div>
@@ -441,10 +445,10 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
                                         {{-- Wishlist --}}
                                         <flux:button wire:click="toggleWishlist({{ $item->product->id }})"
-                                            variant="ghost" size="xs" class="cursor-pointer">
+                                            variant="customer-outline" size="xs" class="cursor-pointer">
                                             <x-slot name="icon">
                                                 <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
-                                                    @class(['size-4', 'text-red-500' => $wishlisted]) />
+                                                    @class(['size-3.5', 'text-red-500' => $wishlisted]) />
                                             </x-slot>
                                             <span class="max-md:hidden">
                                                 {{ $wishlisted ? 'Wishlisted' : 'Save for later' }}
@@ -498,7 +502,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                         </div>
                         <div class="border-t p-3">
                             <flux:button wire:click="proceedToCheckout" class="w-full group cursor-pointer"
-                                variant="primary">
+                                variant="customer-primary" size="customer-lg">
                                 Proceed to Checkout
                                 <x-slot name="iconTrailing">
                                     <flux:icon.chevron-right
@@ -547,7 +551,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                 Missing {{ $product['accessories_count'] }}
                                 {{ Str::plural('accessory', $product['accessories_count']) }}
                             </p>
-                            <flux:button size="xs" variant="ghost" class="mt-2 cursor-pointer"
+                            <flux:button size="xs" variant="customer-outline" class="mt-2 cursor-pointer"
                                 href="{{ route('products.show', $product['slug']) }}#accessories">
                                 View accessories
                             </flux:button>
@@ -556,8 +560,8 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                 @endforeach
             </div>
             <div class="flex gap-2 pt-4 border-t">
-                <flux:button variant="primary" class="cursor-pointer flex-1" href="{{ route('checkout.shipping') }}"
-                    wire:navigate>
+                <flux:button variant="customer-primary" size="customer-lg" class="cursor-pointer flex-1"
+                    href="{{ route('checkout.shipping') }}" wire:navigate>
                     Continue without accessories
                 </flux:button>
             </div>

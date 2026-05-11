@@ -263,13 +263,14 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
 
                 <flux:button wire:click="initiateMpesa" wire:loading.attr="disabled" wire:target="initiateMpesa"
-                    :disabled="$isProcessing" variant="primary" class="w-full cursor-pointer"
-                    icon="device-phone-mobile">
+                    :disabled="$isProcessing" variant="customer-primary" size="customer-lg"
+                    class="w-full cursor-pointer">
+                    <flux:icon.device-phone-mobile class="w-3.5 h-3.5" />
                     <span wire:loading.remove wire:target="initiateMpesa">
                         Pay {{ format_currency($this->order->total) }}
                     </span>
                     <span wire:loading wire:target="initiateMpesa" class="flex items-center gap-2">
-                        <flux:icon.arrow-path class="size-4 animate-spin" />
+                        <flux:icon.arrow-path class="size-3.5 animate-spin" />
                         Sending request...
                     </span>
                 </flux:button>
@@ -391,15 +392,16 @@ new #[Layout('layouts.checkout')] class extends Component {
                     The M-Pesa request timed out. You can retry or switch to card payment.
                 </flux:text>
                 <div class="flex flex-col gap-2">
-                    <flux:button x-on:click="retry()" variant="primary" class="w-full cursor-pointer">
-                        <flux:icon.arrow-path class="size-4 me-2" />
+                    <flux:button x-on:click="retry()" variant="customer-primary" size="customer-lg"
+                        class="w-full cursor-pointer">
+                        <flux:icon.arrow-path class="size-3.5" />
                         Retry M-Pesa
                     </flux:button>
 
                     <flux:button
                         x-on:click="$flux.modal('stk-waiting').close(); $wire.set('paymentMethod', 'card'); $wire.resetProcessing()"
-                        variant="ghost" class="w-full cursor-pointer">
-                        <flux:icon.credit-card class="size-4 me-2" />
+                        variant="customer-outline" size="customer-lg" class="w-full cursor-pointer">
+                        <flux:icon.credit-card class="size-3.5" />
                         Pay with Card instead
                     </flux:button>
 

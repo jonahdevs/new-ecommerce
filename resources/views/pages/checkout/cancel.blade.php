@@ -86,20 +86,22 @@ new #[Layout('layouts.checkout')] class extends Component {
             {{-- Actions --}}
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                 @if ($order && $order->payment_status->value !== 'paid')
-                    <flux:button variant="primary" wire:click="retryPayment" class="w-full sm:w-auto">
-                        <flux:icon.arrow-path class="size-4 me-2" />
+                    <flux:button variant="customer-primary" size="customer-lg" wire:click="retryPayment"
+                        class="w-full sm:w-auto cursor-pointer">
+                        <flux:icon.arrow-path class="size-3.5" />
                         Try Again
                     </flux:button>
                 @endif
 
-                <flux:button variant="ghost" :href="route('cart')" wire:navigate class="w-full sm:w-auto">
-                    <flux:icon.shopping-cart class="size-4 me-2" />
+                <flux:button variant="customer-outline" size="customer-lg" :href="route('cart')" wire:navigate
+                    class="w-full sm:w-auto cursor-pointer">
+                    <flux:icon.shopping-cart class="size-3.5" />
                     Return to Cart
                 </flux:button>
 
-                <flux:button variant="ghost" :href="route('customer.orders.index')" wire:navigate
-                    class="w-full sm:w-auto">
-                    <flux:icon.clipboard-document-list class="size-4 me-2" />
+                <flux:button variant="customer-outline" size="customer-lg" :href="route('customer.orders.index')"
+                    wire:navigate class="w-full sm:w-auto cursor-pointer">
+                    <flux:icon.clipboard-document-list class="size-3.5" />
                     View Orders
                 </flux:button>
             </div>

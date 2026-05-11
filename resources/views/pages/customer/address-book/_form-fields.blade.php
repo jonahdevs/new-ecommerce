@@ -41,7 +41,7 @@ countyName = {{ $countyNameInit }};"
             <x-customer.form-field label="Search location">
                 <x-slot:append>
                     <button type="button"
-                        class="px-4 bg-zinc-950 text-white hover:bg-primary transition-colors shrink-0 border-[1.5px] border-l-0 border-zinc-950"
+                        class="px-4 bg-secondary text-white hover:bg-primary transition-colors shrink-0 border-[1.5px] border-l-0 border-secondary"
                         @click="$dispatch('do-map-search')" title="Search">
                         <flux:icon.magnifying-glass class="size-4" />
                     </button>

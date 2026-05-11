@@ -194,12 +194,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                 <!-- Primary CTA -->
                 <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <flux:button href="{{ route('shop.index') }}" wire:navigate variant="primary"
-                        class="w-full sm:w-auto" icon="magnifying-glass">
+                    <flux:button href="{{ route('shop.index') }}" wire:navigate variant="customer-primary"
+                        size="customer-lg" class="w-full sm:w-auto cursor-pointer">
+                        <flux:icon.magnifying-glass class="w-3.5 h-3.5" />
                         Browse Products
                     </flux:button>
 
-                    <flux:button href="{{ route('home') }}" variant="ghost" class="w-full sm:w-auto">
+                    <flux:button href="{{ route('home') }}" wire:navigate variant="customer-outline" size="customer-lg"
+                        class="w-full sm:w-auto cursor-pointer">
                         Back to Home
                     </flux:button>
                 </div>
@@ -422,8 +424,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         Actions</td>
                                     @foreach ($this->products as $product)
                                         <td class="p-4 text-center border-l dark:border-zinc-700">
-                                            <flux:button wire:click="addToCart({{ $product->id }})" variant="primary"
-                                                size="sm" icon="shopping-cart" class="cursor-pointer">Add to Cart
+                                            <flux:button wire:click="addToCart({{ $product->id }})"
+                                                variant="customer-primary" size="customer" class="cursor-pointer">
+                                                <flux:icon.shopping-cart class="w-3.5 h-3.5" />
+                                                Add to Cart
                                             </flux:button>
                                         </td>
                                     @endforeach
@@ -435,9 +439,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                         Remove</td>
                                     @foreach ($this->products as $product)
                                         <td class="p-4 text-center border-l dark:border-zinc-700">
-                                            <flux:button wire:click="removeProduct({{ $product->id }})" icon="trash"
-                                                icon-variant="outline" size="sm" variant="ghost"
+                                            <flux:button wire:click="removeProduct({{ $product->id }})"
+                                                variant="customer-outline" size="customer"
                                                 class="text-red-500! cursor-pointer">
+                                                <flux:icon.trash variant="outline" class="w-3.5 h-3.5" />
                                             </flux:button>
                                         </td>
                                     @endforeach
