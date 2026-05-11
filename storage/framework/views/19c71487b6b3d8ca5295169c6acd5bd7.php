@@ -122,193 +122,86 @@
     </div>
 
     <div class="container mx-auto px-4 py-4">
-        <div class="grid lg:grid-cols-4 gap-5">
+        <div class="grid lg:grid-cols-5 gap-5">
 
-            <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::card'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'lg:col-span-3 rounded-sm grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-10']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+            <div class="lg:col-span-4 grid grid-cols-1 lg:grid-cols-7 gap-5">
 
                 
                 
                 
-                <div class="lg:col-span-2">
-                    <div wire:ignore class="w-full" x-data="{
+                <div class="lg:col-span-3">
+                    <div wire:ignore x-data="{
                         mainSwiper: null,
                         thumbSwiper: null,
                         activeIndex: 0,
                         init() {
                             const sliderId = '<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>';
                             const thumbEl = document.getElementById(sliderId + 'ThumbSwiper');
+                            const mainEl = document.getElementById(sliderId + 'MainSwiper');
                     
-                            if (thumbEl) {
+                            // Wait for layout to settle (aspect-square needs width to resolve height)
+                            this.$nextTick(() => {
+                                // Match thumb height to the main image's rendered height
+                                const mainContainer = mainEl?.closest('.aspect-square');
+                                if (thumbEl && mainContainer) {
+                                    thumbEl.style.height = mainContainer.offsetHeight + 'px';
+                                }
+                    
+                                // Init thumbs FIRST
                                 this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
-                                    spaceBetween: 10,
-                                    slidesPerView: 4,
+                                    direction: 'vertical',
+                                    slidesPerView: 'auto',
+                                    spaceBetween: 8,
                                     freeMode: true,
                                     watchSlidesProgress: true,
-                                    loop: false,
-                                    breakpoints: {
-                                        640: { slidesPerView: 5 },
-                                        768: { slidesPerView: 6 },
+                                    mousewheel: true,
+                                });
+                    
+                                // Init main AFTER thumbs
+                                this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', {
+                                    spaceBetween: 0,
+                                    thumbs: { swiper: this.thumbSwiper },
+                                    on: {
+                                        slideChange: (swiper) => {
+                                            this.activeIndex = swiper.activeIndex;
+                                        },
                                     },
                                 });
-                            }
                     
-                            this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', {
-                                spaceBetween: 10,
-                                loop: false,
-                                navigation: {
-                                    nextEl: '.swiper-button-next',
-                                    prevEl: '.swiper-button-prev',
-                                },
-                                thumbs: { swiper: this.thumbSwiper ?? null },
-                                on: {
-                                    slideChange: (swiper) => {
-                                        this.activeIndex = swiper.realIndex;
-                                    },
-                                },
-                            });
+                                window.addEventListener('variant-image-selected', (e) => {
+                                    if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
+                                });
                     
-                            this.$nextTick(() => {
-                                if (thumbEl) thumbEl.classList.remove('opacity-0');
-                                document.getElementById(sliderId + 'MainSwiper').classList.remove('opacity-0');
+                                // Fade in
+                                thumbEl?.classList.remove('opacity-0');
+                                mainEl?.classList.remove('opacity-0');
                             });
                         },
-                    }">
-                        
-                        <div class="mb-4">
-                            <div class="swiper border-2 rounded-sm overflow-hidden opacity-0 transition-opacity duration-500"
-                                id="<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>MainSwiper">
-                                <div class="swiper-wrapper">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                        <div class="swiper-slide">
-                                            <div class="aspect-square flex items-center justify-center p-2">
-                                                <?php if (isset($component)) { $__componentOriginal3cb029201b89ff90589b1b1bf9728b02 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal3cb029201b89ff90589b1b1bf9728b02 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.webp-image','data' => ['src' => $slide['url'],'webp' => $slide['webp'] ?? null,'alt' => ''.e($slide['alt']).'','class' => 'w-full h-full object-contain']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('webp-image'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['src' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['url']),'webp' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['webp'] ?? null),'alt' => ''.e($slide['alt']).'','class' => 'w-full h-full object-contain']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal3cb029201b89ff90589b1b1bf9728b02)): ?>
-<?php $attributes = $__attributesOriginal3cb029201b89ff90589b1b1bf9728b02; ?>
-<?php unset($__attributesOriginal3cb029201b89ff90589b1b1bf9728b02); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal3cb029201b89ff90589b1b1bf9728b02)): ?>
-<?php $component = $__componentOriginal3cb029201b89ff90589b1b1bf9728b02; ?>
-<?php unset($__componentOriginal3cb029201b89ff90589b1b1bf9728b02); ?>
-<?php endif; ?>
-                                            </div>
-                                        </div>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                </div>
-
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($this->imageSlides) > 1 && $product->type->value !== 'grouped'): ?>
-                                    <button type="button" @click="mainSwiper?.slidePrev()"
-                                        class="absolute top-1/2 left-1 -translate-y-1/2 z-30
-                               w-7 h-7 rounded-full flex items-center justify-center
-                               bg-black/20 hover:bg-black/40 backdrop-blur-sm
-                               border border-white/20 hover:border-white/40
-                               transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
-                                        <?php if (isset($component)) { $__componentOriginal93e8a1cf63877447e3f60f50005ff258 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal93e8a1cf63877447e3f60f50005ff258 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-left','data' => ['class' => 'size-3.5 text-white']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.chevron-left'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-3.5 text-white']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal93e8a1cf63877447e3f60f50005ff258)): ?>
-<?php $attributes = $__attributesOriginal93e8a1cf63877447e3f60f50005ff258; ?>
-<?php unset($__attributesOriginal93e8a1cf63877447e3f60f50005ff258); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal93e8a1cf63877447e3f60f50005ff258)): ?>
-<?php $component = $__componentOriginal93e8a1cf63877447e3f60f50005ff258; ?>
-<?php unset($__componentOriginal93e8a1cf63877447e3f60f50005ff258); ?>
-<?php endif; ?>
-                                        <span class="sr-only">Previous</span>
-                                    </button>
-
-                                    <button type="button" @click="mainSwiper?.slideNext()"
-                                        class="absolute top-1/2 right-1 -translate-y-1/2 z-30
-                               w-7 h-7 rounded-full flex items-center justify-center
-                               bg-black/20 hover:bg-black/40 backdrop-blur-sm
-                               border border-white/20 hover:border-white/40
-                               transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer">
-                                        <?php if (isset($component)) { $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-right','data' => ['class' => 'size-3.5 text-white']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.chevron-right'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-3.5 text-white']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3)): ?>
-<?php $attributes = $__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3; ?>
-<?php unset($__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal31cb76c8d087d4f00797aeea7232b4c3)): ?>
-<?php $component = $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3; ?>
-<?php unset($__componentOriginal31cb76c8d087d4f00797aeea7232b4c3); ?>
-<?php endif; ?>
-                                        <span class="sr-only">Next</span>
-                                    </button>
-                                <?php elseif(count($this->imageSlides) > 1): ?>
-                                    <div class="swiper-button-prev"></div>
-                                    <div class="swiper-button-next"></div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </div>
+                    }" class="lg:sticky lg:top-24">
 
                         
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($this->imageSlides) > 1): ?>
-                            <div class="swiper px-8 opacity-0 transition-opacity duration-500"
-                                id="<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>ThumbSwiper">
-                                <div class="swiper-wrapper">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                        <div class="swiper-slide cursor-pointer">
-                                            <div class="aspect-square rounded-sm overflow-hidden border-2 transition-all duration-300"
+                        <div class="flex flex-row items-stretch gap-3">
+
+                            
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($this->imageSlides) > 1): ?>
+                                <div class="swiper shrink-0 opacity-0 transition-opacity duration-500  overflow-hidden w-20"
+                                    id="<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>ThumbSwiper">
+                                    <div class="swiper-wrapper">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <div class="swiper-slide cursor-pointer overflow-hidden rounded-sm bg-white border-2 transition-all size-20"
                                                 :class="activeIndex === <?php echo e($index); ?> ?
-                                                    'border-secondary' :
-                                                    'border-zinc-200 hover:border-zinc-300'">
+                                                    'border-primary' :
+                                                    'border-transparent'">
                                                 <?php if (isset($component)) { $__componentOriginal3cb029201b89ff90589b1b1bf9728b02 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3cb029201b89ff90589b1b1bf9728b02 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.webp-image','data' => ['src' => $slide['url'],'webp' => $slide['webp'] ?? null,'alt' => ''.e($slide['alt']).'','class' => 'w-full h-full object-contain']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.webp-image','data' => ['src' => $slide['url'],'webp' => $slide['webp'] ?? null,'alt' => ''.e($slide['alt']).'','class' => 'w-full h-full object-contain p-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('webp-image'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['src' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['url']),'webp' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['webp'] ?? null),'alt' => ''.e($slide['alt']).'','class' => 'w-full h-full object-contain']); ?>
+<?php $component->withAttributes(['src' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['url']),'webp' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['webp'] ?? null),'alt' => ''.e($slide['alt']).'','class' => 'w-full h-full object-contain p-1']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -322,18 +215,54 @@
 <?php unset($__componentOriginal3cb029201b89ff90589b1b1bf9728b02); ?>
 <?php endif; ?>
                                             </div>
-                                        </div>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                            
+                            <div class="flex-1 min-w-0 bg-white aspect-square w-full overflow-hidden">
+                                <div class="swiper w-full h-full opacity-0 transition-opacity duration-500"
+                                    id="<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>MainSwiper">
+                                    <div class="swiper-wrapper">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <div class="swiper-slide flex items-start justify-center">
+                                                <?php if (isset($component)) { $__componentOriginal3cb029201b89ff90589b1b1bf9728b02 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal3cb029201b89ff90589b1b1bf9728b02 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.webp-image','data' => ['src' => $slide['url'],'webp' => $slide['webp'] ?? null,'alt' => ''.e($slide['alt']).'','class' => 'w-full h-auto max-h-full object-contain']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('webp-image'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['src' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['url']),'webp' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($slide['webp'] ?? null),'alt' => ''.e($slide['alt']).'','class' => 'w-full h-auto max-h-full object-contain']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal3cb029201b89ff90589b1b1bf9728b02)): ?>
+<?php $attributes = $__attributesOriginal3cb029201b89ff90589b1b1bf9728b02; ?>
+<?php unset($__attributesOriginal3cb029201b89ff90589b1b1bf9728b02); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal3cb029201b89ff90589b1b1bf9728b02)): ?>
+<?php $component = $__componentOriginal3cb029201b89ff90589b1b1bf9728b02; ?>
+<?php unset($__componentOriginal3cb029201b89ff90589b1b1bf9728b02); ?>
+<?php endif; ?>
+                                            </div>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                        </div>
                     </div>
                 </div>
 
                 
                 
                 
-                <div class="lg:col-span-3 space-y-4">
+                <div class="lg:col-span-4 space-y-4">
 
                     
                     
@@ -1470,32 +1399,11 @@
                     </div>
 
                 </div>
-
-             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>
-<?php $attributes = $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec; ?>
-<?php unset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>
-<?php $component = $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec; ?>
-<?php unset($__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec); ?>
-<?php endif; ?>
+            </div>
 
             
-            <div class="lg:col-span-1">
-                <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'sticky top-44 p-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::card'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'sticky top-44 p-0']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+            <div class="lg:col-span-1 border rounded">
+                <div class="sticky top-44 p-0">
 
                     
                     <div class="border-b dark:border-zinc-700 px-4 py-3">
@@ -1612,16 +1520,7 @@ Warranty & returns <?php echo $__env->renderComponent(); ?>
                         </div>
                     </div>
 
-                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>
-<?php $attributes = $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec; ?>
-<?php unset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>
-<?php $component = $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec; ?>
-<?php unset($__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec); ?>
-<?php endif; ?>
+                </div>
             </div>
         </div>
 

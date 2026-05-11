@@ -18,16 +18,33 @@
     background: rgba(0, 0, 0, 0.7);
 }
 
-.thumbSwiper .swiper-slide {
-    opacity: 0.6;
-    transition: opacity 0.3s;
+/* ============================================================
+   VERTICAL THUMB SWIPER
+   Container height: 460px (set in HTML)
+   slidesPerView:    'auto' — each slide must have explicit height
+   Slide size:       80px × 80px, spaceBetween: 8px
+   ============================================================ */
+
+/* Each thumb slide — explicit size required for 'auto' mode.
+   Slides sit at the top naturally; they scroll when > 5 */
+#mainThumbSwiper .swiper-slide,
+#groupedThumbSwiper .swiper-slide {
+    width: 80px;
+    height: 80px;
+    opacity: 0.5;
+    transition: opacity 0.25s ease;
 }
 
-.thumbSwiper .swiper-slide-thumb-active {
+/* Active thumb — dark border matching inspiration */
+#mainThumbSwiper .swiper-slide-thumb-active,
+#groupedThumbSwiper .swiper-slide-thumb-active {
     opacity: 1;
+    border-color: #18181b !important; /* zinc-900 */
 }
 
-/* Accessories Swiper Styles */
+/* ============================================================
+   ACCESSORIES SWIPER
+   ============================================================ */
 #accessoriesSwiper .swiper-slide {
     height: auto;
 }
