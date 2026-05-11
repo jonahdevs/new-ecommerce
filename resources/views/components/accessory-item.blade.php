@@ -134,15 +134,15 @@ new class extends Component {
         {{-- Qty stepper --}}
         <div class="flex items-center border border-zinc-300 rounded-md overflow-hidden">
             <button wire:click="decreaseQuantity"
-                class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors cursor-pointer"
+                class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors cursor-pointer border-r border-zinc-200"
                 aria-label="Decrease quantity">−</button>
 
-            <span class="w-7 text-center text-sm font-medium text-zinc-800 border-x border-zinc-200">
+            <span class="w-7 text-center text-sm font-medium text-zinc-800 bg-white">
                 {{ $cartQuantity }}
             </span>
 
             <button wire:click="increaseQuantity"
-                class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors cursor-pointer"
+                class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 transition-colors cursor-pointer border-l border-zinc-200"
                 aria-label="Increase quantity">+</button>
         </div>
 
@@ -161,7 +161,7 @@ new class extends Component {
         </flux:button>
 
         {{-- View product --}}
-        <flux:button size="sm" href="{{ route('products.show', $product) }}" target="_blank" rel="noopener noreferrer" title="View product"
-            icon="arrow-top-right-on-square" class="cursor-pointer" />
+        <flux:button size="sm" href="{{ route('products.show', $product) }}" target="_blank"
+            rel="noopener noreferrer" title="View product" icon="arrow-top-right-on-square" class="cursor-pointer" />
     </div>
 </flux:card>

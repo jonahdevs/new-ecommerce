@@ -26,7 +26,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
             ->getCart()
             ->items()
             ->with([
-                'product' => fn($q) => $q->with(['crossSells' => fn($cs) => $cs->active()->visible()]),
+                'product' => fn($q) => $q->with(['crossSells' => fn($cs) => $cs->active()->visible(), 'brand']),
                 'variant' => fn($q) => $q->with(['attributeValues:id,attribute_id,value,label', 'attributeValues.attribute:id,name']),
             ])
             ->get();
@@ -100,7 +100,6 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
         try {
             app(CartService::class)->removeItem($itemId);
             unset($this->cartItems, $this->cartSummary);
-            Flux::modal('remove-item-' . $itemId)->close();
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Item removed from your cart');
         } catch (\Throwable $th) {
@@ -110,9 +109,9 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
     public function updateQuantity(int $itemId, int $quantity): void
     {
-        // should trigger the remove modal, not pass 0 to the service
+        // Directly remove item if quantity is 0 or less
         if ($quantity < 1) {
-            Flux::modal('remove-item-' . $itemId)->show();
+            $this->removeItem($itemId);
             return;
         }
 
@@ -286,187 +285,181 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                         </div>
                     </div>
                 @else
-                    <section class="space-y-2">
-                        @foreach ($this->cartItems as $item)
-                            @php
-                                $wishlisted = in_array($item->product->id, $this->wishlistProductIds);
-                                $variant = $item->variant;
+                    {{-- Cart Items Table --}}
+                    <div class="bg-white border border-zinc-200 rounded-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-zinc-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-200">
+                                        Product
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-center text-[11px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-200">
+                                        Price
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-center text-[11px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-200">
+                                        Quantity
+                                    </th>
+                                    <th
+                                        class="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-200">
+                                        Subtotal
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-200">
+                                @foreach ($this->cartItems as $item)
+                                    @php
+                                        $wishlisted = in_array($item->product->id, $this->wishlistProductIds);
+                                        $variant = $item->variant;
 
-                                // Use variant price/image when available, fall back to product
-                                $unitPrice = $variant?->final_price ?? $item->product->final_price;
-                                $lineTotal = $unitPrice * $item->quantity;
-                                $sku = $variant?->sku ?? $item->product->sku;
-                                $imageUrl = $variant?->image_path
-                                    ? Storage::url($variant->image_path)
-                                    : $item->product->image_url;
+                                        // Use variant price/image when available, fall back to product
+                                        $unitPrice = $variant?->final_price ?? $item->product->final_price;
+                                        $lineTotal = $unitPrice * $item->quantity;
+                                        $sku = $variant?->sku ?? $item->product->sku;
+                                        $imageUrl = $variant?->image_path
+                                            ? Storage::url($variant->image_path)
+                                            : $item->product->image_url;
 
-                                // Variant attribute pills e.g. ['Color' => 'Red', 'Size' => 'Large']
-                                $variantAttrs = $variant
-                                    ? $variant->attributeValues->mapWithKeys(
-                                        fn($av) => [$av->attribute->name => $av->label ?: $av->value],
-                                    )
-                                    : collect();
-                            @endphp
+                                        // Variant attribute pills e.g. ['Color' => 'Red', 'Size' => 'Large']
+                                        $variantAttrs = $variant
+                                            ? $variant->attributeValues->mapWithKeys(
+                                                fn($av) => [$av->attribute->name => $av->label ?: $av->value],
+                                            )
+                                            : collect();
+                                    @endphp
 
-                            <flux:card wire:key="cart-item-{{ $item->id }}" class="p-0 overflow-hidden">
-                                <div class="flex items-start gap-3 p-3 py-4">
+                                    <tr wire:key="cart-item-{{ $item->id }}" class="">
+                                        {{-- Product Column --}}
+                                        <td class="px-6 py-6">
+                                            <div class="flex items-center gap-4">
+                                                {{-- Product Image --}}
+                                                <div
+                                                    class="w-16 h-16 rounded border border-zinc-200 bg-zinc-50 overflow-hidden shrink-0">
+                                                    @if ($imageUrl)
+                                                        <img class="object-cover w-full h-full"
+                                                            src="{{ $imageUrl }}"
+                                                            alt="{{ $item->product->name }}" />
+                                                    @else
+                                                        <flux:icon.photo
+                                                            class="w-full h-full p-2 text-zinc-300 stroke-1" />
+                                                    @endif
+                                                </div>
 
-                                    {{-- Image — variant image if available --}}
-                                    <div class="shrink-0 w-20 h-20 rounded border bg-zinc-50 overflow-hidden">
-                                        @if ($imageUrl)
-                                            <img class="object-contain w-full h-full" src="{{ $imageUrl }}"
-                                                alt="{{ $item->product->name }}" />
-                                        @else
-                                            <flux:icon.photo class="w-full h-full p-2 text-zinc-200 stroke-1" />
-                                        @endif
-                                    </div>
+                                                {{-- Product Details --}}
+                                                <div class="flex-1 min-w-0">
+                                                    {{-- Brand/Category --}}
+                                                    @if ($item->product->brand)
+                                                        <p
+                                                            class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                                                            {{ $item->product->brand->name }}
+                                                        </p>
+                                                    @endif
 
-                                    {{-- Details --}}
-                                    <div class="flex-1 min-w-0">
-                                        <a href="{{ route('products.show', $item->product) }}" wire:navigate
-                                            class="font-medium hover:underline truncate block text-xs sm:text-sm">
-                                            {{ $item->product->name }}
-                                        </a>
+                                                    {{-- Product Name --}}
+                                                    <a href="{{ route('products.show', $item->product) }}"
+                                                        wire:navigate
+                                                        class="font-medium hover:underline block text-sm text-zinc-950 mb-1">
+                                                        {{ $item->product->name }}
+                                                    </a>
 
-                                        {{-- Variant attribute pills --}}
-                                        @if ($variantAttrs->isNotEmpty())
-                                            <div class="flex flex-wrap gap-1 mt-1.5">
-                                                @foreach ($variantAttrs as $attrName => $attrValue)
+                                                    {{-- Variant Attributes --}}
+                                                    @if ($variantAttrs->isNotEmpty())
+                                                        <div class="flex flex-wrap gap-1 mb-2">
+                                                            @foreach ($variantAttrs as $attrName => $attrValue)
+                                                                <span class="text-[10px] text-zinc-500">
+                                                                    {{ $attrName }}: {{ $attrValue }}
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+
+                                                    {{-- Actions --}}
+                                                    <div class="flex items-center gap-3 mt-2">
+                                                        <button wire:click="toggleWishlist({{ $item->product->id }})"
+                                                            class="text-[11px] text-zinc-500 hover:text-zinc-700 transition-colors cursor-pointer">
+                                                            <flux:icon.heart
+                                                                variant="{{ $wishlisted ? 'solid' : 'outline' }}"
+                                                                @class(['size-3 inline mr-1', 'text-red-500' => $wishlisted]) />
+                                                            {{ $wishlisted ? 'Wishlisted' : 'Save for later' }}
+                                                        </button>
+
+                                                        <button wire:click="removeItem({{ $item->id }})"
+                                                            class="text-[11px] text-zinc-500 hover:text-red-500 transition-colors cursor-pointer">
+                                                            <flux:icon.trash class="size-3 inline mr-1" />
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {{-- Price Column --}}
+                                        <td class="px-4 py-6 text-center">
+                                            @php
+                                                $regularPrice = $variant?->price ?? $item->product->price;
+                                                $salePrice = $variant?->sale_price ?? $item->product->sale_price;
+                                                $hasDiscount = $salePrice && $salePrice < $regularPrice;
+                                            @endphp
+
+                                            @if ($hasDiscount)
+                                                <p class="text-sm font-semibold text-zinc-950">
+                                                    {{ format_currency($salePrice) }}
+                                                </p>
+                                                <p class="text-xs text-zinc-400 line-through">
+                                                    {{ format_currency($regularPrice) }}
+                                                </p>
+                                            @else
+                                                <p class="text-sm font-semibold text-zinc-950">
+                                                    {{ format_currency($unitPrice) }}
+                                                </p>
+                                            @endif
+                                        </td>
+
+                                        {{-- Quantity Column --}}
+                                        <td class="px-4 py-6 text-center">
+                                            <div class="flex items-center justify-center">
+                                                <div
+                                                    class="flex items-center border border-zinc-200 rounded overflow-hidden">
+                                                    <button
+                                                        wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})"
+                                                        class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors border-r border-zinc-200">
+                                                        <flux:icon.minus class="size-3" />
+                                                    </button>
                                                     <span
-                                                        class="inline-flex items-center text-[11px] bg-zinc-100 dark:bg-zinc-800
-                                border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5
-                                text-zinc-600 dark:text-zinc-400">
-                                                        {{ $attrName }}: {{ $attrValue }}
+                                                        class="w-12 h-8 flex items-center justify-center text-sm font-medium bg-white">
+                                                        {{ $item->quantity }}
                                                     </span>
-                                                @endforeach
-                                            </div>
-                                        @endif
-
-                                        {{-- SKU --}}
-                                        @if ($sku)
-                                            <p class="text-xs text-zinc-400 mt-1">SKU: {{ $sku }}</p>
-                                        @endif
-
-                                        {{-- Quantity stepper --}}
-                                        <flux:input.group class="mt-2">
-                                            <flux:button icon="minus" size="xs"
-                                                class="cursor-pointer text-zinc-500!"
-                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})" />
-                                            <flux:input value="{{ $item->quantity }}" disabled
-                                                class="max-w-8! outline-none! border-none! ring-0 text-center!"
-                                                size="xs" />
-                                            <flux:button icon="plus" size="xs"
-                                                class="cursor-pointer text-zinc-500!"
-                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})" />
-                                        </flux:input.group>
-                                    </div>
-
-                                    {{-- Unit price --}}
-                                    <div class="text-right shrink-0">
-                                        @php
-                                            $regularPrice = $variant?->price ?? $item->product->price;
-                                            $salePrice = $variant?->sale_price ?? $item->product->sale_price;
-                                            $hasDiscount = $salePrice && $salePrice < $regularPrice;
-                                        @endphp
-
-                                        @if ($hasDiscount)
-                                            <p class="text-sm sm:text-base font-semibold text-secondary">
-                                                {{ format_currency($salePrice) }}
-                                            </p>
-                                            <p class="text-xs text-zinc-400 line-through">
-                                                {{ format_currency($regularPrice) }}
-                                            </p>
-                                        @else
-                                            <p class="text-sm sm:text-base font-semibold text-secondary">
-                                                {{ format_currency($unitPrice) }}
-                                            </p>
-                                        @endif
-
-                                        @if ($item->quantity > 1)
-                                            <p class="text-[11px] text-zinc-400 mt-0.5">per unit</p>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                {{-- Footer actions --}}
-                                <div
-                                    class="bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 flex items-center border-t border-zinc-100 dark:border-zinc-700">
-                                    <div class="flex items-center gap-1 sm:gap-2 md:gap-4">
-
-                                        {{-- Remove --}}
-                                        <flux:modal.trigger name="remove-item-{{ $item->id }}">
-                                            <flux:button variant="customer-outline" size="xs"
-                                                class="cursor-pointer">
-                                                <flux:icon.trash variant="outline" class="size-3.5" />
-                                                <span class="max-md:hidden">
-                                                    Remove
-                                                </span>
-                                            </flux:button>
-                                        </flux:modal.trigger>
-
-                                        <flux:modal name="remove-item-{{ $item->id }}" variant="floating"
-                                            class="w-[92%] md:min-w-88 rounded-xs!">
-                                            <div class="space-y-6">
-                                                <div>
-                                                    <flux:heading size="lg">Remove from Cart</flux:heading>
-                                                    <flux:text class="mt-2">
-                                                        Do you really want to remove
-                                                        <strong>{{ $item->product->name }}</strong>
-                                                        @if ($variantAttrs->isNotEmpty())
-                                                            ({{ $variantAttrs->map(fn($v, $k) => "$k: $v")->implode(', ') }})
-                                                        @endif
-                                                        from your cart?
-                                                    </flux:text>
-                                                </div>
-                                                <div class="flex flex-wrap gap-2">
-                                                    <flux:modal.close>
-                                                        <flux:button
-                                                            wire:click="toggleWishlist({{ $item->product->id }})"
-                                                            variant="customer-outline" size="customer"
-                                                            class="cursor-pointer">
-                                                            <x-slot name="icon">
-                                                                <flux:icon.heart
-                                                                    variant="{{ $wishlisted ? 'solid' : 'outline' }}"
-                                                                    @class(['size-3.5', 'text-red-500' => $wishlisted]) />
-                                                            </x-slot>
-                                                            {{ $wishlisted ? 'Remove from Wishlist' : 'Save for later' }}
-                                                        </flux:button>
-                                                    </flux:modal.close>
-                                                    <flux:spacer />
-                                                    <flux:button type="button" variant="customer-danger"
-                                                        size="customer" class="cursor-pointer text-white!"
-                                                        wire:click="removeItem({{ $item->id }})">
-                                                        <flux:icon.trash class="w-3.5 h-3.5" />
-                                                        Remove Item
-                                                    </flux:button>
+                                                    <button
+                                                        wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})"
+                                                        class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors border-l border-zinc-200">
+                                                        <flux:icon.plus class="size-3" />
+                                                    </button>
                                                 </div>
                                             </div>
-                                        </flux:modal>
+                                        </td>
 
-                                        {{-- Wishlist --}}
-                                        <flux:button wire:click="toggleWishlist({{ $item->product->id }})"
-                                            variant="customer-outline" size="xs" class="cursor-pointer">
-                                            <x-slot name="icon">
-                                                <flux:icon.heart variant="{{ $wishlisted ? 'solid' : 'outline' }}"
-                                                    @class(['size-3.5', 'text-red-500' => $wishlisted]) />
-                                            </x-slot>
-                                            <span class="max-md:hidden">
-                                                {{ $wishlisted ? 'Wishlisted' : 'Save for later' }}
-                                            </span>
-                                        </flux:button>
-                                    </div>
+                                        {{-- Subtotal Column --}}
+                                        <td class="px-6 py-6 text-right">
+                                            <p class="text-sm font-semibold text-zinc-950">
+                                                {{ format_currency($lineTotal) }}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
 
-                                    {{-- Line total --}}
-                                    <div class="ms-auto flex items-center gap-1">
-                                        <p class="text-zinc-500 text-xs">Total:</p>
-                                        <span class="font-medium text-xs sm:text-sm text-zinc-800 dark:text-zinc-100">
-                                            {{ format_currency($lineTotal) }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </flux:card>
-                        @endforeach
-                    </section>
+                    {{-- Continue Shopping Button --}}
+                    <div class="mt-6">
+                        <flux:button href="{{ route('shop.index') }}" wire:navigate variant="customer-outline"
+                            size="customer" class="cursor-pointer">
+                            <flux:icon.chevron-left class="size-3" />
+                            Continue Shopping
+                        </flux:button>
+                    </div>
                 @endif
             </div>
 
