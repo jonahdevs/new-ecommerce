@@ -164,23 +164,23 @@ new #[Layout('layouts.customer')] class extends Component {
                         </div>
 
                         <div class="flex flex-wrap gap-3 mt-3.5 pt-3 border-t border-zinc-200">
-                            <flux:button variant="ghost" size="xs" wire:click="openEdit({{ $address->id }})">
+                            <flux:button variant="customer-outline" size="customer"
+                                wire:click="openEdit({{ $address->id }})">
                                 <flux:icon.pencil-square class="w-3 h-3" />
                                 Edit
                             </flux:button>
 
                             @if (!$address->is_default)
-                                <flux:button variant="ghost" size="xs"
+                                <flux:button variant="customer-outline" size="customer"
                                     wire:click="setDefaultAddress({{ $address->id }})">
                                     <flux:icon.check class="w-3 h-3" />
                                     Set Default
                                 </flux:button>
 
                                 @if ($this->addresses->count() > 1)
-                                    <flux:button variant="ghost" size="xs"
+                                    <flux:button variant="customer-danger" size="customer"
                                         wire:click="deleteAddress({{ $address->id }})"
-                                        wire:confirm="Are you sure you want to delete this address?"
-                                        class="text-red-500! hover:text-red-500!">
+                                        wire:confirm="Are you sure you want to delete this address?">
                                         <flux:icon.trash class="w-3 h-3" />
                                         Delete
                                     </flux:button>

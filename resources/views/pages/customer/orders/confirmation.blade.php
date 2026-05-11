@@ -358,12 +358,12 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 {{-- Actions --}}
                 <div class="anim-5 flex flex-col sm:flex-row gap-3">
-                    <flux:button wire:click="viewOrderDetails" variant="primary" icon="clipboard-document-list"
+                    <flux:button wire:click="viewOrderDetails" variant="customer-primary" icon="clipboard-document-list"
                         class="cursor-pointer w-full">
                         View Order
                     </flux:button>
 
-                    <flux:button wire:click="continueShopping" variant="ghost" icon="shopping-bag"
+                    <flux:button wire:click="continueShopping" variant="customer-outline" icon="shopping-bag"
                         class="cursor-pointer w-full">
                         Continue Shopping
                     </flux:button>
@@ -402,11 +402,11 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <flux:button :href="route('checkout.pay', ['order' => $order->reference])" wire:navigate
-                        variant="primary" icon="arrow-path" class="cursor-pointer w-full sm:w-auto">
+                        variant="customer-primary" icon="arrow-path" class="cursor-pointer w-full sm:w-auto">
                         Try Again
                     </flux:button>
 
-                    <flux:button :href="route('customer.orders.index')" wire:navigate variant="ghost"
+                    <flux:button :href="route('customer.orders.index')" wire:navigate variant="customer-outline"
                         class="cursor-pointer w-full sm:w-auto">
                         View My Orders
                     </flux:button>

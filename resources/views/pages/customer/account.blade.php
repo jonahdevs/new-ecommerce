@@ -111,8 +111,8 @@ new #[Layout('layouts.customer')] class extends Component {
                 </div>
             @else
                 <div class="text-[13px] text-zinc-500 italic mb-4">No default address set.</div>
-                <flux:button variant="primary" href="{{ route('customer.address-book.index') }}" wire:navigate
-                    size="sm">
+                <flux:button variant="customer-primary" href="{{ route('customer.address-book.index') }}" wire:navigate
+                    size="customer">
                     <flux:icon.plus class="w-3.5 h-3.5" />
                     Add Address
                 </flux:button>

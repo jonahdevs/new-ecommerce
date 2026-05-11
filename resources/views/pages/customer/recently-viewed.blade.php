@@ -28,7 +28,7 @@ new #[Layout('layouts.customer')] class extends Component {
             <flux:icon.eye class="w-12 h-12 text-zinc-300 mb-4" />
             <h4 class="text-lg font-medium text-zinc-900">{{ __('No recently viewed products') }}</h4>
             <p class="text-sm text-zinc-500 mt-1">{{ __('Products you view will appear here.') }}</p>
-            <flux:button variant="primary" href="{{ route('shop.index') }}" wire:navigate class="mt-6">
+            <flux:button variant="customer-primary" href="{{ route('shop.index') }}" wire:navigate class="mt-6">
                 {{ __('Start Shopping') }}
             </flux:button>
         </div>

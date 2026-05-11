@@ -36,10 +36,10 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
             <flux:badge color="green" size="sm">{{ __('Enabled') }}</flux:badge>
 
             <div class="flex flex-wrap gap-2">
-                <flux:button size="sm" wire:click="regenerateRecoveryCodes">
+                <flux:button size="customer" variant="customer-outline" wire:click="regenerateRecoveryCodes">
                     {{ __('Regenerate Recovery Codes') }}
                 </flux:button>
-                <flux:button size="sm" variant="danger" wire:click="disableTwoFactor">
+                <flux:button size="customer" variant="customer-danger" wire:click="disableTwoFactor">
                     {{ __('Disable') }}
                 </flux:button>
             </div>
@@ -58,7 +58,7 @@ new #[Layout('layouts.customer-settings'), Title('Password & Security')] class e
                 {{ __('Two-factor authentication adds an extra layer of security by requiring a code from your authenticator app.') }}
             </flux:text>
 
-            <flux:button size="sm" variant="primary" wire:click="enableTwoFactor">
+            <flux:button size="customer-lg" variant="customer-primary" wire:click="enableTwoFactor">
                 {{ __('Enable Two-Factor Authentication') }}
             </flux:button>
         </div>

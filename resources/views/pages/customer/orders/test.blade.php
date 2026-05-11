@@ -331,7 +331,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                         <h4 class="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-3">Tax Invoice</h4>
 
                                         @if ($this->hasKraReceipt)
-                                            <flux:button tag="a" :href="route('customer.orders.receipt', $order)" size="sm" variant="primary" icon="arrow-down-tray" class="w-full font-bold uppercase tracking-wider text-[10px]">
+                                            <flux:button tag="a" :href="route('customer.orders.receipt', $order)" size="sm" variant="customer-primary" icon="arrow-down-tray" class="w-full font-bold uppercase tracking-wider text-[10px]">
                                                 Download Invoice
                                             </flux:button>
                                             <div class="mt-2 text-center">

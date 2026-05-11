@@ -138,7 +138,7 @@ new #[Layout('layouts.customer')] class extends Component {
         <div class="px-4 py-3 border-b flex items-center justify-between">
             <flux:heading size="lg" level="1">Inbox</flux:heading>
             @if ($this->unreadCount > 0)
-                <flux:button wire:click="markAllAsRead" variant="ghost" size="sm">
+                <flux:button wire:click="markAllAsRead" variant="customer-outline" size="sm">
                     Mark all as read
                 </flux:button>
             @endif
@@ -236,7 +236,7 @@ new #[Layout('layouts.customer')] class extends Component {
                                                 </flux:button>
                                             @endif
                                             <flux:button wire:click="markAsRead('{{ $notification->id }}')"
-                                                size="xs" variant="ghost">
+                                                size="xs" variant="customer-outline">
                                                 Mark as read
                                             </flux:button>
                                         </div>
@@ -294,12 +294,12 @@ new #[Layout('layouts.customer')] class extends Component {
                                         <div class="flex items-center gap-2 mt-3">
                                             @if ($data['url'])
                                                 <flux:button :href="$data['url']" wire:navigate size="xs"
-                                                    variant="ghost">
+                                                    variant="customer-outline">
                                                     {{ $data['action'] }}
                                                 </flux:button>
                                             @endif
                                             <flux:button wire:click="deleteNotification('{{ $notification->id }}')"
-                                                size="xs" variant="ghost" class="text-red-500 hover:text-red-600">
+                                                size="xs" variant="customer-outline" class="text-red-500 hover:text-red-600">
                                                 Delete
                                             </flux:button>
                                         </div>

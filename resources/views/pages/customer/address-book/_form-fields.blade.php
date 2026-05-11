@@ -55,7 +55,8 @@ countyName = {{ $countyNameInit }};"
 
             {{-- Map --}}
             <div>
-                <label class="block text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1.5">📍 Pin your exact delivery location</label>
+                <label class="block text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-1.5">📍 Pin your
+                    exact delivery location</label>
                 <p class="text-[12px] text-zinc-500 mb-3 leading-relaxed">
                     Search or click anywhere on the map. Your county is detected automatically from the pin.
                 </p>
@@ -116,13 +117,15 @@ countyName = {{ $countyNameInit }};"
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-zinc-100">
             @if ($cancelHref)
                 <a href="{{ $cancelHref }}" wire:navigate>
-                    <flux:button tag="span">Cancel</flux:button>
+                    <flux:button tag="span" variant="customer-outline" size="customer">Cancel</flux:button>
                 </a>
             @else
-                <flux:button type="button" wire:click="closeModal">Cancel</flux:button>
+                <flux:button type="button" wire:click="closeModal" variant="customer-outline" size="customer">Cancel
+                </flux:button>
             @endif
 
-            <flux:button variant="primary" type="button" class="inline-flex items-center gap-2"
+            <flux:button variant="customer-primary" size="customer-lg" type="button"
+                class="inline-flex items-center gap-2"
                 x-bind:disabled="!hasPinned || !countyResolved || countyResolving"
                 x-bind:class="(!hasPinned || !countyResolved || countyResolving) ? 'opacity-40 cursor-not-allowed!' : ''"
                 @click="step = 'form'">
@@ -139,8 +142,7 @@ countyName = {{ $countyNameInit }};"
         <div class="p-6 space-y-5">
 
             {{-- Pinned summary bar --}}
-            <div
-                class="bg-zinc-100 border-l-[3px] border-primary px-3.5 py-2.5 flex items-start justify-between gap-3">
+            <div class="bg-zinc-100 border-l-[3px] border-primary px-3.5 py-2.5 flex items-start justify-between gap-3">
                 <div class="flex items-start gap-2 min-w-0">
                     <flux:icon.map-pin class="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                     <span x-text="pinnedText || 'Location pinned'"
@@ -225,13 +227,14 @@ countyName = {{ $countyNameInit }};"
 
         {{-- Step 2 footer --}}
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-zinc-100">
-            <flux:button type="button" class="inline-flex items-center gap-2"
+            <flux:button type="button" variant="customer-outline" size="customer"
+                class="inline-flex items-center gap-2"
                 @click="step = 'map'; $nextTick(() => { setTimeout(() => window.deliveryMap?.invalidateSize(), 80); })">
                 <flux:icon.move-left class="size-4" />
                 Back to Map
             </flux:button>
 
-            <flux:button variant="primary" type="submit">
+            <flux:button variant="customer-primary" size="customer-lg" type="submit">
                 {{ $submitLabel }}
             </flux:button>
         </div>

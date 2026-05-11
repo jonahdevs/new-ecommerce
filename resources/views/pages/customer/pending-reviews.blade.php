@@ -45,20 +45,22 @@ new #[Layout('layouts.customer')] class extends Component {
             <flux:icon.star class="w-12 h-12 text-zinc-300 mb-4" />
             <h4 class="text-lg font-medium text-zinc-900">{{ __('No pending reviews') }}</h4>
             <p class="text-sm text-zinc-500 mt-1">{{ __('You have reviewed all your purchased products.') }}</p>
-            <flux:button variant="primary" href="{{ route('customer.orders.index') }}" wire:navigate class="mt-6">
+            <flux:button variant="customer-primary" href="{{ route('customer.orders.index') }}" wire:navigate
+                class="mt-6">
                 {{ __('View Orders') }}
             </flux:button>
         </div>
     @else
         <div class="flex flex-col bg-white">
             @foreach ($this->pendingProducts as $item)
-                <div class="p-4.5 border-b border-zinc-200 last:border-b-0 flex items-center gap-4 transition-colors hover:bg-zinc-50">
+                <div
+                    class="p-4.5 border-b border-zinc-200 last:border-b-0 flex items-center gap-4 transition-colors hover:bg-zinc-50">
                     {{-- Product Image --}}
-                    <div class="w-16 h-16 bg-zinc-50 flex items-center justify-center shrink-0 overflow-hidden border border-zinc-200 rounded-sm">
+                    <div
+                        class="w-16 h-16 bg-zinc-50 flex items-center justify-center shrink-0 overflow-hidden border border-zinc-200 rounded-sm">
                         @if ($item->product?->image_path)
                             <img src="{{ asset('storage/' . $item->product->image_path) }}"
-                                alt="{{ $item->product->name }}"
-                                class="w-[85%] h-[85%] object-contain" />
+                                alt="{{ $item->product->name }}" class="w-[85%] h-[85%] object-contain" />
                         @else
                             <flux:icon.photo class="w-8 h-8 text-zinc-300" />
                         @endif
@@ -77,8 +79,8 @@ new #[Layout('layouts.customer')] class extends Component {
                     {{-- Action --}}
                     <div class="shrink-0 flex items-center">
                         @if ($item->product)
-                            <flux:button href="{{ route('products.reviews', $item->product->slug) }}"
-                                wire:navigate size="sm" variant="primary">
+                            <flux:button href="{{ route('products.reviews', $item->product->slug) }}" wire:navigate
+                                size="sm" variant="customer-primary">
                                 {{ __('Write Review') }}
                             </flux:button>
                         @endif

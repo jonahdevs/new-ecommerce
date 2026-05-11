@@ -298,7 +298,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
                                         @if ($this->hasKraReceipt)
                                             <flux:button tag="a" :href="route('customer.orders.receipt', $order)"
-                                                size="sm" variant="primary" icon="arrow-down-tray"
+                                                size="sm" variant="customer-primary" icon="arrow-down-tray"
                                                 class="w-full font-bold uppercase tracking-wider text-[10px]">
                                                 Download Invoice
                                             </flux:button>
@@ -339,22 +339,23 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
 
             {{-- Actions --}}
             <div class="flex flex-wrap gap-2.5">
-                <flux:button tag="a" variant="outline" href="{{ route('customer.orders.tracking', $order) }}"
-                    wire:navigate size="sm" class="px-5!">
+                <flux:button tag="a" variant="customer-outline"
+                    href="{{ route('customer.orders.tracking', $order) }}" wire:navigate size="customer"
+                    class="px-5!">
                     <flux:icon.clock class="w-3.5 h-3.5" />
                     Track Order
                 </flux:button>
 
                 @if ($this->isPaid && $this->hasKraReceipt)
-                    <flux:button tag="a" variant="outline" href="{{ route('customer.orders.receipt', $order) }}"
-                        size="sm" class="px-5!">
+                    <flux:button tag="a" variant="customer-outline"
+                        href="{{ route('customer.orders.receipt', $order) }}" size="customer" class="px-5!">
                         <flux:icon.arrow-down-tray class="w-3.5 h-3.5" />
                         Download Invoice
                     </flux:button>
                 @endif
 
                 @if ($order->status->value === OrderStatus::DELIVERED->value)
-                    <flux:button size="sm" class="px-5!">
+                    <flux:button size="customer" variant="customer-outline" class="px-5!">
                         <flux:icon.star class="w-3.5 h-3.5" />
                         Leave Review
                     </flux:button>

@@ -115,13 +115,13 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
         {{-- Header --}}
         <div class="flex items-center gap-3 px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
-            <flux:button size="xs" icon="arrow-long-left" variant="ghost" class="cursor-pointer"
+            <flux:button size="customer" icon="arrow-long-left" variant="customer-outline" class="cursor-pointer"
                 :href="route('customer.quotations.index')" wire:navigate />
 
             <flux:heading size="lg">Quotation Details</flux:heading>
 
             @if ($quote->quoted_at)
-                <flux:button size="xs" variant="ghost" icon="arrow-down-tray" class="cursor-pointer"
+                <flux:button size="customer" variant="customer-outline" icon="arrow-down-tray" class="cursor-pointer"
                     :href="route('customer.quotations.pdf', $quote)" target="_blank">
                     PDF
                 </flux:button>
@@ -180,7 +180,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                                 A sales order has been created: {{ $quote->order->reference }}
                             </p>
                         </div>
-                        <flux:button size="sm" variant="ghost"
+                        <flux:button size="sm" variant="customer-outline"
                             :href="route('customer.orders.show', $quote->order)" wire:navigate>
                             View Order
                         </flux:button>
@@ -214,7 +214,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     <flux:text>Quoted on {{ $quote->quoted_at->format('M j, Y') }}</flux:text>
                 @endif
                 @if ($quote->expires_at && $this->canRespond)
-                    <flux:text class="{{ $quote->expires_at->diffInHours() <= 48 ? 'text-amber-600' : 'text-zinc-500' }}">
+                    <flux:text
+                        class="{{ $quote->expires_at->diffInHours() <= 48 ? 'text-amber-600' : 'text-zinc-500' }}">
                         Valid until {{ $quote->expires_at->format('M j, Y') }}
                         ({{ $quote->expires_at->diffForHumans() }})
                     </flux:text>
@@ -246,7 +247,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                             <div class="flex-1">
                                 <flux:heading size="sm">{{ $item->productName() }}</flux:heading>
                                 @if ($item->productSku())
-                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $item->productSku() }}</flux:text>
+                                    <flux:text size="sm" class="text-zinc-400">SKU: {{ $item->productSku() }}
+                                    </flux:text>
                                 @endif
                                 <flux:text size="sm" class="text-zinc-500 mt-1">
                                     Qty: {{ $item->quantity }}
@@ -321,7 +323,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             {{-- ACCEPT / REJECT ACTIONS                                        --}}
             {{-- ============================================================ --}}
             @if ($this->canRespond)
-                <div class="flex flex-col sm:flex-row items-center gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-8">
+                <div
+                    class="flex flex-col sm:flex-row items-center gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-8">
                     <div class="flex-1 text-sm">
                         <p class="font-medium text-zinc-800">Ready to decide?</p>
                         <p class="text-zinc-500 mt-0.5">
@@ -330,13 +333,14 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
                         <flux:modal.trigger name="reject-quote">
-                            <flux:button variant="ghost" icon="x-circle" class="cursor-pointer text-red-500!">
+                            <flux:button variant="customer-outline" icon="x-circle"
+                                class="cursor-pointer text-red-500!">
                                 Reject
                             </flux:button>
                         </flux:modal.trigger>
 
                         <flux:modal.trigger name="accept-quote">
-                            <flux:button variant="primary" icon="check-circle" class="cursor-pointer">
+                            <flux:button variant="customer-primary" icon="check-circle" class="cursor-pointer">
                                 Accept Quote
                             </flux:button>
                         </flux:modal.trigger>
@@ -350,11 +354,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             <flux:heading class="text-lg mb-4">Quotation History</flux:heading>
 
             @php
-                $mainPath = [
-                    QuoteStatus::PENDING,
-                    QuoteStatus::SENT,
-                    QuoteStatus::ACCEPTED,
-                ];
+                $mainPath = [QuoteStatus::PENDING, QuoteStatus::SENT, QuoteStatus::ACCEPTED];
 
                 $isCancelled = $quote->isCancelled();
                 $isRejected = $quote->isRejected();
@@ -421,7 +421,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                                     ])>
                                         {{ $meta['label'] }}
                                     </flux:text>
-                                    <flux:text class="text-xs mt-0.5
+                                    <flux:text
+                                        class="text-xs mt-0.5
                                         {{ $reached ? 'text-zinc-500' : 'text-zinc-300 dark:text-zinc-600' }}">
                                         {{ $reached ? $meta['desc'] : 'Pending' }}
                                     </flux:text>
@@ -445,7 +446,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 @if ($isRejected)
                     <div class="relative flex gap-5 pt-6">
                         <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-500">
+                        <div
+                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-500">
                             <flux:icon name="{{ QuoteStatus::REJECTED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
@@ -460,7 +462,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 @if ($isExpiredS)
                     <div class="relative flex gap-5 pt-6">
                         <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-400">
+                        <div
+                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-400">
                             <flux:icon name="{{ QuoteStatus::EXPIRED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
@@ -475,7 +478,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 @if ($isCancelled)
                     <div class="relative flex gap-5 pt-6">
                         <div class="absolute left-4 top-0 h-6 w-0.5 bg-zinc-300 z-0"></div>
-                        <div class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-500">
+                        <div
+                            class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-500">
                             <flux:icon name="{{ QuoteStatus::CANCELLED->icon() }}" class="size-4" />
                         </div>
                         <div class="flex-1 pt-1">
@@ -493,8 +497,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             {{-- Footer --}}
             <div class="flex flex-col items-center gap-3">
                 @if ($quote->quoted_at)
-                    <flux:button variant="ghost" icon="arrow-down-tray" size="sm" class="cursor-pointer"
-                        :href="route('customer.quotations.pdf', $quote)" target="_blank">
+                    <flux:button variant="customer-outline" icon="arrow-down-tray" size="sm"
+                        class="cursor-pointer" :href="route('customer.quotations.pdf', $quote)" target="_blank">
                         Download Quotation PDF
                     </flux:button>
                 @endif
@@ -539,9 +543,10 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             <div class="flex justify-end gap-3 pt-2">
                 <flux:modal.close>
-                    <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
+                    <flux:button variant="customer-outline" class="cursor-pointer">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button wire:click="acceptQuote" variant="primary" icon="check-circle" class="cursor-pointer">
+                <flux:button wire:click="acceptQuote" variant="customer-primary" icon="check-circle"
+                    class="cursor-pointer">
                     Yes, Accept & Pay
                 </flux:button>
             </div>
@@ -565,9 +570,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
             <div class="flex justify-end gap-3 pt-2">
                 <flux:modal.close>
-                    <flux:button variant="ghost" class="cursor-pointer">Keep</flux:button>
+                    <flux:button variant="customer-outline" class="cursor-pointer">Keep</flux:button>
                 </flux:modal.close>
-                <flux:button wire:click="rejectQuote" variant="danger" class="cursor-pointer">
+                <flux:button wire:click="rejectQuote" variant="customer-danger" class="cursor-pointer">
                     Reject Quotation
                 </flux:button>
             </div>
