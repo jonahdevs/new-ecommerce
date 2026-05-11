@@ -131,7 +131,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
 <div>
     <x-slot:breadcrumbs>
-        <flux:breadcrumbs class="container mx-auto py-2.5 px-4">
+        <flux:breadcrumbs class="container mx-auto px-4">
             <flux:breadcrumbs.item href="{{ route('home') }}" wire:navigate>
                 Home
             </flux:breadcrumbs.item>
@@ -143,6 +143,19 @@ new #[Layout('layouts.checkout')] class extends Component {
     </x-slot:breadcrumbs>
 
     <x-slot:heading>Payment</x-slot:heading>
+
+    {{-- Hide the default order summary button since we have payment-specific buttons --}}
+    <x-slot name="orderSummaryCta">
+        <div class="px-4 py-2">
+            <div class="text-center text-sm text-zinc-500">
+                Choose a payment method to complete your order
+            </div>
+            <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+                <flux:icon.shield-check class="size-3" />
+                <span class="uppercase tracking-widest">SSL Encrypted & Secure</span>
+            </div>
+        </div>
+    </x-slot>
 
     {{-- ── Payment options ── --}}
     <div class="space-y-3">
@@ -230,7 +243,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                     </span>
                 </button>
 
-                <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+                <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400 font-medium">
                     <flux:icon.lock-closed class="size-3" />
                     <span>Payments secured by Stripe. We never store your card details.</span>
                 </div>
@@ -275,90 +288,13 @@ new #[Layout('layouts.checkout')] class extends Component {
                     </span>
                 </flux:button>
 
-                <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+                <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400 font-medium">
                     <flux:icon.lock-closed class="size-3" />
                     <span>Secure payment via Safaricom M-Pesa</span>
                 </div>
             </div>
         </flux:card>
     </div>
-
-    {{-- ── Order summary sidebar — overrides layout default ── --}}
-    <x-slot:sidebar>
-        <flux:card class="p-0">
-            <div class="px-4 py-3 border-b">
-                <flux:heading level="3" class="font-medium!">Order Summary</flux:heading>
-            </div>
-
-            <div class="divide-y max-h-52 overflow-y-auto">
-                @foreach ($this->order->items as $item)
-                    <div class="flex items-center gap-2.5 px-4 py-3">
-                        <div class="w-10 h-10 rounded border bg-zinc-50 overflow-hidden shrink-0">
-                            @php $img = $item->product_image_url ?? $item->product?->image_url; @endphp
-                            @if ($img)
-                                <img src="{{ asset($img) }}" alt="{{ $item->product_snapshot['name'] ?? '' }}"
-                                    class="w-full h-full object-cover" />
-                            @else
-                                <flux:icon.photo class="w-full h-full p-1.5 text-zinc-300" />
-                            @endif
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-medium truncate">
-                                {{ $item->product_snapshot['name'] ?? $item->product?->name }}
-                            </p>
-                            <p class="text-xs text-zinc-400">× {{ $item->quantity }}</p>
-                        </div>
-                        <span class="text-xs font-semibold shrink-0">
-                            {{ format_currency($item->total_cents / 100) }}
-                        </span>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="px-4 py-3 border-t space-y-1.5">
-                <div class="flex justify-between text-xs text-zinc-500">
-                    <span>Subtotal</span>
-                    <span>{{ format_currency($this->order->subtotal) }}</span>
-                </div>
-
-                @if ($this->order->discount > 0)
-                    <div class="flex justify-between text-xs text-green-600">
-                        <span>Discount</span>
-                        <span>− {{ format_currency($this->order->discount) }}</span>
-                    </div>
-                @endif
-
-                <div class="flex justify-between text-xs text-zinc-500">
-                    <span>
-                        Shipping
-                        @if ($this->order->shipping_snapshot['method_name'] ?? null)
-                            <span class="text-zinc-400">
-                                · {{ $this->order->shipping_snapshot['method_name'] }}
-                            </span>
-                        @endif
-                    </span>
-                    <span>
-                        {{ $this->order->shipping == 0 ? 'Free' : format_currency($this->order->shipping) }}
-                    </span>
-                </div>
-
-                @if ($this->taxSettings->tax_enabled && $this->taxSettings->tax_type !== 'inclusive' && $this->order->tax_cents > 0)
-                    <div class="flex justify-between text-xs text-zinc-500">
-                        <span class="flex items-center gap-1.5">
-                            <flux:icon.receipt-percent class="size-3.5 shrink-0" />
-                            {{ $this->taxSettings->tax_name }}
-                        </span>
-                        <span>{{ format_currency($this->order->tax) }}</span>
-                    </div>
-                @endif
-
-                <div class="flex justify-between font-semibold text-sm border-t pt-2 mt-1">
-                    <span>Total</span>
-                    <span>{{ format_currency($this->order->total) }}</span>
-                </div>
-            </div>
-        </flux:card>
-    </x-slot:sidebar>
 
     {{-- ── M-Pesa STK waiting modal ── --}}
     <flux:modal name="stk-waiting" class="max-w-sm">

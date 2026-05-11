@@ -1,5 +1,5 @@
 <x-layouts::guest>
-    <div class="bg-zinc-100">
+    <div class="bg-white border-b border-zinc-200 py-3">
         {{ $breadcrumbs ?? '' }}
     </div>
 
@@ -15,13 +15,11 @@
                 {{ $slot }}
             </div>
 
-            {{-- Order summary sidebar — pages can override via <x-slot:sidebar> --}}
+            {{-- Order summary sidebar — pages can override via <x-slot:orderSummaryCta> --}}
             <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0 lg:sticky lg:top-28">
-                @isset($sidebar)
-                    {{ $sidebar }}
-                @else
-                    <livewire:order-summary />
-                @endisset
+                <livewire:order-summary>
+                    {{ $orderSummaryCta ?? '' }}
+                </livewire:order-summary>
             </div>
 
         </div>

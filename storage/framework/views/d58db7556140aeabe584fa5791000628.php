@@ -177,7 +177,13 @@ use Illuminate\Support\Facades\DB;
 
     
     <div class="p-4 border-t border-zinc-200 bg-white">
-        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(isset($slot)): ?>
+            
+            <?php echo e($slot); ?>
+
+        <?php else: ?>
+            
+            <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'completeOrder','wire:loading.attr' => 'disabled','wire:target' => 'completeOrder','class' => 'w-full group cursor-pointer','variant' => 'customer-primary','size' => 'customer-lg','disabled' => !$this->summary['shipping_selected'] || $isProcessing]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
@@ -189,9 +195,9 @@ use Illuminate\Support\Facades\DB;
 <?php $component->withAttributes(['wire:click' => 'completeOrder','wire:loading.attr' => 'disabled','wire:target' => 'completeOrder','class' => 'w-full group cursor-pointer','variant' => 'customer-primary','size' => 'customer-lg','disabled' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(!$this->summary['shipping_selected'] || $isProcessing)]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-            <span wire:loading.remove wire:target="completeOrder">Place Order</span>
-            <span wire:loading wire:target="completeOrder" class="flex items-center gap-2">
-                <?php if (isset($component)) { $__componentOriginal18ce857dfc449fdd246010f7208cb6d5 = $component; } ?>
+                <span wire:loading.remove wire:target="completeOrder">Place Order</span>
+                <span wire:loading wire:target="completeOrder" class="flex items-center gap-2">
+                    <?php if (isset($component)) { $__componentOriginal18ce857dfc449fdd246010f7208cb6d5 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal18ce857dfc449fdd246010f7208cb6d5 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.arrow-path','data' => ['class' => 'size-3.5 animate-spin']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.arrow-path'); ?>
@@ -213,10 +219,10 @@ use Illuminate\Support\Facades\DB;
 <?php $component = $__componentOriginal18ce857dfc449fdd246010f7208cb6d5; ?>
 <?php unset($__componentOriginal18ce857dfc449fdd246010f7208cb6d5); ?>
 <?php endif; ?>
-                Processing...
-            </span>
-             <?php $__env->slot('iconTrailing', null, []); ?> 
-                <?php if (isset($component)) { $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3 = $component; } ?>
+                    Processing...
+                </span>
+                 <?php $__env->slot('iconTrailing', null, []); ?> 
+                    <?php if (isset($component)) { $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-right','data' => ['class' => 'size-3.5 group-hover:translate-x-1 transition-transform','wire:loading.class' => 'hidden','wire:target' => 'completeOrder']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.chevron-right'); ?>
@@ -238,8 +244,8 @@ use Illuminate\Support\Facades\DB;
 <?php $component = $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3; ?>
 <?php unset($__componentOriginal31cb76c8d087d4f00797aeea7232b4c3); ?>
 <?php endif; ?>
-             <?php $__env->endSlot(); ?>
-         <?php echo $__env->renderComponent(); ?>
+                 <?php $__env->endSlot(); ?>
+             <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
 <?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
@@ -250,11 +256,11 @@ use Illuminate\Support\Facades\DB;
 <?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
 <?php endif; ?>
 
-        <div class="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 font-medium">
-            <?php if (isset($component)) { $__componentOriginal7649f9fde3f65e39f506d39dd1ac88cb = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal7649f9fde3f65e39f506d39dd1ac88cb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.lock-closed','data' => ['class' => 'size-3']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.lock-closed'); ?>
+            <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400 font-medium">
+                <?php if (isset($component)) { $__componentOriginalf870514c33bb1b53395ba02235f60146 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf870514c33bb1b53395ba02235f60146 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.shield-check','data' => ['class' => 'size-3']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon.shield-check'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
@@ -265,15 +271,80 @@ use Illuminate\Support\Facades\DB;
 
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal7649f9fde3f65e39f506d39dd1ac88cb)): ?>
-<?php $attributes = $__attributesOriginal7649f9fde3f65e39f506d39dd1ac88cb; ?>
-<?php unset($__attributesOriginal7649f9fde3f65e39f506d39dd1ac88cb); ?>
+<?php if (isset($__attributesOriginalf870514c33bb1b53395ba02235f60146)): ?>
+<?php $attributes = $__attributesOriginalf870514c33bb1b53395ba02235f60146; ?>
+<?php unset($__attributesOriginalf870514c33bb1b53395ba02235f60146); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal7649f9fde3f65e39f506d39dd1ac88cb)): ?>
-<?php $component = $__componentOriginal7649f9fde3f65e39f506d39dd1ac88cb; ?>
-<?php unset($__componentOriginal7649f9fde3f65e39f506d39dd1ac88cb); ?>
+<?php if (isset($__componentOriginalf870514c33bb1b53395ba02235f60146)): ?>
+<?php $component = $__componentOriginalf870514c33bb1b53395ba02235f60146; ?>
+<?php unset($__componentOriginalf870514c33bb1b53395ba02235f60146); ?>
 <?php endif; ?>
-            <span>Secure checkout</span>
+                <span class="uppercase tracking-widest">SSL Encrypted & Secure</span>
+            </div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    </div>
+
+    
+    <div class="py-4 px-5 border-t border-zinc-100">
+        <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">We accept</div>
+        <div class="flex flex-wrap gap-1.5 mb-6">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ['VISA', 'MPESA', 'MASTERCARD', 'PAYPAL']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pay): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <span
+                    class="inline-block px-2 py-1 bg-zinc-100 border border-zinc-200 rounded text-[9px] font-bold text-zinc-600 tracking-wider"><?php echo e($pay); ?></span>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-center gap-2 text-xs text-zinc-500">
+                <?php if (isset($component)) { $__componentOriginal18ce857dfc449fdd246010f7208cb6d5 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal18ce857dfc449fdd246010f7208cb6d5 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.arrow-path','data' => ['class' => 'size-3.5 text-zinc-400']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon.arrow-path'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'size-3.5 text-zinc-400']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal18ce857dfc449fdd246010f7208cb6d5)): ?>
+<?php $attributes = $__attributesOriginal18ce857dfc449fdd246010f7208cb6d5; ?>
+<?php unset($__attributesOriginal18ce857dfc449fdd246010f7208cb6d5); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal18ce857dfc449fdd246010f7208cb6d5)): ?>
+<?php $component = $__componentOriginal18ce857dfc449fdd246010f7208cb6d5; ?>
+<?php unset($__componentOriginal18ce857dfc449fdd246010f7208cb6d5); ?>
+<?php endif; ?>
+                <span>30-Day Easy Returns Policy</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-500">
+                <?php if (isset($component)) { $__componentOriginal7a62c53a9a388e917a2ccf86cb1b44e8 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal7a62c53a9a388e917a2ccf86cb1b44e8 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.truck','data' => ['class' => 'size-3.5 text-zinc-400']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon.truck'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'size-3.5 text-zinc-400']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal7a62c53a9a388e917a2ccf86cb1b44e8)): ?>
+<?php $attributes = $__attributesOriginal7a62c53a9a388e917a2ccf86cb1b44e8; ?>
+<?php unset($__attributesOriginal7a62c53a9a388e917a2ccf86cb1b44e8); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal7a62c53a9a388e917a2ccf86cb1b44e8)): ?>
+<?php $component = $__componentOriginal7a62c53a9a388e917a2ccf86cb1b44e8; ?>
+<?php unset($__componentOriginal7a62c53a9a388e917a2ccf86cb1b44e8); ?>
+<?php endif; ?>
+                <span>Free delivery on orders over KES 5,000</span>
+            </div>
         </div>
     </div>
 
@@ -427,5 +498,4 @@ Waiting for confirmation... <?php echo $__env->renderComponent(); ?>
 <?php $component = $__componentOriginal8cc9d3143946b992b324617832699c5f; ?>
 <?php unset($__componentOriginal8cc9d3143946b992b324617832699c5f); ?>
 <?php endif; ?>
-
 </div><?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\storage\framework/views/livewire/views/2717a403.blade.php ENDPATH**/ ?>

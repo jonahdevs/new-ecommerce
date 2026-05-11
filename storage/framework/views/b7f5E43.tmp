@@ -1,10 +1,13 @@
 
 
+
+
 <?php $attributes ??= new \Illuminate\View\ComponentAttributeBag;
 
 $__newAttributes = [];
 $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
-    'variant' => 'default',
+    'icon' => null,
+    'name' => null,
 ]));
 
 foreach ($attributes->all() as $__key => $__value) {
@@ -21,7 +24,8 @@ unset($__propNames);
 unset($__newAttributes);
 
 foreach (array_filter(([
-    'variant' => 'default',
+    'icon' => null,
+    'name' => null,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 }
@@ -34,23 +38,27 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
-<?php if (!Flux::componentExists($name = 'radio.group.variants.' . $variant)) throw new \Exception("Flux component [{$name}] does not exist."); ?><?php if (isset($component)) { $__componentOriginalf6b376e50e9192a3af54df033b02996a = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf6b376e50e9192a3af54df033b02996a = $attributes; } ?>
+<?php
+$icon = $name ?? $icon;
+?>
+
+<?php if (!Flux::componentExists($name = 'icon.' . $icon)) throw new \Exception("Flux component [{$name}] does not exist."); ?><?php if (isset($component)) { $__componentOriginal99f5bdde02e072cb5fe2c95dd124b389 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal99f5bdde02e072cb5fe2c95dd124b389 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve([
-    'view' => (app()->version() >= 12 ? hash('xxh128', 'flux') : md5('flux')) . '::' . 'radio.group.variants.' . $variant,
+    'view' => (app()->version() >= 12 ? hash('xxh128', 'flux') : md5('flux')) . '::' . 'icon.' . $icon,
     'data' => $__env->getCurrentComponentData(),
 ] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::' . 'radio.group.variants.' . $variant); ?>
+<?php $component->withName('flux::' . 'icon.' . $icon); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php $component->withAttributes($attributes->getAttributes()); ?><?php echo e($slot); ?> <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginalf6b376e50e9192a3af54df033b02996a)): ?>
-<?php $attributes = $__attributesOriginalf6b376e50e9192a3af54df033b02996a; ?>
-<?php unset($__attributesOriginalf6b376e50e9192a3af54df033b02996a); ?>
+<?php if (isset($__attributesOriginal99f5bdde02e072cb5fe2c95dd124b389)): ?>
+<?php $attributes = $__attributesOriginal99f5bdde02e072cb5fe2c95dd124b389; ?>
+<?php unset($__attributesOriginal99f5bdde02e072cb5fe2c95dd124b389); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginalf6b376e50e9192a3af54df033b02996a)): ?>
-<?php $component = $__componentOriginalf6b376e50e9192a3af54df033b02996a; ?>
-<?php unset($__componentOriginalf6b376e50e9192a3af54df033b02996a); ?>
+<?php if (isset($__componentOriginal99f5bdde02e072cb5fe2c95dd124b389)): ?>
+<?php $component = $__componentOriginal99f5bdde02e072cb5fe2c95dd124b389; ?>
+<?php unset($__componentOriginal99f5bdde02e072cb5fe2c95dd124b389); ?>
 <?php endif; ?>
-<?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\vendor\livewire\flux\src/../stubs/resources/views/flux/radio/group/index.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\vendor\livewire\flux\src/../stubs/resources/views/flux/icon/index.blade.php ENDPATH**/ ?>

@@ -122,6 +122,12 @@ new class extends Component {
     {
         unset($this->summary);
     }
+
+    #[On('complete-order')]
+    public function handleCompleteOrder(): void
+    {
+        $this->completeOrder();
+    }
 };
 ?>
 
@@ -209,23 +215,51 @@ new class extends Component {
 
     {{-- Place order button --}}
     <div class="p-4 border-t border-zinc-200 bg-white">
-        <flux:button wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder"
-            class="w-full group cursor-pointer" variant="customer-primary" size="customer-lg"
-            :disabled="!$this->summary['shipping_selected'] || $isProcessing">
-            <span wire:loading.remove wire:target="completeOrder">Place Order</span>
-            <span wire:loading wire:target="completeOrder" class="flex items-center gap-2">
-                <flux:icon.arrow-path class="size-3.5 animate-spin" />
-                Processing...
-            </span>
-            <x-slot name="iconTrailing">
-                <flux:icon.chevron-right class="size-3.5 group-hover:translate-x-1 transition-transform"
-                    wire:loading.class="hidden" wire:target="completeOrder" />
-            </x-slot>
-        </flux:button>
+        @isset($slot)
+            {{-- Custom button content from parent page --}}
+            {{ $slot }}
+        @else
+            {{-- Default Place Order button --}}
+            <flux:button wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder"
+                class="w-full group cursor-pointer" variant="customer-primary" size="customer-lg"
+                :disabled="!$this->summary['shipping_selected'] || $isProcessing">
+                <span wire:loading.remove wire:target="completeOrder">Place Order</span>
+                <span wire:loading wire:target="completeOrder" class="flex items-center gap-2">
+                    <flux:icon.arrow-path class="size-3.5 animate-spin" />
+                    Processing...
+                </span>
+                <x-slot name="iconTrailing">
+                    <flux:icon.chevron-right class="size-3.5 group-hover:translate-x-1 transition-transform"
+                        wire:loading.class="hidden" wire:target="completeOrder" />
+                </x-slot>
+            </flux:button>
 
-        <div class="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 font-medium">
-            <flux:icon.lock-closed class="size-3" />
-            <span>Secure checkout</span>
+            <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400 font-medium">
+                <flux:icon.shield-check class="size-3" />
+                <span class="uppercase tracking-widest">SSL Encrypted & Secure</span>
+            </div>
+        @endisset
+    </div>
+
+    {{-- We Accept & Trust --}}
+    <div class="py-4 px-5 border-t border-zinc-100">
+        <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">We accept</div>
+        <div class="flex flex-wrap gap-1.5 mb-6">
+            @foreach (['VISA', 'MPESA', 'MASTERCARD', 'PAYPAL'] as $pay)
+                <span
+                    class="inline-block px-2 py-1 bg-zinc-100 border border-zinc-200 rounded text-[9px] font-bold text-zinc-600 tracking-wider">{{ $pay }}</span>
+            @endforeach
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-center gap-2 text-xs text-zinc-500">
+                <flux:icon.arrow-path class="size-3.5 text-zinc-400" />
+                <span>30-Day Easy Returns Policy</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-500">
+                <flux:icon.truck class="size-3.5 text-zinc-400" />
+                <span>Free delivery on orders over KES 5,000</span>
+            </div>
         </div>
     </div>
 
@@ -278,5 +312,4 @@ new class extends Component {
             </div>
         </div>
     </flux:modal>
-
 </div>

@@ -10,7 +10,7 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <div class="bg-zinc-100">
+    <div class="bg-white border-b border-zinc-200 py-3">
         <?php echo e($breadcrumbs ?? ''); ?>
 
     </div>
@@ -51,20 +51,29 @@
 
             
             <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0 lg:sticky lg:top-28">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(isset($sidebar)): ?>
-                    <?php echo e($sidebar); ?>
+                <?php if (isset($__component)) { $__componentOriginal = $__component; } ?>
+<?php if (isset($__key)) { $__keyOriginal = $__key; } ?>
+<?php if (isset($__attributes)) { $__attributesOriginal = $__attributes; } ?>
+<?php if (isset($__slots)) { $__slotsOriginal = $__slots; } ?>
+<?php $__component = 'order-summary'; ?>
+<?php $__key = null; ?>
+<?php $__attributes = []; ?>
+<?php $__slots = []; ?>
+<?php ob_start(); ?>
 
-                <?php else: ?>
-                    <?php
+                    <?php echo e($orderSummaryCta ?? ''); ?>
+
+                <?php $__slots['default'] = ob_get_clean(); ?>
+<?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('order-summary', []);
+[$__name, $__params] = $__split($__component, $__attributes);
 
 $__keyOuter = $__key ?? null;
 
-$__key = null;
-$__componentSlots = [];
+$__key = $__key;
+$__componentSlots = $__slots ?? [];
 
 $__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3996986761-0', $__key);
 
@@ -81,7 +90,11 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+<?php if (isset($__componentOriginal)) { $__component = $__componentOriginal; unset($__componentOriginal); } ?>
+<?php if (isset($__keyOriginal)) { $__key = $__keyOriginal; unset($__keyOriginal); } ?>
+<?php if (isset($__attributesOriginal)) { $__attributes = $__attributesOriginal; unset($__attributesOriginal); } ?>
+<?php if (isset($__slotsOriginal)) { $__slots = $__slotsOriginal; unset($__slotsOriginal); } ?>
+
             </div>
 
         </div>

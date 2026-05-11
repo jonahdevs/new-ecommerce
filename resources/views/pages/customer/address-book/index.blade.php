@@ -128,104 +128,94 @@ new #[Layout('layouts.customer')] class extends Component {
 
 <div>
     {{-- Address grid --}}
-    <div class="bg-white border border-zinc-200 rounded">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
-            <div class="flex items-center gap-2 font-serif text-[16px] font-extrabold uppercase tracking-wider">
-                <flux:icon.map-pin class="w-4 h-4 text-primary" />
-                Saved <em class="text-primary not-italic">Addresses</em>
-            </div>
-        </div>
+    <x-customer.card title="Saved" titleEm="Addresses">
+        <x-slot:icon>
+            <flux:icon.map-pin />
+        </x-slot:icon>
 
-        <div class="p-5">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @forelse ($this->addresses as $address)
-                    <div class="relative border-[1.5px] {{ $address->is_default ? 'border-primary' : 'border-zinc-200 hover:border-zinc-950' }} p-4 transition-colors"
-                        wire:key="addr-{{ $address->id }}">
-                        @if ($address->is_default)
-                            <div class="absolute left-0 top-0 bottom-0 w-0.75 bg-primary rounded-l-sm"></div>
-                            <span
-                                class="absolute top-3 right-3 text-[9px] font-extrabold tracking-widest uppercase text-primary border border-primary px-2 py-0.5">Default</span>
-                        @endif
-
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @forelse ($this->addresses as $address)
+                <div class="relative border-[1.5px] {{ $address->is_default ? 'border-primary' : 'border-zinc-200 hover:border-zinc-950' }} p-4 transition-colors"
+                    wire:key="addr-{{ $address->id }}">
+                    @if ($address->is_default)
+                        <div class="absolute left-0 top-0 bottom-0 w-0.75 bg-primary rounded-l-sm"></div>
                         <span
-                            class="inline-block text-[9px] font-extrabold tracking-widest uppercase px-2 py-0.5 mb-2 {{ $address->is_default ? 'bg-primary text-white' : 'bg-zinc-950 text-white' }}">
-                            {{ $address->label ?? 'Home' }}
-                        </span>
+                            class="absolute top-3 right-3 text-[9px] font-extrabold tracking-widest uppercase text-primary border border-primary px-2 py-0.5">Default</span>
+                    @endif
 
-                        <div class="text-[14px] font-bold text-zinc-950 mb-1">{{ $address->full_name }}</div>
+                    <span
+                        class="inline-block text-[9px] font-extrabold tracking-widest uppercase px-2 py-0.5 mb-2 {{ $address->is_default ? 'bg-primary text-white' : 'bg-zinc-950 text-white' }}">
+                        {{ $address->label ?? 'Home' }}
+                    </span>
 
-                        <div class="text-[12px] text-zinc-500 leading-[1.7]">
-                            {{ $address->address }}<br>
-                            @if ($address->area)
-                                {{ $address->area->name }},
-                            @endif{{ $address->county?->name }}<br>
-                            {{ $address->phone_number }}
-                        </div>
+                    <div class="text-[14px] font-bold text-zinc-950 mb-1">{{ $address->full_name }}</div>
 
-                        <div class="flex flex-wrap gap-3 mt-3.5 pt-3 border-t border-zinc-200">
+                    <div class="text-[12px] text-zinc-500 leading-[1.7]">
+                        {{ $address->address }}<br>
+                        @if ($address->area)
+                            {{ $address->area->name }},
+                        @endif{{ $address->county?->name }}<br>
+                        {{ $address->phone_number }}
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 mt-3.5 pt-3 border-t border-zinc-200">
+                        <flux:button variant="customer-outline" size="customer"
+                            wire:click="openEdit({{ $address->id }})" icon="pencil-square">
+                            Edit
+                        </flux:button>
+
+                        @if (!$address->is_default)
                             <flux:button variant="customer-outline" size="customer"
-                                wire:click="openEdit({{ $address->id }})">
-                                <flux:icon.pencil-square class="w-3 h-3" />
-                                Edit
+                                wire:click="setDefaultAddress({{ $address->id }})" icon="check">
+                                Set Default
                             </flux:button>
 
-                            @if (!$address->is_default)
-                                <flux:button variant="customer-outline" size="customer"
-                                    wire:click="setDefaultAddress({{ $address->id }})">
-                                    <flux:icon.check class="w-3 h-3" />
-                                    Set Default
+                            @if ($this->addresses->count() > 1)
+                                <flux:button variant="customer-danger" size="customer"
+                                    wire:click="deleteAddress({{ $address->id }})"
+                                    wire:confirm="Are you sure you want to delete this address?" icon="trash">
+                                    Delete
                                 </flux:button>
-
-                                @if ($this->addresses->count() > 1)
-                                    <flux:button variant="customer-danger" size="customer"
-                                        wire:click="deleteAddress({{ $address->id }})"
-                                        wire:confirm="Are you sure you want to delete this address?">
-                                        <flux:icon.trash class="w-3 h-3" />
-                                        Delete
-                                    </flux:button>
-                                @endif
                             @endif
-                        </div>
+                        @endif
                     </div>
-                @empty
-                    {{-- Add new card --}}
-                    <button wire:click="openCreate"
-                        class="border-[1.5px] border-dashed border-zinc-200 p-4 flex flex-col items-center justify-center gap-2.5 cursor-pointer min-h-40 transition-all hover:border-primary hover:bg-[#fff8f6] group w-full rounded-sm">
-                        <div
-                            class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center transition-colors group-hover:bg-[#fff0ea]">
-                            <flux:icon.plus
-                                class="w-4.5 h-4.5 text-zinc-500 group-hover:text-primary transition-colors" />
-                        </div>
-                        <div
-                            class="text-[12px] font-bold tracking-widest uppercase text-zinc-500 transition-colors group-hover:text-primary">
-                            Add New Address
-                        </div>
-                    </button>
-                @endforelse
-            </div>
+                </div>
+            @empty
+                {{-- Add new card --}}
+                <button wire:click="openCreate"
+                    class="border-[1.5px] border-dashed border-zinc-200 p-4 flex flex-col items-center justify-center gap-2.5 cursor-pointer min-h-40 transition-all hover:border-primary hover:bg-[#fff8f6] group w-full rounded-sm">
+                    <div
+                        class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center transition-colors group-hover:bg-[#fff0ea]">
+                        <flux:icon.plus class="w-4.5 h-4.5 text-zinc-500 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div
+                        class="text-[12px] font-bold tracking-widest uppercase text-zinc-500 transition-colors group-hover:text-primary">
+                        Add New Address
+                    </div>
+                </button>
+            @endforelse
         </div>
+    </x-customer.card>
 
-        {{-- Modal --}}
+    {{-- Modal --}}
 
-        @if ($showModal)
-            <x-ui.modal wire:key="address-form-modal"
-                title="{{ $isEditing ? 'EDIT' : 'NEW' }} <em class='text-primary not-italic'>ADDRESS</em>"
-                max-width="640px" wire:click.self="closeModal">
-                <x-slot:close>
-                    <button wire:click="closeModal"
-                        class="text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer group">
-                        <flux:icon.x-mark
-                            class="w-5 h-5 group-hover:rotate-90 transition-all duration-150 ease-in-out" />
-                    </button>
-                </x-slot:close>
+    @if ($showModal)
+        <x-ui.modal wire:key="address-form-modal"
+            title="{{ $isEditing ? 'EDIT' : 'NEW' }} <em class='text-primary not-italic'>ADDRESS</em>"
+            max-width="640px" wire:click.self="closeModal">
+            <x-slot:close>
+                <button wire:click="closeModal"
+                    class="text-zinc-400 hover:text-zinc-950 transition-colors cursor-pointer group">
+                    <flux:icon.x-mark class="w-5 h-5 group-hover:rotate-90 transition-all duration-150 ease-in-out" />
+                </button>
+            </x-slot:close>
 
-                <form wire:submit="save">
-                    @include('pages.customer.address-book._form-fields', [
-                        'submitLabel' => $isEditing ? 'Update Address' : 'Save Address',
-                    ])
-                </form>
-            </x-ui.modal>
-        @endif
+            <form wire:submit="save">
+                @include('pages.customer.address-book._form-fields', [
+                    'submitLabel' => $isEditing ? 'Update Address' : 'Save Address',
+                ])
+            </form>
+        </x-ui.modal>
+    @endif
 
-    </div>
+</div>
