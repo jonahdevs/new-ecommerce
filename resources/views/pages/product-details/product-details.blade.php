@@ -281,15 +281,15 @@
 
                             {{-- Cart Actions for Grouped Products --}}
                             <div class="flex flex-col gap-2">
-                                <flux:button wire:click="addFullKitToCart" variant="primary"
-                                    class="w-full uppercase cursor-pointer" wire:loading.attr="disabled"
+                                <flux:button wire:click="addFullKitToCart" variant="customer-primary" size="customer-lg"
+                                    class="w-full cursor-pointer" wire:loading.attr="disabled"
                                     wire:target="addFullKitToCart">
                                     Add Full Kit to Cart
                                 </flux:button>
 
                                 @if (!empty($selectedGroupedItems) && count($selectedGroupedItems) < $this->groupedProducts->count())
-                                    <flux:button wire:click="addSelectedGroupedToCart"
-                                        class="w-full uppercase cursor-pointer" wire:loading.attr="disabled"
+                                    <flux:button wire:click="addSelectedGroupedToCart" variant="customer-outline"
+                                        size="customer-lg" class="w-full cursor-pointer" wire:loading.attr="disabled"
                                         wire:target="addSelectedGroupedToCart">
                                         Add Selected Items ({{ count($selectedGroupedItems) }})
                                     </flux:button>
@@ -495,22 +495,18 @@
 
                                 @if ($product->requires_quotation)
                                     {{-- Quotation products — no cart, quote only --}}
-                                    <flux:button wire:click="addToQuoteBasket" variant="primary"
-                                        class="uppercase cursor-pointer" wire:loading.attr="disabled"
+                                    <flux:button wire:click="addToQuoteBasket" variant="customer-primary"
+                                        size="customer-lg" class="w-full cursor-pointer" wire:loading.attr="disabled"
                                         wire:target="addToQuoteBasket">
-                                        <x-slot name="icon">
-                                            <flux:icon.document-text class="size-4" />
-                                        </x-slot>
                                         Add to Quote
                                     </flux:button>
 
                                     @if ($inQuoteBasket)
-                                        <a href="{{ route('quote') }}" wire:navigate>
-                                            <flux:button icon="arrow-right" icon-variant="outline"
-                                                class="cursor-pointer">
-                                                View Quote Basket
-                                            </flux:button>
-                                        </a>
+                                        <flux:button href="{{ route('quote') }}" wire:navigate
+                                            variant="customer-outline" size="customer-lg"
+                                            class="w-full cursor-pointer">
+                                            View Quote Basket
+                                        </flux:button>
                                     @endif
                                 @else
                                     {{-- Quantity stepper — hidden when out of stock --}}
@@ -532,23 +528,25 @@
 
                                     {{-- Primary action --}}
                                     @if ($product->type === ProductType::VARIABLE && !$selectedVariantId)
-                                        <flux:button variant="primary" class="uppercase cursor-pointer" disabled>
+                                        <flux:button variant="customer-primary" size="customer-lg"
+                                            class="flex-1 cursor-pointer" disabled>
                                             Select Options
                                         </flux:button>
                                     @elseif ($state === 'out_of_stock')
-                                        <flux:button class="uppercase cursor-not-allowed" disabled>
+                                        <flux:button variant="customer-outline" size="customer-lg"
+                                            class="flex-1 cursor-not-allowed" disabled>
                                             Out of Stock
                                         </flux:button>
                                     @elseif ($state === 'backorder' && !$inCart)
-                                        <flux:button wire:click="addToCart"
-                                            class="uppercase cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!"
+                                        <flux:button wire:click="addToCart" size="customer-lg"
+                                            class="flex-1 cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!"
                                             wire:loading.attr="disabled" wire:target="addToCart">
                                             Pre-order
                                         </flux:button>
                                     @elseif (!$inCart)
-                                        <flux:button wire:click="addToCart" variant="primary"
-                                            class="uppercase cursor-pointer" wire:loading.attr="disabled"
-                                            wire:target="addToCart">
+                                        <flux:button wire:click="addToCart" variant="customer-primary"
+                                            size="customer-lg" class="flex-1 cursor-pointer"
+                                            wire:loading.attr="disabled" wire:target="addToCart">
                                             Add to Cart
                                         </flux:button>
                                     @endif
