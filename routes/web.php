@@ -36,7 +36,7 @@ Route::prefix('shop')->name('shop.')->group(function () {
 Route::prefix('products')->name('products.')->group(function () {
     Route::livewire('/compare', 'pages::product-compare')->name('compare');
     Route::livewire('/{product:slug}/reviews', 'pages::product-reviews')->name('reviews');
-    Route::livewire('/{product:slug}', 'pages::product-details.index')->name('show');
+    Route::livewire('/{product:slug}', 'pages::product-details')->name('show');
 });
 
 // ----------------------------------------------------------------------------
