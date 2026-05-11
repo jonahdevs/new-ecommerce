@@ -35,63 +35,56 @@ new #[Layout('layouts.customer')] class extends Component {
     }
 }; ?>
 
-<div class="space-y-4">
-    <flux:card class="p-0 rounded-md">
-        <div class="border-b px-4 py-3">
-            <flux:heading size="lg">{{ __('Pending Reviews') }}</flux:heading>
+<x-customer.card title="Pending" titleEm="Reviews" bodyClass="p-0">
+    <x-slot:icon>
+        <flux:icon.star />
+    </x-slot:icon>
+
+    @if ($this->pendingProducts->isEmpty())
+        <div class="text-center py-16 flex flex-col items-center justify-center">
+            <flux:icon.star class="w-12 h-12 text-zinc-300 mb-4" />
+            <h4 class="text-lg font-medium text-zinc-900">{{ __('No pending reviews') }}</h4>
+            <p class="text-sm text-zinc-500 mt-1">{{ __('You have reviewed all your purchased products.') }}</p>
+            <flux:button variant="primary" href="{{ route('customer.orders.index') }}" wire:navigate class="mt-6">
+                {{ __('View Orders') }}
+            </flux:button>
         </div>
+    @else
+        <div class="flex flex-col bg-white">
+            @foreach ($this->pendingProducts as $item)
+                <div class="p-4.5 border-b border-zinc-200 last:border-b-0 flex items-center gap-4 transition-colors hover:bg-zinc-50">
+                    {{-- Product Image --}}
+                    <div class="w-16 h-16 bg-zinc-50 flex items-center justify-center shrink-0 overflow-hidden border border-zinc-200 rounded-sm">
+                        @if ($item->product?->image_path)
+                            <img src="{{ asset('storage/' . $item->product->image_path) }}"
+                                alt="{{ $item->product->name }}"
+                                class="w-[85%] h-[85%] object-contain" />
+                        @else
+                            <flux:icon.photo class="w-8 h-8 text-zinc-300" />
+                        @endif
+                    </div>
 
-        <div class="p-4">
-            @if ($this->pendingProducts->isEmpty())
-                <div class="text-center py-12">
-                    <flux:icon.star class="w-12 h-12 mx-auto text-zinc-300 mb-4" />
-                    <flux:heading size="lg">{{ __('No pending reviews') }}</flux:heading>
-                    <flux:text class="mt-2">{{ __('You have reviewed all your purchased products.') }}</flux:text>
-                    <flux:button href="{{ route('customer.orders.index') }}" wire:navigate variant="primary"
-                        class="mt-4">
-                        {{ __('View Orders') }}
-                    </flux:button>
-                </div>
-            @else
-                <div class="space-y-4">
-                    @foreach ($this->pendingProducts as $item)
-                        <div class="flex gap-4 p-4 border rounded-lg hover:bg-zinc-50 transition-colors">
-                            {{-- Product Image --}}
-                            <div class="w-20 h-20 shrink-0">
-                                @if ($item->product?->image_path)
-                                    <img src="{{ asset('storage/' . $item->product->image_path) }}"
-                                        alt="{{ $item->product->name }}"
-                                        class="w-full h-full object-cover rounded-md" />
-                                @else
-                                    <div class="w-full h-full bg-zinc-100 rounded-md flex items-center justify-center">
-                                        <flux:icon.photo class="w-8 h-8 text-zinc-300" />
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Product Info --}}
-                            <div class="flex-1 min-w-0">
-                                <flux:heading size="base" class="truncate">
-                                    {{ $item->product?->name ?? ($item->product_snapshot['name'] ?? 'Product') }}
-                                </flux:heading>
-                                <flux:text size="sm" class="text-zinc-500">
-                                    {{ __('Order') }}: {{ $item->order->reference }}
-                                </flux:text>
-                            </div>
-
-                            {{-- Action --}}
-                            <div class="shrink-0 flex items-center">
-                                @if ($item->product)
-                                    <flux:button href="{{ route('products.reviews', $item->product->slug) }}"
-                                        wire:navigate size="sm" variant="primary">
-                                        {{ __('Write Review') }}
-                                    </flux:button>
-                                @endif
-                            </div>
+                    {{-- Product Info --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[13px] font-bold text-zinc-950 mb-0.5 truncate">
+                            {{ $item->product?->name ?? ($item->product_snapshot['name'] ?? 'Product') }}
                         </div>
-                    @endforeach
+                        <div class="text-[11px] text-zinc-500 mt-0.5">
+                            {{ __('Order') }}: #{{ $item->order->reference }}
+                        </div>
+                    </div>
+
+                    {{-- Action --}}
+                    <div class="shrink-0 flex items-center">
+                        @if ($item->product)
+                            <flux:button href="{{ route('products.reviews', $item->product->slug) }}"
+                                wire:navigate size="sm" variant="primary">
+                                {{ __('Write Review') }}
+                            </flux:button>
+                        @endif
+                    </div>
                 </div>
-            @endif
+            @endforeach
         </div>
-    </flux:card>
-</div>
+    @endif
+</x-customer.card>
