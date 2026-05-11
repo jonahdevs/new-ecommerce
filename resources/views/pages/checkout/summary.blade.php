@@ -500,8 +500,8 @@ new #[Layout('layouts.checkout')] class extends Component {
                 ::disabled="processing" class="w-full group cursor-pointer" variant="customer-primary"
                 size="customer-lg">
                 <div class="flex items-center justify-center gap-2 group-active:scale-95 transition-transform">
-                    <span x-show="!processing" class="inline-flex items-center gap-2">Place Order
-                        <flux:icon.move-right class="size-4" />
+                    <span x-show="!processing" class="inline-flex items-center gap-3 group">Place Order
+                        <flux:icon.chevron-right class="size-3.5 group-hover:translate-x-1 transition-transform" />
                     </span>
                     <span x-show="processing" class="flex items-center gap-2" x-cloak>
                         <span>Processing</span>

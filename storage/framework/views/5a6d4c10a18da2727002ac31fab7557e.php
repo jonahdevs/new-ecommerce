@@ -536,28 +536,28 @@ Checkout <?php echo $__env->renderComponent(); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                 <div class="flex items-center justify-center gap-2 group-active:scale-95 transition-transform">
-                    <span x-show="!processing" class="inline-flex items-center gap-2">Place Order
-                        <?php if (isset($component)) { $__componentOriginal3b3f8b5ed735ca7de69214f23bc10d21 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal3b3f8b5ed735ca7de69214f23bc10d21 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.move-right','data' => ['class' => 'size-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.move-right'); ?>
+                    <span x-show="!processing" class="inline-flex items-center gap-3 group">Place Order
+                        <?php if (isset($component)) { $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-right','data' => ['class' => 'size-3.5 group-hover:translate-x-1 transition-transform']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon.chevron-right'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-4']); ?>
+<?php $component->withAttributes(['class' => 'size-3.5 group-hover:translate-x-1 transition-transform']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal3b3f8b5ed735ca7de69214f23bc10d21)): ?>
-<?php $attributes = $__attributesOriginal3b3f8b5ed735ca7de69214f23bc10d21; ?>
-<?php unset($__attributesOriginal3b3f8b5ed735ca7de69214f23bc10d21); ?>
+<?php if (isset($__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3)): ?>
+<?php $attributes = $__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3; ?>
+<?php unset($__attributesOriginal31cb76c8d087d4f00797aeea7232b4c3); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal3b3f8b5ed735ca7de69214f23bc10d21)): ?>
-<?php $component = $__componentOriginal3b3f8b5ed735ca7de69214f23bc10d21; ?>
-<?php unset($__componentOriginal3b3f8b5ed735ca7de69214f23bc10d21); ?>
+<?php if (isset($__componentOriginal31cb76c8d087d4f00797aeea7232b4c3)): ?>
+<?php $component = $__componentOriginal31cb76c8d087d4f00797aeea7232b4c3; ?>
+<?php unset($__componentOriginal31cb76c8d087d4f00797aeea7232b4c3); ?>
 <?php endif; ?>
                     </span>
                     <span x-show="processing" class="flex items-center gap-2" x-cloak>

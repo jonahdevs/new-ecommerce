@@ -473,42 +473,92 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
             {{-- Cart Summary --}}
             @if ($this->cartItems->isNotEmpty())
                 <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0 lg:sticky lg:top-44">
-                    <div class="bg-white rounded-sm border">
-                        <flux:heading level="3"
-                            class="font-medium! text-xs! sm:text-sm! uppercase px-3 py-2 border-b">
-                            Cart Summary
-                        </flux:heading>
-                        <div class="p-3 py-4 space-y-2 text-xs sm:text-sm">
-                            <div class="flex items-center justify-between">
-                                <flux:text>Subtotal:</flux:text>
-                                <flux:heading>{{ format_currency($this->cartSummary['subtotal']) }}</flux:heading>
-                            </div>
-                            @if ($this->cartSummary['discount'] > 0)
-                                <div class="flex items-center justify-between">
-                                    <flux:text>Discount:</flux:text>
-                                    <flux:heading class="text-green-600">
-                                        − {{ format_currency($this->cartSummary['discount']) }}
-                                    </flux:heading>
-                                </div>
-                            @endif
-                            @if ($this->cartSummary['tax_enabled'] && !$this->cartSummary['tax_inclusive'] && $this->cartSummary['tax'] > 0)
-                                <div class="flex items-center justify-between">
-                                    <flux:text>
-                                        {{ $this->cartSummary['tax_name'] }} ({{ $this->cartSummary['tax_rate'] }})
-                                    </flux:text>
-                                    <flux:heading>{{ format_currency($this->cartSummary['tax']) }}</flux:heading>
-                                </div>
-                            @endif
+                    <div class="bg-white border border-zinc-200 rounded-sm overflow-hidden">
+
+                        {{-- Header --}}
+                        <div class="px-5 py-4 border-b border-zinc-200 bg-white">
+                            <h3 class="text-[13px] font-bold uppercase tracking-widest text-zinc-950 font-serif">Cart
+                                Summary</h3>
                         </div>
-                        <div class="border-t p-3">
+
+                        {{-- Totals --}}
+                        <div class="px-5 py-4 space-y-3">
+                            <div class="flex justify-between text-[13px]">
+                                <span class="text-zinc-500 font-medium">Subtotal</span>
+                                <span
+                                    class="text-zinc-950 font-bold">{{ format_currency($this->cartSummary['subtotal']) }}</span>
+                            </div>
+
+                            @if ($this->cartSummary['discount'] > 0)
+                                <div class="flex justify-between text-[13px]">
+                                    <span class="text-green-600 font-medium">Discount</span>
+                                    <span class="text-green-600 font-bold">−
+                                        {{ format_currency($this->cartSummary['discount']) }}</span>
+                                </div>
+                            @endif
+
+                            <div class="flex justify-between text-[13px]">
+                                <span class="text-zinc-500 font-medium">Shipping</span>
+                                <span class="text-zinc-500 text-[11px] font-medium">Calculated at checkout</span>
+                            </div>
+
+                            @if ($this->cartSummary['tax_enabled'] && !$this->cartSummary['tax_inclusive'] && $this->cartSummary['tax'] > 0)
+                                <div class="flex justify-between text-[13px]">
+                                    <span class="text-zinc-500 font-medium">
+                                        {{ $this->cartSummary['tax_name'] }} ({{ $this->cartSummary['tax_rate'] }})
+                                    </span>
+                                    <span
+                                        class="text-zinc-950 font-bold">{{ format_currency($this->cartSummary['tax']) }}</span>
+                                </div>
+                            @endif
+
+                            <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
+                                <span
+                                    class="text-[14px] font-bold uppercase tracking-widest text-zinc-950">Total</span>
+                                <span class="text-[24px] font-black text-primary font-barlow-condensed leading-none">
+                                    {{ format_currency($this->cartSummary['subtotal'] - $this->cartSummary['discount'] + ($this->cartSummary['tax_enabled'] && !$this->cartSummary['tax_inclusive'] ? $this->cartSummary['tax'] : 0)) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Checkout button --}}
+                        <div class="p-4 border-t border-zinc-200 bg-white">
                             <flux:button wire:click="proceedToCheckout" class="w-full group cursor-pointer"
                                 variant="customer-primary" size="customer-lg">
-                                Proceed to Checkout
+                                <span>Proceed to Checkout</span>
                                 <x-slot name="iconTrailing">
                                     <flux:icon.chevron-right
-                                        class="size-4 ms-3 group-hover:translate-x-1 transition-transform" />
+                                        class="size-3.5 group-hover:translate-x-1 transition-transform" />
                                 </x-slot>
                             </flux:button>
+
+                            <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+                                <flux:icon.shield-check class="size-3" />
+                                <span class="uppercase tracking-widest">SSL Encrypted & Secure</span>
+                            </div>
+                        </div>
+
+                        {{-- We Accept & Trust --}}
+                        <div class="py-4 px-5 border-t border-zinc-100">
+                            <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">We accept
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mb-6">
+                                @foreach (['VISA', 'MPESA', 'MASTERCARD', 'PAYPAL'] as $pay)
+                                    <span
+                                        class="inline-block px-2 py-1 bg-zinc-100 border border-zinc-200 rounded text-[9px] font-bold text-zinc-600 tracking-wider">{{ $pay }}</span>
+                                @endforeach
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                                    <flux:icon.arrow-path class="size-3.5 text-zinc-400" />
+                                    <span>30-Day Easy Returns Policy</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                                    <flux:icon.truck class="size-3.5 text-zinc-400" />
+                                    <span>Free delivery on orders over KES 5,000</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
