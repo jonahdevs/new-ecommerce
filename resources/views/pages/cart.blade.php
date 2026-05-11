@@ -26,7 +26,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
             ->getCart()
             ->items()
             ->with([
-                'product' => fn($q) => $q->with(['crossSells' => fn($cs) => $cs->active()->visible(), 'brand']),
+                'product' => fn($q) => $q->with(['brand']),
                 'variant' => fn($q) => $q->with(['attributeValues:id,attribute_id,value,label', 'attributeValues.attribute:id,name']),
             ])
             ->get();
@@ -43,35 +43,6 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
     public function wishlistProductIds(): array
     {
         return app(WishlistService::class)->ids();
-    }
-
-    #[Computed]
-    public function productsWithMissingAccessories(): array
-    {
-        $cartProductIds = $this->cartItems->pluck('product_id')->all();
-        $products = [];
-
-        foreach ($this->cartItems as $item) {
-            $missing = $item->product->crossSells->whereNotIn('id', $cartProductIds);
-
-            if ($missing->isNotEmpty()) {
-                $products[] = [
-                    'id' => $item->product->id,
-                    'slug' => $item->product->slug,
-                    'name' => $item->product->name,
-                    'image' => $item->product->image_url,
-                    'accessories_count' => $missing->count(),
-                ];
-            }
-        }
-
-        return $products;
-    }
-
-    #[Computed]
-    public function hasAvailableAccessories(): bool
-    {
-        return count($this->productsWithMissingAccessories) > 0;
     }
 
     // -----------------------------------------------------------------------
@@ -424,7 +395,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                                     class="flex items-center border border-zinc-200 rounded overflow-hidden">
                                                     <button
                                                         wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})"
-                                                        class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors border-r border-zinc-200">
+                                                        class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors border-r border-zinc-200 cursor-pointer">
                                                         <flux:icon.minus class="size-3" />
                                                     </button>
                                                     <span
@@ -433,7 +404,7 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
                                                     </span>
                                                     <button
                                                         wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})"
-                                                        class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors border-l border-zinc-200">
+                                                        class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors border-l border-zinc-200 cursor-pointer">
                                                         <flux:icon.plus class="size-3" />
                                                     </button>
                                                 </div>
@@ -565,49 +536,4 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
         <livewire:product-recommendations type="recently_viewed" />
     </div>
-
-    {{-- Accessories Modal --}}
-    <flux:modal name="accessories-confirmation" variant="flyout" class="w-full max-w-md">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">Missing Accessories</flux:heading>
-                <flux:subheading class="mt-2">
-                    Some items in your cart have recommended accessories
-                </flux:subheading>
-            </div>
-            <div class="space-y-3">
-                @foreach ($this->productsWithMissingAccessories as $product)
-                    <div class="border rounded-sm p-3 flex items-start gap-3">
-                        {{-- FIX: added fallback for missing product image --}}
-                        @if ($product['image'])
-                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}"
-                                class="w-16 h-16 object-cover rounded-sm shrink-0">
-                        @else
-                            <div class="w-16 h-16 rounded-sm bg-zinc-100 flex items-center justify-center shrink-0">
-                                <flux:icon.photo class="size-8 text-zinc-300 stroke-1" />
-                            </div>
-                        @endif
-
-                        <div class="flex-1">
-                            <p class="font-medium text-sm">{{ $product['name'] }}</p>
-                            <p class="text-xs text-zinc-600 mt-1">
-                                Missing {{ $product['accessories_count'] }}
-                                {{ Str::plural('accessory', $product['accessories_count']) }}
-                            </p>
-                            <flux:button size="xs" variant="customer-outline" class="mt-2 cursor-pointer"
-                                href="{{ route('products.show', $product['slug']) }}#accessories">
-                                View accessories
-                            </flux:button>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            <div class="flex gap-2 pt-4 border-t">
-                <flux:button variant="customer-primary" size="customer-lg" class="cursor-pointer flex-1"
-                    href="{{ route('checkout.shipping') }}" wire:navigate>
-                    Continue without accessories
-                </flux:button>
-            </div>
-        </div>
-    </flux:modal>
 </div>
