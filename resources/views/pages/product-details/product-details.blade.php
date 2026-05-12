@@ -35,95 +35,115 @@
                     {{-- IMAGE SLIDER (SHARED BETWEEN BOTH TYPES)           --}}
                     {{-- ═══════════════════════════════════════════════════ --}}
                     <div class="lg:col-span-3">
-                        <div wire:ignore x-data="{
-                            mainSwiper: null,
-                            thumbSwiper: null,
-                            activeIndex: 0,
-                            init() {
-                                const sliderId = '{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}';
-                                const thumbEl = document.getElementById(sliderId + 'ThumbSwiper');
-                                const mainEl = document.getElementById(sliderId + 'MainSwiper');
-                        
-                                // Wait for layout to settle (aspect-square needs width to resolve height)
-                                this.$nextTick(() => {
-                                    // Match thumb height to the main image's rendered height
-                                    const mainContainer = mainEl?.closest('.aspect-square');
-                                    if (thumbEl && mainContainer) {
-                                        thumbEl.style.height = mainContainer.offsetHeight + 'px';
-                                    }
-                        
-                                    // Init thumbs FIRST
-                                    this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
-                                        direction: 'vertical',
-                                        slidesPerView: 'auto',
-                                        spaceBetween: 8,
-                                        freeMode: true,
-                                        watchSlidesProgress: true,
-                                        mousewheel: true,
-                                    });
-                        
-                                    // Init main AFTER thumbs
-                                    this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', {
-                                        spaceBetween: 0,
-                                        thumbs: { swiper: this.thumbSwiper },
-                                        on: {
-                                            slideChange: (swiper) => {
-                                                this.activeIndex = swiper.activeIndex;
+                        @if (count($this->imageSlides) > 0)
+                            <div wire:ignore x-data="{
+                                mainSwiper: null,
+                                thumbSwiper: null,
+                                activeIndex: 0,
+                                init() {
+                                    const sliderId = '{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}';
+                                    const thumbEl = document.getElementById(sliderId + 'ThumbSwiper');
+                                    const mainEl = document.getElementById(sliderId + 'MainSwiper');
+                            
+                                    // Wait for layout to settle (aspect-square needs width to resolve height)
+                                    this.$nextTick(() => {
+                                        // Match thumb height to the main image's rendered height
+                                        const mainContainer = mainEl?.closest('.aspect-square');
+                                        if (thumbEl && mainContainer) {
+                                            thumbEl.style.height = mainContainer.offsetHeight + 'px';
+                                        }
+                            
+                                        // Init thumbs FIRST (only if element exists)
+                                        if (thumbEl) {
+                                            this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
+                                                direction: 'vertical',
+                                                slidesPerView: 'auto',
+                                                spaceBetween: 8,
+                                                freeMode: true,
+                                                watchSlidesProgress: true,
+                                                mousewheel: true,
+                                            });
+                                        }
+                            
+                                        // Init main swiper - only add thumbs option if thumbSwiper exists
+                                        const mainSwiperOptions = {
+                                            spaceBetween: 0,
+                                            on: {
+                                                slideChange: (swiper) => {
+                                                    this.activeIndex = swiper.activeIndex;
+                                                },
                                             },
-                                        },
+                                        };
+                            
+                                        if (this.thumbSwiper) {
+                                            mainSwiperOptions.thumbs = { swiper: this.thumbSwiper };
+                                        }
+                            
+                                        this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', mainSwiperOptions);
+                            
+                                        window.addEventListener('variant-image-selected', (e) => {
+                                            if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
+                                        });
+                            
+                                        // Fade in
+                                        if (thumbEl) thumbEl.classList.remove('opacity-0');
+                                        if (mainEl) mainEl.classList.remove('opacity-0');
                                     });
-                        
-                                    window.addEventListener('variant-image-selected', (e) => {
-                                        if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
-                                    });
-                        
-                                    // Fade in
-                                    thumbEl?.classList.remove('opacity-0');
-                                    mainEl?.classList.remove('opacity-0');
-                                });
-                            },
-                        }" class="lg:sticky lg:top-24">
+                                },
+                            }" class="lg:sticky lg:top-24">
 
-                            {{-- Flex row: thumbs stretch to match the main image height (driven by aspect-square) --}}
-                            <div class="flex flex-row items-stretch gap-3">
+                                {{-- Flex row: thumbs stretch to match the main image height (driven by aspect-square) --}}
+                                <div class="flex flex-row items-stretch gap-3">
 
-                                {{-- THUMBNAILS — vertical swiper strip --}}
-                                @if (count($this->imageSlides) > 1)
-                                    <div class="swiper shrink-0 opacity-0 transition-opacity duration-500  overflow-hidden w-20"
-                                        id="{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}ThumbSwiper">
-                                        <div class="swiper-wrapper">
-                                            @foreach ($this->imageSlides as $index => $slide)
-                                                <div class="swiper-slide cursor-pointer overflow-hidden rounded-sm bg-white border-2 transition-all size-20"
-                                                    :class="activeIndex === {{ $index }} ?
-                                                        'border-primary' :
-                                                        'border-transparent'">
-                                                    <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
-                                                        alt="{{ $slide['alt'] }}"
-                                                        class="w-full h-full object-contain p-1" />
-                                                </div>
-                                            @endforeach
+                                    {{-- THUMBNAILS — vertical swiper strip --}}
+                                    @if (count($this->imageSlides) > 1)
+                                        <div class="swiper shrink-0 opacity-0 transition-opacity duration-500  overflow-hidden w-20"
+                                            id="{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}ThumbSwiper">
+                                            <div class="swiper-wrapper">
+                                                @foreach ($this->imageSlides as $index => $slide)
+                                                    <div class="swiper-slide cursor-pointer overflow-hidden rounded-sm bg-white border-2 transition-all size-20"
+                                                        :class="activeIndex === {{ $index }} ?
+                                                            'border-primary' :
+                                                            'border-transparent'">
+                                                        <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
+                                                            alt="{{ $slide['alt'] }}"
+                                                            class="w-full h-full object-contain p-1" />
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- MAIN IMAGE —  fills remaining width, same 460px height --}}
+                                    <div class="flex-1 min-w-0 bg-white aspect-square w-full overflow-hidden">
+                                        <div class="swiper w-full h-full opacity-0 transition-opacity duration-500"
+                                            id="{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}MainSwiper">
+                                            <div class="swiper-wrapper">
+                                                @foreach ($this->imageSlides as $slide)
+                                                    <div class="swiper-slide flex items-start justify-center">
+                                                        <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
+                                                            alt="{{ $slide['alt'] }}"
+                                                            class="w-full h-auto max-h-full object-contain" />
+                                                    </div>
+                                                @endforeach
+                                            </div>
                                         </div>
                                     </div>
-                                @endif
 
-                                {{-- MAIN IMAGE —  fills remaining width, same 460px height --}}
-                                <div class="flex-1 min-w-0 bg-white aspect-square w-full overflow-hidden">
-                                    <div class="swiper w-full h-full opacity-0 transition-opacity duration-500"
-                                        id="{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}MainSwiper">
-                                        <div class="swiper-wrapper">
-                                            @foreach ($this->imageSlides as $slide)
-                                                <div class="swiper-slide flex items-start justify-center">
-                                                    <x-webp-image :src="$slide['url']" :webp="$slide['webp'] ?? null"
-                                                        alt="{{ $slide['alt'] }}"
-                                                        class="w-full h-auto max-h-full object-contain" />
-                                                </div>
-                                            @endforeach
-                                        </div>
+                                </div>
+                            </div>
+                        @else
+                            {{-- No image placeholder --}}
+                            <div class="lg:sticky lg:top-24">
+                                <div
+                                    class="bg-zinc-100 dark:bg-zinc-800 aspect-square w-full rounded-lg flex items-center justify-center">
+                                    <div class="text-center text-zinc-400 dark:text-zinc-500">
+                                        <flux:icon.photo class="w-16 h-16 mx-auto mb-2" />
+                                        <p class="text-sm">No image available</p>
                                     </div>
                                 </div>
-
                             </div>
-                        </div>
+                        @endif
                     </div>
 
                     {{-- ═══════════════════════════════════════════════════ --}}
@@ -185,100 +205,105 @@
                         {{-- TYPE-SPECIFIC CONTENT --}}
                         @if ($product->type->value === 'grouped')
                             {{-- ══════════════════════════════════════════════ --}}
-                            {{-- GROUPED PRODUCT: KIT CONTENTS                 --}}
+                            {{-- GROUPED PRODUCT: BANNER CARD                   --}}
                             {{-- ══════════════════════════════════════════════ --}}
-                            <div class="space-y-2">
-                                <p
-                                    class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                                    Kit contents
-                                </p>
+                            @php
+                                $groupedPriceRange = $this->groupedPriceRange;
+                                $hasGroupedRange = $groupedPriceRange['min'] > 0 && $groupedPriceRange['max'] > 0;
+                                $sameGroupedPrice = $groupedPriceRange['min'] === $groupedPriceRange['max'];
+                            @endphp
+                            <div
+                                class="relative overflow-hidden rounded-lg bg-gradient-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
+                                {{-- Decorative icon --}}
+                                <div class="absolute -right-2 -top-2 opacity-10">
+                                    <flux:icon.squares-2x2 class="size-16 text-secondary" />
+                                </div>
 
-                                <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
-                                    {{-- Header --}}
-                                    <div
-                                        class="hidden sm:grid grid-cols-12 gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-                                        <div class="col-span-5">Product</div>
-                                        <div class="col-span-3 text-center">Quantity</div>
-                                        <div class="col-span-4 text-right">Price</div>
-                                    </div>
-                                    <div class="max-h-64 overflow-y-auto">
-                                        {{-- Rows --}}
-                                        @foreach ($this->groupedProducts as $item)
-                                            @php
-                                                $itemPrice = $item->final_price ?? ($item->price ?? 0);
-                                                $itemQty =
-                                                    $groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
-                                                $isSelected = in_array($item->id, $selectedGroupedItems);
-                                            @endphp
+                                <div class="relative p-3">
+                                    {{-- Title --}}
+                                    <p class="text-sm font-semibold text-secondary mb-1">
+                                        Kit Contains {{ $this->groupedProducts->count() }}
+                                        {{ Str::plural('Item', $this->groupedProducts->count()) }}
+                                    </p>
 
-                                            <div wire:key="grouped-{{ $item->id }}"
-                                                wire:click="$toggle('selectedGroupedItems', {{ $item->id }})"
-                                                class="grid grid-cols-12 gap-2 px-3 py-2.5 items-center cursor-pointer transition-colors duration-150
-                                            {{ !$loop->last ? 'border-b border-zinc-200 dark:border-zinc-700' : '' }}
-                                            {{ $isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50' }}">
-
-                                                {{-- Checkbox + Name --}}
-                                                <div class="col-span-5 flex items-center gap-2 min-w-0">
-                                                    <flux:checkbox wire:model.live="selectedGroupedItems"
-                                                        value="{{ $item->id }}" wire:click.stop />
-                                                    <a href="{{ route('products.show', $item) }}" wire:navigate
-                                                        wire:click.stop
-                                                        class="text-xs sm:text-sm font-medium text-secondary hover:underline truncate">
-                                                        {{ $item->name }}
-                                                    </a>
-                                                </div>
-
-                                                {{-- Quantity stepper --}}
-                                                <div class="col-span-3 flex justify-center" wire:click.stop>
-                                                    <div
-                                                        class="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-md overflow-hidden">
-                                                        <button type="button"
-                                                            wire:click.stop="decreaseGroupedQuantity({{ $item->id }})"
-                                                            class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
-                                                            −
-                                                        </button>
-                                                        <span
-                                                            class="w-7 h-6 flex items-center justify-center text-xs font-medium text-zinc-800 dark:text-zinc-100 border-l border-r border-zinc-200 dark:border-zinc-700">
-                                                            {{ $itemQty }}
-                                                        </span>
-                                                        <button type="button"
-                                                            wire:click.stop="increaseGroupedQuantity({{ $item->id }})"
-                                                            class="w-6 h-6 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-base leading-none">
-                                                            +
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-span-4 text-right">
-                                                    @if ($isSelected)
-                                                        <span
-                                                            class="text-xs sm:text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                                            {{ $itemPrice > 0 ? format_currency($itemPrice * $itemQty) : '—' }}
-                                                        </span>
-                                                    @else
-                                                        <span
-                                                            class="text-xs sm:text-sm text-zinc-400 dark:text-zinc-600">—</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                    {{-- Kit total --}}
-                                    <div
-                                        class="flex items-center justify-between px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700">
-                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">
-                                            {{ count($selectedGroupedItems) }} of
-                                            {{ $this->groupedProducts->count() }}
-                                            items selected
-                                        </span>
-                                        <div class="text-right">
-                                            <span class="text-xs text-zinc-500 dark:text-zinc-400 mr-1">Total</span>
-                                            <span class="text-sm sm:text-base font-semibold text-secondary">
-                                                {{ format_currency($this->groupedTotal) }}
-                                            </span>
+                                    {{-- Price Range --}}
+                                    @if ($hasGroupedRange)
+                                        <div class="flex items-baseline gap-2 mb-2">
+                                            @if ($sameGroupedPrice)
+                                                <span
+                                                    class="text-lg font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($groupedPriceRange['min']) }}</span>
+                                                <span class="text-sm text-zinc-500">each</span>
+                                            @else
+                                                <span
+                                                    class="text-lg font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($groupedPriceRange['min']) }}</span>
+                                                <span class="text-sm text-zinc-500">—</span>
+                                                <span
+                                                    class="text-lg font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($groupedPriceRange['max']) }}</span>
+                                            @endif
                                         </div>
+                                    @endif
+
+                                    {{-- View Button --}}
+                                    <button type="button" x-data @click="$flux.modal('kit-contents-modal').show()"
+                                        class="inline-flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-secondary-hover transition-colors cursor-pointer">
+                                        View & select items
+                                        <flux:icon.chevron-right class="size-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        @elseif ($product->type->value === 'bundle')
+                            {{-- ══════════════════════════════════════════════ --}}
+                            {{-- BUNDLE PRODUCT: BANNER CARD WITH SAVINGS      --}}
+                            {{-- ══════════════════════════════════════════════ --}}
+                            @php
+                                $bundlePrice = $product->sale_price ?? $product->price;
+                                $bundleValue = $this->bundleValue;
+                                $savings = $this->bundleSavingsPercent;
+                                $bundlePriceRange = $this->bundlePriceRange;
+                            @endphp
+                            <div
+                                class="relative overflow-hidden rounded-lg bg-gradient-to-r from-green-500/10 to-green-500/5 border border-green-500/20">
+                                {{-- Decorative icon --}}
+                                <div class="absolute -right-2 -top-2 opacity-10">
+                                    <flux:icon.gift class="size-16 text-green-600" />
+                                </div>
+
+                                <div class="relative p-3">
+                                    {{-- Title with savings badge --}}
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="text-sm font-semibold text-green-700 dark:text-green-500">
+                                            Bundle Deal
+                                        </p>
+                                        @if ($savings)
+                                            <flux:badge color="green" size="sm">Save {{ $savings }}%
+                                            </flux:badge>
+                                        @endif
                                     </div>
+
+                                    {{-- Bundle price --}}
+                                    @if ($bundlePrice)
+                                        <div class="flex items-baseline gap-2 mb-1">
+                                            <span
+                                                class="text-xl font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($bundlePrice) }}</span>
+                                            @if ($bundleValue > $bundlePrice)
+                                                <span
+                                                    class="text-sm text-zinc-400 line-through">{{ format_currency($bundleValue) }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    {{-- Items count --}}
+                                    <p class="text-xs text-zinc-500 mb-2">
+                                        Includes {{ $this->bundleProducts->count() }}
+                                        {{ Str::plural('item', $this->bundleProducts->count()) }}
+                                    </p>
+
+                                    {{-- View Button --}}
+                                    <button type="button" x-data @click="$flux.modal('bundle-contents-modal').show()"
+                                        class="inline-flex items-center gap-1.5 text-sm font-medium text-green-700 dark:text-green-500 hover:text-green-800 dark:hover:text-green-400 transition-colors cursor-pointer">
+                                        View bundle contents
+                                        <flux:icon.chevron-right class="size-4" />
+                                    </button>
                                 </div>
                             </div>
                         @else
@@ -532,22 +557,49 @@
 
 
                             @if ($this->accessories->count() > 0)
-                                <a href="#accessories"
-                                    onclick="document.getElementById('accessories').scrollIntoView({ behavior: 'smooth' }); return false;"
-                                    class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-l-2 border-secondary rounded-r-md no-underline group">
-                                    <flux:icon.wrench-screwdriver class="size-3.5 text-secondary shrink-0"
-                                        variant="outline" />
-                                    <span class="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
-                                        {{ $this->accessories->count() }}
-                                        {{ Str::plural('accessory', $this->accessories->count()) }} available for this
-                                        product
-                                    </span>
-                                    <span
-                                        class="text-xs text-secondary ml-auto group-hover:translate-y-0.5 transition-transform flex items-center gap-2">
-                                        View
-                                        <flux:icon.arrow-long-down class="size-4" />
-                                    </span>
-                                </a>
+                                @php
+                                    $priceRange = $this->accessoryPriceRange;
+                                    $hasRange = $priceRange['min'] > 0 && $priceRange['max'] > 0;
+                                    $samePrice = $priceRange['min'] === $priceRange['max'];
+                                @endphp
+                                <div
+                                    class="relative overflow-hidden rounded-lg bg-gradient-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
+                                    {{-- Decorative icon --}}
+                                    <div class="absolute -right-2 -top-2 opacity-10">
+                                        <flux:icon.wrench-screwdriver class="size-16 text-secondary" />
+                                    </div>
+
+                                    <div class="relative p-3">
+                                        {{-- Title --}}
+                                        <p class="text-sm font-semibold text-secondary mb-1">
+                                            {{ $this->accessories->count() }}
+                                            {{ Str::plural('Accessory', $this->accessories->count()) }} Available
+                                        </p>
+
+                                        {{-- Price Range --}}
+                                        @if ($hasRange)
+                                            <div class="flex items-baseline gap-2 mb-2">
+                                                @if ($samePrice)
+                                                    <span
+                                                        class="text-lg font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($priceRange['min']) }}</span>
+                                                @else
+                                                    <span
+                                                        class="text-lg font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($priceRange['min']) }}</span>
+                                                    <span class="text-sm text-zinc-500">—</span>
+                                                    <span
+                                                        class="text-lg font-bold text-zinc-900 dark:text-zinc-100">{{ format_currency($priceRange['max']) }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+
+                                        {{-- View Button --}}
+                                        <button type="button" x-data @click="$flux.modal('accessories-modal').show()"
+                                            class="inline-flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-secondary-hover transition-colors cursor-pointer">
+                                            View accessories
+                                            <flux:icon.chevron-right class="size-4" />
+                                        </button>
+                                    </div>
+                                </div>
                             @endif
                         @endif
 
@@ -764,18 +816,26 @@
                 {{-- Actions --}}
                 <div class="flex flex-col gap-3">
                     @if ($product->type->value === 'grouped')
-                        {{-- Cart Actions for Grouped Products --}}
-                        <flux:button wire:click="addFullKitToCart" variant="customer-primary" size="customer-lg"
-                            class="w-full cursor-pointer" wire:loading.attr="disabled"
-                            wire:target="addFullKitToCart">
-                            Buy Full Kit
+                        {{-- Add to Cart for Grouped Products - Opens Modal --}}
+                        <flux:button x-data @click="$flux.modal('kit-contents-modal').show()"
+                            variant="customer-primary" size="customer-lg" class="w-full cursor-pointer"
+                            icon="shopping-cart">
+                            Add to Cart
                         </flux:button>
-
-                        @if (!empty($selectedGroupedItems) && count($selectedGroupedItems) < $this->groupedProducts->count())
-                            <flux:button wire:click="addSelectedGroupedToCart" variant="customer-outline"
-                                size="customer-lg" class="w-full cursor-pointer" wire:loading.attr="disabled"
-                                wire:target="addSelectedGroupedToCart">
-                                Add Selected ({{ count($selectedGroupedItems) }})
+                    @elseif ($product->type->value === 'bundle')
+                        {{-- Add to Cart for Bundle Products --}}
+                        @if ($inCart)
+                            {{-- Already in cart - show View Cart button --}}
+                            <flux:button href="{{ route('cart') }}" wire:navigate variant="customer-primary"
+                                size="customer-lg" class="w-full cursor-pointer" icon="shopping-cart">
+                                View Cart
+                            </flux:button>
+                        @else
+                            {{-- Not in cart - show Add to Cart which opens modal --}}
+                            <flux:button x-data @click="$flux.modal('bundle-contents-modal').show()"
+                                variant="customer-primary" size="customer-lg" class="w-full cursor-pointer"
+                                icon="shopping-cart">
+                                Add to Cart
                             </flux:button>
                         @endif
                     @else
@@ -886,112 +946,293 @@
             </div>
         </div>
 
-        {{-- ACCESSORIES SECTION --}}
-        @if ($this->accessories->count() > 0)
-            <flux:card class="pb-6 relative pt-10 px-6 mt-10">
-
-                {{-- Tab Buttons --}}
-                <div class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
-
-                    {{-- Accessories --}}
-                    <flux:button x-show="$wire.accessoriesTab == 'accessories'"
-                        @click="$wire.accessoriesTab = 'accessories'" variant="customer-primary"
-                        class="rounded-none cursor-pointer">
-                        Accessories
-
-                        @if ($this->accessories->count() > 0)
-                            <flux:badge size="sm" class="ml-1">{{ $this->accessories->count() }}
-                            </flux:badge>
-                        @endif
-                    </flux:button>
-
-                    <flux:button x-cloak x-show="$wire.accessoriesTab !== 'accessories'"
-                        @click="$wire.accessoriesTab = 'accessories'" class="rounded-none cursor-pointer">
-                        Accessories
-
-                        @if ($this->accessories->count() > 0)
-                            <flux:badge size="sm" class="ml-1">{{ $this->accessories->count() }}
-                            </flux:badge>
-                        @endif
-                    </flux:button>
-                </div>
-
-                {{-- Tab Content --}}
-                <div id="accessories" class="scroll-mt-44">
-
-                    <div wire:ignore x-data="{
-                        swiper: null,
-                        init() {
-                            this.swiper = new Swiper('#accessoriesSwiper', {
-                                slidesPerView: 1,
-                                spaceBetween: 16,
-                                navigation: {
-                                    nextEl: '#accessories-next',
-                                    prevEl: '#accessories-prev',
-                                },
-                                pagination: {
-                                    el: '#accessories-pagination',
-                                    clickable: true,
-                                },
-                                breakpoints: {
-                                    640: { slidesPerView: 2 },
-                                    1024: { slidesPerView: 3 },
-                                    1280: { slidesPerView: 4 },
-                                },
-                            });
-                        },
-                    }">
-
-                        {{-- Swiper --}}
-                        <div class="swiper" id="accessoriesSwiper">
-                            <div class="swiper-wrapper items-stretch pb-1">
-                                @foreach ($this->accessories as $accessory)
-                                    <div class="swiper-slide h-auto!">
-                                        <livewire:accessory-item :product="$accessory" :recommended-quantity="$accessory->pivot->quantity ?? 1"
-                                            :key="'accessory-' . $accessory->id" />
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Footer --}}
-                        <div class="flex items-center justify-between mt-4">
-                            {{-- Pagination dots — only shown when more than 4 accessories --}}
-                            @if ($this->accessories->count() > 4)
-                                <div id="accessories-pagination" class=" space-x-1.5 "></div>
-                            @endif
-
-                            <div class="flex items-center justify-end gap-2 ms-auto">
-                                {{-- Prev --}}
-                                <button id="accessories-prev"
-                                    class="w-8 h-8 flex items-center justify-center border border-zinc-300 rounded-md transition-colors hover:bg-zinc-100 cursor-pointer"
-                                    aria-label="Previous">
-                                    <flux:icon.chevron-left class="w-4 h-4 text-zinc-600" />
-                                </button>
-
-                                {{-- Next --}}
-                                <button id="accessories-next"
-                                    class="w-8 h-8 flex items-center justify-center border border-zinc-300 rounded-md transition-colors hover:bg-zinc-100 cursor-pointer"
-                                    aria-label="Next">
-                                    <flux:icon.chevron-right class="w-4 h-4 text-zinc-600" />
-                                </button>
-
-                                <div class="w-px h-5 bg-zinc-200 mx-1"></div>
-
-                                {{-- Add all --}}
-                                <flux:button wire:click="addAllAccessoriesToCart" wire:loading.attr="disabled"
-                                    wire:target="addAllAccessoriesToCart" size="sm" variant="customer-primary"
-                                    icon="shopping-bag" icon-variant="outline" class="cursor-pointer">
-                                    Add all
-                                </flux:button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </flux:card>
-        @endif
-
         <livewire:product-recommendations type="similar" :context="['product' => $product]" />
         <livewire:product-recommendations type="recently_viewed" />
     </div>
+
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    {{-- ACCESSORIES MODAL                                                       --}}
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    @if ($this->accessories->count() > 0)
+        <flux:modal name="accessories-modal" class="w-full max-w-xl">
+            <div class="space-y-4">
+                {{-- Header --}}
+                <flux:heading size="lg">Available Accessories</flux:heading>
+
+                {{-- Items List --}}
+                <div class="divide-y divide-zinc-200 dark:divide-zinc-700 max-h-96 overflow-y-auto">
+                    @foreach ($this->accessories as $accessory)
+                        @php
+                            $itemPrice = $accessory->final_price ?? ($accessory->price ?? 0);
+                            $itemQty = $accessoryQuantities[$accessory->id] ?? 0;
+
+                            // Stock status
+                            $inStock = $accessory->manage_stock
+                                ? $accessory->stock_quantity > 0 || $accessory->allow_backorder !== 'no'
+                                : $accessory->stock_status !== 'out_of_stock';
+                        @endphp
+
+                        <div wire:key="accessory-item-{{ $accessory->id }}" class="flex items-center gap-3 py-3">
+                            {{-- Product Image --}}
+                            <div class="shrink-0 w-12 h-12 bg-white rounded border border-zinc-200 overflow-hidden">
+                                @if ($accessory->image_path)
+                                    <img src="{{ $accessory->image_url }}" alt="{{ $accessory->name }}"
+                                        class="w-full h-full object-contain" />
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center bg-zinc-100">
+                                        <flux:icon.photo class="size-5 text-zinc-300" />
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Name, Price & Stock --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                    {{ $accessory->name }}
+                                </p>
+                                <p class="text-sm text-zinc-500">
+                                    {{ $itemPrice > 0 ? format_currency($itemPrice) : '—' }}
+                                </p>
+                                @if ($inStock)
+                                    <p class="text-xs text-green-600">In Stock</p>
+                                @else
+                                    <p class="text-xs text-red-500">Out of Stock</p>
+                                @endif
+                            </div>
+
+                            {{-- Quantity Stepper --}}
+                            <div class="shrink-0 flex items-center gap-1">
+                                <button type="button" wire:click="decreaseAccessoryQuantity({{ $accessory->id }})"
+                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+                                    aria-label="Decrease quantity">
+                                    <flux:icon.minus class="size-3" />
+                                </button>
+                                <span
+                                    class="w-8 text-center text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $itemQty }}</span>
+                                <button type="button" wire:click="increaseAccessoryQuantity({{ $accessory->id }})"
+                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+                                    aria-label="Increase quantity">
+                                    <flux:icon.plus class="size-3" />
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Actions --}}
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <flux:button type="button" variant="customer-outline"
+                        x-on:click="$flux.modal('accessories-modal').close()" size="customer-lg"
+                        class="cursor-pointer">
+                        Continue Shopping
+                    </flux:button>
+                    <flux:button type="button" variant="customer-primary" wire:click="addAccessoriesToCart"
+                        size="customer-lg" wire:loading.attr="disabled" wire:target="addAccessoriesToCart"
+                        class="cursor-pointer">
+                        Add to Cart
+                        @if ($this->selectedAccessoriesCount > 0)
+                            <flux:badge size="sm" class="ml-1">{{ $this->selectedAccessoriesCount }}
+                            </flux:badge>
+                        @endif
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+    @endif
+
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    {{-- KIT CONTENTS MODAL (for Grouped Products)                              --}}
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    @if ($product->type->value === 'grouped')
+        <flux:modal name="kit-contents-modal" class="w-full max-w-xl">
+            <div class="space-y-4">
+                {{-- Header --}}
+                <flux:heading size="lg">Select Items</flux:heading>
+
+                {{-- Items List --}}
+                <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                    @foreach ($this->groupedProducts as $item)
+                        @php
+                            $itemPrice = $item->final_price ?? ($item->price ?? 0);
+                            $itemQty = $groupedQuantities[$item->id] ?? 0;
+                            $lineTotal = $itemPrice * $itemQty;
+                        @endphp
+
+                        <div wire:key="modal-grouped-{{ $item->id }}" class="flex items-center gap-3 py-3">
+                            {{-- Product Image --}}
+                            <div class="shrink-0 w-12 h-12 bg-white rounded border border-zinc-200 overflow-hidden">
+                                @if ($item->image_path)
+                                    <img src="{{ $item->image_url }}" alt="{{ $item->name }}"
+                                        class="w-full h-full object-contain" />
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center bg-zinc-100">
+                                        <flux:icon.photo class="size-5 text-zinc-300" />
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Name & Price --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                    {{ $item->name }}
+                                </p>
+                                <p class="text-sm text-zinc-500">
+                                    {{ $itemPrice > 0 ? format_currency($itemPrice) : '—' }}
+                                </p>
+                                @if ($item->manage_stock)
+                                    @if ($item->stock_quantity > 0 || $item->allow_backorder !== 'no')
+                                        <p class="text-xs text-green-600">In Stock</p>
+                                    @else
+                                        <p class="text-xs text-red-500">Out of Stock</p>
+                                    @endif
+                                @else
+                                    @if ($item->stock_status === 'out_of_stock')
+                                        <p class="text-xs text-red-500">Out of Stock</p>
+                                    @else
+                                        <p class="text-xs text-green-600">In Stock</p>
+                                    @endif
+                                @endif
+                            </div>
+
+                            {{-- Quantity Stepper --}}
+                            <div
+                                class="shrink-0 flex items-center border border-zinc-200 dark:border-zinc-700 rounded overflow-hidden">
+                                <button type="button" wire:click="decreaseGroupedQuantity({{ $item->id }})"
+                                    class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer">
+                                    <flux:icon.minus class="size-3" />
+                                </button>
+                                <span
+                                    class="w-8 h-7 flex items-center justify-center text-sm font-medium text-zinc-800 dark:text-zinc-100 border-x border-zinc-200 dark:border-zinc-700">
+                                    {{ $itemQty }}
+                                </span>
+                                <button type="button" wire:click="increaseGroupedQuantity({{ $item->id }})"
+                                    class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer">
+                                    <flux:icon.plus class="size-3" />
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Actions --}}
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <flux:button type="button" variant="customer-outline"
+                        x-on:click="$flux.modal('kit-contents-modal').close()" class="cursor-pointer"
+                        size="customer-lg">
+                        Continue Shopping
+                    </flux:button>
+                    <flux:button type="button" variant="customer-primary" wire:click="addGroupedToCart"
+                        size="customer-lg" wire:loading.attr="disabled" wire:target="addGroupedToCart"
+                        class="cursor-pointer" :disabled="$this->groupedTotal <= 0">
+                        Add to Cart
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+    @endif
+
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    {{-- BUNDLE CONTENTS MODAL                                                  --}}
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    @if ($product->type->value === 'bundle')
+        <flux:modal name="bundle-contents-modal" class="w-full max-w-xl">
+            <div class="space-y-4">
+                {{-- Header --}}
+                <div>
+                    <flux:heading size="lg">What's in this bundle</flux:heading>
+                    @php
+                        $bundlePrice = $product->sale_price ?? $product->price;
+                        $savings = $this->bundleSavingsPercent;
+                    @endphp
+                    @if ($savings)
+                        <flux:text class="text-green-600 text-sm">You save {{ $savings }}% vs buying separately
+                        </flux:text>
+                    @endif
+                </div>
+
+                {{-- Items List (read-only — fixed bundle contents) --}}
+                <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                    @foreach ($this->bundleProducts as $item)
+                        @php
+                            $itemPrice = $item->final_price ?? ($item->price ?? 0);
+                            $itemQty = $item->pivot->quantity ?? 1;
+                        @endphp
+
+                        <div wire:key="bundle-item-{{ $item->id }}" class="flex items-center gap-3 py-3">
+                            {{-- Product Image --}}
+                            <div class="shrink-0 w-12 h-12 bg-white rounded border border-zinc-200 overflow-hidden">
+                                @if ($item->image_path)
+                                    <img src="{{ $item->image_url }}" alt="{{ $item->name }}"
+                                        class="w-full h-full object-contain" />
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center bg-zinc-100">
+                                        <flux:icon.photo class="size-5 text-zinc-300" />
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Name, Price & Stock --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                    {{ $item->name }}
+                                </p>
+                                <p class="text-sm text-zinc-500">
+                                    {{ $itemPrice > 0 ? format_currency($itemPrice) : '—' }}
+                                </p>
+                                @if ($item->manage_stock)
+                                    @if ($item->stock_quantity > 0 || $item->allow_backorder !== 'no')
+                                        <p class="text-xs text-green-600">In Stock</p>
+                                    @else
+                                        <p class="text-xs text-red-500">Out of Stock</p>
+                                    @endif
+                                @else
+                                    @if ($item->stock_status === 'out_of_stock')
+                                        <p class="text-xs text-red-500">Out of Stock</p>
+                                    @else
+                                        <p class="text-xs text-green-600">In Stock</p>
+                                    @endif
+                                @endif
+                            </div>
+
+                            {{-- Fixed Quantity (read-only) --}}
+                            <div class="shrink-0 text-right">
+                                <span class="text-sm text-zinc-500">Qty:</span>
+                                <span
+                                    class="text-sm font-medium text-zinc-800 dark:text-zinc-100 ml-1">{{ $itemQty }}</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Bundle Price --}}
+                @if ($bundlePrice)
+                    <div class="flex items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                        <span class="text-sm text-zinc-500">Bundle Price</span>
+                        <span class="text-lg font-bold text-secondary">{{ format_currency($bundlePrice) }}</span>
+                    </div>
+                @endif
+
+                {{-- Actions --}}
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <flux:button type="button" variant="customer-outline"
+                        x-on:click="$flux.modal('bundle-contents-modal').close()" size="customer-lg"
+                        class="cursor-pointer">
+                        Continue Shopping
+                    </flux:button>
+                    @if ($inCart)
+                        <flux:button href="{{ route('cart') }}" wire:navigate variant="customer-primary"
+                            size="customer-lg" class="cursor-pointer" icon="shopping-cart">
+                            View Cart
+                        </flux:button>
+                    @else
+                        <flux:button type="button" variant="customer-primary" wire:click="addBundleToCart"
+                            size="customer-lg" wire:loading.attr="disabled" wire:target="addBundleToCart"
+                            class="cursor-pointer">
+                            Add to Cart
+                        </flux:button>
+                    @endif
+                </div>
+            </div>
+        </flux:modal>
+    @endif
 </div>

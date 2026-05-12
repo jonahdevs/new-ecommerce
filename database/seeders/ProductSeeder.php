@@ -242,11 +242,10 @@ class ProductSeeder extends Seeder
             throw new \Exception('Product name and SKU are required. Data: ' . json_encode($productData));
         }
 
-        // sale_price = the price from SAP (current selling price).
-        // price      = regular/list price, set by admin when they want to show a "was/now" discount.
-        //              Left null here — admin sets it manually after seeding if needed.
-        $salePrice = $productData['price'] ?? null;
-        $retailPrice = null;
+        // price = the regular/list price from SAP (or JSON seed data)
+        // sale_price = only set when there's an active discount (SAP sync handles this automatically)
+        // For initial seeding, we set price and leave sale_price null
+        $price = $productData['price'] ?? null;
 
         $slugParts = array_filter([
             $productData['name'],
@@ -256,7 +255,7 @@ class ProductSeeder extends Seeder
 
         // Draft if no image or price is missing/zero
         $hasImage = !empty($productData['image']);
-        $hasPrice = !empty($salePrice) && $salePrice > 0;
+        $hasPrice = !empty($price) && $price > 0;
         $status = ($hasImage && $hasPrice) ? 'published' : 'draft';
 
         if (!$hasImage) {
@@ -275,8 +274,8 @@ class ProductSeeder extends Seeder
             'model_number' => $productData['model_number'] ?? null,
             'stock_quantity' => 100,
             'image_path' => $productData['image'] ?? null,
-            'price' => null,
-            'sale_price' => $salePrice,
+            'price' => $price,
+            'sale_price' => null, // No discount on initial seed - SAP sync will set this when prices drop
             'description' => $productData['description'] ?? null,
             'short_description' => $productData['short_description'] ?? null,
             'technical_specification' => $productData['technical_specification'] ?? null,

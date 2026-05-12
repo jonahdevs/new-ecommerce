@@ -32,8 +32,6 @@ new #[Layout('layouts.guest')] class extends Component {
     public bool $inCart = false;
 
     // ── UI state
-    public string $accessoriesTab = 'accessories';
-
     public string $selectedTab = 'description';
 
     public int $reviewsToShow = 5;
@@ -51,11 +49,11 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public ?int $selectedVariantId = null;
 
-    /** IDs of selected grouped items — all pre-selected by default */
-    public array $selectedGroupedItems = [];
-
-    // Grouped products
+    // Grouped products - quantities (0 means not selected)
     public array $groupedQuantities = [];
+
+    // Accessory products - quantities (0 means not selected)
+    public array $accessoryQuantities = [];
 
     // =========================================================================
     // MOUNT
@@ -73,6 +71,12 @@ new #[Layout('layouts.guest')] class extends Component {
         if ($product->type->value === 'grouped') {
             $product->load([
                 'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+            ]);
+        }
+
+        if ($product->type->value === 'bundle') {
+            $product->load([
+                'bundleProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
 
@@ -118,16 +122,22 @@ new #[Layout('layouts.guest')] class extends Component {
 
         $this->product = $product;
 
-        // Grouped product — load items and pre-select all
+        // Grouped product — load items and set default quantities from pivot
         if ($product->type->value === 'grouped') {
             $product->load([
                 'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
 
-            // Pre-select all items and set default quantities from pivot
+            // Set default quantities from pivot (all items pre-selected with their default qty)
             foreach ($product->groupedProducts as $item) {
-                $this->selectedGroupedItems[] = $item->id;
                 $this->groupedQuantities[$item->id] = $item->pivot->quantity ?? 1;
+            }
+        }
+
+        // Accessories — set default quantities from pivot
+        if ($product->accessories->count() > 0) {
+            foreach ($product->accessories as $accessory) {
+                $this->accessoryQuantities[$accessory->id] = $accessory->pivot->quantity ?? 1;
             }
         }
 
@@ -243,11 +253,85 @@ new #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function groupedTotal(): float
     {
-        return $this->groupedProducts->filter(fn($item) => in_array($item->id, $this->selectedGroupedItems))->sum(function ($item) {
-            $qty = $this->groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
-
+        return $this->groupedProducts->sum(function ($item) {
+            $qty = $this->groupedQuantities[$item->id] ?? 0;
             return ($item->final_price ?? 0) * $qty;
         });
+    }
+
+    #[Computed]
+    public function groupedPriceRange(): array
+    {
+        $items = $this->groupedProducts;
+        if ($items->isEmpty()) {
+            return ['min' => 0, 'max' => 0];
+        }
+
+        $prices = $items->map(fn($p) => $p->final_price ?? $p->price ?? 0)->filter(fn($p) => $p > 0);
+
+        if ($prices->isEmpty()) {
+            return ['min' => 0, 'max' => 0];
+        }
+
+        return [
+            'min' => $prices->min(),
+            'max' => $prices->max(),
+        ];
+    }
+
+    #[Computed]
+    public function selectedItemsCount(): int
+    {
+        return collect($this->groupedQuantities)->filter(fn($qty) => $qty > 0)->count();
+    }
+
+    // Bundle products
+    #[Computed(persist: true)]
+    public function bundleProducts()
+    {
+        return $this->product->bundleProducts()->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+    }
+
+    #[Computed]
+    public function bundleValue(): float
+    {
+        return $this->bundleProducts->sum(function ($item) {
+            $qty = $item->pivot->quantity ?? 1;
+            return ($item->final_price ?? 0) * $qty;
+        });
+    }
+
+    #[Computed]
+    public function bundlePriceRange(): array
+    {
+        $items = $this->bundleProducts;
+        if ($items->isEmpty()) {
+            return ['min' => 0, 'max' => 0];
+        }
+
+        $prices = $items->map(fn($p) => $p->final_price ?? $p->price ?? 0)->filter(fn($p) => $p > 0);
+
+        if ($prices->isEmpty()) {
+            return ['min' => 0, 'max' => 0];
+        }
+
+        return [
+            'min' => $prices->min(),
+            'max' => $prices->max(),
+        ];
+    }
+
+    #[Computed]
+    public function bundleSavingsPercent(): ?float
+    {
+        $bundlePrice = $this->product->sale_price ?? $this->product->price;
+        $value = $this->bundleValue;
+
+        if (!$bundlePrice || !$value || $value <= $bundlePrice) {
+            return null;
+        }
+
+        return round((($value - $bundlePrice) / $value) * 100, 1);
     }
 
     // =========================================================================
@@ -522,15 +606,15 @@ new #[Layout('layouts.guest')] class extends Component {
 
     /**
      * Ordered flat list of all image slides for the gallery.
-     * Order: main product image → variant images (deduped) → gallery images.
-     * Each slide carries: url, alt, variantId (null for non-variant slides).
+     * Order: main product image → variant images (for variable) → child product images (for grouped/bundle) → gallery images.
+     * Each slide carries: url, alt, variantId (null for non-variant slides), childProductId (for grouped/bundle).
      */
     #[Computed]
     public function imageSlides(): array
     {
         $slides = [];
 
-        // Shared dedup tracker — spans all three sections below
+        // Shared dedup tracker — spans all sections below
         $seenPaths = [];
 
         // 1. Main product image (always slot 0)
@@ -544,7 +628,7 @@ new #[Layout('layouts.guest')] class extends Component {
             ];
         }
 
-        // 2. Variant images — skip any path already seen
+        // 2. Variant images — for variable products only
         if ($this->product->type->value === 'variable') {
             foreach ($this->product->variants->where('is_active', true)->sortBy('sort_order') as $variant) {
                 if ($variant->image_path && !in_array($variant->image_path, $seenPaths, true)) {
@@ -559,7 +643,38 @@ new #[Layout('layouts.guest')] class extends Component {
             }
         }
 
-        // 3. Gallery images — skip any path already used by main image or a variant
+        // 3. Child product images — for grouped and bundle products
+        if ($this->product->type->value === 'grouped' && $this->product->relationLoaded('groupedProducts')) {
+            foreach ($this->product->groupedProducts as $child) {
+                // Add child's main image
+                if ($child->image_path && !in_array($child->image_path, $seenPaths, true)) {
+                    $seenPaths[] = $child->image_path;
+                    $slides[] = [
+                        'url' => $child->image_url,
+                        'webp' => $child->webp_image_url,
+                        'alt' => $child->name,
+                        'variantId' => null,
+                    ];
+                }
+            }
+        }
+
+        if ($this->product->type->value === 'bundle' && $this->product->relationLoaded('bundleProducts')) {
+            foreach ($this->product->bundleProducts as $child) {
+                // Add child's main image
+                if ($child->image_path && !in_array($child->image_path, $seenPaths, true)) {
+                    $seenPaths[] = $child->image_path;
+                    $slides[] = [
+                        'url' => $child->image_url,
+                        'webp' => $child->webp_image_url,
+                        'alt' => $child->name,
+                        'variantId' => null,
+                    ];
+                }
+            }
+        }
+
+        // 4. Gallery images — skip any path already used
         foreach ($this->product->images as $image) {
             if (!in_array($image->image_path, $seenPaths, true)) {
                 $seenPaths[] = $image->image_path;
@@ -706,14 +821,72 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function increaseGroupedQuantity(int $productId): void
     {
-        $current = $this->groupedQuantities[$productId] ?? 1;
+        $current = $this->groupedQuantities[$productId] ?? 0;
         $this->groupedQuantities[$productId] = $current + 1;
     }
 
     public function decreaseGroupedQuantity(int $productId): void
     {
-        $current = $this->groupedQuantities[$productId] ?? 1;
-        $this->groupedQuantities[$productId] = max(1, $current - 1);
+        $current = $this->groupedQuantities[$productId] ?? 0;
+        $this->groupedQuantities[$productId] = max(0, $current - 1);
+    }
+
+    public function addGroupedToCart(CartService $cartService): void
+    {
+        try {
+            $addedCount = 0;
+
+            foreach ($this->groupedProducts as $item) {
+                $qty = $this->groupedQuantities[$item->id] ?? 0;
+                if ($qty > 0) {
+                    $cartService->addItem(productId: $item->id, quantity: $qty);
+                    $addedCount++;
+                }
+            }
+
+            if ($addedCount === 0) {
+                $this->dispatch('notify', variant: 'warning', message: 'Please select at least one item to add to cart.');
+                return;
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} " . Str::plural('item', $addedCount) . " added to your cart");
+
+            // Close the modal using Flux's modal close method
+            $this->js('$flux.modal("kit-contents-modal").close()');
+        } catch (Throwable $th) {
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add items to cart');
+        }
+    }
+
+    public function addBundleToCart(CartService $cartService): void
+    {
+        try {
+            // Check if bundle is already in cart
+            if ($this->inCart) {
+                $this->dispatch('notify', variant: 'info', message: 'Bundle is already in your cart');
+                $this->js('$flux.modal("bundle-contents-modal").close()');
+                return;
+            }
+
+            // Bundle is added as a single product (the bundle itself), not its children
+            // Always add quantity of 1 for bundles
+            $cartService->addItem(productId: $this->product->id, quantity: 1);
+
+            $this->inCart = true;
+            $cartItem = $cartService->getCartItem($this->product->id);
+            if ($cartItem) {
+                $this->cartItemId = $cartItem->id;
+                $this->cartQuantity = $cartItem->quantity;
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Bundle added to your cart');
+
+            $this->js('$flux.modal("bundle-contents-modal").close()');
+        } catch (Throwable $th) {
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add bundle to cart');
+        }
     }
 
     public function removeFromCart(CartService $cartService): void
@@ -732,6 +905,71 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
+    public function increaseAccessoryQuantity(int $productId): void
+    {
+        $current = $this->accessoryQuantities[$productId] ?? 0;
+        $this->accessoryQuantities[$productId] = $current + 1;
+    }
+
+    public function decreaseAccessoryQuantity(int $productId): void
+    {
+        $current = $this->accessoryQuantities[$productId] ?? 0;
+        $this->accessoryQuantities[$productId] = max(0, $current - 1);
+    }
+
+    public function addAccessoriesToCart(CartService $cartService): void
+    {
+        try {
+            $addedCount = 0;
+
+            foreach ($this->accessories as $accessory) {
+                $qty = $this->accessoryQuantities[$accessory->id] ?? 0;
+                if ($qty > 0) {
+                    $cartService->addItem(productId: $accessory->id, quantity: $qty);
+                    $addedCount++;
+                }
+            }
+
+            if ($addedCount === 0) {
+                $this->dispatch('notify', variant: 'warning', message: 'Please select at least one accessory to add to cart.');
+                return;
+            }
+
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} " . Str::plural('accessory', $addedCount) . " added to your cart");
+
+            $this->js('$flux.modal("accessories-modal").close()');
+        } catch (Throwable $th) {
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add accessories to cart');
+        }
+    }
+
+    #[Computed]
+    public function selectedAccessoriesCount(): int
+    {
+        return collect($this->accessoryQuantities)->filter(fn($qty) => $qty > 0)->count();
+    }
+
+    #[Computed]
+    public function accessoryPriceRange(): array
+    {
+        $accessories = $this->accessories;
+        if ($accessories->isEmpty()) {
+            return ['min' => 0, 'max' => 0];
+        }
+
+        $prices = $accessories->map(fn($a) => $a->final_price ?? $a->price ?? 0)->filter(fn($p) => $p > 0);
+
+        if ($prices->isEmpty()) {
+            return ['min' => 0, 'max' => 0];
+        }
+
+        return [
+            'min' => $prices->min(),
+            'max' => $prices->max(),
+        ];
+    }
+
     public function addAllAccessoriesToCart(CartService $cartService): void
     {
         try {
@@ -748,45 +986,6 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'All accessories have been added to your cart');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add accessories to cart');
-        }
-    }
-
-    public function addFullKitToCart(CartService $cartService): void
-    {
-        try {
-            foreach ($this->groupedProducts as $item) {
-                $qty = $this->groupedQuantities[$item->id] ?? ($item->pivot->quantity ?? 1);
-                $cartService->addItem(productId: $item->id, quantity: $qty);
-            }
-
-            $this->dispatch('cart-updated');
-            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Full kit has been added to your cart');
-        } catch (Throwable $th) {
-            $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add full kit to cart');
-        }
-    }
-
-    public function addSelectedGroupedToCart(CartService $cartService): void
-    {
-        try {
-            if (empty($this->selectedGroupedItems)) {
-                $this->dispatch('notify', title: 'No Items Selected', variant: 'warning', message: 'Please select at least one item to add to cart');
-
-                return;
-            }
-
-            foreach ($this->selectedGroupedItems as $productId) {
-                $item = $this->groupedProducts->firstWhere('id', $productId);
-                if ($item) {
-                    $qty = $this->groupedQuantities[$productId] ?? ($item->pivot->quantity ?? 1);
-                    $cartService->addItem(productId: $item->id, quantity: $qty);
-                }
-            }
-
-            $this->dispatch('cart-updated');
-            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: count($this->selectedGroupedItems) . ' item(s) added to your cart');
-        } catch (Throwable $th) {
-            $this->dispatch('notify', title: 'Add Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add selected items to cart');
         }
     }
 

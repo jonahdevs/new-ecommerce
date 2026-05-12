@@ -87,21 +87,25 @@
         {{-- Product Data  --}}
         <flux:card class="p-0" x-data="{ open: true, tab: 'general' }"
             x-effect="
-                if (tab === 'shipping' && $wire.form.is_virtual) { tab = 'general'; }
+                if (tab === 'shipping' && ($wire.form.is_virtual || $wire.form.type === 'grouped')) { tab = 'general'; }
                 if (tab === 'downloads' && !$wire.form.is_downloadable) { tab = 'general'; }
                 if (tab === 'variations' && $wire.form.type !== 'variable') { tab = 'general'; }
+                if (tab === 'inventory' && $wire.form.type === 'grouped') { tab = 'general'; }
+                if (tab === 'attributes' && ($wire.form.type === 'grouped' || $wire.form.type === 'bundle')) { tab = 'general'; }
             ">
 
             {{-- Card header --}}
             <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-600">
                 <div class="flex items-center gap-3 flex-wrap">
                     <flux:heading class="shrink-0">Product Data</flux:heading>
-                    <flux:select wire:model="form.type" size="xs">
+                    <flux:select wire:model.live="form.type" size="xs" class="w-fit">
                         @foreach (App\Enums\ProductType::cases() as $t)
                             <flux:select.option value="{{ $t->value }}">{{ $t->label() }}</flux:select.option>
                         @endforeach
                     </flux:select>
-                    <div class="flex items-center gap-4 border-l pl-3 dark:border-zinc-600">
+                    {{-- Virtual/Downloadable only for simple and variable products --}}
+                    <div x-show="$wire.form.type === 'simple' || $wire.form.type === 'variable'" x-cloak
+                        class="flex items-center gap-4 border-l pl-3 dark:border-zinc-600">
                         <flux:checkbox wire:model.live="form.is_virtual" label="Virtual" />
                         <flux:checkbox wire:model.live="form.is_downloadable" label="Downloadable" />
                     </div>
@@ -141,9 +145,11 @@
                                     ?
                                     'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium border-r-2 border-zinc-800 dark:border-zinc-200' :
                                     'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300'"
-                                @if ($t['id'] === 'shipping') x-show="!$wire.form.is_virtual" @endif
+                                @if ($t['id'] === 'shipping') x-show="!$wire.form.is_virtual && $wire.form.type !== 'grouped'" @endif
                                 @if ($t['id'] === 'downloads') x-show="$wire.form.is_downloadable" @endif
-                                @if ($t['id'] === 'variations') x-show="$wire.form.type === 'variable'" @endif>
+                                @if ($t['id'] === 'variations') x-show="$wire.form.type === 'variable'" @endif
+                                @if ($t['id'] === 'inventory') x-show="$wire.form.type !== 'grouped'" @endif
+                                @if ($t['id'] === 'attributes') x-show="$wire.form.type !== 'grouped' && $wire.form.type !== 'bundle'" @endif>
                                 <flux:icon :name="$t['icon']" variant="outline" class="size-4 shrink-0" />
                                 {{ $t['label'] }}
                             </button>
@@ -155,54 +161,147 @@
 
                         {{-- ── General ── --}}
                         <div x-show="tab === 'general'" x-cloak class="space-y-5">
-                            <div class="grid grid-cols-2 gap-5">
-                                <flux:field>
-                                    <div class="flex items-center gap-1.5 mb-1">
-                                        <flux:label>Regular Price ({{ get_currency_symbol() }})</flux:label>
-                                        <flux:tooltip content="The standard selling price before any discounts.">
-                                            <flux:icon.information-circle variant="outline"
-                                                class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
-                                        </flux:tooltip>
-                                    </div>
-                                    <flux:input wire:model="form.price" type="number" step="0.01" min="0"
-                                        placeholder="0.00" />
-                                    <flux:error name="form.price" />
-                                </flux:field>
 
-                                <flux:field>
-                                    <div class="flex items-center gap-1.5 mb-1">
-                                        <flux:label>Sale Price ({{ get_currency_symbol() }})</flux:label>
-                                        <flux:tooltip content="Discounted price. Leave blank if no active sale.">
-                                            <flux:icon.information-circle variant="outline"
-                                                class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
-                                        </flux:tooltip>
+                            {{-- Grouped Product Notice --}}
+                            <div x-show="$wire.form.type === 'grouped'" x-cloak
+                                class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                <div class="flex items-start gap-3">
+                                    <flux:icon.information-circle variant="outline"
+                                        class="size-5 text-blue-500 shrink-0 mt-0.5" />
+                                    <div class="text-sm text-blue-700 dark:text-blue-300">
+                                        <p class="font-medium">Grouped products have no price</p>
+                                        <p class="mt-1 text-blue-600 dark:text-blue-400">
+                                            Each child product has its own price. Customers select which items to
+                                            purchase
+                                            from the Linked Products tab.
+                                        </p>
                                     </div>
-                                    <flux:input wire:model="form.sale_price" type="number" step="0.01"
-                                        min="0" placeholder="0.00" />
-                                    <flux:error name="form.sale_price" />
-                                </flux:field>
+                                </div>
                             </div>
 
-                            <flux:field>
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <flux:label>Tax Class</flux:label>
-                                    <flux:tooltip content="The tax class that applies to this product.">
-                                        <flux:icon.information-circle variant="outline"
-                                            class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
-                                    </flux:tooltip>
+                            {{-- Bundle Pricing --}}
+                            <div x-show="$wire.form.type === 'bundle'" x-cloak class="space-y-5">
+                                <div
+                                    class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                    <div class="flex items-start gap-3">
+                                        <flux:icon.gift variant="outline"
+                                            class="size-5 text-green-500 shrink-0 mt-0.5" />
+                                        <div class="text-sm text-green-700 dark:text-green-300">
+                                            <p class="font-medium">Bundle pricing</p>
+                                            <p class="mt-1 text-green-600 dark:text-green-400">
+                                                Set a bundle price below the combined value of items to offer a
+                                                discount.
+                                                Add items in the Linked Products tab.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <flux:select wire:model="form.tax_class_id">
-                                    <flux.select.option value="">— None —</flux.select.option>
-                                    @foreach ($this->taxClasses as $tc)
-                                        <flux.select.option value="{{ $tc->id }}">{{ $tc->name }}
-                                            ({{ $tc->rateLabel() }})
-                                        </flux.select.option>
-                                    @endforeach
-                                </flux:select>
+                                <div class="grid grid-cols-2 gap-5">
+                                    <flux:field>
+                                        <div class="flex items-center gap-1.5 mb-1">
+                                            <flux:label>Bundle Price ({{ get_currency_symbol() }})</flux:label>
+                                            <flux:tooltip content="The price customers pay for the entire bundle.">
+                                                <flux:icon.information-circle variant="outline"
+                                                    class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                            </flux:tooltip>
+                                        </div>
+                                        <flux:input wire:model.live="form.price" type="number" step="0.01"
+                                            min="0" placeholder="0.00" />
+                                        <flux:error name="form.price" />
+                                    </flux:field>
 
-                                <flux:error name="form.tax_class_id" />
-                            </flux:field>
+                                    <flux:field>
+                                        <div class="flex items-center gap-1.5 mb-1">
+                                            <flux:label>Sale Price ({{ get_currency_symbol() }})</flux:label>
+                                            <flux:tooltip content="Optional discounted bundle price.">
+                                                <flux:icon.information-circle variant="outline"
+                                                    class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                            </flux:tooltip>
+                                        </div>
+                                        <flux:input wire:model.live="form.sale_price" type="number" step="0.01"
+                                            min="0" placeholder="0.00" />
+                                        <flux:error name="form.sale_price" />
+                                    </flux:field>
+                                </div>
+
+                                {{-- Bundle value comparison --}}
+                                @if (!empty($form->bundle_products))
+                                    <div
+                                        class="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-lg border dark:border-zinc-700">
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span class="text-zinc-500">Items value (if bought separately):</span>
+                                            <span
+                                                class="font-medium text-zinc-700 dark:text-zinc-300">{{ format_currency($this->bundleValue) }}</span>
+                                        </div>
+                                        @if ($this->bundleSavingsPercent)
+                                            <div
+                                                class="flex justify-between items-center text-sm mt-2 pt-2 border-t dark:border-zinc-700">
+                                                <span class="text-zinc-500">Customer saves:</span>
+                                                <span class="font-medium text-green-600 dark:text-green-400">
+                                                    {{ format_currency($this->bundleValue - ($form->sale_price !== '' ? $form->sale_price : $form->price)) }}
+                                                    ({{ $this->bundleSavingsPercent }}%)
+                                                </span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Simple/Variable Pricing --}}
+                            <div x-show="$wire.form.type === 'simple' || $wire.form.type === 'variable'" x-cloak>
+                                <div class="grid grid-cols-2 gap-5">
+                                    <flux:field>
+                                        <div class="flex items-center gap-1.5 mb-1">
+                                            <flux:label>Regular Price ({{ get_currency_symbol() }})</flux:label>
+                                            <flux:tooltip content="The standard selling price before any discounts.">
+                                                <flux:icon.information-circle variant="outline"
+                                                    class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                            </flux:tooltip>
+                                        </div>
+                                        <flux:input wire:model="form.price" type="number" step="0.01"
+                                            min="0" placeholder="0.00" />
+                                        <flux:error name="form.price" />
+                                    </flux:field>
+
+                                    <flux:field>
+                                        <div class="flex items-center gap-1.5 mb-1">
+                                            <flux:label>Sale Price ({{ get_currency_symbol() }})</flux:label>
+                                            <flux:tooltip content="Discounted price. Leave blank if no active sale.">
+                                                <flux:icon.information-circle variant="outline"
+                                                    class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                            </flux:tooltip>
+                                        </div>
+                                        <flux:input wire:model="form.sale_price" type="number" step="0.01"
+                                            min="0" placeholder="0.00" />
+                                        <flux:error name="form.sale_price" />
+                                    </flux:field>
+                                </div>
+                            </div>
+
+                            {{-- Tax Class - for all except grouped --}}
+                            <div x-show="$wire.form.type !== 'grouped'" x-cloak>
+                                <flux:field>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <flux:label>Tax Class</flux:label>
+                                        <flux:tooltip content="The tax class that applies to this product.">
+                                            <flux:icon.information-circle variant="outline"
+                                                class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
+                                        </flux:tooltip>
+                                    </div>
+
+                                    <flux:select wire:model="form.tax_class_id">
+                                        <flux:select.option value="">— None —</flux:select.option>
+                                        @foreach ($this->taxClasses as $tc)
+                                            <flux:select.option value="{{ $tc->id }}">{{ $tc->name }}
+                                                ({{ $tc->rateLabel() }})
+                                            </flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+
+                                    <flux:error name="form.tax_class_id" />
+                                </flux:field>
+                            </div>
                         </div>
 
                         {{-- ── Inventory ── --}}
@@ -1733,7 +1832,8 @@
             <div class="flex items-center justify-between px-3 py-2 dark:border-zinc-600"
                 :class="{ 'border-b': expanded }">
                 <flux:heading>Tags</flux:heading>
-                <flux:button size="xs" variant="ghost" class="cursor-pointer" @click="expanded = !expanded">
+                <flux:button size="xs" variant="ghost" class="cursor-pointer"
+                    @click="expanded = !expanded">
                     <x-slot name="icon">
                         <flux:icon.chevron-down variant="outline"
                             class="size-4 text-zinc-400 transition-transform duration-200"

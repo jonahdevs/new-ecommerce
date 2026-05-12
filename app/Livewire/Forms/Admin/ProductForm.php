@@ -565,24 +565,52 @@ class ProductForm extends Form
 
     protected function syncLinkedProducts(Product $product): void
     {
-        $product->upsells()->sync(array_column($this->upsell_products, 'id'));
-        $product->crossSells()->sync(array_column($this->cross_sell_products, 'id'));
-        $product->accessories()->sync(array_column($this->accessory_products, 'id'));
+        // Sync upsell products with type pivot data
+        $upsellSyncData = [];
+        foreach ($this->upsell_products as $index => $up) {
+            $upsellSyncData[$up['id']] = [
+                'type' => \App\Enums\ProductRelationshipType::UP_SELLS->value,
+                'sort_order' => $index,
+            ];
+        }
+        $product->upsells()->sync($upsellSyncData);
 
-        // Sync grouped products with quantity pivot data
+        // Sync cross-sell products with type pivot data
+        $crossSellSyncData = [];
+        foreach ($this->cross_sell_products as $index => $cs) {
+            $crossSellSyncData[$cs['id']] = [
+                'type' => \App\Enums\ProductRelationshipType::CROSS_SELL->value,
+                'sort_order' => $index,
+            ];
+        }
+        $product->crossSells()->sync($crossSellSyncData);
+
+        // Sync accessory products with type pivot data
+        $accessorySyncData = [];
+        foreach ($this->accessory_products as $index => $ap) {
+            $accessorySyncData[$ap['id']] = [
+                'type' => \App\Enums\ProductRelationshipType::ACCESSORY->value,
+                'sort_order' => $index,
+            ];
+        }
+        $product->accessories()->sync($accessorySyncData);
+
+        // Sync grouped products with quantity and type pivot data
         $groupedSyncData = [];
         foreach ($this->grouped_products as $index => $gp) {
             $groupedSyncData[$gp['id']] = [
+                'type' => \App\Enums\ProductRelationshipType::GROUPED->value,
                 'quantity' => $gp['quantity'] ?? 1,
                 'sort_order' => $index,
             ];
         }
         $product->groupedProducts()->sync($groupedSyncData);
 
-        // Sync bundle products with quantity pivot data
+        // Sync bundle products with quantity and type pivot data
         $bundleSyncData = [];
         foreach ($this->bundle_products as $index => $bp) {
             $bundleSyncData[$bp['id']] = [
+                'type' => \App\Enums\ProductRelationshipType::BUNDLE->value,
                 'quantity' => $bp['quantity'] ?? 1,
                 'sort_order' => $index,
             ];
