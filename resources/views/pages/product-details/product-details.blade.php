@@ -496,7 +496,7 @@
                                 @if ($product->requires_quotation)
                                     {{-- Quotation products — no cart, quote only --}}
                                     <flux:button wire:click="addToQuoteBasket" variant="customer-primary"
-                                        size="customer-lg" class="w-full cursor-pointer" wire:loading.attr="disabled"
+                                        class="w-full cursor-pointer" wire:loading.attr="disabled"
                                         wire:target="addToQuoteBasket">
                                         Add to Quote
                                     </flux:button>
@@ -513,15 +513,19 @@
                                     @if ($state !== 'out_of_stock' && $state !== 'none')
                                         <flux:button.group>
                                             <flux:button icon="minus" wire:click="decreaseCartQuantity"
-                                                class="cursor-pointer text-zinc-500!" title="Decrease" />
+                                                class="cursor-pointer text-zinc-500!" title="Decrease"
+                                                size="customer-lg" />
                                             <flux:input readonly value="{{ $cartQuantity }}"
-                                                class="max-w-9! text-center! outline-none! border-none! ring-0!" />
+                                                class="max-w-9! outline-none! border-none! ring-0!"
+                                                class:input="text-center! h-[42px]! p-0!"
+                                                size="customer-lg" />
                                             <flux:button icon="plus" wire:click="increaseCartQuantity"
-                                                class="cursor-pointer text-zinc-500!" title="Increase" />
+                                                class="cursor-pointer text-zinc-500!" title="Increase"
+                                                size="customer-lg" />
                                             @if ($inCart)
                                                 <flux:button icon="trash" icon-variant="outline"
                                                     wire:click="removeFromCart" class="cursor-pointer text-red-500!"
-                                                    title="Remove" />
+                                                    title="Remove" size="customer-lg" />
                                             @endif
                                         </flux:button.group>
                                     @endif
@@ -545,7 +549,7 @@
                                         </flux:button>
                                     @elseif (!$inCart)
                                         <flux:button wire:click="addToCart" variant="customer-primary"
-                                            size="customer-lg" class="flex-1 cursor-pointer"
+                                            icon="shopping-bag" size="customer-lg" class="flex-1 cursor-pointer"
                                             wire:loading.attr="disabled" wire:target="addToCart">
                                             Add to Cart
                                         </flux:button>
@@ -570,7 +574,8 @@
                                     }
                                 }">
                                     <flux:button icon="share" icon-variant="outline" title="Share"
-                                        class="cursor-pointer" @click="share()" />
+                                        variant="customer-outline" size="customer-lg" class="cursor-pointer"
+                                        @click="share()" />
                                 </div>
 
                             </div>
@@ -578,17 +583,17 @@
 
                         {{-- SHARED ACTION BUTTONS --}}
                         <div class="flex items-center gap-2">
-                            <flux:button wire:click.stop="toggleWishlist" icon="heart"
-                                icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}" title="Wishlist"
-                                @class(['cursor-pointer', 'text-red-500!' => $wishlisted]) />
+                            <flux:button wire:click.stop="toggleWishlist" icon="heart" size="customer-lg"
+                                variant="customer-outline" icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}"
+                                title="Wishlist" @class(['cursor-pointer', 'text-red-500!' => $wishlisted]) />
 
                             <flux:button wire:click="toggleCompare" icon="{{ $inCompare ? 'x-mark' : 'scale' }}"
-                                icon-variant="outline" title="Compare" @class(['cursor-pointer', 'text-secondary!' => $inCompare]) />
+                                size="customer-lg" variant="customer-outline" title="Compare"
+                                @class(['cursor-pointer', 'text-secondary!' => $inCompare]) />
 
-                            <flux:button icon="share" icon-variant="outline" title="Share"
-                                class="cursor-pointer" />
+                            <flux:button icon="share" icon-variant="outline" title="Share" size="customer-lg"
+                                variant="customer-outline" class="cursor-pointer" />
                         </div>
-
                     </div>
                 </div>
 
@@ -601,7 +606,7 @@
 
                         {{-- Description --}}
                         <flux:button x-show="$wire.selectedTab == 'description'"
-                            @click="$wire.selectedTab = 'description'" variant="primary"
+                            @click="$wire.selectedTab = 'description'" variant="customer-primary"
                             class="rounded-none cursor-pointer">
                             Description
                         </flux:button>
@@ -612,7 +617,7 @@
 
                         {{-- Specification --}}
                         <flux:button x-cloak x-show="$wire.selectedTab == 'specification'"
-                            @click="$wire.selectedTab = 'specification'" variant="primary"
+                            @click="$wire.selectedTab = 'specification'" variant="customer-primary"
                             class="rounded-none cursor-pointer">
                             Specification
                         </flux:button>
@@ -624,7 +629,7 @@
                         @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
                             {{-- Reviews --}}
                             <flux:button x-cloak x-show="$wire.selectedTab == 'reviews'"
-                                @click="$wire.selectedTab = 'reviews'" variant="primary"
+                                @click="$wire.selectedTab = 'reviews'" variant="customer-primary"
                                 class="rounded-none cursor-pointer">
                                 Reviews
                             </flux:button>
@@ -745,7 +750,7 @@
                                         @if ($this->hasMoreReviews)
                                             <div class="mt-6 text-center">
                                                 <flux:button href="{{ route('products.reviews', $product) }}"
-                                                    wire:navigate>
+                                                    wire:navigate variant="customer-outline" size="customer">
                                                     View All {{ $this->reviewStats['total'] }} Reviews
                                                 </flux:button>
                                             </div>
@@ -826,7 +831,7 @@
 
                     {{-- Accessories --}}
                     <flux:button x-show="$wire.accessoriesTab == 'accessories'"
-                        @click="$wire.accessoriesTab = 'accessories'" variant="primary"
+                        @click="$wire.accessoriesTab = 'accessories'" variant="customer-primary"
                         class="rounded-none cursor-pointer">
                         Accessories
 
@@ -911,7 +916,7 @@
 
                                 {{-- Add all --}}
                                 <flux:button wire:click="addAllAccessoriesToCart" wire:loading.attr="disabled"
-                                    wire:target="addAllAccessoriesToCart" size="sm" variant="filled"
+                                    wire:target="addAllAccessoriesToCart" size="sm" variant="customer-primary"
                                     icon="shopping-bag" icon-variant="outline" class="cursor-pointer">
                                     Add all
                                 </flux:button>

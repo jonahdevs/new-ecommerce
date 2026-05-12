@@ -998,14 +998,14 @@
                                     
                                     <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToQuoteBasket','variant' => 'customer-primary','size' => 'customer-lg','class' => 'w-full cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToQuoteBasket']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToQuoteBasket','variant' => 'customer-primary','class' => 'w-full cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToQuoteBasket']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'addToQuoteBasket','variant' => 'customer-primary','size' => 'customer-lg','class' => 'w-full cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToQuoteBasket']); ?>
+<?php $component->withAttributes(['wire:click' => 'addToQuoteBasket','variant' => 'customer-primary','class' => 'w-full cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToQuoteBasket']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                         Add to Quote
@@ -1062,14 +1062,14 @@
 
                                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'minus','wire:click' => 'decreaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Decrease']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'minus','wire:click' => 'decreaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Decrease','size' => 'customer-lg']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'minus','wire:click' => 'decreaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Decrease']); ?>
+<?php $component->withAttributes(['icon' => 'minus','wire:click' => 'decreaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Decrease','size' => 'customer-lg']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1084,14 +1084,14 @@
 <?php endif; ?>
                                             <?php if (isset($component)) { $__componentOriginal26c546557cdc09040c8dd00b2090afd0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal26c546557cdc09040c8dd00b2090afd0 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::input.index','data' => ['readonly' => true,'value' => ''.e($cartQuantity).'','class' => 'max-w-9! text-center! outline-none! border-none! ring-0!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::input.index','data' => ['readonly' => true,'value' => ''.e($cartQuantity).'','class' => 'max-w-9! outline-none! border-none! ring-0!','class:input' => 'text-center! h-[42px]! p-0!','size' => 'customer-lg']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::input'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['readonly' => true,'value' => ''.e($cartQuantity).'','class' => 'max-w-9! text-center! outline-none! border-none! ring-0!']); ?>
+<?php $component->withAttributes(['readonly' => true,'value' => ''.e($cartQuantity).'','class' => 'max-w-9! outline-none! border-none! ring-0!','class:input' => 'text-center! h-[42px]! p-0!','size' => 'customer-lg']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1106,14 +1106,14 @@
 <?php endif; ?>
                                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'plus','wire:click' => 'increaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Increase']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'plus','wire:click' => 'increaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Increase','size' => 'customer-lg']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'plus','wire:click' => 'increaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Increase']); ?>
+<?php $component->withAttributes(['icon' => 'plus','wire:click' => 'increaseCartQuantity','class' => 'cursor-pointer text-zinc-500!','title' => 'Increase','size' => 'customer-lg']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1129,14 +1129,14 @@
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($inCart): ?>
                                                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'trash','iconVariant' => 'outline','wire:click' => 'removeFromCart','class' => 'cursor-pointer text-red-500!','title' => 'Remove']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'trash','iconVariant' => 'outline','wire:click' => 'removeFromCart','class' => 'cursor-pointer text-red-500!','title' => 'Remove','size' => 'customer-lg']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'trash','icon-variant' => 'outline','wire:click' => 'removeFromCart','class' => 'cursor-pointer text-red-500!','title' => 'Remove']); ?>
+<?php $component->withAttributes(['icon' => 'trash','icon-variant' => 'outline','wire:click' => 'removeFromCart','class' => 'cursor-pointer text-red-500!','title' => 'Remove','size' => 'customer-lg']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1238,14 +1238,14 @@
                                     <?php elseif(!$inCart): ?>
                                         <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToCart','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToCart','variant' => 'customer-primary','icon' => 'shopping-bag','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'addToCart','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']); ?>
+<?php $component->withAttributes(['wire:click' => 'addToCart','variant' => 'customer-primary','icon' => 'shopping-bag','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                             Add to Cart
@@ -1281,14 +1281,14 @@
                                 }">
                                     <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'share','iconVariant' => 'outline','title' => 'Share','class' => 'cursor-pointer','@click' => 'share()']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'share','iconVariant' => 'outline','title' => 'Share','variant' => 'customer-outline','size' => 'customer-lg','class' => 'cursor-pointer','@click' => 'share()']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'share','icon-variant' => 'outline','title' => 'Share','class' => 'cursor-pointer','@click' => 'share()']); ?>
+<?php $component->withAttributes(['icon' => 'share','icon-variant' => 'outline','title' => 'Share','variant' => 'customer-outline','size' => 'customer-lg','class' => 'cursor-pointer','@click' => 'share()']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1310,14 +1310,14 @@
                         <div class="flex items-center gap-2">
                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click.stop' => 'toggleWishlist','icon' => 'heart','iconVariant' => ''.e($wishlisted ? 'solid' : 'outline').'','title' => 'Wishlist','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-red-500!' => $wishlisted])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click.stop' => 'toggleWishlist','icon' => 'heart','size' => 'customer-lg','variant' => 'customer-outline','iconVariant' => ''.e($wishlisted ? 'solid' : 'outline').'','title' => 'Wishlist','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-red-500!' => $wishlisted])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click.stop' => 'toggleWishlist','icon' => 'heart','icon-variant' => ''.e($wishlisted ? 'solid' : 'outline').'','title' => 'Wishlist','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-red-500!' => $wishlisted]))]); ?>
+<?php $component->withAttributes(['wire:click.stop' => 'toggleWishlist','icon' => 'heart','size' => 'customer-lg','variant' => 'customer-outline','icon-variant' => ''.e($wishlisted ? 'solid' : 'outline').'','title' => 'Wishlist','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-red-500!' => $wishlisted]))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1333,14 +1333,14 @@
 
                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'toggleCompare','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','iconVariant' => 'outline','title' => 'Compare','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-secondary!' => $inCompare])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'toggleCompare','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','size' => 'customer-lg','variant' => 'customer-outline','title' => 'Compare','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-secondary!' => $inCompare])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'toggleCompare','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','icon-variant' => 'outline','title' => 'Compare','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-secondary!' => $inCompare]))]); ?>
+<?php $component->withAttributes(['wire:click' => 'toggleCompare','icon' => ''.e($inCompare ? 'x-mark' : 'scale').'','size' => 'customer-lg','variant' => 'customer-outline','title' => 'Compare','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-secondary!' => $inCompare]))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1356,14 +1356,14 @@
 
                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'share','iconVariant' => 'outline','title' => 'Share','class' => 'cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['icon' => 'share','iconVariant' => 'outline','title' => 'Share','size' => 'customer-lg','variant' => 'customer-outline','class' => 'cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'share','icon-variant' => 'outline','title' => 'Share','class' => 'cursor-pointer']); ?>
+<?php $component->withAttributes(['icon' => 'share','icon-variant' => 'outline','title' => 'Share','size' => 'customer-lg','variant' => 'customer-outline','class' => 'cursor-pointer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -1377,7 +1377,6 @@
 <?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
 <?php endif; ?>
                         </div>
-
                     </div>
                 </div>
 
@@ -1402,14 +1401,14 @@
                         
                         <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.selectedTab == \'description\'','@click' => '$wire.selectedTab = \'description\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.selectedTab == \'description\'','@click' => '$wire.selectedTab = \'description\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['x-show' => '$wire.selectedTab == \'description\'','@click' => '$wire.selectedTab = \'description\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']); ?>
+<?php $component->withAttributes(['x-show' => '$wire.selectedTab == \'description\'','@click' => '$wire.selectedTab = \'description\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Description
@@ -1450,14 +1449,14 @@
                         
                         <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab == \'specification\'','@click' => '$wire.selectedTab = \'specification\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab == \'specification\'','@click' => '$wire.selectedTab = \'specification\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab == \'specification\'','@click' => '$wire.selectedTab = \'specification\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']); ?>
+<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab == \'specification\'','@click' => '$wire.selectedTab = \'specification\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Specification
@@ -1499,14 +1498,14 @@
                             
                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab == \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab == \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab == \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']); ?>
+<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab == \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                 Reviews
@@ -1809,14 +1808,14 @@ unset($__split);
                                             <div class="mt-6 text-center">
                                                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('products.reviews', $product)).'','wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('products.reviews', $product)).'','wire:navigate' => true,'variant' => 'customer-outline','size' => 'customer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => ''.e(route('products.reviews', $product)).'','wire:navigate' => true]); ?>
+<?php $component->withAttributes(['href' => ''.e(route('products.reviews', $product)).'','wire:navigate' => true,'variant' => 'customer-outline','size' => 'customer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                                     View All <?php echo e($this->reviewStats['total']); ?> Reviews
@@ -1995,14 +1994,14 @@ Warranty & returns <?php echo $__env->renderComponent(); ?>
                     
                     <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.accessoriesTab == \'accessories\'','@click' => '$wire.accessoriesTab = \'accessories\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.accessoriesTab == \'accessories\'','@click' => '$wire.accessoriesTab = \'accessories\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['x-show' => '$wire.accessoriesTab == \'accessories\'','@click' => '$wire.accessoriesTab = \'accessories\'','variant' => 'primary','class' => 'rounded-none cursor-pointer']); ?>
+<?php $component->withAttributes(['x-show' => '$wire.accessoriesTab == \'accessories\'','@click' => '$wire.accessoriesTab = \'accessories\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                         Accessories
@@ -2225,14 +2224,14 @@ unset($__split);
                                 
                                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addAllAccessoriesToCart','wire:loading.attr' => 'disabled','wire:target' => 'addAllAccessoriesToCart','size' => 'sm','variant' => 'filled','icon' => 'shopping-bag','iconVariant' => 'outline','class' => 'cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addAllAccessoriesToCart','wire:loading.attr' => 'disabled','wire:target' => 'addAllAccessoriesToCart','size' => 'sm','variant' => 'customer-primary','icon' => 'shopping-bag','iconVariant' => 'outline','class' => 'cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'addAllAccessoriesToCart','wire:loading.attr' => 'disabled','wire:target' => 'addAllAccessoriesToCart','size' => 'sm','variant' => 'filled','icon' => 'shopping-bag','icon-variant' => 'outline','class' => 'cursor-pointer']); ?>
+<?php $component->withAttributes(['wire:click' => 'addAllAccessoriesToCart','wire:loading.attr' => 'disabled','wire:target' => 'addAllAccessoriesToCart','size' => 'sm','variant' => 'customer-primary','icon' => 'shopping-bag','icon-variant' => 'outline','class' => 'cursor-pointer']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                     Add all

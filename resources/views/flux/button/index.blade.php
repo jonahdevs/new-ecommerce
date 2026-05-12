@@ -86,10 +86,10 @@
                 'xs' => 'h-6 text-xs rounded-md' . ' ' . ($square ? 'w-6' : 'px-2'),
                 'customer' => 'h-auto text-[12px] rounded-none font-serif font-extrabold tracking-wider uppercase' .
                     ' ' .
-                    ($square ? 'w-auto p-3.5' : 'px-3.5 py-1.5'),
+                    ($square ? 'w-auto p-2' : 'px-3.5 py-1.5'),
                 'customer-lg' => 'h-auto text-[13px] rounded-none font-serif font-extrabold tracking-wider uppercase' .
                     ' ' .
-                    ($square ? 'w-auto p-6' : 'px-6 py-2.5'),
+                    ($square ? 'w-auto p-2.5' : 'px-6 py-2.5'),
             },
         )
         ->add('inline-flex') // Buttons are inline by default but links are blocks, so inline-flex is needed here to ensure link-buttons are displayed the same as buttons...
@@ -107,6 +107,7 @@
                     'xs' => $square
                         ? Flux::applyInset($inset, top: '-mt-1', right: '-me-1', bottom: '-mb-1', left: '-ms-1')
                         : Flux::applyInset($inset, top: '-mt-1', right: '-me-2', bottom: '-mb-1', left: '-ms-2'),
+                    default => '',
                 }
                 : '',
         )
@@ -165,6 +166,7 @@
                     'base' => 'shadow-xs',
                     'sm' => 'shadow-xs',
                     'xs' => 'shadow-none',
+                    default => 'shadow-none',
                 },
                 default => '',
             },
