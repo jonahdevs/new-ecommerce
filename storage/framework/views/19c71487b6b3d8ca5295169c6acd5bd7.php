@@ -597,62 +597,45 @@
 
                                                     
                                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($watchType === 'color' && $value['color_code']): ?>
-                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'out_of_stock'): ?>
-                                                            <button type="button" disabled
-                                                                class="relative w-9 h-9 rounded-full border-2 border-zinc-200 cursor-not-allowed overflow-hidden"
-                                                                title="<?php echo e($value['label']); ?> - Out of stock">
-                                                                <span class="absolute inset-0.5 rounded-full"
-                                                                    style="background-color: <?php echo e($value['color_code']); ?>; opacity: 0.4;"></span>
+                                                        <button type="button"
+                                                            wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
+                                                            class="relative w-9 h-9 rounded-full transition-all cursor-pointer <?php echo e($isSelected ? 'ring-2 ring-offset-2 ring-secondary' : 'hover:ring-2 hover:ring-offset-2 hover:ring-zinc-300'); ?> <?php echo e($state === 'backorder' ? 'ring-amber-400' : ''); ?>"
+                                                            title="<?php echo e($value['label']); ?><?php echo e($state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '')); ?>">
+                                                            <span
+                                                                class="absolute inset-0.5 rounded-full border border-zinc-200 <?php echo e($state === 'out_of_stock' ? 'opacity-50' : ''); ?>"
+                                                                style="background-color: <?php echo e($value['color_code']); ?>;"></span>
+                                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'out_of_stock'): ?>
                                                                 <span
                                                                     class="absolute inset-0 flex items-center justify-center">
                                                                     <span
                                                                         class="w-full h-0.5 bg-zinc-400 rotate-45 absolute"></span>
                                                                 </span>
-                                                            </button>
-                                                        <?php else: ?>
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
-                                                                class="relative w-9 h-9 rounded-full transition-all cursor-pointer <?php echo e($isSelected ? 'ring-2 ring-offset-2 ring-secondary' : 'hover:ring-2 hover:ring-offset-2 hover:ring-zinc-300'); ?> <?php echo e($state === 'backorder' ? 'ring-amber-400' : ''); ?>"
-                                                                title="<?php echo e($value['label']); ?><?php echo e($state === 'backorder' ? ' (backorder)' : ''); ?>">
+                                                            <?php elseif($state === 'backorder'): ?>
                                                                 <span
-                                                                    class="absolute inset-0.5 rounded-full border border-zinc-200"
-                                                                    style="background-color: <?php echo e($value['color_code']); ?>;"></span>
-                                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'backorder'): ?>
-                                                                    <span
-                                                                        class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
-                                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                            </button>
-                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                                    class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
+                                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                        </button>
 
                                                         
                                                     <?php elseif($watchType === 'image' && $value['image_path']): ?>
-                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'out_of_stock'): ?>
-                                                            <button type="button" disabled
-                                                                class="relative w-12 h-12 rounded-md border-2 border-zinc-200 cursor-not-allowed overflow-hidden"
-                                                                title="<?php echo e($value['label']); ?> - Out of stock">
-                                                                <img src="<?php echo e(Storage::url($value['image_path'])); ?>"
-                                                                    alt="<?php echo e($value['label']); ?>"
-                                                                    class="w-full h-full object-cover opacity-40" />
+                                                        <button type="button"
+                                                            wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
+                                                            class="relative w-12 h-12 rounded-md border-2 transition-all cursor-pointer overflow-hidden <?php echo e($isSelected ? 'border-secondary ring-1 ring-secondary' : 'border-zinc-200 hover:border-zinc-400'); ?> <?php echo e($state === 'backorder' ? 'border-amber-400' : ''); ?>"
+                                                            title="<?php echo e($value['label']); ?><?php echo e($state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '')); ?>">
+                                                            <img src="<?php echo e(Storage::url($value['image_path'])); ?>"
+                                                                alt="<?php echo e($value['label']); ?>"
+                                                                class="w-full h-full object-cover <?php echo e($state === 'out_of_stock' ? 'opacity-50' : ''); ?>" />
+                                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'out_of_stock'): ?>
                                                                 <span
-                                                                    class="absolute inset-0 flex items-center justify-center bg-zinc-100/50">
+                                                                    class="absolute inset-0 flex items-center justify-center bg-white/30">
                                                                     <span
                                                                         class="w-full h-0.5 bg-zinc-400 rotate-45 absolute"></span>
                                                                 </span>
-                                                            </button>
-                                                        <?php else: ?>
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
-                                                                class="relative w-12 h-12 rounded-md border-2 transition-all cursor-pointer overflow-hidden <?php echo e($isSelected ? 'border-secondary ring-1 ring-secondary' : 'border-zinc-200 hover:border-zinc-400'); ?> <?php echo e($state === 'backorder' ? 'border-amber-400' : ''); ?>"
-                                                                title="<?php echo e($value['label']); ?><?php echo e($state === 'backorder' ? ' (backorder)' : ''); ?>">
-                                                                <img src="<?php echo e(Storage::url($value['image_path'])); ?>"
-                                                                    alt="<?php echo e($value['label']); ?>"
-                                                                    class="w-full h-full object-cover" />
-                                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'backorder'): ?>
-                                                                    <span
-                                                                        class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
-                                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                            </button>
-                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                            <?php elseif($state === 'backorder'): ?>
+                                                                <span
+                                                                    class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
+                                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                        </button>
 
                                                         
                                                     <?php elseif($watchType === 'select'): ?>
@@ -661,38 +644,32 @@
 
                                                         
                                                     <?php else: ?>
-                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'available'): ?>
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
-                                                                class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                                                                    'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
-                                                                    'border-secondary bg-secondary/5 text-secondary font-medium' => $isSelected,
-                                                                    'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' => !$isSelected,
-                                                                ]); ?>">
-                                                                <?php echo e($value['label']); ?>
-
-                                                            </button>
-                                                        <?php elseif($state === 'backorder'): ?>
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
-                                                                class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                                                                    'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
-                                                                    'border-amber-500 bg-amber-50 text-amber-700 font-medium' => $isSelected,
-                                                                    'border-amber-300 text-amber-600 hover:border-amber-500 bg-amber-50/50' => !$isSelected,
-                                                                ]); ?>">
-                                                                <?php echo e($value['label']); ?>
-
+                                                        <button type="button"
+                                                            wire:click="selectAttributeValue('<?php echo e($attribute['name']); ?>', '<?php echo e($value['value']); ?>')"
+                                                            class="<?php echo \Illuminate\Support\Arr::toCssClasses([
+                                                                'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
+                                                                // Selected states
+                                                                'border-secondary bg-secondary/5 text-secondary font-medium' =>
+                                                                    $isSelected && $state === 'available',
+                                                                'border-amber-500 bg-amber-50 text-amber-700 font-medium' =>
+                                                                    $isSelected && $state === 'backorder',
+                                                                'border-zinc-400 bg-zinc-100 text-zinc-500 font-medium' =>
+                                                                    $isSelected && $state === 'out_of_stock',
+                                                                // Unselected states
+                                                                'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' =>
+                                                                    !$isSelected && $state === 'available',
+                                                                'border-amber-300 text-amber-600 hover:border-amber-500 bg-amber-50/50' =>
+                                                                    !$isSelected && $state === 'backorder',
+                                                                'border-zinc-200 text-zinc-400 hover:border-zinc-300 bg-zinc-50' =>
+                                                                    !$isSelected && $state === 'out_of_stock',
+                                                            ]); ?>">
+                                                            <span
+                                                                class="<?php echo e($state === 'out_of_stock' ? 'line-through' : ''); ?>"><?php echo e($value['label']); ?></span>
+                                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($state === 'backorder'): ?>
                                                                 <span
                                                                     class="text-xs opacity-75 ml-1">(backorder)</span>
-                                                            </button>
-                                                        <?php else: ?>
-                                                            <button type="button" disabled
-                                                                class="px-3 py-1.5 text-sm border rounded-md border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed relative"
-                                                                title="Out of stock">
-                                                                <span
-                                                                    class="line-through text-zinc-400"><?php echo e($value['label']); ?></span>
-                                                            </button>
-                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                        </button>
                                                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                             </div>
@@ -717,9 +694,7 @@
                                                             <?php continue; ?>
                                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                                         <option value="<?php echo e($value['value']); ?>"
-                                                            <?php echo e(($selectedAttributeValues[$attribute['name']] ?? null) === $value['value'] ? 'selected' : ''); ?>
-
-                                                            <?php echo e($value['state'] === 'out_of_stock' ? 'disabled' : ''); ?>>
+                                                            <?php echo e(($selectedAttributeValues[$attribute['name']] ?? null) === $value['value'] ? 'selected' : ''); ?>>
                                                             <?php echo e($value['label']); ?>
 
                                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($value['state'] === 'backorder'): ?>

@@ -326,62 +326,45 @@
 
                                                     {{-- COLOR SWATCH --}}
                                                     @if ($watchType === 'color' && $value['color_code'])
-                                                        @if ($state === 'out_of_stock')
-                                                            <button type="button" disabled
-                                                                class="relative w-9 h-9 rounded-full border-2 border-zinc-200 cursor-not-allowed overflow-hidden"
-                                                                title="{{ $value['label'] }} - Out of stock">
-                                                                <span class="absolute inset-0.5 rounded-full"
-                                                                    style="background-color: {{ $value['color_code'] }}; opacity: 0.4;"></span>
+                                                        <button type="button"
+                                                            wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
+                                                            class="relative w-9 h-9 rounded-full transition-all cursor-pointer {{ $isSelected ? 'ring-2 ring-offset-2 ring-secondary' : 'hover:ring-2 hover:ring-offset-2 hover:ring-zinc-300' }} {{ $state === 'backorder' ? 'ring-amber-400' : '' }}"
+                                                            title="{{ $value['label'] }}{{ $state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '') }}">
+                                                            <span
+                                                                class="absolute inset-0.5 rounded-full border border-zinc-200 {{ $state === 'out_of_stock' ? 'opacity-50' : '' }}"
+                                                                style="background-color: {{ $value['color_code'] }};"></span>
+                                                            @if ($state === 'out_of_stock')
                                                                 <span
                                                                     class="absolute inset-0 flex items-center justify-center">
                                                                     <span
                                                                         class="w-full h-0.5 bg-zinc-400 rotate-45 absolute"></span>
                                                                 </span>
-                                                            </button>
-                                                        @else
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
-                                                                class="relative w-9 h-9 rounded-full transition-all cursor-pointer {{ $isSelected ? 'ring-2 ring-offset-2 ring-secondary' : 'hover:ring-2 hover:ring-offset-2 hover:ring-zinc-300' }} {{ $state === 'backorder' ? 'ring-amber-400' : '' }}"
-                                                                title="{{ $value['label'] }}{{ $state === 'backorder' ? ' (backorder)' : '' }}">
+                                                            @elseif ($state === 'backorder')
                                                                 <span
-                                                                    class="absolute inset-0.5 rounded-full border border-zinc-200"
-                                                                    style="background-color: {{ $value['color_code'] }};"></span>
-                                                                @if ($state === 'backorder')
-                                                                    <span
-                                                                        class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
-                                                                @endif
-                                                            </button>
-                                                        @endif
+                                                                    class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
+                                                            @endif
+                                                        </button>
 
                                                         {{-- IMAGE SWATCH --}}
                                                     @elseif ($watchType === 'image' && $value['image_path'])
-                                                        @if ($state === 'out_of_stock')
-                                                            <button type="button" disabled
-                                                                class="relative w-12 h-12 rounded-md border-2 border-zinc-200 cursor-not-allowed overflow-hidden"
-                                                                title="{{ $value['label'] }} - Out of stock">
-                                                                <img src="{{ Storage::url($value['image_path']) }}"
-                                                                    alt="{{ $value['label'] }}"
-                                                                    class="w-full h-full object-cover opacity-40" />
+                                                        <button type="button"
+                                                            wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
+                                                            class="relative w-12 h-12 rounded-md border-2 transition-all cursor-pointer overflow-hidden {{ $isSelected ? 'border-secondary ring-1 ring-secondary' : 'border-zinc-200 hover:border-zinc-400' }} {{ $state === 'backorder' ? 'border-amber-400' : '' }}"
+                                                            title="{{ $value['label'] }}{{ $state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '') }}">
+                                                            <img src="{{ Storage::url($value['image_path']) }}"
+                                                                alt="{{ $value['label'] }}"
+                                                                class="w-full h-full object-cover {{ $state === 'out_of_stock' ? 'opacity-50' : '' }}" />
+                                                            @if ($state === 'out_of_stock')
                                                                 <span
-                                                                    class="absolute inset-0 flex items-center justify-center bg-zinc-100/50">
+                                                                    class="absolute inset-0 flex items-center justify-center bg-white/30">
                                                                     <span
                                                                         class="w-full h-0.5 bg-zinc-400 rotate-45 absolute"></span>
                                                                 </span>
-                                                            </button>
-                                                        @else
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
-                                                                class="relative w-12 h-12 rounded-md border-2 transition-all cursor-pointer overflow-hidden {{ $isSelected ? 'border-secondary ring-1 ring-secondary' : 'border-zinc-200 hover:border-zinc-400' }} {{ $state === 'backorder' ? 'border-amber-400' : '' }}"
-                                                                title="{{ $value['label'] }}{{ $state === 'backorder' ? ' (backorder)' : '' }}">
-                                                                <img src="{{ Storage::url($value['image_path']) }}"
-                                                                    alt="{{ $value['label'] }}"
-                                                                    class="w-full h-full object-cover" />
-                                                                @if ($state === 'backorder')
-                                                                    <span
-                                                                        class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
-                                                                @endif
-                                                            </button>
-                                                        @endif
+                                                            @elseif ($state === 'backorder')
+                                                                <span
+                                                                    class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
+                                                            @endif
+                                                        </button>
 
                                                         {{-- SELECT DROPDOWN --}}
                                                     @elseif ($watchType === 'select')
@@ -390,36 +373,32 @@
 
                                                         {{-- DEFAULT: LABEL/BUTTON --}}
                                                     @else
-                                                        @if ($state === 'available')
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
-                                                                @class([
-                                                                    'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
-                                                                    'border-secondary bg-secondary/5 text-secondary font-medium' => $isSelected,
-                                                                    'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' => !$isSelected,
-                                                                ])>
-                                                                {{ $value['label'] }}
-                                                            </button>
-                                                        @elseif ($state === 'backorder')
-                                                            <button type="button"
-                                                                wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
-                                                                @class([
-                                                                    'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
-                                                                    'border-amber-500 bg-amber-50 text-amber-700 font-medium' => $isSelected,
-                                                                    'border-amber-300 text-amber-600 hover:border-amber-500 bg-amber-50/50' => !$isSelected,
-                                                                ])>
-                                                                {{ $value['label'] }}
+                                                        <button type="button"
+                                                            wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
+                                                            @class([
+                                                                'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
+                                                                // Selected states
+                                                                'border-secondary bg-secondary/5 text-secondary font-medium' =>
+                                                                    $isSelected && $state === 'available',
+                                                                'border-amber-500 bg-amber-50 text-amber-700 font-medium' =>
+                                                                    $isSelected && $state === 'backorder',
+                                                                'border-zinc-400 bg-zinc-100 text-zinc-500 font-medium' =>
+                                                                    $isSelected && $state === 'out_of_stock',
+                                                                // Unselected states
+                                                                'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' =>
+                                                                    !$isSelected && $state === 'available',
+                                                                'border-amber-300 text-amber-600 hover:border-amber-500 bg-amber-50/50' =>
+                                                                    !$isSelected && $state === 'backorder',
+                                                                'border-zinc-200 text-zinc-400 hover:border-zinc-300 bg-zinc-50' =>
+                                                                    !$isSelected && $state === 'out_of_stock',
+                                                            ])>
+                                                            <span
+                                                                class="{{ $state === 'out_of_stock' ? 'line-through' : '' }}">{{ $value['label'] }}</span>
+                                                            @if ($state === 'backorder')
                                                                 <span
                                                                     class="text-xs opacity-75 ml-1">(backorder)</span>
-                                                            </button>
-                                                        @else
-                                                            <button type="button" disabled
-                                                                class="px-3 py-1.5 text-sm border rounded-md border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed relative"
-                                                                title="Out of stock">
-                                                                <span
-                                                                    class="line-through text-zinc-400">{{ $value['label'] }}</span>
-                                                            </button>
-                                                        @endif
+                                                            @endif
+                                                        </button>
                                                     @endif
                                                 @endforeach
                                             </div>
@@ -435,8 +414,7 @@
                                                             @continue
                                                         @endif
                                                         <option value="{{ $value['value'] }}"
-                                                            {{ ($selectedAttributeValues[$attribute['name']] ?? null) === $value['value'] ? 'selected' : '' }}
-                                                            {{ $value['state'] === 'out_of_stock' ? 'disabled' : '' }}>
+                                                            {{ ($selectedAttributeValues[$attribute['name']] ?? null) === $value['value'] ? 'selected' : '' }}>
                                                             {{ $value['label'] }}
                                                             @if ($value['state'] === 'backorder')
                                                                 (backorder)
