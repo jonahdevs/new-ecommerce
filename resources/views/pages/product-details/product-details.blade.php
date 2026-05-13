@@ -1132,13 +1132,20 @@
                     <flux:button type="button" variant="customer-outline"
                         x-on:click="$flux.modal('kit-contents-modal').close()" class="cursor-pointer"
                         size="customer-lg">
-                        Continue Shopping
+                        {{ $this->anyGroupedItemInCart ? 'Continue Shopping' : 'Close' }}
                     </flux:button>
-                    <flux:button type="button" variant="customer-primary" wire:click="addGroupedToCart"
-                        size="customer-lg" wire:loading.attr="disabled" wire:target="addGroupedToCart"
-                        class="cursor-pointer" :disabled="$this->groupedTotal <= 0">
-                        Add to Cart
-                    </flux:button>
+                    @if ($this->anyGroupedItemInCart)
+                        <flux:button href="{{ route('cart') }}" wire:navigate variant="customer-primary"
+                            size="customer-lg" class="cursor-pointer" icon="shopping-cart">
+                            View Cart
+                        </flux:button>
+                    @else
+                        <flux:button type="button" variant="customer-primary" wire:click="addGroupedToCart"
+                            size="customer-lg" wire:loading.attr="disabled" wire:target="addGroupedToCart"
+                            class="cursor-pointer">
+                            Add to Cart
+                        </flux:button>
+                    @endif
                 </div>
             </div>
         </flux:modal>
@@ -1163,7 +1170,7 @@
                     @endif
                 </div>
 
-                {{-- Items List (read-only — fixed bundle contents) --}}
+                {{-- Items List --}}
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @foreach ($this->bundleProducts as $item)
                         @php
@@ -1207,7 +1214,7 @@
                                 @endif
                             </div>
 
-                            {{-- Fixed Quantity (read-only) --}}
+                            {{-- Fixed qty (read-only for bundle) --}}
                             <div class="shrink-0 text-right">
                                 <span class="text-sm text-zinc-500">Qty:</span>
                                 <span

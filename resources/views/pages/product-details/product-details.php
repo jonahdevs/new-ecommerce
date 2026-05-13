@@ -52,6 +52,9 @@ new #[Layout('layouts.guest')] class extends Component {
     // Grouped products - quantities (0 means not selected)
     public array $groupedQuantities = [];
 
+    // Grouped products - per-item cart item IDs (null = not in cart)
+    public array $groupedCartItemIds = [];
+
     // Accessory products - quantities (0 means not selected)
     public array $accessoryQuantities = [];
 
@@ -138,6 +141,30 @@ new #[Layout('layouts.guest')] class extends Component {
         if ($product->accessories->count() > 0) {
             foreach ($product->accessories as $accessory) {
                 $this->accessoryQuantities[$accessory->id] = $accessory->pivot->quantity ?? 1;
+            }
+        }
+
+        // Grouped — init per-item quantities, check if any already in cart
+        if ($product->type->value === 'grouped' && $product->relationLoaded('groupedProducts')) {
+            foreach ($product->groupedProducts as $item) {
+                $inCart = $cartService->has($item->id);
+                if ($inCart) {
+                    $cartItem = $cartService->getCartItem($item->id);
+                    $this->groupedQuantities[$item->id] = $cartItem?->quantity ?? 0;
+                    $this->groupedCartItemIds[$item->id] = $cartItem?->id;
+                } else {
+                    // Default to 1 when none in cart (add-all mode), 0 when some are in cart
+                    $this->groupedQuantities[$item->id] = 0; // will be set below after full loop
+                    $this->groupedCartItemIds[$item->id] = null;
+                }
+            }
+
+            // If any item is in cart, items not in cart start at 0; otherwise all start at 1
+            $anyInCart = collect($this->groupedCartItemIds)->filter(fn($id) => $id !== null)->isNotEmpty();
+            if (!$anyInCart) {
+                foreach ($product->groupedProducts as $item) {
+                    $this->groupedQuantities[$item->id] = $item->pivot->quantity ?? 1;
+                }
             }
         }
 
@@ -826,16 +853,69 @@ new #[Layout('layouts.guest')] class extends Component {
         }
     }
 
-    public function increaseGroupedQuantity(int $productId): void
+    public function increaseGroupedQuantity(int $productId, CartService $cartService): void
     {
-        $current = $this->groupedQuantities[$productId] ?? 0;
-        $this->groupedQuantities[$productId] = $current + 1;
+        try {
+            $newQty = ($this->groupedQuantities[$productId] ?? 1) + 1;
+            $cartItemId = $this->groupedCartItemIds[$productId] ?? null;
+
+            if ($this->anyGroupedItemInCart && $cartItemId !== null) {
+                // In cart mode — update quantity silently
+                $cartService->updateItemQuantity($cartItemId, $newQty);
+                $this->dispatch('cart-updated');
+            } elseif ($this->anyGroupedItemInCart && $cartItemId === null) {
+                // Some items in cart but this one isn't — add it and notify
+                $cartService->addItem(productId: $productId, quantity: $newQty);
+                $cartItem = $cartService->getCartItem($productId);
+                if ($cartItem) {
+                    $this->groupedCartItemIds[$productId] = $cartItem->id;
+                    $newQty = $cartItem->quantity;
+                }
+                $this->dispatch('cart-updated');
+                $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Item added to your cart');
+            }
+            // else: none in cart — local counter only, no notify
+
+            $this->groupedQuantities[$productId] = $newQty;
+        } catch (Throwable $th) {
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart');
+        }
     }
 
-    public function decreaseGroupedQuantity(int $productId): void
+    public function decreaseGroupedQuantity(int $productId, CartService $cartService): void
     {
-        $current = $this->groupedQuantities[$productId] ?? 0;
-        $this->groupedQuantities[$productId] = max(0, $current - 1);
+        try {
+            $current = $this->groupedQuantities[$productId] ?? 1;
+            $cartItemId = $this->groupedCartItemIds[$productId] ?? null;
+
+            if ($this->anyGroupedItemInCart) {
+                // In cart mode
+                if ($current <= 1 && $cartItemId !== null) {
+                    // Remove from cart and notify
+                    $cartService->removeItem($cartItemId);
+                    $this->groupedQuantities[$productId] = 0;
+                    $this->groupedCartItemIds[$productId] = null;
+                    $this->dispatch('cart-updated');
+                    $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Item removed from your cart');
+                    return;
+                }
+                if ($current <= 0)
+                    return;
+
+                // Decrease silently
+                $newQty = $current - 1;
+                if ($cartItemId !== null) {
+                    $cartService->updateItemQuantity($cartItemId, $newQty);
+                    $this->dispatch('cart-updated');
+                }
+                $this->groupedQuantities[$productId] = $newQty;
+            } else {
+                // Local mode — floor at 1, no notify
+                $this->groupedQuantities[$productId] = max(1, $current - 1);
+            }
+        } catch (Throwable $th) {
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart');
+        }
     }
 
     public function addGroupedToCart(CartService $cartService): void
@@ -844,40 +924,45 @@ new #[Layout('layouts.guest')] class extends Component {
             $addedCount = 0;
 
             foreach ($this->groupedProducts as $item) {
-                $qty = $this->groupedQuantities[$item->id] ?? 0;
+                $qty = $this->groupedQuantities[$item->id] ?? 1;
                 if ($qty > 0) {
                     $cartService->addItem(productId: $item->id, quantity: $qty);
+                    $cartItem = $cartService->getCartItem($item->id);
+                    if ($cartItem) {
+                        $this->groupedCartItemIds[$item->id] = $cartItem->id;
+                        $this->groupedQuantities[$item->id] = $cartItem->quantity;
+                    }
                     $addedCount++;
                 }
             }
 
             if ($addedCount === 0) {
-                $this->dispatch('notify', variant: 'warning', message: 'Please select at least one item to add to cart.');
+                $this->dispatch('notify', variant: 'warning', message: 'Please select at least one item.');
                 return;
             }
 
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} " . Str::plural('item', $addedCount) . " added to your cart");
-
-            // Close the modal using Flux's modal close method
-            $this->js('$flux.modal("kit-contents-modal").close()');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add items to cart');
         }
     }
 
+    #[Computed]
+    public function anyGroupedItemInCart(): bool
+    {
+        return collect($this->groupedCartItemIds)->filter(fn($id) => $id !== null)->isNotEmpty();
+    }
+
     public function addBundleToCart(CartService $cartService): void
     {
         try {
-            // Check if bundle is already in cart
             if ($this->inCart) {
                 $this->dispatch('notify', variant: 'info', message: 'Bundle is already in your cart');
                 $this->js('$flux.modal("bundle-contents-modal").close()');
                 return;
             }
 
-            // Bundle is added as a single product (the bundle itself), not its children
-            // Always add quantity of 1 for bundles
             $cartService->addItem(productId: $this->product->id, quantity: 1);
 
             $this->inCart = true;
@@ -889,7 +974,6 @@ new #[Layout('layouts.guest')] class extends Component {
 
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Bundle added to your cart');
-
             $this->js('$flux.modal("bundle-contents-modal").close()');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add bundle to cart');
