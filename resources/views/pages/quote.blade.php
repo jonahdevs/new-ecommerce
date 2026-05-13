@@ -98,6 +98,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $this->dispatch('notify', variant: 'success', message: 'Item removed from quote basket');
     }
 
+    #[\Livewire\Attributes\On('quote-item-added')]
+    #[\Livewire\Attributes\On('quote-item-removed')]
+    public function refreshBasket(): void
+    {
+        unset($this->basketItems, $this->isEmpty);
+    }
+
     public function clearBasket(): void
     {
         app(QuoteBasketService::class)->clear();
@@ -191,141 +198,144 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         <div class="flex items-center justify-between mb-6 gap-4">
             <flux:heading level="1" class="font-bold! text-xl! sm:text-2xl! lg:text-3xl!">Request Quote
             </flux:heading>
-            @if (!$this->isEmpty)
-                <flux:button variant="filled" wire:click="clearBasket" size="sm" class="cursor-pointer">
-                    Clear all
-                </flux:button>
-            @endif
+            <div class="flex items-center gap-2">
+                <flux:modal.trigger name="quote-product-picker">
+                    <flux:button size="sm" variant="primary" icon="plus" class="cursor-pointer">
+                        Add Items
+                    </flux:button>
+                </flux:modal.trigger>
+                @if (!$this->isEmpty)
+                    <flux:button variant="filled" wire:click="clearBasket" size="sm" class="cursor-pointer">
+                        Clear all
+                    </flux:button>
+                @endif
+            </div>
         </div>
 
-        @if ($this->isEmpty)
-            <div class="flex flex-col items-center justify-center py-20 text-center">
-                <flux:icon.document-text class="w-16 h-16 sm:w-20 sm:h-20 text-zinc-300 stroke-1 mb-4" />
-                <flux:heading level="2"
-                    class="text-lg! sm:text-xl! font-semibold! text-zinc-800 dark:text-zinc-100 mb-2">
-                    Your quote basket is empty
-                </flux:heading>
-                <flux:text class="text-zinc-500 mb-8 max-w-md text-xs! sm:text-sm!">
-                    Browse our products and click "Add to Quote" on any item that requires custom pricing.
-                </flux:text>
-                <flux:button href="{{ route('shop.index') }}" wire:navigate variant="primary">
-                    Browse Products
-                </flux:button>
-            </div>
-        @else
-            <div class="grid grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-12 gap-6 items-start">
 
-                {{-- ── LEFT: FORM (col-span-7) ── --}}
-                <div class="col-span-12 lg:col-span-7">
-                    <flux:card class="space-y-6">
+            {{-- ── LEFT: FORM (col-span-7) ── --}}
+            <div class="col-span-12 lg:col-span-7">
+                @php
+                    $selectArrow =
+                        "appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%226%22%3E%3Cpath_d=%22M0_0l5_6_5-6z%22_fill=%22%23888%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center]";
+                @endphp
+                <div class="space-y-6">
 
-                        {{-- Contact details --}}
-                        <div class="space-y-4 pt-4  ">
-                            @if ($this->isGuest)
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <flux:field>
-                                        <flux:label>Full name</flux:label>
-                                        <flux:input wire:model="guestName" placeholder="John Kamau" />
-                                        <flux:error name="guestName" />
-                                    </flux:field>
-                                    <flux:field>
-                                        <flux:label>Phone number</flux:label>
-                                        <flux:input wire:model="guestPhone" type="tel"
-                                            placeholder="+254 7XX XXX XXX" />
-                                        <flux:error name="guestPhone" />
-                                    </flux:field>
-                                </div>
+                    {{-- Contact details --}}
+                    <div class="space-y-4">
+                        @if ($this->isGuest)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <x-customer.form-field label="Full Name" name="guestName" :required="true">
+                                    <input type="text" wire:model="guestName" class="customer-input"
+                                        placeholder="John Kamau" />
+                                </x-customer.form-field>
+                                <x-customer.form-field label="Phone Number" name="guestPhone" :required="true">
+                                    <input type="tel" wire:model="guestPhone" class="customer-input"
+                                        placeholder="+254 7XX XXX XXX" />
+                                </x-customer.form-field>
+                            </div>
 
-                                <flux:field>
-                                    <flux:label>Email address</flux:label>
-                                    <flux:input wire:model="guestEmail" type="email"
-                                        placeholder="john@business.co.ke" />
-                                    <flux:error name="guestEmail" />
-                                </flux:field>
+                            <x-customer.form-field label="Email Address" name="guestEmail" :required="true">
+                                <input type="email" wire:model="guestEmail" class="customer-input"
+                                    placeholder="john@business.co.ke" />
+                            </x-customer.form-field>
 
-
-                                {{-- Delivery location --}}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <flux:select label="County" wire:model.live="selectedCounty"
-                                        placeholder="Select county">
+                            {{-- Delivery location --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <x-customer.form-field label="County" name="selectedCounty">
+                                    <select wire:model.live="selectedCounty" class="customer-input {{ $selectArrow }}">
+                                        <option value="">Select county...</option>
                                         @foreach ($this->counties as $county)
                                             <option value="{{ $county->id }}">{{ $county->name }}</option>
                                         @endforeach
-                                    </flux:select>
+                                    </select>
+                                </x-customer.form-field>
 
-
+                                <x-customer.form-field label="Area" name="selectedArea">
                                     @if ($this->areas->isNotEmpty())
-                                        <flux:select label="Area" wire:model="selectedArea" placeholder="Select area">
+                                        <select wire:model="selectedArea" class="customer-input {{ $selectArrow }}">
+                                            <option value="">Select area...</option>
                                             @foreach ($this->areas as $area)
                                                 <option value="{{ $area->id }}">{{ $area->name }}</option>
                                             @endforeach
-                                        </flux:select>
-                                        <flux:error name="selectedArea" />
+                                        </select>
                                     @else
-                                        <flux:select label="Area" disabled placeholder="Select county first" />
+                                        <select disabled
+                                            class="customer-input {{ $selectArrow }} opacity-50 cursor-not-allowed">
+                                            <option>Select county first</option>
+                                        </select>
                                     @endif
-
+                                </x-customer.form-field>
+                            </div>
+                        @else
+                            <div
+                                class="flex items-center gap-3 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                                <flux:icon.user-circle class="size-5 text-zinc-400 shrink-0" />
+                                <div>
+                                    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                        {{ Auth::user()->name }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">Quote will be sent to
+                                        {{ Auth::user()->email }}</p>
                                 </div>
-                            @else
-                                <div
-                                    class="flex items-center gap-3 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-                                    <flux:icon.user-circle class="size-5 text-zinc-400 shrink-0" />
-                                    <div>
-                                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                                            {{ Auth::user()->name }}
-                                        </p>
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                                            Quote will be sent to {{ Auth::user()->email }}
-                                        </p>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
+                    </div>
 
-                        {{-- Notes --}}
-                        <flux:field>
-                            <flux:label>
-                                Additional notes
-                                <span class="text-zinc-400 font-normal text-xs ml-1">(optional)</span>
-                            </flux:label>
-                            <flux:textarea wire:model="customerNotes" rows="4"
-                                placeholder="Installation requirements, voltage specifications, site access details, number of covers, kitchen layout constraints..." />
-                            <flux:error name="customerNotes" />
-                        </flux:field>
+                    {{-- Notes --}}
+                    <x-customer.form-field label="Additional Notes" name="customerNotes"
+                        hint="Optional — installation requirements, voltage specs, site access details...">
+                        <textarea wire:model="customerNotes" rows="4" class="customer-input resize-none"
+                            placeholder="Installation requirements, voltage specifications, site access details, number of covers, kitchen layout constraints..."></textarea>
+                    </x-customer.form-field>
 
-                        {{-- Info note --}}
-                        <div
-                            class="flex gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-100 dark:border-blue-900">
-                            <flux:icon.information-circle class="size-5 text-secondary shrink-0 mt-0.5" />
-                            <p class="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                                Our team will review your request and contact you within 1 business day with a formal
-                                quote.
-                            </p>
-                        </div>
-
-                        {{-- Submit --}}
-                        <flux:button wire:click="submit" variant="primary" class="w-full uppercase cursor-pointer"
-                            wire:loading.attr="disabled" wire:target="submit" :disabled="$submitting">
-                            <span wire:loading.remove wire:target="submit">Submit Quote Request</span>
-                            <span wire:loading wire:target="submit">Submitting...</span>
-                        </flux:button>
-
-                    </flux:card>
-                </div>
-
-                {{-- ── RIGHT: ITEMS (col-span-5) ── --}}
-                <div class="col-span-12 lg:col-span-5 space-y-4 lg:sticky lg:top-44">
-
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            {{ $this->basketItems->count() }}
-                            {{ Str::plural('item', $this->basketItems->count()) }} in your quote
+                    {{-- Info note --}}
+                    <div
+                        class="flex gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900">
+                        <flux:icon.information-circle class="size-5 text-secondary shrink-0 mt-0.5" />
+                        <p class="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                            Our team will review your request and contact you within 1 business day with a formal quote.
                         </p>
                     </div>
 
-                    {{-- Items list --}}
-                    <div
-                        class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                    {{-- Submit --}}
+                    <flux:button wire:click="submit" variant="customer-primary" size="customer-lg"
+                        class="w-full cursor-pointer" wire:loading.attr="disabled" wire:target="submit"
+                        :disabled="$submitting || $this->isEmpty">
+                        <span wire:loading.remove wire:target="submit">Submit Quote Request</span>
+                        <span wire:loading wire:target="submit">Submitting...</span>
+                    </flux:button>
+
+                </div>
+            </div>
+
+            {{-- ── RIGHT: ITEMS (col-span-5) ── --}}
+            <div class="col-span-12 lg:col-span-5 space-y-4 lg:sticky lg:top-44">
+
+                <div class="flex items-center justify-between">
+                    <p class="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        {{ $this->basketItems->count() }}
+                        {{ Str::plural('item', $this->basketItems->count()) }} in your quote
+                    </p>
+                </div>
+
+                {{-- Items list --}}
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                    @if ($this->isEmpty)
+                        <div class="flex flex-col items-center justify-center py-12 px-6 text-center">
+                            <flux:icon.document-text class="w-12 h-12 text-zinc-300 stroke-1 mb-3" />
+                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Your quote basket is
+                                empty</p>
+                            <p class="text-xs text-zinc-400 mb-4">Search and add products you'd like to request a quote
+                                for.</p>
+                            <flux:modal.trigger name="quote-product-picker">
+                                <flux:button size="sm" variant="primary" icon="plus" class="cursor-pointer">
+                                    Add Items
+                                </flux:button>
+                            </flux:modal.trigger>
+                        </div>
+                    @else
                         @foreach ($this->basketItems as $item)
                             @php
                                 $variant = $item['variant'];
@@ -414,10 +424,23 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 </div>
                             </div>
                         @endforeach
-                    </div>
+                    @endif
                 </div>
             </div>
-        @endif
+        </div>
 
     </div>
+
+    {{-- Product Picker Modal --}}
+    <flux:modal name="quote-product-picker" class="w-full max-w-4xl p-0!">
+        <div
+            class="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+            <flux:heading size="base">Add Items to Quote</flux:heading>
+        </div>
+        <div class="h-[70vh] overflow-hidden flex flex-col">
+            <livewire:quote-product-picker x-on:quote-item-added.window="$wire.$refresh()"
+                x-on:quote-item-removed.window="$wire.$refresh()" />
+        </div>
+    </flux:modal>
+
 </div>

@@ -6,7 +6,6 @@ use App\Models\Product;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +17,6 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 
 new #[Layout('layouts.guest')] class extends Component {
-    use WithPagination;
-
     const TTL_PRODUCTS = 60 * 60 * 2; // 2 hours
     const TTL_BRANDS = 60 * 60 * 6; // 6 hours
     const TTL_CATEGORIES = 60 * 60 * 6; // 6 hours
@@ -63,6 +60,11 @@ new #[Layout('layouts.guest')] class extends Component {
     public string $brandSearch = '';
     public bool $showMobileFilters = false;
 
+    public int $page = 1;
+    public int $perPage = 20;
+    public bool $hasMore = true;
+    public array $loadedProducts = [];
+
     public function mount(): void
     {
         if (!empty($this->selectedBrandsString)) {
@@ -97,6 +99,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
         JsonLd::setType('BreadcrumbList');
         JsonLd::addValue('itemListElement', [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')], ['@type' => 'ListItem', 'position' => 2, 'name' => 'Shop', 'item' => route('shop.index')], ['@type' => 'ListItem', 'position' => 3, 'name' => $this->category->name, 'item' => route('shop.category', $this->category->slug)]]);
+
+        $this->fetchProducts();
     }
 
     // -----------------------------------------------------------------------
@@ -172,8 +176,24 @@ new #[Layout('layouts.guest')] class extends Component {
         return $this->brands->filter(fn($brand) => str_contains(strtolower($brand->name), strtolower($this->brandSearch)));
     }
 
-    #[Computed]
-    public function products()
+    public function loadMore(): void
+    {
+        if (!$this->hasMore) {
+            return;
+        }
+        $this->page++;
+        $this->fetchProducts();
+    }
+
+    private function resetAndLoad(): void
+    {
+        $this->page = 1;
+        $this->hasMore = true;
+        $this->loadedProducts = [];
+        $this->fetchProducts();
+    }
+
+    private function fetchProducts(): void
     {
         $rootCat = $this->activeSubCategory ?? $this->category;
         $catIds = array_merge([$rootCat->id], $rootCat->children()->pluck('id')->toArray());
@@ -224,7 +244,62 @@ new #[Layout('layouts.guest')] class extends Component {
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        return $query->paginate(20);
+        $results = $query
+            ->limit($this->perPage + 1)
+            ->offset(($this->page - 1) * $this->perPage)
+            ->get();
+
+        $this->hasMore = $results->count() > $this->perPage;
+        $batch = $results->take($this->perPage)->pluck('id')->toArray();
+        $this->loadedProducts = [...$this->loadedProducts, ...$batch];
+    }
+
+    #[Computed]
+    public function totalCount(): int
+    {
+        $rootCat = $this->activeSubCategory ?? $this->category;
+        $catIds = array_merge([$rootCat->id], $rootCat->children()->pluck('id')->toArray());
+
+        $query = Product::query()->active()->visibleInCatalog()->whereHas('categories', fn(Builder $q) => $q->whereIn('categories.id', $catIds));
+
+        $query->when(!empty($this->selectedBrands), fn(Builder $q) => $q->whereHas('brand', fn(Builder $q2) => $q2->whereIn('slug', $this->selectedBrands)));
+        $query->when($this->minPrice !== null, fn(Builder $q) => $q->whereRaw('COALESCE(sale_price, price) >= ?', [$this->minPrice]));
+        $query->when($this->maxPrice !== null, fn(Builder $q) => $q->whereRaw('COALESCE(sale_price, price) <= ?', [$this->maxPrice]));
+        $query->when($this->minRating, fn(Builder $q) => $q->where('average_rating', '>=', $this->minRating));
+        $query->when($this->inStock, fn(Builder $q) => $q->where(fn($q2) => $q2->where('stock_quantity', '>', 0)->orWhere('stock_status', 'in_stock')));
+        $query->when($this->onSale, fn(Builder $q) => $q->whereNotNull('sale_price')->where('sale_price', '<', DB::raw('price')));
+        $query->when(!empty($this->search), function (Builder $q) {
+            $term = $this->search;
+            $q->where(
+                fn(Builder $q2) => $q2
+                    ->where('name', 'like', "%{$term}%")
+                    ->orWhere('sku', 'like', "%{$term}%")
+                    ->orWhere('short_description', 'like', "%{$term}%"),
+            );
+        });
+
+        return $query->count();
+    }
+
+    #[Computed]
+    public function products()
+    {
+        if (empty($this->loadedProducts)) {
+            return collect();
+        }
+        return Product::whereIn('id', $this->loadedProducts)
+            ->with([
+                'brand:id,name,slug',
+                'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
+                'variants' => fn($q) => $q
+                    ->where('is_active', true)
+                    ->whereNotNull('price')
+                    ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+                'tags',
+            ])
+            ->orderByRaw('FIELD(id, ' . implode(',', $this->loadedProducts) . ')')
+            ->get()
+            ->keyBy('id');
     }
 
     #[Computed]
@@ -241,14 +316,14 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         $this->subCategorySlug = $this->subCategorySlug === $slug ? null : $slug;
         unset($this->activeSubCategory);
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function clearSubCategory(): void
     {
         $this->subCategorySlug = null;
         unset($this->activeSubCategory);
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function toggleBrand(string $slug): void
@@ -259,21 +334,21 @@ new #[Layout('layouts.guest')] class extends Component {
             $this->selectedBrands[] = $slug;
         }
         $this->selectedBrandsString = !empty($this->selectedBrands) ? implode(',', $this->selectedBrands) : '';
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function clearBrand(string $slug): void
     {
         $this->selectedBrands = array_values(array_diff($this->selectedBrands, [$slug]));
         $this->selectedBrandsString = !empty($this->selectedBrands) ? implode(',', $this->selectedBrands) : '';
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function applyPriceFilter(): void
     {
         $this->minPriceUrl = $this->minPrice;
         $this->maxPriceUrl = $this->maxPrice;
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function clearPriceFilter(): void
@@ -283,52 +358,54 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->maxPrice = $range->max_price ?? 1000000;
         $this->minPriceUrl = null;
         $this->maxPriceUrl = null;
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function setRating(int $rating): void
     {
         $this->minRating = $rating;
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function clearRating(): void
     {
         $this->minRating = null;
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function clearAllFilters(): void
     {
         $this->reset(['subCategorySlug', 'selectedBrands', 'selectedBrandsString', 'minRating', 'sortBy', 'inStock', 'onSale', 'minPriceUrl', 'maxPriceUrl', 'search']);
         unset($this->activeSubCategory);
-        $this->clearPriceFilter();
-        $this->resetPage();
+        $range = $this->priceRange;
+        $this->minPrice = $range->min_price ?? 0;
+        $this->maxPrice = $range->max_price ?? 1000000;
+        $this->resetAndLoad();
     }
 
     public function updatedSortBy(): void
     {
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function updatedInStock(): void
     {
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function updatedOnSale(): void
     {
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function updatedSearch(): void
     {
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function updatedMinRating(): void
     {
-        $this->resetPage();
+        $this->resetAndLoad();
     }
 
     public function render()
@@ -547,7 +624,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <div class="sticky bottom-0 bg-white border-t px-4 py-3">
                         <button wire:click="$set('showMobileFilters', false)" type="button"
                             class="w-full py-2.5 bg-secondary text-white font-medium rounded-md text-xs sm:text-sm">
-                            View {{ $this->products->total() }} Results
+                            View {{ $this->totalCount }} Results
                         </button>
                     </div>
                 </div>
@@ -598,9 +675,9 @@ new #[Layout('layouts.guest')] class extends Component {
                                 </flux:heading>
                             @endif
                             <flux:text class="text-xs! sm:text-sm! text-zinc-600 mt-1">
-                                @if ($this->products->total() > 0)
-                                    <span class="font-medium">{{ number_format($this->products->total()) }}</span>
-                                    {{ Str::plural('product', $this->products->total()) }} found
+                                @if ($this->totalCount > 0)
+                                    <span class="font-medium">{{ number_format($this->totalCount) }}</span>
+                                    {{ Str::plural('product', $this->totalCount) }} found
                                     @if ($this->hasActiveFilters)
                                         <span class="text-zinc-400 mx-1">•</span>
                                         <button wire:click="clearAllFilters" class="text-secondary hover:underline">
@@ -625,8 +702,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
 
                     <flux:text class="lg:hidden text-xs! sm:text-sm! text-zinc-500 mb-3">
-                        <span class="font-medium text-zinc-900">{{ number_format($this->products->total()) }}</span>
-                        {{ Str::plural('product', $this->products->total()) }} found
+                        <span class="font-medium text-zinc-900">{{ number_format($this->totalCount) }}</span>
+                        {{ Str::plural('product', $this->totalCount) }} found
                     </flux:text>
 
                     {{-- Active filter pills --}}
@@ -705,10 +782,14 @@ new #[Layout('layouts.guest')] class extends Component {
 
                 {{-- Products grid --}}
                 <div @class([
-                    'grid grid-cols-1 @xs/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3' => $this->products->isNotEmpty(),
+                    'grid grid-cols-1 @xs/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3' => !empty(
+                        $loadedProducts
+                    ),
                 ])>
-                    @forelse ($this->products as $product)
-                        <livewire:product-card :product="$product" :key="'product-' . $product->id" />
+                    @forelse ($loadedProducts as $productId)
+                        @if ($product = $this->products->get($productId))
+                            <livewire:product-card :product="$product" :key="'product-' . $productId" />
+                        @endif
                     @empty
                         <section class="flex flex-col items-center justify-center min-h-100 text-center col-span-full">
                             <div class="text-zinc-300">
@@ -734,9 +815,19 @@ new #[Layout('layouts.guest')] class extends Component {
                     @endforelse
                 </div>
 
-                @if ($this->products->hasPages())
-                    <div class="mt-8">
-                        {{ $this->products->links() }}
+                {{-- Infinite scroll sentinel --}}
+                <div x-data="{ observer: null }" x-init="observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && $wire.hasMore) {
+                        $wire.loadMore();
+                    }
+                }, { rootMargin: '200px' });
+                observer.observe($el);"
+                    x-effect="if (!$wire.hasMore) observer?.disconnect()" class="h-4"></div>
+
+                @if ($hasMore)
+                    <div class="flex justify-center py-8">
+                        <div class="w-6 h-6 border-2 border-zinc-200 border-t-zinc-500 rounded-full animate-spin">
+                        </div>
                     </div>
                 @endif
             </section>

@@ -4,6 +4,7 @@ use App\Enums\ProductType;
 use App\Services\WishlistService;
 use App\Services\CompareService;
 use App\Services\CartService;
+use App\Services\QuoteBasketService;
 use App\Models\Product;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
@@ -79,6 +80,17 @@ new class extends Component {
         }
 
         $this->addToCart($cartService);
+    }
+
+    public function addToQuoteBasket(QuoteBasketService $quoteBasketService): void
+    {
+        try {
+            $quoteBasketService->add($this->product->id, 1);
+            $this->dispatch('quote-basket-updated');
+            $this->redirect(route('quote'), navigate: true);
+        } catch (\Throwable $th) {
+            $this->dispatch('notify', title: 'Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to quote basket');
+        }
     }
 
     public function addToCart(CartService $cartService): void
@@ -299,8 +311,9 @@ new class extends Component {
             {{-- Price --}}
             <div class="pt-2 mt-auto">
                 @if ($product->requires_quotation)
-                    <flux:button wire:click="goToProduct" size="sm" variant="primary" class="cursor-pointer w-full"
-                        icon="document-text" icon-variant="outline">
+                    <flux:button wire:click="addToQuoteBasket" size="sm" variant="primary"
+                        class="cursor-pointer w-full" icon="document-text" icon-variant="outline"
+                        wire:loading.attr="disabled" wire:target="addToQuoteBasket">
                         Request a Quote
                     </flux:button>
                 @elseif ($product->display_price)
