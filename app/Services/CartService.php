@@ -60,14 +60,14 @@ class CartService
 
             // Always load the lightweight item list so has() is query-free.
             $this->resolvedCart->load([
-                'items' => fn ($q) => $q->select(['id', 'cart_id', 'product_id', 'variant_id', 'quantity']),
+                'items' => fn($q) => $q->select(['id', 'cart_id', 'product_id', 'variant_id', 'quantity']),
             ]);
 
             session(['cart_count' => $this->resolvedCart->items->sum('quantity')]);
         }
 
         // Optionally pull in the heavier relationships on demand.
-        if ($withItems && ! $this->resolvedCart->items->first()?->relationLoaded('product')) {
+        if ($withItems && !$this->resolvedCart->items->first()?->relationLoaded('product')) {
             $this->resolvedCart->load(['items.product', 'items.variant']);
         }
 
@@ -113,7 +113,7 @@ class CartService
     {
         try {
             return $this->getCart()->items->first(
-                fn ($item) => $item->product_id === $productId
+                fn($item) => $item->product_id === $productId
                 && $item->variant_id === $variantId
             );
         } catch (Exception $e) {
@@ -189,7 +189,7 @@ class CartService
                 if ($product->manage_stock && $newQuantity > $product->stock_quantity) {
                     throw new RuntimeException(
                         "Cannot add {$quantity} more items. Only {$product->stock_quantity} available "
-                        ."(you have {$existing->quantity} in cart)."
+                        . "(you have {$existing->quantity} in cart)."
                     );
                 }
 
@@ -221,7 +221,7 @@ class CartService
             return $cart->fresh();
         } catch (ModelNotFoundException) {
             throw new RuntimeException('Product not found.');
-        } catch (InvalidArgumentException|RuntimeException $e) {
+        } catch (InvalidArgumentException | RuntimeException $e) {
             throw $e;
         } catch (Exception $e) {
             Log::error('CartService::addItem() failed', [
@@ -252,7 +252,8 @@ class CartService
             }
 
             $cart = $this->getCart();
-            $cartItem = $cart->items()->findOrFail($cartItemId);
+            // Load product and variant so we can check stock correctly
+            $cartItem = $cart->items()->with(['product', 'variant'])->findOrFail($cartItemId);
 
             if ($quantity === 0) {
                 $cartItem->delete();
@@ -263,13 +264,16 @@ class CartService
 
             $product = $cartItem->product;
 
-            if (! $product) {
+            if (!$product) {
                 throw new RuntimeException('Product no longer available.');
             }
 
-            if ($product->manage_stock && $quantity > $product->stock_quantity) {
+            // For variant items, check stock against the variant; otherwise the product
+            $stockSource = $cartItem->variant ?? $product;
+
+            if ($stockSource->manage_stock && $quantity > $stockSource->stock_quantity) {
                 throw new RuntimeException(
-                    "Cannot update to {$quantity} items. Only {$product->stock_quantity} available in stock."
+                    "Cannot update to {$quantity} items. Only {$stockSource->stock_quantity} available in stock."
                 );
             }
 
@@ -277,7 +281,7 @@ class CartService
             $this->invalidateCache();
         } catch (ModelNotFoundException) {
             throw new RuntimeException('Cart item not found.');
-        } catch (InvalidArgumentException|RuntimeException $e) {
+        } catch (InvalidArgumentException | RuntimeException $e) {
             throw $e;
         } catch (Exception $e) {
             Log::error('CartService::updateItemQuantity() failed', [
@@ -356,8 +360,8 @@ class CartService
     {
         // Ensure the heavy relationships are present.
         if (
-            ! $cart->relationLoaded('items')
-            || ($cart->items->isNotEmpty() && ! $cart->items->first()->relationLoaded('product'))
+            !$cart->relationLoaded('items')
+            || ($cart->items->isNotEmpty() && !$cart->items->first()->relationLoaded('product'))
         ) {
             $cart->load(['items.product', 'items.variant']);
         }
@@ -465,7 +469,7 @@ class CartService
      */
     public function mergeGuestCart(?string $oldSessionId = null): void
     {
-        if (! Auth::check()) {
+        if (!Auth::check()) {
             Log::warning('CartService::mergeGuestCart() aborted — user not authenticated.');
 
             return;
@@ -484,7 +488,7 @@ class CartService
                 ->first();
         }
 
-        if (! $guestCart) {
+        if (!$guestCart) {
             $sessionId = $oldSessionId ?? session()->getId();
             $guestCart = Cart::where('session_id', $sessionId)
                 ->whereNull('user_id')
@@ -492,7 +496,7 @@ class CartService
                 ->first();
         }
 
-        if (! $guestCart || $guestCart->items->isEmpty()) {
+        if (!$guestCart || $guestCart->items->isEmpty()) {
             return;
         }
 
@@ -559,7 +563,7 @@ class CartService
     {
         if ($this->cachedItemKeys === null) {
             $this->cachedItemKeys = $this->getCart()->items
-                ->map(fn ($item) => $this->itemKey($item->product_id, $item->variant_id));
+                ->map(fn($item) => $this->itemKey($item->product_id, $item->variant_id));
         }
 
         return $this->cachedItemKeys;
@@ -570,7 +574,7 @@ class CartService
      */
     private function itemKey(int $productId, ?int $variantId): string
     {
-        return $productId.'-'.($variantId ?? 'null');
+        return $productId . '-' . ($variantId ?? 'null');
     }
 
     /**
@@ -585,5 +589,16 @@ class CartService
         if (app()->has(self::class)) {
             session(['cart_count' => $this->getCount()]);
         }
+    }
+
+    /**
+     * Publicly flush the in-memory cache so the next read re-queries the DB.
+     * Use this when you need fresh cart state without performing a write
+     * (e.g. after switching a product variant on the product detail page).
+     */
+    public function refresh(): void
+    {
+        $this->resolvedCart = null;
+        $this->cachedItemKeys = null;
     }
 }

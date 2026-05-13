@@ -563,7 +563,7 @@
                                     $samePrice = $priceRange['min'] === $priceRange['max'];
                                 @endphp
                                 <div
-                                    class="relative overflow-hidden rounded-lg bg-gradient-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
+                                    class="relative overflow-hidden rounded-lg bg-linear-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
                                     {{-- Decorative icon --}}
                                     <div class="absolute -right-2 -top-2 opacity-10">
                                         <flux:icon.wrench-screwdriver class="size-16 text-secondary" />
@@ -854,31 +854,39 @@
                                 </flux:button>
                             @endif
                         @else
-                            {{-- Quantity stepper — hidden when out of stock --}}
-                            @if ($state !== 'out_of_stock' && $state !== 'none')
+                            {{-- Quantity stepper — always visible when state is known --}}
+                            @if ($state !== 'none')
                                 <div class="mb-1">
-                                    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 mb-2">Quantity
-                                    </p>
-                                    <flux:button.group class="w-max">
-                                        <flux:button icon="minus" wire:click="decreaseCartQuantity"
-                                            class="cursor-pointer text-zinc-500!" title="Decrease"
-                                            size="customer-lg" />
-                                        <flux:input readonly value="{{ $cartQuantity }}"
-                                            class="w-14! outline-none! border-none! ring-0!"
-                                            class:input="text-center! h-[42px]! p-0!" size="customer-lg" />
-                                        <flux:button icon="plus" wire:click="increaseCartQuantity"
-                                            class="cursor-pointer text-zinc-500!" title="Increase"
-                                            size="customer-lg" />
-                                    </flux:button.group>
+                                    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 mb-2">Quantity</p>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" wire:click="decreaseCartQuantity"
+                                            class="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                            aria-label="Decrease quantity"
+                                            @if ($state === 'out_of_stock') disabled @endif>
+                                            <flux:icon.minus class="size-3.5" />
+                                        </button>
+                                        <span
+                                            class="w-10 text-center text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                                            {{ $cartQuantity }}
+                                        </span>
+                                        <button type="button" wire:click="increaseCartQuantity"
+                                            class="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                            aria-label="Increase quantity"
+                                            @if ($state === 'out_of_stock') disabled @endif>
+                                            <flux:icon.plus class="size-3.5" />
+                                        </button>
+                                    </div>
+
                                     @if ($inCart)
-                                        <div class="mt-2 text-sm text-green-600 flex items-center gap-1">
-                                            <flux:icon.check-circle class="size-4" /> In Cart
+                                        <div class="mt-2 flex items-center gap-2 text-sm">
+                                            <flux:icon.check-circle class="size-4 shrink-0 text-green-600" />
+                                            <span class="text-green-600 font-medium">In Cart</span>
                                         </div>
                                     @endif
                                 </div>
                             @endif
 
-                            {{-- Primary actions --}}
+                            {{-- Primary action button --}}
                             @if ($product->type === ProductType::VARIABLE && !$selectedVariantId)
                                 <flux:button variant="customer-primary" size="customer-lg"
                                     class="w-full cursor-pointer" disabled>
@@ -889,17 +897,22 @@
                                     class="w-full cursor-not-allowed" disabled>
                                     Out of Stock
                                 </flux:button>
-                            @elseif ($state === 'backorder' && !$inCart)
+                            @elseif ($inCart)
+                                <flux:button href="{{ route('cart') }}" wire:navigate variant="customer-primary"
+                                    size="customer-lg" class="w-full cursor-pointer" icon="shopping-cart">
+                                    View Cart
+                                </flux:button>
+                            @elseif ($state === 'backorder')
                                 <flux:button wire:click="addToCart" size="customer-lg"
                                     class="w-full cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!"
                                     wire:loading.attr="disabled" wire:target="addToCart">
                                     Pre-order
                                 </flux:button>
-                            @elseif (!$inCart)
+                            @elseif ($state !== 'none')
                                 <flux:button wire:click="addToCart" variant="customer-primary" size="customer-lg"
                                     class="w-full cursor-pointer" wire:loading.attr="disabled"
                                     wire:target="addToCart">
-                                    Add to cart
+                                    Add to Cart
                                 </flux:button>
                             @endif
                         @endif
@@ -1003,14 +1016,14 @@
                             {{-- Quantity Stepper --}}
                             <div class="shrink-0 flex items-center gap-1">
                                 <button type="button" wire:click="decreaseAccessoryQuantity({{ $accessory->id }})"
-                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                                     aria-label="Decrease quantity">
                                     <flux:icon.minus class="size-3" />
                                 </button>
                                 <span
                                     class="w-8 text-center text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $itemQty }}</span>
                                 <button type="button" wire:click="increaseAccessoryQuantity({{ $accessory->id }})"
-                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                                     aria-label="Increase quantity">
                                     <flux:icon.plus class="size-3" />
                                 </button>
@@ -1095,18 +1108,18 @@
                             </div>
 
                             {{-- Quantity Stepper --}}
-                            <div
-                                class="shrink-0 flex items-center border border-zinc-200 dark:border-zinc-700 rounded overflow-hidden">
+                            <div class="shrink-0 flex items-center gap-1">
                                 <button type="button" wire:click="decreaseGroupedQuantity({{ $item->id }})"
-                                    class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer">
+                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                                    aria-label="Decrease quantity">
                                     <flux:icon.minus class="size-3" />
                                 </button>
-                                <span
-                                    class="w-8 h-7 flex items-center justify-center text-sm font-medium text-zinc-800 dark:text-zinc-100 border-x border-zinc-200 dark:border-zinc-700">
+                                <span class="w-8 text-center text-sm font-medium text-zinc-800 dark:text-zinc-100">
                                     {{ $itemQty }}
                                 </span>
                                 <button type="button" wire:click="increaseGroupedQuantity({{ $item->id }})"
-                                    class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer">
+                                    class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                                    aria-label="Increase quantity">
                                     <flux:icon.plus class="size-3" />
                                 </button>
                             </div>

@@ -575,8 +575,11 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->cartItemId = null;
 
         if ($matched) {
-            // Check if already in cart
+            // Flush the CartService in-memory cache so we get fresh DB state
+            // (the singleton retains cached item keys from mount() otherwise)
             $cartService = app(CartService::class);
+            $cartService->refresh();
+
             $this->inCart = $cartService->has($this->product->id, $matched->id);
 
             if ($this->inCart) {
@@ -776,22 +779,24 @@ new #[Layout('layouts.guest')] class extends Component {
         try {
             $newQuantity = $this->cartQuantity + 1;
 
-            // Determine max stock from selected variant or product
-            $source = $this->selectedVariant ?? $this->product;
-            $maxStock = $source->manage_stock ? $source->stock_quantity : PHP_INT_MAX;
+            // Check stock against the variant (if variable) or the product
+            if ($this->selectedVariantId) {
+                $source = ProductVariant::find($this->selectedVariantId);
+            }
 
-            if ($source->manage_stock && $newQuantity > $maxStock) {
+            $source ??= $this->product;
+
+            if ($source->manage_stock && $newQuantity > $source->stock_quantity) {
                 $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
-
                 return;
             }
 
             if ($this->inCart && $this->cartItemId !== null) {
                 $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
+                $this->dispatch('cart-updated');
             }
 
             $this->cartQuantity = $newQuantity;
-            $this->dispatch('cart-updated');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
@@ -803,17 +808,19 @@ new #[Layout('layouts.guest')] class extends Component {
             $newQuantity = $this->cartQuantity - 1;
 
             if ($newQuantity < 1) {
-                $this->removeFromCart($cartService);
-
+                if ($this->inCart) {
+                    $this->removeFromCart($cartService);
+                }
+                // Not in cart — floor at 1
                 return;
             }
 
             if ($this->inCart && $this->cartItemId !== null) {
                 $cartService->updateItemQuantity($this->cartItemId, $newQuantity);
+                $this->dispatch('cart-updated');
             }
 
             $this->cartQuantity = $newQuantity;
-            $this->dispatch('cart-updated');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update cart quantity');
         }
