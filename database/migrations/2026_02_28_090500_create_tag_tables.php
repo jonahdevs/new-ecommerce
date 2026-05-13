@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('tags', function (Blueprint $table) {
@@ -15,6 +14,7 @@ return new class extends Migration
             $table->json('slug');
             $table->string('type')->nullable();
             $table->integer('order_column')->nullable();
+            $table->string('color', 7)->default('#6b7280'); // hex color for badge
 
             $table->timestamps();
         });

@@ -68,18 +68,18 @@ new #[Title('Tags')] class extends Component {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <flux:card>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Tags</div>
-            <div class="text-2xl font-bold text-zinc-900 dark:text-white"
-                x-data="countUp({ to: {{ Tag::count() }} })" x-text="display"></div>
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white" x-data="countUp({ to: {{ Tag::count() }} })" x-text="display">
+            </div>
         </flux:card>
         <flux:card>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tag Types</div>
-            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400"
-                x-data="countUp({ to: {{ $this->types->count() }} })" x-text="display"></div>
+            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-data="countUp({ to: {{ $this->types->count() }} })" x-text="display">
+            </div>
         </flux:card>
         <flux:card>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Tagged Products</div>
-            <div class="text-2xl font-bold text-zinc-500 dark:text-zinc-400"
-                x-data="countUp({ to: {{ \DB::table('taggables')->distinct('taggable_id')->count() }} })" x-text="display"></div>
+            <div class="text-2xl font-bold text-zinc-500 dark:text-zinc-400" x-data="countUp({ to: {{ \DB::table('taggables')->distinct('taggable_id')->count() }} })" x-text="display">
+            </div>
         </flux:card>
     </div>
 
@@ -89,8 +89,7 @@ new #[Title('Tags')] class extends Component {
             <nav class="flex gap-1 overflow-x-auto">
                 <button type="button" wire:click="$set('typeFilter', null)" @class([
                     'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                    'bg-primary text-on-primary font-medium' =>
-                        $typeFilter === null,
+                    'bg-primary text-on-primary font-medium' => $typeFilter === null,
                     'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
                         $typeFilter !== null,
                 ])>
@@ -100,8 +99,7 @@ new #[Title('Tags')] class extends Component {
                     <button type="button" wire:click="$set('typeFilter', '{{ $type }}')"
                         @class([
                             'inline-flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors duration-150 cursor-pointer',
-                            'bg-primary text-on-primary font-medium' =>
-                                $typeFilter === $type,
+                            'bg-primary text-on-primary font-medium' => $typeFilter === $type,
                             'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800' =>
                                 $typeFilter !== $type,
                         ])>
@@ -133,7 +131,11 @@ new #[Title('Tags')] class extends Component {
                 @forelse ($this->tags as $tag)
                     <flux:table.row :key="$tag->id">
                         <flux:table.cell class="ps-4!">
-                            <div class="font-medium text-zinc-800 dark:text-zinc-100">{{ $tag->name }}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-3 h-3 rounded-full shrink-0"
+                                    style="background-color: {{ $tag->color ?: '#6b7280' }}"></span>
+                                <span class="font-medium text-zinc-800 dark:text-zinc-100">{{ $tag->name }}</span>
+                            </div>
                         </flux:table.cell>
 
                         <flux:table.cell>

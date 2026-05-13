@@ -85,13 +85,17 @@
         </flux:card>
 
         {{-- Product Data  --}}
-        <flux:card class="p-0" x-data="{ open: true, tab: 'general' }"
+        <flux:card class="p-0" x-data="{ open: true, tab: $wire.form.type === 'grouped' ? 'linked' : 'general' }"
             x-effect="
-                if (tab === 'shipping' && ($wire.form.is_virtual || $wire.form.type === 'grouped')) { tab = 'general'; }
-                if (tab === 'downloads' && !$wire.form.is_downloadable) { tab = 'general'; }
-                if (tab === 'variations' && $wire.form.type !== 'variable') { tab = 'general'; }
-                if (tab === 'inventory' && $wire.form.type === 'grouped') { tab = 'general'; }
-                if (tab === 'attributes' && ($wire.form.type === 'grouped' || $wire.form.type === 'bundle')) { tab = 'general'; }
+                // Auto-switch tabs based on product type
+                if ($wire.form.type === 'grouped') {
+                    if (tab === 'general' || tab === 'inventory' || tab === 'shipping' || tab === 'attributes') { tab = 'linked'; }
+                } else {
+                    if (tab === 'shipping' && $wire.form.is_virtual) { tab = 'general'; }
+                    if (tab === 'downloads' && !$wire.form.is_downloadable) { tab = 'general'; }
+                    if (tab === 'variations' && $wire.form.type !== 'variable') { tab = 'general'; }
+                    if (tab === 'attributes' && $wire.form.type === 'bundle') { tab = 'general'; }
+                }
             ">
 
             {{-- Card header --}}
@@ -145,6 +149,7 @@
                                     ?
                                     'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium border-r-2 border-zinc-800 dark:border-zinc-200' :
                                     'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300'"
+                                @if ($t['id'] === 'general') x-show="$wire.form.type !== 'grouped'" @endif
                                 @if ($t['id'] === 'shipping') x-show="!$wire.form.is_virtual && $wire.form.type !== 'grouped'" @endif
                                 @if ($t['id'] === 'downloads') x-show="$wire.form.is_downloadable" @endif
                                 @if ($t['id'] === 'variations') x-show="$wire.form.type === 'variable'" @endif
@@ -162,45 +167,12 @@
                         {{-- ── General ── --}}
                         <div x-show="tab === 'general'" x-cloak class="space-y-5">
 
-                            {{-- Grouped Product Notice --}}
-                            <div x-show="$wire.form.type === 'grouped'" x-cloak
-                                class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                <div class="flex items-start gap-3">
-                                    <flux:icon.information-circle variant="outline"
-                                        class="size-5 text-blue-500 shrink-0 mt-0.5" />
-                                    <div class="text-sm text-blue-700 dark:text-blue-300">
-                                        <p class="font-medium">Grouped products have no price</p>
-                                        <p class="mt-1 text-blue-600 dark:text-blue-400">
-                                            Each child product has its own price. Customers select which items to
-                                            purchase
-                                            from the Linked Products tab.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
                             {{-- Bundle Pricing --}}
                             <div x-show="$wire.form.type === 'bundle'" x-cloak class="space-y-5">
-                                <div
-                                    class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                    <div class="flex items-start gap-3">
-                                        <flux:icon.gift variant="outline"
-                                            class="size-5 text-green-500 shrink-0 mt-0.5" />
-                                        <div class="text-sm text-green-700 dark:text-green-300">
-                                            <p class="font-medium">Bundle pricing</p>
-                                            <p class="mt-1 text-green-600 dark:text-green-400">
-                                                Set a bundle price below the combined value of items to offer a
-                                                discount.
-                                                Add items in the Linked Products tab.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div class="grid grid-cols-2 gap-5">
                                     <flux:field>
                                         <div class="flex items-center gap-1.5 mb-1">
-                                            <flux:label>Bundle Price ({{ get_currency_symbol() }})</flux:label>
+                                            <flux:label>Price ({{ get_currency_symbol() }})</flux:label>
                                             <flux:tooltip content="The price customers pay for the entire bundle.">
                                                 <flux:icon.information-circle variant="outline"
                                                     class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />
@@ -253,7 +225,7 @@
                                 <div class="grid grid-cols-2 gap-5">
                                     <flux:field>
                                         <div class="flex items-center gap-1.5 mb-1">
-                                            <flux:label>Regular Price ({{ get_currency_symbol() }})</flux:label>
+                                            <flux:label>Price ({{ get_currency_symbol() }})</flux:label>
                                             <flux:tooltip content="The standard selling price before any discounts.">
                                                 <flux:icon.information-circle variant="outline"
                                                     class="size-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" />

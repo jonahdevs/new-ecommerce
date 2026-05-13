@@ -611,12 +611,16 @@ Short Description <?php echo $__env->renderComponent(); ?>
         
         <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'p-0','xData' => '{ open: true, tab: \'general\' }','xEffect' => '
-                if (tab === \'shipping\' && ($wire.form.is_virtual || $wire.form.type === \'grouped\')) { tab = \'general\'; }
-                if (tab === \'downloads\' && !$wire.form.is_downloadable) { tab = \'general\'; }
-                if (tab === \'variations\' && $wire.form.type !== \'variable\') { tab = \'general\'; }
-                if (tab === \'inventory\' && $wire.form.type === \'grouped\') { tab = \'general\'; }
-                if (tab === \'attributes\' && ($wire.form.type === \'grouped\' || $wire.form.type === \'bundle\')) { tab = \'general\'; }
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'p-0','xData' => '{ open: true, tab: $wire.form.type === \'grouped\' ? \'linked\' : \'general\' }','xEffect' => '
+                // Auto-switch tabs based on product type
+                if ($wire.form.type === \'grouped\') {
+                    if (tab === \'general\' || tab === \'inventory\' || tab === \'shipping\' || tab === \'attributes\') { tab = \'linked\'; }
+                } else {
+                    if (tab === \'shipping\' && $wire.form.is_virtual) { tab = \'general\'; }
+                    if (tab === \'downloads\' && !$wire.form.is_downloadable) { tab = \'general\'; }
+                    if (tab === \'variations\' && $wire.form.type !== \'variable\') { tab = \'general\'; }
+                    if (tab === \'attributes\' && $wire.form.type === \'bundle\') { tab = \'general\'; }
+                }
             ']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::card'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -624,12 +628,16 @@ Short Description <?php echo $__env->renderComponent(); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'p-0','x-data' => '{ open: true, tab: \'general\' }','x-effect' => '
-                if (tab === \'shipping\' && ($wire.form.is_virtual || $wire.form.type === \'grouped\')) { tab = \'general\'; }
-                if (tab === \'downloads\' && !$wire.form.is_downloadable) { tab = \'general\'; }
-                if (tab === \'variations\' && $wire.form.type !== \'variable\') { tab = \'general\'; }
-                if (tab === \'inventory\' && $wire.form.type === \'grouped\') { tab = \'general\'; }
-                if (tab === \'attributes\' && ($wire.form.type === \'grouped\' || $wire.form.type === \'bundle\')) { tab = \'general\'; }
+<?php $component->withAttributes(['class' => 'p-0','x-data' => '{ open: true, tab: $wire.form.type === \'grouped\' ? \'linked\' : \'general\' }','x-effect' => '
+                // Auto-switch tabs based on product type
+                if ($wire.form.type === \'grouped\') {
+                    if (tab === \'general\' || tab === \'inventory\' || tab === \'shipping\' || tab === \'attributes\') { tab = \'linked\'; }
+                } else {
+                    if (tab === \'shipping\' && $wire.form.is_virtual) { tab = \'general\'; }
+                    if (tab === \'downloads\' && !$wire.form.is_downloadable) { tab = \'general\'; }
+                    if (tab === \'variations\' && $wire.form.type !== \'variable\') { tab = \'general\'; }
+                    if (tab === \'attributes\' && $wire.form.type === \'bundle\') { tab = \'general\'; }
+                }
             ']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
@@ -826,6 +834,7 @@ Product Data <?php echo $__env->renderComponent(); ?>
                                     ?
                                     'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium border-r-2 border-zinc-800 dark:border-zinc-200' :
                                     'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300'"
+                                <?php if($t['id'] === 'general'): ?> x-show="$wire.form.type !== 'grouped'" <?php endif; ?>
                                 <?php if($t['id'] === 'shipping'): ?> x-show="!$wire.form.is_virtual && $wire.form.type !== 'grouped'" <?php endif; ?>
                                 <?php if($t['id'] === 'downloads'): ?> x-show="$wire.form.is_downloadable" <?php endif; ?>
                                 <?php if($t['id'] === 'variations'): ?> x-show="$wire.form.type === 'variable'" <?php endif; ?>
@@ -866,80 +875,7 @@ Product Data <?php echo $__env->renderComponent(); ?>
                         <div x-show="tab === 'general'" x-cloak class="space-y-5">
 
                             
-                            <div x-show="$wire.form.type === 'grouped'" x-cloak
-                                class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                <div class="flex items-start gap-3">
-                                    <?php if (isset($component)) { $__componentOriginal1f8061448e375a811323d4736f7bf58b = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal1f8061448e375a811323d4736f7bf58b = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.information-circle','data' => ['variant' => 'outline','class' => 'size-5 text-blue-500 shrink-0 mt-0.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.information-circle'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['variant' => 'outline','class' => 'size-5 text-blue-500 shrink-0 mt-0.5']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal1f8061448e375a811323d4736f7bf58b)): ?>
-<?php $attributes = $__attributesOriginal1f8061448e375a811323d4736f7bf58b; ?>
-<?php unset($__attributesOriginal1f8061448e375a811323d4736f7bf58b); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal1f8061448e375a811323d4736f7bf58b)): ?>
-<?php $component = $__componentOriginal1f8061448e375a811323d4736f7bf58b; ?>
-<?php unset($__componentOriginal1f8061448e375a811323d4736f7bf58b); ?>
-<?php endif; ?>
-                                    <div class="text-sm text-blue-700 dark:text-blue-300">
-                                        <p class="font-medium">Grouped products have no price</p>
-                                        <p class="mt-1 text-blue-600 dark:text-blue-400">
-                                            Each child product has its own price. Customers select which items to
-                                            purchase
-                                            from the Linked Products tab.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            
                             <div x-show="$wire.form.type === 'bundle'" x-cloak class="space-y-5">
-                                <div
-                                    class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                    <div class="flex items-start gap-3">
-                                        <?php if (isset($component)) { $__componentOriginald0fbf3e845befb6e1dacd6bedf8c515a = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginald0fbf3e845befb6e1dacd6bedf8c515a = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.gift','data' => ['variant' => 'outline','class' => 'size-5 text-green-500 shrink-0 mt-0.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::icon.gift'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['variant' => 'outline','class' => 'size-5 text-green-500 shrink-0 mt-0.5']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginald0fbf3e845befb6e1dacd6bedf8c515a)): ?>
-<?php $attributes = $__attributesOriginald0fbf3e845befb6e1dacd6bedf8c515a; ?>
-<?php unset($__attributesOriginald0fbf3e845befb6e1dacd6bedf8c515a); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginald0fbf3e845befb6e1dacd6bedf8c515a)): ?>
-<?php $component = $__componentOriginald0fbf3e845befb6e1dacd6bedf8c515a; ?>
-<?php unset($__componentOriginald0fbf3e845befb6e1dacd6bedf8c515a); ?>
-<?php endif; ?>
-                                        <div class="text-sm text-green-700 dark:text-green-300">
-                                            <p class="font-medium">Bundle pricing</p>
-                                            <p class="mt-1 text-green-600 dark:text-green-400">
-                                                Set a bundle price below the combined value of items to offer a
-                                                discount.
-                                                Add items in the Linked Products tab.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div class="grid grid-cols-2 gap-5">
                                     <?php if (isset($component)) { $__componentOriginaldbce252eb40169cc4a74f0123aabaf0b = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldbce252eb40169cc4a74f0123aabaf0b = $attributes; } ?>
@@ -965,7 +901,7 @@ Product Data <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Bundle Price (<?php echo e(get_currency_symbol()); ?>) <?php echo $__env->renderComponent(); ?>
+Price (<?php echo e(get_currency_symbol()); ?>) <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal8a84eac5abb8af1e2274971f8640b38f)): ?>
 <?php $attributes = $__attributesOriginal8a84eac5abb8af1e2274971f8640b38f; ?>
@@ -1261,7 +1197,7 @@ Sale Price (<?php echo e(get_currency_symbol()); ?>) <?php echo $__env->renderCo
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Regular Price (<?php echo e(get_currency_symbol()); ?>) <?php echo $__env->renderComponent(); ?>
+Price (<?php echo e(get_currency_symbol()); ?>) <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal8a84eac5abb8af1e2274971f8640b38f)): ?>
 <?php $attributes = $__attributesOriginal8a84eac5abb8af1e2274971f8640b38f; ?>

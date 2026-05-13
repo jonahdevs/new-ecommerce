@@ -57,6 +57,10 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
                                 slidesPerGroup: 1,
                                 spaceBetween: 12,
                                 speed: 600,
+                                // Allow clicks on links inside slides
+                                preventClicks: false,
+                                preventClicksPropagation: false,
+                                touchStartPreventDefault: false,
                                 breakpoints: {
                                     375: {
                                         slidesPerView: 2,

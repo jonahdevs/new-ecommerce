@@ -475,7 +475,7 @@ class Product extends Model
                 }
 
                 return match ($this->type->value) {
-                    'variable', 'grouped' => 'from',
+                    'variable' => 'from',
                     default => null,
                 };
             }
@@ -519,7 +519,7 @@ class Product extends Model
 
     /**
      * Calculates the grouped product display price.
-     * Returns "Kit from KES X" — sum of all children × pivot quantities.
+     * Returns price range "KES X — KES Y" showing min and max item prices.
      * Returns null if no grouped products are loaded or priced.
      */
     private function groupedDisplayPrice(): ?string
@@ -533,14 +533,24 @@ class Product extends Model
             return null;
         }
 
-        $total = $items->sum(function ($item) {
-            $price = $item->sale_price ?? $item->price ?? 0;
-            $qty = $item->pivot->quantity ?? 1;
+        $prices = $items
+            ->map(fn($item) => $item->sale_price ?? $item->price ?? 0)
+            ->filter(fn($price) => $price > 0);
 
-            return $price * $qty;
-        });
+        if ($prices->isEmpty()) {
+            return null;
+        }
 
-        return $total > 0 ? format_currency($total) : null;
+        $minPrice = $prices->min();
+        $maxPrice = $prices->max();
+
+        // If all items have the same price, show single price
+        if ($minPrice === $maxPrice) {
+            return format_currency($minPrice);
+        }
+
+        // Show range: "KES 500 — KES 2,500"
+        return format_currency($minPrice) . ' — ' . format_currency($maxPrice);
     }
 
     public function hasDiscount(): bool

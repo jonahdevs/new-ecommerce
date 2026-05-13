@@ -85,25 +85,51 @@ use Livewire\Attributes\Computed;
                 if ($product->type === ProductType::SIMPLE && $product->hasDiscount()) {
                     $badge = [
                         'text' => '-' . $product->discountPercentage(),
-                        'style' => 'background-color: #ef4444;',
+                        'color' => 'bg-red-500',
                     ];
                 }
 
-                // Priority 2: Tags ordered by order_column from admin (if no discount badge)
+                // Priority 2-6: Tags (if no discount badge)
                 if (!$badge && $product->tags->isNotEmpty()) {
-                    // Tags are ordered by order_column (set in admin dashboard)
-                    $topTag = $product->tags->sortBy('order_column')->first();
+                    $tagPriority = [
+                        'sale' => ['priority' => 1, 'color' => 'bg-red-500'],
+                        'clearance' => ['priority' => 2, 'color' => 'bg-orange-500'],
+                        'new arrival' => ['priority' => 3, 'color' => 'bg-emerald-500'],
+                        'best seller' => ['priority' => 4, 'color' => 'bg-amber-500'],
+                        'trending' => ['priority' => 5, 'color' => 'bg-sky-500'],
+                        'featured' => ['priority' => 6, 'color' => 'bg-blue-500'],
+                        'limited edition' => ['priority' => 7, 'color' => 'bg-purple-500'],
+                        'exclusive' => ['priority' => 8, 'color' => 'bg-violet-500'],
+                        'premium' => ['priority' => 9, 'color' => 'bg-slate-600'],
+                        'eco friendly' => ['priority' => 10, 'color' => 'bg-green-600'],
+                    ];
+
+                    $topTag = $product->tags
+                        ->sortBy(fn($t) => $tagPriority[strtolower($t->name)]['priority'] ?? 99)
+                        ->first();
+
+                    if ($topTag) {
+                        $tagKey = strtolower($topTag->name);
+                        $badge = [
+                            'text' => $topTag->name,
+                            'color' => $tagPriority[$tagKey]['color'] ?? 'bg-zinc-500',
+                        ];
+                    }
+                }
+
+                // Priority 7: Bundle product type (only if no other badge)
+                if (!$badge && $product->type === ProductType::BUNDLE) {
                     $badge = [
-                        'text' => $topTag->name,
-                        'style' => $topTag->badgeStyle(),
+                        'text' => 'Bundle',
+                        'color' => 'bg-purple-600',
                     ];
                 }
             ?>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($badge): ?>
                 <div class="absolute top-2 left-0">
-                    <span class="rounded-e-full px-2.5 py-1 text-xs font-medium text-white tracking-wide shadow-sm"
-                        style="<?php echo e($badge['style']); ?>">
+                    <span
+                        class="rounded-e-full <?php echo e($badge['color']); ?> px-2.5 py-1 text-xs font-medium text-white tracking-wide shadow-sm">
                         <?php echo e($badge['text']); ?>
 
                     </span>

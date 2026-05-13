@@ -98,12 +98,20 @@ use Livewire\Attributes\Computed;
                         'style' => $topTag->badgeStyle(),
                     ];
                 }
+
+                // Priority 3: Bundle product type (only if no other badge)
+                if (!$badge && $product->type === ProductType::BUNDLE) {
+                    $badge = [
+                        'text' => 'Bundle',
+                        'style' => 'background-color: #7c3aed;',
+                    ];
+                }
             ?>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($badge): ?>
                 <div class="absolute top-2 left-0">
-                    <span class="rounded-e-full px-2.5 py-1 text-xs font-medium text-white tracking-wide shadow-sm"
-                        style="<?php echo e($badge['style']); ?>">
+                    <span
+                        class="rounded-e-full <?php echo e($badge['color']); ?> px-2.5 py-1 text-xs font-medium text-white tracking-wide shadow-sm">
                         <?php echo e($badge['text']); ?>
 
                     </span>

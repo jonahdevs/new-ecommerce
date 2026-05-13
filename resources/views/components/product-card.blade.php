@@ -195,7 +195,7 @@ new class extends Component {
 
         {{-- ── IMAGE ── --}}
         <div class="relative">
-            <a href="{{ route('products.show', $product) }}" wire:navigate wire:click.stop class="block">
+            <a href="{{ route('products.show', $product) }}" wire:navigate class="block">
                 <figure
                     class="w-full aspect-square overflow-hidden mb-2 relative bg-zinc-50 flex items-center justify-center">
                     @if ($product->image_url)
@@ -208,62 +208,37 @@ new class extends Component {
                 </figure>
             </a>
 
-            {{-- Left-side badges — top-left stack: discount, type, tags --}}
+            {{-- Left-side badge — show only ONE badge with priority --}}
             @php
-                $tagPriority = [
-                    'sale' => 0,
-                    'clearance' => 1,
-                    'new arrival' => 2,
-                    'best seller' => 3,
-                    'trending' => 4,
-                    'featured' => 5,
-                    'limited edition' => 6,
-                    'exclusive' => 7,
-                    'premium' => 8,
-                    'eco friendly' => 9,
-                ];
-                $tagColors = [
-                    'sale' => 'bg-red-500',
-                    'clearance' => 'bg-orange-500',
-                    'new arrival' => 'bg-emerald-500',
-                    'best seller' => 'bg-amber-500',
-                    'trending' => 'bg-sky-500',
-                    'featured' => 'bg-blue-500',
-                    'limited edition' => 'bg-purple-500',
-                    'exclusive' => 'bg-violet-500',
-                    'premium' => 'bg-slate-600',
-                    'eco friendly' => 'bg-green-600',
-                ];
-                $sortedTags = $product->tags
-                    ->sortBy(fn($t) => $tagPriority[strtolower($t->name)] ?? 99)
-                    ->take(1)
-                    ->values();
+                $badge = null;
+
+                // Priority 1: Discount percentage (only for simple products with sale)
+                if ($product->type === ProductType::SIMPLE && $product->hasDiscount()) {
+                    $badge = [
+                        'text' => '-' . $product->discountPercentage(),
+                        'style' => 'background-color: #ef4444;',
+                    ];
+                }
+
+                // Priority 2: Tags ordered by order_column from admin (if no discount badge)
+                if (!$badge && $product->tags->isNotEmpty()) {
+                    // Tags are ordered by order_column (set in admin dashboard)
+                    $topTag = $product->tags->sortBy('order_column')->first();
+                    $badge = [
+                        'text' => $topTag->name,
+                        'style' => $topTag->badgeStyle(),
+                    ];
+                }
             @endphp
-            <div class="absolute top-2 left-0 flex flex-col gap-1">
-                @if ($product->type === ProductType::SIMPLE && $product->hasDiscount())
-                    <span class="rounded-e-full bg-red-400 px-2 py-1 text-xs font-medium text-white tracking-wide">
-                        -{{ $product->discountPercentage() }}
-                    </span>
-                @endif
 
-                @if ($product->type === ProductType::VARIABLE)
-                    <span class="rounded-e-full bg-secondary px-2 py-1 text-xs font-medium text-white tracking-wide">
-                        Options
+            @if ($badge)
+                <div class="absolute top-2 left-0">
+                    <span class="rounded-e-full px-2.5 py-1 text-xs font-medium text-white tracking-wide shadow-sm"
+                        style="{{ $badge['style'] }}">
+                        {{ $badge['text'] }}
                     </span>
-                @elseif ($product->type === ProductType::GROUPED)
-                    <span class="rounded-e-full bg-zinc-700 px-2 py-1 text-xs font-medium text-white tracking-wide">
-                        Kit
-                    </span>
-                @endif
-
-                @foreach ($sortedTags as $tag)
-                    @php $color = $tagColors[strtolower($tag->name)] ?? 'bg-zinc-500'; @endphp
-                    <span
-                        class="rounded-e-full px-2.5 py-0.5 text-xs font-semibold text-white tracking-wide {{ $color }}">
-                        {{ $tag->name }}
-                    </span>
-                @endforeach
-            </div>
+                </div>
+            @endif
 
             {{-- Quick action buttons --}}
             <div
@@ -305,8 +280,8 @@ new class extends Component {
             @endif
 
             {{-- Name --}}
-            <a href="{{ route('products.show', $product) }}" wire:click.prevent="goToProduct"
-                class="text-sm text-zinc-700 line-clamp-2 font-medium tracking-wide">
+            <a href="{{ route('products.show', $product) }}" wire:navigate
+                class="text-sm text-zinc-700 line-clamp-2 font-medium tracking-wide hover:text-secondary transition-colors">
                 {{ $product->name }}
             </a>
 

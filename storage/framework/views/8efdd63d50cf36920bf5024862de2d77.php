@@ -50,6 +50,10 @@ use App\Services\ProductService;
                         spaceBetween: 12,
                         loop: <?php echo e($loop ? 'true' : 'false'); ?>,
                         speed: <?php echo e($speed); ?>,
+                        // Allow clicks on links inside slides
+                        preventClicks: false,
+                        preventClicksPropagation: false,
+                        touchStartPreventDefault: false,
                         <?php if($autoplay): ?> autoplay: {
                                 delay: <?php echo e($autoplayDelay); ?>,
                                 disableOnInteraction: false,

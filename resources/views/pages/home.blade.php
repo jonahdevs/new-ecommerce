@@ -422,6 +422,10 @@ new #[Layout('layouts.guest')] class extends Component {
                                 spaceBetween: 12,
                                 loop: true,
                                 speed: 400,
+                                // Allow clicks on links inside slides
+                                preventClicks: false,
+                                preventClicksPropagation: false,
+                                touchStartPreventDefault: false,
                                 breakpoints: {
                                     375: { slidesPerView: 2 },
                                     640: { slidesPerView: 3 },
@@ -494,6 +498,10 @@ new #[Layout('layouts.guest')] class extends Component {
                                 slidesPerGroup: 1,
                                 spaceBetween: 12,
                                 speed: 600,
+                                // Allow clicks on links inside slides
+                                preventClicks: false,
+                                preventClicksPropagation: false,
+                                touchStartPreventDefault: false,
                                 breakpoints: {
                                     375: {
                                         slidesPerView: 2,

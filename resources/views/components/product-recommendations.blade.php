@@ -61,6 +61,10 @@ new #[Defer] class extends Component {
                         spaceBetween: 12,
                         loop: {{ $loop ? 'true' : 'false' }},
                         speed: {{ $speed }},
+                        // Allow clicks on links inside slides
+                        preventClicks: false,
+                        preventClicksPropagation: false,
+                        touchStartPreventDefault: false,
                         @if ($autoplay) autoplay: {
                                 delay: {{ $autoplayDelay }},
                                 disableOnInteraction: false,
