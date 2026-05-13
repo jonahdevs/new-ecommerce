@@ -21,9 +21,10 @@ use App\Services\ProductService;
 
             <?php echo e(match ($type) {
                 'similar' => 'Similar Products',
+                'up_sells' => 'You May Also Like',
                 'bought_together' => 'Frequently Bought Together',
                 'recently_viewed' => 'Recently Viewed Items',
-                default => 'You may also like',
+                default => 'You May Also Like',
             }); ?>
 
          <?php echo $__env->renderComponent(); ?>

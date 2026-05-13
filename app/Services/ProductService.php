@@ -10,12 +10,12 @@ class ProductService
     public function recommend(string $type, array $context = [], int $limit = 8)
     {
         return match ($type) {
-            'similar'         => $this->similarProducts($context['product'], $limit),
-            'cross_sell'      => $this->crossSells($context['product'], $limit),
-            'up_sells'        => $this->upSells($context['product'], $limit),
+            'similar' => $this->similarProducts($context['product'], $limit),
+            'cross_sell' => $this->crossSells($context['product'], $limit),
+            'up_sells' => $this->upSells($context['product'], $limit),
             'recently_viewed' => $this->recentlyViewed($limit),
-            'cart_related'    => $this->fromCart($limit),
-            default           => collect(),
+            'cart_related' => $this->fromCart($limit),
+            default => collect(),
         };
     }
 
@@ -28,7 +28,19 @@ class ProductService
     protected function crossSells(Product $product, int $limit): \Illuminate\Support\Collection
     {
         $crossSells = $product->crossSells()
-            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->select([
+                'products.id',
+                'products.name',
+                'products.slug',
+                'products.brand_id',
+                'products.price',
+                'products.sale_price',
+                'products.image_path',
+                'products.short_description',
+                'products.type',
+                'products.requires_quotation',
+                'products.reviews_enabled',
+            ])
             ->with([
                 'brand:id,name,slug',
                 'images' => fn($q) => $q->limit(1),
@@ -64,7 +76,19 @@ class ProductService
     protected function upSells(Product $product, int $limit): \Illuminate\Support\Collection
     {
         $upSells = $product->upsells()
-            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled'])
+            ->select([
+                'products.id',
+                'products.name',
+                'products.slug',
+                'products.brand_id',
+                'products.price',
+                'products.sale_price',
+                'products.image_path',
+                'products.short_description',
+                'products.type',
+                'products.requires_quotation',
+                'products.reviews_enabled',
+            ])
             ->with([
                 'brand:id,name,slug',
                 'images' => fn($q) => $q->limit(1),
@@ -208,16 +232,18 @@ class ProductService
 
     protected function fromCart(int $limit): \Illuminate\Support\Collection
     {
-        $cart      = app(CartService::class)->getCart();
+        $cart = app(CartService::class)->getCart();
         $cartItems = $cart->items()->with('product')->get();
 
-        if ($cartItems->isEmpty()) return collect();
+        if ($cartItems->isEmpty())
+            return collect();
 
-        $cartProductIds  = $cartItems->pluck('product_id')->toArray();
+        $cartProductIds = $cartItems->pluck('product_id')->toArray();
         $relatedProducts = collect();
 
         foreach ($cartItems as $cartItem) {
-            if (!$cartItem->product) continue;
+            if (!$cartItem->product)
+                continue;
 
             // Explicit cross-sells first
             $crossSells = $cartItem->product->crossSells()
@@ -354,7 +380,7 @@ class ProductService
             return;
         }
 
-        $user       = Auth::user();
+        $user = Auth::user();
         $sessionIds = session()->get('recently_viewed_products', []);
 
         if (empty($sessionIds)) {
@@ -365,7 +391,7 @@ class ProductService
             ->get(['products.id', 'recently_viewed_products.viewed_at'])
             ->keyBy('id');
 
-        $syncData  = [];
+        $syncData = [];
         $timestamp = now();
 
         foreach ($sessionIds as $index => $productId) {

@@ -69,7 +69,7 @@ new #[Layout('layouts.guest')] class extends Component {
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'crossSells' => fn($q) => $q->active()->visible(), 'accessories' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
+        $product->load(['images', 'brand', 'categories', 'accessories' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
 
         if ($product->type->value === 'grouped') {
             $product->load([

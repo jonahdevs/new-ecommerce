@@ -42,9 +42,10 @@ new #[Defer] class extends Component {
             class="text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold! mb-4!">
             {{ match ($type) {
                 'similar' => 'Similar Products',
+                'up_sells' => 'You May Also Like',
                 'bought_together' => 'Frequently Bought Together',
                 'recently_viewed' => 'Recently Viewed Items',
-                default => 'You may also like',
+                default => 'You May Also Like',
             } }}
         </flux:heading>
 

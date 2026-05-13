@@ -2307,7 +2307,7 @@ unset($__split);
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('product-recommendations', ['type' => 'similar','context' => ['product' => $product]]);
+[$__name, $__params] = $__split('product-recommendations', ['type' => 'up_sells','context' => ['product' => $product]]);
 
 $__keyOuter = $__key ?? null;
 

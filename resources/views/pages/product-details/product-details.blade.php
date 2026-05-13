@@ -1004,7 +1004,7 @@
             </div>
         </div>
 
-        <livewire:product-recommendations type="similar" :context="['product' => $product]" />
+        <livewire:product-recommendations type="up_sells" :context="['product' => $product]" />
         <livewire:product-recommendations type="recently_viewed" />
     </div>
 
