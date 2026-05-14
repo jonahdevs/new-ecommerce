@@ -415,7 +415,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 ?>
 
 @placeholder
-    <div>
+    <div class="min-h-screen">
         {{-- Breadcrumb skeleton --}}
         <div class="bg-white border-b border-zinc-200 py-3">
             <div class="container px-4 mx-auto flex items-center gap-3">

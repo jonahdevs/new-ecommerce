@@ -35,7 +35,7 @@ unset($__defined_vars, $__key, $__value); ?>
     <?php echo $__env->make('partials.head', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </head>
 
-<body <?php echo e($attributes->merge(['class' => 'bg-white text-on-surface font-sans min-h-screen'])); ?>>
+<body <?php echo e($attributes->merge(['class' => 'bg-white text-on-surface font-sans min-h-screen flex flex-col'])); ?>>
 
     
     <div class="sticky top-0 left-0 z-20 w-full">
@@ -228,7 +228,7 @@ unset($__split);
 ?>
     </div>
 
-    <main>
+    <main class="flex-1 bg-white">
         <?php echo e($slot); ?>
 
     </main>

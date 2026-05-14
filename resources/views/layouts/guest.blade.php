@@ -7,7 +7,7 @@
     @include('partials.head')
 </head>
 
-<body {{ $attributes->merge(['class' => 'bg-white text-on-surface font-sans min-h-screen']) }}>
+<body {{ $attributes->merge(['class' => 'bg-white text-on-surface font-sans min-h-screen flex flex-col']) }}>
 
     {{-- STICKY SECTION: Promo Bar + Main Header --}}
     <div class="sticky top-0 left-0 z-20 w-full">
@@ -108,7 +108,7 @@
         <livewire:app-bar-categories />
     @endpersist
 
-    <main>
+    <main class="flex-1 bg-white">
         {{ $slot }}
     </main>
 

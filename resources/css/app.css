@@ -186,7 +186,8 @@
     --color-accent-content: var(--primary);
     --color-accent-foreground: var(--on-primary);
 
-    --color-input-ring: #64748b; /* slate-500 — neutral, never primary */
+    --color-input-ring: #64748b;
+    /* slate-500 — neutral, never primary */
     --color-input-ring-offset: #ffffff;
 
     --color-surface-alt: var(--surface-variant);
@@ -197,6 +198,7 @@
    Re-asserted after DaisyUI loads so they always win.
    ============================================================ */
 @layer theme {
+
     /* Global dark — for Flux components outside the admin layout */
     .dark {
         --color-accent: #ffffff;
@@ -222,6 +224,7 @@
    7. BASE LAYER
    ============================================================ */
 @layer base {
+
     /* Explicit reset — Tailwind v4 preflight no longer guarantees
        body { margin: 0 } and third-party CSS (e.g. Swiper) loads
        before ours and can re-introduce browser defaults. */
@@ -285,7 +288,7 @@ select:focus[data-flux-control] {
    9b. CUSTOMER SIDEBAR
    ============================================================ */
 .customer-sidebar [data-flux-navlist-item] {
-    @apply rounded-none py-5! font-normal!;
+    @apply !rounded-none !py-5 !font-normal;
 }
 
 .customer-sidebar [data-flux-navlist-item][data-current] {
@@ -334,7 +337,7 @@ select:focus[data-flux-control] {
 /* ============================================================
    11. MARYUI OVERRIDES
    ============================================================ */
-.mary-table-pagination span[aria-current="page"] > span {
+.mary-table-pagination span[aria-current="page"]>span {
     background-color: var(--primary);
     @apply text-white;
 }
@@ -403,8 +406,8 @@ select:focus[data-flux-control] {
     @apply text-white;
 }
 
-[data-flux-sidebar] [data-flux-navlist-group] > div,
-[data-flux-sidebar] [data-flux-navlist-group] > ul {
+[data-flux-sidebar] [data-flux-navlist-group]>div,
+[data-flux-sidebar] [data-flux-navlist-group]>ul {
     @apply bg-transparent;
 }
 

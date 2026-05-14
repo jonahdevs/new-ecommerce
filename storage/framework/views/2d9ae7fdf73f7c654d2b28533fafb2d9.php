@@ -1,5 +1,5 @@
 <!-- ====== Footer Section Start -->
-<footer class="relative z-10 bg-inverse-surface text-inverse-on-surface pb-10 pt-20">
+<footer class="relative bg-inverse-surface text-inverse-on-surface pb-10 pt-20">
     <div class="container mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8">
 
