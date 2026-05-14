@@ -430,19 +430,19 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         {{-- Category banner skeleton --}}
         <div class="relative bg-zinc-800 overflow-hidden">
-            <flux:skeleton animate="shimmer" class="absolute inset-0 w-full h-40 opacity-30" />
+            <flux:skeleton animate="shimmer" class="absolute inset-0 w-full h-full opacity-30" />
             <div class="relative container mx-auto px-4 py-8 sm:py-10">
                 <flux:skeleton animate="shimmer" class="w-64 h-8 sm:h-10 mb-2 bg-zinc-600" />
-                <flux:skeleton animate="shimmer" class="w-96 h-4 sm:h-5 bg-zinc-600" />
+                <flux:skeleton animate="shimmer" class="w-96 max-w-full h-4 sm:h-5 bg-zinc-600" />
             </div>
         </div>
 
         {{-- Sub-category pills skeleton --}}
         <div class="border-b bg-white">
-            <div class="container mx-auto px-4 py-3 flex items-center gap-2 overflow-x-auto">
-                <flux:skeleton animate="shimmer" class="shrink-0 w-12 h-7 rounded-full" />
-                @for ($i = 0; $i < 4; $i++)
-                    <flux:skeleton animate="shimmer" class="shrink-0 w-20 h-7 rounded-full" />
+            <div class="container mx-auto px-4 py-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
+                <flux:skeleton animate="shimmer" class="shrink-0 w-12 h-8 rounded-full" />
+                @for ($i = 0; $i < 5; $i++)
+                    <flux:skeleton animate="shimmer" class="shrink-0 w-24 h-8 rounded-full" />
                 @endfor
             </div>
         </div>
@@ -450,8 +450,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         <div class="container mx-auto px-4 py-4">
             {{-- Mobile filter toggle + sort skeleton --}}
             <div class="lg:hidden flex items-center justify-between mb-4 gap-3">
-                <flux:skeleton animate="shimmer" class="w-20 h-9" />
-                <flux:skeleton animate="shimmer" class="w-32 h-9" />
+                <flux:skeleton animate="shimmer" class="w-24 h-10 rounded-md" />
+                <flux:skeleton animate="shimmer" class="w-36 h-10 rounded-md" />
             </div>
 
             <div class="flex gap-6">
@@ -459,53 +459,63 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 <aside class="hidden lg:block w-64 shrink-0">
                     <div class="sticky top-34 bg-white rounded-sm border">
                         <div class="px-3 py-2 border-b flex items-center justify-between">
-                            <flux:skeleton animate="shimmer" class="w-16 h-5" />
-                            <flux:skeleton animate="shimmer" class="w-12 h-3" />
+                            <flux:skeleton animate="shimmer" class="w-16 h-6" />
+                            <flux:skeleton animate="shimmer" class="w-14 h-4" />
                         </div>
                         <div class="divide-y">
-                            {{-- Search filter --}}
-                            <div class="p-4 space-y-3">
-                                <flux:skeleton animate="shimmer" class="w-16 h-4" />
-                                <flux:skeleton animate="shimmer" class="w-full h-9" />
-                            </div>
-                            {{-- Brand filter --}}
-                            <div class="p-4 space-y-3">
-                                <flux:skeleton animate="shimmer" class="w-12 h-4" />
-                                <flux:skeleton animate="shimmer" class="w-full h-8" />
-                                @for ($j = 0; $j < 5; $j++)
-                                    <div class="flex items-center gap-2">
-                                        <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                                        <flux:skeleton animate="shimmer" class="w-20 h-4" />
-                                    </div>
+                            {{-- Subcategories filter --}}
+                            <div class="p-4 space-y-2">
+                                <flux:skeleton animate="shimmer" class="w-24 h-4 mb-3" />
+                                @for ($j = 0; $j < 4; $j++)
+                                    <flux:skeleton animate="shimmer" class="w-full h-9 rounded" />
                                 @endfor
                             </div>
                             {{-- Price filter --}}
                             <div class="p-4 space-y-3">
-                                <flux:skeleton animate="shimmer" class="w-10 h-4" />
-                                <div class="flex gap-2">
-                                    <flux:skeleton animate="shimmer" class="flex-1 h-9" />
-                                    <flux:skeleton animate="shimmer" class="flex-1 h-9" />
+                                <div class="flex items-center justify-between">
+                                    <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-12 h-4" />
                                 </div>
-                                <flux:skeleton animate="shimmer" class="w-full h-8" />
+                                <div class="flex items-center justify-between">
+                                    <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                </div>
+                                <flux:skeleton animate="shimmer" class="w-full h-2 rounded-full" />
+                                <div class="flex gap-2">
+                                    <flux:skeleton animate="shimmer" class="flex-1 h-9 rounded" />
+                                    <flux:skeleton animate="shimmer" class="flex-1 h-9 rounded" />
+                                </div>
                             </div>
                             {{-- Rating filter --}}
-                            <div class="p-4 space-y-3">
-                                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                            <div class="p-4 space-y-2">
+                                <flux:skeleton animate="shimmer" class="w-14 h-4 mb-3" />
                                 @for ($j = 0; $j < 4; $j++)
                                     <div class="flex items-center gap-2">
-                                        <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                                        <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                        <flux:skeleton animate="shimmer" class="w-4 h-4 rounded-full" />
+                                        <flux:skeleton animate="shimmer" class="w-24 h-4" />
                                     </div>
                                 @endfor
                             </div>
-                            {{-- Stock & Sale filters --}}
-                            <div class="p-4 space-y-3">
+                            {{-- Brand filter --}}
+                            <div class="p-4 space-y-2">
+                                <flux:skeleton animate="shimmer" class="w-12 h-4 mb-3" />
+                                <flux:skeleton animate="shimmer" class="w-full h-9 rounded" />
+                                @for ($j = 0; $j < 5; $j++)
+                                    <div class="flex items-center gap-2 py-1">
+                                        <flux:skeleton animate="shimmer" class="w-4 h-4 rounded" />
+                                        <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                    </div>
+                                @endfor
+                            </div>
+                            {{-- More filters --}}
+                            <div class="p-4 space-y-2">
+                                <flux:skeleton animate="shimmer" class="w-20 h-4 mb-3" />
                                 <div class="flex items-center gap-2">
-                                    <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-4 h-4 rounded" />
                                     <flux:skeleton animate="shimmer" class="w-16 h-4" />
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-4 h-4 rounded" />
                                     <flux:skeleton animate="shimmer" class="w-14 h-4" />
                                 </div>
                             </div>
@@ -518,21 +528,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     {{-- Header section --}}
                     <div class="mb-4">
                         <div class="hidden lg:flex items-center justify-between mb-2">
-                            <div>
-                                <flux:skeleton animate="shimmer" class="w-40 h-4" />
+                            <div class="space-y-1">
+                                <flux:skeleton animate="shimmer" class="w-48 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-32 h-4" />
                             </div>
-                            <flux:skeleton animate="shimmer" class="w-36 h-9" />
+                            <flux:skeleton animate="shimmer" class="w-40 h-10 rounded" />
                         </div>
 
                         {{-- Mobile product count --}}
                         <flux:skeleton animate="shimmer" class="lg:hidden w-32 h-4 mb-3" />
-
-                        {{-- Filter pills skeleton --}}
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <flux:skeleton animate="shimmer" class="w-20 h-6" />
-                            <flux:skeleton animate="shimmer" class="w-16 h-6" />
-                            <flux:skeleton animate="shimmer" class="w-24 h-6" />
-                        </div>
                     </div>
 
                     {{-- Products grid skeleton --}}

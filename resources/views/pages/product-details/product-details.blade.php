@@ -27,9 +27,13 @@
                         {{-- Image gallery skeleton --}}
                         <div class="lg:col-span-3">
                             <div class="lg:sticky lg:top-24">
-                                <div class="flex flex-col gap-3 md:flex-row md:items-stretch">
+                                <div class="flex flex-col gap-3 md:flex-row md:items-start">
                                     {{-- Main image --}}
-                                    <flux:skeleton animate="shimmer" class="flex-1 aspect-square rounded-lg" />
+                                    <div class="w-full md:flex-1 md:min-w-0">
+                                        <div class="aspect-square w-full">
+                                            <flux:skeleton animate="shimmer" class="w-full h-full rounded-lg" />
+                                        </div>
+                                    </div>
                                     {{-- Thumbnails — below on mobile, left on md+ --}}
                                     <div class="flex gap-2 md:flex-col md:shrink-0 md:w-20 md:order-first">
                                         @for ($i = 0; $i < 4; $i++)
