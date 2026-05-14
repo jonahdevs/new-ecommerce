@@ -183,10 +183,10 @@ use Artesaos\SEOTools\Facades\JsonLd;
 
     
     <section class="border-y border-zinc-200 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-zinc-100">
+        <div class="container @container/features mx-auto px-4">
+            <div class="grid grid-cols-2 @2xl/features:grid-cols-3 @5xl/features:grid-cols-5 divide-x divide-zinc-100">
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -238,7 +238,7 @@ In Kitchen Equipment <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -290,7 +290,7 @@ Quality Assurance <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <?php if (isset($component)) { $__componentOriginald247533b0158ad1b5720129b2b0e6515 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald247533b0158ad1b5720129b2b0e6515 = $attributes; } ?>
@@ -360,7 +360,7 @@ Bespoke Solutions <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="1.5" stroke="currentColor">
@@ -412,7 +412,7 @@ Countrywide Shipping <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                 </div>
 
-                <div class="hidden lg:flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="hidden @5xl/features:flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5"
                             viewBox="0 0 24 24">
@@ -468,18 +468,18 @@ Professional Setup <?php echo $__env->renderComponent(); ?>
         </div>
     </section>
 
-    <div class="container mx-auto px-4 mt-5 md:mt-7">
-        <div class="pb-6">
+    <div class="container @container/categories mx-auto px-4 mt-5 md:mt-7">
+        <div class="pb-4 @md/categories:pb-6">
             <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'lg','level' => '2','class' => 'text-lg! sm:text-xl! md:text-2xl! lg:text-3xl! font-serif font-semibold']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'lg','level' => '2','class' => 'text-lg! @sm/categories:text-xl! @md/categories:text-2xl! @2xl/categories:text-3xl! font-serif font-semibold']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'lg','level' => '2','class' => 'text-lg! sm:text-xl! md:text-2xl! lg:text-3xl! font-serif font-semibold']); ?>
+<?php $component->withAttributes(['size' => 'lg','level' => '2','class' => 'text-lg! @sm/categories:text-xl! @md/categories:text-2xl! @2xl/categories:text-3xl! font-serif font-semibold']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                 Top Categories
@@ -502,12 +502,12 @@ Professional Setup <?php echo $__env->renderComponent(); ?>
     </section>
 
     
-    <div class="container mx-auto px-0 sm:px-4 mt-5 md:mt-7">
-        <div class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 lg:grid-cols-6">
+    <div class="container @container/newarrivals mx-auto px-0 sm:px-4 mt-5 md:mt-7">
+        <div class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 @4xl/newarrivals:grid-cols-6">
             
             <div
-                class="lg:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 lg:py-8
-                border-b border-white/10 lg:border-b-0 lg:border-r lg:border-white/10">
+                class="@4xl/newarrivals:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 @4xl/newarrivals:py-8
+                border-b border-white/10 @4xl/newarrivals:border-b-0 @4xl/newarrivals:border-r @4xl/newarrivals:border-white/10">
                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-white/60 text-xs! font-semibold uppercase tracking-widest mb-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -611,19 +611,19 @@ New
         </div>
     </div>
 
-    <div class="container mx-auto max-sm:px-0 px-4 mt-5 md:mt-7">
+    <div class="container @container/related mx-auto px-4 mt-5 md:mt-7">
         <div class="">
             <section class="flex items-center justify-between pb-4 ">
                 <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'lg','level' => '2','class' => 'text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'lg','level' => '2','class' => 'text-base! @sm/related:text-lg! @md/related:text-xl! @2xl/related:text-2xl! @4xl/related:text-3xl! font-serif! font-semibold!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'lg','level' => '2','class' => 'text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold!']); ?>
+<?php $component->withAttributes(['size' => 'lg','level' => '2','class' => 'text-base! @sm/related:text-lg! @md/related:text-xl! @2xl/related:text-2xl! @4xl/related:text-3xl! font-serif! font-semibold!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     You May Also Like
@@ -640,14 +640,14 @@ New
 
                 <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => route('shop.index'),'wire:navigate' => true,'class' => 'text-xs sm:text-sm md:text-base']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => route('shop.index'),'wire:navigate' => true,'class' => 'text-xs @sm/related:text-sm @md/related:text-base']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('shop.index')),'wire:navigate' => true,'class' => 'text-xs sm:text-sm md:text-base']); ?>
+<?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('shop.index')),'wire:navigate' => true,'class' => 'text-xs @sm/related:text-sm @md/related:text-base']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 View all
                  <?php echo $__env->renderComponent(); ?>
@@ -668,17 +668,17 @@ View all
     
     <section class="container @container/locations mx-auto px-4 mt-5 md:mt-7 mb-12">
 
-        <div class="pb-6">
+        <div class="pb-4 @md/locations:pb-6">
             <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'xl','level' => '2','class' => 'text-lg! sm:text-xl! md:text-2xl! lg:text-3xl! font-serif! font-semibold!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'xl','level' => '2','class' => 'text-lg! @sm/locations:text-xl! @md/locations:text-2xl! @3xl/locations:text-3xl! font-serif! font-semibold!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'xl','level' => '2','class' => 'text-lg! sm:text-xl! md:text-2xl! lg:text-3xl! font-serif! font-semibold!']); ?>
+<?php $component->withAttributes(['size' => 'xl','level' => '2','class' => 'text-lg! @sm/locations:text-xl! @md/locations:text-2xl! @3xl/locations:text-3xl! font-serif! font-semibold!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                 Our
@@ -695,14 +695,14 @@ View all
 <?php endif; ?>
             <?php if (isset($component)) { $__componentOriginal43e8c568bbb8b06b9124aad3ccf4ec97 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal43e8c568bbb8b06b9124aad3ccf4ec97 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::subheading','data' => ['class' => 'text-xs! sm:text-sm! md:text-base! mt-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::subheading','data' => ['class' => 'text-xs! @sm/locations:text-sm! @md/locations:text-base! mt-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::subheading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! md:text-base! mt-2']); ?>
+<?php $component->withAttributes(['class' => 'text-xs! @sm/locations:text-sm! @md/locations:text-base! mt-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 From local hubs to a continental
                 presence.
@@ -770,26 +770,26 @@ From local hubs to a continental
                 <div class="group/card bg-white rounded-md overflow-hidden ring-1 ring-zinc-200/80">
 
                     
-                    <div class="w-full h-60 overflow-hidden">
+                    <div class="w-full h-48 @md/locations:h-60 overflow-hidden">
                         <img src="<?php echo e(asset($location['image'])); ?>" alt="<?php echo e($location['city']); ?> showroom"
                             loading="lazy" class="w-full h-full object-cover object-center">
                     </div>
 
                     
-                    <div class="p-5">
+                    <div class="p-4 @md/locations:p-5">
 
                         
                         <div class="flex items-center justify-between gap-2 mb-4">
                             <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '3','class' => 'text-base! sm:text-lg! md:text-xl! font-serif!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '3','class' => 'text-base! @sm/locations:text-lg! @md/locations:text-xl! font-serif!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'base','level' => '3','class' => 'text-base! sm:text-lg! md:text-xl! font-serif!']); ?>
+<?php $component->withAttributes(['size' => 'base','level' => '3','class' => 'text-base! @sm/locations:text-lg! @md/locations:text-xl! font-serif!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                 <?php echo e($location['city']); ?>
@@ -805,7 +805,7 @@ From local hubs to a continental
 <?php unset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
 <?php endif; ?>
                             <img src="<?php echo e(asset($location['flag'])); ?>" alt="<?php echo e($location['flag_alt']); ?>"
-                                class="size-5 sm:size-6 rounded-full object-cover">
+                                class="size-5 @sm/locations:size-6 rounded-full object-cover">
                         </div>
 
                         
@@ -814,17 +814,17 @@ From local hubs to a continental
                             
                             <div class="flex items-start gap-3">
                                 <div
-                                    class="shrink-0 mt-0.5 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
+                                    class="shrink-0 mt-0.5 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <?php if (isset($component)) { $__componentOriginal0d48bd54d72df81b49ee07c1a3735f04 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0d48bd54d72df81b49ee07c1a3735f04 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.map-pin','data' => ['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.map-pin','data' => ['class' => 'w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.map-pin'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']); ?>
+<?php $component->withAttributes(['class' => 'w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -840,14 +840,14 @@ From local hubs to a continental
                                 </div>
                                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0638ebfbd490c7a414275d493e14cb4e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! sm:text-sm! text-zinc-500 leading-relaxed pt-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::text','data' => ['class' => 'text-xs! @sm/locations:text-sm! text-zinc-500 leading-relaxed pt-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::text'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'text-xs! sm:text-sm! text-zinc-500 leading-relaxed pt-1']); ?>
+<?php $component->withAttributes(['class' => 'text-xs! @sm/locations:text-sm! text-zinc-500 leading-relaxed pt-1']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                     <?php echo e($location['address']); ?> <?php echo $__env->renderComponent(); ?>
@@ -865,17 +865,17 @@ From local hubs to a continental
                             
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
+                                    class="shrink-0 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <?php if (isset($component)) { $__componentOriginal3b273e6b331c9518de08da49e1886441 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b273e6b331c9518de08da49e1886441 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.phone','data' => ['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.phone','data' => ['class' => 'w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.phone'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']); ?>
+<?php $component->withAttributes(['class' => 'w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -891,14 +891,14 @@ From local hubs to a continental
                                 </div>
                                 <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! @sm/locations:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!']); ?>
+<?php $component->withAttributes(['href' => 'tel:'.e($location['tel']).'','class' => 'text-xs! @sm/locations:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                     <?php echo e($location['phone']); ?>
@@ -918,17 +918,17 @@ From local hubs to a continental
                             
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
+                                    class="shrink-0 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <?php if (isset($component)) { $__componentOriginalb2620669e6f3f9a8ec8b91c4a73fca6f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalb2620669e6f3f9a8ec8b91c4a73fca6f = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.envelope','data' => ['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.envelope','data' => ['class' => 'w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.envelope'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-3 h-3 sm:w-3.5 sm:h-3.5']); ?>
+<?php $component->withAttributes(['class' => 'w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -944,14 +944,14 @@ From local hubs to a continental
                                 </div>
                                 <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! @sm/locations:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!']); ?>
+<?php $component->withAttributes(['href' => 'mailto:'.e($location['email']).'','class' => 'text-xs! @sm/locations:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                                     <?php echo e($location['email']); ?>

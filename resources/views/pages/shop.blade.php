@@ -591,14 +591,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     <div class="hidden lg:flex items-center justify-between mb-2">
                         <div>
                             <flux:heading size="xl" level="1"
-                                class="text-xl! sm:text-2xl! lg:text-3xl! font-serif font-semibold">
+                                class="text-xl! @md/main:text-2xl! @2xl/main:text-3xl! font-serif font-semibold">
                                 @if (!empty($search))
                                     Results for "{{ $search }}"
                                 @else
                                     Products
                                 @endif
                             </flux:heading>
-                            <flux:text class="text-xs! sm:text-sm! text-zinc-600 mt-1">
+                            <flux:text class="text-xs! @md/main:text-sm! text-zinc-600 mt-1">
                                 @if ($this->totalCount > 0)
                                     <span class="font-medium">{{ number_format($this->totalCount) }}</span>
                                     {{ Str::plural('product', $this->totalCount) }} found

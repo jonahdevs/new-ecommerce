@@ -1,10 +1,10 @@
 <!-- ====== Footer Section Start -->
 <footer class="relative bg-inverse-surface text-inverse-on-surface pb-10 pt-20">
-    <div class="container mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8">
+    <div class="container @container/footer mx-auto px-4">
+        <div class="grid grid-cols-1 @2xl/footer:grid-cols-2 @5xl/footer:grid-cols-5 gap-8 @5xl/footer:gap-8">
 
             <!-- Company Info & Store Locations -->
-            <div class="lg:col-span-1">
+            <div class="@5xl/footer:col-span-1">
                 <a href="/" class="inline-block mb-4">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($general->store_logo): ?>
                         <img src="<?php echo e(asset('storage/' . $general->store_logo)); ?>" alt="<?php echo e($general->store_name); ?>"
@@ -132,14 +132,14 @@ Our Store Location
             <div>
                 <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']); ?>
+<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Top Categories
@@ -190,14 +190,14 @@ Our Store Location
             <div>
                 <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']); ?>
+<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Important Links
@@ -345,14 +345,14 @@ Our Store Location
             <div>
                 <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']); ?>
+<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Legal Documents
@@ -525,14 +525,14 @@ Our Store Location
             <div>
                 <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block']); ?>
+<?php $component->withAttributes(['size' => 'base','level' => '4','class' => 'text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Newsletter
@@ -583,7 +583,7 @@ Our Store Location
 
         <!-- Bottom Bar -->
         <div class="mt-12 pt-8 border-t border-inverse-outline">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex flex-col @2xl/footer:flex-row justify-between items-center gap-6">
 
                 <!-- Copyright -->
                 <?php if (isset($component)) { $__componentOriginal0638ebfbd490c7a414275d493e14cb4e = $component; } ?>

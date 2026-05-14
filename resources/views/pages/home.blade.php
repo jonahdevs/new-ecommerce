@@ -255,10 +255,10 @@ new #[Layout('layouts.guest')] class extends Component {
 
     {{-- Feature strips  --}}
     <section class="border-y border-zinc-200 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-zinc-100">
+        <div class="container @container/features mx-auto px-4">
+            <div class="grid grid-cols-2 @2xl/features:grid-cols-3 @5xl/features:grid-cols-5 divide-x divide-zinc-100">
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -270,7 +270,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:text class="mt-1 text-xs! text-zinc-500 leading-tight">In Kitchen Equipment</flux:text>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -282,7 +282,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:text class="mt-1 text-xs! text-zinc-500 leading-tight">Quality Assurance</flux:text>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <flux:icon.arrows-pointing-out class="size-8" />
                     </div>
@@ -291,7 +291,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:text class="mt-1 text-xs! text-zinc-500 leading-tight">Bespoke Solutions</flux:text>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="1.5" stroke="currentColor">
@@ -304,7 +304,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:text class="mt-1 text-xs! text-zinc-500 leading-tight">Countrywide Shipping</flux:text>
                 </div>
 
-                <div class="hidden lg:flex flex-col items-center text-center p-6 transition-colors hover:bg-zinc-50">
+                <div class="hidden @5xl/features:flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5"
                             viewBox="0 0 24 24">
@@ -321,17 +321,17 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </section>
 
-    <div class="container mx-auto px-4 mt-5 md:mt-7">
-        <div class="pb-6">
+    <div class="container @container/categories mx-auto px-4 mt-5 md:mt-7">
+        <div class="pb-4 @md/categories:pb-6">
             <flux:heading size="lg" level="2"
-                class="text-lg! sm:text-xl! md:text-2xl! lg:text-3xl! font-serif font-semibold">
+                class="text-lg! @sm/categories:text-xl! @md/categories:text-2xl! @2xl/categories:text-3xl! font-serif font-semibold">
                 Top Categories
             </flux:heading>
         </div>
         @island('top-categories')
             @placeholder
                 <div
-                    class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+                    class="py-3 pb-5 grid grid-cols-2 @xs/categories:grid-cols-3 @md/categories:grid-cols-4 @2xl/categories:grid-cols-5 @4xl/categories:grid-cols-6 @6xl/categories:grid-cols-7 gap-3">
                     @for ($i = 0; $i < 14; $i++)
                         <div class="animate-pulse">
                             <div class="w-full aspect-4/3 bg-zinc-200 rounded-md"></div>
@@ -342,7 +342,7 @@ new #[Layout('layouts.guest')] class extends Component {
             @endplaceholder
 
             <div
-                class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-5 gap-y-10">
+                class="grid grid-cols-2 @xs/categories:grid-cols-3 @md/categories:grid-cols-4 @2xl/categories:grid-cols-5 @4xl/categories:grid-cols-6 @6xl/categories:grid-cols-7 gap-x-3 gap-y-6 @md/categories:gap-x-5 @md/categories:gap-y-10">
                 @foreach ($this->topCategories as $category)
                     <div class="group relative" :key="'category-' . $category->id">
                         <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
@@ -376,12 +376,12 @@ new #[Layout('layouts.guest')] class extends Component {
     </section>
 
     {{-- New Arrivals --}}
-    <div class="container mx-auto px-0 sm:px-4 mt-5 md:mt-7">
-        <div class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 lg:grid-cols-6">
+    <div class="container @container/newarrivals mx-auto px-0 sm:px-4 mt-5 md:mt-7">
+        <div class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 @4xl/newarrivals:grid-cols-6">
             {{-- Left Panel --}}
             <div
-                class="lg:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 lg:py-8
-                border-b border-white/10 lg:border-b-0 lg:border-r lg:border-white/10">
+                class="@4xl/newarrivals:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 @4xl/newarrivals:py-8
+                border-b border-white/10 @4xl/newarrivals:border-b-0 @4xl/newarrivals:border-r @4xl/newarrivals:border-white/10">
                 <flux:text class="text-white/60 text-xs! font-semibold uppercase tracking-widest mb-2">
                     Just In
                 </flux:text>
@@ -404,7 +404,7 @@ new #[Layout('layouts.guest')] class extends Component {
             {{-- Products --}}
             @island('new-arrivals', defer: true)
                 @placeholder
-                    <section class="lg:col-span-5 px-4 md:px-5 py-5">
+                    <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5">
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                             @for ($i = 0; $i < 5; $i++)
                                 <x-product-card-placeholder />
@@ -414,7 +414,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 @endplaceholder
 
 
-                <section class="lg:col-span-5 px-4 md:px-5 py-5">
+                <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5">
                     <div class="relative" x-data="{
                         swiper: null,
                         init() {
@@ -463,15 +463,15 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
     </div>
 
-    <div class="container mx-auto max-sm:px-0 px-4 mt-5 md:mt-7">
+    <div class="container @container/related mx-auto px-4 mt-5 md:mt-7">
         <div class="">
             <section class="flex items-center justify-between pb-4 ">
                 <flux:heading size="lg" level="2"
-                    class="text-base! sm:text-lg! md:text-xl! lg:text-2xl! xl:text-3xl! font-serif! font-semibold!">
+                    class="text-base! @sm/related:text-lg! @md/related:text-xl! @2xl/related:text-2xl! @4xl/related:text-3xl! font-serif! font-semibold!">
                     You May Also Like
                 </flux:heading>
 
-                <flux:link :href="route('shop.index')" wire:navigate class="text-xs sm:text-sm md:text-base">View all
+                <flux:link :href="route('shop.index')" wire:navigate class="text-xs @sm/related:text-sm @md/related:text-base">View all
                 </flux:link>
             </section>
             @island(name: 'products', defer: true)
@@ -571,13 +571,13 @@ new #[Layout('layouts.guest')] class extends Component {
     {{-- Locations Section --}}
     <section class="container @container/locations mx-auto px-4 mt-5 md:mt-7 mb-12">
 
-        <div class="pb-6">
+        <div class="pb-4 @md/locations:pb-6">
             <flux:heading size="xl" level="2"
-                class="text-lg! sm:text-xl! md:text-2xl! lg:text-3xl! font-serif! font-semibold!">
+                class="text-lg! @sm/locations:text-xl! @md/locations:text-2xl! @3xl/locations:text-3xl! font-serif! font-semibold!">
                 Our
                 Locations
             </flux:heading>
-            <flux:subheading class="text-xs! sm:text-sm! md:text-base! mt-2">From local hubs to a continental
+            <flux:subheading class="text-xs! @sm/locations:text-sm! @md/locations:text-base! mt-2">From local hubs to a continental
                 presence.
             </flux:subheading>
         </div>
@@ -634,22 +634,22 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="group/card bg-white rounded-md overflow-hidden ring-1 ring-zinc-200/80">
 
                     {{-- Image --}}
-                    <div class="w-full h-60 overflow-hidden">
+                    <div class="w-full h-48 @md/locations:h-60 overflow-hidden">
                         <img src="{{ asset($location['image']) }}" alt="{{ $location['city'] }} showroom"
                             loading="lazy" class="w-full h-full object-cover object-center">
                     </div>
 
                     {{-- Content --}}
-                    <div class="p-5">
+                    <div class="p-4 @md/locations:p-5">
 
                         {{-- City + Flag --}}
                         <div class="flex items-center justify-between gap-2 mb-4">
                             <flux:heading size="base" level="3"
-                                class="text-base! sm:text-lg! md:text-xl! font-serif!">
+                                class="text-base! @sm/locations:text-lg! @md/locations:text-xl! font-serif!">
                                 {{ $location['city'] }}
                             </flux:heading>
                             <img src="{{ asset($location['flag']) }}" alt="{{ $location['flag_alt'] }}"
-                                class="size-5 sm:size-6 rounded-full object-cover">
+                                class="size-5 @sm/locations:size-6 rounded-full object-cover">
                         </div>
 
                         {{-- Contact Details --}}
@@ -658,21 +658,21 @@ new #[Layout('layouts.guest')] class extends Component {
                             {{-- Address --}}
                             <div class="flex items-start gap-3">
                                 <div
-                                    class="shrink-0 mt-0.5 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
-                                    <flux:icon.map-pin class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    class="shrink-0 mt-0.5 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
+                                    <flux:icon.map-pin class="w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5" />
                                 </div>
-                                <flux:text class="text-xs! sm:text-sm! text-zinc-500 leading-relaxed pt-1">
+                                <flux:text class="text-xs! @sm/locations:text-sm! text-zinc-500 leading-relaxed pt-1">
                                     {{ $location['address'] }}</flux:text>
                             </div>
 
                             {{-- Phone --}}
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
-                                    <flux:icon.phone class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    class="shrink-0 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
+                                    <flux:icon.phone class="w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5" />
                                 </div>
                                 <flux:link href="tel:{{ $location['tel'] }}"
-                                    class="text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!">
+                                    class="text-xs! @sm/locations:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 font-normal! no-underline!">
                                     {{ $location['phone'] }}
                                 </flux:link>
                             </div>
@@ -680,11 +680,11 @@ new #[Layout('layouts.guest')] class extends Component {
                             {{-- Email --}}
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
-                                    <flux:icon.envelope class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    class="shrink-0 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
+                                    <flux:icon.envelope class="w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5" />
                                 </div>
                                 <flux:link href="mailto:{{ $location['email'] }}"
-                                    class="text-xs! sm:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!">
+                                    class="text-xs! @sm/locations:text-sm! text-zinc-500 hover:text-primary transition-colors duration-150 break-all font-normal! no-underline!">
                                     {{ $location['email'] }}
                                 </flux:link>
                             </div>

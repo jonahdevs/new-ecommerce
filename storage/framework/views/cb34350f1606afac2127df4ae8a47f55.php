@@ -15,7 +15,7 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
 
             <?php if (isset($__placeholder)) { ob_start(); } if (isset($__placeholder)): ?>
                 <div
-                    class="py-3 pb-5 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+                    class="py-3 pb-5 grid grid-cols-2 @xs/categories:grid-cols-3 @md/categories:grid-cols-4 @2xl/categories:grid-cols-5 @4xl/categories:grid-cols-6 @6xl/categories:grid-cols-7 gap-3">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($i = 0; $i < 14; $i++): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                         <div class="animate-pulse">
                             <div class="w-full aspect-4/3 bg-zinc-200 rounded-md"></div>
@@ -26,7 +26,7 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
             <?php endif; if (isset($__placeholder)) { echo ob_get_clean(); return; } ?>
 
             <div
-                class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-5 gap-y-10">
+                class="grid grid-cols-2 @xs/categories:grid-cols-3 @md/categories:grid-cols-4 @2xl/categories:grid-cols-5 @4xl/categories:grid-cols-6 @6xl/categories:grid-cols-7 gap-x-3 gap-y-6 @md/categories:gap-x-5 @md/categories:gap-y-10">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->topCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                     <div class="group relative" :key="'category-' . $category->id">
                         <a href="<?php echo e(route('shop.category', ['category' => $category->slug])); ?>" wire:navigate

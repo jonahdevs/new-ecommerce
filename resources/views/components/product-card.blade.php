@@ -87,7 +87,7 @@ new class extends Component {
         try {
             $quoteBasketService->add($this->product->id, 1);
             $this->dispatch('quote-basket-updated');
-            $this->redirect(route('quote'), navigate: true);
+            $this->dispatch('notify', title: 'Quote Updated', variant: 'success', message: 'Product added to your quote basket');
         } catch (\Throwable $th) {
             $this->dispatch('notify', title: 'Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to quote basket');
         }
@@ -280,8 +280,9 @@ new class extends Component {
                 </flux:button>
 
                 @if ($product->requires_quotation)
-                    <flux:button wire:click="goToProduct" icon="document-text" size="sm" icon-variant="outline"
-                        title="Request Quote" class="cursor-pointer" />
+                    <flux:button wire:click.stop="addToQuoteBasket" icon="document-text" size="sm"
+                        icon-variant="outline" title="Add to Quote" class="cursor-pointer"
+                        wire:loading.attr="disabled" wire:target="addToQuoteBasket" />
                 @else
                     <flux:button wire:click.stop="quickAddToCart" icon="shopping-cart" size="sm"
                         icon-variant="outline"
@@ -461,9 +462,10 @@ new class extends Component {
                         </div>
                     @elseif ($product->requires_quotation)
                         <div class="mt-3">
-                            <flux:button wire:click="goToProduct" variant="primary" class="uppercase cursor-pointer"
-                                size="customer">
-                                Request Quote
+                            <flux:button wire:click="addToQuoteBasket" variant="primary"
+                                class="uppercase cursor-pointer" size="customer" wire:loading.attr="disabled"
+                                wire:target="addToQuoteBasket">
+                                Add to Quote
                             </flux:button>
                         </div>
                     @endif

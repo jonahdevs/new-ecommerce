@@ -431,7 +431,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         {{-- Category banner skeleton --}}
         <div class="relative bg-zinc-800 overflow-hidden">
             <flux:skeleton animate="shimmer" class="absolute inset-0 w-full h-full opacity-30" />
-            <div class="relative container mx-auto px-4 py-8 sm:py-10">
+            <div class="relative container mx-auto px-4 py-6 sm:py-8 md:py-10">
                 <flux:skeleton animate="shimmer" class="w-64 h-8 sm:h-10 mb-2 bg-zinc-600" />
                 <flux:skeleton animate="shimmer" class="w-96 max-w-full h-4 sm:h-5 bg-zinc-600" />
             </div>
@@ -590,7 +590,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 <img src="{{ $category->image_url }}" alt="{{ $category->name }}"
                     class="absolute inset-0 w-full h-full object-cover opacity-30" />
             @endif
-            <div class="relative container mx-auto px-4 py-8 sm:py-10">
+            <div class="relative container mx-auto px-4 py-6 sm:py-8 md:py-10">
                 <flux:heading size="xl" level="1"
                     class="text-2xl! sm:text-3xl! md:text-4xl! text-white mb-2 font-serif! font-semibold!">
                     {{ $this->activeSubCategory?->name ?? $category->name }}
@@ -746,7 +746,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             {{-- Only show h1 here if there's no hero banner --}}
                             @if (!$category->image_url && !$category->description)
                                 <flux:heading size="xl" level="1"
-                                    class="text-xl! sm:text-2xl! lg:text-3xl!">
+                                    class="text-xl! @md/main:text-2xl! @2xl/main:text-3xl!">
                                     @if (!empty($search))
                                         Results for "{{ $search }}" in
                                         {{ $this->activeSubCategory?->name ?? $category->name }}
@@ -755,7 +755,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                     @endif
                                 </flux:heading>
                             @endif
-                            <flux:text class="text-xs! sm:text-sm! text-zinc-600 mt-1">
+                            <flux:text class="text-xs! @md/main:text-sm! text-zinc-600 mt-1">
                                 @if ($this->totalCount > 0)
                                     <span class="font-medium">{{ number_format($this->totalCount) }}</span>
                                     {{ Str::plural('product', $this->totalCount) }} found

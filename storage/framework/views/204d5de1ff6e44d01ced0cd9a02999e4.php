@@ -14,7 +14,7 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
 ?>
 
                 <?php if (isset($__placeholder)) { ob_start(); } if (isset($__placeholder)): ?>
-                    <section class="lg:col-span-5 px-4 md:px-5 py-5">
+                    <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5">
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($i = 0; $i < 5; $i++): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                 <?php if (isset($component)) { $__componentOriginal617f61e5bfd7bca40eb484f2cd6e3a3a = $component; } ?>
@@ -45,7 +45,7 @@ if (isset($__runtimeWith) && is_array($__runtimeWith) && !empty($__runtimeWith))
                 <?php endif; if (isset($__placeholder)) { echo ob_get_clean(); return; } ?>
 
 
-                <section class="lg:col-span-5 px-4 md:px-5 py-5">
+                <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5">
                     <div class="relative" x-data="{
                         swiper: null,
                         init() {

@@ -1,10 +1,10 @@
 <!-- ====== Footer Section Start -->
 <footer class="relative bg-inverse-surface text-inverse-on-surface pb-10 pt-20">
-    <div class="container mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8">
+    <div class="container @container/footer mx-auto px-4">
+        <div class="grid grid-cols-1 @2xl/footer:grid-cols-2 @5xl/footer:grid-cols-5 gap-8 @5xl/footer:gap-8">
 
             <!-- Company Info & Store Locations -->
-            <div class="lg:col-span-1">
+            <div class="@5xl/footer:col-span-1">
                 <a href="/" class="inline-block mb-4">
                     @if ($general->store_logo)
                         <img src="{{ asset('storage/' . $general->store_logo) }}" alt="{{ $general->store_name }}"
@@ -50,7 +50,7 @@
             <!-- Top Categories -->
             <div>
                 <flux:heading size="base" level="4"
-                    class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
+                    class="text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block">
                     Top Categories
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
@@ -70,7 +70,7 @@
             <!-- Important Links -->
             <div>
                 <flux:heading size="base" level="4"
-                    class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
+                    class="text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block">
                     Important Links
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
@@ -111,7 +111,7 @@
             <!-- Legal Documents -->
             <div>
                 <flux:heading size="base" level="4"
-                    class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
+                    class="text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block">
                     Legal Documents
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
@@ -158,7 +158,7 @@
             <!-- Newsletter -->
             <div>
                 <flux:heading size="base" level="4"
-                    class="text-white! text-base! md:text-lg! lg:text-xl! mb-6 relative inline-block">
+                    class="text-white! text-base! @2xl/footer:text-lg! @5xl/footer:text-xl! mb-6 relative inline-block">
                     Newsletter
                     <span class="absolute top-full mt-1 left-0 w-12 h-0.5 bg-primary"></span>
                 </flux:heading>
@@ -178,7 +178,7 @@
 
         <!-- Bottom Bar -->
         <div class="mt-12 pt-8 border-t border-inverse-outline">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex flex-col @2xl/footer:flex-row justify-between items-center gap-6">
 
                 <!-- Copyright -->
                 <flux:text class="text-xs! sm:text-sm! text-inverse-on-surface-muted">
