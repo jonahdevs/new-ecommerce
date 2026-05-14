@@ -768,164 +768,182 @@
                 {{-- TABS SECTION --}}
                 {{-- wire:ignore prevents Livewire morphing from breaking Alpine.js tab state --}}
                 <div wire:ignore x-data="{ activeTab: 'description' }" class="relative mt-10">
-                <div class="bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 rounded-xl pb-6 pt-10 px-6">
-
-                    {{-- Tab Buttons --}}
                     <div
-                        class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
+                        class="bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 rounded-md pb-6 pt-10 px-6">
 
-                        <button type="button" @click="activeTab = 'description'"
-                            :class="activeTab === 'description' ? 'bg-primary text-white' :
-                                'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
-                            class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
-                            Description
-                        </button>
+                        {{-- Tab Buttons --}}
+                        <div
+                            class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
 
-                        <button type="button" @click="activeTab = 'specification'"
-                            :class="activeTab === 'specification' ? 'bg-primary text-white' :
-                                'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
-                            class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
-                            Specification
-                        </button>
+                            {{-- Description Tab --}}
+                            <flux:button x-show="activeTab === 'description'" type="button" size="customer-lg"
+                                variant="customer-primary" class="cursor-pointer">
+                                Description
+                            </flux:button>
+                            <flux:button x-show="activeTab !== 'description'" x-cloak type="button"
+                                size="customer-lg" x-on:click="activeTab = 'description'" class="cursor-pointer">
+                                Description
+                            </flux:button>
 
-                        @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
-                            <button type="button" @click="activeTab = 'reviews'"
-                                :class="activeTab === 'reviews' ? 'bg-primary text-white' :
-                                    'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
-                                class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
-                                Reviews
-                            </button>
-                        @endif
+                            {{-- Specification Tab --}}
+                            <flux:button x-show="activeTab === 'specification'" type="button" size="customer-lg"
+                                variant="customer-primary" class="cursor-pointer">
+                                Specification
+                            </flux:button>
+                            <flux:button x-show="activeTab !== 'specification'" x-cloak type="button"
+                                size="customer-lg" x-on:click="activeTab = 'specification'" class="cursor-pointer">
+                                Specification
+                            </flux:button>
 
-                    </div>
-
-                    {{-- Tab Content: Description --}}
-                    <template x-if="activeTab === 'description'">
-                        <div>
-                            <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
-                                {!! $product->description !!}
-                            </div>
-                        </div>
-                    </template>
-
-                    {{-- Tab Content: Specification --}}
-                    <template x-if="activeTab === 'specification'">
-                        <div>
-                            @if (!empty($product->technical_specification))
-                                <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
-                                    {!! $product->technical_specification !!}
-                                </div>
-                            @else
-                                <p class="text-xs sm:text-sm text-zinc-500">No specifications available for this product.
-                                </p>
+                            @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
+                                {{-- Reviews Tab --}}
+                                <flux:button x-show="activeTab === 'reviews'" type="button" size="customer-lg"
+                                    variant="customer-primary" class="cursor-pointer">
+                                    Reviews
+                                </flux:button>
+                                <flux:button x-show="activeTab !== 'reviews'" x-cloak type="button"
+                                    size="customer-lg" x-on:click="activeTab = 'reviews'" class="cursor-pointer">
+                                    Reviews
+                                </flux:button>
                             @endif
+
                         </div>
-                    </template>
 
-                    {{-- Tab Content: Reviews --}}
-                    @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
-                        <template x-if="activeTab === 'reviews'">
+                        {{-- Tab Content: Description --}}
+                        <template x-if="activeTab === 'description'">
                             <div>
-                                <flux:heading level="4" class="font-bold! mb-6 text-base! sm:text-lg!">Customer
-                                    Ratings</flux:heading>
-
-                                <div class="grid grid-cols-1 lg:grid-cols-4 gap-7">
-
-                                    {{-- ── Rating Distribution ── --}}
-                                    <div class="col-span-1">
-                                        <div class="sticky top-44">
-                                            <div class="text-center">
-                                                <div class="text-2xl sm:text-3xl font-bold text-secondary">
-                                                    {{ $this->reviewStats['average'] }}
-                                                </div>
-
-                                                <div class="flex justify-center gap-1 mt-1">
-                                                    @for ($i = 1; $i <= 5; $i++)
-                                                        @if ($i <= floor($this->reviewStats['average']))
-                                                            <flux:icon.star class="size-5 text-orange-400 fill-current" />
-                                                        @elseif ($i - 0.5 <= $this->reviewStats['average'])
-                                                            <svg class="w-5 h-5 text-orange-400" viewBox="0 0 20 20">
-                                                                <defs>
-                                                                    <linearGradient id="half-star">
-                                                                        <stop offset="50%" stop-color="currentColor" />
-                                                                        <stop offset="50%" stop-color="#D1D5DB" />
-                                                                    </linearGradient>
-                                                                </defs>
-                                                                <path fill="url(#half-star)"
-                                                                    d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                                            </svg>
-                                                        @else
-                                                            <flux:icon.star class="size-5 text-zinc-300 fill-current" />
-                                                        @endif
-                                                    @endfor
-                                                </div>
-
-                                                <div class="text-xs sm:text-sm text-zinc-600 mt-1">
-                                                    {{ $this->reviewStats['total'] }}
-                                                    {{ Str::plural('review', $this->reviewStats['total']) }}
-                                                </div>
-                                            </div>
-
-                                            <flux:separator class="my-4" />
-
-                                            <div class="space-y-2">
-                                                @foreach ($this->reviewStats['distribution'] as $rating => $data)
-                                                    <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
-                                                        <div class="flex gap-0.5">
-                                                            @for ($star = 1; $star <= 5; $star++)
-                                                                @if ($star <= $rating)
-                                                                    <flux:icon.star
-                                                                        class="size-5 text-orange-400 fill-current" />
-                                                                @else
-                                                                    <flux:icon.star
-                                                                        class="size-5 text-zinc-300 fill-current" />
-                                                                @endif
-                                                            @endfor
-                                                        </div>
-                                                        <div class="w-full bg-zinc-200 rounded-full h-2.5">
-                                                            <div class="bg-secondary h-2.5 rounded-full"
-                                                                style="width: {{ $data['percentage'] }}%"></div>
-                                                        </div>
-                                                        <span class="text-sm font-semibold text-secondary min-w-11.25">
-                                                            {{ $data['percentage'] }}%
-                                                        </span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- ── Reviews List ── --}}
-                                    <div class="col-span-1 lg:col-span-3">
-                                        @if ($this->reviews->isEmpty())
-                                            <div class="text-center py-8 text-zinc-500">
-                                                <p>No reviews yet. Be the first to review this product!</p>
-                                            </div>
-                                        @else
-                                            <div class="space-y-6">
-                                                @foreach ($this->reviews as $review)
-                                                    <livewire:review-item :review="$review" :key="'review-item-' . $review->id"
-                                                        :user-vote="$this->userVotes->get($review->id)" />
-                                                @endforeach
-                                            </div>
-
-                                            @if ($this->hasMoreReviews)
-                                                <div class="mt-6 text-center">
-                                                    <flux:button href="{{ route('products.reviews', $product) }}"
-                                                        wire:navigate variant="customer-outline" size="customer">
-                                                        View All {{ $this->reviewStats['total'] }} Reviews
-                                                    </flux:button>
-                                                </div>
-                                            @endif
-                                        @endif
-                                    </div>
-
+                                <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
+                                    {!! $product->description !!}
                                 </div>
                             </div>
                         </template>
-                    @endif
 
-                </div>{{-- end tabs card --}}
+                        {{-- Tab Content: Specification --}}
+                        <template x-if="activeTab === 'specification'">
+                            <div>
+                                @if (!empty($product->technical_specification))
+                                    <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
+                                        {!! $product->technical_specification !!}
+                                    </div>
+                                @else
+                                    <p class="text-xs sm:text-sm text-zinc-500">No specifications available for this
+                                        product.
+                                    </p>
+                                @endif
+                            </div>
+                        </template>
+
+                        {{-- Tab Content: Reviews --}}
+                        @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
+                            <template x-if="activeTab === 'reviews'">
+                                <div>
+                                    <flux:heading level="4" class="font-bold! mb-6 text-base! sm:text-lg!">
+                                        Customer
+                                        Ratings</flux:heading>
+
+                                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-7">
+
+                                        {{-- ── Rating Distribution ── --}}
+                                        <div class="col-span-1">
+                                            <div class="sticky top-44">
+                                                <div class="text-center">
+                                                    <div class="text-2xl sm:text-3xl font-bold text-secondary">
+                                                        {{ $this->reviewStats['average'] }}
+                                                    </div>
+
+                                                    <div class="flex justify-center gap-1 mt-1">
+                                                        @for ($i = 1; $i <= 5; $i++)
+                                                            @if ($i <= floor($this->reviewStats['average']))
+                                                                <flux:icon.star
+                                                                    class="size-5 text-orange-400 fill-current" />
+                                                            @elseif ($i - 0.5 <= $this->reviewStats['average'])
+                                                                <svg class="w-5 h-5 text-orange-400"
+                                                                    viewBox="0 0 20 20">
+                                                                    <defs>
+                                                                        <linearGradient id="half-star">
+                                                                            <stop offset="50%"
+                                                                                stop-color="currentColor" />
+                                                                            <stop offset="50%"
+                                                                                stop-color="#D1D5DB" />
+                                                                        </linearGradient>
+                                                                    </defs>
+                                                                    <path fill="url(#half-star)"
+                                                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                                                </svg>
+                                                            @else
+                                                                <flux:icon.star
+                                                                    class="size-5 text-zinc-300 fill-current" />
+                                                            @endif
+                                                        @endfor
+                                                    </div>
+
+                                                    <div class="text-xs sm:text-sm text-zinc-600 mt-1">
+                                                        {{ $this->reviewStats['total'] }}
+                                                        {{ Str::plural('review', $this->reviewStats['total']) }}
+                                                    </div>
+                                                </div>
+
+                                                <flux:separator class="my-4" />
+
+                                                <div class="space-y-2">
+                                                    @foreach ($this->reviewStats['distribution'] as $rating => $data)
+                                                        <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                                                            <div class="flex gap-0.5">
+                                                                @for ($star = 1; $star <= 5; $star++)
+                                                                    @if ($star <= $rating)
+                                                                        <flux:icon.star
+                                                                            class="size-5 text-orange-400 fill-current" />
+                                                                    @else
+                                                                        <flux:icon.star
+                                                                            class="size-5 text-zinc-300 fill-current" />
+                                                                    @endif
+                                                                @endfor
+                                                            </div>
+                                                            <div class="w-full bg-zinc-200 rounded-full h-2.5">
+                                                                <div class="bg-secondary h-2.5 rounded-full"
+                                                                    style="width: {{ $data['percentage'] }}%"></div>
+                                                            </div>
+                                                            <span
+                                                                class="text-sm font-semibold text-secondary min-w-11.25">
+                                                                {{ $data['percentage'] }}%
+                                                            </span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- ── Reviews List ── --}}
+                                        <div class="col-span-1 lg:col-span-3">
+                                            @if ($this->reviews->isEmpty())
+                                                <div class="text-center py-8 text-zinc-500">
+                                                    <p>No reviews yet. Be the first to review this product!</p>
+                                                </div>
+                                            @else
+                                                <div class="space-y-6">
+                                                    @foreach ($this->reviews as $review)
+                                                        <livewire:review-item :review="$review" :key="'review-item-' . $review->id"
+                                                            :user-vote="$this->userVotes->get($review->id)" />
+                                                    @endforeach
+                                                </div>
+
+                                                @if ($this->hasMoreReviews)
+                                                    <div class="mt-6 text-center">
+                                                        <flux:button href="{{ route('products.reviews', $product) }}"
+                                                            wire:navigate variant="customer-outline" size="customer">
+                                                            View All {{ $this->reviewStats['total'] }} Reviews
+                                                        </flux:button>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </template>
+                        @endif
+
+                    </div>{{-- end tabs card --}}
                 </div>{{-- end wire:ignore x-data activeTab --}}
             </div>
 
