@@ -6,12 +6,14 @@ use App\Concerns\LogsModelChanges;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\SapSyncStatus;
+use App\Events\OrderUpdated;
 use App\Notifications\OrderStatusNotification;
 use App\Settings\OrderSettings;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -19,6 +21,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Order extends Model
 {
     use HasFactory, LogsModelChanges;
+
+    protected static function booted(): void
+    {
+        // Broadcast when a new order is created
+        static::created(function (Order $order) {
+            OrderUpdated::dispatch($order, 'created', auth()->id());
+        });
+
+        // Broadcast when payment status changes
+        static::updated(function (Order $order) {
+            if ($order->wasChanged('payment_status')) {
+                OrderUpdated::dispatch($order, 'payment', auth()->id());
+            }
+        });
+    }
 
     protected $fillable = [
         'user_id',
@@ -131,33 +148,50 @@ class Order extends Model
         return $this->hasOne(DeliveryOrder::class);
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(OrderNote::class)->latest();
+    }
+
+    public function pinnedNotes(): HasMany
+    {
+        return $this->hasMany(OrderNote::class)->where('is_pinned', true)->latest();
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(OrderTag::class, 'order_order_tag')
+            ->withPivot('added_by_user_id')
+            ->withTimestamps();
+    }
+
     // =====================================================
     // Accessors
     // =====================================================
 
     protected function subtotal(): Attribute
     {
-        return Attribute::make(get: fn () => $this->subtotal_cents / 100);
+        return Attribute::make(get: fn() => $this->subtotal_cents / 100);
     }
 
     protected function discount(): Attribute
     {
-        return Attribute::make(get: fn () => $this->discount_cents / 100);
+        return Attribute::make(get: fn() => $this->discount_cents / 100);
     }
 
     protected function shipping(): Attribute
     {
-        return Attribute::make(get: fn () => $this->shipping_cents / 100);
+        return Attribute::make(get: fn() => $this->shipping_cents / 100);
     }
 
     protected function tax(): Attribute
     {
-        return Attribute::make(get: fn () => $this->tax_cents / 100);
+        return Attribute::make(get: fn() => $this->tax_cents / 100);
     }
 
     protected function total(): Attribute
     {
-        return Attribute::make(get: fn () => $this->total_cents / 100);
+        return Attribute::make(get: fn() => $this->total_cents / 100);
     }
 
     // =====================================================
@@ -170,7 +204,7 @@ class Order extends Model
      */
     public function wasConvertedFromQuote(): bool
     {
-        return ! is_null($this->quote_id);
+        return !is_null($this->quote_id);
     }
 
     // =====================================================
@@ -187,7 +221,7 @@ class Order extends Model
 
     public function hasKraReceipt(): bool
     {
-        return ! is_null($this->kra_cu_number) && ! is_null($this->invoice_path);
+        return !is_null($this->kra_cu_number) && !is_null($this->invoice_path);
     }
 
     public function isAwaitingKraValidation(): bool
@@ -206,7 +240,7 @@ class Order extends Model
 
     public static function generateReference(): string
     {
-        $prefix = rtrim(app(OrderSettings::class)->order_id_prefix, '-').'-';
+        $prefix = rtrim(app(OrderSettings::class)->order_id_prefix, '-') . '-';
         $year = now()->year;
 
         // Use max() instead of count() to avoid race conditions
@@ -233,7 +267,7 @@ class Order extends Model
 
     public function transitionTo(OrderStatus $new, ?string $notes = null, string $changedByType = 'system'): void
     {
-        if (! $this->status->canTransitionTo($new)) {
+        if (!$this->status->canTransitionTo($new)) {
             throw new \Exception(
                 "Cannot transition order from {$this->status->label()} to {$new->label()}."
             );
@@ -256,11 +290,15 @@ class Order extends Model
             OrderStatus::SHIPPED,
             OrderStatus::DELIVERED,
             OrderStatus::CANCELLED,
+            OrderStatus::RETURNED,
         ];
 
         if ($this->user && in_array($new, $notifiableStatuses)) {
             $this->user->notify(new OrderStatusNotification($this, $new));
         }
+
+        // Broadcast real-time update to admin dashboard
+        OrderUpdated::dispatch($this, 'status', auth()->id());
     }
 
     // =====================================================

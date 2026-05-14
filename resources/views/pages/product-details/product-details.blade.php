@@ -3,6 +3,140 @@
     use Illuminate\Support\Facades\Storage;
 @endphp
 
+@placeholder
+    <div>
+        {{-- Breadcrumb skeleton --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container mx-auto px-4 flex items-center gap-3">
+                <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-24 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-32 h-4" />
+            </div>
+        </div>
+
+        <div class="container mx-auto px-4 py-4">
+            <div class="grid lg:grid-cols-5 gap-5">
+                {{-- Main content area --}}
+                <div class="lg:col-span-4 space-y-5">
+                    <div class="grid grid-cols-1 lg:grid-cols-7 gap-5">
+                        {{-- Image gallery skeleton --}}
+                        <div class="lg:col-span-3">
+                            <div class="lg:sticky lg:top-24">
+                                <div class="flex flex-col gap-3 md:flex-row md:items-stretch">
+                                    {{-- Main image --}}
+                                    <flux:skeleton animate="shimmer" class="flex-1 aspect-square rounded-lg" />
+                                    {{-- Thumbnails — below on mobile, left on md+ --}}
+                                    <div class="flex gap-2 md:flex-col md:shrink-0 md:w-20 md:order-first">
+                                        @for ($i = 0; $i < 4; $i++)
+                                            <flux:skeleton animate="shimmer" class="size-20 rounded-sm shrink-0" />
+                                        @endfor
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Product details skeleton --}}
+                        <div class="lg:col-span-4 space-y-4">
+                            {{-- Title --}}
+                            <flux:skeleton animate="shimmer" class="w-3/4 h-8" />
+
+                            {{-- Brand + Rating --}}
+                            <div class="flex items-center justify-between flex-wrap gap-3">
+                                <flux:skeleton animate="shimmer" class="w-24 h-5" />
+                                <div class="flex items-center gap-2">
+                                    @for ($i = 0; $i < 5; $i++)
+                                        <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                    @endfor
+                                    <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                </div>
+                            </div>
+
+                            {{-- Short description --}}
+                            <div class="space-y-2">
+                                <flux:skeleton animate="shimmer" class="w-full h-4" />
+                                <flux:skeleton animate="shimmer" class="w-5/6 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-4/6 h-4" />
+                            </div>
+
+                            {{-- SKU --}}
+                            <flux:skeleton animate="shimmer" class="w-32 h-4" />
+
+                            {{-- Variant selector skeleton --}}
+                            <div class="space-y-3">
+                                <flux:skeleton animate="shimmer" class="w-20 h-5" />
+                                <div class="flex flex-wrap gap-2">
+                                    @for ($i = 0; $i < 5; $i++)
+                                        <flux:skeleton animate="shimmer" class="w-16 h-9 rounded-md" />
+                                    @endfor
+                                </div>
+                            </div>
+
+                            {{-- Price + Stock --}}
+                            <flux:skeleton animate="shimmer" class="w-36 h-8" />
+                            <flux:skeleton animate="shimmer" class="w-28 h-5" />
+                        </div>
+                    </div>
+
+                    {{-- Tabs skeleton --}}
+                    <div class="bg-white rounded-lg border">
+                        <div class="border-b flex gap-4 px-6 py-3">
+                            @for ($i = 0; $i < 4; $i++)
+                                <flux:skeleton animate="shimmer" class="w-20 h-6" />
+                            @endfor
+                        </div>
+                        <div class="p-6 space-y-3">
+                            @for ($i = 0; $i < 6; $i++)
+                                <flux:skeleton animate="shimmer" class="w-full h-4" />
+                            @endfor
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Sidebar skeleton --}}
+                <div class="lg:col-span-1 border border-zinc-200 rounded p-4 h-fit">
+                    {{-- Policy links --}}
+                    @for ($i = 0; $i < 3; $i++)
+                        <div class="flex items-center justify-between py-1.5">
+                            <div class="flex items-center gap-2">
+                                <flux:skeleton animate="shimmer" class="size-4 shrink-0" />
+                                <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                            </div>
+                            <flux:skeleton animate="shimmer" class="size-4" />
+                        </div>
+                    @endfor
+
+                    <flux:skeleton animate="shimmer" class="w-full h-px my-2" />
+
+                    {{-- Quantity stepper --}}
+                    <div class="space-y-2 mb-3">
+                        <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                        <div class="flex items-center gap-1">
+                            <flux:skeleton animate="shimmer" class="w-9 h-9 rounded" />
+                            <flux:skeleton animate="shimmer" class="w-10 h-5" />
+                            <flux:skeleton animate="shimmer" class="w-9 h-9 rounded" />
+                        </div>
+                    </div>
+
+                    {{-- Primary cart button --}}
+                    <flux:skeleton animate="shimmer" class="w-full h-10 rounded-md" />
+
+                    {{-- Secondary action buttons --}}
+                    <div class="flex items-center gap-2 mt-2">
+                        <flux:skeleton animate="shimmer" class="w-10 h-10 rounded-md" />
+                        <flux:skeleton animate="shimmer" class="w-10 h-10 rounded-md" />
+                        <flux:skeleton animate="shimmer" class="w-10 h-10 rounded-md" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endplaceholder
+
 <div>
     <div class="bg-white border-b border-zinc-200 py-3">
         <div class="container mx-auto px-4 overflow-x-auto scrollbar-none">
@@ -15,7 +149,8 @@
                 </flux:breadcrumbs.item>
                 @if ($this->primaryCategory)
                     <flux:breadcrumbs.item
-                        href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}" wire:navigate>
+                        href="{{ route('shop.category', ['category' => $this->primaryCategory->slug]) }}"
+                        wire:navigate>
                         {{ $this->primaryCategory->name }}
                     </flux:breadcrumbs.item>
                 @endif
@@ -40,64 +175,83 @@
                                 mainSwiper: null,
                                 thumbSwiper: null,
                                 activeIndex: 0,
+                                isMobile: window.innerWidth < 768,
                                 init() {
                                     const sliderId = '{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}';
+                            
+                                    this.$nextTick(() => this.initSwipers(sliderId));
+                            
+                                    window.addEventListener('resize', () => {
+                                        const nowMobile = window.innerWidth < 768;
+                                        if (nowMobile !== this.isMobile) {
+                                            this.isMobile = nowMobile;
+                                            this.$nextTick(() => this.initSwipers(sliderId));
+                                        }
+                                    });
+                            
+                                    window.addEventListener('variant-image-selected', (e) => {
+                                        if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
+                                    });
+                                },
+                                initSwipers(sliderId) {
                                     const thumbEl = document.getElementById(sliderId + 'ThumbSwiper');
                                     const mainEl = document.getElementById(sliderId + 'MainSwiper');
                             
-                                    // Wait for layout to settle (aspect-square needs width to resolve height)
-                                    this.$nextTick(() => {
-                                        // Match thumb height to the main image's rendered height
-                                        const mainContainer = mainEl?.closest('.aspect-square');
-                                        if (thumbEl && mainContainer) {
-                                            thumbEl.style.height = mainContainer.offsetHeight + 'px';
+                                    if (this.mainSwiper) {
+                                        this.mainSwiper.destroy(true, true);
+                                        this.mainSwiper = null;
+                                    }
+                                    if (this.thumbSwiper) {
+                                        this.thumbSwiper.destroy(true, true);
+                                        this.thumbSwiper = null;
+                                    }
+                            
+                                    if (thumbEl) {
+                                        if (this.isMobile) {
+                                            thumbEl.style.height = '';
+                                        } else {
+                                            const mainContainer = mainEl?.closest('.aspect-square');
+                                            if (mainContainer) {
+                                                thumbEl.style.height = mainContainer.offsetHeight + 'px';
+                                            }
                                         }
                             
-                                        // Init thumbs FIRST (only if element exists)
-                                        if (thumbEl) {
-                                            this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
-                                                direction: 'vertical',
-                                                slidesPerView: 'auto',
-                                                spaceBetween: 8,
-                                                freeMode: true,
-                                                watchSlidesProgress: true,
-                                                mousewheel: true,
-                                            });
-                                        }
-                            
-                                        // Init main swiper - only add thumbs option if thumbSwiper exists
-                                        const mainSwiperOptions = {
-                                            spaceBetween: 0,
-                                            on: {
-                                                slideChange: (swiper) => {
-                                                    this.activeIndex = swiper.activeIndex;
-                                                },
-                                            },
-                                        };
-                            
-                                        if (this.thumbSwiper) {
-                                            mainSwiperOptions.thumbs = { swiper: this.thumbSwiper };
-                                        }
-                            
-                                        this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', mainSwiperOptions);
-                            
-                                        window.addEventListener('variant-image-selected', (e) => {
-                                            if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
+                                        this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
+                                            direction: this.isMobile ? 'horizontal' : 'vertical',
+                                            slidesPerView: 'auto',
+                                            spaceBetween: 8,
+                                            freeMode: true,
+                                            watchSlidesProgress: true,
+                                            mousewheel: true,
                                         });
+                                    }
                             
-                                        // Fade in
-                                        if (thumbEl) thumbEl.classList.remove('opacity-0');
-                                        if (mainEl) mainEl.classList.remove('opacity-0');
-                                    });
+                                    const mainSwiperOptions = {
+                                        spaceBetween: 0,
+                                        on: {
+                                            slideChange: (swiper) => {
+                                                this.activeIndex = swiper.activeIndex;
+                                            },
+                                        },
+                                    };
+                            
+                                    if (this.thumbSwiper) {
+                                        mainSwiperOptions.thumbs = { swiper: this.thumbSwiper };
+                                    }
+                            
+                                    this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', mainSwiperOptions);
+                            
+                                    if (thumbEl) thumbEl.classList.remove('opacity-0');
+                                    if (mainEl) mainEl.classList.remove('opacity-0');
                                 },
                             }" class="lg:sticky lg:top-24">
 
-                                {{-- Flex row: thumbs stretch to match the main image height (driven by aspect-square) --}}
-                                <div class="flex flex-row items-stretch gap-3">
+                                {{-- Flex col on mobile (thumbs below), flex row on md+ (thumbs left) --}}
+                                <div class="flex flex-col gap-3 md:flex-row md:items-stretch">
 
-                                    {{-- THUMBNAILS — vertical swiper strip --}}
+                                    {{-- THUMBNAILS — horizontal strip on mobile (bottom), vertical on md+ (left) --}}
                                     @if (count($this->imageSlides) > 1)
-                                        <div class="swiper shrink-0 opacity-0 transition-opacity duration-500  overflow-hidden w-20"
+                                        <div class="swiper order-last md:order-first opacity-0 transition-opacity duration-500 overflow-hidden h-20 md:h-auto md:shrink-0 md:w-20"
                                             id="{{ $product->type->value === 'grouped' ? 'grouped' : 'main' }}ThumbSwiper">
                                             <div class="swiper-wrapper">
                                                 @foreach ($this->imageSlides as $index => $slide)
@@ -215,7 +369,7 @@
                             <div id="main-product-price"
                                 x-intersect:enter="window.dispatchEvent(new CustomEvent('price-in-view'))"
                                 x-intersect:leave="window.dispatchEvent(new CustomEvent('price-out-of-view'))"
-                                class="relative overflow-hidden rounded-lg bg-gradient-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
+                                class="relative overflow-hidden rounded-lg bg-linear-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
                                 {{-- Decorative icon --}}
                                 <div class="absolute -right-2 -top-2 opacity-10">
                                     <flux:icon.squares-2x2 class="size-16 text-secondary" />
@@ -266,7 +420,7 @@
                             <div id="main-product-price"
                                 x-intersect:enter="window.dispatchEvent(new CustomEvent('price-in-view'))"
                                 x-intersect:leave="window.dispatchEvent(new CustomEvent('price-out-of-view'))"
-                                class="relative overflow-hidden rounded-lg bg-gradient-to-r from-green-500/10 to-green-500/5 border border-green-500/20">
+                                class="relative overflow-hidden rounded-lg bg-linear-to-r from-green-500/10 to-green-500/5 border border-green-500/20">
                                 {{-- Decorative icon --}}
                                 <div class="absolute -right-2 -top-2 opacity-10">
                                     <flux:icon.gift class="size-16 text-green-600" />
@@ -608,63 +762,52 @@
                                 </div>
                             @endif
                         @endif
-
                     </div>
                 </div>
 
                 {{-- TABS SECTION --}}
-                <flux:card class="pb-6 relative pt-10 px-6 mt-10">
+                {{-- x-data on a plain div — Flux's @blaze rendering breaks x-data scope during #[Defer] morph --}}
+                <div x-data="{ activeTab: 'description' }" class="relative mt-10">
+                <div class="bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 rounded-xl pb-6 pt-10 px-6">
 
                     {{-- Tab Buttons --}}
                     <div
                         class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
 
-                        {{-- Description --}}
-                        <flux:button x-show="$wire.selectedTab == 'description'"
-                            @click="$wire.selectedTab = 'description'" variant="customer-primary"
-                            class="rounded-none cursor-pointer">
+                        <button type="button" @click="activeTab = 'description'"
+                            :class="activeTab === 'description' ? 'bg-primary text-white' :
+                                'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
+                            class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
                             Description
-                        </flux:button>
-                        <flux:button x-cloak x-show="$wire.selectedTab !== 'description'"
-                            @click="$wire.selectedTab = 'description'" class="rounded-none cursor-pointer">
-                            Description
-                        </flux:button>
+                        </button>
 
-                        {{-- Specification --}}
-                        <flux:button x-cloak x-show="$wire.selectedTab == 'specification'"
-                            @click="$wire.selectedTab = 'specification'" variant="customer-primary"
-                            class="rounded-none cursor-pointer">
+                        <button type="button" @click="activeTab = 'specification'"
+                            :class="activeTab === 'specification' ? 'bg-primary text-white' :
+                                'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
+                            class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
                             Specification
-                        </flux:button>
-                        <flux:button x-show="$wire.selectedTab !== 'specification'"
-                            @click="$wire.selectedTab = 'specification'" class="rounded-none cursor-pointer">
-                            Specification
-                        </flux:button>
+                        </button>
 
                         @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
-                            {{-- Reviews --}}
-                            <flux:button x-cloak x-show="$wire.selectedTab == 'reviews'"
-                                @click="$wire.selectedTab = 'reviews'" variant="customer-primary"
-                                class="rounded-none cursor-pointer">
+                            <button type="button" @click="activeTab = 'reviews'"
+                                :class="activeTab === 'reviews' ? 'bg-primary text-white' :
+                                    'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
+                                class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
                                 Reviews
-                            </flux:button>
-                            <flux:button x-show="$wire.selectedTab !== 'reviews'"
-                                @click="$wire.selectedTab = 'reviews'" class="rounded-none cursor-pointer">
-                                Reviews
-                            </flux:button>
+                            </button>
                         @endif
 
                     </div>
 
                     {{-- Tab Content: Description --}}
-                    <div wire:cloak wire:show="selectedTab == 'description'">
+                    <div x-show="activeTab === 'description'">
                         <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
                             {!! $product->description !!}
                         </div>
                     </div>
 
                     {{-- Tab Content: Specification --}}
-                    <div wire:cloak wire:show="selectedTab == 'specification'">
+                    <div x-show="activeTab === 'specification'" x-cloak>
                         @if (!empty($product->technical_specification))
                             <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
                                 {!! $product->technical_specification !!}
@@ -677,10 +820,9 @@
 
                     {{-- Tab Content: Reviews --}}
                     @if ($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled)
-                        <div wire:cloak wire:show="selectedTab == 'reviews'">
+                        <div x-show="activeTab === 'reviews'" x-cloak>
                             <flux:heading level="4" class="font-bold! mb-6 text-base! sm:text-lg!">Customer
-                                Ratings
-                            </flux:heading>
+                                Ratings</flux:heading>
 
                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-7">
 
@@ -777,49 +919,52 @@
                         </div>
                     @endif
 
-                </flux:card>
+                </div>{{-- end tabs card --}}
+                </div>{{-- end x-data activeTab --}}
             </div>
 
             {{-- DELIVERY SIDEBAR --}}
-            <div class="lg:col-span-1 border border-zinc-200 dark:border-zinc-700 rounded h-fit sticky top-44 p-4"
-                x-data="{ priceVisible: false }" x-on:price-out-of-view.window="priceVisible = true"
-                x-on:price-in-view.window="priceVisible = false">
+            <div class="lg:col-span-1 border border-zinc-200 dark:border-zinc-700 rounded h-fit sticky top-44 p-4">
 
-                {{-- Price — slides in when main price scrolls out of view --}}
-                @if ($product->requires_quotation)
-                    <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
-                        <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
-                        <span class="text-sm font-medium text-amber-600">Request a quote</span>
-                    </div>
-                @elseif ($product->display_price)
-                    <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
-                        <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
-                        <div class="flex items-baseline gap-1.5 flex-wrap">
-                            @if ($product->has_price_prefix)
-                                <span class="text-xs text-zinc-400">{{ $product->display_price_prefix }}</span>
-                            @endif
-                            <span class="text-lg font-bold text-primary">{{ $product->display_price }}</span>
-                            @if ($product->type === \App\Enums\ProductType::SIMPLE && $product->hasDiscount())
-                                <span
-                                    class="text-xs text-zinc-400 line-through">{{ $product->formatted_price }}</span>
-                                <span
-                                    class="text-xs font-medium text-green-600">-{{ $product->discountPercentage() }}</span>
-                            @endif
+                {{-- Price — slides in when main price scrolls out of view.
+                     wire:ignore keeps Alpine state alive across Livewire re-renders. --}}
+                <div wire:ignore x-data="{ priceVisible: false }" x-on:price-out-of-view.window="priceVisible = true"
+                    x-on:price-in-view.window="priceVisible = false">
+                    @if ($product->requires_quotation)
+                        <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                            <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
+                            <span class="text-sm font-medium text-amber-600">Request a quote</span>
                         </div>
-                    </div>
-                @endif
+                    @elseif ($product->display_price)
+                        <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                            <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
+                            <div class="flex items-baseline gap-1.5 flex-wrap">
+                                @if ($product->has_price_prefix)
+                                    <span class="text-xs text-zinc-400">{{ $product->display_price_prefix }}</span>
+                                @endif
+                                <span class="text-lg font-bold text-primary">{{ $product->display_price }}</span>
+                                @if ($product->type === \App\Enums\ProductType::SIMPLE && $product->hasDiscount())
+                                    <span
+                                        class="text-xs text-zinc-400 line-through">{{ $product->formatted_price }}</span>
+                                    <span
+                                        class="text-xs font-medium text-green-600">-{{ $product->discountPercentage() }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                </div>
 
                 {{-- Dynamic Policies --}}
                 <div class="flex flex-col">
@@ -1305,4 +1450,71 @@
             </div>
         </flux:modal>
     @endif
+
+    {{-- MOBILE STICKY BOTTOM ACTION BAR (hidden on lg+) --}}
+    <div class="fixed bottom-0 inset-x-0 z-50 lg:hidden" x-data="{ visible: false }"
+        x-on:price-out-of-view.window="visible = true" x-on:price-in-view.window="visible = false" x-show="visible"
+        x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full"
+        x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full">
+        <div class="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 px-4 py-3 shadow-lg">
+            <div class="flex items-center gap-2">
+                @php
+                    $mobileState =
+                        $product->type->value === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
+                @endphp
+
+                @if ($product->type->value === 'grouped')
+                    <flux:button x-data @click="$flux.modal('kit-contents-modal').show()" variant="customer-primary"
+                        size="customer-lg" class="flex-1 cursor-pointer" icon="shopping-cart">
+                        Add to Cart
+                    </flux:button>
+                @elseif ($product->type->value === 'bundle')
+                    @if ($inCart)
+                        <flux:button href="{{ route('cart') }}" wire:navigate variant="customer-primary"
+                            size="customer-lg" class="flex-1 cursor-pointer" icon="shopping-cart">
+                            View Cart
+                        </flux:button>
+                    @else
+                        <flux:button x-data @click="$flux.modal('bundle-contents-modal').show()"
+                            variant="customer-primary" size="customer-lg" class="flex-1 cursor-pointer"
+                            icon="shopping-cart">
+                            Add to Cart
+                        </flux:button>
+                    @endif
+                @elseif ($product->requires_quotation)
+                    <flux:button wire:click="addToQuoteBasket" variant="customer-primary" size="customer-lg"
+                        class="flex-1 cursor-pointer" wire:loading.attr="disabled" wire:target="addToQuoteBasket">
+                        Add to Quote
+                    </flux:button>
+                @elseif ($mobileState === 'out_of_stock')
+                    <flux:button variant="customer-outline" size="customer-lg" class="flex-1 cursor-not-allowed"
+                        disabled>
+                        Out of Stock
+                    </flux:button>
+                @elseif ($inCart)
+                    <flux:button href="{{ route('cart') }}" wire:navigate variant="customer-primary"
+                        size="customer-lg" class="flex-1 cursor-pointer" icon="shopping-cart">
+                        View Cart
+                    </flux:button>
+                @elseif ($mobileState === 'backorder')
+                    <flux:button wire:click="addToCart" size="customer-lg"
+                        class="flex-1 cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!"
+                        wire:loading.attr="disabled" wire:target="addToCart">
+                        Pre-order
+                    </flux:button>
+                @elseif ($mobileState !== 'none')
+                    <flux:button wire:click="addToCart" variant="customer-primary" size="customer-lg"
+                        class="flex-1 cursor-pointer" wire:loading.attr="disabled" wire:target="addToCart">
+                        Add to Cart
+                    </flux:button>
+                @endif
+
+                <flux:button wire:click.stop="toggleWishlist" icon="heart" size="customer-lg"
+                    variant="customer-outline" icon-variant="{{ $wishlisted ? 'solid' : 'outline' }}"
+                    title="Wishlist" @class(['cursor-pointer', 'text-red-500!' => $wishlisted])>
+                </flux:button>
+            </div>
+        </div>
+    </div>
 </div>

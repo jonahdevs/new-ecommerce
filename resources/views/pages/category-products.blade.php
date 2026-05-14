@@ -3,8 +3,7 @@
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
+use Livewire\Attributes\{Computed, Defer, Layout};
 use Livewire\Component;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -16,7 +15,7 @@ use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component {
     const TTL_PRODUCTS = 60 * 60 * 2; // 2 hours
     const TTL_BRANDS = 60 * 60 * 6; // 6 hours
     const TTL_CATEGORIES = 60 * 60 * 6; // 6 hours
@@ -417,55 +416,133 @@ new #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
+        {{-- Breadcrumb skeleton --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container px-4 mx-auto flex items-center gap-3">
                 <flux:skeleton animate="shimmer" class="w-4 h-4" />
                 <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                <flux:skeleton animate="shimmer" class="w-3 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
                 <flux:skeleton animate="shimmer" class="w-20 h-4" />
             </div>
         </div>
 
         {{-- Category banner skeleton --}}
-        <flux:skeleton animate="shimmer" class="w-full h-40 rounded-none" />
+        <div class="relative bg-zinc-800 overflow-hidden">
+            <flux:skeleton animate="shimmer" class="absolute inset-0 w-full h-40 opacity-30" />
+            <div class="relative container mx-auto px-4 py-8 sm:py-10">
+                <flux:skeleton animate="shimmer" class="w-64 h-8 sm:h-10 mb-2 bg-zinc-600" />
+                <flux:skeleton animate="shimmer" class="w-96 h-4 sm:h-5 bg-zinc-600" />
+            </div>
+        </div>
+
+        {{-- Sub-category pills skeleton --}}
+        <div class="border-b bg-white">
+            <div class="container mx-auto px-4 py-3 flex items-center gap-2 overflow-x-auto">
+                <flux:skeleton animate="shimmer" class="shrink-0 w-12 h-7 rounded-full" />
+                @for ($i = 0; $i < 4; $i++)
+                    <flux:skeleton animate="shimmer" class="shrink-0 w-20 h-7 rounded-full" />
+                @endfor
+            </div>
+        </div>
 
         <div class="container mx-auto px-4 py-4">
-            <div class="flex gap-4">
+            {{-- Mobile filter toggle + sort skeleton --}}
+            <div class="lg:hidden flex items-center justify-between mb-4 gap-3">
+                <flux:skeleton animate="shimmer" class="w-20 h-9" />
+                <flux:skeleton animate="shimmer" class="w-32 h-9" />
+            </div>
+
+            <div class="flex gap-6">
+                {{-- Desktop sidebar skeleton --}}
                 <aside class="hidden lg:block w-64 shrink-0">
                     <div class="sticky top-34 bg-white rounded-sm border">
-                        <div class="px-3 py-2 border-b">
-                            <flux:skeleton animate="shimmer" class="w-20 h-6" />
+                        <div class="px-3 py-2 border-b flex items-center justify-between">
+                            <flux:skeleton animate="shimmer" class="w-16 h-5" />
+                            <flux:skeleton animate="shimmer" class="w-12 h-3" />
                         </div>
                         <div class="divide-y">
-                            @for ($i = 0; $i < 4; $i++)
-                                <div class="p-4 space-y-2">
-                                    <flux:skeleton animate="shimmer" class="w-24 h-5 mb-3" />
-                                    @for ($j = 0; $j < 4; $j++)
-                                        <flux:skeleton animate="shimmer" class="w-full h-7" />
-                                    @endfor
+                            {{-- Search filter --}}
+                            <div class="p-4 space-y-3">
+                                <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-full h-9" />
+                            </div>
+                            {{-- Brand filter --}}
+                            <div class="p-4 space-y-3">
+                                <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-full h-8" />
+                                @for ($j = 0; $j < 5; $j++)
+                                    <div class="flex items-center gap-2">
+                                        <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                        <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                    </div>
+                                @endfor
+                            </div>
+                            {{-- Price filter --}}
+                            <div class="p-4 space-y-3">
+                                <flux:skeleton animate="shimmer" class="w-10 h-4" />
+                                <div class="flex gap-2">
+                                    <flux:skeleton animate="shimmer" class="flex-1 h-9" />
+                                    <flux:skeleton animate="shimmer" class="flex-1 h-9" />
                                 </div>
-                            @endfor
+                                <flux:skeleton animate="shimmer" class="w-full h-8" />
+                            </div>
+                            {{-- Rating filter --}}
+                            <div class="p-4 space-y-3">
+                                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                                @for ($j = 0; $j < 4; $j++)
+                                    <div class="flex items-center gap-2">
+                                        <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                        <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                    </div>
+                                @endfor
+                            </div>
+                            {{-- Stock & Sale filters --}}
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-center gap-2">
+                                    <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </aside>
-                <div class="flex-1 @container/main">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="space-y-2">
-                            <flux:skeleton animate="shimmer" class="w-48 h-8" />
-                            <flux:skeleton animate="shimmer" class="w-40 h-5" />
+
+                {{-- Main content skeleton --}}
+                <section class="flex-1 @container/main min-w-0">
+                    {{-- Header section --}}
+                    <div class="mb-4">
+                        <div class="hidden lg:flex items-center justify-between mb-2">
+                            <div>
+                                <flux:skeleton animate="shimmer" class="w-40 h-4" />
+                            </div>
+                            <flux:skeleton animate="shimmer" class="w-36 h-9" />
                         </div>
-                        <flux:skeleton animate="shimmer" class="w-32 h-8" />
+
+                        {{-- Mobile product count --}}
+                        <flux:skeleton animate="shimmer" class="lg:hidden w-32 h-4 mb-3" />
+
+                        {{-- Filter pills skeleton --}}
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <flux:skeleton animate="shimmer" class="w-20 h-6" />
+                            <flux:skeleton animate="shimmer" class="w-16 h-6" />
+                            <flux:skeleton animate="shimmer" class="w-24 h-6" />
+                        </div>
                     </div>
 
+                    {{-- Products grid skeleton --}}
                     <div
                         class="grid grid-cols-1 @xs/main:grid-cols-2 @xl/main:grid-cols-3 @3xl/main:grid-cols-4 @5xl/main:grid-cols-5 gap-3">
                         @for ($i = 0; $i < 15; $i++)
                             <x-product-card-placeholder />
                         @endfor
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>

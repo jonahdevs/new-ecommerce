@@ -1,6 +1,7 @@
 <?php
 use App\Enums\{OrderStatus, PaymentStatus};
 use App\Models\Payment;
+use App\Notifications\RefundProcessedNotification;
 use Livewire\Component;
 use Livewire\Attributes\{Title, Computed};
 use Illuminate\Support\Facades\DB;
@@ -39,44 +40,62 @@ new class extends Component {
 
         DB::beginTransaction();
         try {
-            // Update payment status
+            // Update payment status using the enum
             $this->payment->update([
-                'status' => 'refunded',
+                'status' => PaymentStatus::REFUNDED,
                 'meta' => array_merge($this->payment->meta ?? [], [
                     'refund' => [
                         'amount' => $this->refundAmount,
                         'reason' => $this->refundReason,
                         'refunded_at' => now()->toDateTimeString(),
                         'refunded_by' => auth()->id(),
+                        'is_partial' => $this->refundAmount < $this->payment->amount,
                     ],
                 ]),
             ]);
 
-            // Update order status if needed
+            // Update order status and payment_status if needed
             if ($this->payment->order) {
-                $originalStatus = $this->payment->order->status;
+                $order = $this->payment->order;
+                $originalStatus = $order->status;
 
-                $this->payment->order->update([
-                    'status' => OrderStatus::CANCELLED->value,
+                // Update order payment status
+                $order->update([
+                    'payment_status' => PaymentStatus::REFUNDED,
                 ]);
 
-                // Add to status history
-                $this->payment->order->statusHistories()->create([
-                    'from_status' => $originalStatus,
-                    'to_status' => OrderStatus::CANCELLED->value,
-                    'changed_by' => auth()->id(),
-                    'notes' => "Order cancelled due to refund: {$this->refundReason}",
-                ]);
+                // Only cancel the order if it's a full refund and order is not already delivered
+                if ($this->refundAmount >= $this->payment->amount && !in_array($originalStatus, [OrderStatus::DELIVERED, OrderStatus::RETURNED])) {
+                    $order->update(['status' => OrderStatus::CANCELLED]);
+
+                    // Add to status history
+                    $order->statusHistories()->create([
+                        'from_status' => $originalStatus->value,
+                        'to_status' => OrderStatus::CANCELLED->value,
+                        'changed_by_user_id' => auth()->id(),
+                        'changed_by_type' => 'user',
+                        'notes' => "Order cancelled due to full refund: {$this->refundReason}",
+                    ]);
+                }
+
+                // Notify customer about the refund
+                if ($order->user) {
+                    $order->user->notify(new RefundProcessedNotification($order, $this->payment, $this->refundAmount, $this->refundReason));
+                }
             }
 
             DB::commit();
 
             $this->showRefundModal = false;
-            $this->dispatch('notify', title: 'Refund Processed', variant: 'success', message: 'Refund processed successfully.');
+            $this->dispatch('notify', title: 'Refund Processed', variant: 'success', message: 'Refund processed successfully. Customer has been notified.');
 
             $this->payment->refresh();
         } catch (\Exception $e) {
             DB::rollBack();
+            logger()->error('Refund processing failed', [
+                'payment_id' => $this->payment->id,
+                'error' => $e->getMessage(),
+            ]);
             $this->dispatch('notify', title: 'Refund Failed', variant: 'danger', message: 'Failed to process refund: ' . $e->getMessage());
         }
     }
@@ -85,10 +104,11 @@ new class extends Component {
 
 <div>
     @push('breadcrumbs')
-    <flux:breadcrumbs><flux:breadcrumbs.item :href="route('admin.payments.index')" wire:navigate>Transactions</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Details</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
-@endpush
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item :href="route('admin.payments.index')" wire:navigate>Transactions</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>Details</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    @endpush
 
     <div class="mb-6">
         <flux:heading size="xl">Payment Details</flux:heading>

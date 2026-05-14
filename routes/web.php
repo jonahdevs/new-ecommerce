@@ -3,6 +3,7 @@
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Orders\OrderReceiptController;
+use App\Http\Controllers\Orders\PackingSlipController;
 use App\Http\Controllers\Orders\QuotationPdfController;
 use App\Http\Controllers\Payment\CallbackController;
 use App\Models\Order;
@@ -170,6 +171,7 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
         Route::livewire('/', 'pages::admin.sales.orders.index')->name('index');
         Route::livewire('/create', 'pages::admin.sales.orders.create')->name('create');
         Route::livewire('/{order}', 'pages::admin.sales.orders.show')->name('show');
+        Route::get('/{order}/packing-slip', PackingSlipController::class)->name('packing-slip');
     });
 
     Route::prefix('quotations')->name('quotations.')->group(function () {

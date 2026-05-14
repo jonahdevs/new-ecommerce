@@ -1,10 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Defer;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Computed;
+use Livewire\Attributes\{Layout, Computed, Defer, On};
 use App\Services\CompareService;
 use App\Services\CartService;
 use App\Settings\RegionalSettings;
@@ -63,36 +60,38 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
-                <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                <flux:skeleton animate="shimmer" class="w-3 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+        {{-- Breadcrumb placeholder --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center gap-3">
+                    <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                </div>
             </div>
         </div>
 
         <section class="container mx-auto px-4 py-4 min-h-[80svh]">
-            <!-- Compare Header -->
+            {{-- Header placeholder --}}
             <div class="flex items-center justify-between mb-4">
                 <flux:skeleton class="w-48 h-8" animate="shimmer" />
             </div>
 
-            <!-- Comparison Table Placeholder -->
-            <div class="border rounded-sm overflow-hidden">
+            {{-- Comparison Table Placeholder --}}
+            <div class="border border-zinc-200 rounded-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b dark:border-zinc-700">
+                            <tr class="border-b border-zinc-200">
                                 <th class="p-4 text-left w-48">
                                     <flux:skeleton animate="shimmer" class="w-24 h-4" />
                                 </th>
                                 @for ($i = 0; $i < 3; $i++)
-                                    <th class="p-4 text-center border-l dark:border-zinc-700">
+                                    <th class="p-4 text-center border-l border-zinc-200">
                                         <div class="space-y-3">
-                                            <!-- Product Image Skeleton -->
+                                            {{-- Product Image Skeleton --}}
                                             <flux:skeleton animate="shimmer" class="w-32 h-32 mx-auto" />
-                                            <!-- Product Name Skeleton -->
+                                            {{-- Product Name Skeleton --}}
                                             <flux:skeleton animate="shimmer" class="w-40 h-4 mx-auto" />
                                         </div>
                                     </th>
@@ -100,14 +99,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y dark:divide-zinc-700">
+                        <tbody class="divide-y divide-zinc-200">
                             @foreach (['Review', 'Price', 'Brand', 'Categories', 'Description', 'Stock Status', 'Actions', 'Remove'] as $row)
                                 <tr>
                                     <td class="p-4">
                                         <flux:skeleton animate="shimmer" class="w-32 h-4" />
                                     </td>
                                     @for ($i = 0; $i < 3; $i++)
-                                        <td class="p-4 text-center border-l dark:border-zinc-700">
+                                        <td class="p-4 text-center border-l border-zinc-200">
                                             @if ($row === 'Review')
                                                 <flux:skeleton animate="shimmer" class="w-32 h-4 mx-auto" />
                                             @elseif ($row === 'Price')
@@ -119,9 +118,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                                     <flux:skeleton animate="shimmer" class="w-4/6 h-3 mx-auto" />
                                                 </div>
                                             @elseif ($row === 'Actions')
-                                                <flux:skeleton animate="shimmer" class="w-32 h-8 mx-auto" />
+                                                <flux:skeleton animate="shimmer" class="w-32 h-10 mx-auto rounded-md" />
                                             @elseif ($row === 'Remove')
-                                                <flux:skeleton animate="shimmer" class="w-8 h-8 mx-auto" />
+                                                <flux:skeleton animate="shimmer" class="w-10 h-10 mx-auto rounded-md" />
                                             @else
                                                 <flux:skeleton animate="shimmer" class="w-28 h-4 mx-auto" />
                                             @endif
@@ -134,11 +133,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </div>
             </div>
 
-            <!-- Mobile Notice Placeholder -->
-            <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg lg:hidden">
+            {{-- Mobile Notice Placeholder --}}
+            <div class="mt-4 p-4 bg-blue-50 rounded-lg lg:hidden">
                 <flux:skeleton animate="shimmer" class="w-full h-4" />
             </div>
 
+            {{-- Recommendations placeholder --}}
             <div class="mt-10">
                 <flux:skeleton animate="shimmer" class="w-44 h-5 mb-4" />
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -148,7 +148,6 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </div>
             </div>
         </section>
-
     </div>
 @endplaceholder
 

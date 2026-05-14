@@ -3,11 +3,14 @@
 use App\Enums\QuoteStatus;
 use App\Models\Quote;
 use App\Services\QuotationService;
-use Livewire\Attributes\{Computed, Layout, Title};
+use Livewire\Attributes\{Computed, Layout, Title, On, Locked};
 use Livewire\Component;
 
 new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Component {
     public Quote $quote;
+
+    #[Locked]
+    public int $quoteId;
 
     // Rejection reason — optional, shown when customer clicks Reject
     public string $rejectNote = '';
@@ -24,7 +27,31 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             return;
         }
 
+        $this->quoteId = $quote->id;
         $this->quote = $quote->load(['items.product', 'statusHistories', 'order']);
+    }
+
+    // =========================================================================
+    //  REAL-TIME UPDATES
+    // =========================================================================
+
+    #[On('echo-private:quote.{quoteId},.quote.updated')]
+    public function handleQuoteUpdate(array $data): void
+    {
+        // Refresh the quote from database
+        $this->quote = $this->quote->fresh(['items.product', 'statusHistories', 'order']);
+
+        // Clear computed caches
+        unset($this->canRespond, $this->isExpired, $this->showPrices);
+
+        // Show toast notification
+        $message = match ($data['update_type']) {
+            'pricing' => 'Your quotation has been priced and is ready for review!',
+            'status' => "Quotation status updated to {$data['status_label']}",
+            default => 'Your quotation has been updated',
+        };
+
+        $this->dispatch('notify', title: 'Quotation Updated', variant: 'success', message: $message);
     }
 
     // =========================================================================

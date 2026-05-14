@@ -30,7 +30,8 @@ class CheckoutService
         private readonly TaxService $taxService,
         private readonly LocalizationSettings $localization,
         private readonly OrderSettings $orderSettings,
-    ) {}
+    ) {
+    }
 
     // =====================================================
     // Initiate checkout — single path, cart orders only
@@ -55,7 +56,7 @@ class CheckoutService
         // Prevent concurrent checkouts from the same account (e.g. double-click, duplicate tabs).
         // The lock is held for 30 seconds — long enough to cover the full DB transaction + gateway call.
         $lock = Cache::lock("checkout:user:{$user->id}", 30);
-        if (! $lock->get()) {
+        if (!$lock->get()) {
             throw new \RuntimeException('A checkout is already in progress. Please wait a moment and try again.');
         }
 
@@ -70,7 +71,7 @@ class CheckoutService
     {
         $cart = $this->cartService->getCart();
 
-        if (! $cart || ! $cart->items()->exists()) {
+        if (!$cart || !$cart->items()->exists()) {
             throw new \RuntimeException('Your cart is empty.');
         }
 
@@ -78,7 +79,7 @@ class CheckoutService
             throw new \RuntimeException('Please add a shipping address to continue.');
         }
 
-        if (! $this->checkoutSession->isComplete()) {
+        if (!$this->checkoutSession->isComplete()) {
             throw new \RuntimeException('Shipping not selected. Please select a shipping method.');
         }
 
@@ -94,7 +95,7 @@ class CheckoutService
 
         // Pre-flight stock availability check
         $unavailable = $this->inventoryService->checkAvailability($cart);
-        if (! empty($unavailable)) {
+        if (!empty($unavailable)) {
             $items = collect($unavailable)->pluck('product')->implode(', ');
             throw new \RuntimeException("Some items are out of stock: {$items}");
         }
@@ -123,7 +124,7 @@ class CheckoutService
             ?? $user->addresses()->oldest()->value('id');
 
         $address = Address::with(['county', 'area', 'shippingZone'])->find($addressId);
-        if (! $address) {
+        if (!$address) {
             $this->checkoutSession->clearAddressId();
             throw new \RuntimeException('Your selected delivery address no longer exists. Please choose another address.');
         }
@@ -137,7 +138,7 @@ class CheckoutService
             ->where('status', ShippingMethodStatus::ACTIVE)
             ->exists();
 
-        if (! $shippingMethodStillActive) {
+        if (!$shippingMethodStillActive) {
             $this->checkoutSession->clearShipping();
             throw new \RuntimeException('The selected shipping method is no longer available. Please go back and choose another.');
         }
@@ -207,6 +208,46 @@ class CheckoutService
                 $unitPriceCents = (int) round($unitPrice * 100);
                 $unitTaxCents = $this->taxService->calculateTax($unitPriceCents);
 
+                // Build product snapshot
+                $productSnapshot = [
+                    'id' => $item->product->id,
+                    'name' => $item->product->name,
+                    'sku' => $item->variant?->sku ?? $item->product->sku,
+                    'slug' => $item->product->slug,
+                    'image_path' => $item->product->image_path,
+                    'price' => $originalPrice,
+                    'sale_price' => $item->variant?->sale_price ?? $item->product->sale_price,
+                    'final_price' => $unitPrice,
+                    'weight_kg' => $item->product->weight ?? 0.5,
+                    'brand' => $item->product->brand?->name,
+                    'type' => $item->product->type?->value,
+                    'variant' => $item->variant ? [
+                        'id' => $item->variant->id,
+                        'sku' => $item->variant->sku,
+                        'attributes' => $item->variant->attributeValues?->mapWithKeys(
+                            fn($av) => [$av->attribute->name => $av->label ?: $av->value]
+                        )->toArray() ?? [],
+                    ] : null,
+                ];
+
+                // Include bundle contents if this is a bundle product
+                if ($item->product->type?->value === 'bundle') {
+                    $bundleProducts = $item->product->bundleProducts()
+                        ->withPivot('quantity')
+                        ->get();
+
+                    $productSnapshot['bundle_contents'] = $bundleProducts->map(fn($child) => [
+                        'id' => $child->id,
+                        'name' => $child->name,
+                        'sku' => $child->sku,
+                        'slug' => $child->slug,
+                        'image_path' => $child->image_path,
+                        'quantity' => $child->pivot->quantity ?? 1,
+                        'price' => $child->final_price,
+                        'weight_kg' => $child->weight ?? 0.5,
+                    ])->toArray();
+                }
+
                 $order->items()->create([
                     'product_id' => $item->product_id,
                     'product_variant_id' => $item->variant_id,
@@ -217,25 +258,7 @@ class CheckoutService
                         ($originalPrice - $unitPrice) * 100 * $item->quantity
                     ),
                     'total_cents' => (int) round($unitPrice * 100 * $item->quantity),
-                    'product_snapshot' => [
-                        'id' => $item->product->id,
-                        'name' => $item->product->name,
-                        'sku' => $item->variant?->sku ?? $item->product->sku,
-                        'slug' => $item->product->slug,
-                        'image_path' => $item->product->image_path,
-                        'price' => $originalPrice,
-                        'sale_price' => $item->variant?->sale_price ?? $item->product->sale_price,
-                        'final_price' => $unitPrice,
-                        'weight_kg' => $item->product->weight ?? 0.5,
-                        'brand' => $item->product->brand?->name,
-                        'variant' => $item->variant ? [
-                            'id' => $item->variant->id,
-                            'sku' => $item->variant->sku,
-                            'attributes' => $item->variant->attributeValues?->mapWithKeys(
-                                fn ($av) => [$av->attribute->name => $av->label ?: $av->value]
-                            )->toArray() ?? [],
-                        ] : null,
-                    ],
+                    'product_snapshot' => $productSnapshot,
                 ]);
             }
 
@@ -276,7 +299,7 @@ class CheckoutService
             if ($response->isFailed()) {
                 $order->transitionTo(
                     OrderStatus::CANCELLED,
-                    notes: 'Payment initiation failed: '.$response->message,
+                    notes: 'Payment initiation failed: ' . $response->message,
                     changedByType: 'system',
                 );
                 $order->update(['payment_status' => EnumsPaymentStatus::FAILED]);

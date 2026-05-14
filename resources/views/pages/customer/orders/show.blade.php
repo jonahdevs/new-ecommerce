@@ -2,12 +2,15 @@
 
 use App\Enums\{OrderStatus, PaymentStatus};
 use App\Models\Order;
-use Livewire\Attributes\{Computed, Layout, Title};
+use Livewire\Attributes\{Computed, Layout, Title, On, Locked};
 use Livewire\Component;
 use App\Services\CartService;
 
 new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Component {
     public Order $order;
+
+    #[Locked]
+    public int $orderId;
 
     public function mount(Order $order): void
     {
@@ -17,6 +20,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
             return;
         }
 
+        $this->orderId = $order->id;
         $this->order = $order
             ->load([
                 'items.product',
@@ -24,6 +28,29 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                 'quote', // loaded to show "converted from quote" notice when quote system is built
             ])
             ->loadCount('items');
+    }
+
+    // =====================================================
+    // Real-time Updates
+    // =====================================================
+
+    #[On('echo-private:order.{orderId},.order.updated')]
+    public function handleOrderUpdate(array $data): void
+    {
+        // Refresh the order from database
+        $this->order = $this->order->fresh(['items.product', 'payment', 'quote'])->loadCount('items');
+
+        // Clear computed caches
+        unset($this->isPaid, $this->hasKraReceipt, $this->isAwaitingKraValidation, $this->hasSapSyncFailed);
+
+        // Show toast notification
+        $message = match ($data['update_type']) {
+            'status' => "Your order is now {$data['status_label']}",
+            'payment' => "Payment status updated to {$data['payment_status_label']}",
+            default => 'Your order has been updated',
+        };
+
+        $this->dispatch('notify', title: 'Order Updated', variant: 'info', message: $message);
     }
 
     // =====================================================

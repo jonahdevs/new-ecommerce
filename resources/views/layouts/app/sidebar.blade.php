@@ -9,9 +9,13 @@
 </head>
 
 <body class="min-h-screen bg-white dark:bg-zinc-800 app-layout">
-    <flux:sidebar sticky stashable collapsible class="border-e border-zinc-200">
+    <flux:sidebar sticky stashable class="border-e border-zinc-200">
+        <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
+
         <flux:sidebar.header>
-            <img src="{{ asset('logo-inverse.png') }}" alt="" class="w-40 h-auto mx-auto">
+            <a href="{{ route('admin.dashboard') }}" wire:navigate>
+                <img src="{{ asset('logo-inverse.png') }}" alt="Sheffield" class="w-40 h-auto mx-auto">
+            </a>
         </flux:sidebar.header>
 
         <flux:navlist>
@@ -21,11 +25,10 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-
             {{-- Catalog Management --}}
             <flux:navlist.group heading="Catalog" class="grid">
                 <flux:navlist.item icon="cube" wire:navigate :href="route('admin.catalog.products.index')"
-                    wire:navigate :current="request()->routeIs('admin.catalog.products.*')">
+                    :current="request()->routeIs('admin.catalog.products.*')">
                     Products
                 </flux:navlist.item>
 
@@ -51,7 +54,6 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-
             {{-- Sales --}}
             <flux:navlist.group heading="Sales" class="grid">
                 <flux:navlist.item icon="document-text" wire:navigate :href="route('admin.quotations.index')"
@@ -67,7 +69,6 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-
             {{-- Logistics --}}
             <flux:navlist.group heading="Logistics" class="grid">
                 <flux:navlist.item icon="truck" wire:navigate :href="route('admin.logistics.overview')"
@@ -75,7 +76,6 @@
                     Logistics
                 </flux:navlist.item>
             </flux:navlist.group>
-
 
             {{-- Customer --}}
             <flux:navlist.group heading="Customers" class="grid">
@@ -89,10 +89,9 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-
             <flux:navlist.group heading="Access & Control" class="grid">
-                <flux:navlist.item icon="shield" wire:navigate :href="route('admin.access-control.roles.index')"
-                    wire:navigate :current="request()->routeIs('admin.access-control.roles*')">Roles
+                <flux:navlist.item icon="shield-check" wire:navigate :href="route('admin.access-control.roles.index')"
+                    :current="request()->routeIs('admin.access-control.roles*')">Roles
                 </flux:navlist.item>
 
                 <flux:navlist.item icon="key" wire:navigate :href="route('admin.access-control.permissions')"
@@ -101,17 +100,16 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-
-            {{-- Reports --}}
-            <flux:navlist.group heading="Reports & Analytics" expanded="false" class="grid">
-                <flux:navlist.item icon="chart-bar" wire:navigate :href="route('admin.reports.overview')"
+            {{-- Reports & Analytics --}}
+            <flux:navlist.group heading="Reports & Analytics" class="grid">
+                <flux:navlist.item icon="presentation-chart-line" wire:navigate :href="route('admin.reports.overview')"
                     :current="request()->routeIs('admin.reports.overview')">Business Overview
                 </flux:navlist.item>
-                <flux:navlist.item icon="users" wire:navigate :href="route('admin.reports.customers')"
+                <flux:navlist.item icon="user-group" wire:navigate :href="route('admin.reports.customers')"
                     :current="request()->routeIs('admin.reports.customers')">Customer Insights
                 </flux:navlist.item>
-                <flux:navlist.item icon="clipboard-document-list" wire:navigate
-                    :href="route('admin.reports.inventory')" :current="request()->routeIs('admin.reports.inventory')">
+                <flux:navlist.item icon="archive-box" wire:navigate :href="route('admin.reports.inventory')"
+                    :current="request()->routeIs('admin.reports.inventory')">
                     Inventory Health
                 </flux:navlist.item>
                 <flux:navlist.item icon="clipboard-document-list" wire:navigate
@@ -120,10 +118,9 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-
             {{-- Marketing & Content --}}
-            <flux:navlist.group heading="Marketing & Content" expanded="false" class="grid">
-                <flux:navlist.item icon="megaphone" wire:navigate :href="route('admin.marketing.campaigns.index')"
+            <flux:navlist.group heading="Marketing & Content" class="grid">
+                <flux:navlist.item icon="speaker-wave" wire:navigate :href="route('admin.marketing.campaigns.index')"
                     :current="request()->routeIs('admin.marketing.campaigns.*')">Campaigns</flux:navlist.item>
                 <flux:navlist.item icon="ticket" wire:navigate :href="route('admin.marketing.coupons.index')"
                     :current="request()->routeIs('admin.marketing.coupons.*')">Coupons & Discounts
@@ -136,12 +133,10 @@
                 <flux:navlist.item icon="question-mark-circle" wire:navigate :href="route('admin.content.faq.index')"
                     :current="request()->routeIs('admin.content.faq.*')">FAQ Management
                 </flux:navlist.item>
-
             </flux:navlist.group>
 
-
             <flux:navlist.group heading="Settings & Others" class="grid">
-                <flux:navlist.item icon="cog" wire:navigate :href="route('profile.edit')">Settings
+                <flux:navlist.item icon="cog-6-tooth" wire:navigate :href="route('profile.edit')">Settings
                 </flux:navlist.item>
             </flux:navlist.group>
         </flux:navlist>

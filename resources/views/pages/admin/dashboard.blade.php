@@ -371,7 +371,27 @@ new #[Title('Dashboard')] class extends Component {
     {{-- ================================================================== --}}
     <div class="flex items-center justify-between mb-5">
         <div>
-            <flux:heading size="xl" class="font-bold tracking-tight">Dashboard</flux:heading>
+            <div class="flex items-center gap-2">
+                <flux:heading size="xl" class="font-bold tracking-tight">Dashboard</flux:heading>
+                {{-- Real-time connection indicator --}}
+                <div x-data="{ connected: false }" x-init="if (window.Echo) {
+                    window.Echo.connector.pusher.connection.bind('connected', () => { connected = true; });
+                    window.Echo.connector.pusher.connection.bind('disconnected', () => { connected = false; });
+                    connected = window.Echo.connector.pusher.connection.state === 'connected';
+                }"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
+                    :class="connected ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                        'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'"
+                    :title="connected ? 'Real-time updates active' : 'Connecting...'">
+                    <span class="relative flex h-2 w-2">
+                        <span x-show="connected"
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2"
+                            :class="connected ? 'bg-green-500' : 'bg-zinc-400'"></span>
+                    </span>
+                    <span x-text="connected ? 'Live' : 'Offline'"></span>
+                </div>
+            </div>
             <flux:subheading>{{ $this->periodLabel }}</flux:subheading>
         </div>
         <div class="flex items-center gap-2">
@@ -556,7 +576,8 @@ new #[Title('Dashboard')] class extends Component {
                     </div>
 
                     <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Earnings</p>
+                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Earnings
+                        </p>
                         <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none break-all"
                             wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
                             x-text="display">
@@ -1628,5 +1649,27 @@ new #[Title('Dashboard')] class extends Component {
                 });
             });
         });
+
+        // =====================================================================
+        // REAL-TIME UPDATES
+        // =====================================================================
+        if (window.Echo) {
+            window.Echo.private('admin.orders')
+                .listen('.order.updated', (e) => {
+                    console.log('Dashboard: Order updated', e);
+
+                    // Show toast notification for new orders
+                    if (e.update_type === 'created') {
+                        $wire.dispatch('notify', {
+                            title: 'New Order!',
+                            variant: 'success',
+                            message: `Order ${e.reference} received from ${e.customer_name}`,
+                        });
+                    }
+
+                    // Refresh dashboard data
+                    $wire.$refresh();
+                });
+        }
     </script>
 @endscript

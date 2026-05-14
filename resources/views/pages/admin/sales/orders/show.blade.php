@@ -2,7 +2,7 @@
 
 use App\Enums\{OrderStatus, DeliveryOrderStatus, PaymentStatus, SapSyncStatus};
 use App\Jobs\SyncOrderToSapJob;
-use App\Models\{Order, DeliveryOrder};
+use App\Models\{Order, DeliveryOrder, OrderNote, OrderTag};
 use App\Settings\TaxSettings;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\{Computed, Title};
@@ -16,6 +16,13 @@ new #[Title('Order Details')] class extends Component {
     public string $trackingNumber = '';
     public string $courierName = '';
 
+    // Internal notes
+    public string $newNote = '';
+
+    // Tags
+    public string $newTagName = '';
+    public string $newTagColor = 'blue';
+
     public function mount(Order $order): void
     {
         $this->order = $order->load([
@@ -25,10 +32,167 @@ new #[Title('Order Details')] class extends Component {
             'items.product',
             'quote', // loaded to show "converted from quote" notice
             'sapSyncLogs',
+            'notes.user',
+            'tags',
         ]);
 
         $allowed = $order->status->allowedTransitions();
         $this->status = !empty($allowed) ? $allowed[0]->value : '';
+    }
+
+    // =========================================================================
+    //  INTERNAL NOTES
+    // =========================================================================
+
+    #[Computed]
+    public function notes()
+    {
+        return $this->order->notes()->with('user')->latest()->get();
+    }
+
+    public function addNote(): void
+    {
+        $this->validate([
+            'newNote' => 'required|string|min:2|max:2000',
+        ]);
+
+        $this->order->notes()->create([
+            'user_id' => auth()->id(),
+            'content' => $this->newNote,
+        ]);
+
+        $this->newNote = '';
+        unset($this->notes);
+
+        $this->dispatch('notify', title: 'Note Added', variant: 'success', message: 'Internal note has been added.');
+    }
+
+    public function togglePinNote(int $noteId): void
+    {
+        $note = OrderNote::where('order_id', $this->order->id)->find($noteId);
+
+        if ($note) {
+            $note->update(['is_pinned' => !$note->is_pinned]);
+            unset($this->notes);
+        }
+    }
+
+    public function deleteNote(int $noteId): void
+    {
+        $note = OrderNote::where('order_id', $this->order->id)->find($noteId);
+
+        if ($note) {
+            $note->delete();
+            unset($this->notes);
+            $this->dispatch('notify', title: 'Note Deleted', variant: 'success', message: 'Internal note has been deleted.');
+        }
+    }
+
+    // =========================================================================
+    //  ORDER TAGS
+    // =========================================================================
+
+    #[Computed]
+    public function availableTags()
+    {
+        return OrderTag::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function orderTags()
+    {
+        return $this->order->tags;
+    }
+
+    public function addTag(int $tagId): void
+    {
+        if ($this->order->tags()->where('order_tag_id', $tagId)->exists()) {
+            return;
+        }
+
+        $this->order->tags()->attach($tagId, ['added_by_user_id' => auth()->id()]);
+        $this->order->load('tags');
+        unset($this->orderTags);
+
+        $this->dispatch('notify', title: 'Tag Added', variant: 'success', message: 'Tag has been added to the order.');
+    }
+
+    public function removeTag(int $tagId): void
+    {
+        $this->order->tags()->detach($tagId);
+        $this->order->load('tags');
+        unset($this->orderTags);
+
+        $this->dispatch('notify', title: 'Tag Removed', variant: 'success', message: 'Tag has been removed from the order.');
+    }
+
+    public function createAndAddTag(): void
+    {
+        $this->validate([
+            'newTagName' => 'required|string|min:2|max:50|unique:order_tags,name',
+            'newTagColor' => 'required|string|in:' . implode(',', array_keys(OrderTag::COLORS)),
+        ]);
+
+        $tag = OrderTag::create([
+            'name' => $this->newTagName,
+            'color' => $this->newTagColor,
+        ]);
+
+        $this->order->tags()->attach($tag->id, ['added_by_user_id' => auth()->id()]);
+        $this->order->load('tags');
+
+        $this->newTagName = '';
+        $this->newTagColor = 'blue';
+
+        unset($this->availableTags, $this->orderTags);
+
+        $this->dispatch('notify', title: 'Tag Created', variant: 'success', message: "Tag '{$tag->name}' created and added.");
+        $this->modal('create-tag')->close();
+    }
+
+    // =========================================================================
+    //  DUPLICATE ORDER
+    // =========================================================================
+
+    public function duplicateOrder()
+    {
+        try {
+            $newOrder = DB::transaction(function () {
+                // Create new order with same details but new reference
+                $newOrder = $this->order->replicate(['reference', 'invoice_path', 'status', 'payment_status', 'tracking_number', 'courier_name', 'expires_at', 'sap_doc_number', 'sap_doc_entry', 'sap_sync_status', 'sap_synced_at', 'sap_sync_attempts', 'sap_sync_error', 'kra_cu_number', 'kra_validated_at']);
+
+                $newOrder->reference = Order::generateReference();
+                $newOrder->status = OrderStatus::PENDING;
+                $newOrder->payment_status = PaymentStatus::PENDING;
+                $newOrder->sap_sync_status = SapSyncStatus::PENDING;
+                $newOrder->save();
+
+                // Duplicate order items
+                foreach ($this->order->items as $item) {
+                    $newItem = $item->replicate();
+                    $newItem->order_id = $newOrder->id;
+                    $newItem->save();
+                }
+
+                // Add a note about the duplication
+                $newOrder->notes()->create([
+                    'user_id' => auth()->id(),
+                    'content' => "Duplicated from order #{$this->order->reference}",
+                ]);
+
+                return $newOrder;
+            });
+
+            $this->dispatch('notify', title: 'Order Duplicated', variant: 'success', message: "New order {$newOrder->reference} created.");
+
+            return $this->redirect(route('admin.orders.show', $newOrder), navigate: true);
+        } catch (\Exception $e) {
+            logger()->error('Failed to duplicate order', [
+                'order_id' => $this->order->id,
+                'error' => $e->getMessage(),
+            ]);
+            $this->dispatch('notify', title: 'Duplication Failed', variant: 'danger', message: 'Failed to duplicate order. Please try again.');
+        }
     }
 
     #[Computed]
@@ -160,12 +324,13 @@ new #[Title('Order Details')] class extends Component {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             @push('breadcrumbs')
-    <flux:breadcrumbs><flux:breadcrumbs.item :href="route('admin.orders.index')" wire:navigate>
-                    Orders
-                </flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>#{{ $order->reference }}</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
-@endpush
+                <flux:breadcrumbs>
+                    <flux:breadcrumbs.item :href="route('admin.orders.index')" wire:navigate>
+                        Orders
+                    </flux:breadcrumbs.item>
+                    <flux:breadcrumbs.item>#{{ $order->reference }}</flux:breadcrumbs.item>
+                </flux:breadcrumbs>
+            @endpush
 
             <div class="flex items-center gap-3">
                 <flux:heading size="xl" class="font-bold! tracking-tight">
@@ -177,13 +342,63 @@ new #[Title('Order Details')] class extends Component {
                 </flux:badge>
             </div>
 
+            {{-- Order Tags --}}
+            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                @foreach ($this->orderTags as $tag)
+                    <flux:badge :color="$tag->color" size="sm" class="group cursor-default">
+                        {{ $tag->name }}
+                        <button wire:click="removeTag({{ $tag->id }})"
+                            class="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <flux:icon name="x-mark" class="size-3" />
+                        </button>
+                    </flux:badge>
+                @endforeach
+
+                {{-- Add tag dropdown --}}
+                <flux:dropdown>
+                    <flux:button size="sm" variant="ghost" icon="plus"
+                        class="cursor-pointer text-zinc-400 hover:text-zinc-600">
+                        Add Tag
+                    </flux:button>
+                    <flux:menu class="w-48">
+                        @forelse ($this->availableTags->whereNotIn('id', $this->orderTags->pluck('id')) as $tag)
+                            <flux:menu.item wire:click="addTag({{ $tag->id }})">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-{{ $tag->color }}-500"></span>
+                                    {{ $tag->name }}
+                                </div>
+                            </flux:menu.item>
+                        @empty
+                            <flux:menu.item disabled>No more tags available</flux:menu.item>
+                        @endforelse
+                        <flux:menu.separator />
+                        <flux:modal.trigger name="create-tag">
+                            <flux:menu.item icon="plus">Create new tag</flux:menu.item>
+                        </flux:modal.trigger>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
+
             <flux:subheading class="mt-1 flex items-center gap-2">
                 <flux:icon name="calendar" class="size-4" />
                 Placed on {{ $order->created_at->format('M d, Y') }} at {{ $order->created_at->format('g:i A') }}
             </flux:subheading>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+            {{-- Packing Slip --}}
+            <flux:button variant="ghost" icon="clipboard-document-list" size="sm"
+                :href="route('admin.orders.packing-slip', $order)" target="_blank" class="cursor-pointer">
+                Packing Slip
+            </flux:button>
+
+            {{-- Duplicate Order --}}
+            <flux:button variant="ghost" icon="document-duplicate" size="sm" wire:click="duplicateOrder"
+                wire:confirm="Create a duplicate of this order?" class="cursor-pointer">
+                Duplicate
+            </flux:button>
+
+            {{-- Print Invoice --}}
             @if ($order->hasKraReceipt())
                 <flux:button variant="outline" icon="printer" size="sm"
                     :href="route('customer.orders.receipt', $order)" target="_blank">
@@ -194,6 +409,8 @@ new #[Title('Order Details')] class extends Component {
                     Invoice Pending
                 </flux:button>
             @endif
+
+            {{-- Manage Status --}}
             <flux:modal.trigger name="edit-order">
                 <flux:button size="sm" variant="primary" icon="pencil-square" class="cursor-pointer">
                     Manage Status
@@ -787,6 +1004,89 @@ new #[Title('Order Details')] class extends Component {
                 </div>
             </flux:card>
 
+            {{-- ============================================================ --}}
+            {{-- INTERNAL NOTES                                                --}}
+            {{-- ============================================================ --}}
+            <flux:card class="p-0">
+                <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600 flex justify-between items-center">
+                    <flux:heading>Internal Notes</flux:heading>
+                    <flux:badge variant="outline" size="sm">{{ $this->notes->count() }}</flux:badge>
+                </div>
+
+                <div class="p-5 space-y-4">
+                    {{-- Add new note form --}}
+                    <form wire:submit="addNote" class="space-y-2">
+                        <flux:textarea wire:model="newNote" placeholder="Add an internal note..." rows="2"
+                            class="text-sm" />
+                        @error('newNote')
+                            <flux:text class="text-xs text-red-500">{{ $message }}</flux:text>
+                        @enderror
+                        <flux:button type="submit" size="sm" variant="primary" icon="plus"
+                            class="w-full cursor-pointer">
+                            Add Note
+                        </flux:button>
+                    </form>
+
+                    {{-- Notes list --}}
+                    @if ($this->notes->isNotEmpty())
+                        <div class="space-y-3 max-h-80 overflow-y-auto">
+                            @foreach ($this->notes as $orderNote)
+                                <div @class([
+                                    'rounded-lg border p-3 text-sm',
+                                    'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30' =>
+                                        $orderNote->is_pinned,
+                                    'border-zinc-200 dark:border-zinc-700' => !$orderNote->is_pinned,
+                                ])>
+                                    {{-- Note header --}}
+                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                        <div class="flex items-center gap-2">
+                                            @if ($orderNote->is_pinned)
+                                                <flux:icon name="bookmark" class="size-3.5 text-amber-500"
+                                                    variant="solid" />
+                                            @endif
+                                            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                {{ $orderNote->user?->name ?? 'System' }}
+                                            </flux:text>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <flux:button wire:click="togglePinNote({{ $orderNote->id }})"
+                                                size="sm" variant="ghost" class="cursor-pointer !p-1"
+                                                title="{{ $orderNote->is_pinned ? 'Unpin' : 'Pin' }}">
+                                                <flux:icon name="bookmark" class="size-3.5"
+                                                    :variant="$orderNote->is_pinned ? 'solid' : 'outline'" />
+                                            </flux:button>
+                                            <flux:button wire:click="deleteNote({{ $orderNote->id }})"
+                                                wire:confirm="Delete this note?" size="sm" variant="ghost"
+                                                class="cursor-pointer !p-1 text-red-500 hover:text-red-600"
+                                                title="Delete">
+                                                <flux:icon name="trash" class="size-3.5" />
+                                            </flux:button>
+                                        </div>
+                                    </div>
+
+                                    {{-- Note content --}}
+                                    <flux:text
+                                        class="text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap break-words">
+                                        {{ $orderNote->content }}
+                                    </flux:text>
+
+                                    {{-- Note timestamp --}}
+                                    <flux:subheading class="text-[10px]! mt-2">
+                                        {{ $orderNote->created_at->diffForHumans() }}
+                                    </flux:subheading>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-4">
+                            <flux:icon name="chat-bubble-left-right"
+                                class="size-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
+                            <flux:subheading class="text-xs!">No internal notes yet</flux:subheading>
+                        </div>
+                    @endif
+                </div>
+            </flux:card>
+
         </div>
     </div>
 
@@ -835,4 +1135,75 @@ new #[Title('Order Details')] class extends Component {
         </div>
     </flux:modal>
 
+    {{-- ================================================================== --}}
+    {{-- MODAL: Create Tag                                                   --}}
+    {{-- ================================================================== --}}
+    <flux:modal name="create-tag" class="w-full max-w-sm">
+        <div class="space-y-4">
+            <div>
+                <flux:heading size="lg">Create New Tag</flux:heading>
+                <flux:subheading>Create a tag to organize orders</flux:subheading>
+            </div>
+
+            <form wire:submit="createAndAddTag" class="space-y-4">
+                <flux:input wire:model="newTagName" label="Tag Name" placeholder="e.g. VIP, Urgent, Wholesale" />
+                @error('newTagName')
+                    <flux:text class="text-xs text-red-500">{{ $message }}</flux:text>
+                @enderror
+
+                <flux:field>
+                    <flux:label>Color</flux:label>
+                    <div class="grid grid-cols-6 gap-2 mt-2">
+                        @foreach (\App\Models\OrderTag::COLORS as $color => $label)
+                            <button type="button" wire:click="$set('newTagColor', '{{ $color }}')"
+                                class="w-8 h-8 rounded-full bg-{{ $color }}-500 hover:ring-2 hover:ring-offset-2 hover:ring-{{ $color }}-500 transition-all {{ $newTagColor === $color ? 'ring-2 ring-offset-2 ring-' . $color . '-500' : '' }}"
+                                title="{{ $label }}">
+                            </button>
+                        @endforeach
+                    </div>
+                </flux:field>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost" class="cursor-pointer">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="primary" class="cursor-pointer">
+                        Create & Add Tag
+                    </flux:button>
+                </div>
+            </form>
+        </div>
+    </flux:modal>
+
 </div>
+
+@script
+    <script>
+        // =====================================================================
+        // REAL-TIME UPDATES FOR ORDER DETAIL PAGE
+        // =====================================================================
+        if (window.Echo) {
+            const orderId = {{ $order->id }};
+
+            window.Echo.private('admin.orders')
+                .listen('.order.updated', (e) => {
+                    // Only refresh if this is the order we're viewing
+                    if (e.order_id === orderId) {
+                        console.log('This order was updated:', e);
+
+                        // Show notification if updated by someone else
+                        if (e.updated_by && e.updated_by !== {{ auth()->id() }}) {
+                            $wire.dispatch('notify', {
+                                title: 'Order Updated',
+                                variant: 'info',
+                                message: `This order was updated by another user. Status: ${e.status_label}`,
+                            });
+                        }
+
+                        // Refresh the page data
+                        $wire.$refresh();
+                    }
+                });
+        }
+    </script>
+@endscript

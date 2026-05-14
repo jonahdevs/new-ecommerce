@@ -2,13 +2,7 @@
 
 namespace App\Providers;
 
-use App\Events\PaymentConfirmed;
-use App\Listeners\BroadcastNotificationToUser;
-use App\Listeners\SendNewOrderNotification;
-use App\Listeners\SendNewUserNotification;
-use App\Listeners\SyncCartOnLogin;
 use App\Listeners\SyncRecentViewedOnLogin;
-use App\Listeners\SyncWishlistOnLogin;
 use App\Models\Review;
 use App\Observers\ReviewObserver;
 use App\Services\CartService;
@@ -21,8 +15,6 @@ use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -56,12 +48,12 @@ class AppServiceProvider extends ServiceProvider
         if (request()->header('X-Forwarded-Proto') === 'https') {
             URL::forceScheme('https');
         }
-        Event::listen(Login::class, SyncCartOnLogin::class);
-        Event::listen(Login::class, SyncWishlistOnLogin::class);
+        // Note: Login -> SyncCartOnLogin is auto-discovered
+        // Note: Login -> SyncWishlistOnLogin is auto-discovered
         Event::listen(Login::class, SyncRecentViewedOnLogin::class);
-        Event::listen(PaymentConfirmed::class, SendNewOrderNotification::class);
-        Event::listen(Registered::class, SendNewUserNotification::class);
-        Event::listen(NotificationSent::class, BroadcastNotificationToUser::class);
+        // Note: PaymentConfirmed -> SendNewOrderNotification is auto-discovered
+        // Note: Registered -> SendNewUserNotification is auto-discovered
+        // Note: NotificationSent -> BroadcastNotificationToUser is auto-discovered
 
         Review::observe(ReviewObserver::class);
 
@@ -111,7 +103,7 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(
-            fn (): ?Password => app()->isProduction()
+            fn(): ?Password => app()->isProduction()
             ? Password::min(12)
                 ->mixedCase()
                 ->letters()

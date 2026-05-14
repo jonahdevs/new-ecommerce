@@ -21,6 +21,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     //    - SHIPPED: Order has been shipped
     //    - DELIVERED: Order has been delivered
     //    - CANCELLED: Order has been cancelled
+    //    - RETURNED: Return has been processed
     // =========================================================================
 
     public function __construct(
@@ -40,6 +41,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             OrderStatus::SHIPPED => "Order Shipped — {$this->order->reference}",
             OrderStatus::DELIVERED => "Order Delivered — {$this->order->reference}",
             OrderStatus::CANCELLED => "Order Cancelled — {$this->order->reference}",
+            OrderStatus::RETURNED => "Return Processed — {$this->order->reference}",
             default => "Order Update — {$this->order->reference}",
         };
 
@@ -58,6 +60,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             OrderStatus::SHIPPED => 'Order Shipped',
             OrderStatus::DELIVERED => 'Order Delivered',
             OrderStatus::CANCELLED => 'Order Cancelled',
+            OrderStatus::RETURNED => 'Return Processed',
             default => 'Order Update',
         };
 
@@ -65,6 +68,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             OrderStatus::SHIPPED => "Your order {$this->order->reference} has been shipped.",
             OrderStatus::DELIVERED => "Your order {$this->order->reference} has been delivered.",
             OrderStatus::CANCELLED => "Your order {$this->order->reference} has been cancelled.",
+            OrderStatus::RETURNED => "Your return for order {$this->order->reference} has been processed.",
             default => "Your order {$this->order->reference} status has been updated.",
         };
 

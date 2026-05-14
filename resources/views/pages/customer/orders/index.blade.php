@@ -2,13 +2,34 @@
 
 use App\Enums\OrderStatus;
 use Livewire\Component;
-use Livewire\Attributes\{Layout, Computed};
+use Livewire\Attributes\{Layout, Computed, On, Defer};
 use Livewire\WithPagination;
 
-new #[Layout('layouts.customer')] class extends Component {
+new #[Defer] #[Layout('layouts.customer')] class extends Component {
     use WithPagination;
 
     public string $selectedTab = 'ongoing';
+    public int $userId;
+
+    public function mount(): void
+    {
+        $this->userId = auth()->id();
+    }
+
+    // =========================================================================
+    //  REAL-TIME UPDATES
+    //  Listen for order updates on the user's private channel
+    // =========================================================================
+
+    #[On('echo-private:App.Models.User.{userId},.order.updated')]
+    public function handleOrderUpdate(array $data): void
+    {
+        // Clear computed caches to refresh the orders list
+        unset($this->hasOrders, $this->ongoingOrders, $this->cancelledOrders);
+
+        // Show toast notification
+        $this->dispatch('notify', title: 'Order Updated', variant: 'info', message: "Order #{$data['reference']} is now {$data['status_label']}");
+    }
 
     // =========================================================================
     //  COMPUTED — ORDER EXISTENCE CHECK
@@ -55,6 +76,55 @@ new #[Layout('layouts.customer')] class extends Component {
     }
 };
 ?>
+
+@placeholder
+    <div>
+        {{-- Filter tabs skeleton --}}
+        <div class="flex border-[1.5px] border-zinc-200 bg-white overflow-x-auto mb-5 rounded-sm overflow-hidden">
+            <flux:skeleton animate="shimmer" class="h-10 w-64" />
+            <flux:skeleton animate="shimmer" class="h-10 w-64" />
+        </div>
+
+        {{-- Orders list skeleton --}}
+        <div class="flex flex-col bg-white border border-zinc-200">
+            @for ($i = 0; $i < 5; $i++)
+                <div class="p-4.5 border-b border-zinc-200 last:border-b-0 flex items-center gap-4">
+                    {{-- Product images skeleton --}}
+                    <div class="hidden md:flex -space-x-2">
+                        @for ($j = 0; $j < 3; $j++)
+                            <flux:skeleton animate="shimmer" class="w-12 h-12 border-2 border-white" />
+                        @endfor
+                    </div>
+
+                    {{-- Order info skeleton --}}
+                    <div class="flex-1 min-w-0 space-y-1.5">
+                        <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                        <flux:skeleton animate="shimmer" class="w-24 h-3" />
+                        <flux:skeleton animate="shimmer" class="w-40 h-3" />
+                    </div>
+
+                    {{-- Status badge skeleton --}}
+                    <flux:skeleton animate="shimmer" class="w-20 h-6 rounded-full" />
+
+                    {{-- Price skeleton --}}
+                    <flux:skeleton animate="shimmer" class="w-24 h-6 shrink-0" />
+
+                    {{-- Chevron skeleton --}}
+                    <flux:skeleton animate="shimmer" class="w-4 h-4 shrink-0" />
+                </div>
+            @endfor
+        </div>
+
+        {{-- Pagination skeleton --}}
+        <div class="mt-6 flex justify-center">
+            <div class="flex items-center gap-2">
+                @for ($i = 0; $i < 4; $i++)
+                    <flux:skeleton animate="shimmer" class="w-8 h-8" />
+                @endfor
+            </div>
+        </div>
+    </div>
+@endplaceholder
 
 @php
     $tabClass =

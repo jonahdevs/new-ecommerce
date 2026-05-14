@@ -2,12 +2,10 @@
 
 use App\Models\Product;
 use Livewire\Component;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
+use Livewire\Attributes\{Layout, Defer, Computed, On};
 use Artesaos\SEOTools\Facades\SEOMeta;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component {
     public function mount(): void
     {
         SEOMeta::setRobots('noindex,nofollow');
@@ -41,24 +39,38 @@ new #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-2.5 px-4">
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-32 h-4" />
-                <flux:skeleton animate="shimmer" class="w-8 h-4" />
-                <flux:skeleton animate="shimmer" class="w-44 h-4" />
+        {{-- Breadcrumb placeholder --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center gap-3">
+                    <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                </div>
             </div>
         </div>
 
         <section class="container mx-auto px-4 py-4 min-h-[80svh]">
-            <!-- Wishlist Header -->
-            <flux:skeleton class="w-48 h-4 mb-6" animate="shimmer" />
+            {{-- Header placeholder --}}
+            <div class="flex items-center justify-between mb-4">
+                <flux:skeleton class="w-32 h-8" animate="shimmer" />
+            </div>
 
+            {{-- Product grid placeholder --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                @for ($i = 0; $i < 6; $i++)
+                @for ($i = 0; $i < 12; $i++)
                     <x-product-card-placeholder />
                 @endfor
+            </div>
+
+            {{-- Recommendations placeholder --}}
+            <div class="mt-10">
+                <flux:skeleton animate="shimmer" class="w-44 h-5 mb-4" />
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    @for ($i = 1; $i <= 6; $i++)
+                        <x-product-card-placeholder />
+                    @endfor
+                </div>
             </div>
         </section>
     </div>

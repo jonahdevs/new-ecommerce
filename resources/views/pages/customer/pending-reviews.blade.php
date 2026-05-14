@@ -35,6 +35,36 @@ new #[Layout('layouts.customer')] class extends Component {
     }
 }; ?>
 
+@placeholder
+    <div class="bg-white rounded-lg border">
+        {{-- Card header --}}
+        <div class="px-6 py-4 border-b border-zinc-200 flex items-center gap-3">
+            <flux:skeleton animate="shimmer" class="w-5 h-5" />
+            <flux:skeleton animate="shimmer" class="w-20 h-6" />
+            <flux:skeleton animate="shimmer" class="w-16 h-6" />
+        </div>
+
+        {{-- Card content --}}
+        <div class="flex flex-col bg-white">
+            @for ($i = 0; $i < 5; $i++)
+                <div class="p-4.5 border-b border-zinc-200 last:border-b-0 flex items-center gap-4">
+                    {{-- Product Image skeleton --}}
+                    <flux:skeleton animate="shimmer" class="w-16 h-16 rounded-sm shrink-0" />
+
+                    {{-- Product Info skeleton --}}
+                    <div class="flex-1 min-w-0 space-y-2">
+                        <flux:skeleton animate="shimmer" class="w-48 h-4" />
+                        <flux:skeleton animate="shimmer" class="w-32 h-3" />
+                    </div>
+
+                    {{-- Action button skeleton --}}
+                    <flux:skeleton animate="shimmer" class="w-24 h-8 shrink-0" />
+                </div>
+            @endfor
+        </div>
+    </div>
+@endplaceholder
+
 <x-customer.card title="Pending" titleEm="Reviews" bodyClass="p-0">
     <x-slot:icon>
         <flux:icon.star />

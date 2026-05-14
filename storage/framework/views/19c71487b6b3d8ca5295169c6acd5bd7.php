@@ -3,6 +3,8 @@
     use Illuminate\Support\Facades\Storage;
 ?>
 
+
+
 <div>
     <div class="bg-white border-b border-zinc-200 py-3">
         <div class="container mx-auto px-4 overflow-x-auto scrollbar-none">
@@ -140,64 +142,83 @@
                                 mainSwiper: null,
                                 thumbSwiper: null,
                                 activeIndex: 0,
+                                isMobile: window.innerWidth < 768,
                                 init() {
                                     const sliderId = '<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>';
+                            
+                                    this.$nextTick(() => this.initSwipers(sliderId));
+                            
+                                    window.addEventListener('resize', () => {
+                                        const nowMobile = window.innerWidth < 768;
+                                        if (nowMobile !== this.isMobile) {
+                                            this.isMobile = nowMobile;
+                                            this.$nextTick(() => this.initSwipers(sliderId));
+                                        }
+                                    });
+                            
+                                    window.addEventListener('variant-image-selected', (e) => {
+                                        if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
+                                    });
+                                },
+                                initSwipers(sliderId) {
                                     const thumbEl = document.getElementById(sliderId + 'ThumbSwiper');
                                     const mainEl = document.getElementById(sliderId + 'MainSwiper');
                             
-                                    // Wait for layout to settle (aspect-square needs width to resolve height)
-                                    this.$nextTick(() => {
-                                        // Match thumb height to the main image's rendered height
-                                        const mainContainer = mainEl?.closest('.aspect-square');
-                                        if (thumbEl && mainContainer) {
-                                            thumbEl.style.height = mainContainer.offsetHeight + 'px';
+                                    if (this.mainSwiper) {
+                                        this.mainSwiper.destroy(true, true);
+                                        this.mainSwiper = null;
+                                    }
+                                    if (this.thumbSwiper) {
+                                        this.thumbSwiper.destroy(true, true);
+                                        this.thumbSwiper = null;
+                                    }
+                            
+                                    if (thumbEl) {
+                                        if (this.isMobile) {
+                                            thumbEl.style.height = '';
+                                        } else {
+                                            const mainContainer = mainEl?.closest('.aspect-square');
+                                            if (mainContainer) {
+                                                thumbEl.style.height = mainContainer.offsetHeight + 'px';
+                                            }
                                         }
                             
-                                        // Init thumbs FIRST (only if element exists)
-                                        if (thumbEl) {
-                                            this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
-                                                direction: 'vertical',
-                                                slidesPerView: 'auto',
-                                                spaceBetween: 8,
-                                                freeMode: true,
-                                                watchSlidesProgress: true,
-                                                mousewheel: true,
-                                            });
-                                        }
-                            
-                                        // Init main swiper - only add thumbs option if thumbSwiper exists
-                                        const mainSwiperOptions = {
-                                            spaceBetween: 0,
-                                            on: {
-                                                slideChange: (swiper) => {
-                                                    this.activeIndex = swiper.activeIndex;
-                                                },
-                                            },
-                                        };
-                            
-                                        if (this.thumbSwiper) {
-                                            mainSwiperOptions.thumbs = { swiper: this.thumbSwiper };
-                                        }
-                            
-                                        this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', mainSwiperOptions);
-                            
-                                        window.addEventListener('variant-image-selected', (e) => {
-                                            if (this.mainSwiper) this.mainSwiper.slideTo(e.detail.index);
+                                        this.thumbSwiper = new Swiper('#' + sliderId + 'ThumbSwiper', {
+                                            direction: this.isMobile ? 'horizontal' : 'vertical',
+                                            slidesPerView: 'auto',
+                                            spaceBetween: 8,
+                                            freeMode: true,
+                                            watchSlidesProgress: true,
+                                            mousewheel: true,
                                         });
+                                    }
                             
-                                        // Fade in
-                                        if (thumbEl) thumbEl.classList.remove('opacity-0');
-                                        if (mainEl) mainEl.classList.remove('opacity-0');
-                                    });
+                                    const mainSwiperOptions = {
+                                        spaceBetween: 0,
+                                        on: {
+                                            slideChange: (swiper) => {
+                                                this.activeIndex = swiper.activeIndex;
+                                            },
+                                        },
+                                    };
+                            
+                                    if (this.thumbSwiper) {
+                                        mainSwiperOptions.thumbs = { swiper: this.thumbSwiper };
+                                    }
+                            
+                                    this.mainSwiper = new Swiper('#' + sliderId + 'MainSwiper', mainSwiperOptions);
+                            
+                                    if (thumbEl) thumbEl.classList.remove('opacity-0');
+                                    if (mainEl) mainEl.classList.remove('opacity-0');
                                 },
                             }" class="lg:sticky lg:top-24">
 
                                 
-                                <div class="flex flex-row items-stretch gap-3">
+                                <div class="flex flex-col gap-3 md:flex-row md:items-stretch">
 
                                     
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($this->imageSlides) > 1): ?>
-                                        <div class="swiper shrink-0 opacity-0 transition-opacity duration-500  overflow-hidden w-20"
+                                        <div class="swiper order-last md:order-first opacity-0 transition-opacity duration-500 overflow-hidden h-20 md:h-auto md:shrink-0 md:w-20"
                                             id="<?php echo e($product->type->value === 'grouped' ? 'grouped' : 'main'); ?>ThumbSwiper">
                                             <div class="swiper-wrapper">
                                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->imageSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
@@ -479,7 +500,7 @@
                             <div id="main-product-price"
                                 x-intersect:enter="window.dispatchEvent(new CustomEvent('price-in-view'))"
                                 x-intersect:leave="window.dispatchEvent(new CustomEvent('price-out-of-view'))"
-                                class="relative overflow-hidden rounded-lg bg-gradient-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
+                                class="relative overflow-hidden rounded-lg bg-linear-to-r from-secondary/10 to-secondary/5 border border-secondary/20">
                                 
                                 <div class="absolute -right-2 -top-2 opacity-10">
                                     <?php if (isset($component)) { $__componentOriginal9d0b0e731f78867d90e05462d3b99106 = $component; } ?>
@@ -574,7 +595,7 @@
                             <div id="main-product-price"
                                 x-intersect:enter="window.dispatchEvent(new CustomEvent('price-in-view'))"
                                 x-intersect:leave="window.dispatchEvent(new CustomEvent('price-out-of-view'))"
-                                class="relative overflow-hidden rounded-lg bg-gradient-to-r from-green-500/10 to-green-500/5 border border-green-500/20">
+                                class="relative overflow-hidden rounded-lg bg-linear-to-r from-green-500/10 to-green-500/5 border border-green-500/20">
                                 
                                 <div class="absolute -right-2 -top-2 opacity-10">
                                     <?php if (isset($component)) { $__componentOriginald0fbf3e845befb6e1dacd6bedf8c515a = $component; } ?>
@@ -1173,178 +1194,45 @@ Save <?php echo e($savings); ?>%
                                 </div>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
                     </div>
                 </div>
 
                 
-                <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => 'pb-6 relative pt-10 px-6 mt-10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::card'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'pb-6 relative pt-10 px-6 mt-10']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+                
+                <div x-data="{ activeTab: 'description' }" class="relative mt-10">
+                <div class="bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 rounded-xl pb-6 pt-10 px-6">
 
                     
                     <div
                         class="flex items-center gap-2 absolute top-0 left-0 -translate-y-1/2 rounded-b-sm rounded-tr-sm">
 
-                        
-                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.selectedTab == \'description\'','@click' => '$wire.selectedTab = \'description\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['x-show' => '$wire.selectedTab == \'description\'','@click' => '$wire.selectedTab = \'description\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+                        <button type="button" @click="activeTab = 'description'"
+                            :class="activeTab === 'description' ? 'bg-primary text-white' :
+                                'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
+                            class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
                             Description
-                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab !== \'description\'','@click' => '$wire.selectedTab = \'description\'','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab !== \'description\'','@click' => '$wire.selectedTab = \'description\'','class' => 'rounded-none cursor-pointer']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+                        </button>
 
-                            Description
-                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-
-                        
-                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab == \'specification\'','@click' => '$wire.selectedTab = \'specification\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab == \'specification\'','@click' => '$wire.selectedTab = \'specification\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+                        <button type="button" @click="activeTab = 'specification'"
+                            :class="activeTab === 'specification' ? 'bg-primary text-white' :
+                                'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
+                            class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
                             Specification
-                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.selectedTab !== \'specification\'','@click' => '$wire.selectedTab = \'specification\'','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['x-show' => '$wire.selectedTab !== \'specification\'','@click' => '$wire.selectedTab = \'specification\'','class' => 'rounded-none cursor-pointer']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                            Specification
-                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
+                        </button>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled): ?>
-                            
-                            <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xCloak' => true,'xShow' => '$wire.selectedTab == \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['x-cloak' => true,'x-show' => '$wire.selectedTab == \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','variant' => 'customer-primary','class' => 'rounded-none cursor-pointer']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+                            <button type="button" @click="activeTab = 'reviews'"
+                                :class="activeTab === 'reviews' ? 'bg-primary text-white' :
+                                    'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'"
+                                class="px-3.5 py-1.5 text-[12px] font-serif font-extrabold tracking-wider uppercase rounded-none cursor-pointer transition-colors">
                                 Reviews
-                             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-                            <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xShow' => '$wire.selectedTab !== \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','class' => 'rounded-none cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['x-show' => '$wire.selectedTab !== \'reviews\'','@click' => '$wire.selectedTab = \'reviews\'','class' => 'rounded-none cursor-pointer']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                Reviews
-                             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
+                            </button>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                     </div>
 
                     
-                    <div wire:cloak wire:show="selectedTab == 'description'">
+                    <div x-show="activeTab === 'description'">
                         <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
                             <?php echo $product->description; ?>
 
@@ -1352,7 +1240,7 @@ Save <?php echo e($savings); ?>%
                     </div>
 
                     
-                    <div wire:cloak wire:show="selectedTab == 'specification'">
+                    <div x-show="activeTab === 'specification'" x-cloak>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($product->technical_specification)): ?>
                             <div class="text-xs sm:text-sm text-zinc-500 tracking-wider leading-6">
                                 <?php echo $product->technical_specification; ?>
@@ -1366,7 +1254,7 @@ Save <?php echo e($savings); ?>%
 
                     
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->product->reviews_enabled && app(\App\Settings\ReviewSettings::class)->reviews_enabled): ?>
-                        <div wire:cloak wire:show="selectedTab == 'reviews'">
+                        <div x-show="activeTab === 'reviews'" x-cloak>
                             <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['level' => '4','class' => 'font-bold! mb-6 text-base! sm:text-lg!']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -1379,8 +1267,7 @@ Save <?php echo e($savings); ?>%
 <?php $component->withAttributes(['level' => '4','class' => 'font-bold! mb-6 text-base! sm:text-lg!']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 Customer
-                                Ratings
-                             <?php echo $__env->renderComponent(); ?>
+                                Ratings <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
 <?php $attributes = $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
@@ -1635,58 +1522,51 @@ unset($__split);
                         </div>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>
-<?php $attributes = $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec; ?>
-<?php unset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>
-<?php $component = $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec; ?>
-<?php unset($__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec); ?>
-<?php endif; ?>
+                </div>
+                </div>
             </div>
 
             
-            <div class="lg:col-span-1 border border-zinc-200 dark:border-zinc-700 rounded h-fit sticky top-44 p-4"
-                x-data="{ priceVisible: false }" x-on:price-out-of-view.window="priceVisible = true"
-                x-on:price-in-view.window="priceVisible = false">
+            <div class="lg:col-span-1 border border-zinc-200 dark:border-zinc-700 rounded h-fit sticky top-44 p-4">
 
                 
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->requires_quotation): ?>
-                    <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
-                        <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
-                        <span class="text-sm font-medium text-amber-600">Request a quote</span>
-                    </div>
-                <?php elseif($product->display_price): ?>
-                    <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 -translate-y-1"
-                        class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
-                        <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
-                        <div class="flex items-baseline gap-1.5 flex-wrap">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->has_price_prefix): ?>
-                                <span class="text-xs text-zinc-400"><?php echo e($product->display_price_prefix); ?></span>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <span class="text-lg font-bold text-primary"><?php echo e($product->display_price); ?></span>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->type === \App\Enums\ProductType::SIMPLE && $product->hasDiscount()): ?>
-                                <span
-                                    class="text-xs text-zinc-400 line-through"><?php echo e($product->formatted_price); ?></span>
-                                <span
-                                    class="text-xs font-medium text-green-600">-<?php echo e($product->discountPercentage()); ?></span>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <div wire:ignore x-data="{ priceVisible: false }" x-on:price-out-of-view.window="priceVisible = true"
+                    x-on:price-in-view.window="priceVisible = false">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->requires_quotation): ?>
+                        <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                            <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
+                            <span class="text-sm font-medium text-amber-600">Request a quote</span>
                         </div>
-                    </div>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php elseif($product->display_price): ?>
+                        <div x-show="priceVisible" x-cloak x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="mb-3 pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                            <p class="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Price</p>
+                            <div class="flex items-baseline gap-1.5 flex-wrap">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->has_price_prefix): ?>
+                                    <span class="text-xs text-zinc-400"><?php echo e($product->display_price_prefix); ?></span>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <span class="text-lg font-bold text-primary"><?php echo e($product->display_price); ?></span>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->type === \App\Enums\ProductType::SIMPLE && $product->hasDiscount()): ?>
+                                    <span
+                                        class="text-xs text-zinc-400 line-through"><?php echo e($product->formatted_price); ?></span>
+                                    <span
+                                        class="text-xs font-medium text-green-600">-<?php echo e($product->discountPercentage()); ?></span>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
 
                 
                 <div class="flex flex-col">
@@ -3159,4 +3039,239 @@ You save <?php echo e($savings); ?>% vs buying separately
 <?php unset($__componentOriginal8cc9d3143946b992b324617832699c5f); ?>
 <?php endif; ?>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    
+    <div class="fixed bottom-0 inset-x-0 z-50 lg:hidden" x-data="{ visible: false }"
+        x-on:price-out-of-view.window="visible = true" x-on:price-in-view.window="visible = false" x-show="visible"
+        x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full"
+        x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full">
+        <div class="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 px-4 py-3 shadow-lg">
+            <div class="flex items-center gap-2">
+                <?php
+                    $mobileState =
+                        $product->type->value === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
+                ?>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->type->value === 'grouped'): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xData' => true,'@click' => '$flux.modal(\'kit-contents-modal\').show()','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['x-data' => true,'@click' => '$flux.modal(\'kit-contents-modal\').show()','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Add to Cart
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                <?php elseif($product->type->value === 'bundle'): ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($inCart): ?>
+                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('cart')).'','wire:navigate' => true,'variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['href' => ''.e(route('cart')).'','wire:navigate' => true,'variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                            View Cart
+                         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                    <?php else: ?>
+                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['xData' => true,'@click' => '$flux.modal(\'bundle-contents-modal\').show()','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['x-data' => true,'@click' => '$flux.modal(\'bundle-contents-modal\').show()','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                            Add to Cart
+                         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php elseif($product->requires_quotation): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToQuoteBasket','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToQuoteBasket']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:click' => 'addToQuoteBasket','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToQuoteBasket']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Add to Quote
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                <?php elseif($mobileState === 'out_of_stock'): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'customer-outline','size' => 'customer-lg','class' => 'flex-1 cursor-not-allowed','disabled' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['variant' => 'customer-outline','size' => 'customer-lg','class' => 'flex-1 cursor-not-allowed','disabled' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Out of Stock
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                <?php elseif($inCart): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('cart')).'','wire:navigate' => true,'variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['href' => ''.e(route('cart')).'','wire:navigate' => true,'variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','icon' => 'shopping-cart']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        View Cart
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                <?php elseif($mobileState === 'backorder'): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToCart','size' => 'customer-lg','class' => 'flex-1 cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:click' => 'addToCart','size' => 'customer-lg','class' => 'flex-1 cursor-pointer bg-amber-500! border-amber-500! hover:bg-amber-600! text-white!','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Pre-order
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                <?php elseif($mobileState !== 'none'): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'addToCart','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:click' => 'addToCart','variant' => 'customer-primary','size' => 'customer-lg','class' => 'flex-1 cursor-pointer','wire:loading.attr' => 'disabled','wire:target' => 'addToCart']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Add to Cart
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click.stop' => 'toggleWishlist','icon' => 'heart','size' => 'customer-lg','variant' => 'customer-outline','iconVariant' => ''.e($wishlisted ? 'solid' : 'outline').'','title' => 'Wishlist','class' => \Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-red-500!' => $wishlisted])]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:click.stop' => 'toggleWishlist','icon' => 'heart','size' => 'customer-lg','variant' => 'customer-outline','icon-variant' => ''.e($wishlisted ? 'solid' : 'outline').'','title' => 'Wishlist','class' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(\Illuminate\Support\Arr::toCssClasses(['cursor-pointer', 'text-red-500!' => $wishlisted]))]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                 <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+            </div>
+        </div>
+    </div>
 </div><?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\storage\framework/views/livewire/views/8463dcac.blade.php ENDPATH**/ ?>

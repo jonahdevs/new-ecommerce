@@ -34,7 +34,7 @@
 
             <!-- Terms and Conditions -->
             <flux:field variant="inline">
-                <flux:checkbox wire:model="terms" required />
+                <flux:checkbox name="terms" value="1" required />
                 <flux:label>{{ __('I agree to the') }} <flux:link :href="route('terms')" class="ms-2">terms and
                         conditions</flux:link>
                 </flux:label>

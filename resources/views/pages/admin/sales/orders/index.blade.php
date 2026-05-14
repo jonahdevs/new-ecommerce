@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\Quote;
+use App\Models\OrderTag;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\QuoteStatus;
@@ -20,6 +21,8 @@ new #[Title('Orders')] class extends Component {
 
     public string $search = '';
     public string $statusFilter = 'all';
+    public string $paymentFilter = 'all';
+    public string $tagFilter = 'all';
     public string $dateFrom = '';
     public string $dateTo = '';
     public string $sortBy = 'created_at';
@@ -36,6 +39,14 @@ new #[Title('Orders')] class extends Component {
         $this->resetPage();
     }
     public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingPaymentFilter(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingTagFilter(): void
     {
         $this->resetPage();
     }
@@ -59,7 +70,7 @@ new #[Title('Orders')] class extends Component {
     public function orders()
     {
         return Order::query()
-            ->with(['user', 'payment'])
+            ->with(['user', 'payment', 'tags'])
             ->withCount('items')
 
             // Search by reference, customer name, or email
@@ -68,12 +79,28 @@ new #[Title('Orders')] class extends Component {
             // Status filter
             ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
 
+            // Payment status filter
+            ->when($this->paymentFilter !== 'all', fn($q) => $q->where('payment_status', $this->paymentFilter))
+
+            // Tag filter
+            ->when($this->tagFilter !== 'all', fn($q) => $q->whereHas('tags', fn($t) => $t->where('order_tags.id', $this->tagFilter)))
+
             // Date range filter
             ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
             ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
 
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate($this->perPage);
+    }
+
+    // =========================================================================
+    //  COMPUTED — AVAILABLE TAGS
+    // =========================================================================
+
+    #[Computed]
+    public function availableTags()
+    {
+        return OrderTag::withCount('orders')->orderBy('name')->get();
     }
 
     // =========================================================================
@@ -112,6 +139,10 @@ new #[Title('Orders')] class extends Component {
                 ->count(),
             'pending' => Order::query()
                 ->whereIn('status', [OrderStatus::PENDING->value, OrderStatus::PROCESSING->value])
+                ->count(),
+            'unpaid' => Order::query()
+                ->whereIn('payment_status', [PaymentStatus::PENDING->value, PaymentStatus::FAILED->value])
+                ->whereNotIn('status', [OrderStatus::CANCELLED->value])
                 ->count(),
         ];
     }
@@ -152,6 +183,69 @@ new #[Title('Orders')] class extends Component {
     public function pendingQuotesCount(): int
     {
         return Quote::where('status', QuoteStatus::PENDING->value)->count();
+    }
+
+    // =========================================================================
+    //  COMPUTED — PAYMENT STATUS OPTIONS
+    // =========================================================================
+
+    #[Computed]
+    public function paymentStatusOptions(): array
+    {
+        $options = ['all' => 'All Payments'];
+
+        foreach (PaymentStatus::cases() as $case) {
+            $options[$case->value] = $case->label();
+        }
+
+        return $options;
+    }
+
+    // =========================================================================
+    //  QUICK ACTIONS
+    // =========================================================================
+
+    public function quickConfirm(int $orderId): void
+    {
+        $this->quickTransition($orderId, OrderStatus::CONFIRMED);
+    }
+
+    public function quickProcess(int $orderId): void
+    {
+        $this->quickTransition($orderId, OrderStatus::PROCESSING);
+    }
+
+    public function quickShip(int $orderId): void
+    {
+        $this->quickTransition($orderId, OrderStatus::SHIPPED);
+    }
+
+    public function quickDeliver(int $orderId): void
+    {
+        $this->quickTransition($orderId, OrderStatus::DELIVERED);
+    }
+
+    private function quickTransition(int $orderId, OrderStatus $targetStatus): void
+    {
+        $order = Order::find($orderId);
+
+        if (!$order) {
+            $this->dispatch('notify', title: 'Error', variant: 'danger', message: 'Order not found.');
+            return;
+        }
+
+        if (!$order->status->canTransitionTo($targetStatus)) {
+            $this->dispatch('notify', title: 'Invalid Transition', variant: 'warning', message: "Cannot transition from {$order->status->label()} to {$targetStatus->label()}.");
+            return;
+        }
+
+        try {
+            $order->transitionTo($targetStatus, notes: 'Quick action by admin.', changedByType: 'user');
+            unset($this->orders, $this->statusCounts, $this->stats);
+            $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: "Order {$order->reference} is now {$targetStatus->label()}.");
+        } catch (\Exception $e) {
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
+        }
     }
 
     // =========================================================================
@@ -235,6 +329,7 @@ new #[Title('Orders')] class extends Component {
             ->withCount('items')
             ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
             ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->paymentFilter !== 'all', fn($q) => $q->where('payment_status', $this->paymentFilter))
             ->latest()
             ->get();
 
@@ -268,6 +363,8 @@ new #[Title('Orders')] class extends Component {
     {
         $this->search = '';
         $this->statusFilter = 'all';
+        $this->paymentFilter = 'all';
+        $this->tagFilter = 'all';
         $this->dateFrom = '';
         $this->dateTo = '';
         $this->resetPage();
@@ -325,14 +422,35 @@ new #[Title('Orders')] class extends Component {
 
     {{-- Breadcrumb --}}
     @push('breadcrumbs')
-    <flux:breadcrumbs><flux:breadcrumbs.item>Orders</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
-@endpush
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item>Orders</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    @endpush
 
     {{-- Page header --}}
     <div class="flex items-start justify-between mb-6">
         <div>
-            <flux:heading size="xl">Orders</flux:heading>
+            <div class="flex items-center gap-2">
+                <flux:heading size="xl">Orders</flux:heading>
+                {{-- Real-time connection indicator --}}
+                <div x-data="{ connected: false }" x-init="if (window.Echo) {
+                    window.Echo.connector.pusher.connection.bind('connected', () => { connected = true; });
+                    window.Echo.connector.pusher.connection.bind('disconnected', () => { connected = false; });
+                    connected = window.Echo.connector.pusher.connection.state === 'connected';
+                }"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
+                    :class="connected ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                        'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'"
+                    :title="connected ? 'Real-time updates active' : 'Connecting...'">
+                    <span class="relative flex h-2 w-2">
+                        <span x-show="connected"
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2"
+                            :class="connected ? 'bg-green-500' : 'bg-zinc-400'"></span>
+                    </span>
+                    <span x-text="connected ? 'Live' : 'Offline'"></span>
+                </div>
+            </div>
             <flux:subheading>
                 {{ $this->periodLabel }} · Manage sales orders and delivery tracking.
             </flux:subheading>
@@ -355,7 +473,7 @@ new #[Title('Orders')] class extends Component {
     {{-- ================================================================== --}}
 
     <div wire:key="orders-stats-{{ $this->dateFrom }}-{{ $this->dateTo }}"
-        class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <flux:card class="p-4 border-l-4 border-l-blue-500 dark:border-l-blue-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
@@ -389,7 +507,7 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-violet-500 dark:border-l-violet-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Orders Today</flux:subheading>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Today</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['today'] }} })" x-text="display">
                     </flux:heading>
                     <flux:subheading class="text-xs! mt-1">{{ now()->format('M j, Y') }}</flux:subheading>
@@ -404,14 +522,31 @@ new #[Title('Orders')] class extends Component {
         <flux:card class="p-4 border-l-4 border-l-amber-500 dark:border-l-amber-500 rounded-l-none!">
             <div class="flex items-center justify-between">
                 <div>
-                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Needs Attention</flux:subheading>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Processing</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['pending'] }} })" x-text="display">
                     </flux:heading>
-                    <flux:subheading class="text-xs! mt-1">Pending / Processing</flux:subheading>
+                    <flux:subheading class="text-xs! mt-1">Pending / In Progress</flux:subheading>
                 </div>
                 <div
                     class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
                     <flux:icon.clock class="size-5 text-amber-500" />
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card
+            class="p-4 border-l-4 border-l-rose-500 dark:border-l-rose-500 rounded-l-none! cursor-pointer hover:shadow-md transition-shadow"
+            wire:click="$set('paymentFilter', 'pending')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Unpaid</flux:subheading>
+                    <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['unpaid'] }} })" x-text="display">
+                    </flux:heading>
+                    <flux:subheading class="text-xs! mt-1">Awaiting Payment</flux:subheading>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/15 flex items-center justify-center shrink-0">
+                    <flux:icon.credit-card class="size-5 text-rose-500" />
                 </div>
             </div>
         </flux:card>
@@ -443,7 +578,7 @@ new #[Title('Orders')] class extends Component {
             <div class="flex items-center gap-2 ms-auto flex-wrap">
 
                 {{-- Status filter — options are scoped to the active tab --}}
-                <flux:select wire:model.live="statusFilter" class="w-48">
+                <flux:select wire:model.live="statusFilter" class="w-44">
                     @foreach ($this->statusOptions as $value => $label)
                         <flux:select.option value="{{ $value }}">
                             {{ $label }}
@@ -453,6 +588,25 @@ new #[Title('Orders')] class extends Component {
                         </flux:select.option>
                     @endforeach
                 </flux:select>
+
+                {{-- Payment status filter --}}
+                <flux:select wire:model.live="paymentFilter" class="w-36">
+                    @foreach ($this->paymentStatusOptions as $value => $label)
+                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                {{-- Tag filter --}}
+                @if ($this->availableTags->isNotEmpty())
+                    <flux:select wire:model.live="tagFilter" class="w-36">
+                        <flux:select.option value="all">All Tags</flux:select.option>
+                        @foreach ($this->availableTags as $tag)
+                            <flux:select.option value="{{ $tag->id }}">
+                                {{ $tag->name }} ({{ $tag->orders_count }})
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                @endif
 
                 <flux:select wire:model.live="perPage" class="w-24">
                     <flux:select.option value="10">10</flux:select.option>
@@ -477,7 +631,7 @@ new #[Title('Orders')] class extends Component {
                     </flux:menu>
                 </flux:dropdown>
 
-                @if ($search || $statusFilter !== 'all' || $dateFrom || $dateTo)
+                @if ($search || $statusFilter !== 'all' || $paymentFilter !== 'all' || $tagFilter !== 'all' || $dateFrom || $dateTo)
                     <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">Clear
                     </flux:button>
                 @endif
@@ -597,6 +751,20 @@ new #[Title('Orders')] class extends Component {
                                 class="font-semibold text-zinc-800 dark:text-white hover:text-primary transition-colors">
                                 {{ $order->reference }}
                             </a>
+                            @if ($order->tags->isNotEmpty())
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    @foreach ($order->tags->take(3) as $tag)
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-{{ $tag->color }}-100 text-{{ $tag->color }}-700 dark:bg-{{ $tag->color }}-900/30 dark:text-{{ $tag->color }}-400">
+                                            {{ $tag->name }}
+                                        </span>
+                                    @endforeach
+                                    @if ($order->tags->count() > 3)
+                                        <span
+                                            class="text-[10px] text-zinc-400">+{{ $order->tags->count() - 3 }}</span>
+                                    @endif
+                                </div>
+                            @endif
                         </flux:table.cell>
 
                         {{-- Customer --}}
@@ -649,51 +817,81 @@ new #[Title('Orders')] class extends Component {
 
                         {{-- Actions --}}
                         <flux:table.cell align="end" class="pe-4!">
-                            <flux:dropdown align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
-                                    class="cursor-pointer" />
-                                <flux:menu>
+                            <div class="flex items-center justify-end gap-1">
+                                {{-- Quick action buttons for common transitions --}}
+                                @if ($order->status === OrderStatus::PENDING)
+                                    <flux:button size="xs" variant="ghost" icon="check-badge"
+                                        wire:click="quickConfirm({{ $order->id }})"
+                                        wire:confirm="Confirm order {{ $order->reference }}?" title="Confirm Order"
+                                        class="cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20" />
+                                @endif
 
-                                    {{-- View --}}
-                                    <flux:menu.item icon="eye" icon-variant="outline"
-                                        :href="route('admin.orders.show', $order)" wire:navigate>
-                                        View Order
-                                    </flux:menu.item>
+                                @if ($order->status === OrderStatus::CONFIRMED)
+                                    <flux:button size="xs" variant="ghost" icon="arrow-path"
+                                        wire:click="quickProcess({{ $order->id }})" title="Start Processing"
+                                        class="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" />
+                                @endif
 
-                                    <flux:menu.separator />
+                                @if ($order->status === OrderStatus::PROCESSING)
+                                    <flux:button size="xs" variant="ghost" icon="truck"
+                                        wire:click="quickShip({{ $order->id }})" title="Mark as Shipped"
+                                        class="cursor-pointer text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/20" />
+                                @endif
 
-                                    {{-- Change Log --}}
-                                    <flux:menu.item icon="clock" icon-variant="outline"
-                                        href="{{ route('admin.changelog', ['modelType' => 'order', 'id' => $order->id]) }}" wire:navigate>
-                                        Change Log
-                                    </flux:menu.item>
+                                @if ($order->status === OrderStatus::SHIPPED)
+                                    <flux:button size="xs" variant="ghost" icon="check-circle"
+                                        wire:click="quickDeliver({{ $order->id }})" title="Mark as Delivered"
+                                        class="cursor-pointer text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20" />
+                                @endif
 
-                                    <flux:menu.separator />
+                                {{-- More actions dropdown --}}
+                                <flux:dropdown align="end">
+                                    <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal"
+                                        class="cursor-pointer" />
+                                    <flux:menu>
 
-                                    {{-- Status transitions --}}
-                                    @if (count($order->status->allowedTransitions()) > 0)
-                                        <flux:menu.submenu heading="Set Status">
-                                            @foreach ($order->status->allowedTransitions() as $transition)
-                                                <flux:menu.item :icon="$transition->icon()" icon-variant="outline"
-                                                    wire:click="executeBulkAction('{{ $transition->value }}', [{{ $order->id }}])">
-                                                    {{ $transition->label() }}
-                                                </flux:menu.item>
-                                            @endforeach
-                                        </flux:menu.submenu>
-                                        <flux:menu.separator />
-                                    @endif
-
-                                    {{-- Cancel --}}
-                                    @if ($order->status->canTransitionTo(OrderStatus::CANCELLED))
-                                        <flux:menu.item icon="x-circle" variant="danger" icon-variant="outline"
-                                            wire:click="executeBulkAction('{{ OrderStatus::CANCELLED->value }}', [{{ $order->id }}])"
-                                            wire:confirm="Cancel order {{ $order->reference }}?">
-                                            Cancel Order
+                                        {{-- View --}}
+                                        <flux:menu.item icon="eye" icon-variant="outline"
+                                            :href="route('admin.orders.show', $order)" wire:navigate>
+                                            View Order
                                         </flux:menu.item>
-                                    @endif
 
-                                </flux:menu>
-                            </flux:dropdown>
+                                        <flux:menu.separator />
+
+                                        {{-- Change Log --}}
+                                        <flux:menu.item icon="clock" icon-variant="outline"
+                                            href="{{ route('admin.changelog', ['modelType' => 'order', 'id' => $order->id]) }}"
+                                            wire:navigate>
+                                            Change Log
+                                        </flux:menu.item>
+
+                                        <flux:menu.separator />
+
+                                        {{-- Status transitions --}}
+                                        @if (count($order->status->allowedTransitions()) > 0)
+                                            <flux:menu.submenu heading="Set Status">
+                                                @foreach ($order->status->allowedTransitions() as $transition)
+                                                    <flux:menu.item :icon="$transition->icon()" icon-variant="outline"
+                                                        wire:click="executeBulkAction('{{ $transition->value }}', [{{ $order->id }}])">
+                                                        {{ $transition->label() }}
+                                                    </flux:menu.item>
+                                                @endforeach
+                                            </flux:menu.submenu>
+                                            <flux:menu.separator />
+                                        @endif
+
+                                        {{-- Cancel --}}
+                                        @if ($order->status->canTransitionTo(OrderStatus::CANCELLED))
+                                            <flux:menu.item icon="x-circle" variant="danger" icon-variant="outline"
+                                                wire:click="executeBulkAction('{{ OrderStatus::CANCELLED->value }}', [{{ $order->id }}])"
+                                                wire:confirm="Cancel order {{ $order->reference }}?">
+                                                Cancel Order
+                                            </flux:menu.item>
+                                        @endif
+
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </div>
                         </flux:table.cell>
 
                     </flux:table.row>
@@ -715,6 +913,44 @@ new #[Title('Orders')] class extends Component {
         </flux:table>
 
     </flux:card>
+
+    {{-- ================================================================== --}}
+    {{-- KEYBOARD SHORTCUTS MODAL                                            --}}
+    {{-- ================================================================== --}}
+    <flux:modal name="shortcuts-help" class="max-w-sm" @show-shortcuts-modal.window="$el.showModal()">
+        <flux:heading size="lg" class="mb-4">Keyboard Shortcuts</flux:heading>
+        <div class="space-y-3 text-sm">
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-600 dark:text-zinc-400">Focus search</span>
+                <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs font-mono">/</kbd>
+                    <span class="text-zinc-400">or</span>
+                    <kbd class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs font-mono">Ctrl+K</kbd>
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-600 dark:text-zinc-400">New order</span>
+                <kbd class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs font-mono">N</kbd>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-600 dark:text-zinc-400">Export orders</span>
+                <kbd class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs font-mono">E</kbd>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-600 dark:text-zinc-400">Clear filters</span>
+                <kbd class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs font-mono">C</kbd>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-600 dark:text-zinc-400">Show this help</span>
+                <kbd class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs font-mono">?</kbd>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t dark:border-zinc-700">
+            <flux:subheading class="text-xs!">Press <kbd
+                    class="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-[10px] font-mono">?</kbd> anytime to
+                see shortcuts</flux:subheading>
+        </div>
+    </flux:modal>
 
 </div>
 
@@ -780,5 +1016,91 @@ new #[Title('Orders')] class extends Component {
         }
 
         waitForLibraries(() => initDateRangePicker());
+
+        // =====================================================================
+        // KEYBOARD SHORTCUTS
+        // =====================================================================
+        document.addEventListener('keydown', function(e) {
+            // Ignore if user is typing in an input/textarea
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                return;
+            }
+
+            // Ignore if modal is open
+            if (document.querySelector('[data-flux-modal][data-open="true"]')) {
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+            const ctrl = e.ctrlKey || e.metaKey;
+
+            // / or Ctrl+K - Focus search
+            if (key === '/' || (ctrl && key === 'k')) {
+                e.preventDefault();
+                const searchInput = document.querySelector(
+                    'input[wire\\:model\\.live\\.debounce\\.300ms="search"]');
+                if (searchInput) searchInput.focus();
+                return;
+            }
+
+            // n - New order
+            if (key === 'n' && !ctrl) {
+                e.preventDefault();
+                window.location.href = '{{ route('admin.orders.create') }}';
+                return;
+            }
+
+            // e - Export
+            if (key === 'e' && !ctrl) {
+                e.preventDefault();
+                const exportBtn = document.querySelector('[\\@click="runExport()"]');
+                if (exportBtn) exportBtn.click();
+                return;
+            }
+
+            // c - Clear filters
+            if (key === 'c' && !ctrl) {
+                e.preventDefault();
+                $wire.clearFilters();
+                return;
+            }
+
+            // ? - Show shortcuts help
+            if (key === '?' || (e.shiftKey && key === '/')) {
+                e.preventDefault();
+                $wire.dispatch('show-shortcuts-modal');
+                return;
+            }
+        });
+
+        // =====================================================================
+        // REAL-TIME UPDATES
+        // =====================================================================
+        if (window.Echo) {
+            window.Echo.private('admin.orders')
+                .listen('.order.updated', (e) => {
+                    console.log('Order updated:', e);
+
+                    // Show toast notification
+                    const updateMessages = {
+                        'created': `New order ${e.reference} received!`,
+                        'status': `Order ${e.reference} is now ${e.status_label}`,
+                        'payment': `Payment updated for ${e.reference}`,
+                        'general': `Order ${e.reference} was updated`,
+                    };
+
+                    const message = updateMessages[e.update_type] || updateMessages.general;
+
+                    // Dispatch notification to Livewire
+                    $wire.dispatch('notify', {
+                        title: e.update_type === 'created' ? 'New Order!' : 'Order Updated',
+                        variant: e.update_type === 'created' ? 'success' : 'info',
+                        message: message,
+                    });
+
+                    // Refresh the orders list
+                    $wire.$refresh();
+                });
+        }
     </script>
 @endscript

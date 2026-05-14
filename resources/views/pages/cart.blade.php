@@ -5,10 +5,9 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\{Layout, Defer, On, Title};
 use App\Services\CartService;
 use App\Services\WishlistService;
-use Flux\Flux;
 use Artesaos\SEOTools\Facades\SEOMeta;
 
-new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
     public function mount(): void
     {
         // Cart is a private page - should not be indexed
@@ -121,74 +120,105 @@ new #[Title('Cart')] #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-3 px-4">
-                <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                <flux:skeleton animate="shimmer" class="w-3 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+        {{-- Breadcrumb placeholder --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center gap-3">
+                    <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-10 h-4" />
+                </div>
             </div>
         </div>
 
         <div class="mx-auto container px-4 py-4 min-h-[80svh]">
-            <div class="flex items-center justify-between">
-                <flux:skeleton class="w-32 h-6 mb-4" animate="shimmer" />
-                <flux:skeleton class="w-24 h-6 mb-4" animate="shimmer" />
+            {{-- Header placeholder --}}
+            <div class="flex items-center justify-between mb-4 gap-4">
+                <flux:skeleton class="w-20 h-8" animate="shimmer" />
+                <flux:skeleton class="w-24 h-10 rounded-md" animate="shimmer" />
             </div>
 
             <div class="flex flex-col lg:flex-row lg:items-start lg:gap-6">
-                <div class="lg:flex-1">
-                    <div class="space-y-4">
+                {{-- Items placeholder --}}
+                <div class="lg:flex-1 min-w-0">
+                    <div class="bg-white border border-zinc-200 rounded-sm overflow-hidden">
+                        {{-- Table header --}}
+                        <div class="bg-zinc-50 border-b border-zinc-200">
+                            <div class="flex items-center px-6 py-4">
+                                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-16 h-4 ml-auto" />
+                                <flux:skeleton animate="shimmer" class="w-20 h-4 ml-16" />
+                                <flux:skeleton animate="shimmer" class="w-20 h-4 ml-16" />
+                            </div>
+                        </div>
+                        {{-- Table rows --}}
                         @for ($i = 0; $i < 2; $i++)
-                            <div class="bg-white rounded-sm overflow-hidden border">
-                                <div class="flex items-start gap-3 p-3 py-4">
-                                    <div class="shrink-0 px-4">
-                                        <flux:skeleton animate="shimmer" class="w-20 h-20 rounded-sm" />
-                                    </div>
-                                    <div class="flex-1 space-y-2">
-                                        <flux:skeleton animate="shimmer" class="h-5 w-3/4 rounded-sm" />
-                                        <flux:skeleton animate="shimmer" class="h-4 w-1/4 rounded-sm" />
-                                    </div>
-                                    <div>
-                                        <flux:skeleton animate="shimmer" class="h-5 w-24 rounded-sm" />
-                                    </div>
+                            <div class="flex items-center gap-4 px-6 py-6 border-b border-zinc-200 last:border-b-0">
+                                <flux:skeleton animate="shimmer" class="w-16 h-16 rounded shrink-0" />
+                                <div class="flex-1 space-y-2">
+                                    <flux:skeleton animate="shimmer" class="w-24 h-3" />
+                                    <flux:skeleton animate="shimmer" class="w-3/4 h-4" />
+                                    <flux:skeleton animate="shimmer" class="w-32 h-3" />
                                 </div>
-                                <div class="bg-zinc-50 px-3 py-2 flex items-center">
-                                    <div class="flex items-center gap-4">
-                                        <flux:skeleton animate="shimmer" class="h-4 w-20 rounded-sm" />
-                                        <flux:skeleton animate="shimmer" class="h-4 w-24 rounded-sm" />
-                                    </div>
-                                    <div class="ms-auto flex items-center gap-1">
-                                        <flux:skeleton animate="shimmer" class="h-4 w-16 rounded-sm" />
-                                    </div>
-                                </div>
+                                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-24 h-8 rounded" />
+                                <flux:skeleton animate="shimmer" class="w-20 h-4" />
                             </div>
                         @endfor
                     </div>
+                    {{-- Continue shopping button --}}
+                    <div class="mt-6">
+                        <flux:skeleton animate="shimmer" class="w-40 h-10 rounded-md" />
+                    </div>
                 </div>
 
+                {{-- Summary placeholder --}}
                 <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0">
-                    <div class="bg-white rounded-sm border">
-                        <div class="px-3 py-2 border-b">
-                            <flux:skeleton animate="shimmer" class="h-6 w-24 px-3 py-2 rounded-sm" />
+                    <div class="bg-white border border-zinc-200 rounded-sm overflow-hidden">
+                        {{-- Header --}}
+                        <div class="px-5 py-4 border-b border-zinc-200">
+                            <flux:skeleton animate="shimmer" class="w-32 h-4" />
                         </div>
-                        <div class="space-y-2 p-3">
+                        {{-- Totals --}}
+                        <div class="space-y-3 px-5 py-4">
                             <div class="flex items-center justify-between">
-                                <flux:skeleton animate="shimmer" class="h-4 w-24 rounded-sm" />
-                                <flux:skeleton animate="shimmer" class="h-4 w-16 rounded-sm" />
+                                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-24 h-4" />
                             </div>
                             <div class="flex items-center justify-between">
-                                <flux:skeleton animate="shimmer" class="h-4 w-24 rounded-sm" />
-                                <flux:skeleton animate="shimmer" class="h-4 w-16 rounded-sm" />
+                                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-32 h-3" />
+                            </div>
+                            <div class="pt-3 border-t border-zinc-200 flex items-center justify-between">
+                                <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-28 h-6" />
                             </div>
                         </div>
-                        <div class="border-t p-3">
-                            <flux:skeleton animate="shimmer" class="h-10 w-full rounded-sm" />
+                        {{-- Checkout button --}}
+                        <div class="p-4 border-t border-zinc-200">
+                            <flux:skeleton animate="shimmer" class="w-full h-12 rounded-md" />
+                            <div class="mt-3 flex items-center justify-center">
+                                <flux:skeleton animate="shimmer" class="w-40 h-3" />
+                            </div>
+                        </div>
+                        {{-- Payment methods --}}
+                        <div class="py-4 px-5 border-t border-zinc-100">
+                            <flux:skeleton animate="shimmer" class="w-24 h-3 mb-3" />
+                            <div class="flex flex-wrap gap-1.5 mb-6">
+                                @for ($i = 0; $i < 4; $i++)
+                                    <flux:skeleton animate="shimmer" class="w-20 h-6 rounded" />
+                                @endfor
+                            </div>
+                            <div class="space-y-3">
+                                <flux:skeleton animate="shimmer" class="w-full h-4" />
+                                <flux:skeleton animate="shimmer" class="w-full h-4" />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {{-- Recommendations placeholder --}}
             <div class="mt-10">
                 <flux:skeleton animate="shimmer" class="w-44 h-5 mb-4" />
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">

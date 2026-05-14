@@ -27,11 +27,23 @@ new #[Defer] class extends Component {
 
 @placeholder
     <div class="pt-10">
-        <flux:skeleton animate="shimmer" class="w-44 h-5 mb-4" />
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            @for ($i = 1; $i <= 6; $i++)
-                <x-product-card-placeholder />
-            @endfor
+        <flux:skeleton animate="shimmer" class="w-44 h-6 sm:h-7 lg:h-8 mb-4" />
+        <div class="relative">
+            {{-- Left nav button --}}
+            <div class="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-zinc-200"></div>
+
+            <div class="overflow-hidden px-5 pb-5">
+                <div class="flex gap-3">
+                    @for ($i = 0; $i < 6; $i++)
+                        <div class="shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-1/6">
+                            <x-product-card-placeholder />
+                        </div>
+                    @endfor
+                </div>
+            </div>
+
+            {{-- Right nav button --}}
+            <div class="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-zinc-200"></div>
         </div>
     </div>
 @endplaceholder
@@ -60,7 +72,7 @@ new #[Defer] class extends Component {
                     this.swiper = new Swiper('#{{ $type }}', {
                         slidesPerView: 2,
                         spaceBetween: 12,
-                        loop: {{ $loop ? 'true' : 'false' }},
+                        loop: {{ ($loop && $this->products->count() >= 12) ? 'true' : 'false' }},
                         speed: {{ $speed }},
                         // Allow clicks on links inside slides
                         preventClicks: false,

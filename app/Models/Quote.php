@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\LogsModelChanges;
 use App\Enums\QuoteStatus;
+use App\Events\QuoteUpdated;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Quote extends Model
 {
     use HasFactory, LogsModelChanges;
+
+    protected static function booted(): void
+    {
+        // Broadcast when a new quote is created
+        static::created(function (Quote $quote) {
+            QuoteUpdated::dispatch($quote, 'created');
+        });
+    }
 
     protected $fillable = [
         'user_id',
@@ -207,6 +216,9 @@ class Quote extends Model
             'changed_by_type' => $changedByType,
             'notes' => $notes,
         ]);
+
+        // Broadcast real-time update to customer
+        QuoteUpdated::dispatch($this, 'status');
     }
 
     // =====================================================

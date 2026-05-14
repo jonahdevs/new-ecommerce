@@ -17,11 +17,11 @@ use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
+use Livewire\Attributes\{Computed, Layout, Defer, Locked};
 use Livewire\Component;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component {
+    #[Locked]
     public Product $product;
 
     // ── Status flags
@@ -32,8 +32,6 @@ new #[Layout('layouts.guest')] class extends Component {
     public bool $inCart = false;
 
     // ── UI state
-    public string $selectedTab = 'description';
-
     public int $reviewsToShow = 5;
 
     // ── Cart state ──
@@ -62,8 +60,11 @@ new #[Layout('layouts.guest')] class extends Component {
     // MOUNT
     // =========================================================================
 
-    public function mount(Product $product, WishlistService $wishlist, CompareService $compareService, CartService $cartService): void
+    public function mount(Product $product): void
     {
+        $wishlist = app(WishlistService::class);
+        $compareService = app(CompareService::class);
+        $cartService = app(CartService::class);
         $productService = app(ProductService::class);
         $productService->recordView($product);
         $productService->rememberRecentlyViewed($product);

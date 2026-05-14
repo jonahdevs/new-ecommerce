@@ -2,11 +2,14 @@
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
-use Livewire\Attributes\{Layout, Title};
+use Livewire\Attributes\{Layout, Title, On, Locked};
 use Livewire\Component;
 
 new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Component {
     public Order $order;
+
+    #[Locked]
+    public int $orderId;
 
     public function mount(Order $order): void
     {
@@ -16,7 +19,22 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
             return;
         }
 
+        $this->orderId = $order->id;
         $this->order = $order->load(['statusHistories.changedBy', 'quote']);
+    }
+
+    // =====================================================
+    // Real-time Updates
+    // =====================================================
+
+    #[On('echo-private:order.{orderId},.order.updated')]
+    public function handleOrderUpdate(array $data): void
+    {
+        // Refresh the order from database with status histories
+        $this->order = $this->order->fresh(['statusHistories.changedBy', 'quote']);
+
+        // Show toast notification
+        $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: "Your order is now {$data['status_label']}");
     }
 };
 ?>
@@ -115,18 +133,18 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                     @php
                         $reached = $index <= $maxReachedIndex;
                         $isCurrent = $currentStatusIndex !== false && $index === $currentStatusIndex;
-                        
+
                         $history = $histories->get($step->value);
                         if (!$history && $step === OrderStatus::PENDING) {
                             $history = (object) ['created_at' => $order->created_at];
                         }
-                        
+
                         $isLast = $index === count($mainPath) - 1;
                         $injectTerminalHere = $isTerminal && $index === $maxReachedIndex;
                         $meta = $stepMeta[$step->value];
                     @endphp
 
-                    <div class="relative flex gap-6 {{ ($isLast && !$injectTerminalHere) ? 'pb-0' : 'pb-10' }}">
+                    <div class="relative flex gap-6 {{ $isLast && !$injectTerminalHere ? 'pb-0' : 'pb-10' }}">
 
                         {{-- Connector line --}}
                         @if (!$isLast && !$injectTerminalHere)
@@ -139,17 +157,14 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                                 {{ $nextReached ? 'bg-primary' : 'bg-zinc-100' }}">
                             </div>
                         @elseif ($injectTerminalHere)
-                            <div
-                                class="absolute left-4.5 top-9 bottom-0 w-0.75 z-0 bg-primary">
+                            <div class="absolute left-4.5 top-9 bottom-0 w-0.75 z-0 bg-primary">
                             </div>
                         @endif
 
                         {{-- Step dot --}}
                         <div
                             class="relative z-10 shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300
-                            {{ $reached
-                                ? 'bg-primary text-white ring-4 ring-[#fff8f6]'
-                                : 'bg-zinc-50 text-zinc-300 border border-zinc-100' }}">
+                            {{ $reached ? 'bg-primary text-white ring-4 ring-[#fff8f6]' : 'bg-zinc-50 text-zinc-300 border border-zinc-100' }}">
                             <flux:icon name="{{ $step->icon() }}" class="size-4.5" />
                         </div>
 
@@ -198,7 +213,7 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                             </div>
                         </div>
                     </div>
-                    
+
                     @if ($injectTerminalHere)
                         {{-- Render Terminal Step --}}
                         <div class="relative flex gap-6 pb-0">
@@ -210,13 +225,17 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                             <div class="flex-1 pt-0.5">
                                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                     <div>
-                                        <div class="text-[14px] font-bold {{ $currentStatus === OrderStatus::CANCELLED ? 'text-red-600' : 'text-brand-primary' }}">
+                                        <div
+                                            class="text-[14px] font-bold {{ $currentStatus === OrderStatus::CANCELLED ? 'text-red-600' : 'text-brand-primary' }}">
                                             {{ $currentStatus === OrderStatus::CANCELLED ? 'Order Cancelled' : 'Order Returned' }}
-                                            
-                                            <span class="ml-2 inline-flex items-center gap-1.5 text-[10px] font-extrabold tracking-widest uppercase {{ $currentStatus === OrderStatus::CANCELLED ? 'text-red-600 bg-red-50 border-red-100' : 'text-brand-primary bg-orange-50 border-orange-100' }} px-2 py-0.5 border rounded-sm">
+
+                                            <span
+                                                class="ml-2 inline-flex items-center gap-1.5 text-[10px] font-extrabold tracking-widest uppercase {{ $currentStatus === OrderStatus::CANCELLED ? 'text-red-600 bg-red-50 border-red-100' : 'text-brand-primary bg-orange-50 border-orange-100' }} px-2 py-0.5 border rounded-sm">
                                                 <span class="relative flex h-1.5 w-1.5">
-                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $currentStatus === OrderStatus::CANCELLED ? 'bg-red-600' : 'bg-brand-primary' }} opacity-75"></span>
-                                                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 {{ $currentStatus === OrderStatus::CANCELLED ? 'bg-red-600' : 'bg-brand-primary' }}"></span>
+                                                    <span
+                                                        class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $currentStatus === OrderStatus::CANCELLED ? 'bg-red-600' : 'bg-brand-primary' }} opacity-75"></span>
+                                                    <span
+                                                        class="relative inline-flex rounded-full h-1.5 w-1.5 {{ $currentStatus === OrderStatus::CANCELLED ? 'bg-red-600' : 'bg-brand-primary' }}"></span>
                                                 </span>
                                                 Current
                                             </span>

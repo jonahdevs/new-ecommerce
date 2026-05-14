@@ -6,7 +6,7 @@ use App\Services\Payment\Gateways\MpesaGateway;
 use App\Services\Payment\Gateways\StripeGateway;
 use App\Settings\StripeSettings;
 use App\Settings\TaxSettings;
-use Livewire\Attributes\{Computed, Layout, Locked};
+use Livewire\Attributes\{Computed, Layout, Locked, On};
 use Livewire\Component;
 use Artesaos\SEOTools\Facades\SEOMeta;
 
@@ -45,6 +45,23 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         $this->orderId = $orderModel->id;
+    }
+
+    // =====================================================
+    // Real-time Updates — Payment Confirmation
+    // =====================================================
+
+    #[On('echo-private:order.{orderId},.order.updated')]
+    public function handleOrderUpdate(array $data): void
+    {
+        // Check if payment was confirmed
+        if ($data['payment_status'] === PaymentStatus::PAID->value) {
+            // Redirect to confirmation page
+            $this->dispatch('notify', title: 'Payment Confirmed!', variant: 'success', message: 'Your payment has been received. Redirecting...');
+
+            // Small delay to show the notification before redirect
+            $this->js("setTimeout(() => { window.location.href = '{$this->returnUrl}'; }, 1500);");
+        }
     }
 
     #[Computed]

@@ -151,31 +151,91 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <div class="bg-zinc-100">
-            <div class="flex items-center gap-3 container mx-auto py-3 px-4">
-                <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                <flux:skeleton animate="shimmer" class="w-3 h-4" />
-                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+        {{-- Breadcrumb placeholder --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center gap-3">
+                    <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
+                    <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                </div>
             </div>
         </div>
+
         <div class="container mx-auto px-4 py-6 min-h-[80svh]">
-            <flux:skeleton animate="shimmer" class="w-40 h-8 mb-6" />
-            <div class="grid grid-cols-12 gap-6">
-                <div class="col-span-12 lg:col-span-7">
-                    <flux:skeleton animate="shimmer" class="w-full h-96 rounded-lg" />
+            {{-- Header placeholder --}}
+            <div class="flex items-center justify-between mb-6 gap-4">
+                <flux:skeleton animate="shimmer" class="w-48 h-8" />
+                <div class="flex items-center gap-2">
+                    <flux:skeleton animate="shimmer" class="w-28 h-10 rounded-md" />
+                    <flux:skeleton animate="shimmer" class="w-24 h-10 rounded-md" />
                 </div>
-                <div class="col-span-12 lg:col-span-5 space-y-3">
-                    @for ($i = 0; $i < 3; $i++)
-                        <div class="bg-white rounded-lg border p-3 flex gap-3">
-                            <flux:skeleton animate="shimmer" class="w-14 h-14 rounded-md shrink-0" />
-                            <div class="flex-1 space-y-2">
-                                <flux:skeleton animate="shimmer" class="w-3/4 h-4" />
-                                <flux:skeleton animate="shimmer" class="w-1/2 h-3" />
-                                <flux:skeleton animate="shimmer" class="w-24 h-6" />
+            </div>
+
+            <div class="grid grid-cols-12 gap-6 items-start">
+                {{-- Left: Form placeholder --}}
+                <div class="col-span-12 lg:col-span-7 space-y-6">
+                    {{-- Contact fields --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <flux:skeleton animate="shimmer" class="w-24 h-4" />
+                            <flux:skeleton animate="shimmer" class="w-full h-10 rounded-md" />
+                        </div>
+                        <div class="space-y-2">
+                            <flux:skeleton animate="shimmer" class="w-28 h-4" />
+                            <flux:skeleton animate="shimmer" class="w-full h-10 rounded-md" />
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                        <flux:skeleton animate="shimmer" class="w-full h-10 rounded-md" />
+                    </div>
+                    {{-- Location fields --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                            <flux:skeleton animate="shimmer" class="w-full h-10 rounded-md" />
+                        </div>
+                        <div class="space-y-2">
+                            <flux:skeleton animate="shimmer" class="w-12 h-4" />
+                            <flux:skeleton animate="shimmer" class="w-full h-10 rounded-md" />
+                        </div>
+                    </div>
+                    {{-- Notes field --}}
+                    <div class="space-y-2">
+                        <flux:skeleton animate="shimmer" class="w-36 h-4" />
+                        <flux:skeleton animate="shimmer" class="w-full h-24 rounded-md" />
+                    </div>
+                    {{-- Info box --}}
+                    <flux:skeleton animate="shimmer" class="w-full h-16 rounded-md" />
+                    {{-- Submit button --}}
+                    <flux:skeleton animate="shimmer" class="w-full h-12 rounded-md" />
+                </div>
+
+                {{-- Right: Items placeholder --}}
+                <div class="col-span-12 lg:col-span-5 space-y-4">
+                    <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                    <div class="bg-white border border-zinc-200 rounded-sm overflow-hidden">
+                        <div class="bg-zinc-50 border-b border-zinc-200 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                                <flux:skeleton animate="shimmer" class="w-24 h-4" />
                             </div>
                         </div>
-                    @endfor
+                        @for ($i = 0; $i < 3; $i++)
+                            <div class="px-6 py-5 border-b border-zinc-200 last:border-b-0">
+                                <div class="flex items-center gap-4">
+                                    <flux:skeleton animate="shimmer" class="w-16 h-16 rounded shrink-0" />
+                                    <div class="flex-1 space-y-2">
+                                        <flux:skeleton animate="shimmer" class="w-3/4 h-4" />
+                                        <flux:skeleton animate="shimmer" class="w-1/2 h-3" />
+                                        <flux:skeleton animate="shimmer" class="w-20 h-3" />
+                                    </div>
+                                    <flux:skeleton animate="shimmer" class="w-24 h-8 rounded" />
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
                 </div>
             </div>
         </div>
@@ -245,7 +305,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             {{-- Delivery location --}}
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <x-customer.form-field label="County" name="selectedCounty">
-                                    <select wire:model.live="selectedCounty" class="customer-input {{ $selectArrow }}">
+                                    <select wire:model.live="selectedCounty"
+                                        class="customer-input {{ $selectArrow }}">
                                         <option value="">Select county...</option>
                                         @foreach ($this->counties as $county)
                                             <option value="{{ $county->id }}">{{ $county->name }}</option>

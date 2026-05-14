@@ -1,15 +1,12 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\{Layout, Computed, Url, Defer};
 use App\Models\Product;
 use App\Models\ReviewHelpfulness;
 use App\Models\Review;
 use App\Services\ReviewService;
 use Livewire\WithPagination;
-use Livewire\Attributes\Defer;
 use Illuminate\Support\Facades\Auth; // FIX: was missing — Auth::check() / Auth::id() in userVotes() would fail
 
 new #[Defer] #[Layout('layouts.guest')] class extends Component {
@@ -130,57 +127,122 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
 @placeholder
     <div>
-        <section class="bg-zinc-100">
-            <div class="container mx-auto py-2.5 px-4">
-                <div class="flex items-center gap-3">
-                    <flux:skeleton animate="shimmer" class="w-4 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-3 h-4" />
-                    <flux:skeleton animate="shimmer" class="w-14 h-4" />
-                </div>
+        {{-- Breadcrumb skeleton --}}
+        <div class="bg-white border-b border-zinc-200 py-3">
+            <div class="container mx-auto px-4 flex items-center gap-3">
+                <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                <flux:skeleton animate="shimmer" class="w-14 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-20 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                <flux:skeleton animate="shimmer" class="w-3 h-3" />
+                <flux:skeleton animate="shimmer" class="w-16 h-4" />
             </div>
-        </section>
+        </div>
 
-        <div class="container mx-auto px-4 py-4 min-h-[80svh]">
-            <flux:skeleton class="w-48 h-4 mb-6" animate="shimmer" />
+        <section class="container mx-auto px-4 py-4 min-h-[80svh]">
+            {{-- Page header --}}
+            <div class="flex items-center justify-between mb-6">
+                <flux:skeleton animate="shimmer" class="w-48 h-8" />
+            </div>
 
-            <div class="p-5 grid grid-cols-1 lg:grid-cols-4 gap-5">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+                {{-- Sidebar: Rating Statistics --}}
                 <div class="lg:col-span-1">
-                    <div class="lg:sticky lg:top-44 space-y-6">
-                        <flux:skeleton animate="shimmer" class="w-14 h-5 mx-auto mb-2" />
-                        <flux:skeleton animate="shimmer" class="w-28 h-4 mx-auto mb-2" />
-                        <flux:skeleton animate="shimmer" class="w-12 h-3 mx-auto" />
+                    <div class="bg-white rounded-lg border p-6 lg:sticky lg:top-34 space-y-6">
+                        {{-- Average rating display --}}
+                        <div class="text-center">
+                            <flux:skeleton animate="shimmer" class="w-16 h-8 mx-auto mb-2" />
+                            <div class="flex justify-center gap-1 mt-1 mb-2">
+                                @for ($i = 0; $i < 5; $i++)
+                                    <flux:skeleton animate="shimmer" class="w-5 h-5" />
+                                @endfor
+                            </div>
+                            <flux:skeleton animate="shimmer" class="w-20 h-4 mx-auto" />
+                        </div>
 
                         <flux:separator class="my-4" />
 
-                        @for ($i = 0; $i < 5; $i++)
-                            <div class="flex items-center gap-3 mb-2">
-                                <flux:skeleton class="w-16 h-4" />
-                                <flux:skeleton class="flex-1 h-4" />
-                            </div>
-                        @endfor
+                        {{-- Rating distribution bars --}}
+                        <div class="space-y-2">
+                            @for ($i = 0; $i < 5; $i++)
+                                <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3 w-full">
+                                    <div class="flex gap-0.5">
+                                        @for ($star = 0; $star < 5; $star++)
+                                            <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                        @endfor
+                                    </div>
+                                    <flux:skeleton animate="shimmer" class="w-full h-2.5 rounded-full" />
+                                    <flux:skeleton animate="shimmer" class="w-8 h-4" />
+                                </div>
+                            @endfor
+                        </div>
                     </div>
                 </div>
 
+                {{-- Reviews List --}}
                 <div class="lg:col-span-3">
-                    <div class="flex items-center justify-between mb-5 pb-4 border-b">
-                        <flux:skeleton animate="shimmer" class="h-4 w-28" />
-                        <div class="flex items-center gap-3">
-                            <flux:skeleton class="w-28 h-4" />
-                            <flux:skeleton class="w-28 h-4" />
+                    <div class="bg-white rounded-lg border p-6">
+                        {{-- Sort and Filter Controls --}}
+                        <div class="flex items-center justify-between mb-5 pb-4 border-b">
+                            <flux:skeleton animate="shimmer" class="w-32 h-4" />
+                            <div class="flex items-center gap-3">
+                                <flux:skeleton animate="shimmer" class="w-24 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-32 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-28 h-8" />
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="space-y-6">
-                        @for ($i = 0; $i < 4; $i++)
-                            <x-review-item-placeholder />
-                        @endfor
+                        {{-- Reviews Content --}}
+                        <div class="space-y-6">
+                            @for ($i = 0; $i < 4; $i++)
+                                <div class="border-b border-zinc-100 pb-6 last:border-b-0 last:pb-0">
+                                    {{-- Review header --}}
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex items-center gap-3">
+                                            <flux:skeleton animate="shimmer" class="w-10 h-10 rounded-full" />
+                                            <div>
+                                                <flux:skeleton animate="shimmer" class="w-24 h-4 mb-1" />
+                                                <div class="flex gap-1">
+                                                    @for ($star = 0; $star < 5; $star++)
+                                                        <flux:skeleton animate="shimmer" class="w-4 h-4" />
+                                                    @endfor
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <flux:skeleton animate="shimmer" class="w-16 h-3" />
+                                    </div>
+
+                                    {{-- Review content --}}
+                                    <div class="space-y-2 mb-4">
+                                        <flux:skeleton animate="shimmer" class="w-full h-4" />
+                                        <flux:skeleton animate="shimmer" class="w-4/5 h-4" />
+                                        <flux:skeleton animate="shimmer" class="w-3/5 h-4" />
+                                    </div>
+
+                                    {{-- Review actions --}}
+                                    <div class="flex items-center gap-4">
+                                        <flux:skeleton animate="shimmer" class="w-16 h-6" />
+                                        <flux:skeleton animate="shimmer" class="w-20 h-6" />
+                                    </div>
+                                </div>
+                            @endfor
+                        </div>
+
+                        {{-- Pagination skeleton --}}
+                        <div class="mt-8 flex justify-center">
+                            <div class="flex items-center gap-2">
+                                <flux:skeleton animate="shimmer" class="w-8 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-8 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-8 h-8" />
+                                <flux:skeleton animate="shimmer" class="w-8 h-8" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 @endplaceholder
 
@@ -217,7 +279,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
             {{-- Sidebar: Rating Statistics --}}
             <div class="lg:col-span-1">
-                <flux:card class="lg:sticky lg:top-44 space-y-6">
+                <flux:card class="lg:sticky lg:top-34 space-y-6">
                     <div class="text-center">
                         <div class="text-2xl sm:text-3xl font-bold text-secondary">
                             {{ $this->reviewStats['average'] }}

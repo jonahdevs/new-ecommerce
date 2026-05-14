@@ -5,11 +5,11 @@ use App\Services\CartService;
 use App\Services\CheckoutSession;
 use App\Services\Shipping\ShippingCalculator;
 use App\Services\Shipping\ShippingOption;
-use Livewire\Attributes\{Computed, Layout, Locked};
+use Livewire\Attributes\{Computed, Layout, Locked, Defer};
 use Livewire\Component;
 use Artesaos\SEOTools\Facades\SEOMeta;
 
-new #[Layout('layouts.checkout')] class extends Component {
+new #[Defer] #[Layout('layouts.checkout')] class extends Component {
     // The selected method code — bound to the radio group
     public string $selectedMethod = '';
 
@@ -156,6 +156,84 @@ new #[Layout('layouts.checkout')] class extends Component {
         $this->dispatch('shipping-updated')->to('order-summary');
     }
 }; ?>
+
+@placeholder
+    <div>
+        {{-- Breadcrumb skeleton --}}
+        <div class="container mx-auto py-2.5 px-4 flex items-center gap-3">
+            <flux:skeleton animate="shimmer" class="w-4 h-4" />
+            <flux:skeleton animate="shimmer" class="w-14 h-4" />
+            <flux:skeleton animate="shimmer" class="w-3 h-3" />
+            <flux:skeleton animate="shimmer" class="w-20 h-4" />
+            <flux:skeleton animate="shimmer" class="w-3 h-3" />
+            <flux:skeleton animate="shimmer" class="w-16 h-4" />
+        </div>
+
+        {{-- Page heading skeleton --}}
+        <div class="container mx-auto px-4 mb-6">
+            <flux:skeleton animate="shimmer" class="w-48 h-8" />
+        </div>
+
+        <div class="container mx-auto px-4 space-y-4">
+            {{-- Address card skeleton --}}
+            <div class="bg-white rounded-lg border p-0">
+                <div class="px-4 py-2 border-b flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                        <flux:skeleton animate="shimmer" class="w-5 h-5 rounded-full" />
+                        <flux:skeleton animate="shimmer" class="w-24 h-5" />
+                    </div>
+                    <flux:skeleton animate="shimmer" class="w-16 h-4" />
+                </div>
+                <div class="px-4 py-4 space-y-3">
+                    <flux:skeleton animate="shimmer" class="w-40 h-6" />
+                    <div class="space-y-1">
+                        <flux:skeleton animate="shimmer" class="w-64 h-4" />
+                        <flux:skeleton animate="shimmer" class="w-48 h-4" />
+                        <flux:skeleton animate="shimmer" class="w-32 h-3" />
+                    </div>
+                </div>
+            </div>
+
+            {{-- Shipping methods card skeleton --}}
+            <div class="bg-white rounded-lg border p-0">
+                <div class="px-4 py-2 border-b">
+                    <flux:skeleton animate="shimmer" class="w-48 h-5" />
+                </div>
+                <div class="p-4 space-y-3">
+                    {{-- Shipping options skeleton --}}
+                    @for ($i = 0; $i < 3; $i++)
+                        <div class="flex items-start gap-4 p-4 border rounded-lg">
+                            <flux:skeleton animate="shimmer" class="w-4 h-4 rounded-full mt-1" />
+                            <div class="flex-1 min-w-0 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <flux:skeleton animate="shimmer" class="w-32 h-5" />
+                                    <flux:skeleton animate="shimmer" class="w-20 h-5" />
+                                </div>
+                                <flux:skeleton animate="shimmer" class="w-48 h-4" />
+                            </div>
+                        </div>
+                    @endfor
+
+                    {{-- Confirm button skeleton --}}
+                    <div class="flex justify-end mt-5">
+                        <flux:skeleton animate="shimmer" class="w-48 h-10 rounded-md" />
+                    </div>
+                </div>
+            </div>
+
+            {{-- Payment methods card skeleton (if custom payment) --}}
+            <div class="bg-white rounded-lg border p-0 opacity-70">
+                <div class="px-3 py-2 flex items-center gap-1">
+                    <flux:skeleton animate="shimmer" class="w-5 h-5 rounded-full" />
+                    <flux:skeleton animate="shimmer" class="w-32 h-5" />
+                </div>
+            </div>
+
+            {{-- Continue shopping link skeleton --}}
+            <flux:skeleton animate="shimmer" class="w-32 h-4" />
+        </div>
+    </div>
+@endplaceholder
 
 <div>
     {{-- Breadcrumb --}}

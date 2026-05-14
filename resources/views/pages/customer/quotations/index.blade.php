@@ -3,13 +3,40 @@
 use App\Models\Quote;
 use App\Enums\QuoteStatus;
 use Livewire\Component;
-use Livewire\Attributes\{Layout, Computed};
+use Livewire\Attributes\{Layout, Computed, On};
 use Livewire\WithPagination;
 
 new #[Layout('layouts.customer')] class extends Component {
     use WithPagination;
 
     public string $selectedTab = 'active';
+    public int $userId;
+
+    public function mount(): void
+    {
+        $this->userId = auth()->id();
+    }
+
+    // =========================================================================
+    //  REAL-TIME UPDATES
+    //  Listen for quote updates on the user's private channel
+    // =========================================================================
+
+    #[On('echo-private:App.Models.User.{userId},.quote.updated')]
+    public function handleQuoteUpdate(array $data): void
+    {
+        // Clear computed caches to refresh the quotations list
+        unset($this->hasQuotations, $this->activeQuotations, $this->closedQuotations, $this->awaitingResponseCount);
+
+        // Show toast notification
+        $message = match ($data['update_type']) {
+            'pricing' => "Quotation #{$data['reference']} has been priced and is ready for review",
+            'status' => "Quotation #{$data['reference']} status updated to {$data['status_label']}",
+            default => "Quotation #{$data['reference']} has been updated",
+        };
+
+        $this->dispatch('notify', title: 'Quotation Updated', variant: 'info', message: $message);
+    }
 
     // =========================================================================
     //  COMPUTED — EXISTENCE CHECK
@@ -82,21 +109,16 @@ new #[Layout('layouts.customer')] class extends Component {
 
 <div>
     @if (!$this->hasQuotations)
-        <x-customer.card title="My" titleEm="Quotations"
-            bodyClass="p-8 min-h-[50svh] flex flex-col items-center gap-2 justify-center text-center">
-            <x-slot:icon>
-                <flux:icon.tag />
-            </x-slot:icon>
-
-            <flux:icon.tag class="size-12 text-zinc-300" />
-            <h4 class="text-lg font-medium text-zinc-900">No quotations yet</h4>
-            <p class="text-sm text-zinc-500 max-w-sm">
-                When you request a quote for a product, it will appear here.
-            </p>
-            {{-- <x-ui.button tag="a" href="{{ route('shop.index') }}" wire:navigate class="mt-4">
-                Browse Products
-            </x-ui.button> --}}
-        </x-customer.card>
+        {{-- Empty state with same design as actual list --}}
+        <div class="flex flex-col bg-white border border-zinc-200">
+            <div class="p-12 text-center flex flex-col items-center justify-center min-h-[50svh]">
+                <flux:icon.tag class="w-16 h-16 text-zinc-300 mb-4" />
+                <h4 class="text-lg font-bold text-zinc-900 mb-2">No quotations yet</h4>
+                <p class="text-sm text-zinc-500 max-w-sm">
+                    When you request a quote for a product, it will appear here.
+                </p>
+            </div>
+        </div>
     @else
         @if ($this->awaitingResponseCount > 0)
             <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-sm mb-4">
