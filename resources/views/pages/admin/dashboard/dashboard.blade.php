@@ -55,7 +55,7 @@
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })" x-text="display">
+                wire:key="kpi-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })" x-intersect.once="start()" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->salesStats['revenue_trend'] !== null)
@@ -79,7 +79,7 @@
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })" x-text="display">
+                wire:key="kpi-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })" x-intersect.once="start()" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->salesStats['orders_trend'] !== null)
@@ -104,7 +104,7 @@
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-customers-{{ $this->customerStats['total'] }}" x-data="countUp({ to: {{ $this->customerStats['total'] }} })" x-text="display">
+                wire:key="kpi-customers-{{ $this->customerStats['total'] }}" x-data="countUp({ to: {{ $this->customerStats['total'] }} })" x-intersect.once="start()" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->customerStats['new_trend'] !== null)
@@ -128,7 +128,7 @@
                 </div>
             </div>
             <flux:heading size="xl" class="text-2xl! font-bold! mb-1.5"
-                wire:key="kpi-products-{{ $this->productStats['active'] }}" x-data="countUp({ to: {{ $this->productStats['active'] }} })" x-text="display">
+                wire:key="kpi-products-{{ $this->productStats['active'] }}" x-data="countUp({ to: {{ $this->productStats['active'] }} })" x-intersect.once="start()" x-text="display">
             </flux:heading>
             <div class="flex items-center gap-1.5">
                 @if ($this->productStats['low_stock'] + $this->productStats['out_of_stock'] > 0)
@@ -203,7 +203,7 @@
                     <div class="px-5 py-4">
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Orders</p>
                         <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
-                            wire:key="chart-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })"
+                            wire:key="chart-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })" x-intersect.once="start()"
                             x-text="display">
                         </p>
                     </div>
@@ -212,7 +212,7 @@
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Earnings
                         </p>
                         <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none break-all"
-                            wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })"
+                            wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })" x-intersect.once="start()"
                             x-text="display">
                         </p>
                     </div>
@@ -221,7 +221,7 @@
                         <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Paid orders
                         </p>
                         <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
-                            wire:key="chart-paid-{{ $this->salesStats['paid_count'] }}" x-data="countUp({ to: {{ $this->salesStats['paid_count'] }} })"
+                            wire:key="chart-paid-{{ $this->salesStats['paid_count'] }}" x-data="countUp({ to: {{ $this->salesStats['paid_count'] }} })" x-intersect.once="start()"
                             x-text="display">
                         </p>
                     </div>
@@ -232,7 +232,7 @@
                         @if ($this->quotationStats['conversion_rate'] !== null)
                             <p class="text-2xl font-bold text-emerald-500 leading-none"
                                 wire:key="chart-conversion-{{ $this->quotationStats['conversion_rate'] }}"
-                                x-data="countUp({ to: {{ $this->quotationStats['conversion_rate'] }}, decimals: 1, suffix: '%' })" x-text="display">
+                                x-data="countUp({ to: {{ $this->quotationStats['conversion_rate'] }}, decimals: 1, suffix: '%' })" x-intersect.once="start()" x-text="display">
                             </p>
                         @else
                             <p class="text-2xl font-bold text-zinc-300 dark:text-zinc-600 leading-none">—</p>
@@ -760,8 +760,8 @@
                     <div class="w-full grid grid-cols-2 @sm:gap-2 gap-2">
                         @foreach ($cats as $i => $cat)
                             <div class="rounded-xl border border-zinc-100 dark:border-zinc-800 p-3 text-center">
-                                <p class="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-                                    {{ number_format($cat['units']) }}
+                                <p class="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1"
+                                    x-data="countUp({ to: {{ $cat['units'] }} })" x-intersect.once="start()" x-text="display">
                                 </p>
                                 <p
                                     class="flex items-center justify-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
@@ -823,8 +823,8 @@
                         <div class="flex items-center justify-between">
                             <span
                                 class="text-xs text-zinc-700 dark:text-zinc-300 truncate flex-1 min-w-0 pr-2">{{ Str::limit($item['name'], 22) }}</span>
-                            <span
-                                class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 shrink-0">{{ $item['pct'] }}%</span>
+                            <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 shrink-0"
+                                x-data="countUp({ to: {{ $item['pct'] }}, suffix: '%' })" x-intersect.once="start()" x-text="display"></span>
                         </div>
                         <div class="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
                             <div class="h-1 rounded-full transition-all duration-500"

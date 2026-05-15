@@ -140,7 +140,7 @@ new class extends Component {
 
     
     <div class="px-5 py-4 border-b border-zinc-200 bg-white">
-        <h3 class="text-[13px] font-bold uppercase tracking-widest text-zinc-950 font-serif">Order Summary</h3>
+        <h3 class="text-[13px] font-bold uppercase tracking-widest text-zinc-950">Order Summary</h3>
     </div>
 
     
@@ -156,22 +156,22 @@ new class extends Component {
                     )
                     : collect();
             ?>
-            <div class="flex items-center gap-2.5 px-4 py-3">
-                <div class="w-10 h-10 rounded border border-zinc-200 bg-zinc-50 overflow-hidden shrink-0">
+            <div class="flex items-center gap-3 px-4 py-3.5">
+                <div class="w-12 h-12 rounded border border-zinc-200 bg-zinc-50 overflow-hidden shrink-0">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($imageUrl): ?>
                         <img src="<?php echo e($imageUrl); ?>" alt="<?php echo e($item->product->name); ?>"
                             class="w-full h-full object-cover" />
                     <?php else: ?>
                         <?php if (isset($component)) { $__componentOriginal2d7605e1adbee8a1737ebec29a91da61 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal2d7605e1adbee8a1737ebec29a91da61 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.photo','data' => ['class' => 'w-full h-full p-1.5 text-zinc-300']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.photo','data' => ['class' => 'w-full h-full p-2 text-zinc-300']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.photo'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-full h-full p-1.5 text-zinc-300']); ?>
+<?php $component->withAttributes(['class' => 'w-full h-full p-2 text-zinc-300']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -187,17 +187,17 @@ new class extends Component {
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-[11px] font-semibold truncate text-zinc-950"><?php echo e($item->product->name); ?></p>
+                    <p class="text-[13px] font-bold text-zinc-950 truncate mb-0.5"><?php echo e($item->product->name); ?></p>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($variantAttrs->isNotEmpty()): ?>
-                        <p class="text-[9px] text-zinc-400 truncate">
+                        <p class="text-[11px] text-zinc-500 truncate font-medium mb-1">
                             <?php echo e($variantAttrs->map(fn($v, $k) => "$k: $v")->join(' · ')); ?>
 
                         </p>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                    <p class="text-[10px] text-zinc-400 font-medium">× <?php echo e($item->quantity); ?></p>
+                    <p class="text-[11px] text-zinc-400 font-medium">Qty: <?php echo e($item->quantity); ?></p>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-[12px] font-bold text-zinc-950">
+                <div class="flex items-center gap-2.5 shrink-0">
+                    <span class="text-[14px] font-bold text-zinc-950">
                         <?php echo e(format_currency($unitPrice * $item->quantity)); ?>
 
                     </span>
@@ -205,14 +205,14 @@ new class extends Component {
                         class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer" title="Remove item">
                         <?php if (isset($component)) { $__componentOriginal155e76c41fe51242bc25d269fabf82f5 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal155e76c41fe51242bc25d269fabf82f5 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.x-mark','data' => ['class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.x-mark','data' => ['class' => 'size-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.x-mark'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-3.5']); ?>
+<?php $component->withAttributes(['class' => 'size-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -234,31 +234,32 @@ new class extends Component {
     
     <div class="px-5 py-4 bg-zinc-50 border-t border-zinc-200 space-y-3">
 
-        <div class="flex justify-between text-[13px]">
-            <span class="text-zinc-500 font-medium">Subtotal</span>
-            <span class="text-zinc-950 font-bold"><?php echo e(format_currency($this->summary['subtotal'])); ?></span>
+        <div class="flex justify-between items-center">
+            <span class="text-[13px] text-zinc-500 font-medium">Subtotal</span>
+            <span class="text-[14px] text-zinc-950 font-bold"><?php echo e(format_currency($this->summary['subtotal'])); ?></span>
         </div>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->summary['discount'] > 0): ?>
-            <div class="flex justify-between text-[13px]">
-                <span class="text-green-600 font-medium">Discount</span>
-                <span class="text-green-600 font-bold">− <?php echo e(format_currency($this->summary['discount'])); ?></span>
+            <div class="flex justify-between items-center">
+                <span class="text-[13px] text-green-600 font-medium">Discount</span>
+                <span class="text-[14px] text-green-600 font-bold">−
+                    <?php echo e(format_currency($this->summary['discount'])); ?></span>
             </div>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-        <div class="flex justify-between text-[13px]">
-            <span class="text-zinc-500 font-medium">Shipping</span>
+        <div class="flex justify-between items-center">
+            <span class="text-[13px] text-zinc-500 font-medium">Shipping</span>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$this->summary['shipping_selected']): ?>
                 <?php if (isset($component)) { $__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal54ddb5b70b37b1e1cf0f2f95e4c53477 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => route('checkout.shipping'),'wire:navigate' => true,'class' => 'text-amber-500 text-[11px] font-bold uppercase tracking-wider']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::link','data' => ['href' => route('checkout.shipping'),'wire:navigate' => true,'class' => 'text-primary text-[11px] font-bold uppercase tracking-wider']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::link'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('checkout.shipping')),'wire:navigate' => true,'class' => 'text-amber-500 text-[11px] font-bold uppercase tracking-wider']); ?>
+<?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('checkout.shipping')),'wire:navigate' => true,'class' => 'text-primary text-[11px] font-bold uppercase tracking-wider']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Select <?php if (isset($component)) { $__componentOriginal35b86e1ac5a257d741538ecc79e20be3 = $component; } ?>
@@ -294,24 +295,25 @@ new class extends Component {
 <?php unset($__componentOriginal54ddb5b70b37b1e1cf0f2f95e4c53477); ?>
 <?php endif; ?>
             <?php elseif($this->summary['shipping_cost'] == 0): ?>
-                <span class="text-green-600 font-bold">FREE</span>
+                <span class="text-[14px] text-green-600 font-bold">FREE</span>
             <?php else: ?>
-                <span class="text-zinc-950 font-bold"><?php echo e(format_currency($this->summary['shipping_cost'])); ?></span>
+                <span
+                    class="text-[14px] text-zinc-950 font-bold"><?php echo e(format_currency($this->summary['shipping_cost'])); ?></span>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->summary['tax_enabled'] && !$this->summary['tax_inclusive'] && $this->summary['tax'] > 0): ?>
-            <div class="flex justify-between text-[13px]">
-                <span class="text-zinc-500 font-medium">
+            <div class="flex justify-between items-center">
+                <span class="text-[13px] text-zinc-500 font-medium">
                     <?php echo e($this->summary['tax_name']); ?> (<?php echo e($this->summary['tax_rate']); ?>)
                 </span>
-                <span class="text-zinc-950 font-bold"><?php echo e(format_currency($this->summary['tax'])); ?></span>
+                <span class="text-[14px] text-zinc-950 font-bold"><?php echo e(format_currency($this->summary['tax'])); ?></span>
             </div>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
             <span class="text-[14px] font-bold uppercase tracking-widest text-zinc-950">Total</span>
-            <span class="text-[24px] font-black text-primary font-barlow-condensed leading-none">
+            <span class="text-[22px] font-black text-primary leading-none">
                 <?php echo e(format_currency($this->summary['total'])); ?>
 
             </span>
@@ -433,22 +435,22 @@ new class extends Component {
         <div class="flex flex-wrap gap-1.5 mb-6">
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ['VISA', 'MPESA', 'MASTERCARD', 'PAYPAL']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pay): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                 <span
-                    class="inline-block px-2 py-1 bg-zinc-100 border border-zinc-200 rounded text-[9px] font-bold text-zinc-600 tracking-wider"><?php echo e($pay); ?></span>
+                    class="inline-block px-2 py-1 bg-zinc-100 border border-zinc-200 rounded text-[9px] font-extrabold text-zinc-600 tracking-wider"><?php echo e($pay); ?></span>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
         </div>
 
         <div class="space-y-3">
-            <div class="flex items-center gap-2 text-xs text-zinc-500">
+            <div class="flex items-center gap-2.5 text-[12px] text-zinc-500 font-medium">
                 <?php if (isset($component)) { $__componentOriginal18ce857dfc449fdd246010f7208cb6d5 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal18ce857dfc449fdd246010f7208cb6d5 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.arrow-path','data' => ['class' => 'size-3.5 text-zinc-400']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.arrow-path','data' => ['class' => 'size-4 text-zinc-400 shrink-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.arrow-path'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-3.5 text-zinc-400']); ?>
+<?php $component->withAttributes(['class' => 'size-4 text-zinc-400 shrink-0']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -463,17 +465,17 @@ new class extends Component {
 <?php endif; ?>
                 <span>30-Day Easy Returns Policy</span>
             </div>
-            <div class="flex items-center gap-2 text-xs text-zinc-500">
+            <div class="flex items-center gap-2.5 text-[12px] text-zinc-500 font-medium">
                 <?php if (isset($component)) { $__componentOriginal7a62c53a9a388e917a2ccf86cb1b44e8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal7a62c53a9a388e917a2ccf86cb1b44e8 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.truck','data' => ['class' => 'size-3.5 text-zinc-400']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.truck','data' => ['class' => 'size-4 text-zinc-400 shrink-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon.truck'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-3.5 text-zinc-400']); ?>
+<?php $component->withAttributes(['class' => 'size-4 text-zinc-400 shrink-0']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>

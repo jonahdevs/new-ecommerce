@@ -190,8 +190,8 @@
         <div class="container @container/page mx-auto px-4 py-4">
             <div class="grid @4xl/page:grid-cols-5 gap-5">
                 
-                <div class="@4xl/page:col-span-4 space-y-5">
-                    <div class="@container/details grid grid-cols-1 @xl/details:grid-cols-7 gap-5">
+                <div class="@4xl/page:col-span-4 @container/details space-y-5">
+                    <div class="grid grid-cols-1 @xl/details:grid-cols-7 gap-5">
                         
                         <div class="@xl/details:col-span-3">
                             <div class="@xl/details:sticky @xl/details:top-24">
@@ -1021,9 +1021,9 @@
     <div class="container @container/page mx-auto px-4 py-4">
         <div class="grid @4xl/page:grid-cols-5 gap-5">
 
-            <div class="@4xl/page:col-span-4 space-y-5">
+            <div class="@4xl/page:col-span-4 @container/details space-y-5">
 
-                <div class="@container/details grid grid-cols-1 @xl/details:grid-cols-7 gap-5">
+                <div class="grid grid-cols-1 @xl/details:grid-cols-7 gap-5">
 
                     
                     

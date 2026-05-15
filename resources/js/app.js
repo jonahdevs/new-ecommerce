@@ -28,14 +28,23 @@ document.addEventListener('alpine:init', () => {
      */
     Alpine.data('countUp', ({ to = 0, decimals = 0, prefix = '', suffix = '', duration = 900 } = {}) => ({
         display: prefix + '0' + (decimals > 0 ? '.' + '0'.repeat(decimals) : '') + suffix,
+        _to: to,
 
         init() {
-            // If value is 0 or unavailable, just show the final value immediately
-            if (!to) {
+            // Show the final value immediately so there's no blank flash if the
+            // element is off-screen and the intersection never fires (e.g. print).
+            this.display = this.format(to);
+        },
+
+        // Called by x-intersect.once — plays the count-up when the element
+        // first scrolls into view (or is already visible on load).
+        start() {
+            if (!this._to) {
                 this.display = this.format(0);
                 return;
             }
-            this.animate(to);
+            this.display = this.format(0);
+            this.animate(this._to);
         },
 
         format(value) {

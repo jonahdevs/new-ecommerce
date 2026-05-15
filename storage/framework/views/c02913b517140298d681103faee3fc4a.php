@@ -489,9 +489,9 @@ Checkout <?php echo $__env->renderComponent(); ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->address): ?>
             <span
-                class="inline-block text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-secondary text-white mb-2"><?php echo e($this->address->label ?? 'Home'); ?></span>
-            <div class="text-[15px] font-semibold text-zinc-950 mb-1"><?php echo e($this->address->full_name); ?></div>
-            <div class="text-[13px] text-zinc-500 font-medium leading-relaxed">
+                class="inline-block text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 bg-secondary text-white mb-2"><?php echo e($this->address->label ?? 'Home'); ?></span>
+            <div class="text-[14px] font-bold text-zinc-950 mb-1"><?php echo e($this->address->full_name); ?></div>
+            <div class="text-[12px] text-zinc-500 font-medium leading-[1.7]">
                 <?php echo nl2br(e($this->address->address)); ?><br>
                 <?php echo e(implode(', ', array_filter([$this->address->area?->name, $this->address->county?->name]))); ?><br>
                 <?php echo e(format_phone($this->address->phone_number)); ?>
@@ -524,10 +524,8 @@ Checkout <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                 </div>
 
-                <p class="font-semibold tracking-tight mb-1">No address saved</p>
-                <p class="text-zinc-400 text-[13px] tracking-tight">Add a delivery address
-                    to continue.
-                </p>
+                <p class="text-[13px] font-bold text-zinc-950 mb-1">No address saved</p>
+                <p class="text-[12px] text-zinc-500 font-medium">Add a delivery address to continue.</p>
             </div>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
      <?php echo $__env->renderComponent(); ?>
@@ -646,9 +644,9 @@ Checkout <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                     </div>
                     <div>
-                        <div class="text-[14px] font-bold text-zinc-950 mb-0.5">
+                        <div class="text-[13px] font-bold text-zinc-950 mb-0.5">
                             <?php echo e($this->shipping['method_name']); ?></div>
-                        <div class="text-[12px] text-zinc-500 leading-tight font-medium">
+                        <div class="text-[11px] text-zinc-500 leading-tight font-medium">
                             <?php echo e($this->shipping['delivery_window']); ?> · Door Delivery
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->shipping['station_name']): ?>
                                 · Pickup: <?php echo e($this->shipping['station_name']); ?>
@@ -658,15 +656,16 @@ Checkout <?php echo $__env->renderComponent(); ?>
                     </div>
                 </div>
                 <div class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                    'text-[15px] font-bold font-sans',
-                    'text-green-500' => $this->shipping['cost'] == 0,
+                    'text-[14px] font-bold',
+                    'text-green-600' => $this->shipping['cost'] == 0,
+                    'text-zinc-950' => $this->shipping['cost'] > 0,
                 ]); ?>">
                     <?php echo e($this->shipping['cost'] == 0 ? 'FREE' : format_currency($this->shipping['cost'])); ?>
 
                 </div>
             </div>
         <?php else: ?>
-            <p class="text-zinc-400 text-[13px] font-bold uppercase tracking-tight italic">Please select an
+            <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-wider">Please select an
                 address first</p>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
      <?php echo $__env->renderComponent(); ?>
@@ -760,13 +759,13 @@ Checkout <?php echo $__env->renderComponent(); ?>
 
         <div class="flex items-center gap-4">
             <div
-                class="w-14 h-9 bg-white border-1.5 border-zinc-200 flex items-center justify-center text-[10px] font-black tracking-widest shrink-0 rounded-sm">
+                class="w-14 h-9 bg-white border-1.5 border-zinc-200 flex items-center justify-center text-[10px] font-extrabold tracking-widest shrink-0 rounded-sm">
                 <?php echo e($this->paymentDisplay['icon']); ?>
 
             </div>
             <div>
-                <div class="text-[14px] font-bold text-zinc-950 mb-0.5"><?php echo e($this->paymentDisplay['name']); ?></div>
-                <div class="text-[12px] text-zinc-500 font-medium tracking-tight">
+                <div class="text-[13px] font-bold text-zinc-950 mb-0.5"><?php echo e($this->paymentDisplay['name']); ?></div>
+                <div class="text-[11px] text-zinc-500 font-medium">
                     <?php echo e($paymentMethod === 'card' ? 'Visa, Mastercard, Amex accepted' : ($paymentMethod === 'mpesa' ? 'STK push to your Safaricom line' : 'Secure payment processing')); ?>
 
                 </div>
@@ -774,19 +773,19 @@ Checkout <?php echo $__env->renderComponent(); ?>
         </div>
         <div class="flex gap-2 mt-4 pt-4 border-t border-zinc-100">
             <span class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                'text-[9px] font-black px-2 py-1 border',
+                'text-[9px] font-extrabold px-2 py-1 border',
                 $paymentMethod === 'card'
                     ? 'bg-secondary border-secondary text-white'
                     : 'bg-zinc-50 border-zinc-200 text-zinc-400',
             ]); ?>">VISA</span>
             <span class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                'text-[9px] font-black px-2 py-1 border',
+                'text-[9px] font-extrabold px-2 py-1 border',
                 $paymentMethod === 'card'
                     ? 'bg-secondary border-secondary text-white'
                     : 'bg-zinc-50 border-zinc-200 text-zinc-400',
             ]); ?>">MASTERCARD</span>
             <span class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                'text-[9px] font-black px-2 py-1 border',
+                'text-[9px] font-extrabold px-2 py-1 border',
                 $paymentMethod === 'mpesa'
                     ? 'bg-secondary border-secondary text-white'
                     : 'bg-zinc-50 border-zinc-200 text-zinc-400',
@@ -1003,10 +1002,10 @@ Checkout <?php echo $__env->renderComponent(); ?>
                                 <div class="flex-1">
                                     <span
                                         class="inline-block text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 bg-zinc-950 text-white mb-2"><?php echo e($addr->label ?? 'Home'); ?></span>
-                                    <div class="text-[13px] font-semibold text-zinc-950 mb-0.5"><?php echo e($addr->full_name); ?>
+                                    <div class="text-[13px] font-bold text-zinc-950 mb-0.5"><?php echo e($addr->full_name); ?>
 
                                     </div>
-                                    <div class="text-[11px] text-zinc-500 leading-relaxed font-medium">
+                                    <div class="text-[11px] text-zinc-500 leading-[1.7] font-medium">
                                         <?php echo e($addr->address); ?>, <?php echo e($addr->area?->name); ?>,
                                         <?php echo e($addr->county?->name); ?>
 
@@ -1253,7 +1252,7 @@ Checkout <?php echo $__env->renderComponent(); ?>
                                         : 'border-zinc-300',
                                 ]); ?>"></div>
                                 <div>
-                                    <div class="text-[13px] font-semibold text-zinc-950"><?php echo e($option->methodName); ?>
+                                    <div class="text-[13px] font-bold text-zinc-950"><?php echo e($option->methodName); ?>
 
                                     </div>
                                     <div class="text-[11px] text-zinc-500 font-medium mt-0.5">
@@ -1261,8 +1260,8 @@ Checkout <?php echo $__env->renderComponent(); ?>
                                 </div>
                             </div>
                             <div class="<?php echo \Illuminate\Support\Arr::toCssClasses([
-                                'text-[13px] font-bold',
-                                $option->isFree() ? 'text-green-500' : 'text-zinc-950',
+                                'text-[14px] font-bold',
+                                $option->isFree() ? 'text-green-600' : 'text-zinc-950',
                             ]); ?>">
                                 <?php echo e($option->isFree() ? 'FREE' : $option->formattedCost()); ?>
 
@@ -1459,7 +1458,7 @@ Checkout <?php echo $__env->renderComponent(); ?>
 
                             </div>
                             <div>
-                                <div class="text-[13px] font-semibold text-zinc-950"><?php echo e($data['name']); ?></div>
+                                <div class="text-[13px] font-bold text-zinc-950"><?php echo e($data['name']); ?></div>
                                 <div class="text-[11px] text-zinc-500 font-medium mt-0.5">
                                     <?php echo e($data['sub']); ?></div>
                             </div>
