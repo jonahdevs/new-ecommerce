@@ -19,7 +19,7 @@ class FooterComposer
     public function compose(View $view): void
     {
         $view->with('footerCategories', Cache::tags(['footer', 'categories'])->remember('footer:categories', 60 * 60 * 12, function () {
-            return Category::inSection(CategorySection::FOOTER)->take(5)->get();
+            return Category::inSection(CategorySection::FOOTER)->take(5)->get(['id', 'name', 'slug']);
         }));
 
         $view->with('general', $this->general);

@@ -28,7 +28,13 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
         }
 
         $this->quoteId = $quote->id;
-        $this->quote = $quote->load(['items.product', 'statusHistories', 'order']);
+        $this->quote = $quote->load([
+            'items' => fn($q) => $q
+                ->select(['id', 'quote_id', 'product_id', 'product_snapshot', 'quantity', 'original_price_cents', 'quoted_price_cents', 'discount_cents', 'total_cents'])
+                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
+            'statusHistories' => fn($q) => $q->select(['id', 'quote_id', 'to_status', 'created_at']),
+            'order' => fn($q) => $q->select(['id', 'reference']),
+        ]);
     }
 
     // =========================================================================
@@ -39,7 +45,13 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
     public function handleQuoteUpdate(array $data): void
     {
         // Refresh the quote from database
-        $this->quote = $this->quote->fresh(['items.product', 'statusHistories', 'order']);
+        $this->quote = $this->quote->fresh([
+            'items' => fn($q) => $q
+                ->select(['id', 'quote_id', 'product_id', 'product_snapshot', 'quantity', 'original_price_cents', 'quoted_price_cents', 'discount_cents', 'total_cents'])
+                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
+            'statusHistories' => fn($q) => $q->select(['id', 'quote_id', 'to_status', 'created_at']),
+            'order' => fn($q) => $q->select(['id', 'reference']),
+        ]);
 
         // Clear computed caches
         unset($this->canRespond, $this->isExpired, $this->showPrices);

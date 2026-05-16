@@ -115,7 +115,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return collect();
         }
 
-        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
+        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->select(['review_id', 'is_helpful'])->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
     }
 
     public function render()

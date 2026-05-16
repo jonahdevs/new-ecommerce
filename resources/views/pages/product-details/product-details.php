@@ -17,10 +17,14 @@ use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Livewire\Attributes\{Computed, Layout, Defer, Locked};
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Defer;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
-new #[Defer] #[Layout('layouts.guest')] class extends Component {
+new #[Defer] #[Layout('layouts.guest')] class extends Component
+{
     #[Locked]
     public Product $product;
 
@@ -70,17 +74,28 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $productService->rememberRecentlyViewed($product);
 
         // Base eager loads for all product types
-        $product->load(['images', 'brand', 'categories', 'accessories' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity')]);
+        $product->load([
+            'images' => fn ($q) => $q->select(['id', 'product_id', 'image_path', 'webp_url', 'alt_text']),
+            'brand:id,name',
+            'categories' => fn ($q) => $q->select(['categories.id', 'categories.name', 'categories.slug', 'categories.parent_id']),
+            'accessories' => fn ($q) => $q
+                ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                ->active()->visible()->withPivot('sort_order', 'quantity'),
+        ]);
 
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn ($q) => $q
+                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                    ->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
 
         if ($product->type->value === 'bundle') {
             $product->load([
-                'bundleProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'bundleProducts' => fn ($q) => $q
+                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                    ->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
 
@@ -91,10 +106,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         if ($product->type->value === 'variable') {
             $product->load([
                 // Load ALL variants, not just active — we filter display in the view
-                'variants' => fn($q) => $q->orderBy('sort_order'),
-                'variants.attributeValues.attribute',
+                'variants' => fn ($q) => $q
+                    ->select(['id', 'product_id', 'is_active', 'sort_order', 'image_path', 'attributes', 'is_default', 'price', 'manage_stock', 'stock_quantity', 'allow_backorders', 'stock_status', 'backorder_message', 'expected_restock_date', 'sku'])
+                    ->orderBy('sort_order'),
+                'variants.attributeValues' => fn ($q) => $q->select(['id', 'attribute_id', 'value']),
+                'variants.attributeValues.attribute' => fn ($q) => $q->select(['id', 'name']),
                 // Only load variation attributes (not display-only attributes)
-                'attributes' => fn($q) => $q->wherePivot('is_variation_attribute', true),
+                'attributes' => fn ($q) => $q
+                    ->select(['attributes.id', 'attributes.name', 'attributes.watch_type'])
+                    ->wherePivot('is_variation_attribute', true),
             ]);
 
             // Pre-select the default variant or first available variant
@@ -105,20 +125,20 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
                 // Try to get attribute values from relationship first
                 $this->selectedAttributeValues = $defaultVariant->attributeValues
-                    ->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])
+                    ->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])
                     ->toArray();
 
                 // Fallback: if relationship is empty, build from attributes JSON
-                if (empty($this->selectedAttributeValues) && !empty($defaultVariant->attributes)) {
-                    $variantAttrIds = collect($defaultVariant->attributes)->map(fn($id) => (int) $id)->toArray();
+                if (empty($this->selectedAttributeValues) && ! empty($defaultVariant->attributes)) {
+                    $variantAttrIds = collect($defaultVariant->attributes)->map(fn ($id) => (int) $id)->toArray();
 
                     // Load attribute values and map them to attribute names
-                    $attrValues = AttributeValue::with('attribute')
+                    $attrValues = AttributeValue::with(['attribute' => fn ($q) => $q->select(['id', 'name'])])
                         ->whereIn('id', $variantAttrIds)
-                        ->get();
+                        ->get(['id', 'attribute_id', 'value']);
 
                     $this->selectedAttributeValues = $attrValues
-                        ->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])
+                        ->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])
                         ->toArray();
                 }
             }
@@ -129,7 +149,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         // Grouped product — load items and set default quantities from pivot
         if ($product->type->value === 'grouped') {
             $product->load([
-                'groupedProducts' => fn($q) => $q->active()->visible()->withPivot('sort_order', 'quantity'),
+                'groupedProducts' => fn ($q) => $q
+                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                    ->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
 
             // Set default quantities from pivot (all items pre-selected with their default qty)
@@ -161,8 +183,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             }
 
             // If any item is in cart, items not in cart start at 0; otherwise all start at 1
-            $anyInCart = collect($this->groupedCartItemIds)->filter(fn($id) => $id !== null)->isNotEmpty();
-            if (!$anyInCart) {
+            $anyInCart = collect($this->groupedCartItemIds)->filter(fn ($id) => $id !== null)->isNotEmpty();
+            if (! $anyInCart) {
                 foreach ($product->groupedProducts as $item) {
                     $this->groupedQuantities[$item->id] = $item->pivot->quantity ?? 1;
                 }
@@ -275,7 +297,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function groupedProducts()
     {
-        return $this->product->groupedProducts()->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+        return $this->product->groupedProducts()
+            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+            ->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
     #[Computed]
@@ -283,6 +307,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     {
         return $this->groupedProducts->sum(function ($item) {
             $qty = $this->groupedQuantities[$item->id] ?? 0;
+
             return ($item->final_price ?? 0) * $qty;
         });
     }
@@ -295,7 +320,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return ['min' => 0, 'max' => 0];
         }
 
-        $prices = $items->map(fn($p) => $p->final_price ?? $p->price ?? 0)->filter(fn($p) => $p > 0);
+        $prices = $items->map(fn ($p) => $p->final_price ?? $p->price ?? 0)->filter(fn ($p) => $p > 0);
 
         if ($prices->isEmpty()) {
             return ['min' => 0, 'max' => 0];
@@ -310,14 +335,16 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedItemsCount(): int
     {
-        return collect($this->groupedQuantities)->filter(fn($qty) => $qty > 0)->count();
+        return collect($this->groupedQuantities)->filter(fn ($qty) => $qty > 0)->count();
     }
 
     // Bundle products
     #[Computed(persist: true)]
     public function bundleProducts()
     {
-        return $this->product->bundleProducts()->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+        return $this->product->bundleProducts()
+            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+            ->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
     #[Computed]
@@ -325,6 +352,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     {
         return $this->bundleProducts->sum(function ($item) {
             $qty = $item->pivot->quantity ?? 1;
+
             return ($item->final_price ?? 0) * $qty;
         });
     }
@@ -337,7 +365,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return ['min' => 0, 'max' => 0];
         }
 
-        $prices = $items->map(fn($p) => $p->final_price ?? $p->price ?? 0)->filter(fn($p) => $p > 0);
+        $prices = $items->map(fn ($p) => $p->final_price ?? $p->price ?? 0)->filter(fn ($p) => $p > 0);
 
         if ($prices->isEmpty()) {
             return ['min' => 0, 'max' => 0];
@@ -355,7 +383,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $bundlePrice = $this->product->sale_price ?? $this->product->price;
         $value = $this->bundleValue;
 
-        if (!$bundlePrice || !$value || $value <= $bundlePrice) {
+        if (! $bundlePrice || ! $value || $value <= $bundlePrice) {
             return null;
         }
 
@@ -372,7 +400,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedVariant(): ?ProductVariant
     {
-        if ($this->product->type->value !== 'variable' || !$this->selectedVariantId) {
+        if ($this->product->type->value !== 'variable' || ! $this->selectedVariantId) {
             return null;
         }
 
@@ -395,20 +423,20 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         }
 
         // Load all attribute value IDs from pivot in a single query
-        $allValueIds = $this->product->attributes->flatMap(fn($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
+        $allValueIds = $this->product->attributes->flatMap(fn ($attr) => json_decode($attr->pivot->values ?? '[]', true) ?? [])->filter()->unique()->values()->toArray();
 
         if (empty($allValueIds)) {
             return [];
         }
 
-        $allValues = AttributeValue::whereIn('id', $allValueIds)->get()->keyBy('id');
+        $allValues = AttributeValue::whereIn('id', $allValueIds)->get(['id', 'value', 'label', 'color_code', 'image_path'])->keyBy('id');
 
         // Build a map of attribute value ID => stock state
         // by checking which variants contain each value
         $valueStateMap = [];
 
         foreach ($this->product->variants as $variant) {
-            if (!$variant->is_active) {
+            if (! $variant->is_active) {
                 continue;
             }
 
@@ -418,9 +446,9 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             $variantAttributeValueIds = $variant->attributeValues->pluck('id')->toArray();
 
             // Fallback: if relationship is empty, try the attributes JSON field
-            if (empty($variantAttributeValueIds) && !empty($variant->attributes)) {
+            if (empty($variantAttributeValueIds) && ! empty($variant->attributes)) {
                 $variantAttributeValueIds = collect($variant->attributes)
-                    ->map(fn($id) => (int) $id)
+                    ->map(fn ($id) => (int) $id)
                     ->toArray();
             }
 
@@ -437,14 +465,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         return $this->product->attributes
             ->map(
-                fn($attr) => [
+                fn ($attr) => [
                     'name' => $attr->name,
                     'watch_type' => $attr->watch_type ?? 'label', // select, label, color, image
                     'values' => collect(json_decode($attr->pivot->values ?? '[]', true) ?? [])
-                        ->map(fn($id) => $allValues->get($id))
+                        ->map(fn ($id) => $allValues->get($id))
                         ->filter()
                         ->map(
-                            fn($v) => [
+                            fn ($v) => [
                                 'id' => $v->id,
                                 'value' => $v->value,
                                 'label' => $v->label ?: $v->value,
@@ -498,7 +526,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedVariantState(): string
     {
-        if (!$this->selectedVariant) {
+        if (! $this->selectedVariant) {
             return 'none';
         }
 
@@ -568,27 +596,29 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         // Search ALL active variants — including out-of-stock and backorder
         $matched = $this->product->variants->where('is_active', true)->first(function ($variant) use ($selectedValueIds) {
             // First try to match using attributeValues relationship
-            $variantAttrs = $variant->attributeValues->mapWithKeys(fn($av) => [$av->attribute->name => $av->value])->toArray();
+            $variantAttrs = $variant->attributeValues->mapWithKeys(fn ($av) => [$av->attribute->name => $av->value])->toArray();
 
-            if (!empty($variantAttrs)) {
+            if (! empty($variantAttrs)) {
                 foreach ($this->selectedAttributeValues as $attrName => $attrValue) {
                     if (($variantAttrs[$attrName] ?? null) !== $attrValue) {
                         return false;
                     }
                 }
+
                 return true;
             }
 
             // Fallback: match using attributes JSON field
-            if (!empty($variant->attributes) && !empty($selectedValueIds)) {
-                $variantAttrIds = collect($variant->attributes)->map(fn($id) => (int) $id)->toArray();
+            if (! empty($variant->attributes) && ! empty($selectedValueIds)) {
+                $variantAttrIds = collect($variant->attributes)->map(fn ($id) => (int) $id)->toArray();
 
                 // Check if all selected value IDs are in the variant's attributes
                 foreach ($selectedValueIds as $attrName => $valueId) {
-                    if (!in_array($valueId, $variantAttrIds)) {
+                    if (! in_array($valueId, $variantAttrIds)) {
                         return false;
                     }
                 }
+
                 return true;
             }
 
@@ -662,12 +692,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         // 2. Variant images — for variable products only
         if ($this->product->type->value === 'variable') {
             foreach ($this->product->variants->where('is_active', true)->sortBy('sort_order') as $variant) {
-                if ($variant->image_path && !in_array($variant->image_path, $seenPaths, true)) {
+                if ($variant->image_path && ! in_array($variant->image_path, $seenPaths, true)) {
                     $seenPaths[] = $variant->image_path;
                     $slides[] = [
                         'url' => Storage::url($variant->image_path),
                         'webp' => null,
-                        'alt' => $variant->attributeValues->map(fn($av) => $av->value)->join(', ') ?: $this->product->name,
+                        'alt' => $variant->attributeValues->map(fn ($av) => $av->value)->join(', ') ?: $this->product->name,
                         'variantId' => $variant->id,
                     ];
                 }
@@ -678,7 +708,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         if ($this->product->type->value === 'grouped' && $this->product->relationLoaded('groupedProducts')) {
             foreach ($this->product->groupedProducts as $child) {
                 // Add child's main image
-                if ($child->image_path && !in_array($child->image_path, $seenPaths, true)) {
+                if ($child->image_path && ! in_array($child->image_path, $seenPaths, true)) {
                     $seenPaths[] = $child->image_path;
                     $slides[] = [
                         'url' => $child->image_url,
@@ -693,7 +723,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         if ($this->product->type->value === 'bundle' && $this->product->relationLoaded('bundleProducts')) {
             foreach ($this->product->bundleProducts as $child) {
                 // Add child's main image
-                if ($child->image_path && !in_array($child->image_path, $seenPaths, true)) {
+                if ($child->image_path && ! in_array($child->image_path, $seenPaths, true)) {
                     $seenPaths[] = $child->image_path;
                     $slides[] = [
                         'url' => $child->image_url,
@@ -707,7 +737,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
         // 4. Gallery images — skip any path already used
         foreach ($this->product->images as $image) {
-            if (!in_array($image->image_path, $seenPaths, true)) {
+            if (! in_array($image->image_path, $seenPaths, true)) {
                 $seenPaths[] = $image->image_path;
                 $slides[] = [
                     'url' => Storage::url($image->image_path),
@@ -770,7 +800,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             $variantId = $this->selectedVariantId;
 
             // Variable product requires a variant selection
-            if ($this->product->type->value === 'variable' && !$variantId) {
+            if ($this->product->type->value === 'variable' && ! $variantId) {
                 $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
 
                 return;
@@ -801,10 +831,10 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             // If product has accessories and none have been added to cart yet, prompt the customer
             if ($this->product->accessories->isNotEmpty()) {
                 $anyAccessoryInCart = $this->product->accessories->contains(
-                    fn($acc) => $cartService->has($acc->id)
+                    fn ($acc) => $cartService->has($acc->id)
                 );
 
-                if (!$anyAccessoryInCart) {
+                if (! $anyAccessoryInCart) {
                     $this->dispatch(
                         'notify-action',
                         variant: 'info',
@@ -835,6 +865,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
             if ($source->manage_stock && $newQuantity > $source->stock_quantity) {
                 $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
+
                 return;
             }
 
@@ -858,6 +889,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 if ($this->inCart) {
                     $this->removeFromCart($cartService);
                 }
+
                 // Not in cart — floor at 1
                 return;
             }
@@ -917,10 +949,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     $this->groupedCartItemIds[$productId] = null;
                     $this->dispatch('cart-updated');
                     $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Item removed from your cart');
+
                     return;
                 }
-                if ($current <= 0)
+                if ($current <= 0) {
                     return;
+                }
 
                 // Decrease silently
                 $newQty = $current - 1;
@@ -958,11 +992,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
             if ($addedCount === 0) {
                 $this->dispatch('notify', variant: 'warning', message: 'Please select at least one item.');
+
                 return;
             }
 
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} " . Str::plural('item', $addedCount) . " added to your cart");
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} ".Str::plural('item', $addedCount).' added to your cart');
         } catch (Throwable $th) {
             $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add items to cart');
         }
@@ -971,7 +1006,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function anyGroupedItemInCart(): bool
     {
-        return collect($this->groupedCartItemIds)->filter(fn($id) => $id !== null)->isNotEmpty();
+        return collect($this->groupedCartItemIds)->filter(fn ($id) => $id !== null)->isNotEmpty();
     }
 
     public function addBundleToCart(CartService $cartService): void
@@ -980,6 +1015,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             if ($this->inCart) {
                 $this->dispatch('notify', variant: 'info', message: 'Bundle is already in your cart');
                 $this->js('$flux.modal("bundle-contents-modal").close()');
+
                 return;
             }
 
@@ -1043,11 +1079,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
 
             if ($addedCount === 0) {
                 $this->dispatch('notify', variant: 'warning', message: 'Please select at least one accessory to add to cart.');
+
                 return;
             }
 
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} " . Str::plural('accessory', $addedCount) . " added to your cart");
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: "{$addedCount} ".Str::plural('accessory', $addedCount).' added to your cart');
 
             $this->js('$flux.modal("accessories-modal").close()');
         } catch (Throwable $th) {
@@ -1058,7 +1095,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function selectedAccessoriesCount(): int
     {
-        return collect($this->accessoryQuantities)->filter(fn($qty) => $qty > 0)->count();
+        return collect($this->accessoryQuantities)->filter(fn ($qty) => $qty > 0)->count();
     }
 
     #[Computed]
@@ -1069,7 +1106,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return ['min' => 0, 'max' => 0];
         }
 
-        $prices = $accessories->map(fn($a) => $a->final_price ?? $a->price ?? 0)->filter(fn($p) => $p > 0);
+        $prices = $accessories->map(fn ($a) => $a->final_price ?? $a->price ?? 0)->filter(fn ($p) => $p > 0);
 
         if ($prices->isEmpty()) {
             return ['min' => 0, 'max' => 0];
@@ -1125,7 +1162,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed]
     public function userVotes()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return collect();
         }
 
@@ -1134,7 +1171,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             return collect();
         }
 
-        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get()->keyBy('review_id')->map(fn($vote) => $vote->is_helpful);
+        return ReviewHelpfulness::whereIn('review_id', $reviewIds)->where('user_id', Auth::id())->get(['review_id', 'is_helpful'])->keyBy('review_id')->map(fn ($vote) => $vote->is_helpful);
     }
 
     // =========================================================================
@@ -1144,13 +1181,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function accessories()
     {
-        return $this->product->accessories()->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+        return $this->product->accessories()
+            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+            ->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
     #[Computed(persist: true)]
     public function accessoriesTotalPrice(): float
     {
-        return $this->accessories->sum(fn($a) => ($a->final_price ?? 0) * ($a->pivot->quantity ?? 1));
+        return $this->accessories->sum(fn ($a) => ($a->final_price ?? 0) * ($a->pivot->quantity ?? 1));
     }
 
     public function render()

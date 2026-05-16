@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -25,9 +26,10 @@ class CompareService
             return Product::query()->whereIn('id', [])->get();
         }
 
-        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'stock_status'])
+        return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'description', 'stock_status', 'weight', 'length', 'width', 'height', 'technical_specification'])
             ->withAvg('reviews', 'rating')
-            ->with(['brand:id,name', 'categories:id,name'])->whereIn('id', $compareIds)
+            ->with(['brand:id,name', 'categories:id,name'])
+            ->whereIn('id', $compareIds)
             ->get();
     }
 
@@ -67,7 +69,7 @@ class CompareService
             }
 
             // Check category restriction
-            if (!empty($compare)) {
+            if (! empty($compare)) {
                 $firstProductId = $compare[0];
                 $firstProduct = Product::with('categories')->find($firstProductId);
 
@@ -75,9 +77,9 @@ class CompareService
                     $firstCategories = $firstProduct->categories->pluck('id')->toArray();
                     $newCategories = $product->categories->pluck('id')->toArray();
 
-                    $hasCommonCategory = !empty(array_intersect($firstCategories, $newCategories));
+                    $hasCommonCategory = ! empty(array_intersect($firstCategories, $newCategories));
 
-                    if (!$hasCommonCategory) {
+                    if (! $hasCommonCategory) {
                         throw new \RuntimeException('Products must be from the same category to compare. This product is from a different category.');
                     }
                 }
@@ -92,7 +94,7 @@ class CompareService
                 'message' => 'Added to comparison',
                 'count' => \count($compare),
             ];
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             throw new \RuntimeException('Product not found');
         } catch (\RuntimeException $e) {
             // Re-throw runtime exceptions (limit, category mismatch)

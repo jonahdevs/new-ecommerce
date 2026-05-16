@@ -24,6 +24,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 ->where('is_active', true)
                 ->whereNotNull('price')
                 ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
+            'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
         ];
 
         if (auth()->check()) {

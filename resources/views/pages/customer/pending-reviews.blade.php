@@ -23,7 +23,7 @@ new #[Layout('layouts.customer')] class extends Component {
 
         // Get products from delivered orders that haven't been reviewed
         return OrderItem::query()
-            ->select('order_items.*')
+            ->select(['order_items.id', 'order_items.order_id', 'order_items.product_id', 'order_items.product_snapshot'])
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.user_id', $userId)
             ->where('orders.status', OrderStatus::DELIVERED)

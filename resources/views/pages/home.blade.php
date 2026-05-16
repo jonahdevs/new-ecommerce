@@ -74,7 +74,7 @@ new #[Layout('layouts.guest')] class extends Component {
     public function topCategories()
     {
         return Cache::tags(['homepage', 'categories'])->remember('homepage:top-categories', self::TTL_CATEGORIES, function () {
-            return Category::inSection(CategorySection::HOME_PAGE_FEATURED)->active()->get();
+            return Category::inSection(CategorySection::HOME_PAGE_FEATURED)->active()->get(['id', 'name', 'slug', 'image_path']);
         });
     }
 
@@ -90,7 +90,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         ->where('is_active', true)
                         ->whereNotNull('price')
                         ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-                    'tags',
+                    'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
                 ])
                 ->active()
                 ->visibleInCatalog()
@@ -113,7 +113,7 @@ new #[Layout('layouts.guest')] class extends Component {
                         ->where('is_active', true)
                         ->whereNotNull('price')
                         ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-                    'tags',
+                    'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
                 ])
                 ->active()
                 ->visibleInCatalog()

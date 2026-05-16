@@ -52,7 +52,7 @@ new #[Defer] #[Layout('layouts.customer')] class extends Component {
             ->user()
             ->orders()
             ->whereIn('status', [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING, OrderStatus::SHIPPED, OrderStatus::DELIVERED])
-            ->with(['items' => fn($q) => $q->with('product')->limit(1)])
+            ->with(['items' => fn($q) => $q->select(['id', 'order_id', 'product_id', 'product_snapshot'])->with(['product' => fn($q) => $q->select(['id', 'image_path'])])->limit(1)])
             ->withCount('items')
             ->latest()
             ->paginate(5);
@@ -69,7 +69,7 @@ new #[Defer] #[Layout('layouts.customer')] class extends Component {
             ->user()
             ->orders()
             ->whereIn('status', [OrderStatus::CANCELLED, OrderStatus::RETURNED])
-            ->with(['items' => fn($q) => $q->with('product')->limit(1)])
+            ->with(['items' => fn($q) => $q->select(['id', 'order_id', 'product_id', 'product_snapshot'])->with(['product' => fn($q) => $q->select(['id', 'image_path'])])->limit(1)])
             ->withCount('items')
             ->latest()
             ->paginate(5);

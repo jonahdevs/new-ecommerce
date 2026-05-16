@@ -51,11 +51,13 @@ class QuoteBasketService
         $variantIds = $raw->pluck('variant_id')->unique()->filter()->values();
 
         $products = Product::whereIn('id', $productIds)
+            ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'sku'])
             ->with(['brand:id,name'])
             ->get()
             ->keyBy('id');
 
         $variants = ProductVariant::whereIn('id', $variantIds)
+            ->select(['id', 'price', 'sale_price', 'image_path', 'sku'])
             ->with([
                 'attributeValues:id,attribute_id,value,label',
                 'attributeValues.attribute:id,name',
@@ -67,7 +69,7 @@ class QuoteBasketService
             $product = $products->get($item['product_id']);
             $variant = isset($item['variant_id']) ? $variants->get($item['variant_id']) : null;
 
-            if (!$product) {
+            if (! $product) {
                 return null;
             }
 
@@ -76,9 +78,9 @@ class QuoteBasketService
             return [
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'] ?? null,
-                'quantity'   => $item['quantity'],
-                'product'    => $product,
-                'variant'    => $variant,
+                'quantity' => $item['quantity'],
+                'product' => $product,
+                'variant' => $variant,
                 'unit_price' => $unitPrice,
                 'line_total' => $unitPrice * $item['quantity'],
             ];
@@ -98,7 +100,7 @@ class QuoteBasketService
     public function has(int $productId, ?int $variantId = null): bool
     {
         return $this->items()->contains(
-            fn($item) => $item['product_id'] === $productId
+            fn ($item) => $item['product_id'] === $productId
                 && ($item['variant_id'] ?? null) === $variantId
         );
     }
@@ -116,7 +118,7 @@ class QuoteBasketService
         $items = $this->items()->toArray();
 
         $index = collect($items)->search(
-            fn($item) => $item['product_id'] === $productId
+            fn ($item) => $item['product_id'] === $productId
                 && ($item['variant_id'] ?? null) === $variantId
         );
 
@@ -126,7 +128,7 @@ class QuoteBasketService
             $items[] = [
                 'product_id' => $productId,
                 'variant_id' => $variantId,
-                'quantity'   => $quantity,
+                'quantity' => $quantity,
             ];
         }
 
@@ -137,6 +139,7 @@ class QuoteBasketService
     {
         if ($quantity < 1) {
             $this->remove($productId, $variantId);
+
             return;
         }
 
@@ -147,6 +150,7 @@ class QuoteBasketService
             ) {
                 $item['quantity'] = $quantity;
             }
+
             return $item;
         })->toArray();
 
@@ -157,7 +161,7 @@ class QuoteBasketService
     {
         $items = $this->items()
             ->reject(
-                fn($item) => $item['product_id'] === $productId
+                fn ($item) => $item['product_id'] === $productId
                     && ($item['variant_id'] ?? null) === $variantId
             )
             ->values()

@@ -21,7 +21,7 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->addresses()
-            ->with(['county', 'area'])
+            ->with(['county:id,name', 'area:id,name'])
             ->orderByDesc('is_default')
             ->oldest()
             ->get();

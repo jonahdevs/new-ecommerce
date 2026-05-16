@@ -124,7 +124,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function subCategories()
     {
-        return Cache::tags(['categories'])->remember("category:{$this->category->id}:sub-categories", self::TTL_CATEGORIES, fn() => $this->category->children()->active()->ordered()->get());
+        return Cache::tags(['categories'])->remember("category:{$this->category->id}:sub-categories", self::TTL_CATEGORIES, fn() => $this->category->children()->active()->ordered()->get(['id', 'name', 'slug']));
     }
 
     /**
@@ -136,7 +136,11 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         // Load the full ancestor chain in one query using a recursive CTE-style
         // approach: load all categories and walk up by parent_id in PHP.
         $chain = [];
-        $cat = Category::with('parent.parent.parent')->find($this->category->id)?->parent;
+        $cat = Category::with([
+            'parent:id,name,slug,parent_id',
+            'parent.parent:id,name,slug,parent_id',
+            'parent.parent.parent:id,name,slug,parent_id',
+        ])->find($this->category->id, ['id', 'name', 'slug', 'parent_id'])?->parent;
 
         while ($cat) {
             array_unshift($chain, $cat);
@@ -206,7 +210,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     ->where('is_active', true)
                     ->whereNotNull('price')
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-                'tags',
+                'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
             ])
             ->active()
             ->visibleInCatalog()
@@ -294,7 +298,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                     ->where('is_active', true)
                     ->whereNotNull('price')
                     ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-                'tags',
+                'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
             ])
             ->orderByRaw('FIELD(id, ' . implode(',', $this->loadedProducts) . ')')
             ->get()

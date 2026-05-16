@@ -20,7 +20,11 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
         }
 
         $this->orderId = $order->id;
-        $this->order = $order->load(['statusHistories.changedBy', 'quote']);
+        $this->order = $order->load([
+            'statusHistories' => fn($q) => $q->select(['id', 'order_id', 'to_status', 'created_at', 'changed_by_user_id']),
+            'statusHistories.changedBy' => fn($q) => $q->select(['id', 'name']),
+            'quote' => fn($q) => $q->select(['id', 'reference']),
+        ]);
     }
 
     // =====================================================
@@ -31,7 +35,11 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
     public function handleOrderUpdate(array $data): void
     {
         // Refresh the order from database with status histories
-        $this->order = $this->order->fresh(['statusHistories.changedBy', 'quote']);
+        $this->order = $this->order->fresh([
+            'statusHistories' => fn($q) => $q->select(['id', 'order_id', 'to_status', 'created_at', 'changed_by_user_id']),
+            'statusHistories.changedBy' => fn($q) => $q->select(['id', 'name']),
+            'quote' => fn($q) => $q->select(['id', 'reference']),
+        ]);
 
         // Show toast notification
         $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: "Your order is now {$data['status_label']}");

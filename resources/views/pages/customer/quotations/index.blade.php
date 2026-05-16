@@ -61,7 +61,7 @@ new #[Layout('layouts.customer')] class extends Component {
     {
         return Quote::where('user_id', auth()->id())
             ->whereIn('status', [QuoteStatus::PENDING, QuoteStatus::SENT])
-            ->with(['items' => fn($q) => $q->with('product')->limit(1)])
+            ->with(['items' => fn($q) => $q->select(['id', 'quote_id', 'product_id', 'product_snapshot'])->with(['product' => fn($q) => $q->select(['id', 'image_path'])])->limit(1)])
             ->withCount('items')
             ->latest()
             ->paginate(5);
@@ -79,7 +79,7 @@ new #[Layout('layouts.customer')] class extends Component {
     {
         return Quote::where('user_id', auth()->id())
             ->whereIn('status', [QuoteStatus::ACCEPTED, QuoteStatus::REJECTED, QuoteStatus::EXPIRED, QuoteStatus::CANCELLED])
-            ->with(['items' => fn($q) => $q->with('product')->limit(1)])
+            ->with(['items' => fn($q) => $q->select(['id', 'quote_id', 'product_id', 'product_snapshot'])->with(['product' => fn($q) => $q->select(['id', 'image_path'])])->limit(1)])
             ->withCount('items')
             ->latest()
             ->paginate(5);

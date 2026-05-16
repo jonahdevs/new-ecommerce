@@ -25,8 +25,12 @@ new #[Defer] #[Title('Cart')] #[Layout('layouts.guest')] class extends Component
             ->getCart()
             ->items()
             ->with([
-                'product' => fn($q) => $q->with(['brand']),
-                'variant' => fn($q) => $q->with(['attributeValues:id,attribute_id,value,label', 'attributeValues.attribute:id,name']),
+                'product' => fn($q) => $q
+                    ->select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'sku'])
+                    ->with(['brand:id,name']),
+                'variant' => fn($q) => $q
+                    ->select(['id', 'price', 'sale_price', 'image_path', 'sku'])
+                    ->with(['attributeValues:id,attribute_id,value,label', 'attributeValues.attribute:id,name']),
             ])
             ->get();
     }

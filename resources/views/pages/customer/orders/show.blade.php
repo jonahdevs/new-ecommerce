@@ -23,9 +23,15 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
         $this->orderId = $order->id;
         $this->order = $order
             ->load([
-                'items.product',
-                'payment',
-                'quote', // loaded to show "converted from quote" notice when quote system is built
+                'items' => fn($q) => $q
+                    ->select(['id', 'order_id', 'product_id', 'product_variant_id', 'product_snapshot', 'quantity', 'total_cents'])
+                    ->with([
+                        'product' => fn($q) => $q
+                            ->select(['id', 'image_path', 'brand_id', 'stock_quantity'])
+                            ->with(['brand:id,name']),
+                    ]),
+                'payment' => fn($q) => $q->select(['id', 'order_id', 'gateway', 'status', 'amount_cents', 'paid_at']),
+                'quote' => fn($q) => $q->select(['id', 'reference']),
             ])
             ->loadCount('items');
     }
@@ -38,7 +44,17 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
     public function handleOrderUpdate(array $data): void
     {
         // Refresh the order from database
-        $this->order = $this->order->fresh(['items.product', 'payment', 'quote'])->loadCount('items');
+        $this->order = $this->order->fresh([
+            'items' => fn($q) => $q
+                ->select(['id', 'order_id', 'product_id', 'product_variant_id', 'product_snapshot', 'quantity', 'total_cents'])
+                ->with([
+                    'product' => fn($q) => $q
+                        ->select(['id', 'image_path', 'brand_id', 'stock_quantity'])
+                        ->with(['brand:id,name']),
+                ]),
+            'payment' => fn($q) => $q->select(['id', 'order_id', 'gateway', 'status', 'amount_cents', 'paid_at']),
+            'quote' => fn($q) => $q->select(['id', 'reference']),
+        ])->loadCount('items');
 
         // Clear computed caches
         unset($this->isPaid, $this->hasKraReceipt, $this->isAwaitingKraValidation, $this->hasSapSyncFailed);

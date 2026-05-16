@@ -19,7 +19,11 @@ class ReviewService
     {
         return Review::where('product_id', $product->id)
             ->approved()
-            ->with(['user', 'images'])
+            ->select(['id', 'product_id', 'user_id', 'rating', 'title', 'review_text', 'is_verified_purchase', 'helpful_count', 'not_helpful_count', 'created_at'])
+            ->with([
+                'user:id,name',
+                'images' => fn ($q) => $q->select(['id', 'review_id', 'image_path']),
+            ])
             ->latest();
     }
 
@@ -83,14 +87,14 @@ class ReviewService
             ')
             ->first();
 
-        $total   = (int) ($row->total ?? 0);
+        $total = (int) ($row->total ?? 0);
         $average = (float) ($row->average ?? 0.0);
 
         $distribution = [];
         foreach ([5, 4, 3, 2, 1] as $star) {
             $count = (int) ($row->{"star_{$star}"} ?? 0);
             $distribution[$star] = [
-                'count'      => $count,
+                'count' => $count,
                 'percentage' => $total > 0 ? (int) round(($count / $total) * 100) : 0,
             ];
         }
@@ -141,7 +145,7 @@ class ReviewService
      */
     public function vote(Review $review, bool $isHelpful): void
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             throw new AuthenticationException('Authentication required.');
         }
 
@@ -166,8 +170,8 @@ class ReviewService
                 }
             } else {
                 ReviewHelpfulness::create([
-                    'review_id'  => $review->id,
-                    'user_id'    => Auth::id(),
+                    'review_id' => $review->id,
+                    'user_id' => Auth::id(),
                     'is_helpful' => $isHelpful,
                 ]);
 

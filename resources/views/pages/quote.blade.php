@@ -66,7 +66,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Computed(persist: true)]
     public function counties()
     {
-        return County::orderBy('name')->get();
+        return County::orderBy('name')->get(['id', 'name']);
     }
 
     #[Computed]
@@ -75,7 +75,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         if (!$this->selectedCounty) {
             return collect();
         }
-        return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get();
+        return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get(['id', 'name']);
     }
 
     public function updatedSelectedCounty(): void

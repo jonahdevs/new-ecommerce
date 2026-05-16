@@ -7,7 +7,9 @@
       "Bash(\"/c/Users/jonah/.config/herd/bin/php83/php.exe\" \"D:/websites/sheffieldafrica_ecommerce/vendor/bin/pest\" tests/Feature/Admin/ActivityLogs/AdminDropdownChangelogLinksTest.php --compact)",
       "PowerShell(php artisan view:clear)",
       "mcp__laravel-boost__read-log-entries",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\jonah.wakahiu\\\\Desktop\\\\ecommerce\\\\sheffield_ecommerce\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   },
   "enableAllProjectMcpServers": true,

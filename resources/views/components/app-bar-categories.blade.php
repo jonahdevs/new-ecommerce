@@ -11,7 +11,7 @@ new class extends Component {
     public function categories()
     {
         return Cache::tags(['navbar', 'categories'])->remember('navbar:categories', 60 * 60 * 12, function () {
-            return Category::inSection(CategorySection::NAVBAR)->get();
+            return Category::inSection(CategorySection::NAVBAR)->get(['id', 'name', 'slug', 'image_icon']);
         });
     }
 };

@@ -23,7 +23,13 @@ new #[Layout('layouts.guest')] class extends Component {
     {
         abort_if($order->user_id !== auth()->id(), 403);
 
-        $this->order = $order->load(['items.product', 'payment', 'user']);
+        $this->order = $order->load([
+            'items' => fn($q) => $q
+                ->select(['id', 'order_id', 'product_id', 'product_snapshot', 'quantity', 'total_cents'])
+                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
+            'payment' => fn($q) => $q->select(['id', 'order_id', 'gateway', 'status']),
+            'user' => fn($q) => $q->select(['id', 'name', 'email']),
+        ]);
         $this->orderId = $order->id;
 
         // Handle 3DS redirect back from Stripe first.
@@ -106,7 +112,13 @@ new #[Layout('layouts.guest')] class extends Component {
      */
     public function refreshOrderStatus(): void
     {
-        $this->order = $this->order->fresh(['items.product', 'payment', 'user']);
+        $this->order = $this->order->fresh([
+            'items' => fn($q) => $q
+                ->select(['id', 'order_id', 'product_id', 'product_snapshot', 'quantity', 'total_cents'])
+                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
+            'payment' => fn($q) => $q->select(['id', 'order_id', 'gateway', 'status']),
+            'user' => fn($q) => $q->select(['id', 'name', 'email']),
+        ]);
         unset($this->isPaid, $this->isFailed);
 
         if ($this->isPaid) {
@@ -134,7 +146,13 @@ new #[Layout('layouts.guest')] class extends Component {
      */
     public function onPaymentConfirmed(): void
     {
-        $this->order = $this->order->fresh(['items.product', 'payment', 'user']);
+        $this->order = $this->order->fresh([
+            'items' => fn($q) => $q
+                ->select(['id', 'order_id', 'product_id', 'product_snapshot', 'quantity', 'total_cents'])
+                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
+            'payment' => fn($q) => $q->select(['id', 'order_id', 'gateway', 'status']),
+            'user' => fn($q) => $q->select(['id', 'name', 'email']),
+        ]);
         unset($this->isPaid, $this->isFailed);
 
         if ($this->isPaid) {
