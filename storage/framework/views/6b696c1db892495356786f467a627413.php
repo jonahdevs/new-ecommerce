@@ -1,12 +1,4 @@
-{{--
-    Customer Notification Banner
-    - Full width, content constrained to container
-    - Message centered, optional action button, close at right edge
-    - No icon, no progress bar
-    - Auto-dismiss rules:
-        success/info → 5s, warning → 8s, danger → manual only, action → manual only
-    - Listens to `notify` (simple) and `notify-action` (with action button)
---}}
+
 <div x-data="{
     notification: null,
     visible: false,
@@ -56,14 +48,14 @@
         x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" role="alert">
         <div class="container mx-auto px-4 py-2.5 flex items-center gap-3">
 
-            {{-- Spacer to balance close button --}}
+            
             <div class="w-6 shrink-0"></div>
 
-            {{-- Message + optional action — centered --}}
+            
             <div class="flex-1 flex items-center justify-center gap-3 flex-wrap">
                 <p x-text="notification?.message" class="text-sm font-medium text-white text-center"></p>
 
-                {{-- Action button --}}
+                
                 <template x-if="notification?.action">
                     <button type="button" @click="runAction()"
                         class="shrink-0 text-xs font-semibold text-white underline underline-offset-2 hover:no-underline cursor-pointer transition-all whitespace-nowrap"
@@ -72,7 +64,7 @@
                 </template>
             </div>
 
-            {{-- Close button at container right edge --}}
+            
             <button type="button" @click="dismiss()" class="w-6 shrink-0 flex items-center justify-end cursor-pointer"
                 aria-label="Close">
                 <span
@@ -83,9 +75,31 @@
                         'text-amber-500': notification?.variant === 'warning',
                         'text-sky-600': notification?.variant === 'info' || !notification?.variant,
                     }">
-                    <flux:icon.x-mark class="size-3" />
+                    <?php if (isset($component)) { $__componentOriginal155e76c41fe51242bc25d269fabf82f5 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal155e76c41fe51242bc25d269fabf82f5 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.x-mark','data' => ['class' => 'size-3']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon.x-mark'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'size-3']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal155e76c41fe51242bc25d269fabf82f5)): ?>
+<?php $attributes = $__attributesOriginal155e76c41fe51242bc25d269fabf82f5; ?>
+<?php unset($__attributesOriginal155e76c41fe51242bc25d269fabf82f5); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal155e76c41fe51242bc25d269fabf82f5)): ?>
+<?php $component = $__componentOriginal155e76c41fe51242bc25d269fabf82f5; ?>
+<?php unset($__componentOriginal155e76c41fe51242bc25d269fabf82f5); ?>
+<?php endif; ?>
                 </span>
             </button>
         </div>
     </div>
 </div>
+<?php /**PATH C:\Users\jonah.wakahiu\Desktop\ecommerce\sheffield_ecommerce\resources\views/components/customer-notification.blade.php ENDPATH**/ ?>

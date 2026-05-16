@@ -7,45 +7,13 @@ use Livewire\Component;
 use Artesaos\SEOTools\Facades\SEOMeta;
 
 new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extends Component {
-    /**
-     * Per-flag privacy preferences. Persisted as JSON on users.privacy_preferences.
-     *
-     * @var array<string, bool>
-     */
-    public array $prefs = [];
-
     public string $delete_password = '';
 
     public bool $confirm_delete = false;
 
-    public static function defaults(): array
-    {
-        return [
-            'profile_public' => true,
-            'search_indexable' => false,
-            'activity_visible' => true,
-        ];
-    }
-
     public function mount(): void
     {
         SEOMeta::setRobots('noindex,nofollow');
-
-        $stored = Auth::user()->privacy_preferences ?? [];
-        $this->prefs = array_replace(self::defaults(), $stored);
-    }
-
-    public function togglePref(string $key): void
-    {
-        if (!array_key_exists($key, $this->prefs)) {
-            return;
-        }
-
-        $this->prefs[$key] = !$this->prefs[$key];
-
-        Auth::user()->update(['privacy_preferences' => $this->prefs]);
-
-        $this->dispatch('toast', message: __('Preference updated'), type: 'success');
     }
 
     /**
@@ -109,54 +77,6 @@ new #[Layout('layouts.customer-settings'), Title('Privacy & Data')] class extend
 }; ?>
 
 <div class="flex flex-col gap-5">
-    {{-- Privacy Settings --}}
-    <x-customer.settings-card title="Privacy" titleEm="Settings">
-        <x-slot:icon>
-            <flux:icon.shield-check />
-        </x-slot:icon>
-
-        @php
-            $rows = [
-                [
-                    'key' => 'profile_public',
-                    'title' => 'Profile Visibility',
-                    'description' => 'Control who can see your profile information and reviews',
-                    'on' => 'Public',
-                    'off' => 'Private',
-                ],
-                [
-                    'key' => 'search_indexable',
-                    'title' => 'Search Engine Indexing',
-                    'description' => 'Allow search engines to index your public profile and reviews',
-                    'on' => 'Indexable',
-                    'off' => 'Hidden',
-                ],
-                [
-                    'key' => 'activity_visible',
-                    'title' => 'Activity Status',
-                    'description' => 'Show when you\'re active on the platform',
-                    'on' => 'Visible',
-                    'off' => 'Hidden',
-                ],
-            ];
-        @endphp
-
-        @foreach ($rows as $i => $row)
-            @php $on = $prefs[$row['key']] ?? false; @endphp
-            <x-customer.privacy-row :title="$row['title']" :description="$row['description']" :lastItem="$i === count($rows) - 1">
-                <span @class([
-                    'text-[10px] font-bold px-2 py-0.5 border tracking-wider uppercase',
-                    'bg-green-100 text-green-700 border-green-200' => $on,
-                    'bg-zinc-100 text-zinc-500 border-zinc-200' => !$on,
-                ])>{{ $on ? $row['on'] : $row['off'] }}</span>
-                <button type="button" wire:click="togglePref('{{ $row['key'] }}')"
-                    class="border-[1.5px] border-zinc-200 px-3 py-1 font-serif text-[11px] font-extrabold tracking-wider uppercase transition-all hover:border-primary hover:bg-primary hover:text-white cursor-pointer">
-                    {{ $on ? 'Disable' : 'Enable' }}
-                </button>
-            </x-customer.privacy-row>
-        @endforeach
-    </x-customer.settings-card>
-
     {{-- Data Management --}}
     <x-customer.settings-card title="Data" titleEm="Management">
         <x-slot:icon>
