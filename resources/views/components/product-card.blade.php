@@ -281,8 +281,8 @@ new class extends Component {
 
                 @if ($product->requires_quotation)
                     <flux:button wire:click.stop="addToQuoteBasket" icon="document-text" size="sm"
-                        icon-variant="outline" title="Add to Quote" class="cursor-pointer"
-                        wire:loading.attr="disabled" wire:target="addToQuoteBasket" />
+                        icon-variant="outline" title="Add to Quote" class="cursor-pointer" wire:loading.attr="disabled"
+                        wire:target="addToQuoteBasket" />
                 @else
                     <flux:button wire:click.stop="quickAddToCart" icon="shopping-cart" size="sm"
                         icon-variant="outline"

@@ -9,7 +9,10 @@
       "mcp__laravel-boost__read-log-entries",
       "Bash(npm run *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\jonah.wakahiu\\\\Desktop\\\\ecommerce\\\\sheffield_ecommerce\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "mcp__laravel-boost__database-schema",
+      "Bash(vendor/bin/pint *)",
+      "PowerShell(vendor\\\\bin\\\\pint --dirty --format agent)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -75,18 +75,18 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
 
         // Base eager loads for all product types
         $product->load([
-            'images' => fn ($q) => $q->select(['id', 'product_id', 'image_path', 'webp_url', 'alt_text']),
+            'images' => fn ($q) => $q->select(['id', 'product_id', 'image_path', 'webp_path', 'alt_text']),
             'brand:id,name',
             'categories' => fn ($q) => $q->select(['categories.id', 'categories.name', 'categories.slug', 'categories.parent_id']),
             'accessories' => fn ($q) => $q
-                ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
                 ->active()->visible()->withPivot('sort_order', 'quantity'),
         ]);
 
         if ($product->type->value === 'grouped') {
             $product->load([
                 'groupedProducts' => fn ($q) => $q
-                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
                     ->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
@@ -94,7 +94,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
         if ($product->type->value === 'bundle') {
             $product->load([
                 'bundleProducts' => fn ($q) => $q
-                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
                     ->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
         }
@@ -150,7 +150,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
         if ($product->type->value === 'grouped') {
             $product->load([
                 'groupedProducts' => fn ($q) => $q
-                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+                    ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
                     ->active()->visible()->withPivot('sort_order', 'quantity'),
             ]);
 
@@ -298,7 +298,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
     public function groupedProducts()
     {
         return $this->product->groupedProducts()
-            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
             ->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
@@ -343,7 +343,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
     public function bundleProducts()
     {
         return $this->product->bundleProducts()
-            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
             ->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
@@ -1182,7 +1182,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
     public function accessories()
     {
         return $this->product->accessories()
-            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.webp_image_path', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
+            ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
             ->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
