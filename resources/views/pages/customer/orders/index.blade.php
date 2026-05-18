@@ -2,34 +2,13 @@
 
 use App\Enums\OrderStatus;
 use Livewire\Component;
-use Livewire\Attributes\{Layout, Computed, On, Defer};
+use Livewire\Attributes\{Layout, Computed};
 use Livewire\WithPagination;
 
-new #[Defer] #[Layout('layouts.customer')] class extends Component {
+new #[Layout('layouts.customer')] class extends Component {
     use WithPagination;
 
     public string $selectedTab = 'ongoing';
-    public int $userId;
-
-    public function mount(): void
-    {
-        $this->userId = auth()->id();
-    }
-
-    // =========================================================================
-    //  REAL-TIME UPDATES
-    //  Listen for order updates on the user's private channel
-    // =========================================================================
-
-    #[On('echo-private:App.Models.User.{userId},.order.updated')]
-    public function handleOrderUpdate(array $data): void
-    {
-        // Clear computed caches to refresh the orders list
-        unset($this->hasOrders, $this->ongoingOrders, $this->cancelledOrders);
-
-        // Show toast notification
-        $this->dispatch('notify', title: 'Order Updated', variant: 'info', message: "Order #{$data['reference']} is now {$data['status_label']}");
-    }
 
     // =========================================================================
     //  COMPUTED — ORDER EXISTENCE CHECK
@@ -203,3 +182,14 @@ new #[Defer] #[Layout('layouts.customer')] class extends Component {
         </div>
     @endif
 </div>
+
+@script
+<script>
+    if (window.Echo) {
+        window.Echo.private('App.Models.User.{{ auth()->id() }}')
+            .listen('.order.updated', (e) => {
+                $wire.$refresh();
+            });
+    }
+</script>
+@endscript

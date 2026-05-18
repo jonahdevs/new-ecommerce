@@ -2,15 +2,12 @@
 
 use App\Enums\{OrderStatus, PaymentStatus};
 use App\Models\Order;
-use Livewire\Attributes\{Computed, Layout, Title, On, Locked};
+use Livewire\Attributes\{Computed, Layout, Title};
 use Livewire\Component;
 use App\Services\CartService;
 
 new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Component {
     public Order $order;
-
-    #[Locked]
-    public int $orderId;
 
     public function mount(Order $order): void
     {
@@ -20,7 +17,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
             return;
         }
 
-        $this->orderId = $order->id;
         $this->order = $order
             ->load([
                 'items' => fn($q) => $q
@@ -40,7 +36,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
     // Real-time Updates
     // =====================================================
 
-    #[On('echo-private:order.{orderId},.order.updated')]
     public function handleOrderUpdate(array $data): void
     {
         // Refresh the order from database
@@ -59,14 +54,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
         // Clear computed caches
         unset($this->isPaid, $this->hasKraReceipt, $this->isAwaitingKraValidation, $this->hasSapSyncFailed);
 
-        // Show toast notification
-        $message = match ($data['update_type']) {
-            'status' => "Your order is now {$data['status_label']}",
-            'payment' => "Payment status updated to {$data['payment_status_label']}",
-            default => 'Your order has been updated',
-        };
-
-        $this->dispatch('notify', title: 'Order Updated', variant: 'info', message: $message);
     }
 
     // =====================================================
@@ -447,3 +434,14 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
         </div>
     </div>
 </div>
+
+@script
+<script>
+    if (window.Echo) {
+        window.Echo.private('order.{{ $order->id }}')
+            .listen('.order.updated', (e) => {
+                $wire.handleOrderUpdate(e);
+            });
+    }
+</script>
+@endscript

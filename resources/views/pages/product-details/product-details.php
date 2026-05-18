@@ -828,8 +828,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
             $this->dispatch('cart-updated');
             $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Product added to your cart');
 
-            // If product has accessories and none have been added to cart yet, prompt the customer
-            if ($this->product->accessories->isNotEmpty()) {
+            // If product has available/published accessories and none have been added to cart yet, prompt the customer
+            if ($this->accessories->isNotEmpty()) {
                 $anyAccessoryInCart = $this->product->accessories->contains(
                     fn ($acc) => $cartService->has($acc->id)
                 );
@@ -1183,7 +1183,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
     {
         return $this->product->accessories()
             ->select(['products.id', 'products.name', 'products.slug', 'products.image_path', 'products.image_webp', 'products.price', 'products.sale_price', 'products.manage_stock', 'products.stock_quantity', 'products.allow_backorder', 'products.stock_status'])
-            ->active()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
+            ->active()->visible()->withPivot('sort_order', 'quantity')->orderByPivot('sort_order')->get();
     }
 
     #[Computed(persist: true)]
