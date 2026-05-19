@@ -57,10 +57,10 @@ new #[Layout('layouts.customer')] class extends Component {
         try {
             if ($this->isEditing) {
                 $this->form->update();
-                $this->dispatch('notify', variant: 'success', message: 'Address updated successfully');
+                $this->dispatch('notify', title: 'Address Updated', variant: 'success', message: 'Address updated successfully');
             } else {
                 $this->form->store();
-                $this->dispatch('notify', variant: 'success', message: 'Address saved successfully');
+                $this->dispatch('notify', title: 'Address Saved', variant: 'success', message: 'Address saved successfully');
             }
             $this->showModal = false;
             $this->form->reset();
@@ -68,7 +68,7 @@ new #[Layout('layouts.customer')] class extends Component {
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to save address');
+            $this->dispatch('notify', title: 'Save Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to save address');
         }
     }
 
@@ -77,7 +77,7 @@ new #[Layout('layouts.customer')] class extends Component {
         $address = auth()->user()->addresses()->where('id', $addressId)->first();
 
         if (!$address) {
-            $this->dispatch('notify', variant: 'danger', message: 'Address not found');
+            $this->dispatch('notify', title: 'Not Found', variant: 'danger', message: 'Address not found');
             return;
         }
 
@@ -94,9 +94,9 @@ new #[Layout('layouts.customer')] class extends Component {
                     ?->update(['is_default' => true]);
             }
 
-            $this->dispatch('notify', variant: 'success', message: 'Address deleted successfully');
+            $this->dispatch('notify', title: 'Address Deleted', variant: 'success', message: 'Address deleted successfully');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to delete address. Please try again.');
+            $this->dispatch('notify', title: 'Delete Failed', variant: 'danger', message: 'Failed to delete address. Please try again.');
         }
     }
 
@@ -106,7 +106,7 @@ new #[Layout('layouts.customer')] class extends Component {
             $address = auth()->user()->addresses()->where('id', $addressId)->first();
 
             if (!$address) {
-                $this->dispatch('notify', variant: 'danger', message: 'Address not found');
+                $this->dispatch('notify', title: 'Not Found', variant: 'danger', message: 'Address not found');
                 return;
             }
 
@@ -118,9 +118,9 @@ new #[Layout('layouts.customer')] class extends Component {
                 $address->update(['is_default' => true]);
             });
 
-            $this->dispatch('notify', variant: 'success', message: 'Default address updated');
+            $this->dispatch('notify', title: 'Default Updated', variant: 'success', message: 'Default address updated');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: 'Failed to update default address.');
+            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Failed to update default address.');
         }
     }
 };

@@ -109,11 +109,11 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
                 'variants' => fn ($q) => $q
                     ->select(['id', 'product_id', 'is_active', 'sort_order', 'image_path', 'attributes', 'is_default', 'price', 'manage_stock', 'stock_quantity', 'allow_backorders', 'stock_status', 'backorder_message', 'expected_restock_date', 'sku'])
                     ->orderBy('sort_order'),
-                'variants.attributeValues' => fn ($q) => $q->select(['id', 'attribute_id', 'value']),
+                'variants.attributeValues' => fn ($q) => $q->select(['attribute_values.id', 'attribute_values.attribute_id', 'attribute_values.value']),
                 'variants.attributeValues.attribute' => fn ($q) => $q->select(['id', 'name']),
                 // Only load variation attributes (not display-only attributes)
                 'attributes' => fn ($q) => $q
-                    ->select(['attributes.id', 'attributes.name', 'attributes.watch_type'])
+                    ->select(['attributes.id', 'attributes.name', 'attributes.watch_type', 'attributes.watch_shape', 'attributes.watch_size'])
                     ->wherePivot('is_variation_attribute', true),
             ]);
 
@@ -468,6 +468,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
                 fn ($attr) => [
                     'name' => $attr->name,
                     'watch_type' => $attr->watch_type ?? 'label', // select, label, color, image
+                    'watch_shape' => $attr->watch_shape ?? 'default', // default, square, rounded-corners, circle
+                    'watch_size' => $attr->watch_size, // pixel size for swatches (nullable)
                     'values' => collect(json_decode($attr->pivot->values ?? '[]', true) ?? [])
                         ->map(fn ($id) => $allValues->get($id))
                         ->filter()
@@ -801,7 +803,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
 
             // Variable product requires a variant selection
             if ($this->product->type->value === 'variable' && ! $variantId) {
-                $this->dispatch('notify', variant: 'warning', message: 'Please select a variation first.');
+                $this->dispatch('notify', title: 'Variation Required', variant: 'warning', message: 'Please select a variation first.');
 
                 return;
             }
@@ -810,7 +812,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
             $state = $this->product->type->value === 'variable' ? $this->selectedVariantState : $this->simpleProductState;
 
             if ($state === 'out_of_stock') {
-                $this->dispatch('notify', variant: 'warning', message: 'This product is currently out of stock.');
+                $this->dispatch('notify', title: 'Out of Stock', variant: 'warning', message: 'This product is currently out of stock.');
 
                 return;
             }
@@ -864,7 +866,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
             $source ??= $this->product;
 
             if ($source->manage_stock && $newQuantity > $source->stock_quantity) {
-                $this->dispatch('notify', variant: 'warning', message: 'Maximum stock quantity reached');
+                $this->dispatch('notify', title: 'Stock Limit Reached', variant: 'warning', message: 'Maximum stock quantity reached');
 
                 return;
             }
@@ -991,7 +993,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
             }
 
             if ($addedCount === 0) {
-                $this->dispatch('notify', variant: 'warning', message: 'Please select at least one item.');
+                $this->dispatch('notify', title: 'No Items Selected', variant: 'warning', message: 'Please select at least one item.');
 
                 return;
             }
@@ -1013,7 +1015,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
     {
         try {
             if ($this->inCart) {
-                $this->dispatch('notify', variant: 'info', message: 'Bundle is already in your cart');
+                $this->dispatch('notify', title: 'Already in Cart', variant: 'info', message: 'Bundle is already in your cart');
                 $this->js('$flux.modal("bundle-contents-modal").close()');
 
                 return;
@@ -1078,7 +1080,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component
             }
 
             if ($addedCount === 0) {
-                $this->dispatch('notify', variant: 'warning', message: 'Please select at least one accessory to add to cart.');
+                $this->dispatch('notify', title: 'No Accessories Selected', variant: 'warning', message: 'Please select at least one accessory to add to cart.');
 
                 return;
             }

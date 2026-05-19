@@ -107,7 +107,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         app(QuoteBasketService::class)->remove($productId, $variantId);
         unset($this->basketItems, $this->isEmpty);
         $this->dispatch('quote-basket-updated');
-        $this->dispatch('notify', variant: 'success', message: 'Item removed from quote basket');
+        $this->dispatch('notify', title: 'Quote Updated', variant: 'success', message: 'Item removed from quote basket');
     }
 
     #[\Livewire\Attributes\On('quote-item-added')]
@@ -129,7 +129,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         $this->validate();
 
         if ($this->isEmpty) {
-            $this->dispatch('notify', variant: 'warning', message: 'Your quote basket is empty.');
+            $this->dispatch('notify', title: 'Empty Basket', variant: 'warning', message: 'Your quote basket is empty.');
             return;
         }
 
@@ -156,7 +156,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             $this->redirect(route('checkout.quote-success', $order->reference), navigate: true);
         } catch (\Throwable $th) {
             $this->submitting = false;
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to submit quote request. Please try again.');
+            $this->dispatch('notify', title: 'Quote Submission Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to submit quote request. Please try again.');
         }
     }
 };

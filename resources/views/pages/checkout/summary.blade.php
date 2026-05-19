@@ -159,7 +159,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         app(CheckoutSession::class)->clearShipping();
 
         $this->showAddressPickerModal = false;
-        $this->dispatch('notify', variant: 'success', message: 'Delivery address updated');
+        $this->dispatch('notify', title: 'Address Updated', variant: 'success', message: 'Delivery address updated');
         $this->dispatch('shipping-updated')->to('order-summary');
     }
 
@@ -191,7 +191,7 @@ new #[Layout('layouts.checkout')] class extends Component {
             app(CheckoutSession::class)->setAddressId($address->id);
 
             $this->showAddressFormModal = false;
-            $this->dispatch('notify', variant: 'success', message: 'Address saved successfully');
+            $this->dispatch('notify', title: 'Address Saved', variant: 'success', message: 'Address saved successfully');
 
             // Refresh shipping
             $this->selectedMethod = '';
@@ -255,7 +255,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         ]);
 
         $this->showShippingModal = false;
-        $this->dispatch('notify', variant: 'success', message: 'Shipping method updated');
+        $this->dispatch('notify', title: 'Shipping Updated', variant: 'success', message: 'Shipping method updated');
         $this->dispatch('shipping-updated')->to('order-summary');
     }
 
@@ -277,7 +277,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     {
         app(CheckoutSession::class)->setPaymentMethod($this->paymentMethod);
         $this->showPaymentModal = false;
-        $this->dispatch('notify', variant: 'success', message: 'Payment method updated');
+        $this->dispatch('notify', title: 'Payment Updated', variant: 'success', message: 'Payment method updated');
     }
 
     // =========================================================================
@@ -290,19 +290,19 @@ new #[Layout('layouts.checkout')] class extends Component {
         try {
             // Validate that all required steps are completed
             if (!$this->address) {
-                $this->dispatch('notify', variant: 'danger', message: 'Please select a delivery address');
+                $this->dispatch('notify', title: 'Address Required', variant: 'danger', message: 'Please select a delivery address');
                 return;
             }
 
             if (!$this->shipping) {
-                $this->dispatch('notify', variant: 'danger', message: 'Please select a shipping method');
+                $this->dispatch('notify', title: 'Shipping Required', variant: 'danger', message: 'Please select a shipping method');
                 return;
             }
 
             // Dispatch to the order summary component to handle the actual order placement
             $this->dispatch('complete-order')->to('order-summary');
         } catch (\Exception $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Unable to place order. Please try again.');
+            $this->dispatch('notify', title: 'Order Failed', variant: 'danger', message: 'Unable to place order. Please try again.');
         }
     }
 

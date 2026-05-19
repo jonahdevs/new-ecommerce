@@ -18,7 +18,7 @@ class AttributeForm extends Form
 
     public $watch_shape = 'default';
 
-    public $watch_size = 24;
+    public $watch_size = null;
 
     public $is_active = true;
 
@@ -32,8 +32,8 @@ class AttributeForm extends Form
             'name' => 'required|min:2|max:255',
             'slug' => ['nullable', 'max:255', 'unique:attributes,slug,'.$attributeId],
             'watch_type' => 'required|in:select,label,color,image',
-            'watch_shape' => 'required|in:default,rounded-corners,circle',
-            'watch_size' => 'integer|min:1',
+            'watch_shape' => 'required|in:default,square,rounded-corners,circle',
+            'watch_size' => 'nullable|integer|in:24,32,40,48,56,64',
             'sort_order' => 'integer|min:0',
             'is_active' => 'boolean',
         ];

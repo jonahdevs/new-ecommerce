@@ -101,14 +101,14 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
     public function acceptQuote(): void
     {
         if (!$this->canRespond) {
-            $this->dispatch('notify', variant: 'danger', message: 'This quotation is no longer available to accept.');
+            $this->dispatch('notify', title: 'Quote Unavailable', variant: 'danger', message: 'This quotation is no longer available to accept.');
             return;
         }
 
         try {
             $salesOrder = app(QuotationService::class)->accept($this->quote);
 
-            $this->dispatch('notify', variant: 'success', message: 'Quotation accepted! Redirecting to payment...');
+            $this->dispatch('notify', title: 'Quote Accepted', variant: 'success', message: 'Quotation accepted! Redirecting to payment...');
             $this->redirectRoute('checkout.pay', $salesOrder->reference, navigate: true);
         } catch (\Throwable $e) {
             logger()->error('Customer failed to accept quotation.', [
@@ -116,7 +116,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again or contact support.');
+            $this->dispatch('notify', title: 'Accept Failed', variant: 'danger', message: 'Something went wrong. Please try again or contact support.');
         }
     }
 
@@ -131,7 +131,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
         ]);
 
         if (!$this->canRespond) {
-            $this->dispatch('notify', variant: 'danger', message: 'This quotation is no longer available.');
+            $this->dispatch('notify', title: 'Quote Unavailable', variant: 'danger', message: 'This quotation is no longer available.');
             return;
         }
 
@@ -141,9 +141,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             $this->quote->refresh();
             $this->rejectNote = '';
             $this->modal('reject-quote')->close();
-            $this->dispatch('notify', variant: 'warning', message: 'Quotation rejected.');
+            $this->dispatch('notify', title: 'Quote Rejected', variant: 'warning', message: 'Quotation rejected.');
         } catch (\Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Reject Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
 };

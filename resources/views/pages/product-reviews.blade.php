@@ -87,13 +87,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             unset($this->reviews);
             unset($this->userVotes);
 
-            $this->dispatch('notify', variant: 'success', message: 'Thank you for your feedback!');
+            $this->dispatch('notify', title: 'Vote Recorded', variant: 'success', message: 'Thank you for your feedback!');
         } catch (\DomainException $e) {
             $message = $e->getMessage() === 'self_vote' ? 'You cannot vote on your own review.' : 'An error occurred. Please try again.';
 
-            $this->dispatch('notify', variant: 'warning', message: $message);
+            $this->dispatch('notify', title: 'Vote Not Recorded', variant: 'warning', message: $message);
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'warning', message: $th->getMessage() ?: 'Something went wrong!');
+            $this->dispatch('notify', title: 'Vote Failed', variant: 'warning', message: $th->getMessage() ?: 'Something went wrong!');
         }
     }
 

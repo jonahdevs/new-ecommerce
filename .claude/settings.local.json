@@ -14,7 +14,8 @@
       "Bash(vendor/bin/pint *)",
       "PowerShell(vendor\\\\bin\\\\pint --dirty --format agent)",
       "mcp__laravel-boost__last-error",
-      "mcp__laravel-boost__browser-logs"
+      "mcp__laravel-boost__browser-logs",
+      "Bash(php *)"
     ]
   },
   "enableAllProjectMcpServers": true,

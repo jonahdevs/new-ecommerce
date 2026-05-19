@@ -70,7 +70,7 @@ new class extends Component {
     {
         if ($response->isFailed()) {
             $this->isProcessing = false;
-            $this->dispatch('notify', variant: 'danger', message: $response->message ?? 'Payment initiation failed. Please try again.');
+            $this->dispatch('notify', title: 'Payment Failed', variant: 'danger', message: $response->message ?? 'Payment initiation failed. Please try again.');
             return null;
         }
 
@@ -100,7 +100,7 @@ new class extends Component {
             default => 'Something went wrong. Please try again.',
         };
 
-        $this->dispatch('notify', variant: 'danger', message: $errorMessage);
+        $this->dispatch('notify', title: 'Checkout Failed', variant: 'danger', message: $errorMessage);
     }
 
     // =====================================================
@@ -114,7 +114,7 @@ new class extends Component {
             unset($this->cartItems);
             $this->dispatch('cart-updated');
         } catch (\Exception $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Could not remove item. Please try again.');
+            $this->dispatch('notify', title: 'Remove Failed', variant: 'danger', message: 'Could not remove item. Please try again.');
         }
     }
 

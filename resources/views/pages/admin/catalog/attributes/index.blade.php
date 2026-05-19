@@ -111,7 +111,16 @@ new #[Title('Product Attributes')] class extends Component {
             </flux:select>
 
             @if ($form->watch_shape != 'default')
-                <flux:input type="number" label="Size (optional)" wire:model="form.watch_size" />
+                <flux:select label="Size" wire:model="form.watch_size"
+                    description:trailing="Swatch dimensions in pixels (applies to color and image attributes)">
+                    <flux:select.option value="">Default</flux:select.option>
+                    <flux:select.option value="24">Extra small (24px)</flux:select.option>
+                    <flux:select.option value="32">Small (32px)</flux:select.option>
+                    <flux:select.option value="40">Medium (40px)</flux:select.option>
+                    <flux:select.option value="48">Large (48px)</flux:select.option>
+                    <flux:select.option value="56">Extra large (56px)</flux:select.option>
+                    <flux:select.option value="64">XXL (64px)</flux:select.option>
+                </flux:select>
             @endif
 
             <flux:input type="number" label="Sort Order" wire:model="form.sort_order" />

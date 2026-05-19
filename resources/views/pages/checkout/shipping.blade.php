@@ -41,7 +41,7 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
 
         // Guard: address exists but has no shipping zone resolved
         if (!$this->address?->shipping_zone_id) {
-            $this->dispatch('notify', variant: 'danger', message: 'Your address is missing location details. Please update it.');
+            $this->dispatch('notify', title: 'Address Incomplete', variant: 'danger', message: 'Your address is missing location details. Please update it.');
             $this->redirectRoute('customer.address-book.index', navigate: true);
             return;
         }
@@ -116,13 +116,13 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
     {
         // Validate a method is selected
         if (!$this->selectedOption) {
-            $this->dispatch('notify', variant: 'danger', message: 'Please select a shipping method.');
+            $this->dispatch('notify', title: 'Shipping Required', variant: 'danger', message: 'Please select a shipping method.');
             return null;
         }
 
         // PUS requires a station
         if ($this->selectedOption->isPus() && !$this->selectedStationId) {
-            $this->dispatch('notify', variant: 'danger', message: 'Please select a pickup station.');
+            $this->dispatch('notify', title: 'Pickup Station Required', variant: 'danger', message: 'Please select a pickup station.');
             return null;
         }
 

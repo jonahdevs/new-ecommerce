@@ -35,9 +35,9 @@ new class extends Component {
         try {
             $cartService->addItem($this->product->id, $this->cartQuantity);
             $this->dispatch('cart-updated');
-            $this->dispatch('notify', variant: 'success', message: 'Added to cart successfully');
+            $this->dispatch('notify', title: 'Cart Updated', variant: 'success', message: 'Accessory added to your cart');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
+            $this->dispatch('notify', title: 'Add to Cart Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to add to cart');
         }
     }
 
@@ -47,9 +47,9 @@ new class extends Component {
             $added = $wishlistService->toggle($this->product->id);
             $this->wishlisted = $added;
             $this->dispatch('wishlist-updated');
-            $this->dispatch('notify', variant: 'success', message: $added ? 'Added to wishlist' : 'Removed from wishlist');
+            $this->dispatch('notify', title: 'Wishlist Updated', variant: 'success', message: $added ? 'Added to wishlist' : 'Removed from wishlist');
         } catch (\Throwable $th) {
-            $this->dispatch('notify', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
+            $this->dispatch('notify', title: 'Wishlist Failed', variant: 'danger', message: $th->getMessage() ?: 'Unable to update wishlist');
         }
     }
 };

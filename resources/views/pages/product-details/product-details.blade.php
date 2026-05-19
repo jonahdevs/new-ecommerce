@@ -20,9 +20,9 @@
         </div>
 
         <div class="container @container/page mx-auto px-4 py-4">
-            <div class="grid @4xl/page:grid-cols-5 gap-5">
+            <div class="grid @4xl/page:grid-cols-9 gap-5">
                 {{-- Main content area --}}
-                <div class="@4xl/page:col-span-4 @container/details space-y-5">
+                <div class="@4xl/page:col-span-7 @container/details space-y-5">
                     <div class="grid grid-cols-1 @xl/details:grid-cols-7 gap-5">
                         {{-- Image gallery skeleton --}}
                         <div class="@xl/details:col-span-3">
@@ -102,7 +102,7 @@
                 </div>
 
                 {{-- Sidebar skeleton --}}
-                <div class="@4xl/page:col-span-1 border border-zinc-200 rounded p-4 h-fit">
+                <div class="@4xl/page:col-span-2 border border-zinc-200 rounded p-4 h-fit">
                     {{-- Policy links --}}
                     @for ($i = 0; $i < 3; $i++)
                         <div class="flex items-center justify-between py-1.5">
@@ -164,9 +164,9 @@
     </div>
 
     <div class="container @container/page mx-auto px-4 py-4">
-        <div class="grid @4xl/page:grid-cols-5 gap-5">
+        <div class="grid @4xl/page:grid-cols-9 gap-5">
 
-            <div class="@4xl/page:col-span-4 @container/details space-y-5">
+            <div class="@4xl/page:col-span-7 @container/details space-y-5">
 
                 <div class="grid grid-cols-1 @xl/details:grid-cols-7 gap-5">
 
@@ -487,6 +487,25 @@
                                     @foreach ($this->variationAttributes as $attribute)
                                         @php
                                             $watchType = $attribute['watch_type'] ?? 'label';
+                                            $watchShape = $attribute['watch_shape'] ?? 'default';
+                                            $watchSize = $attribute['watch_size'] ?? null;
+
+                                            // Map watch_shape → Tailwind border-radius
+                                            $shapeClass = match ($watchShape) {
+                                                'circle' => 'rounded-full',
+                                                'square' => 'rounded-none',
+                                                'rounded-corners' => 'rounded-md',
+                                                default => $watchType === 'color' ? 'rounded-full' : 'rounded-md',
+                                            };
+
+                                            // Per-watch_type default dimensions when admin hasn't set a size
+                                            $defaultPx = match ($watchType) {
+                                                'color' => 36,
+                                                'image' => 48,
+                                                default => null,
+                                            };
+                                            $sizePx = $watchSize ?: $defaultPx;
+                                            $sizeStyle = $sizePx ? "width: {$sizePx}px; height: {$sizePx}px;" : '';
                                         @endphp
                                         <div class="space-y-1.5">
                                             <p class="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -515,10 +534,11 @@
                                                     @if ($watchType === 'color' && $value['color_code'])
                                                         <button type="button"
                                                             wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
-                                                            class="relative w-9 h-9 rounded-full transition-all cursor-pointer {{ $isSelected ? 'ring-2 ring-offset-2 ring-secondary' : 'hover:ring-2 hover:ring-offset-2 hover:ring-zinc-300' }} {{ $state === 'backorder' ? 'ring-amber-400' : '' }}"
+                                                            class="relative {{ $shapeClass }} transition-all cursor-pointer {{ $isSelected ? 'ring-2 ring-offset-2 ring-secondary' : 'hover:ring-2 hover:ring-offset-2 hover:ring-zinc-300' }} {{ $state === 'backorder' ? 'ring-amber-400' : '' }}"
+                                                            style="{{ $sizeStyle }}"
                                                             title="{{ $value['label'] }}{{ $state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '') }}">
                                                             <span
-                                                                class="absolute inset-0.5 rounded-full border border-zinc-200 {{ $state === 'out_of_stock' ? 'opacity-50' : '' }}"
+                                                                class="absolute inset-0.5 {{ $shapeClass }} border border-zinc-200 {{ $state === 'out_of_stock' ? 'opacity-50' : '' }}"
                                                                 style="background-color: {{ $value['color_code'] }};"></span>
                                                             @if ($state === 'out_of_stock')
                                                                 <span
@@ -536,7 +556,8 @@
                                                     @elseif ($watchType === 'image' && $value['image_path'])
                                                         <button type="button"
                                                             wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
-                                                            class="relative w-12 h-12 rounded-md border-2 transition-all cursor-pointer overflow-hidden {{ $isSelected ? 'border-secondary ring-1 ring-secondary' : 'border-zinc-200 hover:border-zinc-400' }} {{ $state === 'backorder' ? 'border-amber-400' : '' }}"
+                                                            class="relative {{ $shapeClass }} border-2 transition-all cursor-pointer overflow-hidden {{ $isSelected ? 'border-secondary ring-1 ring-secondary' : 'border-zinc-200 hover:border-zinc-400' }} {{ $state === 'backorder' ? 'border-amber-400' : '' }}"
+                                                            style="{{ $sizeStyle }}"
                                                             title="{{ $value['label'] }}{{ $state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '') }}">
                                                             <img src="{{ Storage::url($value['image_path']) }}"
                                                                 alt="{{ $value['label'] }}"
@@ -558,21 +579,34 @@
                                                         {{-- Handled outside the loop --}}
                                                         @continue
 
-                                                        {{-- DEFAULT: LABEL/BUTTON --}}
+                                                        {{-- DEFAULT: LABEL/BUTTON (customer design) --}}
                                                     @else
+                                                        @php
+                                                            // Circle shape needs equal width + height; other shapes use text padding.
+                                                            $isCircle = $watchShape === 'circle';
+                                                            $labelSizePx = $watchSize ?: ($isCircle ? 40 : null);
+                                                            $labelStyle = $isCircle && $labelSizePx
+                                                                ? "width: {$labelSizePx}px; height: {$labelSizePx}px;"
+                                                                : ($labelSizePx ? "min-height: {$labelSizePx}px;" : '');
+                                                            $labelPadding = $isCircle ? '' : 'px-4 py-2';
+                                                        @endphp
                                                         <button type="button"
                                                             wire:click="selectAttributeValue('{{ $attribute['name'] }}', '{{ $value['value'] }}')"
+                                                            title="{{ $value['label'] }}{{ $state === 'out_of_stock' ? ' (out of stock)' : ($state === 'backorder' ? ' (backorder)' : '') }}"
+                                                            style="{{ $labelStyle }}"
                                                             @class([
-                                                                'px-3 py-1.5 text-sm border rounded-md transition-all cursor-pointer',
+                                                                'inline-flex items-center justify-center text-[12px] font-serif font-extrabold tracking-wider uppercase border transition-all cursor-pointer',
+                                                                $shapeClass,
+                                                                $labelPadding,
                                                                 // Selected states
-                                                                'border-secondary bg-secondary/5 text-secondary font-medium' =>
+                                                                'border-primary bg-primary text-white' =>
                                                                     $isSelected && $state === 'available',
-                                                                'border-amber-500 bg-amber-50 text-amber-700 font-medium' =>
+                                                                'border-amber-500 bg-amber-50 text-amber-700' =>
                                                                     $isSelected && $state === 'backorder',
-                                                                'border-zinc-400 bg-zinc-100 text-zinc-500 font-medium' =>
+                                                                'border-zinc-400 bg-zinc-100 text-zinc-500' =>
                                                                     $isSelected && $state === 'out_of_stock',
                                                                 // Unselected states
-                                                                'border-zinc-300 text-zinc-700 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300' =>
+                                                                'border-zinc-300 text-zinc-700 hover:border-primary hover:text-primary dark:border-zinc-600 dark:text-zinc-300' =>
                                                                     !$isSelected && $state === 'available',
                                                                 'border-amber-300 text-amber-600 hover:border-amber-500 bg-amber-50/50' =>
                                                                     !$isSelected && $state === 'backorder',
@@ -580,10 +614,10 @@
                                                                     !$isSelected && $state === 'out_of_stock',
                                                             ])>
                                                             <span
-                                                                class="{{ $state === 'out_of_stock' ? 'line-through' : '' }}">{{ $value['label'] }}</span>
+                                                                class="{{ $state === 'out_of_stock' ? 'line-through' : '' }}">{{ $value['value'] }}</span>
                                                             @if ($state === 'backorder')
                                                                 <span
-                                                                    class="text-xs opacity-75 ml-1">(backorder)</span>
+                                                                    class="text-[10px] opacity-75 ml-1 normal-case">(backorder)</span>
                                                             @endif
                                                         </button>
                                                     @endif
@@ -601,8 +635,9 @@
                                                             @continue
                                                         @endif
                                                         <option value="{{ $value['value'] }}"
+                                                            title="{{ $value['label'] }}"
                                                             {{ ($selectedAttributeValues[$attribute['name']] ?? null) === $value['value'] ? 'selected' : '' }}>
-                                                            {{ $value['label'] }}
+                                                            {{ $value['value'] }}
                                                             @if ($value['state'] === 'backorder')
                                                                 (backorder)
                                                             @elseif ($value['state'] === 'out_of_stock')
@@ -970,7 +1005,7 @@
 
             {{-- DELIVERY SIDEBAR --}}
             <div
-                class="@4xl/page:col-span-1 border border-zinc-200 dark:border-zinc-700 rounded h-fit sticky top-44 p-4">
+                class="@4xl/page:col-span-2 border border-zinc-200 dark:border-zinc-700 rounded h-fit sticky top-44 p-4">
 
                 {{-- Price — slides in when main price scrolls out of view.
                      wire:ignore keeps Alpine state alive across Livewire re-renders. --}}

@@ -129,7 +129,7 @@ new #[Layout('layouts.checkout')] class extends Component {
             $response = app(MpesaGateway::class)->initiateWithPhone($order, $payment, $this->mpesaPhone);
 
             if ($response->isFailed()) {
-                $this->dispatch('notify', variant: 'danger', message: $response->message ?? 'Failed to send M-Pesa request. Please try again.');
+                $this->dispatch('notify', title: 'M-Pesa Failed', variant: 'danger', message: $response->message ?? 'Failed to send M-Pesa request. Please try again.');
                 $this->isProcessing = false;
 
                 return;
@@ -137,7 +137,7 @@ new #[Layout('layouts.checkout')] class extends Component {
 
             $this->dispatch('stk-push-initiated', checkoutRequestId: $response->checkoutRequestId);
         } catch (Throwable $e) {
-            $this->dispatch('notify', variant: 'danger', message: 'Something went wrong. Please try again.');
+            $this->dispatch('notify', title: 'Payment Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
             logger()->error('M-Pesa initiation failed on pay page', ['error' => $e->getMessage()]);
             $this->isProcessing = false;
         }
