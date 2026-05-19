@@ -5,6 +5,7 @@
  */
 
 import './echo';
+import './dashboard-sales-map';
 import richEditor from './rich-editor';
 import Intersect from '@alpinejs/intersect';
 

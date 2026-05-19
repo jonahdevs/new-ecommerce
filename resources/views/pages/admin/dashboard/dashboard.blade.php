@@ -248,88 +248,48 @@
         </flux:card>
 
 
-        {{-- Top Sales Location --}}
+        {{-- Top Sales Locations — Unovis choropleth of Kenya counties --}}
+        @php $salesLocations = $this->topSalesLocations; @endphp
+
         <flux:card class="p-0 overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
                     <flux:heading size="sm">Top Sales Locations</flux:heading>
-                    <flux:text class="text-[10px] text-zinc-400">Distribution by city</flux:text>
+                    <flux:text class="text-[10px] text-zinc-400">Orders by Kenya county · hover for detail</flux:text>
                 </div>
-                <flux:link
-                    :href="route('admin.coming-soon', ['feature' => 'Sales Location Report', 'description' =>
-                        'Detailed analytics on sales distribution across different cities and regions.'
-                    ])"
-                    wire:navigate class="text-xs">Report</flux:link>
             </div>
-            @php
-                $locations = [
-                    ['name' => 'Nairobi', 'count' => 234, 'color' => 'bg-emerald-500'],
-                    ['name' => 'Mombasa', 'count' => 98, 'color' => 'bg-blue-500'],
-                    ['name' => 'Kisumu', 'count' => 67, 'color' => 'bg-amber-500'],
-                    ['name' => 'Nakuru', 'count' => 41, 'color' => 'bg-violet-500'],
-                    ['name' => 'Eldoret', 'count' => 28, 'color' => 'bg-rose-500'],
-                ];
-                $maxCount = $locations[0]['count'];
-            @endphp
 
-
+            {{-- Map (rendered by Unovis on the client) --}}
             <div class="px-4 py-4">
-                {{-- Visual Area: Simplified Geo-Context --}}
-                <div
-                    class="relative flex items-center justify-center h-32 overflow-hidden rounded-xl bg-zinc-50 dark:bg-white/5">
-                    {{-- Abstract Map Suggestion (Replaces the Ellipses) --}}
-                    <svg viewBox="0 0 200 100"
-                        class="absolute inset-0 w-full h-full opacity-10 dark:opacity-20 stroke-current text-zinc-400">
-                        <path d="M40,20 Q60,10 80,30 T120,20 T160,40" fill="none" stroke-width="0.5" />
-                        <circle cx="150" cy="60" r="40" fill="none" stroke-dasharray="2 2" />
-                    </svg>
-
-                    <div class="relative flex gap-6">
-                        @foreach (array_slice($locations, 0, 3) as $loc)
-                            <div class="flex flex-col items-center">
-                                <div class="relative">
-                                    <div class="w-3 h-3 rounded-full {{ $loc['color'] }} shadow-lg shadow-current/20">
-                                    </div>
-                                    <div
-                                        class="absolute inset-0 w-3 h-3 rounded-full {{ $loc['color'] }} animate-ping opacity-20">
-                                    </div>
-                                </div>
-                                <span class="mt-2 text-[10px] font-medium text-zinc-500">{{ $loc['name'] }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-
-            <div class="px-4 pb-4 space-y-3">
-
-                @foreach ($locations as $loc)
-                    <div class="group">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="flex items-center gap-2">
-                                <div class="w-1.5 h-1.5 rounded-full {{ $loc['color'] }}"></div>
-                                <flux:text class="text-xs font-medium">{{ $loc['name'] }}</flux:text>
-                            </div>
-                            <flux:text class="text-xs text-zinc-400">{{ $loc['count'] }}</flux:text>
-                        </div>
-                        {{-- Full width progress bar for better visual comparison --}}
-                        <div class="w-full h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div class="{{ $loc['color'] }} h-full rounded-full transition-all duration-500"
-                                style="width: {{ ($loc['count'] / $maxCount) * 100 }}%"></div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-white/5">
-                <div class="flex items-center justify-between">
-                    <flux:text class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">Total Volume
-                    </flux:text>
-                    <flux:text class="text-xs font-bold">{{ array_sum(array_column($locations, 'count')) }}
-                    </flux:text>
+                <div wire:ignore id="dashboard-sales-map"
+                    data-locations="{{ json_encode($salesLocations) }}"
+                    class="relative w-full overflow-hidden" style="height: 280px;">
                 </div>
             </div>
         </flux:card>
+
+        {{-- Trigger the Unovis map after the markup mounts; re-trigger on Livewire morph. --}}
+        <script>
+            (function() {
+                function paintSalesMap() {
+                    const el = document.getElementById('dashboard-sales-map');
+                    if (!el || typeof window.__initSalesMap !== 'function') return;
+                    let data = [];
+                    try {
+                        data = JSON.parse(el.dataset.locations || '[]');
+                    } catch (e) {
+                        data = [];
+                    }
+                    window.__initSalesMap('dashboard-sales-map', data);
+                }
+                document.addEventListener('DOMContentLoaded', paintSalesMap);
+                document.addEventListener('livewire:navigated', paintSalesMap);
+                document.addEventListener('livewire:initialized', () => {
+                    Livewire.hook('morph.updated', paintSalesMap);
+                });
+                window.addEventListener('load', paintSalesMap);
+            })();
+        </script>
     </div>
 
 

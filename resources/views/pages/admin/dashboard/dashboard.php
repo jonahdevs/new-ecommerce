@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\QuoteStatus;
+use App\Models\County;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quote;
@@ -62,7 +63,7 @@ new #[Title('Dashboard')] class extends Component
 
     private function clearComputedCache(): void
     {
-        unset($this->dateRange, $this->periodLabel, $this->salesStats, $this->quotationStats, $this->productStats, $this->customerStats, $this->revenueChartData, $this->topProductsChartData, $this->recentOrders, $this->recentDeliveries, $this->recentCustomers, $this->satisfactionStats, $this->categoryStats, $this->stockReport);
+        unset($this->dateRange, $this->periodLabel, $this->salesStats, $this->quotationStats, $this->productStats, $this->customerStats, $this->revenueChartData, $this->topProductsChartData, $this->recentOrders, $this->recentDeliveries, $this->recentCustomers, $this->satisfactionStats, $this->categoryStats, $this->stockReport, $this->topSalesLocations);
     }
 
     #[Computed]
@@ -298,6 +299,45 @@ new #[Title('Dashboard')] class extends Component
                 )
                 ->toArray(),
         ];
+    }
+
+    /**
+     * Revenue aggregated per Kenya county for the current period.
+     *
+     * Pulls county name from `orders.shipping_address` JSON snapshot, joins
+     * against the counties table to resolve the official KNBS code, and
+     * returns rows keyed by both name and code so the Unovis map can match
+     * features regardless of which property the TopoJSON uses.
+     *
+     * @return array<int, array{name: string, code: ?string, orders: int, revenue: float}>
+     */
+    #[Computed]
+    public function topSalesLocations(): array
+    {
+        [$from, $to] = $this->dateRange;
+
+        $rows = DB::table('orders')
+            ->where('payment_status', PaymentStatus::PAID->value)
+            ->whereBetween('created_at', [$from, $to])
+            ->whereNotNull('shipping_address')
+            ->selectRaw('
+                JSON_UNQUOTE(JSON_EXTRACT(shipping_address, "$.county")) as county_name,
+                COUNT(*) as orders,
+                SUM(total_cents) / 100 as revenue
+            ')
+            ->groupBy('county_name')
+            ->orderByDesc('revenue')
+            ->get()
+            ->filter(fn ($r) => ! empty($r->county_name) && $r->county_name !== 'null');
+
+        $codesByName = County::pluck('code', 'name')->toArray();
+
+        return $rows->map(fn ($r) => [
+            'name' => $r->county_name,
+            'code' => $codesByName[$r->county_name] ?? null,
+            'orders' => (int) $r->orders,
+            'revenue' => round((float) $r->revenue, 2),
+        ])->values()->toArray();
     }
 
     /**
