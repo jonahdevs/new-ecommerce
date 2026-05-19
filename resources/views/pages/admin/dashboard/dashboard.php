@@ -11,11 +11,13 @@ use App\Models\Quote;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 new #[Title('Dashboard')] class extends Component
 {
@@ -298,17 +300,19 @@ new #[Title('Dashboard')] class extends Component
         ];
     }
 
+    /**
+     * Low-stock items only — products at or below their low_stock_threshold,
+     * sorted with out-of-stock first then ascending by remaining quantity.
+     */
     #[Computed]
     public function stockReport()
     {
         return Product::where('status', 'published')
             ->where('manage_stock', true)
-            ->orderByRaw(
-                'CASE WHEN stock_quantity
-        = 0 THEN 0 WHEN stock_quantity <= low_stock_threshold THEN 1 ELSE 2 END',
-            )
+            ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
+            ->orderBy('stock_quantity')
             ->limit(6)
-            ->get();
+            ->get(['id', 'name', 'sku', 'stock_quantity', 'low_stock_threshold']);
     }
 
     #[Computed]
@@ -380,5 +384,101 @@ new #[Title('Dashboard')] class extends Component
     public function recentCustomers()
     {
         return User::customer()->withCount('orders')->latest()->limit(5)->get();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CSV export — snapshots the current Dashboard view for the active period
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function exportCsv(): StreamedResponse
+    {
+        $sales = $this->salesStats;
+        $quotes = $this->quotationStats;
+        $products = $this->productStats;
+        $customers = $this->customerStats;
+        $categories = $this->categoryStats;
+        $topProducts = $this->topProductsChartData;
+        $revenueChart = $this->revenueChartData;
+
+        $rows = [];
+
+        // Header
+        $rows[] = ['Sheffield Africa — Dashboard Export'];
+        $rows[] = ['Period', $this->periodLabel];
+        $rows[] = ['Generated at', now()->format('Y-m-d H:i:s')];
+        $rows[] = [];
+
+        // Sales
+        $rows[] = ['Sales'];
+        $rows[] = ['Metric', 'Value', 'vs Prior Period'];
+        $rows[] = ['Revenue (KES)', number_format($sales['revenue'], 2), $sales['revenue_trend'] !== null ? $sales['revenue_trend'].'%' : '—'];
+        $rows[] = ['Orders', $sales['order_count'], $sales['orders_trend'] !== null ? $sales['orders_trend'].'%' : '—'];
+        $rows[] = ['Paid Orders', $sales['paid_count'], '—'];
+        $rows[] = ['Avg Order Value (KES)', number_format($sales['avg_order'], 2), '—'];
+        $rows[] = [];
+
+        // Quotations
+        $rows[] = ['Quotations'];
+        $rows[] = ['Metric', 'Value'];
+        $rows[] = ['Total', $quotes['total']];
+        $rows[] = ['Awaiting Pricing', $quotes['pending_admin']];
+        $rows[] = ['Sent', $quotes['sent']];
+        $rows[] = ['Accepted', $quotes['accepted']];
+        $rows[] = ['Conversion Rate (%)', $quotes['conversion_rate'] ?? '—'];
+        $rows[] = [];
+
+        // Products
+        $rows[] = ['Products'];
+        $rows[] = ['Metric', 'Value'];
+        $rows[] = ['Active', $products['active']];
+        $rows[] = ['Low Stock', $products['low_stock']];
+        $rows[] = ['Out of Stock', $products['out_of_stock']];
+        $rows[] = ['Requires Quote', $products['requires_quote']];
+        $rows[] = [];
+
+        // Customers
+        $rows[] = ['Customers'];
+        $rows[] = ['Metric', 'Value', 'vs Prior Period'];
+        $rows[] = ['Total', $customers['total'], '—'];
+        $rows[] = ['New in Period', $customers['new'], $customers['new_trend'] !== null ? $customers['new_trend'].'%' : '—'];
+        $rows[] = ['Returning (2+ orders)', $customers['returning'], '—'];
+        $rows[] = [];
+
+        // Revenue trend
+        $rows[] = ['Revenue Trend'];
+        $rows[] = ['Period', 'Revenue (KES)'];
+        foreach ($revenueChart['labels'] ?? [] as $i => $label) {
+            $rows[] = [$label, number_format($revenueChart['values'][$i] ?? 0, 2)];
+        }
+        $rows[] = [];
+
+        // Top products
+        $rows[] = ['Top Products'];
+        $rows[] = ['Product', 'Units Sold', 'Revenue (KES)'];
+        foreach ($topProducts['products'] ?? [] as $p) {
+            $rows[] = [$p['name'] ?? '—', $p['units_sold'] ?? 0, number_format($p['revenue'] ?? 0, 2)];
+        }
+        $rows[] = [];
+
+        // Top categories
+        $rows[] = ['Top Categories'];
+        $rows[] = ['Category', 'Units', 'Revenue (KES)', 'Share (%)'];
+        foreach ($categories['categories'] ?? [] as $c) {
+            $rows[] = [$c['name'], $c['units'], number_format($c['revenue'], 2), $c['pct']];
+        }
+
+        $handle = fopen('php://temp', 'r+');
+        foreach ($rows as $row) {
+            fputcsv($handle, $row);
+        }
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        return Response::streamDownload(
+            fn () => print $csv,
+            'dashboard-'.now()->format('Y-m-d').'.csv',
+            ['Content-Type' => 'text/csv'],
+        );
     }
 };

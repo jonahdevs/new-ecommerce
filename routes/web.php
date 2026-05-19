@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\OrderStatus;
+use App\Http\Controllers\Admin\AdminQuotationPdfController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Orders\OrderReceiptController;
-use App\Http\Controllers\Admin\AdminQuotationPdfController;
 use App\Http\Controllers\Orders\PackingSlipController;
 use App\Http\Controllers\Orders\QuotationPdfController;
 use App\Http\Controllers\Payment\CallbackController;
@@ -317,13 +317,13 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
     });
 
     // --------------------------------------------------------------------
-    // Reports
+    // Legacy /reports/* URLs redirect to the dashboard (analytics consolidated into it).
     // --------------------------------------------------------------------
 
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::livewire('/overview', 'pages::admin.reports.overview')->name('overview');
-        Route::livewire('/customers', 'pages::admin.reports.customers')->name('customers');
-        Route::livewire('/inventory', 'pages::admin.reports.inventory')->name('inventory');
+        Route::redirect('/overview', '/admin/dashboard')->name('overview');
+        Route::redirect('/customers', '/admin/dashboard')->name('customers');
+        Route::redirect('/inventory', '/admin/dashboard')->name('inventory');
     });
 
     // --------------------------------------------------------------------
@@ -383,7 +383,7 @@ if (app()->isLocal()) {
             if ($min && $max) {
                 $deliveryWindow = $min === $max ? "{$min} business days" : "{$min}–{$max} business days";
             } elseif ($delivery->estimated_delivery_at) {
-                $deliveryWindow = 'By ' . $delivery->estimated_delivery_at->format('D, M j');
+                $deliveryWindow = 'By '.$delivery->estimated_delivery_at->format('D, M j');
             }
         }
 
@@ -461,7 +461,7 @@ if (app()->isLocal()) {
             ->latest()
             ->first();
 
-        if (!$quote) {
+        if (! $quote) {
             $quote = Quote::factory()
                 ->sent()
                 ->withItems(3)
@@ -488,13 +488,13 @@ if (app()->isLocal()) {
             ->first();
 
         // If no suitable order exists, create one
-        if (!$order) {
+        if (! $order) {
             $order = Order::factory()
                 ->confirmed()
                 ->withItems(25) // Create 25 items to test multi-page layout
                 ->withPayment()
                 ->create([
-                    'kra_cu_number' => 'CU-PREVIEW-' . now()->timestamp,
+                    'kra_cu_number' => 'CU-PREVIEW-'.now()->timestamp,
                     'kra_validated_at' => now(),
                 ]);
 
@@ -512,4 +512,4 @@ if (app()->isLocal()) {
 // ADDITIONAL ROUTE FILES
 // ============================================================================
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

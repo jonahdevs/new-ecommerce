@@ -100,18 +100,8 @@
                 </flux:navlist.item>
             </flux:navlist.group>
 
-            {{-- Reports & Analytics --}}
-            <flux:navlist.group heading="Reports & Analytics" class="grid">
-                <flux:navlist.item icon="presentation-chart-line" wire:navigate :href="route('admin.reports.overview')"
-                    :current="request()->routeIs('admin.reports.overview')">Business Overview
-                </flux:navlist.item>
-                <flux:navlist.item icon="user-group" wire:navigate :href="route('admin.reports.customers')"
-                    :current="request()->routeIs('admin.reports.customers')">Customer Insights
-                </flux:navlist.item>
-                <flux:navlist.item icon="archive-box" wire:navigate :href="route('admin.reports.inventory')"
-                    :current="request()->routeIs('admin.reports.inventory')">
-                    Inventory Health
-                </flux:navlist.item>
+            {{-- Audit --}}
+            <flux:navlist.group heading="Audit" class="grid">
                 <flux:navlist.item icon="clipboard-document-list" wire:navigate
                     :href="route('admin.activity-logs.index')" :current="request()->routeIs('admin.activity-logs.*')">
                     Activity Logs

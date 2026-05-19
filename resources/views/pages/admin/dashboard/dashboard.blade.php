@@ -28,8 +28,8 @@
             </div>
             <flux:subheading>{{ $this->periodLabel }}</flux:subheading>
         </div>
-        <div class="flex items-center gap-2">
-            <flux:icon.loading wire:loading wire:target="setDateRange" class="dark:text-white! size-3.5" />
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <flux:icon.loading wire:loading wire:target="setDateRange,exportCsv" class="dark:text-white! size-3.5" />
 
             <div class="relative" wire:ignore>
                 <input type="text" readonly
@@ -37,6 +37,10 @@
                 <flux:icon.calendar-days
                     class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
             </div>
+
+            <flux:button wire:click="exportCsv" icon="arrow-down-tray" variant="ghost" size="sm">
+                Export CSV
+            </flux:button>
         </div>
     </div>
 
@@ -444,7 +448,7 @@
             </div>
         </flux:card>
 
-        {{-- Recent Orders Table (Right, 2 cols) --}}
+        {{-- Recent Orders Table (Right, 2 cols) — compact view; full detail on the Orders page --}}
         <flux:card class="p-0 @lg:col-span-2">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Recent orders</flux:heading>
@@ -462,17 +466,8 @@
                                 class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
                                 Customer</th>
                             <th
-                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                                Items</th>
-                            <th
-                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+                                class="text-right px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
                                 Amount</th>
-                            <th
-                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                                Date</th>
-                            <th
-                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-                                Payment</th>
                             <th
                                 class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
                                 Status</th>
@@ -483,39 +478,16 @@
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
                                 <td class="px-5 py-3">
                                     <a href="{{ route('admin.orders.show', $order) }}" wire:navigate
-                                        class="text-blue-600 dark:text-blue-400 font-medium text-xs hover:underline">{{ $order->reference }}</a>
+                                        class="block text-blue-600 dark:text-blue-400 font-medium text-xs hover:underline">{{ $order->reference }}</a>
+                                    <span class="text-[10px] text-zinc-400 whitespace-nowrap">
+                                        {{ $order->created_at->diffForHumans() }}
+                                    </span>
                                 </td>
-                                <td class="px-5 py-3">
-                                    <div class="flex items-center gap-2.5">
-                                        <div
-                                            class="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-[10px] font-semibold text-zinc-500 shrink-0">
-                                            {{ strtoupper(substr($order->user?->name ?? '?', 0, 2)) }}
-                                        </div>
-                                        <span
-                                            class="text-xs text-zinc-800 dark:text-zinc-200">{{ $order->user?->name ?? '—' }}</span>
-                                    </div>
+                                <td class="px-5 py-3 text-xs text-zinc-800 dark:text-zinc-200">
+                                    {{ $order->user?->name ?? '—' }}
                                 </td>
-                                <td class="px-5 py-3 text-xs text-zinc-500">{{ $order->items_count }}</td>
-                                <td class="px-5 py-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                                <td class="px-5 py-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100 text-right">
                                     {{ format_currency($order->total) }}</td>
-                                <td class="px-5 py-3 text-xs text-zinc-400 whitespace-nowrap">
-                                    {{ $order->created_at->diffForHumans() }}</td>
-                                <td class="px-5 py-3">
-                                    @php
-                                        $pStatus = $order->payment_status->value;
-                                        $pColor = match ($pStatus) {
-                                            'paid'
-                                                => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
-                                            'failed'
-                                                => 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400',
-                                            'processing'
-                                                => 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
-                                            default => 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
-                                        };
-                                    @endphp
-                                    <span
-                                        class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $pColor }}">{{ ucfirst($pStatus) }}</span>
-                                </td>
                                 <td class="px-5 py-3">
                                     <flux:badge size="sm" :color="$order->status->color()">
                                         {{ $order->status->label() }}</flux:badge>
@@ -523,7 +495,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-5 py-10 text-center text-zinc-400 text-sm">No
+                                <td colspan="4" class="px-5 py-10 text-center text-zinc-400 text-sm">No
                                     orders yet</td>
                             </tr>
                         @endforelse
@@ -539,10 +511,10 @@
     {{-- ================================================================== --}}
     <div class="grid grid-cols-1 @lg:grid-cols-3 gap-4 mb-4">
 
-        {{-- Stock Report (Left, 2 cols) --}}
+        {{-- Low Stock Report (Left, 2 cols) — only products at or below low_stock_threshold --}}
         <flux:card class="p-0 @lg:col-span-2">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
-                <flux:heading>Stock report</flux:heading>
+                <flux:heading>Low stock report</flux:heading>
                 <flux:link :href="route('admin.catalog.products.index')" wire:navigate class="text-xs">Manage stock
                 </flux:link>
             </div>
@@ -558,12 +530,9 @@
                                 SKU</th>
                             <th
                                 class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
-                                Price</th>
+                                Status</th>
                             <th
-                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
-                                Stock status</th>
-                            <th
-                                class="text-left px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
+                                class="text-right px-5 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
                                 Qty</th>
                         </tr>
                     </thead>
@@ -573,36 +542,30 @@
                                 <td class="px-5 py-3">
                                     <a href="{{ route('admin.catalog.products.edit', $product) }}" wire:navigate
                                         class="text-xs font-medium text-zinc-800 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                        {{ Str::limit($product->name, 35) }}
+                                        {{ Str::limit($product->name, 45) }}
                                     </a>
                                 </td>
                                 <td class="px-5 py-3 text-xs text-zinc-400 font-mono">
                                     {{ $product->sku ?? '—' }}</td>
-                                <td class="px-5 py-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ format_currency($product->final_price ?? 0) }}</td>
                                 <td class="px-5 py-3">
                                     @if ($product->stock_quantity === 0)
                                         <span
                                             class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400">Out
                                             of stock</span>
-                                    @elseif ($product->stock_quantity <= $product->low_stock_threshold)
+                                    @else
                                         <span
                                             class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">Low
                                             stock</span>
-                                    @else
-                                        <span
-                                            class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">In
-                                            stock</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                <td class="px-5 py-3 text-xs font-semibold text-zinc-800 dark:text-zinc-200 text-right">
                                     {{ $product->stock_quantity }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-5 py-8 text-center text-zinc-400 text-sm">No
-                                    products
-                                    with stock management enabled</td>
+                                <td colspan="4" class="px-5 py-8 text-center text-zinc-400 text-sm">
+                                    All stock levels are above the low-stock threshold.
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
