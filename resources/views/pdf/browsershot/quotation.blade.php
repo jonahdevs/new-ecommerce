@@ -143,6 +143,8 @@
                         $variantAttrs = $item->product_snapshot['variant'] ?? null;
                         $shortDesc = $item->product?->short_description;
                         $unitPrice = ($item->quoted_price_cents ?? $item->original_price_cents) / 100;
+                        // Amount is always price × quantity — total_cents may be 0 on freshly-created quotes.
+                        $lineAmount = $unitPrice * $item->quantity;
                     @endphp
                     <tr>
                         <td class="border border-gray-400 px-2 py-2 align-top text-left">{{ $index + 1 }}.</td>
@@ -170,7 +172,7 @@
                         </td>
                         <td class="border border-gray-400 px-2 py-2 align-top text-center">{{ $item->quantity }}</td>
                         <td class="border border-gray-400 px-2 py-2 align-top text-right font-semibold">
-                            {{ number_format($item->total_cents / 100, 2) }}
+                            {{ number_format($lineAmount, 2) }}
                         </td>
                     </tr>
                 @endforeach
@@ -268,14 +270,11 @@
     @endif
 
     {{-- ================================================================== --}}
-    {{-- FOOTER TAGLINE                                                      --}}
+    {{-- FOOTER NOTE — optional admin-set footer text, no brand name        --}}
     {{-- ================================================================== --}}
-    <div class="mt-8 mb-4 text-center">
-        <div class="text-sm font-bold text-brand">
-            {{ $general->store_tagline ?: $general->store_name }}
+    @if ($quotationSettings->quote_footer_note)
+        <div class="mt-8 mb-4 text-center">
+            <div class="text-[10px] text-gray-600">{{ $quotationSettings->quote_footer_note }}</div>
         </div>
-        @if ($quotationSettings->quote_footer_note)
-            <div class="mt-1 text-[10px] text-gray-600">{{ $quotationSettings->quote_footer_note }}</div>
-        @endif
-    </div>
+    @endif
 @endsection

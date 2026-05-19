@@ -37,6 +37,11 @@ new #[Title('Quotation Details')] class extends Component
             $this->itemPrices[$item->id] = number_format($price / 100, 2, '.', '');
         }
 
+        // Rehydrate shipping from the persisted value so the input keeps what was saved.
+        if ($quote->shipping_cents > 0) {
+            $this->quotedShipping = number_format($quote->shipping_cents / 100, 2, '.', '');
+        }
+
         $settings = app(QuotationSettings::class);
         $this->validityDays = $settings->default_validity_days;
     }
@@ -323,15 +328,6 @@ new #[Title('Quotation Details')] class extends Component
     {{-- CONTEXT ALERTS                                                      --}}
     {{-- ================================================================== --}}
 
-    @if ($quote->isPending())
-        <flux:callout icon="clock" variant="warning" class="mb-5">
-            <flux:heading size="sm" class="font-medium!">Awaiting your pricing</flux:heading>
-            <flux:subheading class="mt-0.5">
-                Fill in the quoted prices below and click <strong>Send to Customer</strong> when ready.
-            </flux:subheading>
-        </flux:callout>
-    @endif
-
     @if ($quote->isSent() && $quote->expires_at?->diffInHours(now()) <= 48 && ! $quote->expires_at?->isPast())
         <flux:callout icon="exclamation-triangle" variant="danger" class="mb-5">
             <flux:heading size="sm" class="font-medium!">
@@ -526,30 +522,35 @@ new #[Title('Quotation Details')] class extends Component
 
             {{-- ── PRICING CONFIGURATION (pending only) ── --}}
             @if ($this->canPrice)
-                <flux:card class="p-6">
-                    <flux:heading level="3" class="font-semibold mb-5">Quote Configuration</flux:heading>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <flux:field>
-                            <flux:label>Validity Period (days)</flux:label>
-                            <flux:input type="number"
-                                min="{{ app(QuotationSettings::class)->min_validity_days }}"
-                                max="{{ app(QuotationSettings::class)->max_validity_days }}"
-                                wire:model="validityDays" />
-                            <flux:description>Default from settings. Override per quote if needed.</flux:description>
-                        </flux:field>
+                <flux:card class="p-0">
+                    <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
+                        <flux:heading>Quote Configuration</flux:heading>
                     </div>
 
-                    <div class="mt-5">
-                        <flux:field>
-                            <flux:label>Note to Customer <span
-                                    class="text-zinc-400 font-normal">(optional)</span></flux:label>
-                            <flux:textarea wire:model="adminNote"
-                                placeholder="Additional terms, installation notes, payment instructions..." rows="3" />
-                        </flux:field>
+                    <div class="p-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <flux:field>
+                                <flux:label>Validity Period (days)</flux:label>
+                                <flux:input type="number"
+                                    min="{{ app(QuotationSettings::class)->min_validity_days }}"
+                                    max="{{ app(QuotationSettings::class)->max_validity_days }}"
+                                    wire:model="validityDays" />
+                                <flux:description>Default from settings. Override per quote if needed.
+                                </flux:description>
+                            </flux:field>
+                        </div>
+
+                        <div class="mt-5">
+                            <flux:field>
+                                <flux:label>Note to Customer <span
+                                        class="text-zinc-400 font-normal">(optional)</span></flux:label>
+                                <flux:textarea wire:model="adminNote"
+                                    placeholder="Additional terms, installation notes, payment instructions..."
+                                    rows="3" />
+                            </flux:field>
+                        </div>
                     </div>
                 </flux:card>
-
             @endif
 
             {{-- ── TIMELINE ── --}}

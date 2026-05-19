@@ -144,6 +144,8 @@
                         $variantAttrs = $item->product_snapshot['variant'] ?? null;
                         $shortDesc = $item->product?->short_description;
                         $unitPrice = ($item->quoted_price_cents ?? $item->original_price_cents) / 100;
+                        // Amount is always price × quantity — total_cents may be 0 on freshly-created quotes.
+                        $lineAmount = $unitPrice * $item->quantity;
                     ?>
                     <tr>
                         <td class="border border-gray-400 px-2 py-2 align-top text-left"><?php echo e($index + 1); ?>.</td>
@@ -172,7 +174,7 @@
                         </td>
                         <td class="border border-gray-400 px-2 py-2 align-top text-center"><?php echo e($item->quantity); ?></td>
                         <td class="border border-gray-400 px-2 py-2 align-top text-right font-semibold">
-                            <?php echo e(number_format($item->total_cents / 100, 2)); ?>
+                            <?php echo e(number_format($lineAmount, 2)); ?>
 
                         </td>
                     </tr>
@@ -280,15 +282,11 @@
     
     
     
-    <div class="mt-8 mb-4 text-center">
-        <div class="text-sm font-bold text-brand">
-            <?php echo e($general->store_tagline ?: $general->store_name); ?>
-
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($quotationSettings->quote_footer_note): ?>
+        <div class="mt-8 mb-4 text-center">
+            <div class="text-[10px] text-gray-600"><?php echo e($quotationSettings->quote_footer_note); ?></div>
         </div>
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($quotationSettings->quote_footer_note): ?>
-            <div class="mt-1 text-[10px] text-gray-600"><?php echo e($quotationSettings->quote_footer_note); ?></div>
-        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-    </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('pdf.browsershot.layouts.main', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jonah\Herd\sheffield_ecommerce\resources\views/pdf/browsershot/quotation.blade.php ENDPATH**/ ?>
