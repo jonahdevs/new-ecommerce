@@ -344,6 +344,15 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
             Route::livewire('/{user}/edit', 'pages::admin.access-control.users.edit')->name('edit');
         });
     });
+
+    // --------------------------------------------------------------------
+    // Email Templates
+    // --------------------------------------------------------------------
+
+    Route::prefix('email-templates')->name('email-templates.')->group(function () {
+        Route::livewire('/', 'pages::admin.email-templates.index')->name('index');
+        Route::livewire('/{type}/edit', 'pages::admin.email-templates.edit')->name('edit');
+    });
 });
 
 // ============================================================================

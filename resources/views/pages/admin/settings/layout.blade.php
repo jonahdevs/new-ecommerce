@@ -186,11 +186,12 @@
                     @php
                         $itemVisible = $item['visible'] ?? true;
                         $itemAllowed = $item['permission'] ? auth()->user()->can($item['permission']) : true;
+                        $itemActiveOn = $item['active_on'] ?? [$item['route']];
+                        $itemIsCurrent = in_array($currentRoute, $itemActiveOn, true);
                     @endphp
 
                     @if ($itemVisible && $itemAllowed)
-                        <flux:navlist.item :href="route($item['route'])" :current="$currentRoute === $item['route']"
-                            wire:navigate>
+                        <flux:navlist.item :href="route($item['route'])" :current="$itemIsCurrent" wire:navigate>
                             {{ $item['label'] }}
                         </flux:navlist.item>
                     @endif

@@ -7,11 +7,13 @@
 import './echo';
 import './dashboard-sales-map';
 import richEditor from './rich-editor';
+import emailEditor from './email-editor';
 import Intersect from '@alpinejs/intersect';
 
 document.addEventListener('alpine:init', () => {
     Alpine.plugin(Intersect);
     Alpine.data('richEditor', richEditor);
+    Alpine.data('emailEditor', emailEditor);
 
     /**
      * countUp — animates a number from 0 to `to` using ease-out-quad.

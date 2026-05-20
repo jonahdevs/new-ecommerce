@@ -1,7 +1,8 @@
 import grapesjs from 'grapesjs'
 import newsletter from 'grapesjs-preset-newsletter'
+import 'grapesjs/dist/css/grapes.min.css'
 
-export default (options = {}) => ({
+const emailEditor = (options = {}) => ({
     editor: null,
 
     init() {
@@ -10,12 +11,12 @@ export default (options = {}) => ({
         this.editor = grapesjs.init({
             container: el,
             fromElement: false,
-            height: '100%',
+            height: '720px',
             width: 'auto',
             storageManager: false,
             plugins: [newsletter],
             pluginsOpts: {
-                [newsletter]: {
+                'gjs-preset-newsletter': {
                     modalLabelImport: 'Paste HTML here',
                     modalLabelExport: 'Copy the code and use it wherever you want',
                     codeViewerTheme: 'material',
@@ -34,6 +35,19 @@ export default (options = {}) => ({
                 styles: [],
             },
         })
+
+        // Register variable tokens as draggable blocks under a "Variables" category
+        if (Array.isArray(options.variables) && options.variables.length) {
+            const bm = this.editor.BlockManager
+            options.variables.forEach((v) => {
+                bm.add(`var-${v.token}`, {
+                    label: v.token,
+                    category: 'Variables',
+                    content: `<span>${v.token}</span>`,
+                    attributes: { title: v.description ?? '' },
+                })
+            })
+        }
 
         // Load existing HTML content if provided
         if (options.html) {
@@ -88,3 +102,5 @@ export default (options = {}) => ({
         this.editor = null
     },
 })
+
+export default emailEditor

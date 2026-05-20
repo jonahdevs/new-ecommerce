@@ -128,6 +128,11 @@
             <flux:navlist.group heading="Settings & Others" class="grid">
                 <flux:navlist.item icon="cog-6-tooth" wire:navigate :href="route('profile.edit')">Settings
                 </flux:navlist.item>
+
+                <flux:navlist.item icon="envelope" wire:navigate :href="route('admin.email-templates.index')"
+                    :current="request()->routeIs('admin.email-templates.*')">
+                    Email Templates
+                </flux:navlist.item>
             </flux:navlist.group>
         </flux:navlist>
     </flux:sidebar>

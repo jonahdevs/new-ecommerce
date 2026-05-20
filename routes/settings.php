@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-
 Route::middleware(['auth', 'staff', 'verified'])
     ->prefix('admin/settings')
     ->group(function () {
@@ -57,4 +56,4 @@ Route::middleware(['auth', 'staff', 'verified'])
         Route::livewire('system/maintenance', 'pages::admin.settings.system.maintenance')->name('settings.maintenance');
     });
 
-Route::middleware(['auth', 'verified'])->group(function () { });
+Route::middleware(['auth', 'verified'])->group(function () {});
