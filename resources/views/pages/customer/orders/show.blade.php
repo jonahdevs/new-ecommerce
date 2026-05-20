@@ -145,7 +145,7 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                     <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
                     <flux:text class="text-sm text-blue-800 flex-1">
                         This order was created from quote
-                        <flux:link :href="route('customer.quotes.show', $order->quote)" wire:navigate
+                        <flux:link :href="route('customer.quotations.show', $order->quote)" wire:navigate
                             class="font-medium">
                             {{ $order->quote->reference }}
                         </flux:link>

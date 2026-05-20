@@ -152,7 +152,7 @@
                     <tbody>
                       @foreach ($quote->items as $item)
                         @php
-                          $variantLabel = collect($item->product_snapshot['variant']['attributes'] ?? [])->map(fn ($v, $k) => "$k: $v")->join(', ');
+                          $variantLabel = collect($item->product_snapshot['variant'] ?? [])->map(fn ($v, $k) => "$k: $v")->join(', ');
                           $subtitle = $variantLabel ?: ($item->productSku() ? 'SKU: ' . $item->productSku() : null);
                         @endphp
                         <tr>

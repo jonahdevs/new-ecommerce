@@ -65,15 +65,13 @@ new #[Title('Quotation Details')] class extends Component
     #[Computed]
     public function quotedTotal(): float
     {
+        $tax = app(\App\Services\TaxService::class);
         $shipping = (float) str_replace(',', '', $this->quotedShipping ?: '0');
-        $itemsTotal = 0;
+        $base = max(0, $this->quotedSubtotal - $this->quote->discount_cents / 100 + $shipping);
 
-        foreach ($this->itemPrices as $itemId => $price) {
-            $item = $this->quote->items->firstWhere('id', (int) $itemId);
-            $itemsTotal += (float) str_replace(',', '', $price ?: '0') * ($item?->quantity ?? 1);
-        }
-
-        return max(0, $itemsTotal - $this->quote->discount_cents / 100 + $shipping);
+        return $tax->isEnabled() && ! $tax->isInclusive()
+            ? $base + $this->quotedTax
+            : $base;
     }
 
     #[Computed]
@@ -87,6 +85,25 @@ new #[Title('Quotation Details')] class extends Component
         }
 
         return max(0, $total);
+    }
+
+    #[Computed]
+    public function quotedTax(): float
+    {
+        $tax = app(\App\Services\TaxService::class);
+
+        if (! $tax->isEnabled()) {
+            return 0.0;
+        }
+
+        $subtotalCents = (int) round($this->quotedSubtotal * 100);
+        $shippingCents = (int) round((float) str_replace(',', '', $this->quotedShipping ?: '0') * 100);
+        $discountCents = $this->quote->discount_cents;
+
+        $taxableSubtotal = max(0, $subtotalCents - $discountCents);
+        $breakdown = $tax->calculateOrderTax($taxableSubtotal, $shippingCents);
+
+        return $breakdown['total_tax'] / 100;
     }
 
     // =========================================================================
@@ -339,17 +356,13 @@ new #[Title('Quotation Details')] class extends Component
     @endif
 
     @if ($quote->order)
-        <flux:callout icon="check-circle" variant="success" class="mb-5">
-            <div class="flex items-center justify-between w-full">
-                <div>
-                    <flux:heading size="sm" class="font-medium!">Converted to a sales order</flux:heading>
-                    <flux:subheading class="mt-0.5">Reference: {{ $quote->order->reference }}</flux:subheading>
-                </div>
-                <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
-                    :href="route('admin.orders.show', $quote->order)" wire:navigate>
-                    View Order
-                </flux:button>
-            </div>
+        <flux:callout icon="check-circle" icon-variant="outline" color="green" class="mb-5">
+            <flux:callout.heading>
+                This quotation was converted to a sales order
+                <flux:link :href="route('admin.orders.show', $quote->order)" wire:navigate class="font-medium">
+                    {{ $quote->order->reference }}
+                </flux:link>
+            </flux:callout.heading>
         </flux:callout>
     @endif
 
@@ -508,6 +521,21 @@ new #[Title('Quotation Details')] class extends Component
                                     </flux:text>
                                 @endif
                             </div>
+                            @php $taxService = app(\App\Services\TaxService::class); @endphp
+                            @if ($taxService->isEnabled())
+                                <div class="flex justify-between text-sm">
+                                    <flux:text>
+                                        {{ $taxService->name() }}
+                                        @if ($taxService->isInclusive())
+                                            <span class="text-zinc-400">(incl.)</span>
+                                        @endif
+                                        <span class="text-zinc-400">({{ $taxService->rateLabel() }})</span>
+                                    </flux:text>
+                                    <flux:text class="font-medium tabular-nums">
+                                        {{ $this->canPrice ? format_currency($this->quotedTax) : format_currency($quote->tax) }}
+                                    </flux:text>
+                                </div>
+                            @endif
                             <div
                                 class="flex justify-between pt-2 border-t border-zinc-200 dark:border-zinc-600">
                                 <flux:heading size="lg">Total</flux:heading>

@@ -3,10 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\DeliveryOrder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DeliveryOrderSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     public function run(): void
     {
         $this->command->info('📦 Seeding delivery orders...');

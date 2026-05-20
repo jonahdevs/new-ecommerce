@@ -19,12 +19,15 @@ use App\Models\ShippingMethod;
 use App\Models\ShippingRate;
 use App\Models\ShippingRateAddon;
 use App\Models\ShippingZone;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class ShippingSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     public function run(): void
     {
         $jsonPath = database_path('seeders/data/counties.json');

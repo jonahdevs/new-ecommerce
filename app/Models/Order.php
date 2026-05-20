@@ -171,27 +171,27 @@ class Order extends Model
 
     protected function subtotal(): Attribute
     {
-        return Attribute::make(get: fn() => $this->subtotal_cents / 100);
+        return Attribute::make(get: fn () => $this->subtotal_cents / 100);
     }
 
     protected function discount(): Attribute
     {
-        return Attribute::make(get: fn() => $this->discount_cents / 100);
+        return Attribute::make(get: fn () => $this->discount_cents / 100);
     }
 
     protected function shipping(): Attribute
     {
-        return Attribute::make(get: fn() => $this->shipping_cents / 100);
+        return Attribute::make(get: fn () => $this->shipping_cents / 100);
     }
 
     protected function tax(): Attribute
     {
-        return Attribute::make(get: fn() => $this->tax_cents / 100);
+        return Attribute::make(get: fn () => $this->tax_cents / 100);
     }
 
     protected function total(): Attribute
     {
-        return Attribute::make(get: fn() => $this->total_cents / 100);
+        return Attribute::make(get: fn () => $this->total_cents / 100);
     }
 
     // =====================================================
@@ -204,7 +204,7 @@ class Order extends Model
      */
     public function wasConvertedFromQuote(): bool
     {
-        return !is_null($this->quote_id);
+        return ! is_null($this->quote_id);
     }
 
     // =====================================================
@@ -221,7 +221,7 @@ class Order extends Model
 
     public function hasKraReceipt(): bool
     {
-        return !is_null($this->kra_cu_number) && !is_null($this->invoice_path);
+        return ! is_null($this->kra_cu_number) && ! is_null($this->invoice_path);
     }
 
     public function isAwaitingKraValidation(): bool
@@ -240,14 +240,16 @@ class Order extends Model
 
     public static function generateReference(): string
     {
-        $prefix = rtrim(app(OrderSettings::class)->order_id_prefix, '-') . '-';
+        $prefix = rtrim(app(OrderSettings::class)->order_id_prefix, '-').'-';
         $year = now()->year;
 
         // Use max() instead of count() to avoid race conditions
         // Get the highest number used this year
+        // Numbers are zero-padded to 6 digits so lexicographic DESC == numeric DESC;
+        // this avoids SUBSTRING_INDEX which is MySQL-only and breaks SQLite in tests.
         $lastReference = static::whereYear('created_at', $year)
             ->where('reference', 'like', "{$prefix}{$year}-%")
-            ->orderByRaw('CAST(SUBSTRING_INDEX(reference, "-", -1) AS UNSIGNED) DESC')
+            ->orderBy('reference', 'desc')
             ->value('reference');
 
         if ($lastReference) {
@@ -267,7 +269,7 @@ class Order extends Model
 
     public function transitionTo(OrderStatus $new, ?string $notes = null, string $changedByType = 'system'): void
     {
-        if (!$this->status->canTransitionTo($new)) {
+        if (! $this->status->canTransitionTo($new)) {
             throw new \Exception(
                 "Cannot transition order from {$this->status->label()} to {$new->label()}."
             );

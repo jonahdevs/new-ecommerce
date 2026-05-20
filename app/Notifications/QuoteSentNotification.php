@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class QuoteSentNotification extends Notification implements ShouldQueue
 {
@@ -29,13 +30,24 @@ class QuoteSentNotification extends Notification implements ShouldQueue
 
     public function toMail(): MailMessage
     {
-        return (new MailMessage)
-            ->subject("Your Quotation is Ready — {$this->quote->reference}")
+        $quote = $this->quote->loadMissing(['items', 'user']);
+
+        $mail = (new MailMessage)
+            ->subject("Your Quotation is Ready — {$quote->reference}")
             ->view('mails.quotes.sent', [
-                'quote' => $this->quote->loadMissing('items'),
-                'customerName' => $this->quote->user?->name ?? 'Customer',
-                'portalUrl' => route('customer.quotations.show', $this->quote),
+                'quote' => $quote,
+                'customerName' => $quote->customerName(),
+                'portalUrl' => route('customer.quotations.show', $quote),
             ]);
+
+        if ($quote->document_path && Storage::disk('local')->exists($quote->document_path)) {
+            $mail->attach(
+                Storage::disk('local')->path($quote->document_path),
+                ['as' => "{$quote->reference}.pdf", 'mime' => 'application/pdf'],
+            );
+        }
+
+        return $mail;
     }
 
     public function toArray(): array

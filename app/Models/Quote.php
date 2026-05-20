@@ -108,6 +108,11 @@ class Quote extends Model
         return Attribute::make(get: fn () => $this->shipping_cents / 100);
     }
 
+    protected function tax(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->tax_cents / 100);
+    }
+
     protected function total(): Attribute
     {
         return Attribute::make(get: fn () => $this->total_cents / 100);

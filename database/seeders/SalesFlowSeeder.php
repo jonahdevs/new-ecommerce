@@ -22,6 +22,7 @@ use App\Models\ShippingMethod;
 use App\Models\ShippingRate;
 use App\Models\ShippingZone;
 use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 /**
@@ -33,6 +34,8 @@ use Illuminate\Database\Seeder;
  */
 class SalesFlowSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     public function run(): void
     {
         $this->command->info('🛒 Seeding sales flow data...');

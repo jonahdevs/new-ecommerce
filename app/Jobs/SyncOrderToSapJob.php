@@ -119,6 +119,15 @@ class SyncOrderToSapJob implements ShouldQueue
     // -------------------------------------------------------
     public function failed(\Throwable $exception): void
     {
+        // Guard against duplicate notifications when the job was dispatched more
+        // than once for the same order (e.g. webhook + payment redirect). If a
+        // concurrent instance already marked the order as failed and sent the
+        // alert, there is nothing left to do.
+        $fresh = $this->order->fresh();
+        if ($fresh->sap_sync_status === SapSyncStatus::FAILED) {
+            return;
+        }
+
         Log::error('SAP sync permanently failed', [
             'order_id' => $this->order->id,
             'reference' => $this->order->reference,

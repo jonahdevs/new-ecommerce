@@ -3,10 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\Tag;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class TagSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     /**
      * Run the database seeds.
      */
@@ -25,11 +29,22 @@ class TagSeeder extends Seeder
             ['name' => 'Exclusive', 'type' => 'badge', 'order_column' => 10, 'color' => '#7c3aed'], // violet-600
         ];
 
-        foreach ($tags as $tag) {
-            $created = Tag::findOrCreate($tag['name'], $tag['type']);
-            $created->order_column = $tag['order_column'];
-            $created->color = $tag['color'];
-            $created->save();
+        foreach ($tags as $tagData) {
+            $tag = Tag::where('type', $tagData['type'])
+                ->where('name->en', $tagData['name'])
+                ->first();
+
+            if (! $tag) {
+                $tag = new Tag([
+                    'name' => ['en' => $tagData['name']],
+                    'slug' => ['en' => Str::slug($tagData['name'])],
+                    'type' => $tagData['type'],
+                ]);
+            }
+
+            $tag->order_column = $tagData['order_column'];
+            $tag->color = $tagData['color'];
+            $tag->save();
         }
     }
 }

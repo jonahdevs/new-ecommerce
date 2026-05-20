@@ -281,11 +281,13 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
             <flux:heading level="1" class="font-bold! text-xl! sm:text-2xl! lg:text-3xl!">Request Quote
             </flux:heading>
             <div class="flex items-center gap-2">
-                <flux:modal.trigger name="quote-product-picker">
-                    <flux:button size="customer" variant="customer-primary" icon="plus" class="cursor-pointer">
-                        Add Items
-                    </flux:button>
-                </flux:modal.trigger>
+                <div x-on:click.capture="const y = window.scrollY; window.addEventListener('scroll', () => window.scrollTo({ top: y, behavior: 'instant' }), { once: true, capture: true })">
+                    <flux:modal.trigger name="quote-product-picker">
+                        <flux:button size="customer" variant="customer-primary" icon="plus" class="cursor-pointer">
+                            Add Items
+                        </flux:button>
+                    </flux:modal.trigger>
+                </div>
                 @if (!$this->isEmpty)
                     <flux:button variant="customer-outline" wire:click="clearBasket" size="customer"
                         class="cursor-pointer">
@@ -477,12 +479,14 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                             <p class="text-sm font-medium text-on-surface mb-1">Your quote basket is empty</p>
                             <p class="text-xs text-on-surface-variant mb-4">Search and add products you'd like to request a quote
                                 for.</p>
-                            <flux:modal.trigger name="quote-product-picker">
-                                <flux:button size="customer" variant="customer-primary" icon="plus"
-                                    class="cursor-pointer">
-                                    Add Items
-                                </flux:button>
-                            </flux:modal.trigger>
+                            <div x-on:click.capture="const y = window.scrollY; window.addEventListener('scroll', () => window.scrollTo({ top: y, behavior: 'instant' }), { once: true, capture: true })">
+                                <flux:modal.trigger name="quote-product-picker">
+                                    <flux:button size="customer" variant="customer-primary" icon="plus"
+                                        class="cursor-pointer">
+                                        Add Items
+                                    </flux:button>
+                                </flux:modal.trigger>
+                            </div>
                         </div>
                     @else
                         <table class="w-full">

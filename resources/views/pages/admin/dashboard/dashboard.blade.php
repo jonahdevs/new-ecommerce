@@ -162,7 +162,6 @@
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
                     <flux:heading>Revenue</flux:heading>
-                    <flux:text class="text-[11px] text-zinc-400">{{ $this->periodLabel }}</flux:text>
                 </div>
                 <div class="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800"
                     x-data="{ activeType: 'area' }">
@@ -185,64 +184,14 @@
                 </div>
             </div>
 
-            {{-- flex instead of grid so the chart area truly fills remaining space --}}
-            <div class="flex flex-col @md:flex-row min-h-0 flex-1">
-
-                {{-- Chart — flex-1 so it fills all space the sidebar doesn't take --}}
-                <div
-                    class="flex-1 min-w-0 px-5 pt-4 pb-5 border-b @md:border-b-0 @md:border-r border-zinc-100 dark:border-zinc-800">
-                    <div id="revenueChartData" data-labels="{{ json_encode($this->revenueChartData['labels']) }}"
-                        data-revenue="{{ json_encode($this->revenueChartData['values']) }}"
-                        data-orders="{{ json_encode($this->revenueChartData['order_counts']) }}"
-                        data-refunds="{{ json_encode($this->revenueChartData['refund_counts']) }}">
-                    </div>
-                    <div wire:ignore style="position:relative; height:100%; width:100%;">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
+            <div class="min-h-0 flex-1 px-5 pt-4 pb-5">
+                <div id="revenueChartData" data-labels="{{ json_encode($this->revenueChartData['labels']) }}"
+                    data-revenue="{{ json_encode($this->revenueChartData['values']) }}"
+                    data-orders="{{ json_encode($this->revenueChartData['order_counts']) }}"
+                    data-refunds="{{ json_encode($this->revenueChartData['refund_counts']) }}">
                 </div>
-
-                {{-- Right sidebar — fixed width, each stat in its own bordered row --}}
-                <div class="w-full @md:w-48 shrink-0 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
-
-                    <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Orders</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
-                            wire:key="chart-orders-{{ $this->salesStats['order_count'] }}" x-data="countUp({ to: {{ $this->salesStats['order_count'] }} })" x-intersect.once="start()"
-                            x-text="display">
-                        </p>
-                    </div>
-
-                    <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Earnings
-                        </p>
-                        <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none break-all"
-                            wire:key="chart-revenue-{{ $this->salesStats['revenue'] }}" x-data="countUp({ to: {{ $this->salesStats['revenue'] }}, decimals: 2, prefix: 'KES ' })" x-intersect.once="start()"
-                            x-text="display">
-                        </p>
-                    </div>
-
-                    <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Paid orders
-                        </p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none"
-                            wire:key="chart-paid-{{ $this->salesStats['paid_count'] }}" x-data="countUp({ to: {{ $this->salesStats['paid_count'] }} })" x-intersect.once="start()"
-                            x-text="display">
-                        </p>
-                    </div>
-
-                    <div class="px-5 py-4">
-                        <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-1.5">Conversion
-                        </p>
-                        @if ($this->quotationStats['conversion_rate'] !== null)
-                            <p class="text-2xl font-bold text-emerald-500 leading-none"
-                                wire:key="chart-conversion-{{ $this->quotationStats['conversion_rate'] }}"
-                                x-data="countUp({ to: {{ $this->quotationStats['conversion_rate'] }}, decimals: 1, suffix: '%' })" x-intersect.once="start()" x-text="display">
-                            </p>
-                        @else
-                            <p class="text-2xl font-bold text-zinc-300 dark:text-zinc-600 leading-none">—</p>
-                        @endif
-                    </div>
-
+                <div wire:ignore style="position:relative; height:100%; width:100%;">
+                    <canvas id="revenueChart"></canvas>
                 </div>
             </div>
         </flux:card>
@@ -255,7 +204,6 @@
             <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
                     <flux:heading size="sm">Top Sales Locations</flux:heading>
-                    <flux:text class="text-[10px] text-zinc-400">Orders by Kenya county · hover for detail</flux:text>
                 </div>
             </div>
 
@@ -298,113 +246,119 @@
     {{-- ================================================================== --}}
     <div class="grid grid-cols-1 @lg:grid-cols-3 gap-4 mb-4">
 
-        {{-- Recent Activity Widget (Left, 1 col) --}}
+        {{-- Recent Activity — vertical timeline (Left, 1 col) --}}
         <flux:card class="p-0 flex flex-col">
             <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <flux:heading>Recent Activity</flux:heading>
-                <flux:link :href="route('admin.activity-logs.index')" wire:navigate class="text-xs">View all
-                </flux:link>
+                <flux:link :href="route('admin.activity-logs.index')" wire:navigate class="text-xs">View all</flux:link>
             </div>
 
-            <div>
-                <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    @forelse($this->recentActivities as $activity)
-                        <div
-                            class="flex items-start gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
-                            <div class="shrink-0 mt-0.5">
-                                @php
-                                    $iconClass = match (true) {
-                                        str_contains($activity->description, 'failed') ||
-                                            str_contains($activity->description, 'cancelled')
-                                            => 'text-red-600 dark:text-red-400',
-                                        str_contains($activity->description, 'confirmed') ||
-                                            str_contains($activity->description, 'paid') ||
-                                            str_contains($activity->description, 'success') ||
-                                            str_contains($activity->description, 'accepted')
-                                            => 'text-green-600 dark:text-green-400',
-                                        str_contains($activity->description, 'initiated') ||
-                                            str_contains($activity->description, 'requested')
-                                            => 'text-yellow-600 dark:text-yellow-400',
-                                        default => 'text-blue-600 dark:text-blue-400',
-                                    };
-                                @endphp
+            <div class="px-5 py-4">
+                @forelse($this->recentActivities as $activity)
+                    @php
+                        $desc = $activity->description;
 
-                                @if (str_contains($activity->description, 'payment'))
-                                    <flux:icon.currency-dollar class="size-5 {{ $iconClass }}" />
-                                @elseif (str_contains($activity->description, 'order'))
-                                    <flux:icon.shopping-bag class="size-5 {{ $iconClass }}" />
-                                @elseif (str_contains($activity->description, 'inventory'))
-                                    <flux:icon.chart-bar class="size-5 {{ $iconClass }}" />
-                                @elseif (str_contains($activity->description, 'sap'))
-                                    <flux:icon.arrow-path class="size-5 {{ $iconClass }}" />
-                                @elseif (str_contains($activity->description, 'quote'))
-                                    <flux:icon.document-text class="size-5 {{ $iconClass }}" />
-                                @elseif (str_contains($activity->description, 'user'))
-                                    <flux:icon.user class="size-5 {{ $iconClass }}" />
-                                @elseif (str_contains($activity->description, 'webhook'))
-                                    <flux:icon.bell class="size-5 {{ $iconClass }}" />
-                                @else
-                                    <flux:icon.information-circle class="size-5 {{ $iconClass }}" />
-                                @endif
+                        $bgClass = match (true) {
+                            str_contains($desc, 'failed') || str_contains($desc, 'cancelled')    => 'bg-rose-100 dark:bg-rose-950/60',
+                            str_contains($desc, 'confirmed') || str_contains($desc, 'paid') ||
+                            str_contains($desc, 'success') || str_contains($desc, 'accepted')    => 'bg-emerald-100 dark:bg-emerald-950/60',
+                            str_contains($desc, 'initiated') || str_contains($desc, 'requested') => 'bg-amber-100 dark:bg-amber-950/60',
+                            default                                                               => 'bg-blue-100 dark:bg-blue-950/60',
+                        };
+
+                        $iconClass = match (true) {
+                            str_contains($desc, 'failed') || str_contains($desc, 'cancelled')    => 'text-rose-600 dark:text-rose-400',
+                            str_contains($desc, 'confirmed') || str_contains($desc, 'paid') ||
+                            str_contains($desc, 'success') || str_contains($desc, 'accepted')    => 'text-emerald-600 dark:text-emerald-400',
+                            str_contains($desc, 'initiated') || str_contains($desc, 'requested') => 'text-amber-600 dark:text-amber-400',
+                            default                                                               => 'text-blue-600 dark:text-blue-400',
+                        };
+
+                        $textClass = $iconClass;
+                    @endphp
+
+                    <div class="relative flex gap-3 {{ $loop->last ? '' : 'pb-5' }}">
+                        {{-- Connecting line --}}
+                        @unless ($loop->last)
+                            <div class="absolute left-[13px] top-8 bottom-0 w-px bg-zinc-100 dark:bg-zinc-800"></div>
+                        @endunless
+
+                        {{-- Icon badge --}}
+                        <div class="relative shrink-0 size-7 rounded-full {{ $bgClass }} flex items-center justify-center">
+                            @if (str_contains($desc, 'payment'))
+                                <flux:icon.currency-dollar class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'order'))
+                                <flux:icon.shopping-bag class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'inventory') || str_contains($desc, 'stock'))
+                                <flux:icon.chart-bar class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'sap') || str_contains($desc, 'sync'))
+                                <flux:icon.arrow-path class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'quote'))
+                                <flux:icon.document-text class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'user') || str_contains($desc, 'customer'))
+                                <flux:icon.user class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'webhook'))
+                                <flux:icon.bell class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'product'))
+                                <flux:icon.cube class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'shipping') || str_contains($desc, 'delivery'))
+                                <flux:icon.truck class="size-3.5 {{ $iconClass }}" />
+                            @elseif (str_contains($desc, 'login') || str_contains($desc, 'auth'))
+                                <flux:icon.lock-closed class="size-3.5 {{ $iconClass }}" />
+                            @else
+                                <flux:icon.bolt class="size-3.5 {{ $iconClass }}" />
+                            @endif
+                        </div>
+
+                        {{-- Content --}}
+                        <div class="flex-1 min-w-0 -mt-0.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <p class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
+                                    {{ str_replace('_', ' ', ucwords($desc, '_')) }}
+                                </p>
+                                <time class="text-[10px] text-zinc-400 whitespace-nowrap shrink-0">
+                                    {{ $activity->created_at->diffForHumans() }}
+                                </time>
                             </div>
 
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="flex-1">
-                                        <p class="text-xs font-medium {{ $iconClass }}">
-                                            {{ str_replace('_', ' ', ucwords($activity->description, '_')) }}
-                                        </p>
+                            @if ($activity->causer)
+                                <p class="text-[10px] text-zinc-400 mt-0.5">{{ $activity->causer->name ?? 'System' }}</p>
+                            @endif
 
-                                        @if ($activity->causer)
-                                            <p class="text-[10px] text-zinc-400 mt-0.5">
-                                                by {{ $activity->causer->name ?? 'System' }}
-                                            </p>
+                            @if ($activity->subject)
+                                <p class="text-[10px] text-zinc-500 mt-0.5">
+                                    @if ($activity->subject_type === 'App\Models\Order')
+                                        Order #{{ $activity->subject->reference ?? 'N/A' }}
+                                        @if ($activity->properties->has('total'))
+                                            · {{ format_currency($activity->properties->get('total')) }}
                                         @endif
-
-                                        @if ($activity->subject)
-                                            <p class="text-[10px] text-zinc-500 dark:text-zinc-500 mt-1">
-                                                @if ($activity->subject_type === 'App\Models\Order')
-                                                    Order #{{ $activity->subject->reference ?? 'N/A' }}
-                                                    @if ($activity->properties->has('total'))
-                                                        • {{ format_currency($activity->properties->get('total')) }}
-                                                    @endif
-                                                @elseif($activity->subject_type === 'App\Models\Payment')
-                                                    @if ($activity->properties->has('order_reference'))
-                                                        Order #{{ $activity->properties->get('order_reference') }}
-                                                    @endif
-                                                    @if ($activity->properties->has('amount'))
-                                                        • {{ format_currency($activity->properties->get('amount')) }}
-                                                    @endif
-                                                @elseif($activity->subject_type === 'App\Models\Quote')
-                                                    Quote #{{ $activity->subject->reference ?? 'N/A' }}
-                                                @elseif($activity->subject_type === 'App\Models\User')
-                                                    {{ $activity->subject->email ?? 'User' }}
-                                                @else
-                                                    {{ class_basename($activity->subject_type) }}
-                                                    #{{ $activity->subject_id }}
-                                                @endif
-                                            </p>
+                                    @elseif ($activity->subject_type === 'App\Models\Payment')
+                                        @if ($activity->properties->has('order_reference'))
+                                            Order #{{ $activity->properties->get('order_reference') }}
                                         @endif
-                                    </div>
+                                        @if ($activity->properties->has('amount'))
+                                            · {{ format_currency($activity->properties->get('amount')) }}
+                                        @endif
+                                    @elseif ($activity->subject_type === 'App\Models\Quote')
+                                        Quote #{{ $activity->subject->reference ?? 'N/A' }}
+                                    @elseif ($activity->subject_type === 'App\Models\User')
+                                        {{ $activity->subject->email ?? 'User' }}
+                                    @else
+                                        {{ class_basename($activity->subject_type) }} #{{ $activity->subject_id }}
+                                    @endif
+                                </p>
+                            @endif
 
-                                    <time class="text-[10px] text-zinc-400 whitespace-nowrap">
-                                        {{ $activity->created_at->diffForHumans() }}
-                                    </time>
-                                </div>
-
-                                @if ($activity->properties->has('reason') || $activity->properties->has('error'))
-                                    <p class="text-[10px] text-red-600 dark:text-red-400 mt-1">
-                                        {{ $activity->properties->get('reason') ?? $activity->properties->get('error') }}
-                                    </p>
-                                @endif
-                            </div>
+                            @if ($activity->properties->has('reason') || $activity->properties->has('error'))
+                                <p class="text-[10px] text-rose-500 mt-0.5">
+                                    {{ $activity->properties->get('reason') ?? $activity->properties->get('error') }}
+                                </p>
+                            @endif
                         </div>
-                    @empty
-                        <div class="px-5 py-10 text-center text-zinc-400 text-sm">
-                            No recent activity
-                        </div>
-                    @endforelse
-                </div>
+                    </div>
+                @empty
+                    <p class="py-8 text-center text-sm text-zinc-400">No recent activity</p>
+                @endforelse
             </div>
         </flux:card>
 
@@ -544,40 +498,54 @@
                     wire:navigate class="text-xs">Report</flux:link>
             </div>
 
-            <div class="p-4 flex flex-col flex-1">
-                {{-- Data bridge — morphed by Livewire, read by JS --}}
+            <div class="p-5 flex flex-col flex-1">
+                {{-- Data bridge --}}
                 <div id="satisfactionChartData"
-                    data-this-series="{{ json_encode($this->satisfactionStats['this_series']) }}"
-                    data-last-series="{{ json_encode($this->satisfactionStats['last_series']) }}"
-                    data-days="{{ $this->satisfactionStats['days_this_month'] }}">
+                    data-distribution="{{ json_encode(array_values($this->satisfactionStats['distribution'])) }}"
+                    data-average="{{ $this->satisfactionStats['average'] ?? 0 }}"
+                    data-total="{{ $this->satisfactionStats['total'] }}">
                 </div>
-                {{-- Canvas — fixed height, owned by Chart.js --}}
-                <div class="flex-1">
-                    <div wire:ignore style="position:relative; height:100%; width:100%;">
+
+                {{-- Donut chart + centre overlay --}}
+                <div class="relative flex items-center justify-center" style="height:180px;">
+                    <div wire:ignore style="position:relative; height:180px; width:180px;">
                         <canvas id="satisfactionChart"></canvas>
+                    </div>
+                    <div class="absolute flex flex-col items-center justify-center pointer-events-none">
+                        @if ($this->satisfactionStats['average'])
+                            <span class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-none">
+                                {{ $this->satisfactionStats['average'] }}
+                            </span>
+                            <span class="text-[10px] text-zinc-400 mt-0.5">out of 5</span>
+                        @else
+                            <span class="text-xs text-zinc-400">No reviews</span>
+                        @endif
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 @sm:gap-4 gap-2 mt-4">
-                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-                            {{ format_currency($this->satisfactionStats['this_month']) }}
-                        </p>
-                        <p class="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                            <flux:icon.arrow-path class="size-3 text-blue-500 shrink-0" />
-                            {{ $this->satisfactionStats['month_label'] }}
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-                            {{ format_currency($this->satisfactionStats['last_month']) }}
-                        </p>
-                        <p class="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                            <flux:icon.arrow-path class="size-3 text-emerald-500 shrink-0" />
-                            {{ $this->satisfactionStats['last_month_label'] }}
-                        </p>
-                    </div>
+                {{-- Star breakdown --}}
+                @php
+                    $ratingColors = [5 => '#10B981', 4 => '#3B82F6', 3 => '#F59E0B', 2 => '#F97316', 1 => '#F43F5E'];
+                    $reviewTotal = $this->satisfactionStats['total'];
+                @endphp
+                <div class="mt-5 flex flex-col gap-2">
+                    @foreach ($ratingColors as $star => $color)
+                        @php
+                            $count = $this->satisfactionStats['distribution'][$star] ?? 0;
+                            $pct = $reviewTotal > 0 ? round(($count / $reviewTotal) * 100) : 0;
+                        @endphp
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-zinc-500 w-3 shrink-0">{{ $star }}</span>
+                            <flux:icon.star class="size-3 shrink-0" style="color: {{ $color }};" />
+                            <div class="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500"
+                                    style="width: {{ $pct }}%; background-color: {{ $color }};"></div>
+                            </div>
+                            <span class="text-[10px] text-zinc-400 w-5 text-right shrink-0">{{ $count }}</span>
+                        </div>
+                    @endforeach
                 </div>
+
             </div>
         </flux:card>
 
@@ -1035,7 +1003,7 @@
         };
 
         // -----------------------------------------------------------------------
-        //  Satisfaction — reads from #satisfactionChartData bridge
+        //  Satisfaction — donut chart of star-rating distribution
         // -----------------------------------------------------------------------
         function initSatisfactionChart() {
             const bridge = document.getElementById('satisfactionChartData');
@@ -1044,85 +1012,42 @@
 
             destroyChart('satisfactionChart');
 
-            const days = parseInt(bridge.dataset.days || '30');
-            const labels = Array.from({
-                length: days
-            }, (_, i) => i + 1);
+            const distribution = JSON.parse(bridge.dataset.distribution || '[0,0,0,0,0]');
+            const total = parseInt(bridge.dataset.total || '0');
+            const colors = ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#F43F5E'];
 
             chartInstances['satisfactionChart'] = new Chart(canvas, {
-                type: 'line',
+                type: 'doughnut',
                 data: {
-                    labels,
+                    labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
                     datasets: [{
-                            label: 'This month',
-                            data: JSON.parse(bridge.dataset.thisSeries || '[]'),
-                            borderColor: '#3B82F6',
-                            backgroundColor: 'rgba(59,130,246,0.10)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#3B82F6',
-                            pointBorderWidth: 2,
-                            pointHoverRadius: 6,
-                            pointHoverBackgroundColor: '#ffffff',
-                            pointHoverBorderColor: '#3B82F6',
-                            pointHoverBorderWidth: 2,
-                        },
-                        {
-                            label: 'Last month',
-                            data: JSON.parse(bridge.dataset.lastSeries || '[]'),
-                            borderColor: '#10B981',
-                            backgroundColor: 'rgba(16,185,129,0.10)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#10B981',
-                            pointBorderWidth: 2,
-                            pointHoverRadius: 6,
-                            pointHoverBackgroundColor: '#ffffff',
-                            pointHoverBorderColor: '#10B981',
-                            pointHoverBorderWidth: 2,
-                        },
-                    ],
+                        data: total > 0 ? distribution : [1],
+                        backgroundColor: total > 0 ? colors : [isDark() ? '#3f3f46' : '#e4e4e7'],
+                        borderWidth: 0,
+                        hoverOffset: total > 0 ? 6 : 0,
+                    }],
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
+                    cutout: '72%',
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
+                            enabled: total > 0,
                             backgroundColor: isDark() ? '#18181b' : '#ffffff',
                             borderColor: isDark() ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                             borderWidth: 1,
                             titleColor: isDark() ? '#e4e4e7' : '#3f3f46',
                             bodyColor: isDark() ? '#a1a1aa' : '#71717a',
                             padding: 10,
-                            boxPadding: 4,
-                            usePointStyle: true,
                             callbacks: {
-                                title: ctx => `Day ${ctx[0].label}`,
-                                label: ctx =>
-                                    `  ${ctx.dataset.label}: ${currencySymbol} ${ctx.parsed.y.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`,
+                                label: ctx => {
+                                    const pct = total > 0 ? Math.round((ctx.parsed / total) * 100) : 0;
+                                    return `  ${ctx.parsed} reviews (${pct}%)`;
+                                },
                             },
                         },
-                    },
-                    scales: {
-                        x: {
-                            display: false
-                        }, // ← no x-axis at all
-                        y: {
-                            display: false
-                        }, // ← no y-axis at all
                     },
                 },
             });

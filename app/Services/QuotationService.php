@@ -32,6 +32,7 @@ class QuotationService
         private readonly NotificationSettings $notificationSettings,
         private readonly CustomerNotificationSettings $customerNotificationSettings,
         private readonly PaymentService $paymentService,
+        private readonly TaxService $taxService,
     ) {}
 
     // =========================================================================
@@ -255,31 +256,35 @@ class QuotationService
 
                     $subtotalCents += $newUnitPriceCents * $item->quantity;
                 }
-
-                $totalCents = max(0, $subtotalCents - $quote->discount_cents + $shippingCents);
-
-                $quote->update([
-                    'subtotal_cents' => $subtotalCents,
-                    'shipping_cents' => $shippingCents,
-                    'total_cents' => $totalCents,
-                    'expires_at' => now()->addDays($validityDays),
-                ]);
             } else {
-                $totalCents = max(
-                    0,
-                    $quote->subtotal_cents - $quote->discount_cents + $shippingCents
-                );
+                $subtotalCents = $quote->subtotal_cents;
+            }
 
-                $quote->update([
-                    'shipping_cents' => $shippingCents,
-                    'total_cents' => $totalCents,
-                    'expires_at' => now()->addDays($validityDays),
-                ]);
+            $taxableSubtotal = max(0, $subtotalCents - $quote->discount_cents);
+            $taxBreakdown = $this->taxService->calculateOrderTax($taxableSubtotal, $shippingCents);
+            $taxCents = $taxBreakdown['total_tax'];
+
+            $baseCents = max(0, $subtotalCents - $quote->discount_cents + $shippingCents);
+            $totalCents = $this->taxService->isInclusive()
+                ? $baseCents
+                : $baseCents + $taxCents;
+
+            $updateData = [
+                'shipping_cents' => $shippingCents,
+                'tax_cents' => $taxCents,
+                'total_cents' => $totalCents,
+                'expires_at' => now()->addDays($validityDays),
+            ];
+
+            if (! empty($itemPrices)) {
+                $updateData['subtotal_cents'] = $subtotalCents;
             }
 
             if ($note) {
-                $quote->update(['admin_notes' => $note]);
+                $updateData['admin_notes'] = $note;
             }
+
+            $quote->update($updateData);
         });
 
         return $quote->refresh();
@@ -322,25 +327,30 @@ class QuotationService
 
                     $subtotalCents += $newUnitPriceCents * $item->quantity;
                 }
-
-                $totalCents = max(0, $subtotalCents - $quote->discount_cents + $shippingCents);
-
-                $quote->update([
-                    'subtotal_cents' => $subtotalCents,
-                    'shipping_cents' => $shippingCents,
-                    'total_cents' => $totalCents,
-                ]);
             } else {
-                $totalCents = max(
-                    0,
-                    $quote->subtotal_cents - $quote->discount_cents + $shippingCents
-                );
-
-                $quote->update([
-                    'shipping_cents' => $shippingCents,
-                    'total_cents' => $totalCents,
-                ]);
+                $subtotalCents = $quote->subtotal_cents;
             }
+
+            $taxableSubtotal = max(0, $subtotalCents - $quote->discount_cents);
+            $taxBreakdown = $this->taxService->calculateOrderTax($taxableSubtotal, $shippingCents);
+            $taxCents = $taxBreakdown['total_tax'];
+
+            $baseCents = max(0, $subtotalCents - $quote->discount_cents + $shippingCents);
+            $totalCents = $this->taxService->isInclusive()
+                ? $baseCents
+                : $baseCents + $taxCents;
+
+            $updateData = [
+                'shipping_cents' => $shippingCents,
+                'tax_cents' => $taxCents,
+                'total_cents' => $totalCents,
+            ];
+
+            if (! empty($itemPrices)) {
+                $updateData['subtotal_cents'] = $subtotalCents;
+            }
+
+            $quote->update($updateData);
 
             $quote->update([
                 'expires_at' => now()->addDays($validityDays),
@@ -485,14 +495,17 @@ class QuotationService
         ]);
 
         foreach ($quote->items as $quoteItem) {
+            $unitPriceCents = $quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents;
+            $unitTaxCents = $this->taxService->calculateTax($unitPriceCents);
+
             $order->items()->create([
                 'product_id' => $quoteItem->product_id,
                 'product_variant_id' => $quoteItem->product_variant_id,
                 'quantity' => $quoteItem->quantity,
-                'unit_price_cents' => $quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents,
-                'unit_tax_cents' => 0,
+                'unit_price_cents' => $unitPriceCents,
+                'unit_tax_cents' => $unitTaxCents,
                 'discount_cents' => 0,
-                'total_cents' => ($quoteItem->quoted_price_cents ?? $quoteItem->original_price_cents) * $quoteItem->quantity,
+                'total_cents' => $unitPriceCents * $quoteItem->quantity,
                 'product_snapshot' => $quoteItem->product_snapshot,
             ]);
         }

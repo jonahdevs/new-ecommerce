@@ -15,11 +15,15 @@
                 {{ $slot }}
             </div>
 
-            {{-- Order summary sidebar — pages can override via <x-slot:orderSummaryCta> --}}
+            {{-- Order summary sidebar — pages can replace entirely via <x-slot:sidebar> --}}
             <div class="w-full lg:w-96 shrink-0 mt-4 lg:mt-0 lg:sticky lg:top-28">
-                <livewire:order-summary>
-                    {{ $orderSummaryCta ?? '' }}
-                </livewire:order-summary>
+                @isset($sidebar)
+                    {{ $sidebar }}
+                @else
+                    <livewire:order-summary>
+                        {{ $orderSummaryCta ?? '' }}
+                    </livewire:order-summary>
+                @endisset
             </div>
 
         </div>

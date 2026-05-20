@@ -3,10 +3,15 @@
 use App\Enums\QuoteStatus;
 use App\Models\Quote;
 use App\Services\QuotationService;
-use Livewire\Attributes\{Computed, Layout, Title, On, Locked};
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Component {
+new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Component
+{
     public Quote $quote;
 
     #[Locked]
@@ -24,16 +29,17 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
         // Ensure the quotation belongs to this customer
         if ($quote->user_id !== auth()->id()) {
             $this->redirectRoute('customer.quotations.index', navigate: true);
+
             return;
         }
 
         $this->quoteId = $quote->id;
         $this->quote = $quote->load([
-            'items' => fn($q) => $q
+            'items' => fn ($q) => $q
                 ->select(['id', 'quote_id', 'product_id', 'product_snapshot', 'quantity', 'original_price_cents', 'quoted_price_cents', 'discount_cents', 'total_cents'])
-                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
-            'statusHistories' => fn($q) => $q->select(['id', 'quote_id', 'to_status', 'created_at']),
-            'order' => fn($q) => $q->select(['id', 'reference']),
+                ->with(['product' => fn ($q) => $q->select(['id', 'image_path'])]),
+            'statusHistories' => fn ($q) => $q->select(['id', 'quote_id', 'to_status', 'created_at']),
+            'order' => fn ($q) => $q->select(['id', 'reference']),
         ]);
     }
 
@@ -46,11 +52,11 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
     {
         // Refresh the quote from database
         $this->quote = $this->quote->fresh([
-            'items' => fn($q) => $q
+            'items' => fn ($q) => $q
                 ->select(['id', 'quote_id', 'product_id', 'product_snapshot', 'quantity', 'original_price_cents', 'quoted_price_cents', 'discount_cents', 'total_cents'])
-                ->with(['product' => fn($q) => $q->select(['id', 'image_path'])]),
-            'statusHistories' => fn($q) => $q->select(['id', 'quote_id', 'to_status', 'created_at']),
-            'order' => fn($q) => $q->select(['id', 'reference']),
+                ->with(['product' => fn ($q) => $q->select(['id', 'image_path'])]),
+            'statusHistories' => fn ($q) => $q->select(['id', 'quote_id', 'to_status', 'created_at']),
+            'order' => fn ($q) => $q->select(['id', 'reference']),
         ]);
 
         // Clear computed caches
@@ -100,8 +106,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
 
     public function acceptQuote(): void
     {
-        if (!$this->canRespond) {
+        if (! $this->canRespond) {
             $this->dispatch('notify', title: 'Quote Unavailable', variant: 'danger', message: 'This quotation is no longer available to accept.');
+
             return;
         }
 
@@ -109,8 +116,8 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             $salesOrder = app(QuotationService::class)->accept($this->quote);
 
             $this->dispatch('notify', title: 'Quote Accepted', variant: 'success', message: 'Quotation accepted! Redirecting to payment...');
-            $this->redirectRoute('checkout.pay', $salesOrder->reference, navigate: true);
-        } catch (\Throwable $e) {
+            $this->redirectRoute('checkout.quote-pay', $salesOrder->reference, navigate: true);
+        } catch (Throwable $e) {
             logger()->error('Customer failed to accept quotation.', [
                 'quote_id' => $this->quote->id,
                 'user_id' => auth()->id(),
@@ -130,8 +137,9 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             'rejectNote' => ['nullable', 'string', 'max:500'],
         ]);
 
-        if (!$this->canRespond) {
+        if (! $this->canRespond) {
             $this->dispatch('notify', title: 'Quote Unavailable', variant: 'danger', message: 'This quotation is no longer available.');
+
             return;
         }
 
@@ -142,7 +150,7 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             $this->rejectNote = '';
             $this->modal('reject-quote')->close();
             $this->dispatch('notify', title: 'Quote Rejected', variant: 'warning', message: 'Quotation rejected.');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->dispatch('notify', title: 'Reject Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
         }
     }
@@ -203,20 +211,15 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
             @endif
 
             @if ($quote->isAccepted() && $quote->order)
-                <div class="flex items-start gap-3 p-4 bg-teal-50 border border-teal-200 rounded-lg mb-5">
-                    <flux:icon.check-circle class="size-5 shrink-0 mt-0.5 text-teal-500" />
-                    <div class="text-sm flex items-center justify-between w-full">
-                        <div>
-                            <p class="font-medium text-teal-800">You accepted this quotation</p>
-                            <p class="text-teal-700 mt-0.5">
-                                A sales order has been created: {{ $quote->order->reference }}
-                            </p>
-                        </div>
-                        <flux:button size="sm" variant="customer-outline"
-                            :href="route('customer.orders.show', $quote->order)" wire:navigate>
-                            View Order
-                        </flux:button>
-                    </div>
+                <div class="flex items-center gap-3 p-3 bg-teal-50 border border-teal-200 rounded-sm mb-5">
+                    <flux:icon.tag class="size-4 shrink-0 text-teal-500" />
+                    <flux:text class="text-sm text-teal-800 flex-1">
+                        This quotation was converted to a sales order
+                        <flux:link :href="route('customer.orders.show', $quote->order)" wire:navigate
+                            class="font-medium">
+                            {{ $quote->order->reference }}
+                        </flux:link>
+                    </flux:text>
                 </div>
             @endif
 
@@ -337,6 +340,20 @@ new #[Title('Quotation Details')] #[Layout('layouts.customer')] class extends Co
                                         @endif
                                     </span>
                                 </div>
+                                @php $taxService = app(\App\Services\TaxService::class); @endphp
+                                @if ($taxService->isEnabled() && $quote->tax_cents > 0)
+                                    <div class="flex justify-between text-[13px]">
+                                        <span class="text-on-surface-variant font-medium">
+                                            {{ $taxService->name() }}
+                                            @if ($taxService->isInclusive())
+                                                <span class="text-[11px] font-normal">(incl.)</span>
+                                            @endif
+                                        </span>
+                                        <span class="text-on-surface font-bold">
+                                            {{ format_currency($quote->tax) }}
+                                        </span>
+                                    </div>
+                                @endif
                                 <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
                                     <span
                                         class="text-[14px] font-bold uppercase tracking-widest text-on-surface">Total</span>

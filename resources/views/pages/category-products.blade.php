@@ -901,13 +901,15 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                 </div>
 
                 {{-- Infinite scroll sentinel --}}
-                <div x-data="{ observer: null }" x-init="observer = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && $wire.hasMore) {
-                        $wire.loadMore();
-                    }
-                }, { rootMargin: '200px' });
-                observer.observe($el);"
-                    x-effect="if (!$wire.hasMore) observer?.disconnect()" class="h-4"></div>
+                <div x-data="{ obs: null, loading: false }"
+                    x-init="obs = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting && $wire.hasMore && !loading) {
+                            loading = true;
+                            $wire.loadMore().then(() => { loading = false; });
+                        }
+                    }, { rootMargin: '200px' });
+                    obs.observe($el);"
+                    x-effect="if (!$wire.hasMore) obs?.disconnect()" class="h-4"></div>
 
                 @if ($hasMore)
                     <div class="flex justify-center py-8">

@@ -4,10 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\Attribute;
 use App\Models\AttributeValue;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class AttributeSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     /**
      * Run the database seeds.
      */

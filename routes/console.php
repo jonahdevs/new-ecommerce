@@ -78,6 +78,24 @@ Schedule::command('orders:cancel-unpaid')
     ->appendOutputTo(storage_path('logs/scheduler.log'));
 
 // ==============================================
+// QUOTATIONS: Revert abandoned quote payments
+//
+// Runs every 5 minutes. Finds quote-originated orders that are still
+// PENDING payment after their 30-minute payment window has expired,
+// then cancels the order and reverts the quote back to SENT so the
+// customer can retry payment.
+//
+// Runs on the same cadence as CleanupExpiredOrders so the revert
+// happens promptly after the customer abandons the payment page.
+// ==============================================
+Schedule::command('quotations:revert-abandoned-payments')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+// ==============================================
 // ORDERS: Cleanup expired orders and reservations
 //
 // Runs every 5 minutes. Finds pending orders with expired payments

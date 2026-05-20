@@ -8,6 +8,8 @@ use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     /**
      * Run the database seeds.
      */
@@ -29,7 +31,7 @@ class UserSeeder extends Seeder
         User::factory()->create([
             'name' => 'Jonah Wakahiu',
             'email' => 'jonah.wakahiu@sheffieldafrica.com',
-            'is_staff' => true
+            'is_staff' => true,
         ])->assignRole('super_admin');
     }
 }

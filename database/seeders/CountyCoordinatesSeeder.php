@@ -5,12 +5,15 @@ namespace Database\Seeders;
 use App\Models\Area;
 use App\Models\County;
 use App\Models\CountyBoundary;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class CountyCoordinatesSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     // =========================================================================
     // Kenya county GeoJSON — public dataset from the Kenya Data Portal.
     // Each feature's geometry is a Polygon or MultiPolygon for one county.

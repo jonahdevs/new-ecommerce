@@ -1,15 +1,19 @@
 <?php
 
-use App\Models\Quote;
 use App\Enums\QuoteStatus;
+use App\Models\Quote;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\Attributes\{Layout, Computed, On};
 use Livewire\WithPagination;
 
-new #[Layout('layouts.customer')] class extends Component {
+new #[Layout('layouts.customer')] class extends Component
+{
     use WithPagination;
 
     public string $selectedTab = 'active';
+
     public int $userId;
 
     public function mount(): void
@@ -60,8 +64,19 @@ new #[Layout('layouts.customer')] class extends Component {
     public function activeQuotations()
     {
         return Quote::where('user_id', auth()->id())
-            ->whereIn('status', [QuoteStatus::PENDING, QuoteStatus::SENT])
-            ->with(['items' => fn($q) => $q->select(['id', 'quote_id', 'product_id', 'product_snapshot'])->with(['product' => fn($q) => $q->select(['id', 'image_path'])])->limit(1)])
+            ->where(function ($q) {
+                $q->where('status', QuoteStatus::PENDING)
+                    ->orWhere('status', QuoteStatus::ACCEPTED)
+                    // SENT only if not yet past its expiry date
+                    ->orWhere(fn ($q) => $q
+                        ->where('status', QuoteStatus::SENT)
+                        ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                    );
+            })
+            ->with([
+                'items' => fn ($q) => $q->select(['id', 'quote_id', 'product_id', 'product_snapshot'])->with(['product' => fn ($q) => $q->select(['id', 'image_path'])])->limit(1),
+                'order' => fn ($q) => $q->select(['id', 'quote_id', 'reference', 'payment_status']),
+            ])
             ->withCount('items')
             ->latest()
             ->paginate(5);
@@ -70,16 +85,26 @@ new #[Layout('layouts.customer')] class extends Component {
     // =========================================================================
     //  COMPUTED — CLOSED QUOTATIONS
     //
-    //  Terminal quotations — accepted, rejected, expired, or cancelled.
-    //  Shown separately so the active tab stays focused on actionable items.
+    //  Terminal quotations — rejected, expired, or cancelled.
+    //  Also includes SENT quotes whose expiry has passed but the cron hasn't
+    //  transitioned them yet, so the customer sees them here immediately.
+    //  Accepted quotes stay in the active tab until the customer completes payment.
     // =========================================================================
 
     #[Computed]
     public function closedQuotations()
     {
         return Quote::where('user_id', auth()->id())
-            ->whereIn('status', [QuoteStatus::ACCEPTED, QuoteStatus::REJECTED, QuoteStatus::EXPIRED, QuoteStatus::CANCELLED])
-            ->with(['items' => fn($q) => $q->select(['id', 'quote_id', 'product_id', 'product_snapshot'])->with(['product' => fn($q) => $q->select(['id', 'image_path'])])->limit(1)])
+            ->where(function ($q) {
+                $q->whereIn('status', [QuoteStatus::REJECTED, QuoteStatus::EXPIRED, QuoteStatus::CANCELLED])
+                    // SENT quotes that have already passed their expiry
+                    ->orWhere(fn ($q) => $q
+                        ->where('status', QuoteStatus::SENT)
+                        ->whereNotNull('expires_at')
+                        ->where('expires_at', '<=', now())
+                    );
+            })
+            ->with(['items' => fn ($q) => $q->select(['id', 'quote_id', 'product_id', 'product_snapshot'])->with(['product' => fn ($q) => $q->select(['id', 'image_path'])])->limit(1)])
             ->withCount('items')
             ->latest()
             ->paginate(5);
@@ -143,7 +168,7 @@ new #[Layout('layouts.customer')] class extends Component {
             </button>
             <button wire:click="$set('selectedTab', 'closed')"
                 class="{{ $tabClass }} {{ $selectedTab === 'closed' ? $tabActive : $tabInactive }}">
-                Closed ({{ $this->closedQuotations->total() }})
+                Rejected / Expired ({{ $this->closedQuotations->total() }})
             </button>
         </div>
 
@@ -157,14 +182,21 @@ new #[Layout('layouts.customer')] class extends Component {
                     $firstProductName =
                         $firstItem?->product_snapshot['name'] ?? ($firstItem?->product?->name ?? 'Product');
                     $needsResponse = $quotation->status === QuoteStatus::SENT;
+                    $isAcceptedUnpaid = $quotation->status === QuoteStatus::ACCEPTED
+                        && $quotation->order
+                        && $quotation->order->payment_status->value !== 'paid';
                     $img = $firstItem?->product_snapshot['image_url'] ?? $firstItem?->product?->image_url;
                 @endphp
-                <a href="{{ route('customer.quotations.show', $quotation) }}" wire:navigate
-                    @class([
-                        'p-4.5 border-b border-zinc-200 last:border-b-0 flex items-center gap-4 transition-colors hover:bg-zinc-50 cursor-pointer',
-                        'bg-amber-50/30' => $needsResponse,
-                    ])>
-                    <div class="hidden md:flex">
+                <div @class([
+                    'relative border-b border-zinc-200 last:border-b-0 flex items-center gap-4 transition-colors hover:bg-zinc-50',
+                    'bg-amber-50/30 hover:bg-amber-50/50' => $needsResponse,
+                    'bg-teal-50/30 hover:bg-teal-50/50' => $isAcceptedUnpaid,
+                ])>
+                    {{-- Full-row link to quote detail --}}
+                    <a href="{{ route('customer.quotations.show', $quotation) }}" wire:navigate
+                        class="absolute inset-0 z-0"></a>
+
+                    <div class="hidden md:flex pl-4.5">
                         <div
                             class="w-12 h-12 bg-zinc-50 flex items-center justify-center shrink-0 overflow-hidden border-2 border-white">
                             @if ($img)
@@ -175,7 +207,7 @@ new #[Layout('layouts.customer')] class extends Component {
                             @endif
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 py-4.5 pl-4.5 md:pl-0">
                         <div class="text-[13px] font-bold text-on-surface mb-0.5">#{{ $quotation->reference }}</div>
                         <div class="text-[11px] text-on-surface-variant">{{ $quotation->created_at->format('d M Y') }}</div>
                         <div class="text-[11px] text-on-surface-variant mt-0.5">
@@ -192,15 +224,28 @@ new #[Layout('layouts.customer')] class extends Component {
                                     {{ $quotation->expires_at->diffForHumans() }}
                                 </span>
                             @endif
+                            @if ($isAcceptedUnpaid)
+                                · <span class="font-bold text-teal-600">Payment pending</span>
+                            @endif
                         </div>
                     </div>
-                    <flux:badge size="sm" :color="$quotation->status->color()">
-                        {{ $quotation->status->label() }}
-                    </flux:badge>
-                    <div class="text-on-surface-variant shrink-0">
-                        <flux:icon.chevron-right class="w-4 h-4" />
+                    <div class="relative z-10 flex items-center gap-2 shrink-0 pr-4.5 py-4.5">
+                        <flux:badge size="sm" :color="$quotation->status->color()">
+                            {{ $quotation->status->label() }}
+                        </flux:badge>
+                        @if ($isAcceptedUnpaid)
+                            <a href="{{ route('checkout.quote-pay', $quotation->order->reference) }}"
+                                wire:navigate
+                                class="relative z-10 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white bg-primary hover:bg-[#e03d00] transition-colors">
+                                Pay Now
+                            </a>
+                        @else
+                            <div class="text-on-surface-variant">
+                                <flux:icon.chevron-right class="w-4 h-4" />
+                            </div>
+                        @endif
                     </div>
-                </a>
+                </div>
             @empty
                 <div class="p-12 text-center flex flex-col items-center justify-center">
                     <flux:icon.tag class="w-12 h-12 text-zinc-300 mb-3" />

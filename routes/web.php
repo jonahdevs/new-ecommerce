@@ -78,6 +78,7 @@ Route::middleware(['auth', 'customer'])
     ->name('checkout.')
     ->group(function () {
         Route::livewire('/pay/{order}', 'pages::checkout.pay')->name('pay');
+        Route::livewire('/quote-pay/{order}', 'pages::checkout.quote-pay')->name('quote-pay');
     });
 
 // Checkout flow — auth + customer + must have items in cart

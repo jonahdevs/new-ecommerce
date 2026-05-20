@@ -9,6 +9,7 @@ use App\Models\County;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quote;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -220,41 +221,38 @@ new #[Title('Dashboard')] class extends Component
     #[Computed]
     public function satisfactionStats(): array
     {
-        $thisStart = now()->startOfMonth();
-        $lastStart = now()->subMonth()->startOfMonth();
-        $lastEnd = now()->subMonth()->endOfMonth();
+        $base = Review::query()->approved();
 
-        $query = fn ($from, $to) => Order::where('payment_status', PaymentStatus::PAID->value)
-            ->whereBetween('created_at', [$from, $to])
-            ->selectRaw('DATE(created_at) as day, SUM(total_cents) / 100 as revenue')
-            ->groupBy('day')
-            ->orderBy('day')
-            ->pluck('revenue', 'day');
+        $total = (clone $base)->count();
+        $average = $total > 0 ? round((clone $base)->avg('rating'), 1) : null;
 
-        $thisRows = $query($thisStart, now()->endOfDay());
-        $lastRows = $query($lastStart, $lastEnd);
-        $thisDays = $thisStart->daysInMonth();
-        $lastDays = $lastStart->daysInMonth();
-        $thisSeries = [];
-        $lastSeries = [];
+        $rawDistribution = (clone $base)
+            ->selectRaw('rating, COUNT(*) as count')
+            ->groupBy('rating')
+            ->pluck('count', 'rating');
 
-        for ($d = 1; $d <= max($thisDays, $lastDays); $d++) {
-            if ($d <= $thisDays) {
-                $thisSeries[] = round((float) ($thisRows[$thisStart->copy()->setDay($d)->toDateString()] ?? 0), 2);
-            }
-            if ($d <= $lastDays) {
-                $lastSeries[] = round((float) ($lastRows[$lastStart->copy()->setDay($d)->toDateString()] ?? 0), 2);
-            }
+        $distribution = [];
+        for ($star = 5; $star >= 1; $star--) {
+            $distribution[$star] = (int) ($rawDistribution[$star] ?? 0);
         }
 
+        [$from, $to] = $this->dateRange;
+        $periodDays = $from->diffInDays($to) + 1;
+        $prevFrom = $from->copy()->subDays($periodDays);
+        $prevTo = $from->copy()->subDay();
+
+        $thisPeriodAvg = Review::query()->approved()->whereBetween('created_at', [$from, $to])->avg('rating');
+        $lastPeriodAvg = Review::query()->approved()->whereBetween('created_at', [$prevFrom, $prevTo])->avg('rating');
+
+        $trend = ($thisPeriodAvg && $lastPeriodAvg)
+            ? round($thisPeriodAvg - $lastPeriodAvg, 1)
+            : null;
+
         return [
-            'this_month' => round(array_sum($thisSeries), 2),
-            'last_month' => round(array_sum($lastSeries), 2),
-            'this_series' => $thisSeries,
-            'last_series' => $lastSeries,
-            'days_this_month' => $thisDays,
-            'month_label' => $thisStart->format('M Y'),
-            'last_month_label' => $lastStart->format('M Y'),
+            'total' => $total,
+            'average' => $average,
+            'distribution' => $distribution,
+            'trend' => $trend,
         ];
     }
 

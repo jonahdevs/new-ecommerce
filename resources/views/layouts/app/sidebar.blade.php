@@ -9,7 +9,7 @@
 </head>
 
 <body class="min-h-screen bg-white dark:bg-zinc-800 app-layout">
-    <flux:sidebar sticky stashable class="border-e border-zinc-200">
+    <flux:sidebar sticky stashable class="border-e border-zinc-200 w-56">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
         <flux:sidebar.header>
@@ -104,7 +104,7 @@
             <flux:navlist.group heading="Audit" class="grid">
                 <flux:navlist.item icon="clipboard-document-list" wire:navigate
                     :href="route('admin.activity-logs.index')" :current="request()->routeIs('admin.activity-logs.*')">
-                    Activity Logs
+                    Activity
                 </flux:navlist.item>
             </flux:navlist.group>
 
@@ -113,7 +113,7 @@
                 <flux:navlist.item icon="speaker-wave" wire:navigate :href="route('admin.marketing.campaigns.index')"
                     :current="request()->routeIs('admin.marketing.campaigns.*')">Campaigns</flux:navlist.item>
                 <flux:navlist.item icon="ticket" wire:navigate :href="route('admin.marketing.coupons.index')"
-                    :current="request()->routeIs('admin.marketing.coupons.*')">Coupons & Discounts
+                    :current="request()->routeIs('admin.marketing.coupons.*')">Coupons
                 </flux:navlist.item>
                 <flux:navlist.item icon="envelope" wire:navigate :href="route('admin.marketing.newsletter.index')"
                     :current="request()->routeIs('admin.marketing.newsletter.*')">Newsletter</flux:navlist.item>
@@ -121,7 +121,7 @@
                     :current="request()->routeIs('admin.content.blog.*')">Blog Posts
                 </flux:navlist.item>
                 <flux:navlist.item icon="question-mark-circle" wire:navigate :href="route('admin.content.faq.index')"
-                    :current="request()->routeIs('admin.content.faq.*')">FAQ Management
+                    :current="request()->routeIs('admin.content.faq.*')">FAQ
                 </flux:navlist.item>
             </flux:navlist.group>
 
