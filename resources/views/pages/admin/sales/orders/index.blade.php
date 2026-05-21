@@ -1,18 +1,22 @@
 <?php
 
-use App\Models\Order;
-use App\Models\Quote;
-use App\Models\OrderTag;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\QuoteStatus;
+use App\Models\Order;
+use App\Models\OrderTag;
+use App\Models\Quote;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Response;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, Computed, On, Url};
-use Illuminate\Support\Facades\Response;
 
-new #[Title('Orders')] class extends Component {
+new #[Title('Orders')] class extends Component
+{
     use WithPagination;
 
     // =========================================================================
@@ -55,18 +59,22 @@ new #[Title('Orders')] class extends Component {
     {
         $this->resetPage();
     }
+
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
     }
+
     public function updatingPaymentFilter(): void
     {
         $this->resetPage();
     }
+
     public function updatingTagFilter(): void
     {
         $this->resetPage();
     }
+
     public function updatingPerPage(): void
     {
         $this->resetPage();
@@ -91,20 +99,20 @@ new #[Title('Orders')] class extends Component {
             ->withCount('items')
 
             // Search by reference, customer name, or email
-            ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
+            ->when($this->search, fn ($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
 
             // Status filter
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
 
             // Payment status filter
-            ->when($this->paymentFilter !== 'all', fn($q) => $q->where('payment_status', $this->paymentFilter))
+            ->when($this->paymentFilter !== 'all', fn ($q) => $q->where('payment_status', $this->paymentFilter))
 
             // Tag filter
-            ->when($this->tagFilter !== 'all', fn($q) => $q->whereHas('tags', fn($t) => $t->where('order_tags.id', $this->tagFilter)))
+            ->when($this->tagFilter !== 'all', fn ($q) => $q->whereHas('tags', fn ($t) => $t->where('order_tags.id', $this->tagFilter)))
 
             // Date range filter
-            ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->dateTo))
 
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate($this->perPage);
@@ -127,7 +135,7 @@ new #[Title('Orders')] class extends Component {
     #[Computed]
     public function periodLabel(): string
     {
-        if (!$this->dateFrom && !$this->dateTo) {
+        if (! $this->dateFrom && ! $this->dateTo) {
             return 'All time';
         }
         $from = $this->dateFrom ? Carbon::parse($this->dateFrom) : null;
@@ -136,7 +144,7 @@ new #[Title('Orders')] class extends Component {
             return $from->format('M j, Y');
         }
 
-        return ($from ? $from->format('M j') : '…') . ' – ' . ($to ? $to->format('M j, Y') : '…');
+        return ($from ? $from->format('M j') : '…').' – '.($to ? $to->format('M j, Y') : '…');
     }
 
     #[Computed]
@@ -148,7 +156,7 @@ new #[Title('Orders')] class extends Component {
         return [
             'total' => Order::count(),
             'processing' => Order::query()
-                ->whereIn('status', [OrderStatus::PENDING->value, OrderStatus::PROCESSING->value, OrderStatus::CONFIRMED->value])
+                ->whereIn('status', [OrderStatus::PENDING->value, OrderStatus::PROCESSING->value])
                 ->count(),
             'unpaid' => Order::query()
                 ->whereIn('payment_status', [PaymentStatus::PENDING->value, PaymentStatus::FAILED->value])
@@ -221,53 +229,6 @@ new #[Title('Orders')] class extends Component {
     }
 
     // =========================================================================
-    //  QUICK ACTIONS
-    // =========================================================================
-
-    public function quickConfirm(int $orderId): void
-    {
-        $this->quickTransition($orderId, OrderStatus::CONFIRMED);
-    }
-
-    public function quickProcess(int $orderId): void
-    {
-        $this->quickTransition($orderId, OrderStatus::PROCESSING);
-    }
-
-    public function quickShip(int $orderId): void
-    {
-        $this->quickTransition($orderId, OrderStatus::SHIPPED);
-    }
-
-    public function quickDeliver(int $orderId): void
-    {
-        $this->quickTransition($orderId, OrderStatus::DELIVERED);
-    }
-
-    private function quickTransition(int $orderId, OrderStatus $targetStatus): void
-    {
-        $order = Order::find($orderId);
-
-        if (!$order) {
-            $this->dispatch('notify', title: 'Error', variant: 'danger', message: 'Order not found.');
-            return;
-        }
-
-        if (!$order->status->canTransitionTo($targetStatus)) {
-            $this->dispatch('notify', title: 'Invalid Transition', variant: 'warning', message: "Cannot transition from {$order->status->label()} to {$targetStatus->label()}.");
-            return;
-        }
-
-        try {
-            $order->transitionTo($targetStatus, notes: 'Quick action by admin.', changedByType: 'user');
-            unset($this->orders, $this->statusCounts, $this->stats);
-            $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: "Order {$order->reference} is now {$targetStatus->label()}.");
-        } catch (\Exception $e) {
-            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Something went wrong. Please try again.');
-        }
-    }
-
-    // =========================================================================
     //  SORTING
     // =========================================================================
 
@@ -296,7 +257,7 @@ new #[Title('Orders')] class extends Component {
         }
 
         $targetStatus = OrderStatus::tryFrom($action);
-        if (!$targetStatus) {
+        if (! $targetStatus) {
             return;
         }
 
@@ -309,7 +270,7 @@ new #[Title('Orders')] class extends Component {
                 try {
                     $order->transitionTo($targetStatus, notes: 'Bulk status update by admin.', changedByType: 'user');
                     $updated++;
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $skipped++;
                 }
             } else {
@@ -338,7 +299,7 @@ new #[Title('Orders')] class extends Component {
             ->withCount('items')
             ->get();
 
-        return $this->buildCsvDownload($orders, 'orders-selected-' . now()->format('Y-m-d'));
+        return $this->buildCsvDownload($orders, 'orders-selected-'.now()->format('Y-m-d'));
     }
 
     public function exportFiltered()
@@ -346,13 +307,13 @@ new #[Title('Orders')] class extends Component {
         $orders = Order::query()
             ->with(['user', 'payment'])
             ->withCount('items')
-            ->when($this->search, fn($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
-            ->when($this->paymentFilter !== 'all', fn($q) => $q->where('payment_status', $this->paymentFilter))
+            ->when($this->search, fn ($q) => $q->where('reference', 'like', "%{$this->search}%")->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->paymentFilter !== 'all', fn ($q) => $q->where('payment_status', $this->paymentFilter))
             ->latest()
             ->get();
 
-        return $this->buildCsvDownload($orders, 'orders-' . now()->format('Y-m-d'));
+        return $this->buildCsvDownload($orders, 'orders-'.now()->format('Y-m-d'));
     }
 
     private function buildCsvDownload($orders, string $filename)
@@ -371,7 +332,7 @@ new #[Title('Orders')] class extends Component {
         $csv = stream_get_contents($handle);
         fclose($handle);
 
-        return Response::streamDownload(fn() => print $csv, $filename . '.csv', ['Content-Type' => 'text/csv']);
+        return Response::streamDownload(fn () => print $csv, $filename.'.csv', ['Content-Type' => 'text/csv']);
     }
 
     // =========================================================================
@@ -510,7 +471,7 @@ new #[Title('Orders')] class extends Component {
                     <flux:subheading class="text-xs! uppercase tracking-wide mb-1">Processing</flux:subheading>
                     <flux:heading size="xl" class="text-2xl! font-bold!" x-data="countUp({ to: {{ $this->stats['processing'] }} })" x-text="display">
                     </flux:heading>
-                    <flux:subheading class="text-xs! mt-1">Pending / Confirmed / Processing</flux:subheading>
+                    <flux:subheading class="text-xs! mt-1">Pending / Processing</flux:subheading>
                 </div>
                 <div
                     class="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -670,10 +631,6 @@ new #[Title('Orders')] class extends Component {
             </flux:subheading>
 
             {{-- Bulk actions --}}
-            <flux:button size="sm" variant="ghost" icon="check-badge" icon-variant="outline"
-                class="cursor-pointer" @click="runBulkAction('{{ OrderStatus::CONFIRMED->value }}')">Confirm
-            </flux:button>
-
             <flux:button size="sm" variant="ghost" icon="arrow-path" icon-variant="outline"
                 class="cursor-pointer" @click="runBulkAction('{{ OrderStatus::PROCESSING->value }}')">Mark
                 Processing</flux:button>
@@ -836,35 +793,7 @@ new #[Title('Orders')] class extends Component {
 
                         {{-- Actions --}}
                         <flux:table.cell align="end" class="pe-4!">
-                            <div class="flex items-center justify-end gap-1">
-                                {{-- Quick action buttons for common transitions --}}
-                                @if ($order->status === OrderStatus::PENDING)
-                                    <flux:button size="xs" variant="ghost" icon="check-badge"
-                                        wire:click="quickConfirm({{ $order->id }})"
-                                        wire:confirm="Confirm order {{ $order->reference }}?" title="Confirm Order"
-                                        class="cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20" />
-                                @endif
-
-                                @if ($order->status === OrderStatus::CONFIRMED)
-                                    <flux:button size="xs" variant="ghost" icon="arrow-path"
-                                        wire:click="quickProcess({{ $order->id }})" title="Start Processing"
-                                        class="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" />
-                                @endif
-
-                                @if ($order->status === OrderStatus::PROCESSING)
-                                    <flux:button size="xs" variant="ghost" icon="truck"
-                                        wire:click="quickShip({{ $order->id }})" title="Mark as Shipped"
-                                        class="cursor-pointer text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/20" />
-                                @endif
-
-                                @if ($order->status === OrderStatus::SHIPPED)
-                                    <flux:button size="xs" variant="ghost" icon="check-circle"
-                                        wire:click="quickDeliver({{ $order->id }})" title="Mark as Delivered"
-                                        class="cursor-pointer text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20" />
-                                @endif
-
-                                {{-- More actions dropdown --}}
-                                <flux:dropdown align="end">
+                            <flux:dropdown align="end">
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal"
                                         class="cursor-pointer" />
                                     <flux:menu>
@@ -909,8 +838,7 @@ new #[Title('Orders')] class extends Component {
                                         @endif
 
                                     </flux:menu>
-                                </flux:dropdown>
-                            </div>
+                            </flux:dropdown>
                         </flux:table.cell>
 
                     </flux:table.row>

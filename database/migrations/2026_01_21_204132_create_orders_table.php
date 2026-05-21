@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('reference')->unique();
 
             $table->string('invoice_path')->nullable()->comment('Relative path to tax invoice PDF in storage/app/');
+            $table->string('packing_list_path')->nullable()->comment('Relative path to packing slip PDF in storage/app/');
 
             $table->string('status')->default('pending');
             $table->string('payment_status')->default('pending');

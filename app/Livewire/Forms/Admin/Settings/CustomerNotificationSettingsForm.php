@@ -9,15 +9,7 @@ class CustomerNotificationSettingsForm extends Form
 {
     public bool $order_confirmation = true;
 
-    public bool $order_processing = true;
-
-    public bool $order_shipped = true;
-
-    public bool $order_delivered = true;
-
-    public bool $order_cancelled = true;
-
-    public bool $order_refunded = true;
+    public bool $order_updates = true;
 
     public bool $abandoned_cart = false;
 
@@ -37,11 +29,7 @@ class CustomerNotificationSettingsForm extends Form
     {
         return [
             'order_confirmation' => ['boolean'],
-            'order_processing' => ['boolean'],
-            'order_shipped' => ['boolean'],
-            'order_delivered' => ['boolean'],
-            'order_cancelled' => ['boolean'],
-            'order_refunded' => ['boolean'],
+            'order_updates' => ['boolean'],
             'abandoned_cart' => ['boolean'],
             'abandoned_cart_delay' => ['required_if:abandoned_cart,true', 'integer', 'min:1', 'max:72'],
             'review_request' => ['boolean'],
@@ -55,11 +43,7 @@ class CustomerNotificationSettingsForm extends Form
     public function fromSettings(CustomerNotificationSettings $settings): void
     {
         $this->order_confirmation = $settings->order_confirmation;
-        $this->order_processing = $settings->order_processing;
-        $this->order_shipped = $settings->order_shipped;
-        $this->order_delivered = $settings->order_delivered;
-        $this->order_cancelled = $settings->order_cancelled;
-        $this->order_refunded = $settings->order_refunded;
+        $this->order_updates = $settings->order_updates;
         $this->abandoned_cart = $settings->abandoned_cart;
         $this->abandoned_cart_delay = $settings->abandoned_cart_delay;
         $this->review_request = $settings->review_request;
@@ -74,11 +58,7 @@ class CustomerNotificationSettingsForm extends Form
         $this->validate();
 
         $settings->order_confirmation = $this->order_confirmation;
-        $settings->order_processing = $this->order_processing;
-        $settings->order_shipped = $this->order_shipped;
-        $settings->order_delivered = $this->order_delivered;
-        $settings->order_cancelled = $this->order_cancelled;
-        $settings->order_refunded = $this->order_refunded;
+        $settings->order_updates = $this->order_updates;
         $settings->abandoned_cart = $this->abandoned_cart;
         $settings->abandoned_cart_delay = $this->abandoned_cart_delay;
         $settings->review_request = $this->review_request;

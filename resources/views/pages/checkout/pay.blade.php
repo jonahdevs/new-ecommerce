@@ -171,7 +171,8 @@ new #[Layout('layouts.checkout')] class extends Component {
 
     <x-slot name="orderSummaryCta">
         <div class="px-4 py-2 text-center">
-            <p class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Choose a payment method</p>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Choose a payment method
+            </p>
             <div
                 class="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
                 <flux:icon.shield-check class="size-3" />
@@ -250,7 +251,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
 
                 {{-- Pay button --}}
-                <button @click="submitPayment()" :disabled="loading || !ready"
+                {{-- <button @click="submitPayment()" :disabled="loading || !ready"
                     class="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-[#e03d00] disabled:opacity-50 disabled:cursor-not-allowed text-white font-serif font-extrabold tracking-wider uppercase text-[13px] px-6 py-2.5 transition-colors cursor-pointer">
                     <span x-show="!loading" class="inline-flex items-center gap-2">
                         Pay {{ format_currency($this->order->total) }}
@@ -259,7 +260,15 @@ new #[Layout('layouts.checkout')] class extends Component {
                         Processing
                         <flux:icon.loading class="size-3.5" />
                     </span>
-                </button>
+                </button> --}}
+
+                <flux:button @click="submitPayment()" ::disabled="loading || !ready"
+                    variant="customer-primary" size="customer-lg" class="w-full cursor-pointer">
+                    <span x-show="!loading">Pay {{ format_currency($this->order->total) }}</span>
+                    <span x-show="loading" x-cloak class="inline-flex items-center gap-2">
+                        Processing <flux:icon.loading class="size-3.5" />
+                    </span>
+                </flux:button>
 
                 <div
                     class="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
@@ -288,7 +297,8 @@ new #[Layout('layouts.checkout')] class extends Component {
 
                 <flux:icon.device-phone-mobile class="size-4 text-on-surface-variant" />
                 <span class="text-[13px] font-bold text-on-surface">M-Pesa</span>
-                <span class="ml-auto text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Safaricom</span>
+                <span
+                    class="ml-auto text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Safaricom</span>
             </div>
 
             <div x-show="$wire.paymentMethod === 'mpesa'" x-cloak class="px-5 pb-5 border-t border-zinc-200">
@@ -304,16 +314,14 @@ new #[Layout('layouts.checkout')] class extends Component {
                     </x-customer.form-field>
                 </div>
 
-                <flux:button wire:click="initiateMpesa" wire:loading.attr="disabled" wire:target="initiateMpesa"
-                    :disabled="$isProcessing" variant="customer-primary" size="customer-lg"
-                    class="w-full cursor-pointer">
-                    <flux:icon.device-phone-mobile class="size-3.5" />
-                    <span wire:loading.remove wire:target="initiateMpesa">
+                <flux:button wire:click="initiateMpesa" :disabled="$isProcessing"
+                    :loading="false" variant="customer-primary" size="customer-lg" class="w-full cursor-pointer">
+                    <span wire:loading.remove wire:target="initiateMpesa" class="inline-flex items-center gap-2">
+                        <flux:icon.device-phone-mobile class="size-4" />
                         Pay {{ format_currency($this->order->total) }}
                     </span>
                     <span wire:loading wire:target="initiateMpesa" class="inline-flex items-center gap-2">
-                        Sending request
-                        <flux:icon.loading class="size-3.5" />
+                        Processing <flux:icon.loading class="size-3.5" />
                     </span>
                 </flux:button>
 
@@ -347,7 +355,8 @@ new #[Layout('layouts.checkout')] class extends Component {
                     <div class="bg-green-500 h-1 transition-all duration-1000"
                         :style="'width: ' + (timeLeft / 60 * 100) + '%'"></div>
                 </div>
-                <p class="text-[11px] text-on-surface-variant font-medium uppercase tracking-widest">Waiting for confirmation...
+                <p class="text-[11px] text-on-surface-variant font-medium uppercase tracking-widest">Waiting for
+                    confirmation...
                 </p>
             </div>
 

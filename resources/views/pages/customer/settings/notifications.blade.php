@@ -26,11 +26,11 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
     public static function defaults(): array
     {
         return [
-            'order_confirmations' => ['email' => true, 'sms' => false, 'push' => true],
-            'shipping_updates' => ['email' => true, 'sms' => false, 'push' => true],
+            'order_confirmation' => ['email' => true, 'sms' => false, 'push' => false],
+            'order_updates' => ['email' => true, 'sms' => false, 'push' => false],
             'special_offers' => ['email' => true, 'sms' => false, 'push' => false],
             'new_arrivals' => ['email' => false, 'sms' => false, 'push' => false],
-            'review_reminders' => ['email' => true, 'sms' => false, 'push' => true],
+            'review_reminders' => ['email' => true, 'sms' => false, 'push' => false],
             'security_alerts' => ['email' => true, 'sms' => true, 'push' => false],
             'password_changes' => ['email' => true, 'sms' => true, 'push' => false],
         ];
@@ -69,8 +69,8 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
         {{-- Channel headers --}}
         <div class="flex items-center justify-end px-5 py-2.5 border-b border-zinc-200 gap-5">
             <span class="text-[9px] font-extrabold tracking-widest uppercase text-on-surface-variant w-9 text-center">Email</span>
-            <span class="text-[9px] font-extrabold tracking-widest uppercase text-on-surface-variant w-9 text-center">SMS</span>
-            <span class="text-[9px] font-extrabold tracking-widest uppercase text-on-surface-variant w-9 text-center">Push</span>
+            <span class="text-[9px] font-extrabold tracking-widest uppercase text-on-surface-variant/40 w-9 text-center">SMS</span>
+            <span class="text-[9px] font-extrabold tracking-widest uppercase text-on-surface-variant/40 w-9 text-center">Push</span>
         </div>
 
         {{-- Orders & Shipping --}}
@@ -78,10 +78,10 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
             <flux:icon.shopping-bag class="w-3.5 h-3.5 text-primary shrink-0" />
             <span class="text-[11px] font-bold tracking-widest uppercase text-on-surface-variant">Orders & Shipping</span>
         </div>
-        <x-customer.notification-row topic="order_confirmations" title="Order Confirmations"
+        <x-customer.notification-row topic="order_confirmation" title="Order Confirmation"
             description="Receive confirmation when your order is placed" />
-        <x-customer.notification-row topic="shipping_updates" title="Shipping Updates"
-            description="Get notified when your order ships and is delivered" />
+        <x-customer.notification-row topic="order_updates" title="Order Updates"
+            description="Get notified when your order is processed, shipped, delivered, cancelled or refunded" />
 
         {{-- Promotions --}}
         <div class="flex items-center gap-2 px-5 py-3.5 border-b border-zinc-200 bg-zinc-50/40">

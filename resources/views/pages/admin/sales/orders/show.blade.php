@@ -1,26 +1,35 @@
 <?php
 
-use App\Enums\{OrderStatus, DeliveryOrderStatus, PaymentStatus, SapSyncStatus};
+use App\Enums\DeliveryOrderStatus;
+use App\Enums\OrderStatus;
+use App\Enums\SapSyncStatus;
 use App\Jobs\SyncOrderToSapJob;
-use App\Models\{Order, DeliveryOrder, OrderNote, OrderTag};
+use App\Models\DeliveryOrder;
+use App\Models\Order;
+use App\Models\OrderNote;
+use App\Models\OrderTag;
 use App\Settings\TaxSettings;
-use Illuminate\Validation\Rule;
-use Livewire\Attributes\{Computed, On, Title};
-use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
-new #[Title('Order Details')] class extends Component {
+new #[Title('Order Details')] class extends Component
+{
     public Order $order;
+
     public string $status = '';
+
     public string $note = '';
-    public string $trackingNumber = '';
-    public string $courierName = '';
 
     // Internal notes
     public string $newNote = '';
 
     // Tags
     public string $newTagName = '';
+
     public string $newTagColor = 'blue';
 
     public function mount(Order $order): void
@@ -30,14 +39,15 @@ new #[Title('Order Details')] class extends Component {
             'user',
             'statusHistories.changedBy',
             'items.product',
-            'quote', // loaded to show "converted from quote" notice
+            'quote',
+            'deliveryOrder',
             'sapSyncLogs',
             'notes.user',
             'tags',
         ]);
 
         $allowed = $order->status->allowedTransitions();
-        $this->status = !empty($allowed) ? $allowed[0]->value : '';
+        $this->status = ! empty($allowed) ? $allowed[0]->value : '';
     }
 
     // =========================================================================
@@ -97,7 +107,7 @@ new #[Title('Order Details')] class extends Component {
         $note = OrderNote::where('order_id', $this->order->id)->find($noteId);
 
         if ($note) {
-            $note->update(['is_pinned' => !$note->is_pinned]);
+            $note->update(['is_pinned' => ! $note->is_pinned]);
             unset($this->notes);
         }
     }
@@ -155,7 +165,7 @@ new #[Title('Order Details')] class extends Component {
     {
         $this->validate([
             'newTagName' => 'required|string|min:2|max:50|unique:order_tags,name',
-            'newTagColor' => 'required|string|in:' . implode(',', array_keys(OrderTag::COLORS)),
+            'newTagColor' => 'required|string|in:'.implode(',', array_keys(OrderTag::COLORS)),
         ]);
 
         $tag = OrderTag::create([
@@ -175,51 +185,6 @@ new #[Title('Order Details')] class extends Component {
         $this->modal('create-tag')->close();
     }
 
-    // =========================================================================
-    //  DUPLICATE ORDER
-    // =========================================================================
-
-    public function duplicateOrder()
-    {
-        try {
-            $newOrder = DB::transaction(function () {
-                // Create new order with same details but new reference
-                $newOrder = $this->order->replicate(['reference', 'invoice_path', 'status', 'payment_status', 'tracking_number', 'courier_name', 'expires_at', 'sap_doc_number', 'sap_doc_entry', 'sap_sync_status', 'sap_synced_at', 'sap_sync_attempts', 'sap_sync_error', 'kra_cu_number', 'kra_validated_at']);
-
-                $newOrder->reference = Order::generateReference();
-                $newOrder->status = OrderStatus::PENDING;
-                $newOrder->payment_status = PaymentStatus::PENDING;
-                $newOrder->sap_sync_status = SapSyncStatus::PENDING;
-                $newOrder->save();
-
-                // Duplicate order items
-                foreach ($this->order->items as $item) {
-                    $newItem = $item->replicate();
-                    $newItem->order_id = $newOrder->id;
-                    $newItem->save();
-                }
-
-                // Add a note about the duplication
-                $newOrder->notes()->create([
-                    'user_id' => auth()->id(),
-                    'content' => "Duplicated from order #{$this->order->reference}",
-                ]);
-
-                return $newOrder;
-            });
-
-            $this->dispatch('notify', title: 'Order Duplicated', variant: 'success', message: "New order {$newOrder->reference} created.");
-
-            return $this->redirect(route('admin.orders.show', $newOrder), navigate: true);
-        } catch (\Exception $e) {
-            logger()->error('Failed to duplicate order', [
-                'order_id' => $this->order->id,
-                'error' => $e->getMessage(),
-            ]);
-            $this->dispatch('notify', title: 'Duplication Failed', variant: 'danger', message: 'Failed to duplicate order. Please try again.');
-        }
-    }
-
     #[Computed]
     public function allowedTransitions(): array
     {
@@ -236,56 +201,34 @@ new #[Title('Order Details')] class extends Component {
     {
         if (empty($this->order->status->allowedTransitions())) {
             $this->dispatch('notify', title: 'Action Not Allowed', variant: 'danger', message: 'This order cannot be updated further.');
+
             return;
         }
 
         $newStatus = OrderStatus::from($this->status);
 
-        $rules = [
+        $this->validate([
             'status' => ['required', Rule::enum(OrderStatus::class)],
             'note' => 'nullable|string|max:1000',
-        ];
+        ]);
 
-        if ($newStatus === OrderStatus::SHIPPED) {
-            $rules['trackingNumber'] = 'nullable|string|max:255';
-            $rules['courierName'] = 'nullable|string|max:255';
-        }
-
-        $this->validate($rules);
-
-        if (!$this->order->status->canTransitionTo($newStatus)) {
+        if (! $this->order->status->canTransitionTo($newStatus)) {
             $this->addError('status', "Cannot transition from {$this->order->status->label()} to {$newStatus->label()}.");
+
             return;
         }
 
         try {
             DB::transaction(function () use ($newStatus) {
-                // Create the delivery order when transitioning to PROCESSING.
-                // The guard inside createDeliveryOrder() ensures this only fires
-                // on sales orders — quotations are already redirected away in mount().
-                if ($newStatus === OrderStatus::PROCESSING) {
-                    $this->createDeliveryOrder();
-                }
-
-                // Save tracking info when shipping the order
-                if ($newStatus === OrderStatus::SHIPPED) {
-                    $this->order->update([
-                        'tracking_number' => $this->trackingNumber ?: null,
-                        'courier_name' => $this->courierName ?: null,
-                    ]);
-                }
-
                 $this->order->transitionTo($newStatus, notes: $this->note ?: null, changedByType: 'user');
             });
 
-            $this->order->refresh();
+            $this->order->refresh()->load('deliveryOrder');
             $this->note = '';
-            $this->trackingNumber = '';
-            $this->courierName = '';
 
             $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: 'Order status updated.');
             $this->modal('edit-order')->close();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logger()->error('Failed to update order status.', [
                 'order_id' => $this->order->id,
                 'user_id' => auth()->id(),
@@ -297,8 +240,9 @@ new #[Title('Order Details')] class extends Component {
 
     public function retrySapSync(): void
     {
-        if (!in_array($this->order->sap_sync_status, [SapSyncStatus::FAILED, SapSyncStatus::PENDING])) {
+        if (! in_array($this->order->sap_sync_status, [SapSyncStatus::FAILED, SapSyncStatus::PENDING])) {
             $this->dispatch('notify', title: 'Not Applicable', variant: 'warning', message: 'SAP sync retry is only available for failed or pending orders.');
+
             return;
         }
 
@@ -325,8 +269,8 @@ new #[Title('Order Details')] class extends Component {
 
         $snapshot = $this->order->shipping_snapshot;
 
-        if (!$snapshot) {
-            throw new \RuntimeException('Cannot process order — shipping snapshot is missing.');
+        if (! $snapshot) {
+            throw new RuntimeException('Cannot process order — shipping snapshot is missing.');
         }
 
         DeliveryOrder::create([
@@ -368,41 +312,19 @@ new #[Title('Order Details')] class extends Component {
             </div>
 
             {{-- Order Tags --}}
-            <div class="flex items-center gap-2 mt-2 flex-wrap">
-                @foreach ($this->orderTags as $tag)
-                    <flux:badge :color="$tag->color" size="sm" class="group cursor-default">
-                        {{ $tag->name }}
-                        <button wire:click="removeTag({{ $tag->id }})"
-                            class="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <flux:icon name="x-mark" class="size-3" />
-                        </button>
-                    </flux:badge>
-                @endforeach
-
-                {{-- Add tag dropdown --}}
-                <flux:dropdown>
-                    <flux:button size="sm" variant="ghost" icon="plus"
-                        class="cursor-pointer text-zinc-400 hover:text-zinc-600">
-                        Add Tag
-                    </flux:button>
-                    <flux:menu class="w-48">
-                        @forelse ($this->availableTags->whereNotIn('id', $this->orderTags->pluck('id')) as $tag)
-                            <flux:menu.item wire:click="addTag({{ $tag->id }})">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-3 h-3 rounded-full bg-{{ $tag->color }}-500"></span>
-                                    {{ $tag->name }}
-                                </div>
-                            </flux:menu.item>
-                        @empty
-                            <flux:menu.item disabled>No more tags available</flux:menu.item>
-                        @endforelse
-                        <flux:menu.separator />
-                        <flux:modal.trigger name="create-tag">
-                            <flux:menu.item icon="plus">Create new tag</flux:menu.item>
-                        </flux:modal.trigger>
-                    </flux:menu>
-                </flux:dropdown>
-            </div>
+            @if ($this->orderTags->isNotEmpty())
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                    @foreach ($this->orderTags as $tag)
+                        <flux:badge :color="$tag->color" size="sm" class="group cursor-default">
+                            {{ $tag->name }}
+                            <button wire:click="removeTag({{ $tag->id }})"
+                                class="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <flux:icon name="x-mark" class="size-3" />
+                            </button>
+                        </flux:badge>
+                    @endforeach
+                </div>
+            @endif
 
             <flux:subheading class="mt-1 flex items-center gap-2">
                 <flux:icon name="calendar" class="size-4" />
@@ -411,17 +333,13 @@ new #[Title('Order Details')] class extends Component {
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-            {{-- Packing Slip --}}
-            <flux:button variant="ghost" icon="clipboard-document-list" size="sm"
-                :href="route('admin.orders.packing-slip', $order)" target="_blank" class="cursor-pointer">
-                Packing Slip
-            </flux:button>
-
-            {{-- Duplicate Order --}}
-            <flux:button variant="ghost" icon="document-duplicate" size="sm" wire:click="duplicateOrder"
-                wire:confirm="Create a duplicate of this order?" class="cursor-pointer">
-                Duplicate
-            </flux:button>
+            {{-- Packing Slip — available once order moves to Processing or beyond --}}
+            @if ($order->status !== OrderStatus::PENDING)
+                <flux:button variant="ghost" icon="clipboard-document-list" size="sm"
+                    :href="route('admin.orders.packing-slip', $order)" target="_blank" class="cursor-pointer">
+                    Packing Slip
+                </flux:button>
+            @endif
 
             {{-- Print Invoice --}}
             @if ($order->hasKraReceipt())
@@ -434,6 +352,29 @@ new #[Title('Order Details')] class extends Component {
                     Invoice Pending
                 </flux:button>
             @endif
+
+            {{-- Add Tag --}}
+            <flux:dropdown>
+                <flux:button size="sm" variant="ghost" icon="tag" class="cursor-pointer">
+                    Add Tag
+                </flux:button>
+                <flux:menu class="w-48">
+                    @forelse ($this->availableTags->whereNotIn('id', $this->orderTags->pluck('id')) as $tag)
+                        <flux:menu.item wire:click="addTag({{ $tag->id }})">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-{{ $tag->color }}-500"></span>
+                                {{ $tag->name }}
+                            </div>
+                        </flux:menu.item>
+                    @empty
+                        <flux:menu.item disabled>No more tags available</flux:menu.item>
+                    @endforelse
+                    <flux:menu.separator />
+                    <flux:modal.trigger name="create-tag">
+                        <flux:menu.item icon="plus">Create new tag</flux:menu.item>
+                    </flux:modal.trigger>
+                </flux:menu>
+            </flux:dropdown>
 
             {{-- Manage Status --}}
             <flux:modal.trigger name="edit-order">
@@ -613,7 +554,6 @@ new #[Title('Order Details')] class extends Component {
                         // are redirected to their own show page in mount().
                         $mainPath = [
                             OrderStatus::PENDING,
-                            OrderStatus::CONFIRMED,
                             OrderStatus::PROCESSING,
                             OrderStatus::SHIPPED,
                             OrderStatus::DELIVERED,
@@ -1169,13 +1109,6 @@ new #[Title('Order Details')] class extends Component {
                         </flux:select.option>
                     @endforeach
                 </flux:select>
-
-                @if ($status === \App\Enums\OrderStatus::SHIPPED->value)
-                    <flux:input wire:model="courierName" label="Courier / Logistics Provider"
-                        placeholder="e.g. DHL, G4S, Sendy" />
-                    <flux:input wire:model="trackingNumber" label="Tracking Number"
-                        placeholder="e.g. 1Z999AA10123456784" />
-                @endif
 
                 <flux:textarea wire:model="note" label="Note (optional)"
                     placeholder="Note about this status change..." rows="3" />

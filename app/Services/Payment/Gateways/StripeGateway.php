@@ -200,12 +200,6 @@ class StripeGateway implements PaymentGateway
                 return;
             }
 
-            $order->transitionTo(
-                OrderStatus::CONFIRMED,
-                notes: 'Payment confirmed via Stripe webhook',
-                changedByType: 'system',
-            );
-
             $order->update(['payment_status' => PaymentStatus::PAID->value]);
         });
 

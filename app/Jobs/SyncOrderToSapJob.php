@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\SapSyncStatus;
 use App\Models\Order;
-use App\Models\User;
 use App\Notifications\SapSyncFailedNotification;
 use App\Services\Sap\SapIntegrationService;
 use Illuminate\Bus\Queueable;
@@ -148,10 +147,8 @@ class SyncOrderToSapJob implements ShouldQueue
             ])
             ->log('sap_sync_failed');
 
-        // Alert all admin users so they can manually investigate
-        Notification::send(
-            User::role('admin')->get(),
-            new SapSyncFailedNotification($this->order, $exception)
-        );
+        // Send a single alert email to the system notification address
+        Notification::route('mail', config('mail.from.address'))
+            ->notify(new SapSyncFailedNotification($this->order, $exception));
     }
 }

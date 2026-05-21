@@ -4,31 +4,40 @@ namespace App\Http\Controllers\Orders;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\PackingListService;
+use Illuminate\Support\Facades\Storage;
 use Spatie\LaravelPdf\Facades\Pdf;
 
 class PackingSlipController extends Controller
 {
-    // =========================================================================
-    //  Generate and serve a packing slip PDF for warehouse fulfillment.
-    //
-    //  Access rules:
-    //    - Only staff members can access (admin routes)
-    //    - Available for any order regardless of payment status
-    //
-    //  The packing slip includes:
-    //    - Order reference and date
-    //    - Customer shipping address
-    //    - Item list with SKU, name, and quantity (no prices)
-    //    - Barcode for scanning
-    // =========================================================================
+    public function __construct(private readonly PackingListService $packingListService) {}
 
     public function __invoke(Order $order)
     {
         $order->load(['items.product', 'user', 'deliveryOrder.shippingMethod', 'deliveryOrder.pickupStation']);
 
-        return Pdf::view('pdf.packing-slip', ['order' => $order])
+        // Serve the stored PDF when it exists (generated at PROCESSING)
+        if ($this->packingListService->exists($order)) {
+            return Storage::disk('local')->response(
+                $order->packing_list_path,
+                "PackingSlip-{$order->reference}.pdf",
+                ['Content-Type' => 'application/pdf'],
+            );
+        }
+
+        // Fallback: generate on the fly (order not yet at PROCESSING, or generation failed)
+        $driver = config('laravel-pdf.driver', 'browsershot');
+        $isChromium = in_array($driver, ['browsershot', 'cloudflare', 'gotenberg']);
+
+        $pdf = Pdf::view('pdf.packing-slip', ['order' => $order])
             ->format('a4')
-            ->margins(10, 10, 10, 10)
             ->name("PackingSlip-{$order->reference}.pdf");
+
+        if ($isChromium) {
+            $pdf->footerView('pdf.packing-slip-footer')
+                ->margins(10, 10, 25, 10);
+        }
+
+        return $pdf;
     }
 }

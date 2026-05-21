@@ -4,13 +4,22 @@ namespace App\Listeners;
 
 use App\Events\PaymentConfirmed;
 use App\Notifications\OrderConfirmedNotification;
+use App\Settings\CustomerNotificationSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
 class SendOrderConfirmationToCustomer
 {
+    public function __construct(
+        private readonly CustomerNotificationSettings $customerNotificationSettings,
+    ) {}
+
     public function handle(PaymentConfirmed $event): void
     {
+        if (! $this->customerNotificationSettings->order_confirmation) {
+            return;
+        }
+
         $order = $event->order;
         $email = $order->customerEmail();
 

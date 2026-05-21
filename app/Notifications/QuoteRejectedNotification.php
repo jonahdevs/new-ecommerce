@@ -20,13 +20,17 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
     //  decision on the portal and see a confirmation message there.
     // =========================================================================
 
-    public function __construct(public readonly Quote $quote)
-    {
-    }
+    public function __construct(public readonly Quote $quote) {}
 
-    public function via(): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if ($notifiable->wantsNotification('notify_quote_rejected')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(): MailMessage
@@ -43,8 +47,7 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
             ->line("**Quoted total:** {$total}")
             ->when(
                 $this->quote->rejection_reason,
-                fn($mail) =>
-                $mail->line("**Customer note:** {$this->quote->rejection_reason}")
+                fn ($mail) => $mail->line("**Customer note:** {$this->quote->rejection_reason}")
             )
             ->line('You may wish to follow up with the customer to understand their concerns or offer a revised quotation.')
             ->action('View Quotation', $quotationUrl)
@@ -53,11 +56,13 @@ class QuoteRejectedNotification extends Notification implements ShouldQueue
 
     public function toArray(): array
     {
+        $rejectedBy = $this->quote->user?->name ?? 'customer';
+
         return [
             'quote_id' => $this->quote->id,
             'reference' => $this->quote->reference,
             'title' => 'Quote Rejected',
-            'message' => "Quote {$this->quote->reference} was rejected by {$this->quote->user?->name ?? 'customer'}.",
+            'message' => "Quote {$this->quote->reference} was rejected by {$rejectedBy}.",
             'url' => route('admin.quotations.show', $this->quote),
         ];
     }

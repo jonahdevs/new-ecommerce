@@ -74,7 +74,9 @@ new #[Layout('layouts.guest')] class extends Component {
     public function topCategories()
     {
         return Cache::tags(['homepage', 'categories'])->remember('homepage:top-categories', self::TTL_CATEGORIES, function () {
-            return Category::inSection(CategorySection::HOME_PAGE_FEATURED)->active()->get(['id', 'name', 'slug', 'image_path']);
+            return Category::inSection(CategorySection::HOME_PAGE_FEATURED)
+                ->active()
+                ->get(['id', 'name', 'slug', 'image_path']);
         });
     }
 
@@ -258,7 +260,8 @@ new #[Layout('layouts.guest')] class extends Component {
         <div class="container @container/features mx-auto px-4">
             <div class="grid grid-cols-2 @2xl/features:grid-cols-3 @5xl/features:grid-cols-5 divide-x divide-zinc-100">
 
-                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
+                <div
+                    class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -267,10 +270,12 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <flux:heading size="sm" level="3" class="text-xs! font-semibold uppercase tracking-wider">
                         Africa No. 1</flux:heading>
-                    <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">In Kitchen Equipment</flux:text>
+                    <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">In Kitchen Equipment
+                    </flux:text>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
+                <div
+                    class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -282,7 +287,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">Quality Assurance</flux:text>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
+                <div
+                    class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <flux:icon.arrows-pointing-out class="size-8" />
                     </div>
@@ -291,7 +297,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">Bespoke Solutions</flux:text>
                 </div>
 
-                <div class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
+                <div
+                    class="flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="1.5" stroke="currentColor">
@@ -301,10 +308,12 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <flux:heading size="sm" level="3"
                         class="text-xs! font-semibold uppercase tracking-wider">Fast Delivery</flux:heading>
-                    <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">Countrywide Shipping</flux:text>
+                    <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">Countrywide Shipping
+                    </flux:text>
                 </div>
 
-                <div class="hidden @5xl/features:flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
+                <div
+                    class="hidden @5xl/features:flex flex-col items-center text-center p-4 @md/features:p-6 transition-colors hover:bg-zinc-50">
                     <div class="mb-3 text-primary">
                         <svg class="size-8" fill="none" stroke="currentColor" stroke-width="1.5"
                             viewBox="0 0 24 24">
@@ -314,7 +323,8 @@ new #[Layout('layouts.guest')] class extends Component {
                     </div>
                     <flux:heading size="sm" level="3"
                         class="text-xs! font-semibold uppercase tracking-wider">Installation</flux:heading>
-                    <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">Professional Setup</flux:text>
+                    <flux:text class="mt-1 text-xs! text-on-surface-variant leading-tight">Professional Setup
+                    </flux:text>
                 </div>
 
             </div>
@@ -338,7 +348,8 @@ new #[Layout('layouts.guest')] class extends Component {
                 //  @3xl (48rem+)  5 cols — small laptops
                 //  @5xl (64rem+)  6 cols — desktops
                 //  @7xl (80rem+)  7 cols — wide desktops
-                $catGrid = 'grid-cols-1 @xs/categories:grid-cols-2 @md/categories:grid-cols-3 @xl/categories:grid-cols-4 @3xl/categories:grid-cols-5 @5xl/categories:grid-cols-6 @7xl/categories:grid-cols-7';
+                $catGrid =
+                    'grid-cols-1 @xs/categories:grid-cols-2 @md/categories:grid-cols-3 @xl/categories:grid-cols-4 @3xl/categories:grid-cols-5 @5xl/categories:grid-cols-6 @7xl/categories:grid-cols-7';
             @endphp
 
             @placeholder
@@ -352,8 +363,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 </div>
             @endplaceholder
 
-            <div
-                class="grid {{ $catGrid }} gap-x-3 gap-y-6 @md/categories:gap-x-5 @md/categories:gap-y-10">
+            <div class="grid {{ $catGrid }} gap-x-3 gap-y-6 @md/categories:gap-x-5 @md/categories:gap-y-10">
                 @foreach ($this->topCategories as $category)
                     <div class="group relative" :key="'category-' . $category->id">
                         <a href="{{ route('shop.category', ['category' => $category->slug]) }}" wire:navigate
@@ -388,7 +398,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
     {{-- New Arrivals --}}
     <div class="container @container/newarrivals mx-auto px-0 sm:px-4 mt-5 md:mt-7">
-        <div class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 @4xl/newarrivals:grid-cols-6">
+        <div
+            class="bg-primary max-sm:rounded-none rounded-md overflow-hidden grid grid-cols-1 @4xl/newarrivals:grid-cols-6">
             {{-- Left Panel --}}
             <div
                 class="@4xl/newarrivals:col-span-1 flex flex-col justify-center px-5 md:px-6 py-6 @4xl/newarrivals:py-8
@@ -482,9 +493,12 @@ new #[Layout('layouts.guest')] class extends Component {
                     You May Also Like
                 </flux:heading>
 
-                <flux:link :href="route('shop.index')" wire:navigate class="text-xs @sm/related:text-sm @md/related:text-base">View all
+                <flux:link :href="route('shop.index')" wire:navigate
+                    class="text-xs @sm/related:text-sm no-underline! hover:underline">
+                    View all
                 </flux:link>
             </section>
+
             @island(name: 'products', defer: true)
                 @placeholder
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-6">
@@ -493,7 +507,6 @@ new #[Layout('layouts.guest')] class extends Component {
                         @endfor
                     </div>
                 @endplaceholder
-
 
                 <section>
                     <!-- Products slider -->
@@ -588,7 +601,8 @@ new #[Layout('layouts.guest')] class extends Component {
                 Our
                 Locations
             </flux:heading>
-            <flux:subheading class="text-xs! @sm/locations:text-sm! @md/locations:text-base! mt-2">From local hubs to a continental
+            <flux:subheading class="text-xs! @sm/locations:text-sm! @md/locations:text-base! mt-2">From local hubs to a
+                continental
                 presence.
             </flux:subheading>
         </div>
@@ -672,7 +686,8 @@ new #[Layout('layouts.guest')] class extends Component {
                                     class="shrink-0 mt-0.5 w-6 h-6 @sm/locations:w-7 @sm/locations:h-7 rounded-md bg-secondary/10 text-secondary ring-1 ring-secondary/20 flex items-center justify-center">
                                     <flux:icon.map-pin class="w-3 h-3 @sm/locations:w-3.5 @sm/locations:h-3.5" />
                                 </div>
-                                <flux:text class="text-xs! @sm/locations:text-sm! text-on-surface-variant leading-relaxed pt-1">
+                                <flux:text
+                                    class="text-xs! @sm/locations:text-sm! text-on-surface-variant leading-relaxed pt-1">
                                     {{ $location['address'] }}</flux:text>
                             </div>
 

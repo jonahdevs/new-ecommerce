@@ -14,9 +14,15 @@ class NewReviewNotification extends Notification implements ShouldQueue
 
     public function __construct(public readonly Review $review) {}
 
-    public function via(): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if ($notifiable->wantsNotification('notify_new_review')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(): MailMessage

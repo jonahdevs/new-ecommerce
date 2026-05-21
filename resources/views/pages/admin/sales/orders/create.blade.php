@@ -60,7 +60,7 @@ new #[Title('Create Order')] class extends Component {
 
     public string $paymentGateway = 'cod';
     public string $paymentStatus = 'paid';
-    public string $initialStatus = 'confirmed';
+    public string $initialStatus = 'processing';
     public string $notes = '';
 
     // =========================================================================
@@ -374,8 +374,8 @@ new #[Title('Create Order')] class extends Component {
                 return $order;
             });
 
-            // Trigger SAP sync for confirmed + paid orders
-            if ($order->status->value === 'confirmed' && $this->paymentStatus === 'paid') {
+            // Trigger SAP sync for processing + paid orders
+            if ($order->status->value === 'processing' && $this->paymentStatus === 'paid') {
                 SyncOrderToSapJob::dispatch($order->fresh());
             }
 
@@ -406,7 +406,7 @@ new #[Title('Create Order')] class extends Component {
             'discountAmount' => 'numeric|min:0',
             'paymentGateway' => 'required|in:cod,manual',
             'paymentStatus' => 'required|in:pending,paid',
-            'initialStatus' => 'required|in:pending,confirmed',
+            'initialStatus' => 'required|in:pending,processing',
         ];
 
         if ($this->isGuest) {
@@ -468,7 +468,7 @@ new #[Title('Create Order')] class extends Component {
 
     <flux:callout color="indigo" icon="information-circle" class="mb-6">
         <flux:callout.heading>ERP sync is automatic</flux:callout.heading>
-        <flux:callout.text>Orders set to <strong>Confirmed</strong> with payment <strong>Mark as Paid</strong> will be
+        <flux:callout.text>Orders set to <strong>Processing</strong> with payment <strong>Mark as Paid</strong> will be
             synced to SAP and a KRA receipt generated automatically.</flux:callout.text>
     </flux:callout>
 
@@ -798,7 +798,7 @@ new #[Title('Create Order')] class extends Component {
                     </div>
                     <div class="p-5">
                         <flux:select wire:model="initialStatus">
-                            <flux:select.option value="confirmed">Confirmed</flux:select.option>
+                            <flux:select.option value="processing">Processing</flux:select.option>
                             <flux:select.option value="pending">Pending</flux:select.option>
                         </flux:select>
                     </div>

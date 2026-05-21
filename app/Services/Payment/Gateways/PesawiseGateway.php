@@ -190,11 +190,6 @@ class PesawiseGateway implements PaymentGateway
                 'meta' => array_merge($order->payment->meta ?? [], $data),
             ]);
 
-            $order->transitionTo(
-                OrderStatus::CONFIRMED,
-                notes: 'Payment confirmed via Pesawise webhook',
-                changedByType: 'system',
-            );
             $order->update(['payment_status' => PaymentStatus::PAID->value]);
         });
 

@@ -411,7 +411,7 @@ new #[Title('Dashboard')] class extends Component
     #[Computed]
     public function recentDeliveries()
     {
-        return Order::whereIn('status', [OrderStatus::SHIPPED->value, OrderStatus::DELIVERED->value, OrderStatus::PROCESSING->value, OrderStatus::CONFIRMED->value])
+        return Order::whereIn('status', [OrderStatus::SHIPPED->value, OrderStatus::DELIVERED->value, OrderStatus::PROCESSING->value])
             ->with(['user', 'items.product'])
             ->latest()
             ->limit(5)

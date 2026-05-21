@@ -19,9 +19,15 @@ class FailedPaymentNotification extends Notification implements ShouldQueue
         public readonly ?string $reason = null
     ) {}
 
-    public function via(): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if ($notifiable->wantsNotification('notify_failed_payment')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(): MailMessage

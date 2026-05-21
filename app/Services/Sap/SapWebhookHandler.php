@@ -164,7 +164,6 @@ class SapWebhookHandler
 
         try {
             $this->receiptService->generate($order);
-            $this->receiptService->sendToCustomer($order);
         } catch (\Throwable $e) {
             // Receipt failure must never cause the webhook to return 500 —
             // SAP would keep retrying the webhook instead of the real issue.

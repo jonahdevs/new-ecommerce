@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Settings\CustomerNotificationSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -27,17 +28,31 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     public function __construct(
         public readonly Order $order,
         public readonly OrderStatus $newStatus,
-    ) {
-    }
+    ) {}
 
-    public function via(): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        $systemSettings = app(CustomerNotificationSettings::class);
+
+        if (! $systemSettings->order_updates) {
+            return $channels;
+        }
+
+        $prefs = $notifiable->notification_preferences ?? [];
+
+        if ($prefs['order_updates']['email'] ?? true) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(): MailMessage
     {
         $subject = match ($this->newStatus) {
+            OrderStatus::PROCESSING => "Order Processing — {$this->order->reference}",
             OrderStatus::SHIPPED => "Order Shipped — {$this->order->reference}",
             OrderStatus::DELIVERED => "Order Delivered — {$this->order->reference}",
             OrderStatus::CANCELLED => "Order Cancelled — {$this->order->reference}",
@@ -57,6 +72,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     public function toArray(): array
     {
         $title = match ($this->newStatus) {
+            OrderStatus::PROCESSING => 'Order Processing',
             OrderStatus::SHIPPED => 'Order Shipped',
             OrderStatus::DELIVERED => 'Order Delivered',
             OrderStatus::CANCELLED => 'Order Cancelled',
@@ -65,6 +81,7 @@ class OrderStatusNotification extends Notification implements ShouldQueue
         };
 
         $message = match ($this->newStatus) {
+            OrderStatus::PROCESSING => "Your order {$this->order->reference} is being processed.",
             OrderStatus::SHIPPED => "Your order {$this->order->reference} has been shipped.",
             OrderStatus::DELIVERED => "Your order {$this->order->reference} has been delivered.",
             OrderStatus::CANCELLED => "Your order {$this->order->reference} has been cancelled.",

@@ -15,7 +15,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     public CustomerAddressForm $form;
     public string $selectedMethod = '';
     public ?int $selectedStationId = null;
-    public string $paymentMethod = 'mpesa';
+    public string $paymentMethod = 'card';
 
     // --- Selection UI ---
     public ?int $selectedAddressId = null;
@@ -53,6 +53,8 @@ new #[Layout('layouts.checkout')] class extends Component {
 
         if ($checkoutSession->hasPaymentMethod()) {
             $this->paymentMethod = $checkoutSession->getPaymentMethod();
+        } else {
+            $checkoutSession->setPaymentMethod($this->paymentMethod);
         }
     }
 
@@ -335,7 +337,9 @@ new #[Layout('layouts.checkout')] class extends Component {
         <x-slot:icon>
             <div @class([
                 'w-5.5 h-5.5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300',
-                $this->address ? 'bg-green-500 text-white' : 'bg-zinc-100 text-on-surface-variant',
+                $this->address
+                    ? 'bg-green-500 text-white'
+                    : 'bg-zinc-100 text-on-surface-variant',
             ])>
                 @if ($this->address)
                     <flux:icon.check class="size-3" />
@@ -379,7 +383,9 @@ new #[Layout('layouts.checkout')] class extends Component {
         <x-slot:icon>
             <div @class([
                 'w-5.5 h-5.5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300',
-                $this->shipping ? 'bg-green-500 text-white' : 'bg-zinc-100 text-on-surface-variant',
+                $this->shipping
+                    ? 'bg-green-500 text-white'
+                    : 'bg-zinc-100 text-on-surface-variant',
             ])>
                 @if ($this->shipping)
                     <flux:icon.check class="size-3" />
@@ -423,8 +429,9 @@ new #[Layout('layouts.checkout')] class extends Component {
                 </div>
             </div>
         @else
-            <p class="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider">Please select an
-                address first</p>
+            <p class="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider">
+                {{ $this->address ? 'Please select a shipping method' : 'Please select an address first' }}
+            </p>
         @endif
     </x-customer.card>
 
@@ -494,9 +501,14 @@ new #[Layout('layouts.checkout')] class extends Component {
     </a>
 
     <x-slot name="orderSummaryCta">
-        <div x-data="{ processing: false }">
-            <flux:button @click="$dispatch('place-order')" @place-order.window="processing = true"
-                ::disabled="processing" class="w-full group cursor-pointer" variant="customer-primary"
+        <div x-data="{
+            processing: false,
+            get isDisabled() {
+                return !{{ $this->address ? 'true' : 'false' }} || !{{ $this->shipping ? 'true' : 'false' }} || !{{ $this->paymentMethod ? 'true' : 'false' }} || this.processing;
+            }
+        }">
+            <flux:button @click="!isDisabled && $dispatch('place-order')" @place-order.window="processing = true"
+                ::disabled="isDisabled" class="w-full group cursor-pointer" variant="customer-primary"
                 size="customer-lg">
                 <div class="flex items-center justify-center gap-2 group-active:scale-95 transition-transform">
                     <span x-show="!processing" class="inline-flex items-center gap-3 group">Place Order
@@ -525,13 +537,13 @@ new #[Layout('layouts.checkout')] class extends Component {
                 {{ format_currency($this->cartSummary['total'] + ($this->shipping['cost'] ?? 0)) }}
             </div>
         </div>
-        <button @click="$dispatch('place-order')" x-data="{
+        <button @click="!isDisabled && $dispatch('place-order')" x-data="{
             processing: false,
             get isDisabled() {
-                return !{{ $this->address ? 'true' : 'false' }} || !{{ $this->shipping ? 'true' : 'false' }} || this.processing;
+                return !{{ $this->address ? 'true' : 'false' }} || !{{ $this->shipping ? 'true' : 'false' }} || !{{ $this->paymentMethod ? 'true' : 'false' }} || this.processing;
             }
-        }" @place-order.window="processing = true"
-            :disabled="isDisabled"
+        }"
+            @place-order.window="processing = true" :disabled="isDisabled"
             class="bg-primary text-white font-sans text-[14px] font-bold uppercase tracking-widest px-5 py-2.5 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2">
             <span x-show="!processing">Place Order →</span>
             <span x-show="processing" class="flex items-center gap-2" x-cloak>

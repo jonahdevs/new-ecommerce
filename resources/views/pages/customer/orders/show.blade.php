@@ -399,32 +399,6 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                 @endif
             </div>
 
-            {{-- KRA Validation messages --}}
-            @if ($this->isPaid)
-                <div class="mt-2">
-                    @if ($this->isAwaitingKraValidation)
-                        <div class="flex items-start gap-2 p-3 bg-purple-50 border border-purple-200 rounded-sm">
-                            <flux:icon.clock class="size-4 shrink-0 mt-0.5 text-purple-500" />
-                            <div class="text-xs text-purple-700">
-                                Invoice pending KRA validation. This usually completes within a few minutes. We'll email
-                                you
-                                once it's ready.
-                            </div>
-                        </div>
-                    @elseif ($this->hasSapSyncFailed)
-                        <div class="flex items-start gap-2 p-3 bg-rose-50 border border-rose-200 rounded-sm">
-                            <flux:icon.exclamation-triangle class="size-4 shrink-0 mt-0.5 text-rose-500" />
-                            <div class="text-xs text-rose-700">
-                                Invoice generation encountered an issue. Our team has been notified. Please contact
-                                support
-                                if this persists.
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            @endif
-
-
             <div class="text-center mt-6">
                 <div class="text-[13px] text-on-surface-variant">
                     Need help with this order? <a href="#"

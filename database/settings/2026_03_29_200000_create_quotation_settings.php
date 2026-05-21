@@ -19,14 +19,5 @@ return new class extends SettingsMigration
         $this->migrator->add('quotations.quote_terms', null);
         $this->migrator->add('quotations.quote_footer_note', null);
 
-        // Admin notification settings for quotes
-        $this->migrator->add('notifications.notify_new_quote', true);
-        $this->migrator->add('notifications.notify_quote_accepted', true);
-        $this->migrator->add('notifications.notify_quote_rejected', true);
-
-        // Customer notification settings for quotes
-        $this->migrator->add('customer_notifications.quote_sent', true);
-        $this->migrator->add('customer_notifications.quote_expiring_reminder', true);
-        $this->migrator->add('customer_notifications.quote_expiring_days', 2);
     }
 };

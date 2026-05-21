@@ -63,7 +63,7 @@ it('creates a confirmed paid order with correct totals', function () {
     $order = Order::create([
         'user_id' => $customer->id,
         'reference' => Order::generateReference(),
-        'status' => 'confirmed',
+        'status' => 'processing',
         'payment_status' => PaymentStatus::PAID->value,
         'currency' => 'KES',
         'subtotal_cents' => 200000,
@@ -90,7 +90,7 @@ it('creates a confirmed paid order with correct totals', function () {
     expect($order->total_cents)->toBe(250000);
     expect($order->subtotal_cents)->toBe(200000);
     expect($order->shipping_cents)->toBe(50000);
-    expect($order->status->value)->toBe('confirmed');
+    expect($order->status->value)->toBe('processing');
     expect($order->payment)->not->toBeNull();
     expect($order->payment->status)->toBe(PaymentStatus::PAID);
 });
@@ -112,7 +112,7 @@ it('records status history when admin creates an order', function () {
     $order = Order::create([
         'user_id' => null,
         'reference' => Order::generateReference(),
-        'status' => 'confirmed',
+        'status' => 'processing',
         'payment_status' => PaymentStatus::PENDING->value,
         'currency' => 'KES',
         'subtotal_cents' => 100000,
@@ -128,13 +128,13 @@ it('records status history when admin creates an order', function () {
 
     $order->statusHistories()->create([
         'from_status' => null,
-        'to_status' => 'confirmed',
+        'to_status' => 'processing',
         'changed_by_user_id' => $this->admin->id,
         'changed_by_type' => 'user',
         'notes' => 'Order created by admin on behalf of customer.',
     ]);
 
     expect($order->statusHistories)->toHaveCount(1);
-    expect($order->statusHistories->first()->to_status)->toBe('confirmed');
+    expect($order->statusHistories->first()->to_status)->toBe('processing');
     expect($order->statusHistories->first()->changed_by_type)->toBe('user');
 });

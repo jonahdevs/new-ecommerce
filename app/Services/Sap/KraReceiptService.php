@@ -3,9 +3,7 @@
 namespace App\Services\Sap;
 
 use App\Models\Order;
-use App\Notifications\KraTaxInvoiceNotification;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Spatie\LaravelPdf\Facades\Pdf;
 
@@ -91,46 +89,10 @@ class KraReceiptService
 
     /**
      * True when all required KRA data is present on the order.
-     * Gate this before calling generate() or sendToCustomer().
+     * Gate this before calling generate().
      */
     public function canGenerate(Order $order): bool
     {
         return ! is_null($order->kra_cu_number);
-    }
-
-    /**
-     * Emails the generated invoice PDF to the customer.
-     * Silently skips if no email address is available (guest with no email).
-     */
-    public function sendToCustomer(Order $order): void
-    {
-        $email = $order->customerEmail();
-
-        if (! $email) {
-            Log::warning('Invoice: no customer email, skipping send', [
-                'order_id' => $order->id,
-            ]);
-
-            return;
-        }
-
-        if (! $order->invoice_path || ! Storage::disk(self::DISK)->exists($order->invoice_path)) {
-            Log::warning('Invoice: PDF not found, skipping send', [
-                'order_id' => $order->id,
-                'path' => $order->invoice_path,
-            ]);
-
-            return;
-        }
-
-        $order->user
-            ? $order->user->notify(new KraTaxInvoiceNotification($order))
-            : Notification::route('mail', $email)
-                ->notify(new KraTaxInvoiceNotification($order));
-
-        Log::info('Invoice emailed to customer', [
-            'order_id' => $order->id,
-            'email' => $email,
-        ]);
     }
 }

@@ -73,7 +73,7 @@
 
     {{-- Preview text --}}
     <div style="display: none; max-height: 0; overflow: hidden;">
-        Your order {{ $order->reference }} has been confirmed — thank you for shopping with us.
+        Thank you! We've received your order {{ $order->reference }} and are getting it ready for you.
         &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
         &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
         &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
@@ -104,14 +104,17 @@
 
                                     {{-- Greeting --}}
                                     <p class="intro" style="margin: 0 0 6px; font-size: 13px; line-height: 20px; color: #475569;">Hi {{ $customerName }},</p>
+                                    <p class="intro" style="margin: 0 0 4px; font-size: 15px; line-height: 22px; font-weight: 700; color: #1e293b;">
+                                        Thank you for your order!
+                                    </p>
                                     <p class="intro" style="margin: 0 0 20px; font-size: 13px; line-height: 20px; color: #475569;">
-                                        Your order <strong style="color: #1e293b;">{{ $order->reference }}</strong> has been confirmed and is now being processed.
+                                        We've received your order <strong style="color: #1e293b;">{{ $order->reference }}</strong> and our team is now reviewing it. We'll send you another update as soon as it's on its way.
                                     </p>
 
                                     {{-- ── Stepper ──────────────────────────────── --}}
                                     <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; margin-bottom: 20px;">
                                         <tr>
-                                            {{-- Placed (active) --}}
+                                            {{-- Received (active) --}}
                                             <td style="width: 32px; text-align: center;">
                                                 <div class="step-icon-on" style="line-height: 32px; margin: 0 auto; height: 32px; width: 32px; border-radius: 50%; background-color: #c02434; padding: 6px; text-align: center; color: #fff;">
                                                     <svg fill="currentColor" viewBox="0 0 100 125" style="width:100%;height:100%;">
@@ -119,11 +122,11 @@
                                                     </svg>
                                                 </div>
                                             </td>
-                                            <td style="vertical-align: middle;"><div style="height: 3px; background-color: #c02434;"></div></td>
-                                            {{-- Confirmed (active) --}}
+                                            <td style="vertical-align: middle;"><div style="height: 3px; background-color: #e2e8f0;"></div></td>
+                                            {{-- Processing (inactive) --}}
                                             <td style="width: 32px; text-align: center;">
-                                                <div class="step-icon-on" style="line-height: 32px; margin: 0 auto; height: 32px; width: 32px; border-radius: 50%; background-color: #c02434; padding: 6px; text-align: center; color: #fff;">
-                                                    <svg fill="currentColor" viewBox="0 0 512 640" style="width:100%;height:100%;enable-background:new 0 0 512 512;">
+                                                <div class="step-icon-off" style="margin: 0 auto; display: flex; height: 32px; width: 32px; align-items: center; justify-content: center; border-radius: 50%; background-color: #f1f5f9; padding: 6px; border: 1px solid #e2e8f0;">
+                                                    <svg fill="currentColor" viewBox="0 0 512 640" style="width:100%;height:100%;color:#94a3b8;enable-background:new 0 0 512 512;">
                                                         <path d="M368.929,123.071l-20-20c-3.905-3.905-3.905-10.237,0-14.143c3.905-3.905,10.237-3.905,14.143,0L376,101.858l32.929-32.929c3.905-3.905,10.237-3.905,14.143,0c3.905,3.905,3.905,10.237,0,14.143l-40,40C379.167,126.976,372.834,126.977,368.929,123.071z"/>
                                                         <path d="M486,456H26c-5.523,0-10-4.478-10-10v-50c0-5.523,4.477-10,10-10h460c5.523,0,10,4.477,10,10v50C496,451.522,491.523,456,486,456z M36,436h440v-30H36V436z"/>
                                                         <path d="M106,496H56c-5.523,0-10-4.478-10-10v-40c0-5.523,4.477-10,10-10h70c3.466,0,6.685,1.795,8.506,4.743c1.822,2.947,1.988,6.629,0.438,9.728l-20,40C113.251,493.86,109.788,496,106,496z M66,476h33.82l10-20H66V476z"/>
@@ -158,11 +161,11 @@
                                         </tr>
                                         <tr>
                                             <td style="padding-top: 6px; text-align: center;">
-                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #c02434;">Placed</p>
+                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #c02434;">Received</p>
                                             </td>
                                             <td></td>
                                             <td style="padding-top: 6px; text-align: center;">
-                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #c02434;">Confirmed</p>
+                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8;">Processing</p>
                                             </td>
                                             <td></td>
                                             <td style="padding-top: 6px; text-align: center;">
@@ -260,11 +263,13 @@
 
                                     {{-- ── Closing ──────────────────────────────── --}}
                                     <p class="closing" style="margin: 0 0 10px; font-size: 13px; line-height: 20px; color: #64748b;">
-                                        Questions about your order? Our support team is happy to help.
+                                        You can track your order at any time from your
+                                        <a href="{{ $orderUrl }}" style="color: #c02434; text-decoration: none; font-weight: 600;">account</a>.
+                                        Questions? Our support team is always happy to help.
                                     </p>
                                     <p class="closing" style="margin: 0; font-size: 13px; line-height: 20px; color: #475569;">
                                         Thank you for choosing Sheffield Africa.<br>
-                                        <strong style="color: #1e293b;">Sheffield Africa Support Team</strong>
+                                        <strong style="color: #1e293b;">Sheffield Africa Team</strong>
                                     </p>
 
                                 </td>

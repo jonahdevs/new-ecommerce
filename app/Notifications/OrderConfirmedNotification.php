@@ -7,7 +7,6 @@ use App\Services\TaxService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Storage;
 
 class OrderConfirmedNotification extends Notification
 {
@@ -19,7 +18,14 @@ class OrderConfirmedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $prefs = $notifiable->notification_preferences ?? [];
+        $channels = [];
+
+        if ($prefs['order_confirmation']['email'] ?? true) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -27,57 +33,22 @@ class OrderConfirmedNotification extends Notification
         $order = $this->order->loadMissing([
             'items.product',
             'payment',
-            'deliveryOrder.shippingMethod',
-            'deliveryOrder.pickupStation',
             'user',
         ]);
 
         $taxService = app(TaxService::class);
 
-        $mail = (new MailMessage)
-            ->subject("Order Confirmed — {$order->reference}")
+        return (new MailMessage)
+            ->subject("We've received your order — {$order->reference}")
             ->view('mails.orders.confirmation', [
                 'order' => $order,
                 'customerName' => $order->user?->name ?? 'Customer',
                 'orderUrl' => route('customer.orders.show', $order),
-                'deliveryWindow' => $this->resolveDeliveryWindow(),
                 'paymentLabel' => $this->resolvePaymentLabel(),
                 'taxEnabled' => $taxService->isEnabled(),
                 'taxInclusive' => $taxService->isInclusive(),
                 'taxLabel' => $taxService->name().' ('.$taxService->rateLabel().')',
             ]);
-
-        // Attach the invoice PDF if it exists on disk
-        if ($order->invoice_path && Storage::disk('local')->exists($order->invoice_path)) {
-            $mail->attach(
-                Storage::disk('local')->path($order->invoice_path),
-                ['as' => "Invoice-{$order->reference}.pdf", 'mime' => 'application/pdf']
-            );
-        }
-
-        return $mail;
-    }
-
-    private function resolveDeliveryWindow(): ?string
-    {
-        $delivery = $this->order->deliveryOrder;
-
-        if (! $delivery) {
-            return null;
-        }
-
-        $min = $delivery->shippingRate?->estimated_days_min;
-        $max = $delivery->shippingRate?->estimated_days_max;
-
-        if ($min && $max) {
-            return $min === $max ? "{$min} business days" : "{$min}–{$max} business days";
-        }
-
-        if ($delivery->estimated_delivery_at) {
-            return 'By '.$delivery->estimated_delivery_at->format('D, M j');
-        }
-
-        return null;
     }
 
     private function resolvePaymentLabel(): string

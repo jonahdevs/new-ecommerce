@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use App\Concerns\LogsModelChanges;
 use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,6 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'newsletter_subscribed',
         'default_payment_method',
         'is_staff',
+        'notification_preferences',
         'status',
         'status_reason',
         'suspended_until',
@@ -75,6 +75,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'terms_accepted_at' => 'datetime',
             'password' => 'hashed',
             'status' => UserStatus::class,
+            'notification_preferences' => 'array',
         ];
     }
 
@@ -86,7 +87,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn($word) => Str::substr($word, 0, 1))
+            ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
 
@@ -168,6 +169,11 @@ class User extends Authenticatable implements MustVerifyEmail
     // HELPER METHODS
     // ===============================================
 
+    public function wantsNotification(string $key): bool
+    {
+        return (bool) ($this->notification_preferences[$key] ?? true);
+    }
+
     public function getDefaultAddress(): ?Address
     {
         return $this->addresses()->where('is_default', true)->first();
@@ -179,9 +185,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Get the attributes that should be logged when changed.
-     * 
+     *
      * Tracks changes to: name, email, status
-     * 
+     *
      * @return array<int, string>
      */
     protected function getLoggedAttributes(): array

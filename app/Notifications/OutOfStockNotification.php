@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class LowStockNotification extends Notification implements ShouldQueue
+class OutOfStockNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -18,7 +18,7 @@ class LowStockNotification extends Notification implements ShouldQueue
     {
         $channels = ['database'];
 
-        if ($notifiable->wantsNotification('notify_low_stock')) {
+        if ($notifiable->wantsNotification('notify_out_of_stock')) {
             $channels[] = 'mail';
         }
 
@@ -28,17 +28,13 @@ class LowStockNotification extends Notification implements ShouldQueue
     public function toMail(): MailMessage
     {
         $adminUrl = route('admin.products.edit', $this->product);
-        $stockQty = $this->product->stock_quantity;
-        $threshold = $this->product->low_stock_threshold;
 
         return (new MailMessage)
-            ->subject("Low Stock Alert — {$this->product->name}")
-            ->greeting('Low stock alert')
-            ->line("Product **{$this->product->name}** is running low on stock.")
+            ->subject("Out of Stock — {$this->product->name}")
+            ->greeting('Out of stock alert')
+            ->line("Product **{$this->product->name}** has run out of stock.")
             ->line("**SKU:** {$this->product->sku}")
-            ->line("**Current stock:** {$stockQty} units")
-            ->line("**Threshold:** {$threshold} units")
-            ->line('Please restock this product to avoid running out.')
+            ->line('Please restock this product as soon as possible to avoid losing sales.')
             ->action('View Product', $adminUrl)
             ->salutation('Sheffield Africa · Inventory Team');
     }
@@ -48,8 +44,8 @@ class LowStockNotification extends Notification implements ShouldQueue
         return [
             'product_id' => $this->product->id,
             'sku' => $this->product->sku,
-            'title' => 'Low Stock Alert',
-            'message' => "{$this->product->name} is low on stock ({$this->product->stock_quantity} units remaining)",
+            'title' => 'Out of Stock',
+            'message' => "{$this->product->name} is now out of stock",
             'url' => route('admin.products.edit', $this->product),
         ];
     }

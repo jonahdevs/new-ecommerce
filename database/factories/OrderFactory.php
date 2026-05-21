@@ -72,14 +72,6 @@ class OrderFactory extends Factory
         ]);
     }
 
-    public function confirmed(): static
-    {
-        return $this->state([
-            'status' => OrderStatus::CONFIRMED->value,
-            'payment_status' => PaymentStatus::PAID->value,
-        ]);
-    }
-
     public function processing(): static
     {
         return $this->state([

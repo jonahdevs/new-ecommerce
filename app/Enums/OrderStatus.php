@@ -5,7 +5,6 @@ namespace App\Enums;
 enum OrderStatus: string
 {
     case PENDING = 'pending';
-    case CONFIRMED = 'confirmed';
     case PROCESSING = 'processing';
     case SHIPPED = 'shipped';
     case DELIVERED = 'delivered';
@@ -16,7 +15,6 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PENDING => 'Pending',
-            self::CONFIRMED => 'Confirmed',
             self::PROCESSING => 'Processing',
             self::SHIPPED => 'Shipped',
             self::DELIVERED => 'Delivered',
@@ -29,7 +27,6 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PENDING => 'amber',
-            self::CONFIRMED => 'blue',
             self::PROCESSING => 'purple',
             self::SHIPPED => 'indigo',
             self::DELIVERED => 'emerald',
@@ -42,7 +39,6 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PENDING => 'clock',
-            self::CONFIRMED => 'check-badge',
             self::PROCESSING => 'loader-circle',
             self::SHIPPED => 'truck',
             self::DELIVERED => 'package-check',
@@ -59,8 +55,7 @@ enum OrderStatus: string
     public function allowedTransitions(): array
     {
         return match ($this) {
-            self::PENDING => [self::CONFIRMED, self::CANCELLED],
-            self::CONFIRMED => [self::PROCESSING, self::CANCELLED],
+            self::PENDING => [self::PROCESSING, self::CANCELLED],
             self::PROCESSING => [self::SHIPPED, self::CANCELLED],
             self::SHIPPED => [self::DELIVERED, self::RETURNED],
             self::DELIVERED => [self::RETURNED],
@@ -78,7 +73,6 @@ enum OrderStatus: string
     {
         return in_array($this, [
             self::PENDING,
-            self::CONFIRMED,
             self::PROCESSING,
             self::SHIPPED,
         ]);

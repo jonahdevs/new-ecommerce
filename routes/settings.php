@@ -12,6 +12,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         Route::livewire('account/profile', 'pages::admin.settings.account.profile')->name('profile.edit');
         Route::livewire('account/password', 'pages::admin.settings.account.password')->name('user-password.edit');
         Route::livewire('account/appearance', 'pages::admin.settings.account.appearance')->name('appearance.edit');
+        Route::livewire('account/notifications', 'pages::admin.settings.account.notifications')->name('account.notifications');
         Route::livewire('account/two-factor', 'pages::admin.settings.account.two-factor')->middleware(
             when(
                 Features::canManageTwoFactorAuthentication()
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'staff', 'verified'])
         Route::livewire('seo/social', 'pages::admin.settings.seo.social')->name('settings.social');
 
         // System
+        Route::livewire('system/notifications', 'pages::admin.settings.system.notifications')->name('settings.system.notifications');
         Route::livewire('system/maintenance', 'pages::admin.settings.system.maintenance')->name('settings.maintenance');
     });
 

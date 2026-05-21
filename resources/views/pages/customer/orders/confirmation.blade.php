@@ -222,8 +222,8 @@ new #[Layout('layouts.guest')] class extends Component
                     'paid_at' => now(),
                 ]);
 
-                // Transition order to confirmed
-                $this->order->transitionTo(OrderStatus::CONFIRMED, notes: 'Payment confirmed via Stripe 3DS redirect', changedByType: 'system');
+                // Transition order to processing
+                $this->order->transitionTo(OrderStatus::PROCESSING, notes: 'Payment confirmed via Stripe 3DS redirect', changedByType: 'system');
 
                 $this->order->update(['payment_status' => PaymentStatus::PAID->value]);
                 $this->order->refresh();

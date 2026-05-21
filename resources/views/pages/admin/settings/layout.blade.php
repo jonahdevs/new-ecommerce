@@ -25,21 +25,21 @@
 
     $tabs = [
         'general' => [
-            'label' => __('General'),
+            'label' => __('Account'),
             'icon' => 'user-circle',
             'route' => 'profile.edit',
             'permission' => null,
-            'active_on' => ['profile.edit', 'user-password.edit', 'two-factor.show', 'settings.admin-alerts', 'settings.customer-emails'],
+            'active_on' => ['profile.edit', 'user-password.edit', 'two-factor.show', 'account.notifications'],
         ],
         'website' => [
-            'label' => __('Website'),
+            'label' => __('Store'),
             'icon' => 'globe-alt',
             'route' => 'settings.store-info',
             'permission' => 'manage.settings',
             'active_on' => ['settings.store-info', 'settings.localization', 'settings.regional', 'appearance.edit', 'settings.seo', 'settings.social'],
         ],
         'app' => [
-            'label' => __('App'),
+            'label' => __('Commerce'),
             'icon' => 'squares-2x2',
             'route' => 'settings.orders',
             'permission' => 'manage.settings',
@@ -50,7 +50,7 @@
             'icon' => 'cog-6-tooth',
             'route' => 'settings.mail',
             'permission' => 'manage.settings',
-            'active_on' => ['settings.mail', 'settings.maintenance'],
+            'active_on' => ['settings.mail', 'settings.maintenance', 'settings.system.notifications', 'settings.admin-alerts'],
         ],
         'financial' => [
             'label' => __('Financial'),
@@ -81,8 +81,7 @@
                 'permission' => null,
                 'visible' => Laravel\Fortify\Features::canManageTwoFactorAuthentication(),
             ],
-            ['label' => __('Admin alerts'), 'route' => 'settings.admin-alerts', 'permission' => 'manage.settings'],
-            ['label' => __('Customer emails'), 'route' => 'settings.customer-emails', 'permission' => 'manage.settings'],
+            ['label' => __('Notifications'), 'route' => 'account.notifications', 'permission' => null],
         ],
         'website' => [
             ['label' => __('Business info'), 'route' => 'settings.store-info', 'permission' => 'manage.settings'],
@@ -100,6 +99,8 @@
         ],
         'system' => [
             ['label' => __('Mail'), 'route' => 'settings.mail', 'permission' => 'manage.settings'],
+            ['label' => __('Channels'), 'route' => 'settings.system.notifications', 'permission' => 'manage.settings'],
+            ['label' => __('Notifications'), 'route' => 'settings.admin-alerts', 'permission' => 'manage.settings'],
             ['label' => __('Maintenance'), 'route' => 'settings.maintenance', 'permission' => 'manage.settings'],
         ],
 

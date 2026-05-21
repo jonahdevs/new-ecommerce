@@ -115,7 +115,7 @@ new #[Title('Logistics Overview')] class extends Component {
     }
 }; ?>
 
-<x-admin.logistics.layout>
+<x-admin.logistics.layout heading="Logistics Overview" subheading="Shipping, delivery, and logistics at a glance.">
 
     {{-- Header --}}
     <div class="flex items-end justify-between mb-6">

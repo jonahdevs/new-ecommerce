@@ -4,6 +4,7 @@ namespace App\Services\Payment\Gateways;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Events\PaymentConfirmed;
 use App\Jobs\SyncOrderToSapJob;
 use App\Models\Order;
 use App\Models\Payment;
@@ -215,11 +216,6 @@ class MpesaGateway implements PaymentGateway
                 return;
             }
 
-            $order->transitionTo(
-                OrderStatus::CONFIRMED,
-                notes: 'Payment confirmed via M-Pesa webhook. Receipt: '.($receipt ?? 'N/A'),
-                changedByType: 'system',
-            );
             $order->update(['payment_status' => PaymentStatus::PAID->value]);
         });
 
@@ -239,6 +235,8 @@ class MpesaGateway implements PaymentGateway
 
         app(CartService::class)->clear(User::find($order->user_id));
         app(CheckoutSession::class)->clear();
+
+        PaymentConfirmed::dispatch($order->fresh(['payment']));
 
         SyncOrderToSapJob::dispatch($order->fresh());
 

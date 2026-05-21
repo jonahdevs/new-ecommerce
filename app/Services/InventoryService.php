@@ -6,7 +6,9 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\User;
 use App\Notifications\LowStockNotification;
+use App\Notifications\OutOfStockNotification;
 use App\Settings\InventorySettings;
 use App\Settings\NotificationSettings;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +23,7 @@ class InventoryService
     public function __construct(
         private readonly NotificationSettings $notificationSettings,
         private readonly InventorySettings $inventorySettings,
-    ) {
-    }
+    ) {}
 
     /**
      * Check if all cart items are in stock
@@ -31,7 +32,7 @@ class InventoryService
      */
     public function checkAvailability(Cart $cart): array
     {
-        if (!$this->inventorySettings->inventory_tracking_enabled) {
+        if (! $this->inventorySettings->inventory_tracking_enabled) {
             return [];
         }
 
@@ -41,16 +42,17 @@ class InventoryService
             // Check if this is a bundle product
             if ($item->product->type?->value === 'bundle') {
                 $bundleUnavailable = $this->checkBundleAvailability($item);
-                if (!empty($bundleUnavailable)) {
+                if (! empty($bundleUnavailable)) {
                     $unavailable = array_merge($unavailable, $bundleUnavailable);
                 }
+
                 continue;
             }
 
             // Get the stock item (variant or product)
             $stockItem = $this->getStockItem($item);
 
-            if (!$stockItem) {
+            if (! $stockItem) {
                 $unavailable[] = [
                     'product' => $item->product->name,
                     'requested' => $item->quantity,
@@ -62,7 +64,7 @@ class InventoryService
             }
 
             // Skip stock check if product doesn't manage stock
-            if (!($stockItem->manage_stock ?? false)) {
+            if (! ($stockItem->manage_stock ?? false)) {
                 continue;
             }
 
@@ -95,7 +97,7 @@ class InventoryService
 
         foreach ($bundleProducts as $child) {
             // Skip if child doesn't manage stock
-            if (!$child->manage_stock) {
+            if (! $child->manage_stock) {
                 continue;
             }
 
@@ -104,7 +106,7 @@ class InventoryService
 
             if ($availableStock < $childQuantityNeeded) {
                 $unavailable[] = [
-                    'product' => $cartItem->product->name . ' (Bundle)',
+                    'product' => $cartItem->product->name.' (Bundle)',
                     'child_product' => $child->name,
                     'requested' => $childQuantityNeeded,
                     'available' => $availableStock,
@@ -130,22 +132,23 @@ class InventoryService
                 $productSnapshot = $item->product_snapshot ?? [];
                 $isBundleProduct = ($productSnapshot['type'] ?? null) === 'bundle';
 
-                if ($isBundleProduct && !empty($productSnapshot['bundle_contents'])) {
+                if ($isBundleProduct && ! empty($productSnapshot['bundle_contents'])) {
                     // For bundles, reserve stock from each child product
                     foreach ($productSnapshot['bundle_contents'] as $bundleChild) {
                         $childProduct = Product::lockForUpdate()->find($bundleChild['id']);
 
-                        if (!$childProduct) {
+                        if (! $childProduct) {
                             Log::warning('Bundle child product not found during reservation', [
                                 'order_id' => $order->id,
                                 'bundle_product' => $item->getProductName(),
                                 'child_id' => $bundleChild['id'],
                             ]);
+
                             continue;
                         }
 
                         // Skip if child doesn't manage stock
-                        if (!$childProduct->manage_stock) {
+                        if (! $childProduct->manage_stock) {
                             continue;
                         }
 
@@ -176,12 +179,12 @@ class InventoryService
                         ? ProductVariant::lockForUpdate()->find($item->product_variant_id)
                         : Product::lockForUpdate()->find($item->product_id);
 
-                    if (!$stockItem) {
+                    if (! $stockItem) {
                         throw new \Exception("Product not found: {$item->getProductName()}");
                     }
 
                     // Skip if product doesn't manage stock
-                    if (!($stockItem->manage_stock ?? false)) {
+                    if (! ($stockItem->manage_stock ?? false)) {
                         continue;
                     }
 
@@ -211,7 +214,7 @@ class InventoryService
                 ->performedOn($order)
                 ->withProperties([
                     'order_id' => $order->id,
-                    'items' => $order->items->map(fn($item) => [
+                    'items' => $order->items->map(fn ($item) => [
                         'product_id' => $item->product_id,
                         'product_name' => $item->getProductName(),
                         'quantity' => $item->quantity,
@@ -234,21 +237,22 @@ class InventoryService
                 $productSnapshot = $item->product_snapshot ?? [];
                 $isBundleProduct = ($productSnapshot['type'] ?? null) === 'bundle';
 
-                if ($isBundleProduct && !empty($productSnapshot['bundle_contents'])) {
+                if ($isBundleProduct && ! empty($productSnapshot['bundle_contents'])) {
                     // For bundles, deduct stock from each child product
                     foreach ($productSnapshot['bundle_contents'] as $bundleChild) {
                         $childProduct = Product::lockForUpdate()->find($bundleChild['id']);
 
-                        if (!$childProduct) {
+                        if (! $childProduct) {
                             Log::warning('Bundle child product not found during stock deduction', [
                                 'order_id' => $order->id,
                                 'bundle_product' => $item->getProductName(),
                                 'child_id' => $bundleChild['id'],
                             ]);
+
                             continue;
                         }
 
-                        if (!$childProduct->manage_stock) {
+                        if (! $childProduct->manage_stock) {
                             continue;
                         }
 
@@ -267,6 +271,7 @@ class InventoryService
 
                         $childProduct->decrement('stock_quantity', $childQuantity);
                         $this->checkLowStock($childProduct);
+                        $this->checkOutOfStock($childProduct);
 
                         Log::info('Bundle child stock deducted', [
                             'order_id' => $order->id,
@@ -290,7 +295,7 @@ class InventoryService
                         ? ProductVariant::lockForUpdate()->find($item->product_variant_id)
                         : Product::lockForUpdate()->find($item->product_id);
 
-                    if (!$stockItem) {
+                    if (! $stockItem) {
                         Log::error('Stock item not found during deduction', [
                             'order_id' => $order->id,
                             'item_id' => $item->id,
@@ -314,8 +319,9 @@ class InventoryService
                         // Deduct the stock
                         $stockItem->decrement('stock_quantity', $item->quantity);
 
-                        // Check if stock is now low and send notification
+                        // Check stock levels and notify admin if thresholds crossed
                         $this->checkLowStock($stockItem);
+                        $this->checkOutOfStock($stockItem);
 
                         Log::info('Stock deducted', [
                             'order_id' => $order->id,
@@ -337,7 +343,7 @@ class InventoryService
                 ->performedOn($order)
                 ->withProperties([
                     'order_id' => $order->id,
-                    'items' => $order->items->map(fn($item) => [
+                    'items' => $order->items->map(fn ($item) => [
                         'product_id' => $item->product_id,
                         'product_name' => $item->getProductName(),
                         'quantity_deducted' => $item->quantity,
@@ -358,12 +364,12 @@ class InventoryService
                 $productSnapshot = $item->product_snapshot ?? [];
                 $isBundleProduct = ($productSnapshot['type'] ?? null) === 'bundle';
 
-                if ($isBundleProduct && !empty($productSnapshot['bundle_contents'])) {
+                if ($isBundleProduct && ! empty($productSnapshot['bundle_contents'])) {
                     // For bundles, release reservations from each child product
                     foreach ($productSnapshot['bundle_contents'] as $bundleChild) {
                         $childProduct = Product::find($bundleChild['id']);
 
-                        if (!$childProduct) {
+                        if (! $childProduct) {
                             continue;
                         }
 
@@ -385,7 +391,7 @@ class InventoryService
                         ? ProductVariant::find($item->product_variant_id)
                         : Product::find($item->product_id);
 
-                    if (!$stockItem) {
+                    if (! $stockItem) {
                         continue;
                     }
 
@@ -461,43 +467,70 @@ class InventoryService
      */
     private function checkLowStock($stockItem): void
     {
-        // Check both InventorySettings and legacy NotificationSettings flags
-        if (!$this->inventorySettings->notify_admin_low_stock && !$this->notificationSettings->notify_low_stock) {
+        if (! $this->notificationSettings->notify_low_stock) {
             return;
         }
 
-        // Only check for products (not variants)
         if ($stockItem instanceof ProductVariant) {
             return;
         }
 
-        // Only check if product manages stock
-        if (!$stockItem->manage_stock) {
+        if (! $stockItem->manage_stock) {
             return;
         }
 
         $currentStock = $stockItem->stock_quantity;
-        // Per-product threshold takes priority; fall back to global InventorySettings value
         $threshold = $stockItem->low_stock_threshold ?? $this->inventorySettings->low_stock_threshold;
 
-        // Send notification if stock just hit or went below threshold
         if ($currentStock <= $threshold && $currentStock > 0) {
             try {
-                $adminEmail = $this->notificationSettings->admin_notification_email
-                    ?? config('mail.from.address');
+                $staffUsers = User::staff()->get();
 
-                Notification::route('mail', $adminEmail)
-                    ->notify(new LowStockNotification($stockItem));
+                Notification::send($staffUsers, new LowStockNotification($stockItem));
 
-                Log::info('Low stock notification sent to admin', [
+                Log::info('Low stock notification sent to staff', [
                     'product_id' => $stockItem->id,
                     'sku' => $stockItem->sku,
                     'current_stock' => $currentStock,
                     'threshold' => $threshold,
-                    'admin_email' => $adminEmail,
+                    'staff_count' => $staffUsers->count(),
                 ]);
             } catch (\Throwable $e) {
-                Log::error('Failed to send low stock notification to admin', [
+                Log::error('Failed to send low stock notification', [
+                    'product_id' => $stockItem->id,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    private function checkOutOfStock($stockItem): void
+    {
+        if (! $this->notificationSettings->notify_out_of_stock) {
+            return;
+        }
+
+        if ($stockItem instanceof ProductVariant) {
+            return;
+        }
+
+        if (! $stockItem->manage_stock) {
+            return;
+        }
+
+        if ($stockItem->stock_quantity <= 0) {
+            try {
+                $staffUsers = User::staff()->get();
+
+                Notification::send($staffUsers, new OutOfStockNotification($stockItem));
+
+                Log::info('Out of stock notification sent to staff', [
+                    'product_id' => $stockItem->id,
+                    'sku' => $stockItem->sku,
+                    'staff_count' => $staffUsers->count(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to send out of stock notification', [
                     'product_id' => $stockItem->id,
                     'exception' => $e->getMessage(),
                 ]);

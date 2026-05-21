@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DeliveryOrderStatus;
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,41 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DeliveryOrder extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::updated(function (DeliveryOrder $deliveryOrder) {
+            if (! $deliveryOrder->wasChanged('status')) {
+                return;
+            }
+
+            $order = $deliveryOrder->order;
+
+            if (! $order) {
+                return;
+            }
+
+            $status = $deliveryOrder->status;
+
+            if (in_array($status, [DeliveryOrderStatus::DELIVERED, DeliveryOrderStatus::COLLECTED])) {
+                if ($order->status->canTransitionTo(OrderStatus::DELIVERED)) {
+                    $order->transitionTo(
+                        OrderStatus::DELIVERED,
+                        notes: 'Automatically updated from delivery confirmation.',
+                        changedByType: 'system',
+                    );
+                }
+            } elseif ($status === DeliveryOrderStatus::RETURNED) {
+                if ($order->status->canTransitionTo(OrderStatus::RETURNED)) {
+                    $order->transitionTo(
+                        OrderStatus::RETURNED,
+                        notes: 'Automatically updated from delivery return.',
+                        changedByType: 'system',
+                    );
+                }
+            }
+        });
+    }
 
     protected $fillable = [
         'order_id',
@@ -47,6 +83,11 @@ class DeliveryOrder extends Model
     // ===============================================
     // RELATIONSHIPS
     // ===============================================
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
 
     public function logisticsProvider(): BelongsTo
     {

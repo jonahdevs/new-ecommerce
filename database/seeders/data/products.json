@@ -10013,28 +10013,175 @@
         "short_description": "Test variable product — sold in color × size combinations. Each variant has its own SKU, price, and stock.",
         "description": "<p>This is a <strong>variable product</strong> used to test the variable product type. It exposes color (Red, Blue, Green) × size (S, M, L) combinations, each managed as an independent variant.</p>",
         "attributes": [
-            {"slug": "color", "values": ["red", "blue", "green"], "is_variation_attribute": true, "is_visible": true},
-            {"slug": "size", "values": ["s", "m", "l"], "is_variation_attribute": true, "is_visible": true}
+            {
+                "slug": "color",
+                "values": [
+                    "red",
+                    "blue",
+                    "green"
+                ],
+                "is_variation_attribute": true,
+                "is_visible": true
+            },
+            {
+                "slug": "size",
+                "values": [
+                    "s",
+                    "m",
+                    "l"
+                ],
+                "is_variation_attribute": true,
+                "is_visible": true
+            }
         ],
         "variants": [
-            {"sku": "TEST/VAR/001-RED-S", "name": "Red / Small", "price": 1500, "stock_quantity": 20, "is_default": true,
-                "attribute_values": [{"attribute": "color", "value": "red"}, {"attribute": "size", "value": "s"}]},
-            {"sku": "TEST/VAR/001-RED-M", "name": "Red / Medium", "price": 1500, "stock_quantity": 25,
-                "attribute_values": [{"attribute": "color", "value": "red"}, {"attribute": "size", "value": "m"}]},
-            {"sku": "TEST/VAR/001-RED-L", "name": "Red / Large", "price": 1600, "stock_quantity": 15,
-                "attribute_values": [{"attribute": "color", "value": "red"}, {"attribute": "size", "value": "l"}]},
-            {"sku": "TEST/VAR/001-BLU-S", "name": "Blue / Small", "price": 1500, "stock_quantity": 18,
-                "attribute_values": [{"attribute": "color", "value": "blue"}, {"attribute": "size", "value": "s"}]},
-            {"sku": "TEST/VAR/001-BLU-M", "name": "Blue / Medium", "price": 1500, "sale_price": 1299, "stock_quantity": 30,
-                "attribute_values": [{"attribute": "color", "value": "blue"}, {"attribute": "size", "value": "m"}]},
-            {"sku": "TEST/VAR/001-BLU-L", "name": "Blue / Large", "price": 1600, "stock_quantity": 12,
-                "attribute_values": [{"attribute": "color", "value": "blue"}, {"attribute": "size", "value": "l"}]},
-            {"sku": "TEST/VAR/001-GRN-S", "name": "Green / Small", "price": 1500, "stock_quantity": 0, "stock_status": "out_of_stock",
-                "attribute_values": [{"attribute": "color", "value": "green"}, {"attribute": "size", "value": "s"}]},
-            {"sku": "TEST/VAR/001-GRN-M", "name": "Green / Medium", "price": 1500, "stock_quantity": 22,
-                "attribute_values": [{"attribute": "color", "value": "green"}, {"attribute": "size", "value": "m"}]},
-            {"sku": "TEST/VAR/001-GRN-L", "name": "Green / Large", "price": 1600, "stock_quantity": 10,
-                "attribute_values": [{"attribute": "color", "value": "green"}, {"attribute": "size", "value": "l"}]}
+            {
+                "sku": "TEST/VAR/001-RED-S",
+                "name": "Red / Small",
+                "price": 1500,
+                "stock_quantity": 20,
+                "is_default": true,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "red"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "s"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-RED-M",
+                "name": "Red / Medium",
+                "price": 1500,
+                "stock_quantity": 25,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "red"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "m"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-RED-L",
+                "name": "Red / Large",
+                "price": 1600,
+                "stock_quantity": 15,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "red"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "l"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-BLU-S",
+                "name": "Blue / Small",
+                "price": 1500,
+                "stock_quantity": 18,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "blue"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "s"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-BLU-M",
+                "name": "Blue / Medium",
+                "price": 1500,
+                "sale_price": 1299,
+                "stock_quantity": 30,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "blue"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "m"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-BLU-L",
+                "name": "Blue / Large",
+                "price": 1600,
+                "stock_quantity": 12,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "blue"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "l"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-GRN-S",
+                "name": "Green / Small",
+                "price": 1500,
+                "stock_quantity": 0,
+                "stock_status": "out_of_stock",
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "green"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "s"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-GRN-M",
+                "name": "Green / Medium",
+                "price": 1500,
+                "stock_quantity": 22,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "green"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "m"
+                    }
+                ]
+            },
+            {
+                "sku": "TEST/VAR/001-GRN-L",
+                "name": "Green / Large",
+                "price": 1600,
+                "stock_quantity": 10,
+                "attribute_values": [
+                    {
+                        "attribute": "color",
+                        "value": "green"
+                    },
+                    {
+                        "attribute": "size",
+                        "value": "l"
+                    }
+                ]
+            }
         ]
     },
     {
@@ -10049,9 +10196,18 @@
         "short_description": "Test grouped product — three independently-purchasable children shown together on one page.",
         "description": "<p>This is a <strong>grouped product</strong>. The customer can add any of the child products to their cart in any quantity. Pricing is shown as a range derived from the children.</p>",
         "grouped_children": [
-            {"sku": "TEST/SIMPLE/001", "quantity": 1},
-            {"sku": "TEST/SIMPLE/002", "quantity": 1},
-            {"sku": "TEST/SIMPLE/003", "quantity": 1}
+            {
+                "sku": "TEST/SIMPLE/001",
+                "quantity": 1
+            },
+            {
+                "sku": "TEST/SIMPLE/002",
+                "quantity": 1
+            },
+            {
+                "sku": "TEST/SIMPLE/003",
+                "quantity": 1
+            }
         ]
     },
     {
@@ -10066,9 +10222,18 @@
         "short_description": "Test bundle product — fixed-price kit of three items, sold as one SKU at a discount versus buying separately.",
         "description": "<p>This is a <strong>bundle product</strong>. The customer pays a single bundled price (KES 6,500) instead of the sum of the children (KES 7,500). The platform calculates the savings percentage automatically.</p>",
         "bundle_children": [
-            {"sku": "TEST/SIMPLE/001", "quantity": 1},
-            {"sku": "TEST/SIMPLE/002", "quantity": 1},
-            {"sku": "TEST/SIMPLE/003", "quantity": 1}
+            {
+                "sku": "TEST/SIMPLE/001",
+                "quantity": 1
+            },
+            {
+                "sku": "TEST/SIMPLE/002",
+                "quantity": 1
+            },
+            {
+                "sku": "TEST/SIMPLE/003",
+                "quantity": 1
+            }
         ]
     },
     {

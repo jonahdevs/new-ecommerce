@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Order;
 use App\Models\Payment;
+use App\Settings\CustomerNotificationSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -22,12 +23,23 @@ class RefundProcessedNotification extends Notification implements ShouldQueue
         public readonly Payment $payment,
         public readonly float $refundAmount,
         public readonly string $refundReason,
-    ) {
-    }
+    ) {}
 
-    public function via(): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if (! app(CustomerNotificationSettings::class)->order_refunded) {
+            return $channels;
+        }
+
+        $prefs = $notifiable->notification_preferences ?? [];
+
+        if ($prefs['order_updates']['email'] ?? true) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(): MailMessage
@@ -52,7 +64,7 @@ class RefundProcessedNotification extends Notification implements ShouldQueue
             'reference' => $this->order->reference,
             'refund_amount' => $this->refundAmount,
             'title' => 'Refund Processed',
-            'message' => "A refund of " . format_currency($this->refundAmount) . " has been processed for order {$this->order->reference}.",
+            'message' => 'A refund of '.format_currency($this->refundAmount)." has been processed for order {$this->order->reference}.",
             'url' => route('customer.orders.show', $this->order),
         ];
     }

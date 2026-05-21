@@ -26,9 +26,15 @@ class QuoteAcceptedNotification extends Notification implements ShouldQueue
         public readonly Order $order,
     ) {}
 
-    public function via(): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if ($notifiable->wantsNotification('notify_quote_accepted')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(): MailMessage

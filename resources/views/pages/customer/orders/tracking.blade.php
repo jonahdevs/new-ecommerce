@@ -87,7 +87,6 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
             @php
                 $mainPath = [
                     OrderStatus::PENDING,
-                    OrderStatus::CONFIRMED,
                     OrderStatus::PROCESSING,
                     OrderStatus::SHIPPED,
                     OrderStatus::DELIVERED,
@@ -115,13 +114,9 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
                         'label' => 'Order Placed',
                         'desc' => 'Your order has been placed successfully.',
                     ],
-                    'confirmed' => [
-                        'label' => 'Payment Confirmed',
-                        'desc' => 'Your payment was received and your order is confirmed.',
-                    ],
                     'processing' => [
                         'label' => 'Being Prepared',
-                        'desc' => 'Your items are being packed and getting ready.',
+                        'desc' => 'Your payment was received and your items are being packed.',
                     ],
                     'shipped' => [
                         'label' => 'Out for Delivery',

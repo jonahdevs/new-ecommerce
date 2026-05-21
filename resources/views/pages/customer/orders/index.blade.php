@@ -42,7 +42,7 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->orders()
-            ->whereIn('status', [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING, OrderStatus::SHIPPED, OrderStatus::DELIVERED])
+            ->whereIn('status', [OrderStatus::PENDING, OrderStatus::PROCESSING, OrderStatus::SHIPPED, OrderStatus::DELIVERED])
             ->with([
                 'items' => fn($q) => $q
                     ->select(['id', 'order_id', 'product_id', 'product_snapshot'])

@@ -17,13 +17,13 @@ class NotificationSettingsForm extends Form
 
     public bool $notify_failed_payment = true;
 
+    public bool $notify_out_of_stock = true;
+
     public bool $notify_new_quote = true;
 
     public bool $notify_quote_accepted = true;
 
     public bool $notify_quote_rejected = false;
-
-    public string $admin_notification_email = '';
 
     public function rules(): array
     {
@@ -33,10 +33,10 @@ class NotificationSettingsForm extends Form
             'notify_new_review' => ['boolean'],
             'notify_new_user' => ['boolean'],
             'notify_failed_payment' => ['boolean'],
+            'notify_out_of_stock' => ['boolean'],
             'notify_new_quote' => ['boolean'],
             'notify_quote_accepted' => ['boolean'],
             'notify_quote_rejected' => ['boolean'],
-            'admin_notification_email' => ['nullable', 'email', 'max:255'],
         ];
     }
 
@@ -47,10 +47,10 @@ class NotificationSettingsForm extends Form
         $this->notify_new_review = $settings->notify_new_review;
         $this->notify_new_user = $settings->notify_new_user;
         $this->notify_failed_payment = $settings->notify_failed_payment;
+        $this->notify_out_of_stock = $settings->notify_out_of_stock;
         $this->notify_new_quote = $settings->notify_new_quote;
         $this->notify_quote_accepted = $settings->notify_quote_accepted;
         $this->notify_quote_rejected = $settings->notify_quote_rejected;
-        $this->admin_notification_email = $settings->admin_notification_email ?? '';
     }
 
     public function save(NotificationSettings $settings): void
@@ -62,10 +62,10 @@ class NotificationSettingsForm extends Form
         $settings->notify_new_review = $this->notify_new_review;
         $settings->notify_new_user = $this->notify_new_user;
         $settings->notify_failed_payment = $this->notify_failed_payment;
+        $settings->notify_out_of_stock = $this->notify_out_of_stock;
         $settings->notify_new_quote = $this->notify_new_quote;
         $settings->notify_quote_accepted = $this->notify_quote_accepted;
         $settings->notify_quote_rejected = $this->notify_quote_rejected;
-        $settings->admin_notification_email = $this->admin_notification_email ?: null;
 
         $settings->save();
     }

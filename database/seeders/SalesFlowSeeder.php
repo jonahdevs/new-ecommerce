@@ -193,25 +193,15 @@ class SalesFlowSeeder extends Seeder
         }
         $this->command->info('    ✓ 5 pending orders');
 
-        // Confirmed orders (paid, awaiting processing)
-        for ($i = 0; $i < 8; $i++) {
-            Order::factory()
-                ->confirmed()
-                ->withItems(rand(1, 5))
-                ->withPayment()
-                ->create();
-        }
-        $this->command->info('    ✓ 8 confirmed orders');
-
         // Processing orders
-        for ($i = 0; $i < 6; $i++) {
+        for ($i = 0; $i < 14; $i++) {
             Order::factory()
                 ->processing()
                 ->withItems(rand(1, 4))
                 ->withPayment()
                 ->create();
         }
-        $this->command->info('    ✓ 6 processing orders');
+        $this->command->info('    ✓ 14 processing orders');
 
         // Shipped orders
         for ($i = 0; $i < 10; $i++) {
@@ -255,7 +245,7 @@ class SalesFlowSeeder extends Seeder
 
             // Vary the order status
             $statuses = [
-                OrderStatus::CONFIRMED,
+                OrderStatus::PROCESSING,
                 OrderStatus::PROCESSING,
                 OrderStatus::SHIPPED,
                 OrderStatus::DELIVERED,
@@ -266,7 +256,7 @@ class SalesFlowSeeder extends Seeder
 
             $order->update(['status' => $status->value]);
 
-            if (in_array($status, [OrderStatus::CONFIRMED, OrderStatus::PROCESSING, OrderStatus::SHIPPED, OrderStatus::DELIVERED])) {
+            if (in_array($status, [OrderStatus::PROCESSING, OrderStatus::SHIPPED, OrderStatus::DELIVERED])) {
                 $this->createDeliveryOrder($order, $status);
             }
         }
@@ -455,7 +445,7 @@ class SalesFlowSeeder extends Seeder
             'user_id' => $quote->user_id,
             'quote_id' => $quote->id,
             'reference' => Order::generateReference(),
-            'status' => OrderStatus::CONFIRMED->value,
+            'status' => OrderStatus::PROCESSING->value,
             'payment_status' => PaymentStatus::PAID->value,
             'currency' => $quote->currency,
             'subtotal_cents' => $quote->subtotal_cents,
@@ -528,7 +518,6 @@ class SalesFlowSeeder extends Seeder
             ->first();
 
         $deliveryStatus = match ($orderStatus) {
-            OrderStatus::CONFIRMED => DeliveryOrderStatus::PENDING,
             OrderStatus::PROCESSING => fake()->randomElement([DeliveryOrderStatus::PENDING, DeliveryOrderStatus::PICKED_UP]),
             OrderStatus::SHIPPED => fake()->randomElement([DeliveryOrderStatus::IN_TRANSIT, DeliveryOrderStatus::OUT_FOR_DELIVERY]),
             OrderStatus::DELIVERED => DeliveryOrderStatus::DELIVERED,

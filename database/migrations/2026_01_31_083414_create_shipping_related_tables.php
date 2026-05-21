@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Schema;
 //                             delivered | failed | at_station | collected |
 //                             returning | returned | cancelled
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -97,7 +98,6 @@ return new class extends Migration {
             $table->decimal('lat_center', 10, 7)->nullable();
             $table->decimal('lng_center', 10, 7)->nullable();
             $table->timestamps();
-
 
             $table->index('shipping_zone_id');
         });
@@ -459,7 +459,6 @@ return new class extends Migration {
 
             $table->boolean('is_default')->default(false);
 
-
             $table->timestamps();
 
             $table->index('user_id');
@@ -530,8 +529,8 @@ return new class extends Migration {
             // Update to ->constrained('orders') when your orders table exists
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->foreignId('logistics_provider_id')->nullable()->constrained('logistics_providers')->restrictOnDelete();
-            $table->foreignId('shipping_method_id')->constrained('shipping_methods')->restrictOnDelete();
-            $table->foreignId('shipping_zone_id')->constrained('shipping_zones')->restrictOnDelete();
+            $table->foreignId('shipping_method_id')->nullable()->constrained('shipping_methods')->nullOnDelete();
+            $table->foreignId('shipping_zone_id')->nullable()->constrained('shipping_zones')->nullOnDelete();
 
             // -- Rate references (one will be set depending on method type) --
             // These are nullable by design: cost_breakdown JSON is the source
