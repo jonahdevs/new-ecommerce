@@ -106,7 +106,7 @@ new #[Layout('layouts.customer')] class extends Component {
                 </div>
                 <div class="text-[12px] text-on-surface-variant leading-[1.7]">
                     {{ $user->defaultAddress->address }}<br>
-                    {{ $user->defaultAddress->area?->name }}, {{ $user->defaultAddress->county?->name }}<br>
+                    {{ $user->defaultAddress->subCounty?->name }}, {{ $user->defaultAddress->county?->name }}<br>
                     {{ $user->defaultAddress->phone_number }}
                 </div>
             @else

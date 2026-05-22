@@ -18,7 +18,7 @@ class PickupStationForm extends Form
 
     public string|int $county_id = '';
 
-    public string|int $area_id = '';
+    public string|int $sub_county_id = '';
 
     public string $address = '';
 
@@ -47,7 +47,7 @@ class PickupStationForm extends Form
             'name' => 'required|string|max:150',
             'code' => $uniqueCode,
             'county_id' => 'required|exists:counties,id',
-            'area_id' => 'nullable|exists:areas,id',
+            'sub_county_id' => 'nullable|exists:sub_counties,id',
             'address' => 'required|string|max:500',
             'phone' => 'nullable|string|max:20',
             'operating_hours' => 'nullable|string|max:200',
@@ -75,7 +75,7 @@ class PickupStationForm extends Form
         $this->name = $station->name;
         $this->code = $station->code;
         $this->county_id = $station->county_id;
-        $this->area_id = $station->area_id ?? '';
+        $this->sub_county_id = $station->sub_county_id ?? '';
         $this->address = $station->address;
         $this->phone = $station->phone ?? '';
         $this->operating_hours = $station->operating_hours ?? '';
@@ -108,7 +108,7 @@ class PickupStationForm extends Form
             'name' => $this->name,
             'code' => $this->code,
             'county_id' => $this->county_id,
-            'area_id' => $this->area_id ?: null,
+            'sub_county_id' => $this->sub_county_id ?: null,
             'address' => $this->address,
             'phone' => $this->phone ?: null,
             'operating_hours' => $this->operating_hours ?: null,

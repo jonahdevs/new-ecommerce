@@ -41,7 +41,7 @@ class PusEngine
         // 1. Resolve the flat line-haul rate for this weight + zone
         $rate = $this->resolveRate($method, $zone, $weightKg);
 
-        if (!$rate) {
+        if (! $rate) {
             return null;
         }
 
@@ -95,7 +95,7 @@ class PusEngine
 
         $rate = ShippingRate::find($option->shippingRateId);
 
-        if (!$rate) {
+        if (! $rate) {
             return $option;
         }
 
@@ -135,8 +135,7 @@ class PusEngine
             ->where('status', 'active')
             ->where('min_weight', '<=', $weightKg)
             ->where(
-                fn($q) =>
-                $q->whereNull('max_weight')
+                fn ($q) => $q->whereNull('max_weight')
                     ->orWhere('max_weight', '>=', $weightKg)
             )
             ->orderBy('min_weight')
@@ -152,7 +151,7 @@ class PusEngine
             ->with('county.shippingZone')
             ->first();
 
-        if (!$primaryStation) {
+        if (! $primaryStation) {
             return $customerZone;
         }
 
@@ -161,7 +160,7 @@ class PusEngine
 
     private function resolveStations(?int $countyId): Collection
     {
-        return PickupStation::with(['county', 'area'])
+        return PickupStation::with(['county', 'subCounty'])
             ->where('status', 'active')
             ->where(function ($query) use ($countyId) {
                 $query->where('is_primary', true);
@@ -190,8 +189,7 @@ class PusEngine
             ->where('status', 'active')
             ->where('addon_type', 'pus')
             ->where(
-                fn($q) =>
-                $q->whereNull('pickup_station_id')
+                fn ($q) => $q->whereNull('pickup_station_id')
                     ->orWhere('pickup_station_id', $stationId)
             )
             ->sum('addon_amount');

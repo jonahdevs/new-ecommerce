@@ -496,10 +496,10 @@ class QuotationService
 
         // Resolve shipping address from user's default address
         $address = $user?->addresses()
-            ->with(['county', 'area', 'shippingZone'])
+            ->with(['county', 'subCounty', 'shippingZone'])
             ->where('is_default', true)
             ->first()
-            ?? $user?->addresses()->with(['county', 'area', 'shippingZone'])->oldest()->first();
+            ?? $user?->addresses()->with(['county', 'subCounty', 'shippingZone'])->oldest()->first();
 
         $addressSnapshot = $address ? [
             'first_name' => $address->first_name,
@@ -507,7 +507,7 @@ class QuotationService
             'full_name' => $address->full_name,
             'phone_number' => $address->phone_number,
             'address' => $address->address,
-            'area' => $address->area?->name,
+            'area' => $address->subCounty?->name,
             'county' => $address->county?->name,
             'zone' => $address->shippingZone?->name,
         ] : [

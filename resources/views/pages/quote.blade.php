@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\County;
-use App\Models\Area;
+use App\Models\SubCounty;
 use App\Services\QuoteBasketService;
 use App\Services\QuotationService;
 use Illuminate\Support\Facades\Auth;
@@ -19,8 +19,8 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     #[Validate('nullable|integer|exists:counties,id')]
     public ?int $selectedCounty = null;
 
-    #[Validate('nullable|integer|exists:areas,id')]
-    public ?int $selectedArea = null;
+    #[Validate('nullable|integer|exists:sub_counties,id')]
+    public ?int $selectedSubCounty = null;
 
     #[Validate('nullable|string|max:1000')]
     public string $customerNotes = '';
@@ -73,27 +73,28 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
     }
 
     #[Computed]
-    public function areas()
+    public function subCounties()
     {
-        if (!$this->selectedCounty) {
+        if (! $this->selectedCounty) {
             return collect();
         }
-        return Area::where('county_id', $this->selectedCounty)->orderBy('name')->get(['id', 'name']);
+
+        return SubCounty::where('county_id', $this->selectedCounty)->orderBy('name')->get(['id', 'name']);
     }
 
     public function updatedDeliveryType(): void
     {
         if ($this->deliveryType === 'pickup') {
-            $this->selectedCounty = null;
-            $this->selectedArea = null;
-            unset($this->areas);
+            $this->selectedCounty  = null;
+            $this->selectedSubCounty = null;
+            unset($this->subCounties);
         }
     }
 
     public function updatedSelectedCounty(): void
     {
-        $this->selectedArea = null;
-        unset($this->areas);
+        $this->selectedSubCounty = null;
+        unset($this->subCounties);
     }
 
     public function updateQuantity(int $productId, ?int $variantId, int $quantity): void
@@ -138,7 +139,7 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
         try {
             $county = $this->selectedCounty ? County::find($this->selectedCounty)?->name : null;
 
-            $area = $this->selectedArea ? Area::find($this->selectedArea)?->name : null;
+            $area = $this->selectedSubCounty ? SubCounty::find($this->selectedSubCounty)?->name : null;
 
             $quote = $quotationService->createFromBasket(app(QuoteBasketService::class), [
                 'delivery_type' => $this->deliveryType,
@@ -416,12 +417,12 @@ new #[Defer] #[Layout('layouts.guest')] class extends Component {
                                 </select>
                             </x-customer.form-field>
 
-                            <x-customer.form-field label="Area" name="selectedArea">
-                                @if ($this->areas->isNotEmpty())
-                                    <select wire:model="selectedArea" class="customer-input {{ $selectArrow }}">
-                                        <option value="">Select area...</option>
-                                        @foreach ($this->areas as $area)
-                                            <option value="{{ $area->id }}">{{ $area->name }}</option>
+                            <x-customer.form-field label="Sub-County" name="selectedSubCounty">
+                                @if ($this->subCounties->isNotEmpty())
+                                    <select wire:model="selectedSubCounty" class="customer-input {{ $selectArrow }}">
+                                        <option value="">Select sub-county...</option>
+                                        @foreach ($this->subCounties as $subCounty)
+                                            <option value="{{ $subCounty->id }}">{{ $subCounty->name }}</option>
                                         @endforeach
                                     </select>
                                 @else

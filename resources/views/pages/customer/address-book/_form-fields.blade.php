@@ -286,9 +286,7 @@ countyName = {{ $countyNameInit }};"
                 pin.addListener('dragend', (e) => {
                     const lat = e.latLng.lat();
                     const lng = e.latLng.lng();
-                    $wire.set('form.latitude', lat);
-                    $wire.set('form.longitude', lng);
-                    reverseGeocode(lat, lng);
+                    reverseGeocode(lat, lng, (countyRaw) => dropPin(lat, lng, countyRaw));
                 });
             }
 
@@ -301,7 +299,7 @@ countyName = {{ $countyNameInit }};"
             infoWindow.open({ map, anchor: pin });
         }
 
-        function dispatchCounty(countyRaw, areaRaw) {
+        function fallbackCountyFromName(countyRaw) {
             if (!countyRaw) {
                 window.dispatchEvent(new CustomEvent('county-resolved', { detail: { resolved: false, name: '' } }));
                 return;
@@ -310,22 +308,32 @@ countyName = {{ $countyNameInit }};"
                 window.dispatchEvent(new CustomEvent('county-resolved', {
                     detail: { resolved: !!result, name: result?.name || '' }
                 }));
-                if (result && areaRaw) {
-                    $wire.call('resolveAreaFromName', areaRaw);
+            });
+        }
+
+        function dropPin(lat, lng, geocodedCountyRaw) {
+            $wire.call('pinDropped', lat, lng).then(result => {
+                if (result.countyResolved) {
+                    window.dispatchEvent(new CustomEvent('county-resolved', {
+                        detail: { resolved: true, name: result.countyName }
+                    }));
+                } else {
+                    fallbackCountyFromName(geocodedCountyRaw || '');
                 }
             });
         }
 
-        // ── Reverse geocoding (Google Geocoder) ───────────────────────────────────
+        // ── Reverse geocoding (Google Geocoder) ─── display text only ─────────────
 
-        function reverseGeocode(lat, lng) {
+        function reverseGeocode(lat, lng, onCountyRaw) {
             if (!geocoder) { geocoder = new google.maps.Geocoder(); }
 
             geocoder.geocode({ location: { lat, lng } }, (results, status) => {
                 if (status !== 'OK' || !results?.length) {
                     const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    showInfoWindow(fallback);
                     window.dispatchEvent(new CustomEvent('map-pin-placed', { detail: { text: fallback } }));
-                    window.dispatchEvent(new CustomEvent('county-resolved', { detail: { resolved: false, name: '' } }));
+                    if (onCountyRaw) { onCountyRaw(''); }
                     return;
                 }
 
@@ -333,8 +341,6 @@ countyName = {{ $countyNameInit }};"
                 const get = (type) => comps.find(c => c.types.includes(type))?.long_name || '';
 
                 const countyRaw = get('administrative_area_level_1');
-                const areaRaw = get('sublocality_level_1') || get('locality') || get('administrative_area_level_2');
-
                 const road = get('route') || get('establishment') || get('point_of_interest');
                 const suburb = get('sublocality_level_1') || get('neighborhood');
                 const city = get('locality');
@@ -345,7 +351,7 @@ countyName = {{ $countyNameInit }};"
 
                 showInfoWindow(shortDisp);
                 window.dispatchEvent(new CustomEvent('map-pin-placed', { detail: { text: shortDisp } }));
-                dispatchCounty(countyRaw, areaRaw);
+                if (onCountyRaw) { onCountyRaw(countyRaw); }
             });
         }
 
@@ -378,9 +384,7 @@ countyName = {{ $countyNameInit }};"
                     const lat = e.latLng.lat();
                     const lng = e.latLng.lng();
                     placePin(lat, lng);
-                    $wire.set('form.latitude', lat);
-                    $wire.set('form.longitude', lng);
-                    reverseGeocode(lat, lng);
+                    reverseGeocode(lat, lng, (countyRaw) => dropPin(lat, lng, countyRaw));
                 });
             }
 
@@ -391,7 +395,7 @@ countyName = {{ $countyNameInit }};"
                         map.setCenter({ lat: state.pin.lat, lng: state.pin.lng });
                         map.setZoom(15);
                         placePin(state.pin.lat, state.pin.lng);
-                        reverseGeocode(state.pin.lat, state.pin.lng);
+                        reverseGeocode(state.pin.lat, state.pin.lng, null);
                     } else {
                         if (pin) { pin.setMap(null); pin = null; }
                         map.setCenter(KENYA_CENTER);
@@ -428,7 +432,6 @@ countyName = {{ $countyNameInit }};"
                 const get = (type) => comps.find(c => c.types.includes(type))?.long_name || '';
 
                 const countyRaw = get('administrative_area_level_1');
-                const areaRaw = get('sublocality_level_1') || get('locality') || get('administrative_area_level_2');
                 const city = get('locality') || get('administrative_area_level_2') || '';
                 const displayText = place.name
                     ? [place.name, city].filter(Boolean).join(', ')
@@ -436,12 +439,9 @@ countyName = {{ $countyNameInit }};"
 
                 if (map) { map.setCenter({ lat, lng }); map.setZoom(16); }
                 placePin(lat, lng);
-                $wire.set('form.latitude', lat);
-                $wire.set('form.longitude', lng);
                 showInfoWindow(displayText);
-
                 window.dispatchEvent(new CustomEvent('map-pin-placed', { detail: { text: displayText } }));
-                dispatchCounty(countyRaw, areaRaw);
+                dropPin(lat, lng, countyRaw);
             });
         }
 

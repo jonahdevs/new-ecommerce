@@ -10,7 +10,6 @@ use App\Enums\ShippingMethodStatus;
 use App\Enums\ShippingRateAddonStatus;
 use App\Enums\ShippingRateStatus;
 use App\Enums\ShippingZoneStatus;
-use App\Models\Area;
 use App\Models\County;
 use App\Models\FreeShippingRule;
 use App\Models\LogisticsProvider;
@@ -75,9 +74,6 @@ class ShippingSeeder extends Seeder
 
             $this->command->info('🎁 Creating free shipping rules...');
             $this->createFreeShippingRules($zones, $methods);
-
-            $this->command->info('🌍 Assigning Greater Nairobi delivery areas...');
-            $this->assignNairobiExtendedAreas($zones);
 
             DB::commit();
             $this->command->info('✅ Successfully seeded all shipping data!');
@@ -202,19 +198,16 @@ class ShippingSeeder extends Seeder
     }
 
     // =========================================================================
-    //  Counties & Areas
+    //  Counties
     //
     //  Each county is assigned the zone that matches its `region` key from
-    //  the JSON. Areas get shipping_zone_id = null so they fall back to
-    //  their county's zone by default. Set an area's shipping_zone_id
-    //  explicitly only when it needs to override its county's zone
-    //  (e.g. a border town served by a different rate bracket).
+    //  the JSON. Sub-county zone overrides are managed via the admin UI
+    //  after CountyCoordinatesSeeder seeds all 290 sub-county boundaries.
     // =========================================================================
 
     private function processCounties(array $counties, array $zones): void
     {
         $countyCount = 0;
-        $areaCount = 0;
 
         foreach ($counties as $countyData) {
             $regionKey = $this->resolveZoneKey($countyData['region']);
@@ -225,7 +218,7 @@ class ShippingSeeder extends Seeder
                 continue;
             }
 
-            $county = County::create([
+            County::create([
                 'name' => $countyData['name'],
                 'code' => $countyData['number'],
                 'shipping_zone_id' => $zones[$regionKey]->id,
@@ -233,20 +226,10 @@ class ShippingSeeder extends Seeder
 
             $countyCount++;
 
-            foreach (array_unique($countyData['main_towns'] ?? []) as $town) {
-                Area::create([
-                    'name' => $town,
-                    'county_id' => $county->id,
-                    'shipping_zone_id' => null,
-                ]);
-                $areaCount++;
-            }
-
-            $townCount = count(array_unique($countyData['main_towns'] ?? []));
-            $this->command->info("  ✓ {$countyData['number']} — {$countyData['name']} ({$townCount} areas) → {$regionKey}");
+            $this->command->info("  ✓ {$countyData['number']} — {$countyData['name']} → {$regionKey}");
         }
 
-        $this->command->info("📊 {$countyCount} counties, {$areaCount} areas created");
+        $this->command->info("📊 {$countyCount} counties created");
     }
 
     // =========================================================================
@@ -385,17 +368,13 @@ class ShippingSeeder extends Seeder
             return;
         }
 
-        $embakasi = Area::where('county_id', $nairobi->id)
-            ->where('name', 'like', '%Embakasi%')
-            ->first();
-
         $stations = [
             [
                 'name' => 'Nairobi Pickup — Syokimau',
                 'code' => 'nbo-syokimau',
                 'logistics_provider_id' => $provider->id,
                 'county_id' => $nairobi->id,
-                'area_id' => $embakasi?->id,
+                'sub_county_id' => null,
                 'address' => 'Off Old Mombasa Road, before the Nairobi SGR Terminus',
                 'phone' => '+254712345678',
                 'operating_hours' => 'Mon–Fri: 8:00 AM – 8:00 PM, Sat: 8:00 AM – 1:00 PM, Sun: Closed',
@@ -411,95 +390,6 @@ class ShippingSeeder extends Seeder
             PickupStation::create($station);
             $this->command->info("  ✓ Created station: {$station['name']}");
         }
-    }
-
-    // =========================================================================
-    //  Free Shipping Rules
-    //
-    //  Nairobi free shipping is ACTIVE with min_order_amount = 0, meaning
-    //  every order qualifies regardless of basket size. Both methods get
-    //  their own rule so the resolver can match on method + zone.
-    //
-    //  No max_weight cap — the free delivery promise is unconditional for now.
-    //  Set max_weight when you want to exclude heavy shipments from the offer.
-    //
-    //  The nationwide rule is kept INACTIVE as a placeholder for future use.
-    // =========================================================================
-
-    // =========================================================================
-    //  Greater Nairobi Extended Areas
-    //
-    //  Specific areas in neighbouring counties (Machakos, Kajiado, Kiambu)
-    //  that fall within Sheffield's free-delivery catchment are assigned the
-    //  NAIROBI shipping zone. This overrides the county's default UPCOUNTRY
-    //  zone via area.shipping_zone_id, which Address::resolveShippingZone()
-    //  checks first before falling back to the county zone.
-    //
-    //  To add more areas later: add a row to the relevant county array.
-    //  To promote an entire county: update its shipping_zone_id directly.
-    // =========================================================================
-
-    private function assignNairobiExtendedAreas(array $zones): void
-    {
-        $nairobiZone = $zones['NAIROBI'];
-
-        // Define the catchment by county → list of area names.
-        // Names are matched case-insensitively; unmatched areas are created.
-        $catchment = [
-            'Machakos' => [
-                'Athi River',
-                'Mlolongo',
-                'Syokimau',
-            ],
-            'Kajiado' => [
-                'Ongata Rongai',
-                'Kitengela',
-                'Ngong',
-            ],
-            'Kiambu' => [
-                'Ruiru',
-                'Kamakis',
-                'Two Rivers',
-                'Ngoigwa',
-                'Jomoko',
-                'Tatu City',
-            ],
-        ];
-
-        $updated = 0;
-        $created = 0;
-
-        foreach ($catchment as $countyName => $areaNames) {
-            $county = County::where('name', $countyName)->first();
-
-            if (! $county) {
-                $this->command->warn("  ⚠ County not found: {$countyName} — skipping");
-
-                continue;
-            }
-
-            foreach ($areaNames as $areaName) {
-                $area = Area::where('county_id', $county->id)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($areaName)])
-                    ->first();
-
-                if ($area) {
-                    $area->update(['shipping_zone_id' => $nairobiZone->id]);
-                    $updated++;
-                    $this->command->info("  ✓ {$county->name} → {$area->name} (zone overridden)");
-                } else {
-                    Area::create([
-                        'name' => $areaName,
-                        'county_id' => $county->id,
-                        'shipping_zone_id' => $nairobiZone->id,
-                    ]);
-                    $created++;
-                    $this->command->info("  + {$county->name} → {$areaName} (created & assigned)");
-                }
-            }
-        }
-
-        $this->command->info("📊 Greater Nairobi: {$updated} areas updated, {$created} areas created");
     }
 
     private function createFreeShippingRules(array $zones, array $methods): void

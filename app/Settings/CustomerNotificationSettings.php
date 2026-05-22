@@ -9,7 +9,15 @@ class CustomerNotificationSettings extends Settings
     // Order notifications
     public bool $order_confirmation;   // email on order placed
 
-    public bool $order_updates;        // email when order status changes (processing/shipped/delivered/cancelled/refunded)
+    public bool $order_processing;     // email when status moves to processing
+
+    public bool $order_shipped;        // email when order is shipped
+
+    public bool $order_delivered;      // email when order is delivered
+
+    public bool $order_cancelled;      // email when order is cancelled
+
+    public bool $order_refunded;       // email when refund is processed
 
     // Cart notifications
     public bool $abandoned_cart;          // email for abandoned carts

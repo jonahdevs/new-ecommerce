@@ -36,7 +36,16 @@ class OrderStatusNotification extends Notification implements ShouldQueue
 
         $systemSettings = app(CustomerNotificationSettings::class);
 
-        if (! $systemSettings->order_updates) {
+        $systemEnabled = match ($this->newStatus) {
+            OrderStatus::PROCESSING => $systemSettings->order_processing,
+            OrderStatus::SHIPPED => $systemSettings->order_shipped,
+            OrderStatus::DELIVERED => $systemSettings->order_delivered,
+            OrderStatus::CANCELLED => $systemSettings->order_cancelled,
+            OrderStatus::RETURNED => $systemSettings->order_refunded,
+            default => false,
+        };
+
+        if (! $systemEnabled) {
             return $channels;
         }
 

@@ -21,7 +21,7 @@ new #[Layout('layouts.customer')] class extends Component {
         return auth()
             ->user()
             ->addresses()
-            ->with(['county:id,name', 'area:id,name'])
+            ->with(['county:id,name', 'subCounty:id,name'])
             ->orderByDesc('is_default')
             ->oldest()
             ->get();
@@ -152,8 +152,8 @@ new #[Layout('layouts.customer')] class extends Component {
 
                     <div class="text-[12px] text-on-surface-variant leading-[1.7]">
                         {{ $address->address }}<br>
-                        @if ($address->area)
-                            {{ $address->area->name }},
+                        @if ($address->subCounty)
+                            {{ $address->subCounty->name }},
                         @endif{{ $address->county?->name }}<br>
                         {{ $address->phone_number }}
                     </div>

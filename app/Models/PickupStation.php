@@ -16,7 +16,7 @@ class PickupStation extends Model
         'name',
         'code',
         'county_id',
-        'area_id',
+        'sub_county_id',
         'address',
         'phone',
         'operating_hours',
@@ -49,9 +49,9 @@ class PickupStation extends Model
         return $this->belongsTo(County::class);
     }
 
-    public function area(): BelongsTo
+    public function subCounty(): BelongsTo
     {
-        return $this->belongsTo(Area::class);
+        return $this->belongsTo(SubCounty::class);
     }
 
     public function deliveryOrders(): HasMany

@@ -30,12 +30,11 @@ class ShippingZone extends Model
     }
 
     /**
-     * Areas that have explicitly overridden to this zone.
-     * Does not include areas inheriting via their county.
+     * Sub-counties that have explicitly overridden to this zone.
      */
-    public function areas(): HasMany
+    public function subCounties(): HasMany
     {
-        return $this->hasMany(Area::class);
+        return $this->hasMany(SubCounty::class);
     }
 
     public function shippingRates(): HasMany

@@ -21,7 +21,7 @@ class OrderConfirmedNotification extends Notification
         $prefs = $notifiable->notification_preferences ?? [];
         $channels = [];
 
-        if ($prefs['order_confirmation']['email'] ?? true) {
+        if ($prefs['order_confirmations']['email'] ?? true) {
             $channels[] = 'mail';
         }
 

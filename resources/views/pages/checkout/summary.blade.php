@@ -65,7 +65,7 @@ new #[Layout('layouts.checkout')] class extends Component {
     #[Computed]
     public function address(): ?Address
     {
-        return $this->selectedAddressId ? Address::with(['county', 'area', 'shippingZone'])->find($this->selectedAddressId) : null;
+        return $this->selectedAddressId ? Address::with(['county', 'subCounty', 'shippingZone'])->find($this->selectedAddressId) : null;
     }
 
     #[Computed]
@@ -82,7 +82,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         $cartService = app(CartService::class);
-        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, areaId: $this->address->area_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
+        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, subCountyId: $this->address->sub_county_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
     }
 
     #[Computed]
@@ -363,7 +363,7 @@ new #[Layout('layouts.checkout')] class extends Component {
             <div class="text-[14px] font-bold text-on-surface mb-1">{{ $this->address->full_name }}</div>
             <div class="text-[12px] text-on-surface-variant font-medium leading-[1.7]">
                 {!! nl2br(e($this->address->address)) !!}<br>
-                {{ implode(', ', array_filter([$this->address->area?->name, $this->address->county?->name])) }}<br>
+                {{ implode(', ', array_filter([$this->address->subCounty?->name, $this->address->county?->name])) }}<br>
                 {{ format_phone($this->address->phone_number) }}
             </div>
         @else
@@ -591,7 +591,7 @@ new #[Layout('layouts.checkout')] class extends Component {
                                     <div class="text-[13px] font-bold text-on-surface mb-0.5">{{ $addr->full_name }}
                                     </div>
                                     <div class="text-[11px] text-on-surface-variant leading-[1.7] font-medium">
-                                        {{ $addr->address }}, {{ $addr->area?->name }},
+                                        {{ $addr->address }}, {{ $addr->subCounty?->name }},
                                         {{ $addr->county?->name }}
                                     </div>
                                 </div>

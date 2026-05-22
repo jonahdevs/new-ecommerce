@@ -4,7 +4,8 @@ namespace App\Livewire\Forms\Admin;
 
 use App\Enums\UserStatus;
 use App\Models\Address;
-use App\Models\Area;
+use App\Models\County;
+use App\Models\SubCounty;
 use App\Models\User;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
@@ -37,7 +38,7 @@ class CustomerForm extends Form
 
     public ?int $county_id = null;
 
-    public ?int $area_id = null;
+    public ?int $sub_county_id = null;
 
     public string $address_line = '';
 
@@ -67,7 +68,7 @@ class CustomerForm extends Form
             'address_last_name' => ['nullable', 'string', 'max:100'],
             'address_phone' => ['nullable', 'string', 'max:20'],
             'county_id' => ['nullable', 'exists:counties,id'],
-            'area_id' => ['nullable', 'exists:areas,id'],
+            'sub_county_id' => ['nullable', 'exists:sub_counties,id'],
             'address_line' => ['nullable', 'string', 'max:255'],
             'additional_information' => ['nullable', 'string', 'max:500'],
 
@@ -96,7 +97,7 @@ class CustomerForm extends Form
             $this->address_last_name = $address->last_name;
             $this->address_phone = $address->phone_number ?? '';
             $this->county_id = $address->county_id;
-            $this->area_id = $address->area_id;
+            $this->sub_county_id = $address->sub_county_id;
             $this->address_line = $address->address ?? '';
             $this->additional_information = $address->additional_information ?? '';
         }
@@ -162,10 +163,13 @@ class CustomerForm extends Form
 
     private function saveAddress(User $user): void
     {
-        $area = Area::with('county')->find($this->area_id);
+        $subCounty = $this->sub_county_id
+            ? SubCounty::with('shippingZone', 'county.shippingZone')->find($this->sub_county_id)
+            : null;
 
-        // Area is more precise, fall back to county if area has no zone
-        $shippingZoneId = $area?->shipping_zone_id ?? $area?->county?->shipping_zone_id;
+        $shippingZoneId = $subCounty?->shipping_zone_id
+            ?? $subCounty?->county?->shipping_zone_id
+            ?? County::find($this->county_id)?->shipping_zone_id;
 
         $user->addresses()->updateOrCreate(
             ['is_default' => true],
@@ -174,7 +178,7 @@ class CustomerForm extends Form
                 'last_name' => $this->address_last_name,
                 'phone_number' => $this->address_phone,
                 'county_id' => $this->county_id,
-                'area_id' => $this->area_id,
+                'sub_county_id' => $this->sub_county_id,
                 'address' => $this->address_line,
                 'shipping_zone_id' => $shippingZoneId,
                 'additional_information' => $this->additional_information ?: null,

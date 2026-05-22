@@ -58,7 +58,7 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
     #[Computed]
     public function address(): ?Address
     {
-        return $this->addressId ? Address::with(['county', 'area', 'shippingZone'])->find($this->addressId) : null;
+        return $this->addressId ? Address::with(['county', 'subCounty', 'shippingZone'])->find($this->addressId) : null;
     }
 
     #[Computed]
@@ -70,7 +70,7 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
 
         $cartService = app(CartService::class);
 
-        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, areaId: $this->address->area_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
+        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, subCountyId: $this->address->sub_county_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
     }
 
     #[Computed]
@@ -270,7 +270,7 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
                 <div class="mt-2 space-y-1">
                     <flux:text>{{ $this->address->address }}</flux:text>
                     <flux:text>
-                        {{ implode(', ', array_filter([$this->address->area?->name, $this->address->county?->name])) }}
+                        {{ implode(', ', array_filter([$this->address->subCounty?->name, $this->address->county?->name])) }}
                     </flux:text>
                     <flux:text class="text-on-surface-variant text-xs">
                         Zone: {{ $this->address->shippingZone?->name ?? '—' }}

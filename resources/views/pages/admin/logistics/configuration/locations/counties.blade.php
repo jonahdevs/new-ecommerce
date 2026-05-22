@@ -32,7 +32,7 @@ new #[Title('Counties')] class extends Component {
     #[Computed]
     public function counties()
     {
-        return County::with('shippingZone')->withCount('areas')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterZone, fn($q) => $q->where('shipping_zone_id', $this->filterZone))->orderBy('name')->paginate(10);
+        return County::with('shippingZone')->withCount('subCounties')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterZone, fn($q) => $q->where('shipping_zone_id', $this->filterZone))->orderBy('name')->paginate(10);
     }
 
     #[Computed]
@@ -89,8 +89,8 @@ new #[Title('Counties')] class extends Component {
         try {
             $county = County::findOrFail($this->deletingId);
 
-            if ($county->areas()->exists()) {
-                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this county has areas attached. Remove them first.');
+            if ($county->subCounties()->exists()) {
+                $this->dispatch('notify', title: 'Cannot Delete', variant: 'warning', message: 'Cannot delete — this county has sub-counties attached. Remove them first.');
                 Flux::modal('delete-confirmation')->close();
                 return;
             }
@@ -139,7 +139,7 @@ new #[Title('Counties')] class extends Component {
                 <flux:table.column class="ps-4!">County</flux:table.column>
                 <flux:table.column>Code</flux:table.column>
                 <flux:table.column>Shipping Zone</flux:table.column>
-                <flux:table.column>Areas</flux:table.column>
+                <flux:table.column>Sub-Counties</flux:table.column>
                 <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
             </flux:table.columns>
 
@@ -170,7 +170,7 @@ new #[Title('Counties')] class extends Component {
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            <flux:subheading>{{ $county->areas_count }}</flux:subheading>
+                            <flux:subheading>{{ $county->sub_counties_count }}</flux:subheading>
                         </flux:table.cell>
 
                         <flux:table.cell align="end" class="pe-4!">
@@ -240,7 +240,7 @@ new #[Title('Counties')] class extends Component {
     {{-- Delete Confirmation --}}
     <flux:modal name="delete-confirmation" class="md:w-88 space-y-6">
         <flux:heading size="lg" class="mb-2">Delete County?</flux:heading>
-        <flux:subheading>All areas within this county must be removed before it can be deleted.</flux:subheading>
+        <flux:subheading>All sub-counties within this county must be removed before it can be deleted.</flux:subheading>
         <div class="flex gap-3">
             <flux:modal.close class="flex-1">
                 <flux:button variant="ghost" class="w-full cursor-pointer">Cancel</flux:button>

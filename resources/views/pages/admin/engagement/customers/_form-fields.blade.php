@@ -168,10 +168,10 @@
                 @endforeach
             </flux:select>
 
-            <flux:select label="Area" wire:model="form.area_id" placeholder="Select area..."
+            <flux:select label="Sub-County" wire:model="form.sub_county_id" placeholder="Select sub-county..."
                 :disabled="!$form->county_id">
-                @foreach ($this->areas as $area)
-                    <flux:select.option :value="$area->id">{{ $area->name }}</flux:select.option>
+                @foreach ($this->subCounties as $subCounty)
+                    <flux:select.option :value="$subCounty->id">{{ $subCounty->name }}</flux:select.option>
                 @endforeach
             </flux:select>
 

@@ -202,7 +202,7 @@ Physical collection points for the PUS model.
 | `logistics_provider_id` | FK      | Which provider operates this station                                                                                                                                               |
 | `code`                  | string  | Unique slug. e.g. `nbo-syokimau`                                                                                                                                                   |
 | `county_id`             | FK      | County the station is in. Used for zone resolution and nearby sorting                                                                                                              |
-| `area_id`               | FK/null | Optional — narrows the location within the county                                                                                                                                  |
+| `sub_county_id`         | FK/null | Optional — narrows the location within the county to a specific sub-county                                                                                                         |
 | `holding_days`          | integer | Days before uncollected parcels are returned. Default `7`                                                                                                                          |
 | `is_primary`            | boolean | **Always offer this station at checkout regardless of the customer's zone.** Set `true` on your headquarters/main station. Every deployment must have exactly one primary station. |
 | `status`                | string  | Cast: `PickupStationStatus` — `active`, `inactive`, `temporarily_closed`                                                                                                           |
@@ -342,7 +342,7 @@ Single entry point for all shipping option resolution.
 ```php
 $options = app(ShippingCalculator::class)->calculate(
     countyId:    $address->county_id,
-    areaId:      $address->area_id,
+    subCountyId: $address->sub_county_id,
     weightKg:    $cartService->getWeight(),
     orderAmount: $cartService->getSubtotal(),
 );

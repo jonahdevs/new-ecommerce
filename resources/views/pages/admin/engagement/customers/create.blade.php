@@ -4,7 +4,7 @@ use App\Livewire\Forms\Admin\CustomerForm;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\{Title, Computed};
-use App\Models\{County, Area};
+use App\Models\{County, SubCounty};
 use App\Enums\UserStatus;
 
 new #[Title('Create Customer')] class extends Component {
@@ -32,10 +32,9 @@ new #[Title('Create Customer')] class extends Component {
     }
 
     #[Computed]
-    public function areas()
+    public function subCounties()
     {
-        // Reactively filters when county_id changes
-        return $this->form->county_id ? Area::where('county_id', $this->form->county_id)->orderBy('name')->get() : collect();
+        return $this->form->county_id ? SubCounty::where('county_id', $this->form->county_id)->orderBy('name')->get() : collect();
     }
 
     #[Computed]

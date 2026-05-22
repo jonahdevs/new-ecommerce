@@ -7,7 +7,6 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\QuoteStatus;
 use App\Models\Address;
-use App\Models\Area;
 use App\Models\County;
 use App\Models\DeliveryOrder;
 use App\Models\LogisticsProvider;
@@ -75,7 +74,6 @@ class SalesFlowSeeder extends Seeder
             return;
         }
 
-        $nairobiAreas = Area::where('county_id', $nairobi->id)->get();
         $addressCount = 0;
 
         // customer@sheffieldafrica.com — 3 saved addresses, first one default
@@ -91,14 +89,13 @@ class SalesFlowSeeder extends Seeder
             ];
 
             foreach ($nairobiAddresses as $stub) {
-                $area = $nairobiAreas->isNotEmpty() ? $nairobiAreas->random() : null;
                 Address::create([
                     'user_id' => $knownCustomer->id,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'phone_number' => '+254712345678',
                     'county_id' => $nairobi->id,
-                    'area_id' => $area?->id,
+                    'sub_county_id' => null,
                     'address' => $stub['address'],
                     'shipping_zone_id' => $nairobi->shipping_zone_id,
                     'is_default' => $stub['is_default'],
@@ -113,14 +110,13 @@ class SalesFlowSeeder extends Seeder
             $count = fake()->numberBetween(1, 2);
 
             foreach (range(1, $count) as $i) {
-                $area = $nairobiAreas->isNotEmpty() ? $nairobiAreas->random() : null;
                 Address::create([
                     'user_id' => $customer->id,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'phone_number' => fake()->numerify('+2547########'),
                     'county_id' => $nairobi->id,
-                    'area_id' => $area?->id,
+                    'sub_county_id' => null,
                     'address' => fake()->streetAddress(),
                     'shipping_zone_id' => $nairobi->shipping_zone_id,
                     'is_default' => $i === 1,

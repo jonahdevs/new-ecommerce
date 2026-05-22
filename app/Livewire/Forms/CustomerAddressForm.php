@@ -3,9 +3,10 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Address;
-use App\Models\Area;
 use App\Models\County;
 use App\Models\ShippingZone;
+use App\Models\SubCounty;
+use App\Models\Town;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -23,7 +24,9 @@ class CustomerAddressForm extends Form
 
     public ?string $county_id = null;
 
-    public ?string $area_id = null;
+    public ?int $sub_county_id = null;
+
+    public ?int $town_id = null;
 
     public string $address_text = '';
 
@@ -35,37 +38,36 @@ class CustomerAddressForm extends Form
 
     public ?float $longitude = null;
 
-    //  Validation ─
+    //  Validation
 
     public function rules(): array
     {
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            // Phone mask is "999 999 999" (9 digits + 2 spaces = 11 chars)
-            // Regex allows 9-12 chars with digits and spaces
             'phone_number' => ['required', 'string', 'regex:/^[0-9]{3}\s?[0-9]{3}\s?[0-9]{3}$/'],
             'alternative_phone_number' => ['nullable', 'string', 'regex:/^[0-9]{3}\s?[0-9]{3}\s?[0-9]{3}$/'],
             'county_id' => [
                 'required',
                 'exists:counties,id',
                 function ($attribute, $value, $fail) {
-                    // Validate that the county has a shipping zone configured
                     $zoneId = $this->resolveShippingZone();
+
                     if (! $zoneId) {
                         $fail('Delivery is not available in this county. Please select a different location or contact support.');
 
                         return;
                     }
 
-                    // Validate the zone is active
                     $zone = ShippingZone::find($zoneId);
+
                     if (! $zone || $zone->status->value !== 'active') {
                         $fail('Delivery is temporarily unavailable in this area. Please try again later or contact support.');
                     }
                 },
             ],
-            'area_id' => ['nullable', 'exists:areas,id'],
+            'sub_county_id' => ['nullable', 'exists:sub_counties,id'],
+            'town_id' => ['nullable', 'exists:towns,id'],
             'address_text' => [
                 Rule::requiredIf(fn () => ! $this->latitude || ! $this->longitude),
                 'nullable',
@@ -86,8 +88,7 @@ class CustomerAddressForm extends Form
             'alternative_phone_number.regex' => 'Enter a valid phone number without the country code.',
             'county_id.required' => 'Please select a county.',
             'county_id.exists' => 'The selected county is invalid.',
-            'area_id.exists' => 'The selected area is invalid.',
-            'address_text.required' => 'Please enter a street address.',
+            'address_text.required' => 'Please enter a street address or drop a pin on the map.',
         ];
     }
 
@@ -100,8 +101,9 @@ class CustomerAddressForm extends Form
         $this->last_name = $address->last_name;
         $this->phone_number = strip_phone_prefix($address->phone_number);
         $this->alternative_phone_number = strip_phone_prefix($address->alternative_phone_number);
-        $this->county_id = $address->county_id;
-        $this->area_id = $address->area_id ?? '';
+        $this->county_id = (string) $address->county_id;
+        $this->sub_county_id = $address->sub_county_id;
+        $this->town_id = $address->town_id;
         $this->address_text = $address->address;
         $this->additional_information = $address->additional_information;
         $this->is_default = $address->is_default;
@@ -115,7 +117,6 @@ class CustomerAddressForm extends Form
     {
         $this->validate();
 
-        // First address is always default regardless of checkbox
         $isFirstAddress = ! auth()->user()->addresses()->exists();
         $makeDefault = $isFirstAddress || $this->is_default;
 
@@ -125,7 +126,8 @@ class CustomerAddressForm extends Form
             'phone_number' => normalize_phone($this->phone_number),
             'alternative_phone_number' => normalize_phone($this->alternative_phone_number),
             'county_id' => $this->county_id,
-            'area_id' => $this->area_id ?: null,
+            'sub_county_id' => $this->sub_county_id,
+            'town_id' => $this->town_id,
             'address' => $this->address_text,
             'additional_information' => $this->additional_information,
             'shipping_zone_id' => $this->resolveShippingZone(),
@@ -145,7 +147,6 @@ class CustomerAddressForm extends Form
     {
         $this->validate();
 
-        // If unchecking default but no other default exists, keep this one default
         $hasOtherDefault = auth()->user()
             ->addresses()
             ->where('id', '!=', $this->address->id)
@@ -160,7 +161,8 @@ class CustomerAddressForm extends Form
             'phone_number' => normalize_phone($this->phone_number),
             'alternative_phone_number' => normalize_phone($this->alternative_phone_number),
             'county_id' => $this->county_id,
-            'area_id' => $this->area_id ?: null,
+            'sub_county_id' => $this->sub_county_id,
+            'town_id' => $this->town_id,
             'address' => $this->address_text,
             'additional_information' => $this->additional_information,
             'shipping_zone_id' => $this->resolveShippingZone(),
@@ -179,31 +181,31 @@ class CustomerAddressForm extends Form
     //  Zone resolution
 
     /**
-     * Resolve the shipping zone for this address.
-     *
-     * Priority:
-     *   1. Area's zone override (if area is set and has one)
-     *   2. County's zone (the default)
-     *
-     * This mirrors ShippingCalculator::resolveZone() exactly so that
-     * the zone stored on the address always matches what checkout calculates.
+     * Priority: town zone → sub-county zone → county zone.
+     * Mirrors Address::resolveShippingZone() exactly.
      */
     protected function resolveShippingZone(): ?int
     {
-        // Check area override first
-        if ($this->area_id) {
-            $areaZoneId = Area::where('id', $this->area_id)
-                ->whereNotNull('shipping_zone_id')
-                ->value('shipping_zone_id');
+        if ($this->town_id) {
+            $town = Town::with('shippingZone', 'subCounty.shippingZone', 'county.shippingZone')->find($this->town_id);
 
-            if ($areaZoneId) {
-                return $areaZoneId;
+            if ($town) {
+                return $town->shipping_zone_id
+                    ?? $town->subCounty?->shipping_zone_id
+                    ?? $town->county?->shipping_zone_id;
             }
         }
 
-        // Fall back to county zone
-        return County::where('id', $this->county_id)
-            ->value('shipping_zone_id');
+        if ($this->sub_county_id) {
+            $subCounty = SubCounty::with('county')->find($this->sub_county_id);
+
+            if ($subCounty) {
+                return $subCounty->shipping_zone_id
+                    ?? $subCounty->county?->shipping_zone_id;
+            }
+        }
+
+        return County::where('id', $this->county_id)->value('shipping_zone_id');
     }
 
     //  Default management

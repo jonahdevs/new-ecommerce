@@ -103,19 +103,24 @@ return new class extends Migration
         });
 
         // ================================================================
-        //  4. AREAS
-        //     Towns/suburbs/estates within a county.
-        //     Can optionally override the county's shipping zone for
-        //     granular pricing (e.g. a border town that ships differently).
+        //  4.5 SUB-COUNTIES
+        //     Kenya's 290 sub-counties (ADM2) within each county.
+        //     Seeded from geoBoundaries ADM2 GeoJSON.
+        //     Like areas, can optionally override the county's shipping zone
+        //     for granular pricing. Used for point-in-polygon zone resolution
+        //     when a customer pins their delivery location on the map.
         // ================================================================
 
-        Schema::create('areas', function (Blueprint $table) {
+        Schema::create('sub_counties', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->foreignId('county_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
 
-            // If set, this area uses a different zone than its parent county.
-            $table->foreignId('shipping_zone_id')->nullable()->constrained()->cascadeOnUpdate()->restrictOnDelete();
+            // If set, this sub-county uses a different zone than its parent county.
+            $table->foreignId('shipping_zone_id')->nullable()->constrained()->cascadeOnUpdate()->nullOnDelete();
+
+            // geoBoundaries shapeID for reference / future re-seeding.
+            $table->string('shape_id')->nullable();
 
             $table->decimal('lat_center', 10, 7)->nullable();
             $table->decimal('lng_center', 10, 7)->nullable();
@@ -309,7 +314,7 @@ return new class extends Migration
 
             $table->foreignId('county_id')->constrained()->restrictOnDelete();
 
-            $table->foreignId('area_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('sub_county_id')->nullable()->constrained('sub_counties')->nullOnDelete();
 
             $table->text('address');
             $table->string('phone')->nullable();
@@ -328,7 +333,7 @@ return new class extends Migration
 
             $table->index(['logistics_provider_id', 'status']);
             $table->index(['county_id', 'status']);
-            $table->index(['area_id', 'status']);
+            $table->index(['sub_county_id', 'status']);
             $table->index('is_primary');
         });
 
@@ -425,6 +430,48 @@ return new class extends Migration
         });
 
         // ================================================================
+        //  TOWNS (ADM3)
+        //     1,452 ward-level localities within each sub-county.
+        //     Seeded from geoBoundaries ADM3 GeoJSON.
+        //     Can optionally override the parent sub-county/county zone
+        //     for hyper-local pricing (e.g. Rongai, Kiambu town).
+        // ================================================================
+
+        Schema::create('towns', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('sub_county_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('county_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('shipping_zone_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('shape_id')->nullable()->unique();
+            $table->decimal('lat_center', 10, 7)->nullable();
+            $table->decimal('lng_center', 10, 7)->nullable();
+            $table->timestamps();
+
+            $table->index(['sub_county_id', 'shipping_zone_id']);
+            $table->index(['county_id', 'shipping_zone_id']);
+        });
+
+        // ================================================================
+        //  TOWN BOUNDARIES (ADM3)
+        //     GeoJSON polygon per town.
+        //     Source: geoBoundaries ADM3 dataset.
+        // ================================================================
+
+        Schema::create('town_boundaries', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('town_id')->unique()->constrained()->cascadeOnDelete();
+            $table->json('geojson');
+            $table->decimal('bbox_min_lat', 10, 7)->nullable();
+            $table->decimal('bbox_max_lat', 10, 7)->nullable();
+            $table->decimal('bbox_min_lng', 10, 7)->nullable();
+            $table->decimal('bbox_max_lng', 10, 7)->nullable();
+            $table->timestamps();
+
+            $table->index(['bbox_min_lat', 'bbox_max_lat', 'bbox_min_lng', 'bbox_max_lng'], 'idx_town_bbox');
+        });
+
+        // ================================================================
         //  11. ADDRESSES
         //     Customer delivery addresses.
         //     Stores the resolved shipping zone so we don't have to
@@ -447,12 +494,16 @@ return new class extends Migration
 
             $table->foreignId('county_id')->constrained()->restrictOnDelete();
 
-            $table->foreignId('area_id')->nullable()->constrained()->nullOnDelete();
+            // Resolved via point-in-polygon when customer pins their location.
+            $table->foreignId('sub_county_id')->nullable()->constrained('sub_counties')->nullOnDelete();
+
+            // ADM3 town-level resolution (more granular than sub-county).
+            $table->foreignId('town_id')->nullable()->constrained('towns')->nullOnDelete();
 
             $table->text('address');
             $table->text('additional_information')->nullable();
 
-            // Resolved at save time from area override or county zone.
+            // Resolved at save time: sub_county zone override → county zone.
             $table->foreignId('shipping_zone_id')->constrained()->restrictOnDelete();
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
@@ -462,7 +513,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('user_id');
-            $table->index(['county_id', 'area_id']);
+            $table->index(['county_id', 'sub_county_id']);
             $table->index('shipping_zone_id');
             $table->index(['user_id', 'is_default']);
         });
@@ -589,12 +640,11 @@ return new class extends Migration
 
             $table->foreignId('county_id')->unique()->constrained('counties')->cascadeOnUpdate()->cascadeOnDelete(); // one boundary row per county
 
-            // Full GeoJSON Feature or Geometry object for the county polygon.
-            // Source: Kenya National Bureau of Statistics public dataset.
+            // Full GeoJSON geometry for the county polygon.
+            // Source: geoBoundaries ADM1 dataset.
             $table->json('geojson');
 
-            // Bounding box — precomputed from geojson for fast map viewport fitting.
-            // Avoids parsing the full polygon just to zoom the map to the county.
+            // Bounding box — precomputed for fast map viewport fitting.
             $table->decimal('bbox_min_lat', 10, 7)->nullable();
             $table->decimal('bbox_max_lat', 10, 7)->nullable();
             $table->decimal('bbox_min_lng', 10, 7)->nullable();
@@ -603,6 +653,33 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('county_id');
+        });
+
+        // ================================================================
+        //  SUB-COUNTY BOUNDARIES
+        //     GeoJSON polygon per sub-county.
+        //     Source: geoBoundaries ADM2 dataset.
+        //     Used for server-side point-in-polygon zone resolution when
+        //     a customer's address includes a lat/lng pin.
+        // ================================================================
+
+        Schema::create('sub_county_boundaries', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('sub_county_id')->unique()->constrained('sub_counties')->cascadeOnUpdate()->cascadeOnDelete();
+
+            // Full GeoJSON geometry for the sub-county polygon.
+            $table->json('geojson');
+
+            // Bounding box — precomputed for fast bbox pre-filter before polygon check.
+            $table->decimal('bbox_min_lat', 10, 7)->nullable();
+            $table->decimal('bbox_max_lat', 10, 7)->nullable();
+            $table->decimal('bbox_min_lng', 10, 7)->nullable();
+            $table->decimal('bbox_max_lng', 10, 7)->nullable();
+
+            $table->timestamps();
+
+            $table->index(['bbox_min_lat', 'bbox_max_lat', 'bbox_min_lng', 'bbox_max_lng'], 'idx_sub_county_bbox');
         });
 
         // ================================================================
@@ -624,6 +701,9 @@ return new class extends Migration
             $table->dropColumn('preferred_shipping_method_id');
         });
 
+        Schema::dropIfExists('town_boundaries');
+        Schema::dropIfExists('towns');
+        Schema::dropIfExists('sub_county_boundaries');
         Schema::dropIfExists('county_boundaries');
         Schema::dropIfExists('delivery_orders');
         Schema::dropIfExists('addresses');
@@ -633,7 +713,7 @@ return new class extends Migration
         Schema::dropIfExists('vehicle_rates');
         Schema::dropIfExists('shipping_rates');
         Schema::dropIfExists('shipping_methods');
-        Schema::dropIfExists('areas');
+        Schema::dropIfExists('sub_counties');  // towns dropped first (FK dependency)
         Schema::dropIfExists('counties');
         Schema::dropIfExists('shipping_zones');
         Schema::dropIfExists('logistics_providers');

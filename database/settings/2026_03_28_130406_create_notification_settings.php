@@ -27,7 +27,11 @@ return new class extends SettingsMigration
 
         // Customer notification toggles
         $this->migrator->add('customer_notifications.order_confirmation', true);
-        $this->migrator->add('customer_notifications.order_updates', true);
+        $this->migrator->add('customer_notifications.order_processing', true);
+        $this->migrator->add('customer_notifications.order_shipped', true);
+        $this->migrator->add('customer_notifications.order_delivered', true);
+        $this->migrator->add('customer_notifications.order_cancelled', true);
+        $this->migrator->add('customer_notifications.order_refunded', true);
         $this->migrator->add('customer_notifications.abandoned_cart', false);
         $this->migrator->add('customer_notifications.abandoned_cart_delay', 1);
         $this->migrator->add('customer_notifications.review_request', false);

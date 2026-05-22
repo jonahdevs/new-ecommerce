@@ -24,9 +24,14 @@ class County extends Model
         return $this->belongsTo(ShippingZone::class);
     }
 
-    public function areas(): HasMany
+    public function subCounties(): HasMany
     {
-        return $this->hasMany(Area::class);
+        return $this->hasMany(SubCounty::class);
+    }
+
+    public function towns(): HasMany
+    {
+        return $this->hasMany(Town::class);
     }
 
     public function pickupStations(): HasMany

@@ -439,13 +439,13 @@ new #[Title('Create Order')] class extends Component {
             ];
         }
 
-        $address = Address::with(['county', 'area'])->find($this->selectedAddressId);
+        $address = Address::with(['county', 'subCounty'])->find($this->selectedAddressId);
 
         return [
             'full_name' => $address->full_name,
             'phone_number' => $address->phone_number,
             'address' => $address->address,
-            'area' => $address->area?->name,
+            'area' => $address->subCounty?->name,
             'county' => $address->county?->name,
         ];
     }
@@ -573,7 +573,7 @@ new #[Title('Create Order')] class extends Component {
                                             </p>
                                             <p class="text-zinc-500 text-xs leading-relaxed">
                                                 {{ $addr->address }}<br>
-                                                {{ $addr->area?->name ? $addr->area->name . ', ' : '' }}{{ $addr->county?->name }}
+                                                {{ $addr->subCounty?->name ? $addr->subCounty->name . ', ' : '' }}{{ $addr->county?->name }}
                                             </p>
                                             @if ($addr->is_default)
                                                 <flux:badge size="sm" color="blue" class="mt-1">Default

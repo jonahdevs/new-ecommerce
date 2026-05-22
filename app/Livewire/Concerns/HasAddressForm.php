@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Concerns;
 
-use App\Models\Area;
 use App\Models\County;
+use App\Services\SubCountyResolver;
+use App\Services\TownResolver;
 use Livewire\Attributes\Computed;
 
 /**
@@ -19,16 +20,6 @@ trait HasAddressForm
     }
 
     #[Computed]
-    public function areas()
-    {
-        if (! $this->form->county_id) {
-            return collect();
-        }
-
-        return Area::where('county_id', $this->form->county_id)->orderBy('name')->get();
-    }
-
-    #[Computed]
     public function hasDefaultAddress(): bool
     {
         return auth()->user()->addresses()->where('is_default', true)->exists();
@@ -41,18 +32,14 @@ trait HasAddressForm
             ? County::with('boundary')->find($this->form->county_id)
             : null;
 
-        $area = $this->form->area_id
-            ? Area::find($this->form->area_id)
-            : null;
-
         return [
             'pin' => [
                 'lat' => $this->form->latitude,
                 'lng' => $this->form->longitude,
             ],
             'center' => [
-                'lat' => $area?->lat_center ?? ($county?->lat_center ?? -1.2921),
-                'lng' => $area?->lng_center ?? ($county?->lng_center ?? 36.8219),
+                'lat' => $county?->lat_center ?? -1.2921,
+                'lng' => $county?->lng_center ?? 36.8219,
             ],
             'countyName' => $county?->name,
             'boundaryGeojson' => $county?->boundary?->geojson ?? null,
@@ -66,14 +53,46 @@ trait HasAddressForm
 
     public function updatedFormCountyId(): void
     {
-        $this->form->area_id = null;
+        $this->form->latitude = null;
+        $this->form->longitude = null;
+        $this->form->sub_county_id = null;
+        $this->form->town_id = null;
     }
 
-    public function updatedFormAreaId(): void
+    /**
+     * Called by the map JS whenever the customer moves their pin.
+     * Runs point-in-polygon to silently resolve the sub-county and zone.
+     * Returns county resolution state so JS can update Alpine without a second server call.
+     *
+     * @return array{countyResolved: bool, countyName: string}
+     */
+    public function pinDropped(float $lat, float $lng): array
     {
-        // Triggers mapState recompute — JS picks it up via $wire
+        $this->form->latitude = $lat;
+        $this->form->longitude = $lng;
+
+        $subCounty = app(SubCountyResolver::class)->resolve($lat, $lng);
+
+        if ($subCounty) {
+            $this->form->sub_county_id = $subCounty->id;
+            $this->form->county_id = (string) $subCounty->county_id;
+
+            $town = app(TownResolver::class)->resolve($lat, $lng);
+            $this->form->town_id = $town?->id;
+
+            return ['countyResolved' => true, 'countyName' => $subCounty->county->name ?? ''];
+        }
+
+        $this->form->sub_county_id = null;
+        $this->form->town_id = null;
+
+        return ['countyResolved' => false, 'countyName' => ''];
     }
 
+    /**
+     * Called by the map JS after Nominatim geocoding resolves a county name.
+     * Strips Nominatim admin-unit suffixes before matching.
+     */
     public function resolveCountyFromName(string $rawName): ?array
     {
         $rawName = trim($rawName);
@@ -82,9 +101,11 @@ trait HasAddressForm
             return null;
         }
 
-        // Strip Nominatim admin-unit suffixes that appear in Kenya:
-        // "Nairobi City County" → "Nairobi", "Westlands Ward" → "Westlands" (then fails to match a county, triggering fallback)
-        $name = trim(preg_replace('/\s+(city\s+)?(county|ward|sub-?county|division|location|sub-?location)\s*$/i', '', $rawName));
+        $name = trim(preg_replace(
+            '/\s+(city\s+)?(county|ward|sub-?county|division|location|sub-?location)\s*$/i',
+            '',
+            $rawName
+        ));
 
         $county = County::whereRaw('LOWER(name) = ?', [strtolower($name)])->first()
             ?? County::where(function ($q) use ($name) {
@@ -97,29 +118,8 @@ trait HasAddressForm
         }
 
         $this->form->county_id = (string) $county->id;
-        $this->form->area_id = null;
+        $this->form->sub_county_id = null;
 
         return ['id' => $county->id, 'name' => $county->name];
-    }
-
-    public function resolveAreaFromName(string $rawName): ?array
-    {
-        $rawName = trim($rawName);
-
-        if (! $rawName || ! $this->form->county_id) {
-            return null;
-        }
-
-        $area = Area::where('county_id', $this->form->county_id)
-            ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($rawName).'%'])
-            ->first();
-
-        if (! $area) {
-            return null;
-        }
-
-        $this->form->area_id = (string) $area->id;
-
-        return ['id' => $area->id, 'name' => $area->name];
     }
 }

@@ -240,10 +240,11 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
             Route::livewire('/methods', 'pages::admin.logistics.configuration.methods')->name('methods');
             Route::livewire('/pickup-stations', 'pages::admin.logistics.configuration.pickup-stations')->name('pickup-stations');
             Route::livewire('/free-shipping-rules', 'pages::admin.logistics.configuration.free-shipping-rules')->name('free-shipping-rules');
+            Route::livewire('/zone-map', 'pages::admin.logistics.configuration.zone-map')->name('zone-map');
 
             Route::prefix('locations')->name('locations.')->group(function () {
                 Route::livewire('/counties', 'pages::admin.logistics.configuration.locations.counties')->name('counties');
-                Route::livewire('/areas', 'pages::admin.logistics.configuration.locations.areas')->name('areas');
+                Route::livewire('/sub-counties', 'pages::admin.logistics.configuration.locations.sub-counties')->name('sub-counties');
             });
 
             Route::prefix('rates')->name('rates.')->group(function () {

@@ -26,7 +26,7 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
     public static function defaults(): array
     {
         return [
-            'order_confirmation' => ['email' => true, 'sms' => false, 'push' => false],
+            'order_confirmations' => ['email' => true, 'sms' => false, 'push' => false],
             'order_updates' => ['email' => true, 'sms' => false, 'push' => false],
             'quote_received' => ['email' => true, 'sms' => false, 'push' => false],
             'quote_updates' => ['email' => true, 'sms' => false, 'push' => false],
@@ -80,7 +80,7 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
             <flux:icon.shopping-bag class="w-3.5 h-3.5 text-primary shrink-0" />
             <span class="text-[11px] font-bold tracking-widest uppercase text-on-surface-variant">Orders & Shipping</span>
         </div>
-        <x-customer.notification-row topic="order_confirmation" title="Order Confirmation"
+        <x-customer.notification-row topic="order_confirmations" title="Order Confirmation"
             description="Receive confirmation when your order is placed" />
         <x-customer.notification-row topic="order_updates" title="Order Updates"
             description="Get notified when your order is processed, shipped, delivered, cancelled or refunded" />

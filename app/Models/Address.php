@@ -14,7 +14,8 @@ class Address extends Model
         'phone_number',
         'alternative_phone_number',
         'county_id',
-        'area_id',
+        'sub_county_id',
+        'town_id',
         'address',
         'additional_information',
         'shipping_zone_id',
@@ -41,9 +42,14 @@ class Address extends Model
         return $this->belongsTo(County::class);
     }
 
-    public function area(): BelongsTo
+    public function subCounty(): BelongsTo
     {
-        return $this->belongsTo(Area::class);
+        return $this->belongsTo(SubCounty::class);
+    }
+
+    public function town(): BelongsTo
+    {
+        return $this->belongsTo(Town::class);
     }
 
     public function shippingZone(): BelongsTo
@@ -64,7 +70,7 @@ class Address extends Model
     {
         $parts = array_filter([
             $this->address,
-            $this->area?->name,
+            $this->subCounty?->name,
             $this->county->name,
         ]);
 
@@ -73,14 +79,31 @@ class Address extends Model
 
     /**
      * Resolve and store the shipping zone at save time.
-     * Call this before saving when county_id or area_id changes.
+     * Priority: sub-county zone override → county zone.
+     * Call this before saving when county_id or sub_county_id changes.
+     */
+    /**
+     * Resolve and store the shipping zone at save time.
+     * Priority: town zone → sub-county zone → county zone.
      */
     public function resolveShippingZone(): void
     {
-        $area = $this->area_id ? Area::with('county.shippingZone', 'shippingZone')->find($this->area_id) : null;
+        if ($this->town_id) {
+            $town = Town::with('shippingZone', 'subCounty.shippingZone', 'county.shippingZone')->find($this->town_id);
+            $this->shipping_zone_id = $town->shipping_zone_id
+                ?? $town->subCounty?->shipping_zone_id
+                ?? $town->county?->shipping_zone_id;
 
-        $this->shipping_zone_id = $area
-            ? ($area->shipping_zone_id ?? $area->county->shipping_zone_id)
-            : County::find($this->county_id)?->shipping_zone_id;
+            return;
+        }
+
+        if ($this->sub_county_id) {
+            $subCounty = SubCounty::with('shippingZone', 'county.shippingZone')->find($this->sub_county_id);
+            $this->shipping_zone_id = $subCounty->shipping_zone_id ?? $subCounty->county->shipping_zone_id;
+
+            return;
+        }
+
+        $this->shipping_zone_id = County::find($this->county_id)?->shipping_zone_id;
     }
 }

@@ -4,12 +4,12 @@ namespace App\Services;
 
 use App\Enums\ShippingMethodStatus;
 use App\Enums\ShippingRateStatus;
-use App\Models\Area;
 use App\Models\Cart;
 use App\Models\County;
 use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Models\ShippingRate;
+use App\Models\SubCounty;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -223,15 +223,15 @@ class ShippingCalculatorService
      *
      * @param  User|null  $user
      * @param  int|null  $countyId
-     * @param  int|null  $areaId
+     * @param  int|null  $subCountyId
      */
-    protected function resolveShippingZone($user, $countyId = null, $areaId = null): int
+    protected function resolveShippingZone($user, $countyId = null, $subCountyId = null): int
     {
-        // Priority 1: If area is provided, get zone from area
-        if ($areaId) {
-            $area = Area::find($areaId);
-            if ($area && $area->shipping_zone_id) {
-                return $area->shipping_zone_id;
+        // Priority 1: If sub-county is provided, get zone from sub-county
+        if ($subCountyId) {
+            $subCounty = SubCounty::find($subCountyId);
+            if ($subCounty && $subCounty->shipping_zone_id) {
+                return $subCounty->shipping_zone_id;
             }
         }
 

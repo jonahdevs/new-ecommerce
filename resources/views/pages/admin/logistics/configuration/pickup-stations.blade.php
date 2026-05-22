@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\PickupStationStatus;
-use App\Models\Area;
 use App\Models\County;
+use App\Models\SubCounty;
 use App\Models\LogisticsProvider;
 use App\Models\PickupStation;
 use App\Livewire\Forms\Admin\PickupStationForm;
@@ -46,16 +46,15 @@ new #[Title('Pickup Stations')] class extends Component {
         $this->resetPage();
     }
 
-    // When county changes in the form, clear the area selection
     public function updatedFormCountyId(): void
     {
-        $this->form->area_id = '';
+        $this->form->sub_county_id = '';
     }
 
     #[Computed]
     public function stations()
     {
-        return PickupStation::with(['county', 'area', 'logisticsProvider'])
+        return PickupStation::with(['county', 'subCounty', 'logisticsProvider'])
             ->when(
                 $this->search,
                 fn($q) => $q
@@ -77,12 +76,13 @@ new #[Title('Pickup Stations')] class extends Component {
     }
 
     #[Computed]
-    public function areasForForm()
+    public function subCountiesForForm()
     {
-        if (!$this->form->county_id) {
+        if (! $this->form->county_id) {
             return collect();
         }
-        return Area::where('county_id', $this->form->county_id)->orderBy('name')->get();
+
+        return SubCounty::where('county_id', $this->form->county_id)->orderBy('name')->get();
     }
 
     #[Computed]
@@ -251,8 +251,8 @@ new #[Title('Pickup Stations')] class extends Component {
 
                         <flux:table.cell>
                             <flux:subheading>{{ $station->county->name }}</flux:subheading>
-                            @if ($station->area)
-                                <flux:subheading>{{ $station->area->name }}</flux:subheading>
+                            @if ($station->subCounty)
+                                <flux:subheading>{{ $station->subCounty->name }}</flux:subheading>
                             @endif
                         </flux:table.cell>
 
@@ -351,9 +351,9 @@ new #[Title('Pickup Stations')] class extends Component {
                     @endforeach
                 </flux:select>
 
-                <flux:select wire:model="form.area_id" label="Area (Optional)" clearable placeholder="Select area...">
-                    @foreach ($this->areasForForm as $area)
-                        <flux:select.option value="{{ $area->id }}">{{ $area->name }}</flux:select.option>
+                <flux:select wire:model="form.sub_county_id" label="Sub-County (Optional)" clearable placeholder="Select sub-county...">
+                    @foreach ($this->subCountiesForForm as $subCounty)
+                        <flux:select.option value="{{ $subCounty->id }}">{{ $subCounty->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </div>

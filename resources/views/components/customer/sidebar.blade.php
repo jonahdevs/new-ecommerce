@@ -7,7 +7,7 @@
     $wishlistCount = $user->wishlistItems()->count();
 @endphp
 
-<aside class="customer-sidebar w-full lg:w-64 shrink-0 lg:self-start lg:sticky lg:top-28">
+<aside class="customer-sidebar w-full lg:w-64 shrink-0 lg:self-start lg:sticky lg:top-36">
     <div class="bg-white rounded-md border  py-4">
 
         {{-- Profile card --}}
