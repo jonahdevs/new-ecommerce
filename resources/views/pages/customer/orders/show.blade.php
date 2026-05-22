@@ -141,16 +141,15 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
             {{-- Shown when this order was converted from an accepted quote.   --}}
             {{-- ============================================================ --}}
             @if ($order->wasConvertedFromQuote() && $order->quote)
-                <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-sm mb-6">
-                    <flux:icon.tag class="size-4 shrink-0 text-blue-500" />
-                    <flux:text class="text-sm text-blue-800 flex-1">
+                <flux:callout icon="tag" color="blue">
+                    <flux:callout.heading>Created from a quotation</flux:callout.heading>
+                    <flux:callout.text>
                         This order was created from quote
-                        <flux:link :href="route('customer.quotations.show', $order->quote)" wire:navigate
-                            class="font-medium">
+                        <flux:callout.link :href="route('customer.quotations.show', $order->quote)" wire:navigate>
                             {{ $order->quote->reference }}
-                        </flux:link>
-                    </flux:text>
-                </div>
+                        </flux:callout.link>
+                    </flux:callout.text>
+                </flux:callout>
             @endif
 
             {{-- Order Quick Summary --}}
@@ -347,20 +346,20 @@ new #[Title('Order Details')] #[Layout('layouts.customer')] class extends Compon
                                                     {{ $order->kra_cu_number }}</div>
                                             </div>
                                         @elseif ($this->isAwaitingKraValidation)
-                                            <div
-                                                class="p-3 bg-purple-50 border border-purple-100 rounded-sm text-[11px] text-purple-700 leading-relaxed font-medium">
-                                                Pending KRA validation. This usually takes a few minutes.
-                                            </div>
+                                            <flux:callout icon="clock" color="violet">
+                                                <flux:callout.heading>Pending KRA validation</flux:callout.heading>
+                                                <flux:callout.text>This usually takes a few minutes.</flux:callout.text>
+                                            </flux:callout>
                                         @elseif ($this->hasSapSyncFailed)
-                                            <div
-                                                class="p-3 bg-red-50 border border-red-100 rounded-sm text-[11px] text-red-700 leading-relaxed font-medium">
-                                                Invoice generation issue. Support has been notified.
-                                            </div>
+                                            <flux:callout variant="danger" icon="x-circle">
+                                                <flux:callout.heading>Invoice generation issue</flux:callout.heading>
+                                                <flux:callout.text>Support has been notified.</flux:callout.text>
+                                            </flux:callout>
                                         @else
-                                            <div
-                                                class="p-3 bg-zinc-50 border border-zinc-100 rounded-sm text-[11px] text-on-surface-variant leading-relaxed italic">
-                                                Your invoice is being prepared...
-                                            </div>
+                                            <flux:callout variant="secondary" icon="document-text">
+                                                <flux:callout.heading>Invoice being prepared</flux:callout.heading>
+                                                <flux:callout.text>Your tax invoice will be available shortly.</flux:callout.text>
+                                            </flux:callout>
                                         @endif
                                     </div>
                                 @endif

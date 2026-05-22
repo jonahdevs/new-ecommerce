@@ -230,6 +230,10 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('admin')->name('admin.'
     Route::prefix('logistics')->name('logistics.')->group(function () {
         Route::livewire('/overview', 'pages::admin.logistics.dashboard')->name('overview');
 
+        Route::prefix('delivery-orders')->name('delivery-orders.')->group(function () {
+            Route::livewire('/{deliveryOrder}', 'pages::admin.logistics.delivery-orders.show')->name('show');
+        });
+
         Route::prefix('configuration')->name('configuration.')->group(function () {
             Route::livewire('/providers', 'pages::admin.logistics.configuration.providers')->name('providers');
             Route::livewire('/zones', 'pages::admin.logistics.configuration.zones')->name('zones');

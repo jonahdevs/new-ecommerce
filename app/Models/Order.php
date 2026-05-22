@@ -325,15 +325,10 @@ class Order extends Model
 
     /**
      * Creates a delivery order when the order is marked as shipped.
-     * Skips quote-converted orders (logistics arranged separately).
      * Idempotent — safe to call multiple times.
      */
     private function createDeliveryOrderOnShip(): void
     {
-        if ($this->wasConvertedFromQuote()) {
-            return;
-        }
-
         if ($this->deliveryOrder()->exists()) {
             return;
         }

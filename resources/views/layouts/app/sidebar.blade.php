@@ -96,15 +96,6 @@
                     <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.rates.addons')" :current="request()->routeIs('admin.logistics.configuration.rates.addons')">Rate Add-ons</flux:navlist.item>
                 </flux:navlist.group>
 
-                <flux:navlist.group
-                    expandable
-                    heading="Operations"
-                    :expanded="request()->routeIs('admin.logistics.operations.*')"
-                >
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.operations.delivery-orders')" :current="request()->routeIs('admin.logistics.operations.delivery-orders')">Delivery Orders</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.operations.pus-tracker')" :current="request()->routeIs('admin.logistics.operations.pus-tracker')">PUS Tracker</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.operations.returns')" :current="request()->routeIs('admin.logistics.operations.returns')">Returns</flux:navlist.item>
-                </flux:navlist.group>
 
             </flux:navlist.group>
 

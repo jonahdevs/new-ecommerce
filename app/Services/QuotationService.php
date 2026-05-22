@@ -9,8 +9,10 @@ use App\Enums\SapSyncStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Quote;
+use App\Models\User;
 use App\Notifications\QuoteAcceptedNotification;
 use App\Notifications\QuoteExpiringNotification;
+use App\Notifications\QuoteReceivedNotification;
 use App\Notifications\QuoteRejectedNotification;
 use App\Notifications\QuoteRequestedNotification;
 use App\Notifications\QuoteSentNotification;
@@ -195,6 +197,7 @@ class QuotationService
         $basket->clear();
 
         $this->notifyRequested($quote);
+        $this->notifyCustomerReceived($quote);
 
         return $quote;
     }
@@ -210,9 +213,48 @@ class QuotationService
         }
 
         try {
-            $this->notifyAdmin(new QuoteRequestedNotification($quote));
+            $staffUsers = User::staff()->get();
+
+            if ($staffUsers->isEmpty()) {
+                Log::warning('QuoteRequestedNotification skipped: no staff users found', [
+                    'quote_id' => $quote->id,
+                ]);
+
+                return;
+            }
+
+            Notification::send($staffUsers, new QuoteRequestedNotification($quote));
         } catch (\Throwable $e) {
             Log::error('Failed to send QuoteRequestedNotification.', [
+                'quote_id' => $quote->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // =========================================================================
+    // QUOTE RECEIVED (customer confirmation notification)
+    // =========================================================================
+
+    public function notifyCustomerReceived(Quote $quote): void
+    {
+        if (! $this->customerNotificationSettings->quote_received) {
+            return;
+        }
+
+        try {
+            if ($quote->user) {
+                $quote->user->notify(new QuoteReceivedNotification($quote));
+            } elseif ($email = $quote->customerEmail()) {
+                Notification::route('mail', $email)
+                    ->notify(new QuoteReceivedNotification($quote));
+            } else {
+                Log::warning('QuoteReceivedNotification: no customer email available', [
+                    'quote_id' => $quote->id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send QuoteReceivedNotification.', [
                 'quote_id' => $quote->id,
                 'error' => $e->getMessage(),
             ]);

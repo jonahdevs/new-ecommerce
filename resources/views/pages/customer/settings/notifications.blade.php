@@ -28,6 +28,8 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
         return [
             'order_confirmation' => ['email' => true, 'sms' => false, 'push' => false],
             'order_updates' => ['email' => true, 'sms' => false, 'push' => false],
+            'quote_received' => ['email' => true, 'sms' => false, 'push' => false],
+            'quote_updates' => ['email' => true, 'sms' => false, 'push' => false],
             'special_offers' => ['email' => true, 'sms' => false, 'push' => false],
             'new_arrivals' => ['email' => false, 'sms' => false, 'push' => false],
             'review_reminders' => ['email' => true, 'sms' => false, 'push' => false],
@@ -82,6 +84,16 @@ new #[Layout('layouts.customer-settings'), Title('Notification Preferences')] cl
             description="Receive confirmation when your order is placed" />
         <x-customer.notification-row topic="order_updates" title="Order Updates"
             description="Get notified when your order is processed, shipped, delivered, cancelled or refunded" />
+
+        {{-- Quotations --}}
+        <div class="flex items-center gap-2 px-5 py-3.5 border-b border-zinc-200 bg-zinc-50/40">
+            <flux:icon.document-text class="w-3.5 h-3.5 text-primary shrink-0" />
+            <span class="text-[11px] font-bold tracking-widest uppercase text-on-surface-variant">Quotations</span>
+        </div>
+        <x-customer.notification-row topic="quote_received" title="Quote Request Confirmed"
+            description="Confirmation email when your quote request is received by our team" />
+        <x-customer.notification-row topic="quote_updates" title="Quote Updates"
+            description="Notifications when your quotation is priced, sent or about to expire" />
 
         {{-- Promotions --}}
         <div class="flex items-center gap-2 px-5 py-3.5 border-b border-zinc-200 bg-zinc-50/40">

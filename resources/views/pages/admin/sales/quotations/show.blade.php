@@ -65,7 +65,9 @@ new #[Title('Quotation Details')] class extends Component {
     public function quotedTotal(): float
     {
         $tax = app(\App\Services\TaxService::class);
-        $shipping = (float) str_replace(',', '', $this->quotedShipping ?: '0');
+        $shipping = $this->quote->delivery_type === 'pickup'
+            ? 0.0
+            : (float) str_replace(',', '', $this->quotedShipping ?: '0');
         $base = max(0, $this->quotedSubtotal - $this->quote->discount_cents / 100 + $shipping);
 
         return $tax->isEnabled() && !$tax->isInclusive() ? $base + $this->quotedTax : $base;
@@ -94,7 +96,9 @@ new #[Title('Quotation Details')] class extends Component {
         }
 
         $subtotalCents = (int) round($this->quotedSubtotal * 100);
-        $shippingCents = (int) round((float) str_replace(',', '', $this->quotedShipping ?: '0') * 100);
+        $shippingCents = $this->quote->delivery_type === 'pickup'
+            ? 0
+            : (int) round((float) str_replace(',', '', $this->quotedShipping ?: '0') * 100);
         $discountCents = $this->quote->discount_cents;
 
         $taxableSubtotal = max(0, $subtotalCents - $discountCents);
@@ -124,7 +128,7 @@ new #[Title('Quotation Details')] class extends Component {
 
         try {
             app(QuotationService::class)->prepare($this->quote, [
-                'shipping' => $this->quotedShipping ?: 0,
+                'shipping' => $this->quote->delivery_type === 'pickup' ? 0 : ($this->quotedShipping ?: 0),
                 'validity_days' => $this->validityDays,
                 'note' => $this->adminNote ?: null,
                 'item_prices' => $this->itemPrices,
@@ -158,7 +162,7 @@ new #[Title('Quotation Details')] class extends Component {
 
         try {
             app(QuotationService::class)->send($this->quote, [
-                'shipping' => $this->quotedShipping ?: 0,
+                'shipping' => $this->quote->delivery_type === 'pickup' ? 0 : ($this->quotedShipping ?: 0),
                 'validity_days' => $this->validityDays,
                 'note' => $this->adminNote ?: null,
                 'item_prices' => $this->itemPrices,
@@ -244,7 +248,7 @@ new #[Title('Quotation Details')] class extends Component {
         try {
             if ($this->canPrice) {
                 app(QuotationService::class)->prepare($this->quote, [
-                    'shipping' => $this->quotedShipping ?: 0,
+                    'shipping' => $this->quote->delivery_type === 'pickup' ? 0 : ($this->quotedShipping ?: 0),
                     'validity_days' => $this->validityDays,
                     'note' => $this->adminNote ?: null,
                     'item_prices' => $this->itemPrices,
@@ -497,6 +501,7 @@ new #[Title('Quotation Details')] class extends Component {
                                     </flux:text>
                                 </div>
                             @endif
+                            @if ($quote->delivery_type !== 'pickup')
                             <div class="flex justify-between items-center text-sm">
                                 <flux:text>Shipping</flux:text>
                                 @if ($this->canPrice)
@@ -515,6 +520,7 @@ new #[Title('Quotation Details')] class extends Component {
                                     </flux:text>
                                 @endif
                             </div>
+                            @endif
                             @php $taxService = app(\App\Services\TaxService::class); @endphp
                             @if ($taxService->isEnabled())
                                 <div class="flex justify-between text-sm">

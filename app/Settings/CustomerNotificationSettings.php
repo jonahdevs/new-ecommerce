@@ -22,6 +22,8 @@ class CustomerNotificationSettings extends Settings
     public int $review_request_delay;    // days after delivery to send review request
 
     // Quotation notifications
+    public bool $quote_received;           // email confirming quote request was received
+
     public bool $quote_sent;              // email when quote is sent to customer
 
     public bool $quote_expiring_reminder; // reminder before quote expires

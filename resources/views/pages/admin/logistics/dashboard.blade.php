@@ -5,7 +5,6 @@ use App\Models\DeliveryOrder;
 use App\Models\LogisticsProvider;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
-use App\Settings\RegionalSettings;
 use Livewire\Attributes\{Computed, Title, Url};
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -41,21 +40,15 @@ new #[Title('Logistics')] class extends Component {
     #[Url(history: true)]
     public string $filterDateTo = '';
 
+    #[Url(history: true)]
+    public string $filterType = '';
+
     public int $perPage = 15;
 
     // Bulk action bridge
     public array $pendingBulkIds = [];
 
     public string $pendingBulkStatus = '';
-
-    // Order detail flyout
-    public ?int $viewingId = null;
-
-    public string $statusNote = '';
-
-    public string $newStatus = '';
-
-    public bool $confirmingStatus = false;
 
     // ─── Pagination resets ────────────────────────────────────────────────────
 
@@ -73,31 +66,33 @@ new #[Title('Logistics')] class extends Component {
 
     public function updatingFilterDateTo(): void { $this->resetPage(); }
 
+    public function updatingFilterType(): void { $this->resetPage(); }
+
     public function updatingPerPage(): void { $this->resetPage(); }
 
     public function setKpiDateRange(string $from, string $to): void
     {
         $this->dateFrom = $from;
         $this->dateTo = $to;
-        unset($this->kpiStats, $this->statusBreakdown, $this->zoneBreakdown);
-    }
-
-    public function setDateRange(string $from, string $to): void
-    {
         $this->filterDateFrom = $from;
         $this->filterDateTo = $to;
         $this->resetPage();
+        unset($this->kpiStats, $this->statusBreakdown, $this->zoneBreakdown);
     }
 
     public function clearFilters(): void
     {
         $this->search = '';
+        $this->filterType = '';
         $this->filterStatus = '';
         $this->filterMethod = '';
         $this->filterZone = '';
         $this->filterProvider = '';
         $this->filterDateFrom = '';
         $this->filterDateTo = '';
+        $this->dateFrom = '';
+        $this->dateTo = '';
+        unset($this->kpiStats, $this->statusBreakdown, $this->zoneBreakdown);
         $this->resetPage();
     }
 
@@ -193,7 +188,9 @@ new #[Title('Logistics')] class extends Component {
     public function orders()
     {
         return DeliveryOrder::with(['shippingMethod', 'shippingZone', 'logisticsProvider', 'pickupStation'])
-            ->where('is_return', false)
+            ->when($this->filterType === 'delivery', fn($q) => $q->where('is_return', false)->whereNull('pickup_station_id'))
+            ->when($this->filterType === 'pus', fn($q) => $q->where('is_return', false)->whereNotNull('pickup_station_id'))
+            ->when($this->filterType === 'returns', fn($q) => $q->where('is_return', true))
             ->when($this->search, fn($q) => $q->where(
                 fn($q) => $q
                     ->where('id', 'like', "%{$this->search}%")
@@ -213,7 +210,10 @@ new #[Title('Logistics')] class extends Component {
     #[Computed]
     public function statusCounts(): array
     {
-        $counts = DeliveryOrder::where('is_return', false)
+        $counts = DeliveryOrder::query()
+            ->when($this->filterType === 'delivery', fn($q) => $q->where('is_return', false)->whereNull('pickup_station_id'))
+            ->when($this->filterType === 'pus', fn($q) => $q->where('is_return', false)->whereNotNull('pickup_station_id'))
+            ->when($this->filterType === 'returns', fn($q) => $q->where('is_return', true))
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -244,109 +244,6 @@ new #[Title('Logistics')] class extends Component {
     public function providers()
     {
         return LogisticsProvider::where('status', 'active')->orderBy('name')->get();
-    }
-
-    #[Computed]
-    public function regionalSettings(): RegionalSettings
-    {
-        return app(RegionalSettings::class);
-    }
-
-    // ─── Order detail ─────────────────────────────────────────────────────────
-
-    #[Computed]
-    public function viewingOrder(): ?DeliveryOrder
-    {
-        if (! $this->viewingId) {
-            return null;
-        }
-
-        return DeliveryOrder::with([
-            'shippingMethod', 'shippingZone', 'logisticsProvider',
-            'pickupStation', 'shippingRate.shippingZone', 'vehicleRate',
-        ])->find($this->viewingId);
-    }
-
-    #[Computed]
-    public function allowedTransitions(): array
-    {
-        if (! $this->viewingOrder) {
-            return [];
-        }
-
-        $current = $this->viewingOrder->status instanceof DeliveryOrderStatus
-            ? $this->viewingOrder->status
-            : DeliveryOrderStatus::from($this->viewingOrder->status);
-
-        return match ($current) {
-            DeliveryOrderStatus::PENDING          => [DeliveryOrderStatus::PICKED_UP, DeliveryOrderStatus::CANCELLED],
-            DeliveryOrderStatus::PICKED_UP        => [DeliveryOrderStatus::IN_TRANSIT],
-            DeliveryOrderStatus::IN_TRANSIT       => [DeliveryOrderStatus::OUT_FOR_DELIVERY, DeliveryOrderStatus::AT_STATION],
-            DeliveryOrderStatus::OUT_FOR_DELIVERY => [DeliveryOrderStatus::DELIVERED, DeliveryOrderStatus::FAILED],
-            DeliveryOrderStatus::FAILED           => [DeliveryOrderStatus::RETURNING, DeliveryOrderStatus::OUT_FOR_DELIVERY],
-            DeliveryOrderStatus::AT_STATION       => [DeliveryOrderStatus::COLLECTED, DeliveryOrderStatus::RETURNING],
-            DeliveryOrderStatus::RETURNING        => [DeliveryOrderStatus::RETURNED],
-            default                               => [],
-        };
-    }
-
-    public function viewOrder(int $id): void
-    {
-        $this->viewingId = $id;
-        $this->newStatus = '';
-        $this->statusNote = '';
-        $this->confirmingStatus = false;
-        unset($this->viewingOrder, $this->allowedTransitions);
-        Flux::modal('order-detail')->show();
-    }
-
-    public function prepareStatusUpdate(string $status): void
-    {
-        $this->newStatus = $status;
-        $this->confirmingStatus = true;
-    }
-
-    public function cancelStatusUpdate(): void
-    {
-        $this->newStatus = '';
-        $this->statusNote = '';
-        $this->confirmingStatus = false;
-    }
-
-    public function applyStatusUpdate(): void
-    {
-        if (! $this->viewingId || ! $this->newStatus) {
-            return;
-        }
-
-        try {
-            $order = DeliveryOrder::findOrFail($this->viewingId);
-            $updates = ['status' => $this->newStatus];
-
-            if ($this->newStatus === DeliveryOrderStatus::DELIVERED->value) {
-                $updates['delivered_at'] = now();
-            }
-
-            if ($this->newStatus === DeliveryOrderStatus::COLLECTED->value) {
-                $updates['delivered_at'] = $updates['delivered_at'] ?? now();
-            }
-
-            $order->update($updates);
-
-            $this->confirmingStatus = false;
-            $this->statusNote = '';
-            $this->newStatus = '';
-
-            unset($this->viewingOrder, $this->allowedTransitions, $this->orders, $this->statusCounts, $this->kpiStats);
-            $this->dispatch('notify', title: 'Status Updated', variant: 'success', message: 'Delivery order status updated.');
-        } catch (\Throwable $e) {
-            logger()->error('Failed to update delivery order status.', [
-                'exception' => $e->getMessage(),
-                'order_id'  => $this->viewingId,
-                'user_id'   => auth()->id(),
-            ]);
-            $this->dispatch('notify', title: 'Update Failed', variant: 'danger', message: 'Could not update status. Please try again.');
-        }
     }
 
     // ─── Bulk actions ─────────────────────────────────────────────────────────
@@ -415,7 +312,7 @@ new #[Title('Logistics')] class extends Component {
         clearSelection() { this.selected = []; },
         runBulkAction(status) { if (this.selected.length === 0) return; $wire.prepareBulkAction(status, this.selected); },
 
-        columns: JSON.parse(localStorage.getItem('delivery_orders_columns') ?? 'null') ?? { method: true, zone: true, provider: true, estimated: true },
+        columns: JSON.parse(localStorage.getItem('delivery_orders_columns') ?? 'null') ?? { method: true, zone: true, provider: true, estimated: true, deadline: false },
         toggleColumn(col) { this.columns[col] = !this.columns[col]; localStorage.setItem('delivery_orders_columns', JSON.stringify(this.columns)); },
     }"
     @delivery-orders-refreshed.window="allIds = [...$event.detail.ids]; selected = [];"
@@ -424,11 +321,11 @@ new #[Title('Logistics')] class extends Component {
     <x-admin.logistics.layout heading="Logistics" subheading="Overview, pipeline, and delivery orders at a glance.">
 
         <x-slot:actions>
-            <flux:icon.loading wire:loading wire:target="setKpiDateRange" class="size-3.5 text-zinc-400" />
+            <flux:icon.loading wire:loading wire:target="setKpiDateRange,clearFilters" class="size-3.5 text-zinc-400" />
             <div class="relative" wire:ignore>
                 <input type="text" readonly
                     class="logistics-kpi-date-range w-56 pl-8 pr-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
-                    placeholder="Revenue: this month" />
+                    placeholder="Filter by date" />
                 <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
             </div>
             <flux:button variant="ghost" size="sm" icon="arrow-path" wire:click="$refresh" class="cursor-pointer text-zinc-400">
@@ -457,19 +354,18 @@ new #[Title('Logistics')] class extends Component {
                 </flux:card>
 
                 {{-- At Station --}}
-                <a href="{{ route('admin.logistics.operations.pus-tracker') }}" wire:navigate class="block">
-                    <flux:card class="p-5 h-full hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors">
-                        <div class="flex items-start justify-between mb-3">
-                            <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider">At Station</p>
-                            <div class="w-7 h-7 rounded-md bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
-                                <flux:icon.building-storefront class="w-4 h-4 text-orange-500" />
-                            </div>
+                <flux:card class="p-5 h-full hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors cursor-pointer"
+                    wire:click="$set('filterType', 'pus')">
+                    <div class="flex items-start justify-between mb-3">
+                        <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider">At Station</p>
+                        <div class="w-7 h-7 rounded-md bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+                            <flux:icon.building-storefront class="w-4 h-4 text-orange-500" />
                         </div>
-                        <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums"
-                            x-data="countUp({ to: {{ $this->kpiStats['at_station'] }} })" x-text="display"></p>
-                        <p class="text-xs text-zinc-400 mt-1">awaiting collection</p>
-                    </flux:card>
-                </a>
+                    </div>
+                    <p class="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums"
+                        x-data="countUp({ to: {{ $this->kpiStats['at_station'] }} })" x-text="display"></p>
+                    <p class="text-xs text-zinc-400 mt-1">awaiting collection</p>
+                </flux:card>
 
                 {{-- Delivered Today --}}
                 <flux:card class="p-5">
@@ -602,12 +498,12 @@ new #[Title('Logistics')] class extends Component {
                         <div class="flex items-center gap-8">
 
                             {{-- Donut chart --}}
-                            <div class="relative shrink-0 flex items-center justify-center" style="height:160px; width:160px;">
-                                <div wire:ignore style="position:relative; height:160px; width:160px; z-index:20;">
+                            <div class="relative shrink-0 flex items-center justify-center" style="height:120px; width:120px;">
+                                <div wire:ignore style="position:relative; height:120px; width:120px; z-index:20;">
                                     <canvas id="pipelineChart"></canvas>
                                 </div>
                                 <div class="absolute flex flex-col items-center justify-center pointer-events-none">
-                                    <span class="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums leading-none">
+                                    <span class="text-xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums leading-none">
                                         {{ $pipelineTotal }}
                                     </span>
                                     <span class="text-[9px] text-zinc-400 uppercase tracking-wide mt-0.5">active</span>
@@ -692,11 +588,11 @@ new #[Title('Logistics')] class extends Component {
                                 </span>
                             @endif
                         </div>
-                        <a href="{{ route('admin.logistics.operations.pus-tracker') }}" wire:navigate
+                        <button wire:click="$set('filterType', 'pus')"
                             class="text-xs text-zinc-400 hover:text-zinc-600 transition-colors flex items-center gap-1">
                             All
                             <flux:icon.arrow-long-right class="size-4" />
-                        </a>
+                        </button>
                     </div>
 
                     <div class="divide-y divide-zinc-50 dark:divide-zinc-800/60">
@@ -737,26 +633,14 @@ new #[Title('Logistics')] class extends Component {
             {{-- DELIVERY ORDERS TABLE                                            --}}
             {{-- ================================================================ --}}
             <div>
-                {{-- Section heading --}}
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">Delivery Orders</h2>
-                        <p class="text-xs text-zinc-400 mt-0.5">Track and manage all forward deliveries</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <flux:icon.loading wire:loading wire:target="setDateRange" class="size-3.5 text-zinc-400" />
-                        <div class="relative" wire:ignore>
-                            <input type="text" readonly
-                                class="delivery-orders-date-range w-52 pl-8 pr-3 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-300 hover:border-zinc-400 transition-colors"
-                                placeholder="All dates" />
-                            <flux:icon.calendar-days class="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-                        </div>
-                    </div>
-                </div>
-
                 <flux:card class="p-0">
 
-                    {{-- Toolbar --}}
+                    {{-- Card header --}}
+                    <div class="px-5 py-4 border-b border-zinc-200 dark:border-zinc-600">
+                        <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">Delivery Orders</h2>
+                    </div>
+
+                    {{-- Toolbar: search + per-page + columns + clear --}}
                     <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-600">
 
                         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
@@ -771,69 +655,11 @@ new #[Title('Logistics')] class extends Component {
                                 <flux:select.option value="100">100</flux:select.option>
                             </flux:select>
 
-                            {{-- Filters dropdown --}}
-                            <flux:dropdown>
-                                <flux:button icon="funnel" icon-variant="outline" variant="ghost" size="sm">
-                                    Filters
-                                    @if ($filterStatus || $filterMethod || $filterZone || $filterProvider)
-                                        <flux:badge size="sm" class="ms-2" color="blue">
-                                            {{ collect([$filterStatus, $filterMethod, $filterZone, $filterProvider])->filter()->count() }}
-                                        </flux:badge>
-                                    @endif
-                                </flux:button>
-                                <flux:menu class="min-w-80">
-                                    <div class="flex items-center justify-between px-4 py-2 border-b dark:border-zinc-600">
-                                        <flux:heading size="sm">Filter Options</flux:heading>
-                                        @if ($filterStatus || $filterMethod || $filterZone || $filterProvider)
-                                            <flux:button variant="ghost" size="xs" wire:click="clearFilters" class="cursor-pointer">
-                                                Reset
-                                            </flux:button>
-                                        @endif
-                                    </div>
-                                    <div class="space-y-3 p-5">
-                                        <flux:field>
-                                            <flux:label>Status</flux:label>
-                                            <flux:select wire:model.live="filterStatus" placeholder="All Statuses">
-                                                @foreach ($this->statuses as $s)
-                                                    <flux:select.option value="{{ $s->value }}">
-                                                        {{ $s->label() }} ({{ $this->statusCounts[$s->value] ?? 0 }})
-                                                    </flux:select.option>
-                                                @endforeach
-                                            </flux:select>
-                                        </flux:field>
-                                        <flux:field>
-                                            <flux:label>Shipping Method</flux:label>
-                                            <flux:select wire:model.live="filterMethod" placeholder="All Methods">
-                                                @foreach ($this->methods as $method)
-                                                    <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
-                                                @endforeach
-                                            </flux:select>
-                                        </flux:field>
-                                        <flux:field>
-                                            <flux:label>Shipping Zone</flux:label>
-                                            <flux:select wire:model.live="filterZone" placeholder="All Zones">
-                                                @foreach ($this->zones as $zone)
-                                                    <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
-                                                @endforeach
-                                            </flux:select>
-                                        </flux:field>
-                                        <flux:field>
-                                            <flux:label>Provider</flux:label>
-                                            <flux:select wire:model.live="filterProvider" placeholder="All Providers">
-                                                @foreach ($this->providers as $provider)
-                                                    <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
-                                                @endforeach
-                                            </flux:select>
-                                        </flux:field>
-                                    </div>
-                                </flux:menu>
-                            </flux:dropdown>
-
                             {{-- Column visibility --}}
                             <flux:dropdown>
                                 <flux:button icon="view-columns" icon-variant="outline" variant="ghost" size="sm">Columns</flux:button>
                                 <flux:menu>
-                                    @foreach (['method' => 'Method', 'zone' => 'Zone', 'provider' => 'Provider', 'estimated' => 'Estimated'] as $col => $colLabel)
+                                    @foreach (['method' => 'Method', 'zone' => 'Zone', 'provider' => 'Provider', 'estimated' => 'Estimated', 'deadline' => 'Collection Deadline'] as $col => $colLabel)
                                         <flux:menu.item @click.prevent="toggleColumn('{{ $col }}')">
                                             <span class="flex items-center gap-2">
                                                 <span x-text="columns.{{ $col }} ? '✓' : ''" class="w-4 text-green-600 font-bold"></span>
@@ -844,46 +670,44 @@ new #[Title('Logistics')] class extends Component {
                                 </flux:menu>
                             </flux:dropdown>
 
-                            @if ($search || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
-                                <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">Clear</flux:button>
+                            @if ($search || $filterType || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
+                                <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">Clear all</flux:button>
                             @endif
 
                         </div>
                     </div>
 
-                    {{-- Active filter chips --}}
-                    @if ($filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
-                        <div class="flex flex-wrap gap-2 px-5 py-2 border-b border-zinc-200 dark:border-zinc-600">
-                            <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-center me-1">Active:</span>
-                            @if ($filterStatus)
-                                <flux:badge size="sm" variant="flat" closable wire:click="$set('filterStatus', '')">
-                                    Status: {{ DeliveryOrderStatus::tryFrom($filterStatus)?->label() }}
-                                </flux:badge>
-                            @endif
-                            @if ($filterMethod)
-                                <flux:badge size="sm" variant="flat" closable wire:click="$set('filterMethod', '')">
-                                    Method: {{ $this->methods->find($filterMethod)?->name }}
-                                </flux:badge>
-                            @endif
-                            @if ($filterZone)
-                                <flux:badge size="sm" variant="flat" closable wire:click="$set('filterZone', '')">
-                                    Zone: {{ $this->zones->find($filterZone)?->name }}
-                                </flux:badge>
-                            @endif
-                            @if ($filterProvider)
-                                <flux:badge size="sm" variant="flat" closable wire:click="$set('filterProvider', '')">
-                                    Provider: {{ $this->providers->find($filterProvider)?->name }}
-                                </flux:badge>
-                            @endif
-                            @if ($filterDateFrom || $filterDateTo)
-                                <flux:badge size="sm" variant="flat" closable wire:click="setDateRange('', '')">
-                                    {{ $filterDateFrom ? \Carbon\Carbon::parse($filterDateFrom)->format('M d, Y') : '…' }}
-                                    –
-                                    {{ $filterDateTo ? \Carbon\Carbon::parse($filterDateTo)->format('M d, Y') : '…' }}
-                                </flux:badge>
-                            @endif
-                        </div>
-                    @endif
+                    {{-- Inline filters row --}}
+                    <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-zinc-200 dark:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-800/30">
+                        <flux:select wire:model.live="filterType" placeholder="All Types" class="w-44">
+                            <flux:select.option value="delivery">Standard Delivery</flux:select.option>
+                            <flux:select.option value="pus">Pickup Station</flux:select.option>
+                            <flux:select.option value="returns">Returns</flux:select.option>
+                        </flux:select>
+                        <flux:select wire:model.live="filterStatus" placeholder="All Statuses" class="w-44">
+                            @foreach ($this->statuses as $s)
+                                <flux:select.option value="{{ $s->value }}">
+                                    {{ $s->label() }} ({{ $this->statusCounts[$s->value] ?? 0 }})
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:select wire:model.live="filterMethod" placeholder="All Methods" class="w-44">
+                            @foreach ($this->methods as $method)
+                                <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:select wire:model.live="filterZone" placeholder="All Zones" class="w-44">
+                            @foreach ($this->zones as $zone)
+                                <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:select wire:model.live="filterProvider" placeholder="All Providers" class="w-44">
+                            @foreach ($this->providers as $provider)
+                                <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+
 
                     {{-- Bulk action bar --}}
                     <div x-cloak x-show="selected.length > 0"
@@ -926,6 +750,7 @@ new #[Title('Logistics')] class extends Component {
                             <flux:table.column x-show="columns.provider">Provider</flux:table.column>
                             <flux:table.column>Cost</flux:table.column>
                             <flux:table.column x-show="columns.estimated">Estimated</flux:table.column>
+                            <flux:table.column x-show="columns.deadline">Deadline</flux:table.column>
                             <flux:table.column>Status</flux:table.column>
                             <flux:table.column align="end" class="pe-4!">Actions</flux:table.column>
                         </flux:table.columns>
@@ -933,7 +758,7 @@ new #[Title('Logistics')] class extends Component {
                         <flux:table.rows>
                             @forelse ($this->orders as $order)
                                 <flux:table.row :key="$order->id"
-                                    x-bind:class="isSelected({{ $order->id }}) ? 'bg-blue-50 dark:bg-blue-900/20' : ''">
+                                    x-bind:class="isSelected({{ $order->id }}) ? 'bg-zinc-50 dark:bg-zinc-800/40' : ''">
 
                                     <flux:table.cell class="ps-4! w-10">
                                         <flux:checkbox ::checked="isSelected({{ $order->id }})" @change="toggle({{ $order->id }})" />
@@ -944,11 +769,11 @@ new #[Title('Logistics')] class extends Component {
                                     </flux:table.cell>
 
                                     <flux:table.cell x-show="columns.method">
-                                        <span class="text-sm">{{ $order->shippingMethod->name }}</span>
+                                        <span class="text-sm">{{ $order->shippingMethod?->name ?? '—' }}</span>
                                     </flux:table.cell>
 
                                     <flux:table.cell x-show="columns.zone">
-                                        <span class="text-sm">{{ $order->shippingZone->name }}</span>
+                                        <span class="text-sm">{{ $order->shippingZone?->name ?? '—' }}</span>
                                     </flux:table.cell>
 
                                     <flux:table.cell x-show="columns.provider">
@@ -980,43 +805,46 @@ new #[Title('Logistics')] class extends Component {
                                         @endif
                                     </flux:table.cell>
 
+                                    <flux:table.cell x-show="columns.deadline">
+                                        @if ($order->collection_deadline_at)
+                                            <span class="text-sm">{{ $order->collection_deadline_at->format('M d, Y') }}</span>
+                                        @else
+                                            <span class="text-zinc-400">—</span>
+                                        @endif
+                                    </flux:table.cell>
+
                                     <flux:table.cell>
-                                        <flux:badge size="sm" variant="flat" :color="$order->status->color()">
+                                        <flux:badge size="sm" variant="flat" color="zinc">
                                             {{ $order->status->label() }}
                                         </flux:badge>
                                         @if ($order->isOverdueCollection())
-                                            <div class="text-xs text-red-500 mt-0.5 font-medium">Collection overdue</div>
+                                            <div class="text-xs text-zinc-500 mt-0.5 font-medium">Collection overdue</div>
                                         @endif
                                     </flux:table.cell>
 
                                     <flux:table.cell align="end" class="pe-4!">
-                                        <flux:dropdown align="end">
-                                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="cursor-pointer" />
-                                            <flux:menu>
-                                                <flux:menu.item icon="eye" icon-variant="outline" wire:click="viewOrder({{ $order->id }})">
-                                                    View Details
-                                                </flux:menu.item>
-                                            </flux:menu>
-                                        </flux:dropdown>
+                                        <flux:button variant="ghost" size="sm" icon="arrow-top-right-on-square"
+                                            :href="route('admin.logistics.delivery-orders.show', $order)"
+                                            wire:navigate class="cursor-pointer" />
                                     </flux:table.cell>
 
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="9" class="py-16 text-center">
+                                    <flux:table.cell colspan="10" class="py-16 text-center">
                                         <div class="flex flex-col items-center gap-3 text-zinc-400">
                                             <flux:icon.clipboard-document-list class="size-12 stroke-1" />
                                             <div>
                                                 <flux:text class="font-medium text-zinc-500">No delivery orders found</flux:text>
                                                 <flux:text class="text-xs mt-0.5">
-                                                    @if ($search || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
+                                                    @if ($search || $filterType || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
                                                         No orders match your current filters.
                                                     @else
                                                         Delivery orders will appear here once customers place orders.
                                                     @endif
                                                 </flux:text>
                                             </div>
-                                            @if ($search || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
+                                            @if ($search || $filterType || $filterStatus || $filterMethod || $filterZone || $filterProvider || $filterDateFrom || $filterDateTo)
                                                 <flux:button variant="ghost" size="sm" wire:click="clearFilters">Clear filters</flux:button>
                                             @endif
                                         </div>
@@ -1030,147 +858,6 @@ new #[Title('Logistics')] class extends Component {
             </div>
 
         </div>
-
-        {{-- ================================================================ --}}
-        {{-- ORDER DETAIL FLYOUT                                              --}}
-        {{-- ================================================================ --}}
-        <flux:modal name="order-detail" class="md:w-xl space-y-0" variant="flyout">
-            @if ($this->viewingOrder)
-                @php
-                    $vo     = $this->viewingOrder;
-                    $voStatus = $vo->status instanceof DeliveryOrderStatus ? $vo->status : DeliveryOrderStatus::from($vo->status);
-                    $breakdown = $vo->cost_breakdown ?? [];
-                @endphp
-
-                <div class="flex items-start justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                    <div>
-                        <flux:heading size="lg">Delivery #{{ $vo->order_id }}</flux:heading>
-                        @if ($vo->provider_reference)
-                            <code class="text-xs text-zinc-400">Ref: {{ $vo->provider_reference }}</code>
-                        @endif
-                    </div>
-                    <flux:badge :color="$voStatus->color()" variant="flat">{{ $voStatus->label() }}</flux:badge>
-                </div>
-
-                <div class="py-4 space-y-6">
-
-                    <div class="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Method</p>
-                            <p class="font-medium">{{ $vo->shippingMethod->name }}</p>
-                        </div>
-                        <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Zone</p>
-                            <p class="font-medium">{{ $vo->shippingZone->name }}</p>
-                        </div>
-                        <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Provider</p>
-                            <p class="font-medium">{{ $vo->logisticsProvider?->name ?? '—' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Shipping Cost</p>
-                            <p class="font-semibold text-base">{{ format_currency($vo->shipping_cost) }}</p>
-                        </div>
-                        <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Weight</p>
-                            <p class="font-medium">
-                                {{ $vo->package_weight_kg ? $vo->package_weight_kg . ' ' . $this->regionalSettings->weight_unit : '—' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-zinc-400 text-xs mb-0.5">Created</p>
-                            <p class="font-medium">{{ $vo->created_at->format('M d, Y H:i') }}</p>
-                        </div>
-                    </div>
-
-                    @if ($vo->estimated_delivery_at || $vo->delivered_at)
-                        <div class="grid grid-cols-2 gap-4 text-sm">
-                            @if ($vo->estimated_delivery_at)
-                                <div>
-                                    <p class="text-zinc-400 text-xs mb-0.5">Estimated Delivery</p>
-                                    <p class="font-medium">{{ $vo->estimated_delivery_at->format('M d, Y H:i') }}</p>
-                                </div>
-                            @endif
-                            @if ($vo->delivered_at)
-                                <div>
-                                    <p class="text-zinc-400 text-xs mb-0.5">Delivered At</p>
-                                    <p class="font-medium text-emerald-600">{{ $vo->delivered_at->format('M d, Y H:i') }}</p>
-                                </div>
-                            @endif
-                        </div>
-                    @endif
-
-                    @if ($vo->pickupStation)
-                        <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-sm space-y-1">
-                            <p class="font-medium text-orange-700 dark:text-orange-300">Pickup Station</p>
-                            <p>{{ $vo->pickupStation->name }}</p>
-                            @if ($vo->collection_deadline_at)
-                                <p class="text-orange-600 dark:text-orange-400 text-xs">
-                                    Collection deadline: {{ $vo->collection_deadline_at->format('M d, Y') }}
-                                    @if ($vo->collection_deadline_at->isPast())
-                                        <span class="font-semibold">(Overdue)</span>
-                                    @elseif ($vo->collection_deadline_at->diffInDays(now()) <= 2)
-                                        <span class="font-semibold">({{ $vo->collection_deadline_at->diffForHumans() }})</span>
-                                    @endif
-                                </p>
-                            @endif
-                        </div>
-                    @endif
-
-                    @if (!empty($breakdown))
-                        <div>
-                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cost Breakdown</p>
-                            <div class="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg divide-y divide-zinc-100 dark:divide-zinc-700 text-sm">
-                                @foreach ($breakdown as $key => $value)
-                                    @if (!in_array($key, ['model', 'total']))
-                                        <div class="flex justify-between px-3 py-2">
-                                            <span class="text-zinc-500 capitalize">{{ str_replace('_', ' ', $key) }}</span>
-                                            <span class="font-medium">{{ is_numeric($value) ? format_currency($value) : $value }}</span>
-                                        </div>
-                                    @endif
-                                @endforeach
-                                <div class="flex justify-between px-3 py-2 font-semibold">
-                                    <span>Total</span>
-                                    <span>{{ format_currency($breakdown['total'] ?? $vo->shipping_cost) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if (!$voStatus->isTerminal() && count($this->allowedTransitions))
-                        <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Update Status</p>
-                            @if (!$confirmingStatus)
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach ($this->allowedTransitions as $transition)
-                                        <flux:button variant="outline" size="sm"
-                                            wire:click="prepareStatusUpdate('{{ $transition->value }}')">
-                                            → {{ $transition->label() }}
-                                        </flux:button>
-                                    @endforeach
-                                </div>
-                            @else
-                                <div class="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg p-4 space-y-3">
-                                    <p class="text-sm">
-                                        Mark as <strong>{{ DeliveryOrderStatus::from($newStatus)->label() }}</strong>?
-                                    </p>
-                                    <flux:textarea wire:model="statusNote" placeholder="Optional note (internal only)..." rows="2" />
-                                    <div class="flex gap-2">
-                                        <flux:button variant="ghost" size="sm" wire:click="cancelStatusUpdate">Cancel</flux:button>
-                                        <flux:button variant="primary" size="sm" wire:click="applyStatusUpdate">Confirm Update</flux:button>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    @elseif ($voStatus->isTerminal())
-                        <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4">
-                            <p class="text-sm text-zinc-400">This order is in a terminal state and cannot be updated further.</p>
-                        </div>
-                    @endif
-
-                </div>
-            @endif
-        </flux:modal>
 
         {{-- Bulk confirm --}}
         <flux:modal name="bulk-confirm" class="md:w-96 space-y-6">
@@ -1311,21 +998,6 @@ new #[Title('Logistics')] class extends Component {
         }
     }
 
-    function initTableDatePicker() {
-        const el = $('.delivery-orders-date-range').first();
-        if (!el.length) return;
-        if (el.data('daterangepicker')) { el.data('daterangepicker').remove(); }
-
-        el.daterangepicker(dateRangeOptions, function(start, end) {
-            $wire.setDateRange(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
-            el.val(start.format('MMM DD, YYYY') + ' – ' + end.format('MMM DD, YYYY'));
-        });
-        el.on('cancel.daterangepicker', function() { $wire.setDateRange('', ''); el.val(''); });
-        if ($wire.filterDateFrom && $wire.filterDateTo) {
-            el.val(moment($wire.filterDateFrom).format('MMM DD, YYYY') + ' – ' + moment($wire.filterDateTo).format('MMM DD, YYYY'));
-        }
-    }
-
     // ─── Boot ─────────────────────────────────────────────────────────────────
 
     let rafId = null;
@@ -1337,7 +1009,6 @@ new #[Title('Logistics')] class extends Component {
     waitForLibraries(() => {
         initPipelineChart();
         initKpiDatePicker();
-        initTableDatePicker();
     });
 
     $wire.interceptMessage(({ onSuccess }) => {

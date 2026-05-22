@@ -182,6 +182,11 @@ new #[Title('Notifications')] class extends Component {
                 </div>
 
                 @include('pages.admin.settings.notifications.partials.alert-row', [
+                    'model' => 'customerForm.quote_received',
+                    'title' => __('Quote request received'),
+                    'description' => __('Confirmation sent to customers immediately when they submit a quote request'),
+                ])
+                @include('pages.admin.settings.notifications.partials.alert-row', [
                     'model' => 'customerForm.quote_sent',
                     'title' => __('Quote sent'),
                     'description' => __('Sent when admin sends a priced quotation to the customer'),

@@ -19,6 +19,8 @@ class CustomerNotificationSettingsForm extends Form
 
     public int $review_request_delay = 3;
 
+    public bool $quote_received = true;
+
     public bool $quote_sent = true;
 
     public bool $quote_expiring_reminder = true;
@@ -34,6 +36,7 @@ class CustomerNotificationSettingsForm extends Form
             'abandoned_cart_delay' => ['required_if:abandoned_cart,true', 'integer', 'min:1', 'max:72'],
             'review_request' => ['boolean'],
             'review_request_delay' => ['required_if:review_request,true', 'integer', 'min:1', 'max:30'],
+            'quote_received' => ['boolean'],
             'quote_sent' => ['boolean'],
             'quote_expiring_reminder' => ['boolean'],
             'quote_expiring_days' => ['required_if:quote_expiring_reminder,true', 'integer', 'min:1', 'max:30'],
@@ -48,6 +51,7 @@ class CustomerNotificationSettingsForm extends Form
         $this->abandoned_cart_delay = $settings->abandoned_cart_delay;
         $this->review_request = $settings->review_request;
         $this->review_request_delay = $settings->review_request_delay;
+        $this->quote_received = $settings->quote_received;
         $this->quote_sent = $settings->quote_sent;
         $this->quote_expiring_reminder = $settings->quote_expiring_reminder;
         $this->quote_expiring_days = $settings->quote_expiring_days;
@@ -63,6 +67,7 @@ class CustomerNotificationSettingsForm extends Form
         $settings->abandoned_cart_delay = $this->abandoned_cart_delay;
         $settings->review_request = $this->review_request;
         $settings->review_request_delay = $this->review_request_delay;
+        $settings->quote_received = $this->quote_received;
         $settings->quote_sent = $this->quote_sent;
         $settings->quote_expiring_reminder = $this->quote_expiring_reminder;
         $settings->quote_expiring_days = $this->quote_expiring_days;

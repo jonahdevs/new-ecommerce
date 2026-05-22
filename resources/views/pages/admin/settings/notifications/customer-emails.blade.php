@@ -87,6 +87,11 @@ new #[Title('Customer Emails')] class extends Component {
                 </div>
 
                 <div class="p-5 space-y-5">
+                    <flux:checkbox wire:model="form.quote_received" label="{{ __('Quote request received') }}"
+                        description="{{ __('Confirmation email sent to the customer immediately after they submit a quote request') }}" />
+
+                    <flux:separator />
+
                     <flux:checkbox wire:model="form.quote_sent" label="{{ __('Quote sent') }}"
                         description="{{ __('Sent when admin sends a priced quotation to the customer') }}" />
 

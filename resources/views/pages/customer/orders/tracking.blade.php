@@ -69,16 +69,15 @@ new #[Title('Order Tracking')] #[Layout('layouts.customer')] class extends Compo
             </div>
 
             @if ($order->wasConvertedFromQuote() && $order->quote)
-                <div class="flex items-center gap-2 mt-3 p-2 bg-blue-50 border border-blue-100 rounded-sm">
-                    <flux:icon.tag class="size-3.5 text-blue-500" />
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-blue-800">
-                        Converted from quote
-                        <a href="{{ route('customer.quotations.show', $order->quote) }}" wire:navigate
-                            class="underline ml-1">
+                <flux:callout icon="tag" color="blue" class="mt-3">
+                    <flux:callout.heading>Converted from a quotation</flux:callout.heading>
+                    <flux:callout.text>
+                        This order was created from quote
+                        <flux:callout.link :href="route('customer.quotations.show', $order->quote)" wire:navigate>
                             {{ $order->quote->reference }}
-                        </a>
-                    </span>
-                </div>
+                        </flux:callout.link>
+                    </flux:callout.text>
+                </flux:callout>
             @endif
         </div>
 

@@ -35,5 +35,6 @@ return new class extends SettingsMigration
         $this->migrator->add('customer_notifications.quote_sent', true);
         $this->migrator->add('customer_notifications.quote_expiring_reminder', true);
         $this->migrator->add('customer_notifications.quote_expiring_days', 2);
+        $this->migrator->add('customer_notifications.quote_received', true);
     }
 };

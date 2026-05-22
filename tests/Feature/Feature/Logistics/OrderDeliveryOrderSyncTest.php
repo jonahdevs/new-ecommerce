@@ -4,10 +4,52 @@ use App\Enums\DeliveryOrderStatus;
 use App\Enums\OrderStatus;
 use App\Models\DeliveryOrder;
 use App\Models\Order;
+use App\Models\Quote;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
+
+// ─── Auto-creation on SHIPPED ─────────────────────────────────────────────────
+
+it('creates a delivery order when a regular order transitions to shipped', function () {
+    $order = Order::factory()->for(User::factory()->create())->create([
+        'status' => OrderStatus::PROCESSING->value,
+        'quote_id' => null,
+    ]);
+
+    $order->transitionTo(OrderStatus::SHIPPED, changedByType: 'system');
+
+    expect($order->deliveryOrder()->exists())->toBeTrue();
+    expect($order->deliveryOrder()->first()->status)->toBe(DeliveryOrderStatus::PENDING);
+});
+
+it('creates a delivery order when a quote-converted order transitions to shipped', function () {
+    $user = User::factory()->create();
+    $quote = Quote::factory()->for($user)->create();
+    $order = Order::factory()->for($user)->create([
+        'status' => OrderStatus::PROCESSING->value,
+        'quote_id' => $quote->id,
+    ]);
+
+    $order->transitionTo(OrderStatus::SHIPPED, changedByType: 'system');
+
+    expect($order->deliveryOrder()->exists())->toBeTrue();
+    expect($order->deliveryOrder()->first()->status)->toBe(DeliveryOrderStatus::PENDING);
+});
+
+it('does not create a duplicate delivery order if one already exists', function () {
+    $order = Order::factory()->for(User::factory()->create())->create([
+        'status' => OrderStatus::PROCESSING->value,
+        'quote_id' => null,
+    ]);
+
+    DeliveryOrder::create(['order_id' => $order->id, 'shipping_cost' => 0, 'status' => DeliveryOrderStatus::PENDING]);
+
+    $order->transitionTo(OrderStatus::SHIPPED, changedByType: 'system');
+
+    expect($order->deliveryOrder()->count())->toBe(1);
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
