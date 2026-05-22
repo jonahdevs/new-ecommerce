@@ -79,31 +79,35 @@ class Address extends Model
 
     /**
      * Resolve and store the shipping zone at save time.
-     * Priority: sub-county zone override → county zone.
-     * Call this before saving when county_id or sub_county_id changes.
-     */
-    /**
-     * Resolve and store the shipping zone at save time.
-     * Priority: town zone → sub-county zone → county zone.
+     *
+     * Priority: town zone → sub-county zone → county zone. Each tier is read
+     * independently — we do NOT walk town→subCounty parent relationships
+     * because geoBoundaries ADM2/ADM3 centroid-based parenting can disagree
+     * with live point-in-polygon. The town/sub_county/county_id fields were
+     * each set by live resolvers; trust them at face value.
      */
     public function resolveShippingZone(): void
     {
         if ($this->town_id) {
-            $town = Town::with('shippingZone', 'subCounty.shippingZone', 'county.shippingZone')->find($this->town_id);
-            $this->shipping_zone_id = $town->shipping_zone_id
-                ?? $town->subCounty?->shipping_zone_id
-                ?? $town->county?->shipping_zone_id;
+            $townZoneId = Town::where('id', $this->town_id)->value('shipping_zone_id');
 
-            return;
+            if ($townZoneId) {
+                $this->shipping_zone_id = $townZoneId;
+
+                return;
+            }
         }
 
         if ($this->sub_county_id) {
-            $subCounty = SubCounty::with('shippingZone', 'county.shippingZone')->find($this->sub_county_id);
-            $this->shipping_zone_id = $subCounty->shipping_zone_id ?? $subCounty->county->shipping_zone_id;
+            $subCountyZoneId = SubCounty::where('id', $this->sub_county_id)->value('shipping_zone_id');
 
-            return;
+            if ($subCountyZoneId) {
+                $this->shipping_zone_id = $subCountyZoneId;
+
+                return;
+            }
         }
 
-        $this->shipping_zone_id = County::find($this->county_id)?->shipping_zone_id;
+        $this->shipping_zone_id = County::where('id', $this->county_id)->value('shipping_zone_id');
     }
 }

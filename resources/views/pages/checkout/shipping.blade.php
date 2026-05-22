@@ -58,7 +58,7 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
     #[Computed]
     public function address(): ?Address
     {
-        return $this->addressId ? Address::with(['county', 'subCounty', 'shippingZone'])->find($this->addressId) : null;
+        return $this->addressId ? Address::with(['county', 'subCounty', 'town', 'shippingZone'])->find($this->addressId) : null;
     }
 
     #[Computed]
@@ -70,7 +70,7 @@ new #[Defer] #[Layout('layouts.checkout')] class extends Component {
 
         $cartService = app(CartService::class);
 
-        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, subCountyId: $this->address->sub_county_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
+        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, subCountyId: $this->address->sub_county_id, townId: $this->address->town_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
     }
 
     #[Computed]

@@ -144,18 +144,21 @@ class PusEngine
 
     private function resolvePusZone(ShippingZone $customerZone): ShippingZone
     {
-        // If the customer is already in a zone that has PUS rates, use it.
-        // Otherwise fall back to the primary station's zone.
+        // PUS pricing is anchored at the primary station, not the customer.
+        // Resolve the station's zone via sub-county → county (same precedence
+        // as an address) so sub-county zone takes precedence over county zone.
         $primaryStation = PickupStation::where('is_primary', true)
             ->where('status', 'active')
-            ->with('county.shippingZone')
+            ->with(['subCounty.shippingZone', 'county.shippingZone'])
             ->first();
 
         if (! $primaryStation) {
             return $customerZone;
         }
 
-        return $primaryStation->county->shippingZone;
+        return $primaryStation->subCounty?->shippingZone
+            ?? $primaryStation->county?->shippingZone
+            ?? $customerZone;
     }
 
     private function resolveStations(?int $countyId): Collection

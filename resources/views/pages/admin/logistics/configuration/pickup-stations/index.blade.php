@@ -45,6 +45,12 @@ new #[Title('Pickup Stations')] class extends Component {
     {
         $this->resetPage();
     }
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public int $perPage = 10;
 
     public function updatedFormCountyId(): void
     {
@@ -66,7 +72,7 @@ new #[Title('Pickup Stations')] class extends Component {
             ->when($this->filterProvider, fn($q) => $q->where('logistics_provider_id', $this->filterProvider))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate($this->perPage);
     }
 
     #[Computed]
@@ -177,56 +183,35 @@ new #[Title('Pickup Stations')] class extends Component {
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b dark:border-zinc-600">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name, code or address..."
-                icon="magnifying-glass" clearable class="max-w-md" />
+                icon="magnifying-glass" clearable class="max-w-sm" />
 
-            <div class="ms-auto flex items-center gap-5">
-                <flux:dropdown position="bottom" align="end">
-                    <flux:button variant="ghost" size="sm" icon="funnel" icon-variant="outline" icon-trailing="chevron-down">
-                        Filters
-                        @php $activeFilters = collect([$filterCounty, $filterProvider, $filterStatus])->filter()->count(); @endphp
-                        @if ($activeFilters > 0)
-                            <flux:badge size="sm" class="ms-1">{{ $activeFilters }}</flux:badge>
-                        @endif
-                    </flux:button>
+            <div class="flex items-center gap-2 ms-auto flex-wrap">
+                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable class="w-44">
+                    @foreach ($this->counties as $county)
+                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
 
-                    <flux:menu class="min-w-64">
-                        <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-700">
-                            <flux:subheading>Filter Options</flux:subheading>
-                            <flux:button variant="ghost" size="xs"
-                                wire:click="$set('filterCounty', ''); $set('filterProvider', ''); $set('filterStatus', '')"
-                                class="cursor-pointer">Reset</flux:button>
-                        </div>
-                        <flux:separator />
-                        <div class="p-3 space-y-3">
-                            <flux:field>
-                                <flux:label>County</flux:label>
-                                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable>
-                                    @foreach ($this->counties as $county)
-                                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                            </flux:field>
-                            <flux:field>
-                                <flux:label>Provider</flux:label>
-                                <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable>
-                                    @foreach ($this->providers as $provider)
-                                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                            </flux:field>
-                            <flux:field>
-                                <flux:label>Status</flux:label>
-                                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
-                                    @foreach ($this->statuses as $status)
-                                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                            </flux:field>
-                        </div>
-                    </flux:menu>
-                </flux:dropdown>
+                <flux:select wire:model.live="filterProvider" placeholder="All Providers" clearable class="w-44">
+                    @foreach ($this->providers as $provider)
+                        <flux:select.option value="{{ $provider->id }}">{{ $provider->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="w-36">
+                    @foreach ($this->statuses as $status)
+                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="perPage" class="w-20">
+                    <flux:select.option value="10">10</flux:select.option>
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                </flux:select>
             </div>
         </div>
 

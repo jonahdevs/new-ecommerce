@@ -60,8 +60,18 @@ return new class extends Migration
 
         // ================================================================
         //  2. SHIPPING ZONES
-        //     Geographic regions that determine which rate bracket applies.
-        //     e.g. "Within Nairobi", "Outside Nairobi"
+        //     Service tiers, not geography. Each row models a delivery
+        //     posture the business sells:
+        //
+        //       within_nairobi   door + PUS, base rate
+        //                        (Nairobi County + satellite ring towns)
+        //       upcountry        door delivery, higher rate (rest of Kenya)
+        //
+        //     A zone is bound to geography via three places, in
+        //     precedence order at resolution time:
+        //       1. towns.shipping_zone_id        (ADM3 ward override)
+        //       2. sub_counties.shipping_zone_id (ADM2 default)
+        //       3. counties.shipping_zone_id     (ADM1 fallback)
         //
         //     Cast: ShippingZoneStatus
         //       active   → usable, shown at checkout
@@ -86,14 +96,17 @@ return new class extends Migration
 
         // ================================================================
         //  3. COUNTIES
-        //     Kenya's 47 counties. Each belongs to a shipping zone,
-        //     which determines the rate bracket for deliveries to that county.
+        //     Kenya's 47 counties. shipping_zone_id is the COARSE FALLBACK
+        //     when neither the town nor the sub-county sets one.
+        //     Most addresses resolve at sub-county; this column is only
+        //     used for sparse cases (no map pin, no sub-county match).
         // ================================================================
 
         Schema::create('counties', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('code')->unique()->nullable();
+            // Coarse fallback. Every county maps to one of the two zones.
             $table->foreignId('shipping_zone_id')->constrained('shipping_zones')->cascadeOnUpdate()->restrictOnDelete();
             $table->decimal('lat_center', 10, 7)->nullable();
             $table->decimal('lng_center', 10, 7)->nullable();
@@ -184,10 +197,12 @@ return new class extends Migration
         // ================================================================
         //  6. SHIPPING RATES
         //     Weight-bracket × zone pricing for flat and pus methods.
+        //     One row per (zone, method, weight tier). Missing combination
+        //     = method not offered in that zone.
         //
-        //     Zone           | Small  | Medium | Large  | XL
-        //     Within Nairobi | 400    | 800    | 1,200  | 1,800
-        //     Outside Nairobi| 600    | 1,200  | 1,800  | 2,700
+        //     Zone             | Small | Medium | Large | XL
+        //     within_nairobi  | 300   | 600    |   900 | 1,400
+        //     upcountry       | 500   | 900    | 1,400 | 2,000
         //
         //     Also used as the LINE HAUL component of PUS pricing.
         //     The PUS surcharge stacks on top via shipping_rate_addons.

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             // ReviewSeeder::class,
             ShippingSeeder::class,
             CountyCoordinatesSeeder::class,
+            ServiceAreaSeeder::class,
             SalesFlowSeeder::class,
             DeliveryOrderSeeder::class,
         ]);

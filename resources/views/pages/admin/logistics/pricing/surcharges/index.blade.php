@@ -12,11 +12,14 @@ use Livewire\WithPagination;
 use Livewire\Component;
 use Flux\Flux;
 
-new #[Title('Rate Addons')] class extends Component {
+new #[Title('Surcharges')] class extends Component {
     use WithPagination;
 
     public ShippingRateAddonForm $form;
     public ?int $deletingId = null;
+
+    #[Url(history: true)]
+    public string $search = '';
 
     #[Url(history: true)]
     public string $filterMethod = '';
@@ -27,6 +30,12 @@ new #[Title('Rate Addons')] class extends Component {
     #[Url(history: true)]
     public string $filterStatus = '';
 
+    public int $perPage = 10;
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
     public function updatedFilterMethod(): void
     {
         $this->resetPage();
@@ -39,16 +48,21 @@ new #[Title('Rate Addons')] class extends Component {
     {
         $this->resetPage();
     }
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
 
     #[Computed]
     public function addons()
     {
         return ShippingRateAddon::with(['shippingRate.shippingZone', 'shippingRate.shippingMethod', 'pickupStation'])
+            ->when($this->search, fn($q) => $q->whereHas('shippingRate', fn($r) => $r->whereHas('shippingMethod', fn($m) => $m->where('name', 'like', "%{$this->search}%"))))
             ->when($this->filterMethod, fn($q) => $q->whereHas('shippingRate', fn($r) => $r->where('shipping_method_id', $this->filterMethod)))
             ->when($this->filterAddonType, fn($q) => $q->where('addon_type', $this->filterAddonType))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate($this->perPage);
     }
 
     // Only flat/pus methods make sense for addons
@@ -158,8 +172,8 @@ new #[Title('Rate Addons')] class extends Component {
     }
 }; ?>
 
-<x-admin.logistics.layout heading="Rate Addons"
-    subheading="Surcharges that stack on top of flat rates. Used primarily for PUS pickup station fees.">
+<x-admin.logistics.layout heading="Surcharges"
+    subheading="Add-on fees that stack on top of base rates. Used primarily for PUS pickup station handling.">
 
     <x-slot:actions>
         <flux:button variant="primary" icon="plus-circle" wire:click="openCreate" class="cursor-pointer">
@@ -170,52 +184,36 @@ new #[Title('Rate Addons')] class extends Component {
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
 
         {{-- Filters --}}
-        <div class="flex items-center gap-4 px-5 py-3 border-b dark:border-zinc-600">
-            <flux:dropdown position="bottom" align="end">
-                <flux:button variant="ghost" size="sm" icon="funnel" icon-variant="outline" icon-trailing="chevron-down">
-                    Filters
-                    @php $activeFilters = collect([$filterMethod, $filterAddonType, $filterStatus])->filter()->count(); @endphp
-                    @if ($activeFilters > 0)
-                        <flux:badge size="sm" class="ms-1">{{ $activeFilters }}</flux:badge>
-                    @endif
-                </flux:button>
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by method name..."
+                icon="magnifying-glass" clearable class="max-w-sm" />
 
-                <flux:menu class="min-w-64">
-                    <div class="flex items-center justify-between px-3 py-2 border-b dark:border-zinc-700">
-                        <flux:subheading>Filter Options</flux:subheading>
-                        <flux:button variant="ghost" size="xs"
-                            wire:click="$set('filterMethod', ''); $set('filterAddonType', ''); $set('filterStatus', '')"
-                            class="cursor-pointer">Reset</flux:button>
-                    </div>
-                    <flux:separator />
-                    <div class="p-3 space-y-3">
-                        <flux:field>
-                            <flux:label>Method</flux:label>
-                            <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable>
-                                @foreach ($this->methods as $method)
-                                    <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        </flux:field>
-                        <flux:field>
-                            <flux:label>Addon Type</flux:label>
-                            <flux:select wire:model.live="filterAddonType" placeholder="All Types" clearable>
-                                @foreach ($this->addonTypes as $type)
-                                    <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        </flux:field>
-                        <flux:field>
-                            <flux:label>Status</flux:label>
-                            <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable>
-                                @foreach ($this->statuses as $status)
-                                    <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        </flux:field>
-                    </div>
-                </flux:menu>
-            </flux:dropdown>
+            <div class="flex items-center gap-2 ms-auto flex-wrap">
+                <flux:select wire:model.live="filterMethod" placeholder="All Methods" clearable class="w-44">
+                    @foreach ($this->methods as $method)
+                        <flux:select.option value="{{ $method->id }}">{{ $method->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="filterAddonType" placeholder="All Types" clearable class="w-36">
+                    @foreach ($this->addonTypes as $type)
+                        <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="w-36">
+                    @foreach ($this->statuses as $status)
+                        <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="perPage" class="w-20">
+                    <flux:select.option value="10">10</flux:select.option>
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                </flux:select>
+            </div>
         </div>
 
         <flux:table :paginate="$this->addons">
@@ -294,16 +292,16 @@ new #[Title('Rate Addons')] class extends Component {
                                 <div>
                                     <flux:heading size="sm">No rate addons found</flux:heading>
                                     <flux:subheading class="mt-0.5">
-                                        @if ($this->filterMethod || $this->filterAddonType || $this->filterStatus)
+                                        @if ($this->search || $this->filterMethod || $this->filterAddonType || $this->filterStatus)
                                             No results match your current filters.
                                         @else
                                             Add PUS surcharges or other fees that stack on top of base rates.
                                         @endif
                                     </flux:subheading>
                                 </div>
-                                @if ($this->filterMethod || $this->filterAddonType || $this->filterStatus)
+                                @if ($this->search || $this->filterMethod || $this->filterAddonType || $this->filterStatus)
                                     <flux:button variant="ghost" size="sm"
-                                        wire:click="$set('filterMethod', ''); $set('filterAddonType', ''); $set('filterStatus', '')">
+                                        wire:click="$set('search', ''); $set('filterMethod', ''); $set('filterAddonType', ''); $set('filterStatus', '')">
                                         Clear filters
                                     </flux:button>
                                 @endif

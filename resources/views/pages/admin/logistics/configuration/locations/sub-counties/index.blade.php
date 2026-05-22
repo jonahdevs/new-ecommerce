@@ -18,17 +18,16 @@ new #[Title('Sub-Counties')] class extends Component {
     #[Url(history: true)]
     public string $filterZone = '';
 
-    // For bulk zone assignment on a county
-    public ?int $bulkCountyId = null;
-    public string $bulkZoneId = '';
-
     // For individual sub-county zone override
     public ?int $editingSubCountyId = null;
     public string $editingZoneId = '';
 
-    public function updatedSearch(): void {}
-    public function updatedFilterCounty(): void {}
-    public function updatedFilterZone(): void {}
+    public int $perPage = 10;
+
+    public function updatedSearch(): void { $this->resetPage(); }
+    public function updatedFilterCounty(): void { $this->resetPage(); }
+    public function updatedFilterZone(): void { $this->resetPage(); }
+    public function updatedPerPage(): void { $this->resetPage(); }
 
     #[Computed]
     public function counties()
@@ -52,45 +51,7 @@ new #[Title('Sub-Counties')] class extends Component {
             ->when($this->filterZone === 'inherited', fn ($q) => $q->whereNull('shipping_zone_id'))
             ->orderBy('county_id')
             ->orderBy('name')
-            ->paginate(30);
-    }
-
-    // ─── Bulk zone assignment ─────────────────────────────────────
-
-    public function openBulkAssign(int $countyId): void
-    {
-        $this->bulkCountyId = $countyId;
-        $this->bulkZoneId   = '';
-        Flux::modal('bulk-assign-modal')->show();
-    }
-
-    public function saveBulkAssign(): void
-    {
-        $this->validate([
-            'bulkZoneId' => 'required|exists:shipping_zones,id',
-        ], [
-            'bulkZoneId.required' => 'Please select a zone.',
-        ]);
-
-        $count = SubCounty::where('county_id', $this->bulkCountyId)
-            ->update(['shipping_zone_id' => $this->bulkZoneId]);
-
-        Flux::modal('bulk-assign-modal')->close();
-        $this->dispatch('notify',
-            title: 'Zone Assigned',
-            variant: 'success',
-            message: "{$count} sub-counties assigned to zone."
-        );
-    }
-
-    public function clearBulkZone(int $countyId): void
-    {
-        SubCounty::where('county_id', $countyId)->update(['shipping_zone_id' => null]);
-        $this->dispatch('notify',
-            title: 'Overrides Cleared',
-            variant: 'success',
-            message: 'All sub-counties in this county now inherit from the county zone.'
-        );
+            ->paginate($this->perPage);
     }
 
     // ─── Individual override ──────────────────────────────────────
@@ -127,42 +88,33 @@ new #[Title('Sub-Counties')] class extends Component {
     heading="Sub-Counties"
     subheading="Assign shipping zones to sub-counties. Sub-counties without an override inherit the parent county's zone. Zone is resolved automatically from the customer's map pin.">
 
-    {{-- Filters --}}
-    <flux:card class="p-0 mb-4 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
-        <div class="flex flex-col md:flex-row gap-3 px-5 py-3">
-            <flux:input wire:model.live.debounce.300ms="search"
-                placeholder="Search sub-county..."
-                icon="magnifying-glass" clearable class="max-w-xs" />
-
-            <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable class="md:w-48">
-                @foreach ($this->counties as $county)
-                    <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
-                @endforeach
-            </flux:select>
-
-            <flux:select wire:model.live="filterZone" placeholder="All Sub-Counties" clearable class="md:w-48">
-                <flux:select.option value="overridden">Zone Overridden</flux:select.option>
-                <flux:select.option value="inherited">Inheriting from County</flux:select.option>
-            </flux:select>
-        </div>
-    </flux:card>
-
-    {{-- County bulk-assign buttons --}}
-    @if (! $this->search && ! $this->filterZone)
-        <flux:card class="p-4 mb-4">
-            <flux:heading size="sm" class="mb-3">Bulk Zone Assignment by County</flux:heading>
-            <div class="flex flex-wrap gap-2">
-                @foreach ($this->counties as $county)
-                    <flux:button size="sm" variant="outline" wire:click="openBulkAssign({{ $county->id }})">
-                        {{ $county->name }}
-                    </flux:button>
-                @endforeach
-            </div>
-        </flux:card>
-    @endif
-
     {{-- Sub-county table --}}
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600">
+            <flux:input wire:model.live.debounce.300ms="search"
+                placeholder="Search sub-county..."
+                icon="magnifying-glass" clearable class="max-w-sm" />
+
+            <div class="flex items-center gap-2 ms-auto flex-wrap">
+                <flux:select wire:model.live="filterCounty" placeholder="All Counties" clearable class="w-44">
+                    @foreach ($this->counties as $county)
+                        <flux:select.option value="{{ $county->id }}">{{ $county->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="filterZone" placeholder="All" clearable class="w-48">
+                    <flux:select.option value="overridden">Zone Overridden</flux:select.option>
+                    <flux:select.option value="inherited">Inheriting from County</flux:select.option>
+                </flux:select>
+
+                <flux:select wire:model.live="perPage" class="w-20">
+                    <flux:select.option value="10">10</flux:select.option>
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                </flux:select>
+            </div>
+        </div>
         <flux:table :paginate="$this->subCounties">
             <flux:table.columns>
                 <flux:table.column class="ps-4!">Sub-County</flux:table.column>
@@ -221,28 +173,6 @@ new #[Title('Sub-Counties')] class extends Component {
             </flux:table.rows>
         </flux:table>
     </flux:card>
-
-    {{-- Bulk assign modal --}}
-    <flux:modal name="bulk-assign-modal" class="max-w-sm">
-        <flux:heading size="lg">Assign Zone to County</flux:heading>
-        <flux:text class="mt-1 mb-4 text-zinc-500">
-            All sub-counties in this county will be assigned the selected zone.
-            You can override individual sub-counties afterwards.
-        </flux:text>
-
-        <flux:field label="Shipping Zone">
-            <flux:select wire:model="bulkZoneId" placeholder="Select a zone...">
-                @foreach ($this->zones as $zone)
-                    <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
-                @endforeach
-            </flux:select>
-        </flux:field>
-
-        <div class="flex justify-end gap-3 mt-6">
-            <flux:button variant="ghost" x-on:click="$flux.modal('bulk-assign-modal').close()">Cancel</flux:button>
-            <flux:button variant="primary" wire:click="saveBulkAssign">Assign Zone</flux:button>
-        </div>
-    </flux:modal>
 
     {{-- Individual edit modal --}}
     <flux:modal name="edit-modal" class="max-w-sm">

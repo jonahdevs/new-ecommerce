@@ -182,26 +182,24 @@ class CustomerAddressForm extends Form
 
     /**
      * Priority: town zone → sub-county zone → county zone.
-     * Mirrors Address::resolveShippingZone() exactly.
+     * Each tier is read independently — see ShippingCalculator::resolveZone()
+     * for why we don't traverse town→subCounty parent chains.
      */
     protected function resolveShippingZone(): ?int
     {
         if ($this->town_id) {
-            $town = Town::with('shippingZone', 'subCounty.shippingZone', 'county.shippingZone')->find($this->town_id);
+            $townZoneId = Town::where('id', $this->town_id)->value('shipping_zone_id');
 
-            if ($town) {
-                return $town->shipping_zone_id
-                    ?? $town->subCounty?->shipping_zone_id
-                    ?? $town->county?->shipping_zone_id;
+            if ($townZoneId) {
+                return $townZoneId;
             }
         }
 
         if ($this->sub_county_id) {
-            $subCounty = SubCounty::with('county')->find($this->sub_county_id);
+            $subCountyZoneId = SubCounty::where('id', $this->sub_county_id)->value('shipping_zone_id');
 
-            if ($subCounty) {
-                return $subCounty->shipping_zone_id
-                    ?? $subCounty->county?->shipping_zone_id;
+            if ($subCountyZoneId) {
+                return $subCountyZoneId;
             }
         }
 

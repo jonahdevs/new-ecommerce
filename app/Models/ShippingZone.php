@@ -16,9 +16,13 @@ class ShippingZone extends Model
         'is_delivery_available',
     ];
 
-    protected $casts = [
-        'status' => ShippingZoneStatus::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => ShippingZoneStatus::class,
+            'is_delivery_available' => 'boolean',
+        ];
+    }
 
     // ===============================================
     // RELATIONSHIPS

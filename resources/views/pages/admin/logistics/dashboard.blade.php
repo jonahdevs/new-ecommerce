@@ -1,10 +1,15 @@
 <?php
 
 use App\Enums\DeliveryOrderStatus;
+use App\Models\Address;
+use App\Models\County;
 use App\Models\DeliveryOrder;
 use App\Models\LogisticsProvider;
+use App\Models\PickupStation;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
+use App\Models\SubCounty;
+use App\Models\Town;
 use Livewire\Attributes\{Computed, Title, Url};
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -228,6 +233,36 @@ new #[Title('Logistics')] class extends Component {
         return DeliveryOrderStatus::cases();
     }
 
+    /**
+     * Snapshot of the service-area coverage state. Drives the health card.
+     */
+    #[Computed]
+    public function serviceAreaHealth(): array
+    {
+        $zonesByCode = ShippingZone::pluck('id', 'code')->all();
+        $withinNairobiId = $zonesByCode['within_nairobi'] ?? null;
+
+        $primaryStation = PickupStation::with(['subCounty.shippingZone', 'county.shippingZone'])
+            ->where('is_primary', true)
+            ->where('status', 'active')
+            ->first();
+
+        $primaryStationZone = $primaryStation
+            ? ($primaryStation->subCounty?->shippingZone ?? $primaryStation->county?->shippingZone)
+            : null;
+
+        return [
+            'counties_total'           => County::count(),
+            'counties_within_nairobi'  => $withinNairobiId ? County::where('shipping_zone_id', $withinNairobiId)->count() : 0,
+            'sub_county_overrides'     => SubCounty::whereNotNull('shipping_zone_id')->count(),
+            'town_overrides'           => Town::whereNotNull('shipping_zone_id')->count(),
+            'primary_station'          => $primaryStation,
+            'primary_station_zone'     => $primaryStationZone,
+            'primary_station_ok'       => $primaryStationZone?->is_delivery_available ?? false,
+            'orphan_addresses'         => Address::whereNull('shipping_zone_id')->count(),
+        ];
+    }
+
     #[Computed]
     public function methods()
     {
@@ -445,12 +480,70 @@ new #[Title('Logistics')] class extends Component {
             </div>
 
             {{-- ================================================================ --}}
+            {{-- SERVICE-AREA HEALTH                                              --}}
+            {{-- ================================================================ --}}
+            @php $health = $this->serviceAreaHealth; @endphp
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {{-- Counties --}}
+                <a href="{{ route('admin.logistics.configuration.locations.counties.index') }}" wire:navigate
+                    class="group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                    <p class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">Counties</p>
+                    <div class="flex items-baseline gap-2 mt-1.5">
+                        <p class="text-2xl font-bold tabular-nums">{{ $health['counties_within_nairobi'] }}</p>
+                        <p class="text-xs text-zinc-400">/ {{ $health['counties_total'] }}</p>
+                    </div>
+                    <p class="text-[11px] text-zinc-500 mt-1">within nairobi</p>
+                </a>
+
+                {{-- Sub-county overrides --}}
+                <a href="{{ route('admin.logistics.configuration.locations.sub-counties.index', ['filterZone' => 'overridden']) }}" wire:navigate
+                    class="group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                    <p class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">Sub-county overrides</p>
+                    <p class="text-2xl font-bold tabular-nums mt-1.5 text-blue-600 dark:text-blue-400">{{ $health['sub_county_overrides'] }}</p>
+                    <p class="text-[11px] text-zinc-500 mt-1">ADM2 layer</p>
+                </a>
+
+                {{-- Ward overrides --}}
+                <a href="{{ route('admin.logistics.configuration.locations.towns.index', ['filterMode' => 'overridden']) }}" wire:navigate
+                    class="group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                    <p class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">Ward overrides</p>
+                    <p class="text-2xl font-bold tabular-nums mt-1.5 text-violet-600 dark:text-violet-400">{{ $health['town_overrides'] }}</p>
+                    <p class="text-[11px] text-zinc-500 mt-1">ADM3 layer</p>
+                </a>
+
+                {{-- Primary station --}}
+                <a href="{{ $health['primary_station'] ? route('admin.logistics.configuration.pickup-stations.show', $health['primary_station']) : route('admin.logistics.configuration.pickup-stations.index') }}" wire:navigate
+                    class="group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                    <p class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">Primary PUS</p>
+                    @if ($health['primary_station'])
+                        <p class="text-sm font-semibold mt-1.5 truncate">{{ $health['primary_station']->name }}</p>
+                        <p class="text-[11px] mt-1 {{ $health['primary_station_ok'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                            {{ $health['primary_station_ok'] ? '✓ Zone deliverable' : '⚠ Zone not deliverable' }}
+                        </p>
+                    @else
+                        <p class="text-sm text-amber-600 dark:text-amber-400 mt-1.5">⚠ No primary station</p>
+                    @endif
+                </a>
+
+                {{-- Orphan addresses --}}
+                <div class="p-4 rounded-xl border @if ($health['orphan_addresses'] > 0) border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 @else border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 @endif">
+                    <p class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">Orphan addresses</p>
+                    <p @class([
+                        'text-2xl font-bold tabular-nums mt-1.5',
+                        'text-amber-600 dark:text-amber-400' => $health['orphan_addresses'] > 0,
+                        'text-zinc-800 dark:text-zinc-100' => $health['orphan_addresses'] === 0,
+                    ])>{{ $health['orphan_addresses'] }}</p>
+                    <p class="text-[11px] text-zinc-500 mt-1">No zone resolved</p>
+                </div>
+            </div>
+
+            {{-- ================================================================ --}}
             {{-- CHARTS ROW                                                       --}}
             {{-- ================================================================ --}}
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-                {{-- Pipeline (spans 2 cols) --}}
-                <flux:card class="p-5 lg:col-span-2">
+                {{-- Pipeline --}}
+                <flux:card class="p-5">
                     <div class="flex items-center justify-between mb-5">
                         <div>
                             <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Pipeline</h3>
@@ -495,35 +588,30 @@ new #[Title('Logistics')] class extends Component {
                     </div>
 
                     @if ($pipelineTotal > 0)
-                        <div class="flex items-center gap-8">
+                        <div class="flex flex-col items-center gap-4">
 
                             {{-- Donut chart --}}
-                            <div class="relative shrink-0 flex items-center justify-center" style="height:120px; width:120px;">
-                                <div wire:ignore style="position:relative; height:120px; width:120px; z-index:20;">
+                            <div class="relative flex items-center justify-center" style="height:180px; width:180px;">
+                                <div wire:ignore style="position:relative; height:180px; width:180px; z-index:20;">
                                     <canvas id="pipelineChart"></canvas>
                                 </div>
                                 <div class="absolute flex flex-col items-center justify-center pointer-events-none">
-                                    <span class="text-xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums leading-none">
+                                    <span class="text-3xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums leading-none">
                                         {{ $pipelineTotal }}
                                     </span>
-                                    <span class="text-[9px] text-zinc-400 uppercase tracking-wide mt-0.5">active</span>
+                                    <span class="text-[10px] text-zinc-400 uppercase tracking-wide mt-1">active</span>
                                 </div>
                             </div>
 
                             {{-- Legend --}}
-                            <div class="flex-1 space-y-2.5">
+                            <div class="w-full grid grid-cols-2 gap-x-3 gap-y-1.5">
                                 @foreach ($stages as $key => [$label, $hex])
                                     @php $count = $breakdown[$key] ?? 0; @endphp
                                     @if ($count > 0)
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ $hex }}"></div>
-                                            <span class="text-xs text-zinc-500 flex-1">{{ $label }}</span>
-                                            <span class="text-xs text-zinc-400 tabular-nums w-8 text-right">
-                                                {{ round(($count / $pipelineTotal) * 100) }}%
-                                            </span>
-                                            <span class="text-xs font-semibold tabular-nums text-zinc-700 dark:text-zinc-300 w-5 text-right">
-                                                {{ $count }}
-                                            </span>
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <div class="w-2 h-2 rounded-full shrink-0" style="background: {{ $hex }}"></div>
+                                            <span class="text-[11px] text-zinc-500 truncate flex-1">{{ $label }}</span>
+                                            <span class="text-[11px] font-semibold tabular-nums text-zinc-700 dark:text-zinc-300 shrink-0">{{ $count }}</span>
                                         </div>
                                     @endif
                                 @endforeach

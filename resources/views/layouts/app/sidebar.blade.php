@@ -84,17 +84,24 @@
                     heading="Configuration"
                     :expanded="request()->routeIs('admin.logistics.configuration.*')"
                 >
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.providers')" :current="request()->routeIs('admin.logistics.configuration.providers')">Providers</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.zones')" :current="request()->routeIs('admin.logistics.configuration.zones')">Zones</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.methods')" :current="request()->routeIs('admin.logistics.configuration.methods')">Methods</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.pickup-stations')" :current="request()->routeIs('admin.logistics.configuration.pickup-stations')">Pickup Stations</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.free-shipping-rules')" :current="request()->routeIs('admin.logistics.configuration.free-shipping-rules')">Free Shipping</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.zone-map')" :current="request()->routeIs('admin.logistics.configuration.zone-map')">Zone Map</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.locations.counties')" :current="request()->routeIs('admin.logistics.configuration.locations.counties')">Counties</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.locations.sub-counties')" :current="request()->routeIs('admin.logistics.configuration.locations.sub-counties')">Sub-Counties</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.rates.flat')" :current="request()->routeIs('admin.logistics.configuration.rates.flat')">Flat Rates</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.rates.vehicle')" :current="request()->routeIs('admin.logistics.configuration.rates.vehicle')">Vehicle Rates</flux:navlist.item>
-                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.rates.addons')" :current="request()->routeIs('admin.logistics.configuration.rates.addons')">Rate Add-ons</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.zones.index')" :current="request()->routeIs('admin.logistics.configuration.zones.*')">Zones</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.locations.counties.index')" :current="request()->routeIs('admin.logistics.configuration.locations.counties.*')">Counties</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.locations.sub-counties.index')" :current="request()->routeIs('admin.logistics.configuration.locations.sub-counties.*')">Sub-Counties</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.locations.towns.index')" :current="request()->routeIs('admin.logistics.configuration.locations.towns.*')">Towns (Wards)</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.methods.index')" :current="request()->routeIs('admin.logistics.configuration.methods.*')">Methods</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.providers.index')" :current="request()->routeIs('admin.logistics.configuration.providers.*')">Providers</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.pickup-stations.index')" :current="request()->routeIs('admin.logistics.configuration.pickup-stations.*')">Pickup Stations</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.configuration.resolver')" :current="request()->routeIs('admin.logistics.configuration.resolver')">Address Tester</flux:navlist.item>
+                </flux:navlist.group>
+
+                <flux:navlist.group
+                    expandable
+                    heading="Pricing"
+                    :expanded="request()->routeIs('admin.logistics.pricing.*')"
+                >
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.pricing.matrix')" :current="request()->routeIs('admin.logistics.pricing.matrix')">Rate Matrix</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.pricing.surcharges.index')" :current="request()->routeIs('admin.logistics.pricing.surcharges.*')">Surcharges</flux:navlist.item>
+                    <flux:navlist.item wire:navigate :href="route('admin.logistics.pricing.free-shipping.index')" :current="request()->routeIs('admin.logistics.pricing.free-shipping.*')">Free Shipping</flux:navlist.item>
                 </flux:navlist.group>
 
 

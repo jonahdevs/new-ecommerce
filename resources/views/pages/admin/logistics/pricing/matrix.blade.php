@@ -11,7 +11,7 @@ use Livewire\Attributes\{Title, Computed, Url};
 use Livewire\Component;
 use Flux\Flux;
 
-new #[Title('Flat Rates')] class extends Component {
+new #[Title('Pricing Matrix')] class extends Component {
     public FlatRateCellForm $cellForm;
     public FlatRateTierForm $tierForm;
 
@@ -184,8 +184,8 @@ new #[Title('Flat Rates')] class extends Component {
     }
 }; ?>
 
-<x-admin.logistics.layout heading="Flat Rates"
-    subheading="Weight-bracket pricing per shipping zone. Editing a rate archives the old one — history is always preserved.">
+<x-admin.logistics.layout heading="Pricing Matrix"
+    subheading="Weight-bracket × zone pricing per shipping method. Editing a cell archives the old rate — history is always preserved.">
 
     <x-slot:actions>
         @if ($selectedMethodId)

@@ -35,11 +35,17 @@ new #[Title('Logistics Providers')] class extends Component {
     {
         $this->resetPage();
     }
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public int $perPage = 10;
 
     #[Computed]
     public function providers()
     {
-        return LogisticsProvider::query()->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterType, fn($q) => $q->where('type', $this->filterType))->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))->withCount('shippingMethods')->orderBy('name')->paginate(10);
+        return LogisticsProvider::query()->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterType, fn($q) => $q->where('type', $this->filterType))->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))->withCount('shippingMethods')->orderBy('name')->paginate($this->perPage);
     }
 
     #[Computed]
@@ -128,20 +134,27 @@ new #[Title('Logistics Providers')] class extends Component {
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b dark:border-zinc-600">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name or code..."
-                icon="magnifying-glass" clearable class="max-w-md" />
+                icon="magnifying-glass" clearable class="max-w-sm" />
 
-            <div class="ms-auto flex items-center gap-4">
-                <flux:select wire:model.live="filterType" placeholder="All Types" clearable class="md:w-44">
+            <div class="flex items-center gap-2 ms-auto flex-wrap">
+                <flux:select wire:model.live="filterType" placeholder="All Types" clearable class="w-36">
                     <flux:select.option value="internal">Internal</flux:select.option>
                     <flux:select.option value="external">External</flux:select.option>
                 </flux:select>
 
-                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="md:w-44">
+                <flux:select wire:model.live="filterStatus" placeholder="All Statuses" clearable class="w-40">
                     @foreach ($this->statuses as $status)
                         <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
                     @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="perPage" class="w-20">
+                    <flux:select.option value="10">10</flux:select.option>
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
                 </flux:select>
             </div>
         </div>

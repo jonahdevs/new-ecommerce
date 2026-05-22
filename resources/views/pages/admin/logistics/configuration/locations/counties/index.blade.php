@@ -20,19 +20,16 @@ new #[Title('Counties')] class extends Component {
     #[Url(history: true)]
     public string $filterZone = '';
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-    public function updatedFilterZone(): void
-    {
-        $this->resetPage();
-    }
+    public int $perPage = 10;
+
+    public function updatedSearch(): void { $this->resetPage(); }
+    public function updatedFilterZone(): void { $this->resetPage(); }
+    public function updatedPerPage(): void { $this->resetPage(); }
 
     #[Computed]
     public function counties()
     {
-        return County::with('shippingZone')->withCount('subCounties')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterZone, fn($q) => $q->where('shipping_zone_id', $this->filterZone))->orderBy('name')->paginate(10);
+        return County::with('shippingZone')->withCount('subCounties')->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('code', 'like', "%{$this->search}%"))->when($this->filterZone, fn($q) => $q->where('shipping_zone_id', $this->filterZone))->orderBy('name')->paginate($this->perPage);
     }
 
     #[Computed]
@@ -121,15 +118,22 @@ new #[Title('Counties')] class extends Component {
 
     <flux:card class="p-0 **:data-flux-columns:bg-zinc-50 dark:**:data-flux-columns:bg-zinc-800">
         {{-- Filters --}}
-        <div class="flex flex-col md:flex-row gap-4 px-5 py-3 border-b dark:border-zinc-600">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b dark:border-zinc-600">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name or code..."
-                icon="magnifying-glass" clearable class="max-w-md" />
+                icon="magnifying-glass" clearable class="max-w-sm" />
 
-            <div class="flex items-center gap-5 ms-auto">
-                <flux:select wire:model.live="filterZone" placeholder="All Zones" clearable class="md:w-56">
+            <div class="flex items-center gap-2 ms-auto flex-wrap">
+                <flux:select wire:model.live="filterZone" placeholder="All Zones" clearable class="w-44">
                     @foreach ($this->zones as $zone)
                         <flux:select.option value="{{ $zone->id }}">{{ $zone->name }}</flux:select.option>
                     @endforeach
+                </flux:select>
+
+                <flux:select wire:model.live="perPage" class="w-20">
+                    <flux:select.option value="10">10</flux:select.option>
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
                 </flux:select>
             </div>
         </div>

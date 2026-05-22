@@ -7,6 +7,9 @@ use App\Models\PickupStation;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\SubCounty;
+use App\Models\Town;
+use App\Services\Shipping\Engines\FlatRateEngine;
+use App\Services\Shipping\Engines\PusEngine;
 use Illuminate\Support\Collection;
 
 /**
@@ -21,6 +24,7 @@ use Illuminate\Support\Collection;
  *   $options = $calculator->calculate(
  *       countyId:     $countyId,
  *       subCountyId:  $subCountyId,   // nullable — resolved from lat/lng pin
+ *       townId:       $townId,        // nullable — most-specific override
  *       weightKg:     $weightKg,
  *       orderAmount:  $orderTotal,
  *   );
@@ -45,8 +49,9 @@ class ShippingCalculator
     /**
      * Resolve all available shipping options for a given location + cart.
      *
-     * @param  int  $countyId  Required — top-level geographic fallback
-     * @param  int|null  $subCountyId  Optional — resolved from lat/lng pin, may override zone
+     * @param  int  $countyId  Required — coarse fallback
+     * @param  int|null  $subCountyId  Optional — primary source of truth (resolved from lat/lng pin)
+     * @param  int|null  $townId  Optional — ADM3 override (most-specific)
      * @param  float  $weightKg  Total cart weight in kilograms
      * @param  float  $orderAmount  Cart subtotal — used for free shipping rules
      * @return Collection<ShippingOption> Sorted by cost ascending
@@ -54,12 +59,13 @@ class ShippingCalculator
     public function calculate(
         int $countyId,
         ?int $subCountyId = null,
+        ?int $townId = null,
         float $weightKg = 0,
         float $orderAmount = 0,
     ): Collection {
-        $zone = $this->resolveZone($countyId, $subCountyId);
+        $zone = $this->resolveZone($countyId, $subCountyId, $townId);
 
-        if (! $zone) {
+        if (! $zone || ! $zone->is_delivery_available) {
             return collect();
         }
 
@@ -71,10 +77,6 @@ class ShippingCalculator
         $options = collect();
 
         foreach ($methods as $method) {
-            if (! $zone->is_delivery_available && $method->type === 'flat') {
-                continue;
-            }
-
             $option = match ($method->type) {
                 'flat' => $this->flatEngine->calculate(
                     method: $method,
@@ -137,19 +139,31 @@ class ShippingCalculator
     /**
      * Resolve the effective shipping zone for a location.
      *
-     * Priority:
-     *   1. Sub-county zone override (if sub-county has one explicitly set)
-     *   2. County's zone (the default)
+     * Priority (most-specific wins):
+     *   1. town.shipping_zone_id        (ADM3 ward override)
+     *   2. sub_county.shipping_zone_id  (ADM2 default)
+     *   3. county.shipping_zone_id      (ADM1 fallback)
      *
-     * Returns null only if the county doesn't exist or has no zone assigned.
+     * Each tier is read independently — we do NOT traverse Town→SubCounty
+     * relationships because geoBoundaries ADM2/ADM3 centroids can disagree
+     * with live point-in-polygon resolution. The caller passes all three IDs
+     * from live resolvers; trust them at face value.
      */
-    public function resolveZone(int $countyId, ?int $subCountyId = null): ?ShippingZone
+    public function resolveZone(int $countyId, ?int $subCountyId = null, ?int $townId = null): ?ShippingZone
     {
-        if ($subCountyId) {
-            $subCounty = SubCounty::with(['shippingZone', 'county.shippingZone'])->find($subCountyId);
+        if ($townId) {
+            $townZoneId = Town::where('id', $townId)->value('shipping_zone_id');
 
-            if ($subCounty) {
-                return $subCounty->shippingZone ?? $subCounty->county?->shippingZone;
+            if ($townZoneId) {
+                return ShippingZone::find($townZoneId);
+            }
+        }
+
+        if ($subCountyId) {
+            $subCountyZoneId = SubCounty::where('id', $subCountyId)->value('shipping_zone_id');
+
+            if ($subCountyZoneId) {
+                return ShippingZone::find($subCountyZoneId);
             }
         }
 
@@ -158,22 +172,25 @@ class ShippingCalculator
 
     //  Convenience helpers
 
-    public function isDeliverable(int $countyId, ?int $subCountyId = null): bool
+    public function isDeliverable(int $countyId, ?int $subCountyId = null, ?int $townId = null): bool
     {
-        return $this->resolveZone($countyId, $subCountyId) !== null;
+        $zone = $this->resolveZone($countyId, $subCountyId, $townId);
+
+        return $zone !== null && $zone->is_delivery_available;
     }
 
-    public function getZoneName(int $countyId, ?int $subCountyId = null): ?string
+    public function getZoneName(int $countyId, ?int $subCountyId = null, ?int $townId = null): ?string
     {
-        return $this->resolveZone($countyId, $subCountyId)?->name;
+        return $this->resolveZone($countyId, $subCountyId, $townId)?->name;
     }
 
     public function cheapestOption(
         int $countyId,
         ?int $subCountyId = null,
+        ?int $townId = null,
         float $weightKg = 0,
         float $orderAmount = 0,
     ): ?ShippingOption {
-        return $this->calculate($countyId, $subCountyId, $weightKg, $orderAmount)->first();
+        return $this->calculate($countyId, $subCountyId, $townId, $weightKg, $orderAmount)->first();
     }
 }
