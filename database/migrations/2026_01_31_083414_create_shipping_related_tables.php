@@ -88,6 +88,12 @@ return new class extends Migration
             $table->string('status')->default('active');
             $table->boolean('is_delivery_available')->default(false);
 
+            // Custom polygon drawn by an admin on the zone map.
+            // Stored as [[lat, lng], ...] coordinate pairs (Google Maps path format).
+            // When set, takes highest priority in zone resolution — overrides the
+            // admin-boundary hierarchy (town → sub-county → county) at checkout.
+            $table->json('geometry')->nullable();
+
             $table->timestamps();
 
             $table->index('status');

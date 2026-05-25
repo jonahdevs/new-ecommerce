@@ -54,7 +54,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900 min-w-64">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.information-circle class="text-sky-500" />
                             </div>
@@ -87,7 +87,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900 min-w-64">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.check-circle class="text-green-500" />
                             </div>
@@ -120,7 +120,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900 min-w-64">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.exclamation-circle class="text-amber-500" />
                             </div>
@@ -153,7 +153,7 @@
                         x-transition:leave="transition duration-300 ease-in"
                         x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
                         x-transition:leave-start="translate-x-0 opacity-100">
-                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900">
+                        <flux:card class="flex items-center px-3 py-2.5 relative shadow-xl bg-white dark:bg-zinc-900 min-w-64">
                             <div class="pe-3 flex items-center justify-center">
                                 <flux:icon.x-circle class="text-red-500" />
                             </div>

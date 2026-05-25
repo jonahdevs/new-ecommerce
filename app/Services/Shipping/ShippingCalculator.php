@@ -42,6 +42,7 @@ class ShippingCalculator
     public function __construct(
         private readonly FlatRateEngine $flatEngine,
         private readonly PusEngine $pusEngine,
+        private readonly ZonePolygonService $polygonService,
     ) {}
 
     //  Main calculation
@@ -54,6 +55,8 @@ class ShippingCalculator
      * @param  int|null  $townId  Optional — ADM3 override (most-specific)
      * @param  float  $weightKg  Total cart weight in kilograms
      * @param  float  $orderAmount  Cart subtotal — used for free shipping rules
+     * @param  float|null  $lat  Customer's pinned latitude — enables custom polygon resolution
+     * @param  float|null  $lng  Customer's pinned longitude — enables custom polygon resolution
      * @return Collection<ShippingOption> Sorted by cost ascending
      */
     public function calculate(
@@ -62,8 +65,10 @@ class ShippingCalculator
         ?int $townId = null,
         float $weightKg = 0,
         float $orderAmount = 0,
+        ?float $lat = null,
+        ?float $lng = null,
     ): Collection {
-        $zone = $this->resolveZone($countyId, $subCountyId, $townId);
+        $zone = $this->resolveZone($countyId, $subCountyId, $townId, $lat, $lng);
 
         if (! $zone || ! $zone->is_delivery_available) {
             return collect();
@@ -140,17 +145,32 @@ class ShippingCalculator
      * Resolve the effective shipping zone for a location.
      *
      * Priority (most-specific wins):
-     *   1. town.shipping_zone_id        (ADM3 ward override)
-     *   2. sub_county.shipping_zone_id  (ADM2 default)
-     *   3. county.shipping_zone_id      (ADM1 fallback)
+     *   0. Custom polygon geometry       (admin-drawn, highest precision — requires lat/lng)
+     *   1. town.shipping_zone_id         (ADM3 ward override)
+     *   2. sub_county.shipping_zone_id   (ADM2 default)
+     *   3. county.shipping_zone_id       (ADM1 fallback)
      *
-     * Each tier is read independently — we do NOT traverse Town→SubCounty
-     * relationships because geoBoundaries ADM2/ADM3 centroids can disagree
-     * with live point-in-polygon resolution. The caller passes all three IDs
-     * from live resolvers; trust them at face value.
+     * Each admin-boundary tier is read independently — we do NOT traverse
+     * Town→SubCounty relationships because geoBoundaries ADM2/ADM3 centroids
+     * can disagree with live point-in-polygon resolution.
      */
-    public function resolveZone(int $countyId, ?int $subCountyId = null, ?int $townId = null): ?ShippingZone
-    {
+    public function resolveZone(
+        int $countyId,
+        ?int $subCountyId = null,
+        ?int $townId = null,
+        ?float $lat = null,
+        ?float $lng = null,
+    ): ?ShippingZone {
+        // 0. Custom polygon — highest precision when the customer has pinned a location.
+        if ($lat !== null && $lng !== null) {
+            $polygonZone = $this->polygonService->resolveByCoordinates($lat, $lng);
+
+            if ($polygonZone) {
+                return $polygonZone;
+            }
+        }
+
+        // 1. Town (ADM3) ward override.
         if ($townId) {
             $townZoneId = Town::where('id', $townId)->value('shipping_zone_id');
 
@@ -159,6 +179,7 @@ class ShippingCalculator
             }
         }
 
+        // 2. Sub-county (ADM2) override.
         if ($subCountyId) {
             $subCountyZoneId = SubCounty::where('id', $subCountyId)->value('shipping_zone_id');
 
@@ -167,21 +188,32 @@ class ShippingCalculator
             }
         }
 
+        // 3. County (ADM1) fallback.
         return County::with('shippingZone')->find($countyId)?->shippingZone;
     }
 
     //  Convenience helpers
 
-    public function isDeliverable(int $countyId, ?int $subCountyId = null, ?int $townId = null): bool
-    {
-        $zone = $this->resolveZone($countyId, $subCountyId, $townId);
+    public function isDeliverable(
+        int $countyId,
+        ?int $subCountyId = null,
+        ?int $townId = null,
+        ?float $lat = null,
+        ?float $lng = null,
+    ): bool {
+        $zone = $this->resolveZone($countyId, $subCountyId, $townId, $lat, $lng);
 
         return $zone !== null && $zone->is_delivery_available;
     }
 
-    public function getZoneName(int $countyId, ?int $subCountyId = null, ?int $townId = null): ?string
-    {
-        return $this->resolveZone($countyId, $subCountyId, $townId)?->name;
+    public function getZoneName(
+        int $countyId,
+        ?int $subCountyId = null,
+        ?int $townId = null,
+        ?float $lat = null,
+        ?float $lng = null,
+    ): ?string {
+        return $this->resolveZone($countyId, $subCountyId, $townId, $lat, $lng)?->name;
     }
 
     public function cheapestOption(
@@ -190,7 +222,9 @@ class ShippingCalculator
         ?int $townId = null,
         float $weightKg = 0,
         float $orderAmount = 0,
+        ?float $lat = null,
+        ?float $lng = null,
     ): ?ShippingOption {
-        return $this->calculate($countyId, $subCountyId, $townId, $weightKg, $orderAmount)->first();
+        return $this->calculate($countyId, $subCountyId, $townId, $weightKg, $orderAmount, $lat, $lng)->first();
     }
 }

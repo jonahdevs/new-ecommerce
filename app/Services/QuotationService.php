@@ -535,6 +535,8 @@ class QuotationService
                 subCountyId: $address->sub_county_id,
                 weightKg: $weightKg,
                 orderAmount: $quote->subtotal_cents / 100,
+                lat: $address->latitude ? (float) $address->latitude : null,
+                lng: $address->longitude ? (float) $address->longitude : null,
             );
             $resolvedMethod = $options->first(fn ($o) => ! $o->isPus()) ?? $options->first();
         }

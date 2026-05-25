@@ -7,6 +7,7 @@ use App\Models\County;
 use App\Models\ShippingZone;
 use App\Models\SubCounty;
 use App\Models\Town;
+use App\Services\Shipping\ZonePolygonService;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -181,12 +182,28 @@ class CustomerAddressForm extends Form
     //  Zone resolution
 
     /**
-     * Priority: town zone → sub-county zone → county zone.
-     * Each tier is read independently — see ShippingCalculator::resolveZone()
-     * for why we don't traverse town→subCounty parent chains.
+     * Priority (most-specific wins):
+     *   0. Custom polygon geometry     (admin-drawn — requires latitude/longitude)
+     *   1. town.shipping_zone_id       (ADM3 ward override)
+     *   2. sub_county.shipping_zone_id (ADM2 default)
+     *   3. county.shipping_zone_id     (ADM1 fallback)
+     *
+     * See ShippingCalculator::resolveZone() for why we read each tier
+     * independently rather than traversing parent relationships.
      */
     protected function resolveShippingZone(): ?int
     {
+        // 0. Custom polygon — most precise when the customer has pinned a location.
+        if ($this->latitude !== null && $this->longitude !== null) {
+            $polygonZone = app(ZonePolygonService::class)
+                ->resolveByCoordinates((float) $this->latitude, (float) $this->longitude);
+
+            if ($polygonZone) {
+                return $polygonZone->id;
+            }
+        }
+
+        // 1. Town (ADM3) override.
         if ($this->town_id) {
             $townZoneId = Town::where('id', $this->town_id)->value('shipping_zone_id');
 
@@ -195,6 +212,7 @@ class CustomerAddressForm extends Form
             }
         }
 
+        // 2. Sub-county (ADM2) override.
         if ($this->sub_county_id) {
             $subCountyZoneId = SubCounty::where('id', $this->sub_county_id)->value('shipping_zone_id');
 
@@ -203,6 +221,7 @@ class CustomerAddressForm extends Form
             }
         }
 
+        // 3. County (ADM1) fallback.
         return County::where('id', $this->county_id)->value('shipping_zone_id');
     }
 

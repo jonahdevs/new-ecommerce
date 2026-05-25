@@ -82,7 +82,7 @@ new #[Layout('layouts.checkout')] class extends Component {
         }
 
         $cartService = app(CartService::class);
-        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, subCountyId: $this->address->sub_county_id, townId: $this->address->town_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal());
+        return app(ShippingCalculator::class)->calculate(countyId: $this->address->county_id, subCountyId: $this->address->sub_county_id, townId: $this->address->town_id, weightKg: $cartService->getWeight(), orderAmount: $cartService->getSubtotal(), lat: $this->address->latitude ? (float) $this->address->latitude : null, lng: $this->address->longitude ? (float) $this->address->longitude : null);
     }
 
     #[Computed]

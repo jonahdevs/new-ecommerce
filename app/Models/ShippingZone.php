@@ -3,17 +3,21 @@
 namespace App\Models;
 
 use App\Enums\ShippingZoneStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ShippingZone extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'code',
         'description',
         'status',
         'is_delivery_available',
+        'geometry',
     ];
 
     protected function casts(): array
@@ -21,6 +25,7 @@ class ShippingZone extends Model
         return [
             'status' => ShippingZoneStatus::class,
             'is_delivery_available' => 'boolean',
+            'geometry' => 'array',
         ];
     }
 
