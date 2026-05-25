@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\SapSyncStatus;
 use App\Models\Order;
 use App\Notifications\SapSyncFailedNotification;
+use App\Services\Sap\SapApiException;
 use App\Services\Sap\SapIntegrationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -82,7 +83,24 @@ class SyncOrderToSapJob implements ShouldQueue
 
         // Single API call — the middleware handles Sales Order,
         // A/R Invoice and Incoming Payment creation internally.
-        $result = $sap->syncOrder($this->order);
+        // Catch non-retryable SAP errors (e.g. 400 Bad Request) and fail
+        // immediately so we don't waste the remaining retry slots.
+        try {
+            $result = $sap->syncOrder($this->order);
+        } catch (SapApiException $e) {
+            if (! $e->isRetryable()) {
+                Log::error('SAP sync aborted — non-retryable error, skipping remaining attempts', [
+                    'order_id' => $this->order->id,
+                    'http_status' => $e->httpStatus,
+                    'error' => $e->getMessage(),
+                ]);
+                $this->fail($e);
+
+                return;
+            }
+
+            throw $e; // Retryable — let Laravel queue the next attempt
+        }
 
         // Move to CU_PENDING — SAP documents are created, now waiting for
         // the KRA webhook to deliver the CU number and generate the invoice.

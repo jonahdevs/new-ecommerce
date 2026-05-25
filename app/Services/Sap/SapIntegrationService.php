@@ -44,7 +44,7 @@ class SapIntegrationService
 
         $start = microtime(true);
 
-        $http = Http::withOptions(['verify' => false])->timeout(60);
+        $http = Http::withOptions(['verify' => config('sap.verify_ssl', true)])->timeout(60);
 
         if ($apiKey = config('sap.api_key')) {
             $http = $http->withHeaders(['x-api-key' => $apiKey]);
@@ -147,35 +147,14 @@ class SapIntegrationService
             'order' => [
                 'cart' => [
                     'debit_total_price' => $order->total_cents / 100,
-                    // 'lines'             => $order->items->map(fn($item) => [
-                    //     'code'         => $item->product_snapshot['sku'] ?? $item->product?->sku ?? 'UNKNOWN',
-                    //     'item_id'      => $item->product_id,
-                    //     'line_item_id' => $item->id,
-                    //     'price'        => $item->unit_price_cents / 100,
-                    //     'quantity'     => $item->quantity,
-                    //     'linetotal'    => $item->total_cents / 100,
-                    // ])->values()->toArray(),
-
-                    'lines' => [
-                        [
-                            'code' => 'FAB/SPE/00468',
-                            'item_id' => 8813071,
-                            'line_item_id' => 164693573,
-                            'price' => 449,
-                            'quantity' => 100,
-                            'linetotal' => 44900,
-                        ],
-                        [
-                            'code' => 'IMG/REF/00044',
-                            'item_id' => 8813071,
-                            'line_item_id' => 164693573,
-                            'price' => 1000,
-                            'quantity' => 3,
-                            'linetotal' => 1000,
-                        ],
-
-                    ],
-
+                    'lines' => $order->items->map(fn ($item) => [
+                        'code' => $item->product_snapshot['sku'] ?? $item->product?->sku ?? 'UNKNOWN',
+                        'item_id' => $item->product_id,
+                        'line_item_id' => $item->id,
+                        'price' => $item->unit_price_cents / 100,
+                        'quantity' => $item->quantity,
+                        'linetotal' => $item->total_cents / 100,
+                    ])->values()->toArray(),
                 ],
                 'Orderid' => $order->id,
                 'name' => $user?->name ?? $order->guest_info['name'] ?? '',

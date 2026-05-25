@@ -180,6 +180,23 @@ class SapWebhookHandler
 
     private function handleReturn(Order $order, array $payload): void
     {
+        // Only transition to RETURNED from states where SAP has already
+        // processed the order. Returning an order that never reached SAP
+        // (pending / syncing / failed) would hide the original sync failure.
+        $validTransitionStates = [
+            SapSyncStatus::CU_PENDING,
+            SapSyncStatus::CU_RECEIVED,
+        ];
+
+        if (! in_array($order->sap_sync_status, $validTransitionStates)) {
+            Log::warning('SAP webhook: RETURNED event ignored — order not in a valid state for return transition', [
+                'order_id' => $order->id,
+                'current_status' => $order->sap_sync_status->value,
+            ]);
+
+            return;
+        }
+
         $order->update([
             'sap_sync_status' => SapSyncStatus::RETURNED,
         ]);

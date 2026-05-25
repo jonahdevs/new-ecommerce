@@ -19,11 +19,11 @@ class SapProductSyncService
 
     /**
      * Batch sync multiple products/variants from SAP.
-     * 
+     *
      * SKU lookup order:
      * 1. Check product_variants table first (variant SKUs are more specific)
      * 2. If not found, check products table
-     * 
+     *
      * Updates price and stock for existing products or variants.
      */
     public function batchSyncProducts(array $products): array
@@ -146,7 +146,7 @@ class SapProductSyncService
      * Update product price and stock from SAP.
      *
      * Price Logic:
-     * - If incoming price < current price (by at least MIN_DISCOUNT_PERCENT): 
+     * - If incoming price < current price (by at least MIN_DISCOUNT_PERCENT):
      *   Keep price as "was" price, set sale_price to incoming (shows discount)
      * - If incoming price >= current price OR product has no price:
      *   Set price to incoming, clear sale_price (no discount shown)
@@ -190,6 +190,7 @@ class SapProductSyncService
         $updateData = [
             'stock_quantity' => (int) $data['stock_quantity'],
             'stock_status' => $this->determineStockStatus($data['stock_quantity']),
+            'sap_last_synced_at' => now(),
         ];
 
         $action = $this->determinePriceAction($incomingPrice, $currentPrice, $currentSalePrice);

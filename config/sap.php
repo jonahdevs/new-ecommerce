@@ -30,4 +30,13 @@ return [
     | Your company's KRA PIN displayed on tax receipts.
     */
     'business_pin' => env('KRA_BUSINESS_PIN'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | TLS Certificate Verification
+    |--------------------------------------------------------------------------
+    | Set to false only for local development against self-signed certificates.
+    | Must be true (or a path to a CA bundle) in staging and production.
+    */
+    'verify_ssl' => env('SAP_VERIFY_SSL', true),
 ];

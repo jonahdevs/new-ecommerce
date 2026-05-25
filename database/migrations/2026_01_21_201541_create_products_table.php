@@ -207,6 +207,9 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->text('description')->nullable();
 
+            // SAP Business One integration
+            $table->timestamp('sap_last_synced_at')->nullable();
+
             $table->timestamps();
 
             $table->index(['product_id', 'is_active']);

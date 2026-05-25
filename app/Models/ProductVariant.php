@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class ProductVariant extends Model
 {
     use LogsModelChanges;
+
     protected $fillable = [
         'product_id',
         'attribute_hash',
@@ -39,6 +40,7 @@ class ProductVariant extends Model
         'is_active',
         'sort_order',
         'description',
+        'sap_last_synced_at',
     ];
 
     protected function casts(): array
@@ -57,6 +59,7 @@ class ProductVariant extends Model
             'is_default' => 'boolean',
             'is_active' => 'boolean',
             'expected_restock_date' => 'date',
+            'sap_last_synced_at' => 'datetime',
         ];
     }
 
@@ -97,7 +100,7 @@ class ProductVariant extends Model
     protected function finalPrice(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->sale_price ?? $this->price,
+            get: fn () => $this->sale_price ?? $this->price,
         );
     }
 
@@ -117,14 +120,14 @@ class ProductVariant extends Model
 
     /**
      * Get the attributes that should be logged when changed.
-     * 
+     *
      * Tracks critical business fields for ProductVariant:
      * - sku: Product variant identifier
      * - price: Base price
      * - sale_price: Promotional price
      * - stock_quantity: Inventory level
      * - is_active: Availability status
-     * 
+     *
      * @return array<int, string>
      */
     protected function getLoggedAttributes(): array

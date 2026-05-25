@@ -18,7 +18,11 @@ class SapSyncFailedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // This notification is dispatched to an anonymous notifiable via
+        // Notification::route('mail', ...). The 'database' channel requires a
+        // real Eloquent model with an id and notifications() relationship, so it
+        // is intentionally omitted here to avoid a runtime exception.
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage

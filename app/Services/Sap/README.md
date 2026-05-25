@@ -100,7 +100,25 @@ The middleware handles Sales Order + A/R Invoice + Incoming Payment creation int
         "phone": "+254712345678",
         "payment_status": "Paid",
         "cart": {
-            "debit_total_price": 15750.0
+            "debit_total_price": 15750.0,
+            "lines": [
+                {
+                    "code": "PROD-SKU-001",
+                    "item_id": 101,
+                    "line_item_id": 1001,
+                    "price": 5250.0,
+                    "quantity": 2,
+                    "linetotal": 10500.0
+                },
+                {
+                    "code": "PROD-SKU-002",
+                    "item_id": 102,
+                    "line_item_id": 1002,
+                    "price": 5250.0,
+                    "quantity": 1,
+                    "linetotal": 5250.0
+                }
+            ]
         }
     }
 }
@@ -191,6 +209,8 @@ The handler is **idempotent** — if the same CU number arrives twice for the sa
 
 **URL**: `POST /api/sap/products/sync`
 
+> Route registered in `routes/api.php` under the `sap.` name prefix.
+
 **Authentication**: `X-SAP-Secret` header
 
 ### Request
@@ -252,7 +272,11 @@ The handler is **idempotent** — if the same CU number arrives twice for the sa
 
 ```env
 SAP_BASE_URL=https://sap-middleware.yourdomain.com
+SAP_API_KEY=your-api-key
 SAP_WEBHOOK_SECRET=your-shared-secret
+
+# Set to false ONLY for local dev against self-signed certs. Must be true in production.
+SAP_VERIFY_SSL=true
 ```
 
 Config file: `config/sap.php`
@@ -315,7 +339,7 @@ curl -X POST http://sheffield-ecommerce.test/api/webhooks/sap \
 ### Product Sync
 
 ```bash
-curl -X POST http://sheffield-ecommerce.test/api/sap/products/sync \
+curl -X POST https://sheffield-ecommerce.test/api/sap/products/sync \
   -H "Content-Type: application/json" \
   -H "X-SAP-Secret: your-webhook-secret" \
   -d '{
