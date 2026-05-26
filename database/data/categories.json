@@ -1,0 +1,307 @@
+[
+    {
+        "name": "Vegetable Processors",
+        "image": "categories/vegetable_processors.webp",
+        "icon": "categories/vegetable_processors_icon.png",
+        "description": "Commercial vegetable processing equipment designed for efficient cutting, slicing, dicing, and shredding of vegetables in high-volume kitchen environments.",
+        "sort_order": 1,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Potato Processors",
+        "image": "categories/potato_processors.webp",
+        "icon": "categories/potato_processors_icon.png",
+        "description": "Specialist potato processing machinery including peelers, chippers, and slicers built to handle large quantities of potatoes with speed and consistency.",
+        "sort_order": 2,
+        "placements": [
+            "navbar",
+            "footer"
+        ]
+    },
+    {
+        "name": "Meat Processors",
+        "image": "categories/meat_processors.webp",
+        "icon": "categories/meat_processors_icon.png",
+        "description": "Professional meat processing equipment including mincers, slicers, and tenderisers designed for butcheries, delis, and commercial kitchens.",
+        "sort_order": 3,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Meat Displays",
+        "image": "categories/meat_display.webp",
+        "icon": "categories/meat_display_icon.png",
+        "description": "Refrigerated meat display cases and counters that keep fresh and cured meats at optimal temperatures while maximising product visibility for customers.",
+        "sort_order": 4,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Juice Processors",
+        "image": "categories/juice_processors.webp",
+        "icon": "categories/juice_processors_icon.png",
+        "description": "Commercial juicing and juice processing equipment including extractors, squeezers, and dispensers for restaurants, juice bars, and catering operations.",
+        "sort_order": 5,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Refrigeration",
+        "image": "categories/refrigeration.webp",
+        "icon": "categories/refrigeration_icon.png",
+        "description": "Commercial refrigeration units including upright fridges, under-counter chillers, and walk-in cold rooms engineered for reliable food preservation in professional settings.",
+        "sort_order": 6,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Cold Displays",
+        "image": "categories/cold_displays.webp",
+        "icon": "categories/cold_display_icon.png",
+        "description": "Open and closed refrigerated display units ideal for showcasing chilled products such as beverages, dairy, salads, and deli items in retail and foodservice environments.",
+        "sort_order": 7,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Pastry Displays",
+        "image": "categories/pastry_display.webp",
+        "icon": "categories/pastry_display_icon.png",
+        "description": "Elegant display cases designed to present pastries, cakes, and baked goods in an attractive and hygienic manner, suitable for bakeries, cafes, and patisseries.",
+        "sort_order": 8,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Ice Cream Displays",
+        "image": "categories/ice_cream_displays.webp",
+        "icon": "categories/ice_cream_display_icon.png",
+        "description": "Specialised freezer display units for gelato, sorbet, and ice cream, maintaining precise low temperatures while providing excellent product visibility and easy access.",
+        "sort_order": 9,
+        "placements": [
+            "navbar",
+            "homepage_featured",
+            "footer"
+        ]
+    },
+    {
+        "name": "Warm Displays",
+        "image": "categories/warm_display.webp",
+        "icon": "categories/warm_display_icon.png",
+        "description": "Heated display units that keep hot food items at safe serving temperatures, perfect for displaying pies, rotisserie items, and prepared hot foods in retail or foodservice settings.",
+        "sort_order": 10,
+        "placements": [
+            "navbar"
+        ]
+    },
+    {
+        "name": "Ovens",
+        "image": "categories/ovens.png",
+        "icon": "categories/ovens_icon.png",
+        "description": "A comprehensive range of commercial ovens including convection, combi-steam, deck, and pizza ovens built for precision cooking and high-volume output in professional kitchens.",
+        "sort_order": 11,
+        "placements": [
+            "navbar",
+            "homepage_featured"
+        ]
+    },
+    {
+        "name": "Bakery Preparation",
+        "image": "categories/bakery_preparation.webp",
+        "icon": "categories/bakery_preparation_icon.png",
+        "description": "Bakery preparation equipment including dough mixers, proofers, dividers, and moulders designed to streamline production in artisan and industrial baking operations.",
+        "sort_order": 12,
+        "placements": [
+            "navbar",
+            "homepage_featured"
+        ]
+    },
+    {
+        "name": "Buffet & Servery",
+        "image": "categories/buffet_servery_02.webp",
+        "icon": "categories/buffet_servery_icon.png",
+        "description": "Buffet and servery solutions including bain-maries, food warmers, sneeze guards, and serving counters tailored for hotels, canteens, events, and self-service environments.",
+        "sort_order": 13,
+        "placements": [
+            "navbar",
+            "homepage_featured"
+        ]
+    },
+    {
+        "name": "Induction Cookers",
+        "image": "categories/induction_cookers.webp",
+        "icon": "categories/induction_cooker_icon.png",
+        "description": "High-performance commercial induction cookers offering precise temperature control, energy efficiency, and rapid heating for professional kitchens and live cooking stations.",
+        "sort_order": 14,
+        "placements": [
+            "navbar",
+            "homepage_featured"
+        ]
+    },
+    {
+        "name": "GN Containers & Lids",
+        "image": "categories/gn_containers_lids.webp",
+        "icon": "categories/gn_containers_lids_icon.png",
+        "description": "Gastronorm containers in a full range of standard sizes and materials, compatible with commercial ovens, bain-maries, and refrigeration units for versatile food storage and service.",
+        "sort_order": 15,
+        "placements": []
+    },
+    {
+        "name": "Fast Food",
+        "image": "categories/fast_food.webp",
+        "icon": "categories/fast_food_icon.png",
+        "description": "Dedicated fast food equipment including grills, toasters, heat lamps, and holding units engineered for quick-service restaurants and high-throughput food operations.",
+        "sort_order": 16,
+        "placements": [
+            "navbar"
+        ]
+    },
+    {
+        "name": "Fryers",
+        "image": "categories/fryers.webp",
+        "icon": "categories/fryers_icon.png",
+        "description": "Commercial deep fryers in countertop and floor-standing models, offering precise oil temperature management and high capacity output for chips, chicken, and fried foods.",
+        "sort_order": 17,
+        "placements": [
+            "navbar",
+            "homepage_featured"
+        ]
+    },
+    {
+        "name": "Beverage Equipment",
+        "image": "categories/beverage_equipment.webp",
+        "icon": "categories/beverage_equipment_icon.png",
+        "description": "A wide range of professional beverage equipment including coffee machines, blenders, water dispensers, and tea urns for cafes, restaurants, hotels, and office environments.",
+        "sort_order": 18,
+        "placements": [
+            "navbar",
+            "homepage_featured"
+        ]
+    },
+    {
+        "name": "Food Transport",
+        "image": "categories/food_transport.webp",
+        "icon": "categories/food_transport_icon.png",
+        "description": "Insulated food transport containers, trolleys, and delivery systems designed to maintain safe food temperatures during transit for catering, healthcare, and events.",
+        "sort_order": 19,
+        "placements": []
+    },
+    {
+        "name": "Hygiene",
+        "image": "categories/hygiene.webp",
+        "icon": "categories/hygiene_icon.png",
+        "description": "Commercial hygiene equipment and consumables including hand wash stations, sanitiser dispensers, and cleaning systems to uphold health and safety standards in food environments.",
+        "sort_order": 20,
+        "placements": []
+    },
+    {
+        "name": "Rational Tablets",
+        "image": "categories/rational_tablets.webp",
+        "icon": "categories/rational_tablets_icon.png",
+        "description": "Genuine Rational cleaning tablets formulated for use with Rational combi ovens, ensuring thorough and efficient automated cleaning cycles and prolonged appliance performance.",
+        "sort_order": 21,
+        "placements": []
+    },
+    {
+        "name": "Rational Accessories",
+        "image": "categories/rational_accessories.webp",
+        "icon": "categories/rational_accessories_icon.png",
+        "description": "Official Rational accessories including trays, racks, and gastronorm supports designed to expand the functionality and versatility of Rational combi-steam ovens.",
+        "sort_order": 22,
+        "placements": []
+    },
+    {
+        "name": "Cleaning Solutions",
+        "image": "categories/cleaning_solutions.webp",
+        "icon": "categories/cleaning_solutions_icon.png",
+        "description": "Professional-grade cleaning solutions and detergents for commercial kitchen equipment, surfaces, and utensils, meeting food-safe and industry hygiene compliance standards.",
+        "sort_order": 23,
+        "placements": []
+    },
+    {
+        "name": "Shelving & Storage",
+        "image": null,
+        "icon": "categories/shelving_storage_icon.png",
+        "description": "Heavy-duty shelving units, racking systems, and storage solutions built for commercial kitchens, storerooms, and cold rooms to organise ingredients and equipment efficiently.",
+        "sort_order": 24,
+        "placements": []
+    },
+    {
+        "name": "Kitchen Smalls",
+        "image": "categories/kitchen_smalls.png",
+        "icon": "categories/kitchen_small_icon.png",
+        "description": "Essential small kitchen tools and utensils including pots, pans, chopping boards, knives, and preparation accessories for everyday use in professional culinary environments.",
+        "sort_order": 25,
+        "placements": []
+    },
+    {
+        "name": "Coffee Machines",
+        "image": "categories/coffee_machine.webp",
+        "icon": "categories/coffee_machine_icon.png",
+        "description": "Professional espresso machines, automatic coffee makers, grinders, and accessories from leading brands including Rancilio, Simonelli, Kalerm, and Dr. Coffee — built for cafes, restaurants, hotels, and commercial kitchens across East Africa.",
+        "sort_order": 26,
+        "placements": []
+    },
+    {
+        "name": "Ice Cube Machines",
+        "image": null,
+        "icon": "categories/ice_cube_machines_icon.png",
+        "description": "Commercial ice cube machines from trusted brands including Brema and Iberna — engineered for consistent, high-volume ice production in bars, restaurants, hotels, and food service operations across East Africa.",
+        "sort_order": 27,
+        "placements": []
+    },
+    {
+        "name": "Ice Cream Machines",
+        "image": "categories/ice_cream_machines.webp",
+        "icon": "categories/ice_cream_machines_icon.png",
+        "description": "Professional soft serve and gelato machines from leading brands including Pasmo and Carpigiani — designed for cafes, dessert shops, hotels, and high-end hospitality venues across East Africa.",
+        "sort_order": 28,
+        "placements": []
+    },
+    {
+        "name": "Dishwashers",
+        "image": "categories/dishwashers.webp",
+        "icon": "categories/dishwashers_icon.png",
+        "description": "Commercial dishwashers, glass washers, and warewashing accessories from trusted brands including Comenda, Hattons, and Kayalar — built for restaurants, hotels, bars, and high-volume food service operations across East Africa.",
+        "sort_order": 29,
+        "placements": []
+    },
+    {
+        "name": "Burners",
+        "image": "categories/burners.webp",
+        "icon": "categories/burners_icon.png",
+        "description": "Commercial gas and electric burners from trusted brands — built for restaurants, hotels, catering operations, and high-volume food service environments across East Africa.",
+        "sort_order": 30,
+        "placements": []
+    },
+    {
+        "name": "Test Products",
+        "image": null,
+        "icon": null,
+        "description": "Internal category used by seeded test fixtures covering every supported product type (simple, variable, grouped, bundle, virtual, downloadable, quotation).",
+        "sort_order": 99,
+        "placements": []
+    }
+]

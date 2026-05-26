@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
+use App\Observers\ProductObserver;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'slug', 'sku', 'type', 'short_description', 'description', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'weight', 'length', 'width', 'height', 'stock_status', 'stock_quantity', 'manage_stock', 'allow_backorder', 'low_stock_threshold', 'is_active', 'is_featured', 'visibility', 'meta_title', 'meta_description', 'sort_order'])]
+#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'weight', 'length', 'width', 'height', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order'])]
+#[ObservedBy(ProductObserver::class)]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -28,10 +31,9 @@ class Product extends Model
             'visibility' => ProductVisibility::class,
             'is_taxable' => 'boolean',
             'requires_shipping' => 'boolean',
-            'manage_stock' => 'boolean',
             'allow_backorder' => 'boolean',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
+            'requires_quotation' => 'boolean',
+            'min_order_quantity' => 'integer',
             'sort_order' => 'integer',
         ];
     }
@@ -45,9 +47,25 @@ class Product extends Model
         return $this->belongsTo(TaxClass::class);
     }
 
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class)->withPivot('sort_order');
+    }
+
+    public function primaryCategory(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'primary_category_id');
+    }
+
+    public function accessories(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_accessories', 'product_id', 'accessory_product_id')
+            ->withPivot('sort_order');
     }
 
     public function images(): HasMany

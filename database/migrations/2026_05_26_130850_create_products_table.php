@@ -7,8 +7,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -32,6 +31,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('sku')->unique()->nullable(); // null for variable/grouped/bundled (children/variants carry SKUs)
+            $table->foreignId('brand_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('primary_category_id')->nullable()->constrained('categories')->nullOnDelete();
+            $table->string('model_number')->nullable();
 
             // Type discriminator
             $table->string('type')->default(ProductType::SIMPLE->value);
@@ -39,6 +41,7 @@ return new class extends Migration
             // Content
             $table->text('short_description')->nullable();
             $table->longText('description')->nullable();
+            $table->longText('technical_specification')->nullable();
 
             // Pricing (base price; variants may override; grouped has no direct price)
             $table->unsignedBigInteger('price')->nullable();            // nullable: grouped products have no price of their own
@@ -59,22 +62,25 @@ return new class extends Migration
             $table->decimal('width', 8, 3)->nullable();
             $table->decimal('height', 8, 3)->nullable();
 
-            // Inventory (used by simple/virtual/downloadable; variable tracks per-variant;
-            //            grouped/bundled manage stock at child/component level)
+            // Inventory (stock_quantity NULL = stock not tracked for this product;
+            //            variable tracks per-variant; grouped/bundled defer to children)
             $table->string('stock_status')->default(StockStatus::IN_STOCK->value);
             $table->unsignedInteger('stock_quantity')->nullable();
-            $table->boolean('manage_stock')->default(false);
             $table->boolean('allow_backorder')->default(false);
             $table->unsignedInteger('low_stock_threshold')->nullable();
 
-            // Visibility & status
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_featured')->default(false);
+            // Quotation flow (B2B price-on-request)
+            $table->boolean('requires_quotation')->default(false);
+            $table->text('quotation_notes')->nullable();
+            $table->unsignedInteger('min_order_quantity')->nullable();
+
+            // Visibility
             $table->string('visibility')->default(ProductVisibility::VISIBLE->value);
 
-            // SEO
+            // SEO & Meta
             $table->string('meta_title')->nullable();
             $table->text('meta_description')->nullable();
+            $table->string('canonical_url', 500)->nullable();
 
             // Sorting
             $table->unsignedInteger('sort_order')->default(0);
@@ -91,6 +97,16 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->integer('sort_order')->default(0);
             $table->primary(['category_id', 'product_id']);
+        });
+
+        // ----------------------------------------------------------------
+        // PRODUCT ACCESSORIES (recommended/required add-on products)
+        // ----------------------------------------------------------------
+        Schema::create('product_accessories', function (Blueprint $table) {
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('accessory_product_id')->constrained('products')->cascadeOnDelete();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->primary(['product_id', 'accessory_product_id']);
         });
 
         // ----------------------------------------------------------------
@@ -140,10 +156,9 @@ return new class extends Migration
             $table->unsignedBigInteger('compare_at_price')->nullable();
             $table->unsignedBigInteger('cost_price')->nullable();
 
-            // Inventory
+            // Inventory (stock_quantity NULL = stock not tracked for this variant)
             $table->string('stock_status')->default(StockStatus::IN_STOCK->value);
             $table->unsignedInteger('stock_quantity')->nullable();
-            $table->boolean('manage_stock')->default(false);
             $table->boolean('allow_backorder')->default(false);
 
             // Shipping overrides
@@ -301,6 +316,7 @@ return new class extends Migration
         Schema::dropIfExists('product_variants');
         Schema::dropIfExists('product_attributes');
         Schema::dropIfExists('product_images');
+        Schema::dropIfExists('product_accessories');
         Schema::dropIfExists('category_product');
         Schema::dropIfExists('products');
     }

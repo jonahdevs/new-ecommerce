@@ -30,7 +30,6 @@ return new class extends Migration
             // SEO & Meta
             $table->string('meta_title')->nullable();
             $table->text('meta_description')->nullable();
-            $table->json('meta_keywords')->nullable();
             $table->string('canonical_url', 500)->nullable();
 
             $table->timestamps();

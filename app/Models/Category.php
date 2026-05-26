@@ -9,13 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'slug', 'parent_id', 'description', 'image', 'thumbnail', 'icon', 'icon_svg', 'status', 'sort_order', 'meta_title', 'meta_description', 'meta_keywords', 'canonical_url'])]
+#[Fillable(['name', 'slug', 'parent_id', 'description', 'image', 'thumbnail', 'icon', 'icon_svg', 'status', 'sort_order', 'meta_title', 'meta_description', 'canonical_url'])]
 class Category extends Model
 {
     protected function casts(): array
     {
         return [
-            'meta_keywords' => 'array',
             'status' => CategoryStatus::class,
         ];
     }
