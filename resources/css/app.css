@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=Public+Sans:ital,wght@0,300..700;1,300..700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
 
@@ -9,7 +10,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Public Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-serif: 'Newsreader', 'EB Garamond', Georgia, serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -30,6 +33,16 @@
     --color-brand-blue-500: hsl(229, 52%, 39%);
     --color-brand-blue-600: hsl(229, 52%, 34%);
     --color-brand-blue-700: hsl(229, 52%, 29%);
+
+    /* Workshop direction tokens — neutral ink scale, surfaces, lines */
+    --color-ink: #0c1421;
+    --color-ink-2: #2b3344;
+    --color-ink-3: #5d6577;
+    --color-ink-4: #8c93a3;
+    --color-surface: #ffffff;
+    --color-surface-sunken: #f4f6fb;
+    --color-line: #dde2eb;
+    --color-line-strong: #b9c0cf;
 
     --color-accent: var(--color-brand-500);
     --color-accent-content: var(--color-brand-500);
@@ -69,6 +82,34 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* Storefront page shell — wider than max-w-7xl (1280px) to match the Workshop design spec.
+   Use in place of `mx-auto max-w-7xl px-6` for any storefront-facing section. */
+.shell {
+    max-width: 1400px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+}
+@media (min-width: 1024px) {
+    .shell { padding-inline: 2.5rem; }
+}
+
+/* Prevent prices from wrapping mid-number */
+.price { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Hero rotator + brands marquee animations */
+@keyframes brandMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+.brand-marquee-track {
+    animation: brandMarquee 40s linear infinite;
+}
+.brand-marquee:hover .brand-marquee-track {
+    animation-play-state: paused;
+}
+
+@keyframes pageFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.page-fade { animation: pageFade 220ms ease both; }

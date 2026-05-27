@@ -9,6 +9,6 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     //
 }; ?>
 
-<div class="mx-auto max-w-7xl px-6 py-12">
+<div class="shell py-12">
     {{-- TODO: contact, shipping address, delivery method, payment, order summary, place-order --}}
 </div>

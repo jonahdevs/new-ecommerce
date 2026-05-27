@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Route;
 // Storefront (guests + logged-in browsing)
 // ---------------------------------------------------------------------------
 Route::livewire('/', 'pages::storefront.home')->name('home');
+Route::livewire('/shop', 'pages::storefront.catalog')->name('catalog');
+Route::livewire('/shop/{category:slug}', 'pages::storefront.category')->name('category.show');
+Route::livewire('/cart', 'pages::storefront.cart')->name('cart');
+Route::livewire('/wishlist', 'pages::storefront.wishlist')->name('wishlist');
 
 // ---------------------------------------------------------------------------
 // Post-login landing — branches by role.

@@ -11,6 +11,6 @@ new #[Layout('layouts::storefront')] #[Title('Search')] class extends Component
     public string $query = '';
 }; ?>
 
-<div class="mx-auto max-w-7xl px-6 py-12">
+<div class="shell py-12">
     {{-- TODO: search input bound to $query, results grid, empty/no-results state --}}
 </div>

@@ -19,6 +19,6 @@ new #[Layout('layouts::storefront')] class extends Component
     }
 }; ?>
 
-<div class="mx-auto max-w-7xl px-6 py-12">
+<div class="shell py-12">
     {{-- TODO: gallery, title, price, variant selector, qty, add-to-cart, description, specs, related --}}
 </div>
