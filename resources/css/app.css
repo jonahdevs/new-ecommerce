@@ -23,16 +23,24 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
+    --color-brand-500: hsl(354, 68%, 45%);
+    --color-brand-600: hsl(354, 68%, 40%);
+    --color-brand-700: hsl(354, 68%, 35%);
+
+    --color-brand-blue-500: hsl(229, 52%, 39%);
+    --color-brand-blue-600: hsl(229, 52%, 34%);
+    --color-brand-blue-700: hsl(229, 52%, 29%);
+
+    --color-accent: var(--color-brand-500);
+    --color-accent-content: var(--color-brand-500);
     --color-accent-foreground: var(--color-white);
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: var(--color-brand-500);
+        --color-accent-content: var(--color-brand-500);
+        --color-accent-foreground: var(--color-white);
     }
 }
 

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Livewire\Component;
 
@@ -16,5 +16,5 @@ new class extends Component {}; ?>
         </flux:button>
     </flux:modal.trigger>
 
-    <livewire:pages::settings.delete-user-modal />
+    <livewire:pages::account.settings.delete-user-modal />
 </section>

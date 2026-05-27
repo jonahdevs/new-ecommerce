@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Concerns\ProfileValidationRules;
 /* @chisel-email-verification */
@@ -85,7 +85,7 @@ new #[Title('Profile settings')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::account.settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
@@ -126,9 +126,9 @@ new #[Title('Profile settings')] class extends Component {
         {{-- @chisel-email-verification --}}
         @if ($this->showDeleteUser)
         {{-- @end-chisel-email-verification --}}
-            <livewire:pages::settings.delete-user-form />
+            <livewire:pages::account.settings.delete-user-form />
         {{-- @chisel-email-verification --}}
         @endif
         {{-- @end-chisel-email-verification --}}
-    </x-pages::settings.layout>
+    </x-pages::account.settings.layout>
 </section>

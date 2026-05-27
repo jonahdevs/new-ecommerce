@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Concerns\PasswordValidationRules;
 use Flux\Flux;
@@ -187,7 +187,7 @@ new #[Title('Security settings')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+    <x-pages::account.settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
         <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
             <flux:input
                 wire:model="current_password"
@@ -245,7 +245,7 @@ new #[Title('Security settings')] class extends Component {
                                 </flux:button>
                             </div>
 
-                            <livewire:pages::settings.two-factor.recovery-codes :$requiresConfirmation />
+                            <livewire:pages::account.settings.two-factor.recovery-codes :$requiresConfirmation />
                         </div>
                     @else
                         <div class="space-y-4">
@@ -262,7 +262,7 @@ new #[Title('Security settings')] class extends Component {
                                 </flux:button>
                             </flux:modal.trigger>
 
-                            <livewire:pages::settings.two-factor-setup-modal :requires-confirmation="$requiresConfirmation" />
+                            <livewire:pages::account.settings.two-factor-setup-modal :requires-confirmation="$requiresConfirmation" />
                         </div>
                     @endif
                 </div>
@@ -326,7 +326,7 @@ new #[Title('Security settings')] class extends Component {
             </section>
         @endif
         {{-- @end-chisel-passkeys --}}
-    </x-pages::settings.layout>
+    </x-pages::account.settings.layout>
 
     {{-- @chisel-passkeys --}}
     <flux:modal

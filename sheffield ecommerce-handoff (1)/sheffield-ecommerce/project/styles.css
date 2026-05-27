@@ -1,0 +1,268 @@
+/* Sheffield — base styles. Two directions: 'editorial' (warm) and 'workshop' (catalog).
+   Brand tokens from user. */
+
+:root {
+  /* Brand */
+  --brand-500: hsl(354, 68%, 45%);
+  --brand-600: hsl(354, 68%, 40%);
+  --brand-700: hsl(354, 68%, 35%);
+  --brand-blue-500: hsl(229, 52%, 39%);
+  --brand-blue-600: hsl(229, 52%, 34%);
+  --brand-blue-700: hsl(229, 52%, 29%);
+
+  /* Fonts (overridden by tweak) */
+  --font-heading: "Newsreader", "EB Garamond", Georgia, serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  color-scheme: light;
+}
+
+/* ───────── Direction: Editorial (warm) ───────── */
+[data-direction="editorial"] {
+  --bg: #faf6ee;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1ebdc;
+  --surface: #fffdf8;
+  --ink: #1c1a14;
+  --ink-2: #4a463b;
+  --ink-3: #7a7466;
+  --ink-4: #a8a294;
+  --line: #e7e0cc;
+  --line-strong: #d4caaf;
+  --accent: var(--brand-500);
+  --accent-hover: var(--brand-600);
+  --accent-ink: #ffffff;
+  --secondary: var(--brand-blue-500);
+  --tag-bg: #efe6cf;
+  --warm-1: #b87333;   /* warm copper */
+  --warm-2: #8a6e3c;   /* olive bronze */
+  --warm-3: #2f3e2e;   /* deep forest */
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(35, 28, 14, 0.05);
+  --shadow: 0 6px 24px -8px rgba(35, 28, 14, 0.12);
+
+  --pad-section: 80px;
+  --pad-x: 56px;
+  --max-w: 1320px;
+}
+
+/* ───────── Direction: Workshop (catalog) ───────── */
+[data-direction="workshop"] {
+  --bg: #ffffff;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f4f6fb;
+  --surface: #ffffff;
+  --ink: #0c1421;
+  --ink-2: #2b3344;
+  --ink-3: #5d6577;
+  --ink-4: #8c93a3;
+  --line: #dde2eb;
+  --line-strong: #b9c0cf;
+  --accent: var(--brand-500);
+  --accent-hover: var(--brand-600);
+  --accent-ink: #ffffff;
+  --secondary: var(--brand-blue-500);
+  --secondary-hover: var(--brand-blue-600);
+  --tag-bg: #e6ebf6;
+  --warm-1: var(--brand-500);            /* warm accents repurposed for brand red */
+  --warm-2: var(--brand-blue-500);       /* secondary text accent → brand blue */
+  --warm-3: var(--brand-blue-700);       /* dark feature surfaces → deep brand blue */
+  --feature-blue: var(--brand-blue-700);
+  --feature-blue-mid: var(--brand-blue-500);
+
+  --radius-sm: 3px;
+  --radius: 5px;
+  --radius-lg: 6px;
+  --shadow-sm: 0 1px 0 rgba(12, 20, 33, 0.04);
+  --shadow: 0 4px 16px -6px rgba(12, 20, 33, 0.12);
+
+  --pad-section: 56px;
+  --pad-x: 40px;
+  --max-w: 1400px;
+}
+
+/* Workshop: strong blue top strip on header for brand presence */
+[data-direction="workshop"] header { border-bottom: 2px solid var(--brand-blue-700); }
+[data-direction="workshop"] .twk-panel { color: #1a2436; }
+
+/* ───────── Reset / base ───────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; color: inherit; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  margin: 0;
+  line-height: 1.08;
+  color: var(--ink);
+  text-wrap: balance;
+}
+[data-direction="workshop"] h2,
+[data-direction="workshop"] h3,
+[data-direction="workshop"] h4 { letter-spacing: -0.02em; }
+
+/* Section heading kicker */
+.kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+[data-direction="workshop"] .kicker { color: var(--ink-3); }
+
+/* ───────── Buttons ───────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 80ms ease;
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--ink); color: #fff; }
+.btn-secondary:hover { background: var(--ink-2); }
+.btn-outline {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.btn-outline:hover { border-color: var(--ink); background: var(--bg-sunken); }
+.btn-ghost { background: transparent; color: var(--ink); }
+.btn-ghost:hover { background: var(--bg-sunken); }
+.btn-sm { height: 36px; padding: 0 14px; font-size: 13px; }
+.btn-lg { height: 52px; padding: 0 26px; font-size: 15px; }
+
+[data-direction="workshop"] .btn-primary {
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+/* Pill / chip / badge */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  background: var(--tag-bg);
+  color: var(--ink-2);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+[data-direction="workshop"] .chip { border-radius: 3px; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  background: var(--ink);
+  color: #fff;
+}
+.badge-accent { background: var(--accent); }
+.badge-soft { background: var(--tag-bg); color: var(--ink-2); }
+.badge-outline { background: transparent; border: 1px solid var(--line-strong); color: var(--ink-2); }
+
+/* ───────── Inputs ───────── */
+.input, .select {
+  height: 44px;
+  width: 100%;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.input:focus, .select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px hsl(354 68% 45% / 0.12); }
+.input::placeholder { color: var(--ink-4); }
+
+/* ───────── Layout containers ───────── */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad-x); }
+
+/* ───────── Utility ───────── */
+.divider { height: 1px; background: var(--line); }
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+/* Scrollbar styling for nicer feel */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 3px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+
+/* Prevent prices from wrapping mid-number ("KES" + "1,234") */
+.price, [data-price] { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Hide scrollbars in horizontal "peek" carousels */
+.peek-track::-webkit-scrollbar { display: none; }
+
+/* Product illustrations — fit inside their container */
+.prod-illust svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.page-fade { animation: pageFade 220ms ease both; }
+@keyframes pageFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hide horizontal overflow during transitions */
+.page-root { min-height: 100vh; }
+
+/* Sticky header offset for anchored sections (if needed) */
+section { scroll-margin-top: 120px; }

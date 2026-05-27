@@ -1,0 +1,16 @@
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+
+new #[Layout('layouts::storefront')] #[Title('Search')] class extends Component
+{
+    #[Url(as: 'q')]
+    public string $query = '';
+}; ?>
+
+<div class="mx-auto max-w-7xl px-6 py-12">
+    {{-- TODO: search input bound to $query, results grid, empty/no-results state --}}
+</div>
