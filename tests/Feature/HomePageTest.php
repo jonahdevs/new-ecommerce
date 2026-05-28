@@ -7,7 +7,7 @@ it('renders the storefront home page', function () {
     $response->assertSee('Shop by category');
     $response->assertSee('Featured equipment');
     $response->assertSee('New arrivals');
-    $response->assertSee('Visit a Sheffield showroom');
+    $response->assertSee('Start a quote');
     $response->assertSee('Brands we carry');
     $response->assertSee('The Sheffield Quarterly');
 });

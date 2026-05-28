@@ -44,7 +44,7 @@ it('renders cart items when products are in session', function () {
     Livewire::test('pages::storefront.cart')
         ->assertSee('Wok Range')
         ->assertSee('Pasta Cooker')
-        ->assertSee('Order summary');
+        ->assertSee('Cart summary');
 });
 
 it('increments and decrements cart quantity', function () {

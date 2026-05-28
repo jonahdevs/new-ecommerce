@@ -25,7 +25,7 @@
                         Shop
                         <flux:icon.chevron-down variant="micro" class="size-3.5" />
                     </a>
-                    <a href="{{ route('catalog') }}" class="hover:text-brand-500 transition-colors" wire:navigate>Request quote</a>
+                    <a href="{{ route('quote.request') }}" class="hover:text-brand-500 transition-colors" wire:navigate>Request quote</a>
                     <a href="{{ route('contact') }}" class="hover:text-brand-500 transition-colors" wire:navigate>Contact</a>
                 </nav>
 

@@ -69,6 +69,11 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 <div class="page-fade">
     <div class="shell pt-4 pb-20">
 
+        <flux:breadcrumbs class="mb-4">
+            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>Cart</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+
         {{-- Page header --}}
         <div class="flex items-center justify-between">
             <h1 class="text-3xl font-semibold tracking-tight">Cart</h1>
@@ -86,7 +91,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                 <p class="mx-auto mt-2 max-w-md text-ink-3">Browse the catalog and add equipment, or request a formal quote for tendered projects.</p>
                 <div class="mt-6 flex justify-center gap-2.5">
                     <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate>Shop the catalog</flux:button>
-                    <flux:button variant="customer-outline" size="customer" :href="route('catalog')" wire:navigate>Request a quote</flux:button>
+                    <flux:button variant="customer-outline" size="customer" :href="route('quote.request')" wire:navigate>Request a quote</flux:button>
                 </div>
             </div>
 
@@ -219,7 +224,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                             <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! $kes($totalCents) !!}</span>
                         </div>
 
-                        <flux:button variant="customer-primary" size="customer-lg" href="#" icon:trailing="arrow-right" class="mt-5! w-full!">
+                        <flux:button variant="customer-primary" size="customer-lg" :href="route('checkout')" wire:navigate icon:trailing="arrow-right" class="mt-5! w-full!">
                             Proceed to checkout
                         </flux:button>
 

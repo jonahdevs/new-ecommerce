@@ -52,7 +52,7 @@ new #[Layout('layouts::account')] #[Title('Quotes & RFQs — Sheffield')] class 
             <flux:icon.document-text variant="outline" class="mx-auto size-9 text-ink-4" />
             <flux:heading size="sm" class="mt-4">No quotes yet</flux:heading>
             <flux:text class="mt-1">Request a formal quote for your next project.</flux:text>
-            <flux:button variant="customer-primary" size="customer" :href="route('contact')" wire:navigate class="mt-5">
+            <flux:button variant="customer-primary" size="customer" :href="route('quote.request')" wire:navigate class="mt-5">
                 Request a quote
             </flux:button>
         </flux:card>
