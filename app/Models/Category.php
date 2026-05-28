@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CategoryStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -17,6 +18,25 @@ class Category extends Model
         return [
             'status' => CategoryStatus::class,
         ];
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->image));
+    }
+
+    protected function thumbnailUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->thumbnail));
+    }
+
+    protected function iconUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->icon));
     }
 
     // ==================================================

@@ -1,9 +1,10 @@
 ﻿<?php
 
-use Livewire\Component;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Component;
 
-new #[Title('Appearance settings')] class extends Component {
+new #[Layout('layouts::settings')] #[Title('Appearance — Sheffield')] class extends Component {
     //
 }; ?>
 

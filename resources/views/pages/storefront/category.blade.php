@@ -153,7 +153,7 @@ new #[Layout('layouts::storefront')] class extends Component {
         <div class="shell grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_200px]">
             <div class="flex items-center gap-4">
                 @if ($category->icon)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($category->icon) }}" alt=""
+                    <img src="{{ $category->icon_url }}" alt=""
                         class="size-12 shrink-0 object-contain" />
                 @endif
                 <div>
@@ -165,7 +165,7 @@ new #[Layout('layouts::storefront')] class extends Component {
             </div>
             @if ($category->image)
                 <div class="hidden h-30 w-50 overflow-hidden rounded md:block">
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($category->image) }}" alt=""
+                    <img src="{{ $category->image_url }}" alt=""
                         class="size-full object-cover" />
                 </div>
             @endif

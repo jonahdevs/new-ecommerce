@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 #[Fillable(['name', 'description', 'slug', 'logo', 'website_url', 'is_active', 'sort_order', 'meta_title', 'meta_description', 'canonical_url'])]
 class Brand extends Model
@@ -21,9 +20,7 @@ class Brand extends Model
 
     protected function logoUrl(): Attribute
     {
-        return Attribute::get(
-            fn () => $this->logo ? Storage::url($this->logo) : null
-        );
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->logo));
     }
 
     public function products(): HasMany

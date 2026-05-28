@@ -34,7 +34,7 @@
                             {!! $category->icon_svg !!}
                         </span>
                     @elseif ($category->icon)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($category->icon) }}" alt=""
+                        <img src="{{ $category->icon_url }}" alt=""
                             class="size-5 shrink-0 object-contain brightness-0 invert" loading="lazy" />
                     @endif
                     <span class="truncate">{{ $category->name }}</span>

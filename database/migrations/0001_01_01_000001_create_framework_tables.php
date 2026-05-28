@@ -6,11 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        Schema::create('cache', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->mediumText('value');
+            $table->bigInteger('expiration')->index();
+        });
+
+        Schema::create('cache_locks', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->string('owner');
+            $table->bigInteger('expiration')->index();
+        });
+
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
             $table->string('queue')->index();
@@ -45,15 +54,26 @@ return new class extends Migration
 
             $table->index(['connection', 'queue', 'failed_at']);
         });
+
+        Schema::create(config('settings.repositories.database.table') ?? 'settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('group');
+            $table->string('name');
+            $table->boolean('locked')->default(false);
+            $table->json('payload');
+            $table->timestamps();
+
+            $table->unique(['group', 'name']);
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('jobs');
-        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('settings');
         Schema::dropIfExists('failed_jobs');
+        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('cache');
     }
 };

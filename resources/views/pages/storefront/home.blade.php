@@ -241,7 +241,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
                 <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
                     <div class="relative aspect-square overflow-hidden border-b-2 border-ink bg-surface-sunken">
                         @if ($category->image)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($category->image) }}" alt=""
+                            <img src="{{ $category->image_url }}" alt=""
                                 loading="lazy"
                                 class="block size-full object-cover transition duration-300 group-hover:scale-[1.04]" />
                         @endif
