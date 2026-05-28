@@ -4,15 +4,21 @@ use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Product;
 use App\Support\StorefrontSession;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class extends Component
 {
     use InteractsWithStorefront;
+
+    public function mount(): void
+    {
+        SEOMeta::setRobots('noindex,follow');
+    }
 
     public function remove(string $slug): void
     {
@@ -52,7 +58,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
             ->where('price', '>', 0)
             ->when($wishlistSlugs, fn ($q) => $q->whereNotIn('slug', $wishlistSlugs))
             ->inRandomOrder()
-            ->take(4)
+            ->take(6)
             ->get();
     }
 }; ?>
@@ -63,7 +69,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
 @endphp
 
 <div class="page-fade">
-    <div class="shell pt-8 pb-20">
+    <div class="shell pt-4 pb-20">
         {{-- Breadcrumb --}}
         <nav class="mb-4 flex items-center gap-1.5 text-[12.5px] text-ink-3" aria-label="Breadcrumb">
             <a href="{{ route('home') }}" class="hover:text-ink" wire:navigate>Home</a>
@@ -180,7 +186,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                     <h2 class="text-[22px] font-semibold tracking-tight">You might also want</h2>
                     <a href="{{ route('catalog') }}" wire:navigate class="text-[13px] text-zinc-600 hover:text-zinc-900">Browse all →</a>
                 </div>
-                <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+                <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
                     @foreach ($this->recommendations as $product)
                         <x-storefront.product-card :product="$product" wire:key="reco-{{ $product->id }}" />
                     @endforeach

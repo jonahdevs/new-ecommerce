@@ -11,22 +11,52 @@
 
     // TODO: move to a Settings model / table — phones, addresses come from config for now
     $showrooms = [
-        ['city' => 'Nairobi',  'country' => 'Kenya',   'isHQ' => true,  'address' => 'Sheffield House, Mombasa Road', 'suburb' => 'Industrial Area', 'phone' => '+254 20 234 5600'],
-        ['city' => 'Mombasa',  'country' => 'Kenya',   'isHQ' => false, 'address' => 'Nyerere Avenue, Plot 14',        'suburb' => 'Mombasa Island',  'phone' => '+254 41 230 0120'],
-        ['city' => 'Kampala',  'country' => 'Uganda',  'isHQ' => false, 'address' => 'Plot 42, Yusuf Lule Road',       'suburb' => 'Nakasero',        'phone' => '+256 414 250 600'],
-        ['city' => 'Kigali',   'country' => 'Rwanda',  'isHQ' => false, 'address' => 'KG 11 Avenue, Kacyiru',           'suburb' => 'Kacyiru',         'phone' => '+250 788 305 600'],
+        [
+            'city' => 'Nairobi',
+            'country' => 'Kenya',
+            'isHQ' => true,
+            'address' => 'Sheffield House, Mombasa Road',
+            'suburb' => 'Industrial Area',
+            'phone' => '+254 20 234 5600',
+        ],
+        [
+            'city' => 'Mombasa',
+            'country' => 'Kenya',
+            'isHQ' => false,
+            'address' => 'Nyerere Avenue, Plot 14',
+            'suburb' => 'Mombasa Island',
+            'phone' => '+254 41 230 0120',
+        ],
+        [
+            'city' => 'Kampala',
+            'country' => 'Uganda',
+            'isHQ' => false,
+            'address' => 'Plot 42, Yusuf Lule Road',
+            'suburb' => 'Nakasero',
+            'phone' => '+256 414 250 600',
+        ],
+        [
+            'city' => 'Kigali',
+            'country' => 'Rwanda',
+            'isHQ' => false,
+            'address' => 'KG 11 Avenue, Kacyiru',
+            'suburb' => 'Kacyiru',
+            'phone' => '+250 788 305 600',
+        ],
     ];
 @endphp
 
-<footer class="mt-20 bg-brand-blue-700 pt-16 pb-8 text-[#e6ddc8]">
+<footer class="mt-20 bg-brand-blue-500 pt-16 pb-8 text-[#e6ddc8]">
     <div class="shell">
         <div class="grid grid-cols-1 gap-10 md:grid-cols-12">
             <div class="md:col-span-4">
-                <a href="{{ route('home') }}" class="inline-flex items-center" wire:navigate aria-label="{{ config('app.name', 'Sheffield') }} — Home">
+                <a href="{{ route('home') }}" class="inline-flex items-center" wire:navigate
+                    aria-label="{{ config('app.name', 'Sheffield') }} — Home">
                     <img src="/logo-inverse.png" alt="{{ config('app.name', 'Sheffield') }}" class="h-9 w-auto" />
                 </a>
                 <p class="mt-4 max-w-xs text-sm leading-relaxed text-[#c9bea4]">
-                    Commercial kitchen equipment for restaurants, hotels and catering operations across East Africa. Since 2003.
+                    Commercial kitchen equipment for restaurants, hotels and catering operations across East Africa.
+                    Since 2003.
                 </p>
                 <div class="mt-5 flex flex-col gap-2 text-[13.5px] text-[#c9bea4]">
                     <span class="inline-flex items-center gap-2">
@@ -47,14 +77,16 @@
                                 <div class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#f3eadd]">
                                     {{ $loc['city'] }}
                                     @if ($loc['isHQ'])
-                                        <span class="rounded-sm bg-brand-500 px-1.5 py-px text-[9px] tracking-wider text-white">HQ</span>
+                                        <span
+                                            class="rounded-sm bg-brand-500 px-1.5 py-px text-[9px] tracking-wider text-white">HQ</span>
                                     @endif
                                 </div>
                                 <div class="mt-1 text-[12px] leading-snug text-[#c9bea4]">
                                     {{ $loc['address'] }}<br>
                                     {{ $loc['suburb'] }}, {{ $loc['country'] }}
                                 </div>
-                                <a href="#" class="mt-1 inline-block text-[12px] text-[#d8c79d] hover:text-white">{{ $loc['phone'] }}</a>
+                                <a href="#"
+                                    class="mt-1 inline-block text-[12px] text-[#d8c79d] hover:text-white">{{ $loc['phone'] }}</a>
                             </div>
                         @endforeach
                     </div>
@@ -82,7 +114,8 @@
             </div>
         </div>
 
-        <div class="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[#e6ddc8]/15 pt-6 text-[12.5px] text-[#9c927c]">
+        <div
+            class="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[#e6ddc8]/15 pt-6 text-[12.5px] text-[#9c927c]">
             <div class="flex items-center gap-4">
                 <span>&copy; {{ date('Y') }} Sheffield East Africa Ltd.</span>
                 <a href="#" class="hover:text-white">Terms</a>

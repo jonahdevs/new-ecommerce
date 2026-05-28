@@ -24,16 +24,16 @@ const HomeEditorial = ({ navigate, addToCart, compare, setCompare, wishlist, tog
   const D = window.SHEFFIELD_DATA;
   return (
     <>
-      {/* TRUST STRIP */}
-      <section style={{ marginTop: 56, borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
-        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", padding: "28px 0" }}>
+      {/* TRUST STRIP — extends the hero's sunken zone */}
+      <section style={{ background: "var(--bg-sunken)", borderBottom: "1px solid var(--line)" }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", padding: "36px 0 40px" }}>
           {[
             { icon: <IconTruck size={20}/>, t: "Regional delivery", s: "Nairobi · Mombasa · Kampala · Kigali" },
             { icon: <IconWrench size={20}/>, t: "Install & commission", s: "Factory-trained engineers, on-site" },
             { icon: <IconShield size={20}/>, t: "Parts in stock", s: "98% of consumables next-day" },
             { icon: <IconCertified size={20}/>, t: "Trade pricing", s: "Net 30 for verified business accounts" },
           ].map((u, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, paddingLeft: i === 0 ? 0 : 24, borderLeft: i === 0 ? 0 : "1px solid var(--line)" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, paddingLeft: i === 0 ? 0 : 24, borderLeft: i === 0 ? 0 : "1px solid var(--line-strong)" }}>
               <div style={{ color: "var(--accent)" }}>{u.icon}</div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>{u.t}</div>
@@ -256,8 +256,8 @@ const HomeWorkshop = ({ navigate, addToCart, compare, setCompare, wishlist, togg
       <section style={{ paddingTop: 56 }}>
         <div className="container">
           <SectionHeader title="Shop by category" link="All →" onLink={() => navigate("catalog")}/>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 10 }}>
-            {D.categories.map(cat => <CategoryChipWS key={cat.slug} cat={cat} navigate={navigate}/>)}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 20, rowGap: 28 }}>
+            {D.categories.slice(0, 12).map(cat => <CategoryChipWS key={cat.slug} cat={cat} navigate={navigate}/>)}
           </div>
         </div>
       </section>
@@ -327,39 +327,55 @@ const SectionHeader = ({ title, link, onLink }) => (
 
 const CategoryChipWS = ({ cat, navigate }) => {
   return (
-    <a href="#" onClick={(e) => { e.preventDefault(); navigate("category", { slug: cat.slug }); }} style={{
-      background: "#fff", border: "1px solid var(--line)",
-      borderRadius: "var(--radius)", overflow: "hidden",
-      display: "flex", flexDirection: "column",
-      transition: "border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease",
-    }}
-    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-strong)"; e.currentTarget.style.boxShadow = "var(--shadow-sm)"; }}
-    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.boxShadow = "none"; }}>
+    <a href="#" onClick={(e) => { e.preventDefault(); navigate("category", { slug: cat.slug }); }}
+      style={{
+        display: "block",
+        textDecoration: "none",
+        transition: "opacity 120ms ease",
+      }}
+      onMouseEnter={(e) => {
+        const img = e.currentTarget.querySelector("img.ws-cat-img");
+        if (img) img.style.transform = "scale(1.04)";
+        const label = e.currentTarget.querySelector(".ws-cat-label");
+        if (label) label.style.color = "var(--accent)";
+      }}
+      onMouseLeave={(e) => {
+        const img = e.currentTarget.querySelector("img.ws-cat-img");
+        if (img) img.style.transform = "scale(1)";
+        const label = e.currentTarget.querySelector(".ws-cat-label");
+        if (label) label.style.color = "var(--ink)";
+      }}>
       <div style={{
         position: "relative",
-        aspectRatio: "5 / 3",
+        aspectRatio: "1 / 1",
         background: "var(--bg-sunken)",
         overflow: "hidden",
+        borderBottom: "2px solid var(--ink)",
       }}>
         {cat.image && (
-          <img src={cat.image} alt="" loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}/>
-        )}
-        {cat.icon && (
-          <div style={{
-            position: "absolute", top: 8, left: 8,
-            width: 28, height: 28, borderRadius: 4,
-            background: "rgba(255,255,255,0.94)",
-            padding: 5,
-            boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-          }}>
-            <img src={cat.icon} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }}/>
-          </div>
+          <img className="ws-cat-img" src={cat.image} alt="" loading="lazy"
+            style={{
+              width: "100%", height: "100%", objectFit: "cover", display: "block",
+              transition: "transform 240ms ease",
+            }}/>
         )}
       </div>
-      <div style={{ padding: "10px 12px", textAlign: "center", borderTop: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.25 }}>{cat.name}</div>
-        <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 3 }}>{cat.count} items</div>
+      <div style={{ paddingTop: 10, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+        <div className="ws-cat-label" style={{
+          fontSize: 11.5,
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color: "var(--ink)",
+          lineHeight: 1.25,
+          transition: "color 120ms ease",
+        }}>{cat.name}</div>
+        <div style={{
+          fontSize: 11,
+          color: "var(--ink-3)",
+          fontVariantNumeric: "tabular-nums",
+          flexShrink: 0,
+        }}>{cat.count}</div>
       </div>
     </a>
   );

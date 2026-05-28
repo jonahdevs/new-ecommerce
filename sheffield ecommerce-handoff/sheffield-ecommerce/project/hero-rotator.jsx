@@ -189,7 +189,7 @@ const navArrowStyle = (side) => ({
 
 // ───────── Thin promo banner ─────────
 const ThinPromoBanner = ({ navigate }) => (
-  <section style={{ background: "var(--bg)", padding: "8px 0" }}>
+  <section style={{ background: "var(--bg-sunken)", padding: "12px 0 8px" }}>
     <div className="container">
       <button onClick={() => navigate("catalog")}
         aria-label="Your business, fully equipped — up to 20% off mega sale"

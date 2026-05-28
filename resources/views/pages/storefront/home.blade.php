@@ -7,6 +7,10 @@ use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
 use App\Models\CategoryPlacement;
 use App\Models\Product;
+use Artesaos\SEOTools\Facades\JsonLdMulti;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -17,6 +21,16 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
 {
     use InteractsWithStorefront;
 
+    public function mount(): void
+    {
+        $description = 'Authorised distributor for Rational, Hobart, True, Electrolux Professional and more. Showrooms in Nairobi, Mombasa, Kampala and Kigali — install, service and spares across East Africa.';
+
+        SEOMeta::setDescription($description);
+        OpenGraph::setDescription($description)->setType('website');
+        TwitterCard::setDescription($description);
+        JsonLdMulti::setDescription($description)->setType('Organization');
+    }
+
     // TODO: cache these once they become hot. View composer would be cleaner.
     #[Computed]
     public function featuredCategories(): Collection
@@ -26,7 +40,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
             ->where('location', CategorySection::HOME_PAGE_FEATURED)
             ->where('status', CategoryStatus::ACTIVE)
             ->orderBy('sort_order')
-            ->take(8)
+            ->take(14)
             ->get()
             ->pluck('category')
             ->filter();
@@ -42,7 +56,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
             ->whereNotNull('price')
             ->where('price', '>', 0)
             ->inRandomOrder()
-            ->take(4)
+            ->take(6)
             ->get();
     }
 
@@ -56,7 +70,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
             ->whereNotNull('price')
             ->where('price', '>', 0)
             ->latest('id')
-            ->take(4)
+            ->take(6)
             ->get();
     }
 
@@ -91,7 +105,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
 
 <div class="page-fade">
     {{-- Thin promo banner --}}
-    <section class="bg-white py-2">
+    <section class="bg-surface-sunken pt-3 pb-2">
         <div class="shell">
             <a href="#" wire:navigate aria-label="Up to 20% off mega sale"
                 class="block overflow-hidden rounded-md shadow-sm"
@@ -183,32 +197,33 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
         </div>
     </section>
 
-    {{-- Categories — dense Workshop grid --}}
+    {{-- Categories — dense Workshop grid (12 chips, square aspect, ink underline) --}}
     <section class="shell pt-14">
         <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
             <h2 class="text-[22px] font-semibold tracking-tight">Shop by category</h2>
             <a href="{{ route('catalog') }}" class="text-[13px] text-zinc-600 hover:text-zinc-900" wire:navigate>All →</a>
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
+        {{-- grid-rows-2 + [grid-auto-rows:0] caps visible rows to 2 at any breakpoint, so the
+             extra chips needed to fill a 7-col row at 2xl don't dangle below 2 rows of 6 at lg/xl. --}}
+        <div class="grid grid-cols-2 grid-rows-2 gap-x-5 gap-y-7 overflow-hidden sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7 [grid-auto-rows:0]">
             @foreach ($this->featuredCategories as $category)
                 <a href="{{ route('category.show', $category) }}" wire:navigate
-                    class="group flex flex-col overflow-hidden rounded border border-zinc-200 bg-white transition hover:border-zinc-400 hover:shadow-sm">
-                    <div class="relative aspect-[5/3] overflow-hidden bg-surface-sunken">
+                    class="group block transition">
+                    <div class="relative aspect-square overflow-hidden border-b-2 border-ink bg-surface-sunken">
                         @if ($category->image)
                             <img src="{{ \Illuminate\Support\Facades\Storage::url($category->image) }}"
                                 alt="" loading="lazy"
-                                class="block size-full object-cover" />
-                        @endif
-                        @if ($category->icon)
-                            <div class="absolute top-2 left-2 size-7 rounded-sm bg-white/95 p-1.5 shadow-sm">
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($category->icon) }}" alt="" class="size-full object-contain" />
-                            </div>
+                                class="block size-full object-cover transition duration-300 group-hover:scale-[1.04]" />
                         @endif
                     </div>
-                    <div class="border-t border-zinc-200 px-3 py-2.5 text-center">
-                        <div class="text-[12.5px] leading-tight font-semibold">{{ $category->name }}</div>
-                        <div class="mt-0.5 text-[10.5px] text-ink-3">{{ $category->products_count ?? $category->products()->count() }} items</div>
+                    <div class="flex items-baseline justify-between gap-2 pt-2.5">
+                        <div class="text-[11.5px] leading-tight font-semibold tracking-[0.06em] text-ink uppercase transition-colors group-hover:text-brand-500">
+                            {{ $category->name }}
+                        </div>
+                        <div class="shrink-0 text-[11px] text-ink-3 tabular-nums">
+                            {{ $category->products_count ?? $category->products()->count() }}
+                        </div>
                     </div>
                 </a>
             @endforeach
@@ -252,7 +267,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
             <h2 class="text-[22px] font-semibold tracking-tight">Featured equipment</h2>
             <a href="{{ route('catalog') }}" class="text-[13px] text-zinc-600 hover:text-zinc-900" wire:navigate>See all featured →</a>
         </div>
-        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
             @foreach ($this->featuredProducts as $product)
                 <x-storefront.product-card :product="$product" />
             @endforeach
@@ -265,7 +280,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
             <h2 class="text-[22px] font-semibold tracking-tight">New arrivals</h2>
             <a href="{{ route('catalog') }}?sort=newest" class="text-[13px] text-zinc-600 hover:text-zinc-900" wire:navigate>See all new →</a>
         </div>
-        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
             @foreach ($this->newArrivals as $product)
                 <x-storefront.product-card :product="$product" />
             @endforeach
@@ -398,7 +413,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
         <div class="grid grid-cols-1 items-center gap-6 rounded-lg bg-ink p-9 text-white lg:grid-cols-[1fr_auto]" style="background: #0c1421">
             <div>
                 <div class="text-[11.5px] font-bold tracking-[0.12em] text-brand-500 uppercase">For procurement</div>
-                <div class="mt-2 font-serif text-3xl leading-tight">
+                <div class="mt-2 font-serif text-[32px] leading-[1.1] font-normal">
                     Upload your tender or BOQ — formal quote in 24 hours.
                 </div>
                 <div class="mt-2 text-[14px] text-[#c9bea4]">

@@ -2,7 +2,8 @@
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "direction": "editorial",
-  "headingFont": "Newsreader"
+  "headingFont": "Newsreader",
+  "categoryNav": "transparent"
 }/*EDITMODE-END*/;
 
 const HEADING_FONTS = {
@@ -36,9 +37,10 @@ function App() {
   // Apply direction & font to root
   React.useEffect(() => {
     document.documentElement.setAttribute("data-direction", t.direction);
+    document.documentElement.setAttribute("data-catnav", t.categoryNav);
     document.documentElement.style.setProperty("--font-heading", HEADING_FONTS[t.headingFont] || HEADING_FONTS["Newsreader"]);
     setRoute(r => ({ ...r }));
-  }, [t.direction, t.headingFont]);
+  }, [t.direction, t.headingFont, t.categoryNav]);
 
   // Persist
   React.useEffect(() => { localStorage.setItem(PERSISTED_KEYS.cart, JSON.stringify(cart)); }, [cart]);
@@ -156,6 +158,11 @@ function App() {
         <TweakSelect label="Heading font" value={t.headingFont}
           options={Object.keys(HEADING_FONTS)}
           onChange={(v) => setTweak("headingFont", v)}/>
+
+        <TweakSection label="Category nav"/>
+        <TweakSelect label="Surface" value={t.categoryNav}
+          options={["transparent", "sunken", "white", "dark", "blue"]}
+          onChange={(v) => setTweak("categoryNav", v)}/>
 
         <TweakSection label="Demo navigation"/>
         <TweakButton label="Open Login" onClick={() => navigate("login")}/>

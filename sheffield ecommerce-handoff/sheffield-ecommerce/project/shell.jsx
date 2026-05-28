@@ -346,7 +346,7 @@ const CategoryNav = ({ route, navigate }) => {
   const cats = window.SHEFFIELD_DATA.categories;
 
   return (
-    <nav style={{ background: "var(--bg)", borderBottom: "1px solid var(--line)" }}>
+    <nav style={{ background: "var(--catnav-bg)", borderBottom: "1px solid var(--catnav-border)" }}>
       <div className="container">
         <div style={{
           display: "grid",
@@ -355,9 +355,9 @@ const CategoryNav = ({ route, navigate }) => {
           gridAutoRows: 0,
           overflow: "hidden",
           gap: 1,
-          background: "var(--line)",
-          borderLeft: "1px solid var(--line)",
-          borderRight: "1px solid var(--line)",
+          background: "var(--catnav-divider)",
+          borderLeft: "1px solid var(--catnav-divider)",
+          borderRight: "1px solid var(--catnav-divider)",
         }}>
           {cats.map((c) => {
             const active = route.name === "category" && route.params.slug === c.slug;
@@ -367,21 +367,21 @@ const CategoryNav = ({ route, navigate }) => {
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "10px 12px",
-                  background: active ? "var(--bg-sunken)" : "var(--bg)",
-                  color: active ? "var(--accent)" : "var(--ink-2)",
+                  background: active ? "var(--catnav-cell-active)" : "var(--catnav-cell-bg)",
+                  color: active ? "var(--catnav-text-active)" : "var(--catnav-text)",
                   fontSize: 13,
                   fontWeight: active ? 600 : 500,
                   transition: "background 120ms ease, color 120ms ease",
                 }}
-                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = "var(--bg-sunken)"; e.currentTarget.style.color = "var(--ink)"; } }}
-                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "var(--bg)"; e.currentTarget.style.color = "var(--ink-2)"; } }}>
+                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = "var(--catnav-cell-hover)"; e.currentTarget.style.color = "var(--catnav-text-hover)"; } }}
+                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "var(--catnav-cell-bg)"; e.currentTarget.style.color = "var(--catnav-text)"; } }}>
                 {c.icon ? (
                   <img src={c.icon} alt="" style={{
                     width: 22, height: 22, objectFit: "contain", flexShrink: 0,
-                    filter: active ? "none" : "opacity(0.78)",
+                    filter: active ? "var(--catnav-icon-filter-active)" : "var(--catnav-icon-filter)",
                   }}/>
                 ) : (
-                  <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", color: active ? "var(--accent)" : "var(--ink-3)" }}>
+                  <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", color: active ? "var(--catnav-icon-color-active)" : "var(--catnav-icon-color)" }}>
                     <IconGrid size={18} sw={1.6}/>
                   </span>
                 )}

@@ -1,9 +1,28 @@
-@props(['cartCount' => 0])
+<?php
+
+use App\Support\StorefrontSession;
+use Livewire\Attributes\On;
+use Livewire\Component;
+
+new class extends Component
+{
+    /**
+     * Re-render when the cart changes elsewhere on the page.
+     * The dispatch comes from InteractsWithStorefront::addToCart() (and any
+     * future cart mutation) — see app/Livewire/Concerns/InteractsWithStorefront.php.
+     */
+    #[On('cart-updated')]
+    public function refresh(): void
+    {
+        // Empty: Livewire re-runs render() after any listener fires.
+    }
+}; ?>
 
 @php
-    $lines = \App\Support\StorefrontSession::cartLines();
+    $cartCount = StorefrontSession::cartCount();
+    $lines = StorefrontSession::cartLines();
     $subtotalCents = $lines->sum('line_total_cents');
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
+    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv($cents, 100), 0, '.', ',');
 @endphp
 
 <flux:dropdown position="bottom" align="end" gap="10">

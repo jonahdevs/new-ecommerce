@@ -5,6 +5,9 @@ use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -18,6 +21,15 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
 {
     use InteractsWithStorefront;
     use WithPagination;
+
+    public function mount(): void
+    {
+        $description = 'Browse Sheffield\'s full commercial kitchen catalog — ovens, refrigeration, preparation, warewashing, beverage and more. Filter by brand, price, stock and category.';
+
+        SEOMeta::setDescription($description);
+        OpenGraph::setDescription($description)->setType('website');
+        TwitterCard::setDescription($description);
+    }
 
     /** @var array<int, string> */
     #[Url(as: 'cat', history: true)]
@@ -37,15 +49,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
     #[Url(history: true)]
     public string $sort = 'popularity';
 
-    #[Url(history: true)]
-    public string $view = 'grid';
-
     public function updating(string $prop): void
     {
-        // Reset pagination when any filter or sort changes
-        if ($prop !== 'view') {
-            $this->resetPage();
-        }
+        // Reset pagination when any filter or sort changes.
+        $this->resetPage();
     }
 
     public function clearFilters(): void
@@ -140,7 +147,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
 @endphp
 
 <div class="page-fade">
-    <div class="shell pt-8 pb-20">
+    <div class="shell pt-4 pb-20">
         {{-- Breadcrumb --}}
         <nav class="mb-4 flex items-center gap-1.5 text-[12.5px] text-ink-3" aria-label="Breadcrumb">
             <a href="{{ route('home') }}" class="hover:text-ink" wire:navigate>Home</a>
@@ -167,12 +174,17 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                         <div class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Category</div>
                         <div class="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
                             @foreach ($this->categoriesList as $cat)
-                                <label class="group flex cursor-pointer items-center gap-2.5 text-[13.5px] text-ink-2 hover:text-ink">
-                                    <input type="checkbox" wire:model.live="selectedCategories" value="{{ $cat->slug }}"
-                                        class="size-4 rounded-sm border-1.5 border-line-strong accent-brand-500" />
-                                    <span class="flex-1">{{ $cat->name }}</span>
-                                    <span class="text-xs text-ink-4">{{ $cat->products_count }}</span>
-                                </label>
+                                {{-- Verbose form: flux:label's `trailing` slot pushes the product count
+                                     to `ml-auto`, giving us the same name + count layout we want. --}}
+                                <flux:field variant="inline">
+                                    <flux:checkbox wire:model.live="selectedCategories" value="{{ $cat->slug }}" />
+                                    <flux:label>
+                                        {{ $cat->name }}
+                                        <x-slot:trailing>
+                                            <span class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
+                                        </x-slot:trailing>
+                                    </flux:label>
+                                </flux:field>
                             @endforeach
                         </div>
                     </div>
@@ -183,12 +195,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                         <div class="flex flex-col gap-2"
                             :class="openBrands ? 'max-h-96 overflow-y-auto pr-1' : ''">
                             @foreach ($this->brandsList as $i => $brand)
-                                <label class="flex cursor-pointer items-center gap-2.5 text-[13.5px] text-ink-2 hover:text-ink"
-                                    @if ($i >= 6) x-show="openBrands" @endif>
-                                    <input type="checkbox" wire:model.live="selectedBrands" value="{{ $brand->id }}"
-                                        class="size-4 rounded-sm border-1.5 border-line-strong accent-brand-500" />
-                                    <span class="flex-1">{{ $brand->name }}</span>
-                                </label>
+                                <div @if ($i >= 6) x-show="openBrands" @endif>
+                                    <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}"
+                                        :label="$brand->name" />
+                                </div>
                             @endforeach
                         </div>
                         @if ($this->brandsList->count() > 6)
@@ -215,11 +225,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                     {{-- Availability --}}
                     <div>
                         <div class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Availability</div>
-                        <label class="flex cursor-pointer items-center gap-2.5 text-[13.5px] text-ink-2 hover:text-ink">
-                            <input type="checkbox" wire:model.live="inStockOnly"
-                                class="size-4 rounded-sm border-1.5 border-line-strong accent-brand-500" />
-                            <span>In stock — ships now</span>
-                        </label>
+                        <flux:checkbox wire:model.live="inStockOnly" label="In stock — ships now" />
                     </div>
                 </div>
             </aside>
@@ -248,16 +254,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                             <option value="price-asc">Price — low to high</option>
                             <option value="price-desc">Price — high to low</option>
                         </select>
-                        <div class="inline-flex rounded border border-zinc-200">
-                            <button wire:click="$set('view', 'grid')" aria-label="Grid view"
-                                class="inline-flex size-9 items-center justify-center transition {{ $view === 'grid' ? 'bg-surface-sunken text-ink' : 'text-ink-3 hover:text-ink' }}">
-                                <flux:icon.layout-grid variant="micro" class="size-4" />
-                            </button>
-                            <button wire:click="$set('view', 'rows')" aria-label="List view"
-                                class="inline-flex size-9 items-center justify-center transition {{ $view === 'rows' ? 'bg-surface-sunken text-ink' : 'text-ink-3 hover:text-ink' }}">
-                                <flux:icon.list variant="micro" class="size-4" />
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -308,54 +304,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                         <p class="mt-2 text-ink-3">Try widening your price range, or removing brand/category constraints.</p>
                         <flux:button variant="primary" wire:click="clearFilters" class="mt-5">Clear all filters</flux:button>
                     </div>
-                @elseif ($view === 'grid')
-                    <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                @else
+                    <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                         @foreach ($this->products as $product)
                             <x-storefront.product-card :product="$product" wire:key="prod-{{ $product->id }}" />
-                        @endforeach
-                    </div>
-                @else
-                    <div class="flex flex-col gap-3">
-                        @foreach ($this->products as $product)
-                            @php
-                                $cover = $product->images->first();
-                                $price = $product->sale_price ?? $product->price;
-                                $compareAt = $product->sale_price ? $product->price : null;
-                                $inStock = $product->stock_status === StockStatus::IN_STOCK;
-                            @endphp
-                            <article wire:key="row-{{ $product->id }}"
-                                class="grid cursor-pointer grid-cols-[140px_1fr_auto_auto] items-center gap-5 rounded border border-zinc-200 bg-white p-4 transition hover:border-zinc-400 hover:shadow-sm">
-                                <div class="h-28 w-[140px] overflow-hidden rounded bg-surface-sunken p-2">
-                                    @if ($cover)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($cover->path) }}" alt="" class="size-full object-contain" loading="lazy" />
-                                    @endif
-                                </div>
-                                <div>
-                                    @if ($product->brand)
-                                        <div class="text-[11.5px] font-bold tracking-[0.06em] text-brand-blue-600 uppercase">{{ $product->brand->name }}</div>
-                                    @endif
-                                    <div class="mt-1 text-[15px] font-medium leading-tight">{{ $product->name }}</div>
-                                    @if ($product->short_description)
-                                        <div class="mt-1 line-clamp-2 max-w-2xl text-[13px] text-ink-3">{{ $product->short_description }}</div>
-                                    @endif
-                                    <div class="mt-2 text-[11.5px] text-ink-4 tabular-nums">{{ $product->sku }}</div>
-                                </div>
-                                <div class="text-right">
-                                    @if ($compareAt)
-                                        <div class="text-[12px] text-ink-4 line-through">{!! $kes($compareAt) !!}</div>
-                                    @endif
-                                    <div class="font-serif text-[22px]">
-                                        {!! $price ? $kes($price) : 'Request quote' !!}
-                                    </div>
-                                    <div class="text-[11.5px] {{ $inStock ? 'text-emerald-700' : 'text-ink-3' }}">
-                                        {{ $inStock ? '● In stock' : 'Made to order' }}
-                                    </div>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <flux:button variant="primary" size="sm">Add to cart</flux:button>
-                                    <flux:button size="sm">Compare</flux:button>
-                                </div>
-                            </article>
                         @endforeach
                     </div>
                 @endif
@@ -363,7 +315,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                 {{-- Pagination --}}
                 @if ($this->products->hasPages())
                     <div class="mt-10">
-                        {{ $this->products->links() }}
+                        <flux:pagination :paginator="$this->products" />
                     </div>
                 @endif
             </div>

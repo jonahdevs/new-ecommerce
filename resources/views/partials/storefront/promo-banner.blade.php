@@ -1,5 +1,5 @@
 {{-- TODO: wire to a setting (spatie/laravel-settings) so admins can edit/hide --}}
-<div class="bg-brand-blue-700 text-[#f2ead9]">
+<div class="bg-brand-blue-500 text-[#f2ead9]">
     <div class="shell flex h-9 items-center justify-between gap-4 text-[12.5px]">
         <div class="flex items-center gap-7 overflow-hidden">
             <span class="flex items-center gap-1.5">

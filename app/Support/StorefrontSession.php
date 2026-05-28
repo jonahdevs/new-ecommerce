@@ -169,10 +169,86 @@ final class StorefrontSession
         Session::forget(self::WISHLIST_KEY);
     }
 
-    // ─── Compare (count-only for now; the compare page itself is future work) ─
+    // ─── Compare ─────────────────────────────────────────────────────────────
+
+    private const COMPARE_MAX = 4;
+
+    /** @return array<int, string> */
+    public static function compare(): array
+    {
+        return Session::get(self::COMPARE_KEY, []);
+    }
 
     public static function compareCount(): int
     {
-        return count(Session::get(self::COMPARE_KEY, []));
+        return count(self::compare());
+    }
+
+    public static function isCompared(string $slug): bool
+    {
+        return in_array($slug, self::compare(), true);
+    }
+
+    /** Returns whether the slug is now in the compare list after toggling. */
+    public static function toggleCompare(string $slug): bool
+    {
+        $list = self::compare();
+        if (in_array($slug, $list, true)) {
+            $list = array_values(array_diff($list, [$slug]));
+            Session::put(self::COMPARE_KEY, $list);
+
+            return false;
+        }
+        // Hard cap at 4 — silently drop the oldest if we'd exceed it.
+        $list[] = $slug;
+        if (count($list) > self::COMPARE_MAX) {
+            $list = array_slice($list, -self::COMPARE_MAX);
+        }
+        Session::put(self::COMPARE_KEY, $list);
+
+        return true;
+    }
+
+    public static function removeFromCompare(string $slug): void
+    {
+        $list = array_values(array_diff(self::compare(), [$slug]));
+        Session::put(self::COMPARE_KEY, $list);
+    }
+
+    public static function clearCompare(): void
+    {
+        Session::forget(self::COMPARE_KEY);
+    }
+
+    /** @return EloquentCollection<int, Product> Products preserved in saved-order, eager-loaded for the compare table. */
+    public static function compareProducts(): EloquentCollection
+    {
+        $slugs = self::compare();
+        if ($slugs === []) {
+            /** @var EloquentCollection<int, Product> */
+            return new EloquentCollection;
+        }
+
+        $products = Product::query()
+            ->with([
+                'brand',
+                'primaryCategory',
+                'images' => fn ($q) => $q->where('is_cover', true)->limit(1),
+                'productAttributes' => fn ($q) => $q->where('is_visible', true)->orderBy('sort_order'),
+                'productAttributes.attribute',
+            ])
+            ->whereIn('slug', $slugs)
+            ->where('visibility', 'visible')
+            ->get()
+            ->keyBy('slug');
+
+        /** @var EloquentCollection<int, Product> */
+        return new EloquentCollection(
+            collect($slugs)
+                ->map(fn ($slug) => $products->get($slug))
+                ->filter()
+                ->values()
+                ->all()
+        );
     }
 }

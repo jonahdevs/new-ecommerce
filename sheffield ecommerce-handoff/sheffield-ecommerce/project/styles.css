@@ -89,6 +89,68 @@
 [data-direction="workshop"] header { border-bottom: 2px solid var(--brand-blue-700); }
 [data-direction="workshop"] .twk-panel { color: #1a2436; }
 
+/* ───────── Category nav surface styles ─────────
+   Cells reference these vars; bg/text/divider swap as a set. */
+:root {
+  --catnav-bg: var(--bg);
+  --catnav-cell-bg: var(--bg);
+  --catnav-cell-hover: var(--bg-sunken);
+  --catnav-cell-active: var(--bg-sunken);
+  --catnav-text: var(--ink-2);
+  --catnav-text-hover: var(--ink);
+  --catnav-text-active: var(--accent);
+  --catnav-divider: var(--line);
+  --catnav-border: var(--line);
+  --catnav-icon-filter: opacity(0.78);
+  --catnav-icon-filter-active: none;
+  --catnav-icon-color: var(--ink-3);
+  --catnav-icon-color-active: var(--accent);
+}
+[data-catnav="sunken"] {
+  --catnav-bg: var(--bg-sunken);
+  --catnav-cell-bg: var(--bg);
+  --catnav-cell-hover: var(--surface);
+  --catnav-cell-active: var(--surface);
+  --catnav-divider: var(--line);
+  --catnav-border: var(--line-strong);
+}
+[data-catnav="white"] {
+  --catnav-bg: var(--surface);
+  --catnav-cell-bg: var(--surface);
+  --catnav-cell-hover: var(--bg-sunken);
+  --catnav-cell-active: var(--bg-sunken);
+}
+[data-catnav="dark"] {
+  --catnav-bg: #1c1a14;
+  --catnav-cell-bg: #1c1a14;
+  --catnav-cell-hover: #2a261d;
+  --catnav-cell-active: #2a261d;
+  --catnav-text: #c8c0ac;
+  --catnav-text-hover: #f3ead5;
+  --catnav-text-active: #f3ead5;
+  --catnav-divider: #34302a;
+  --catnav-border: #1c1a14;
+  --catnav-icon-filter: invert(0.85) sepia(0.15) saturate(0.7);
+  --catnav-icon-filter-active: invert(1) brightness(1.05);
+  --catnav-icon-color: #8c8474;
+  --catnav-icon-color-active: #f3ead5;
+}
+[data-catnav="blue"] {
+  --catnav-bg: var(--brand-blue-700);
+  --catnav-cell-bg: var(--brand-blue-700);
+  --catnav-cell-hover: var(--brand-blue-600);
+  --catnav-cell-active: var(--brand-blue-600);
+  --catnav-text: rgba(255,255,255,0.82);
+  --catnav-text-hover: #ffffff;
+  --catnav-text-active: #ffffff;
+  --catnav-divider: hsl(229, 52%, 25%);
+  --catnav-border: var(--brand-blue-700);
+  --catnav-icon-filter: invert(1) opacity(0.85);
+  --catnav-icon-filter-active: invert(1) brightness(1.05);
+  --catnav-icon-color: rgba(255,255,255,0.6);
+  --catnav-icon-color-active: #ffffff;
+}
+
 /* ───────── Reset / base ───────── */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }

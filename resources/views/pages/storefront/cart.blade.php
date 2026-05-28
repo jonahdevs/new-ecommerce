@@ -2,14 +2,20 @@
 
 use App\Enums\StockStatus;
 use App\Support\StorefrontSession;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extends Component
 {
+    public function mount(): void
+    {
+        SEOMeta::setRobots('noindex,follow');
+    }
+
     public function increment(string $slug): void
     {
         $cart = StorefrontSession::cart();
@@ -55,7 +61,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
 @endphp
 
 <div class="page-fade">
-    <div class="shell pt-8 pb-20">
+    <div class="shell pt-4 pb-20">
         {{-- Breadcrumb --}}
         <nav class="mb-4 flex items-center gap-1.5 text-[12.5px] text-ink-3" aria-label="Breadcrumb">
             <a href="{{ route('home') }}" class="hover:text-ink" wire:navigate>Home</a>

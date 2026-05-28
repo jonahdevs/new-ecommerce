@@ -65,11 +65,10 @@ const ProductCard = ({ product, navigate, compare, setCompare, addToCart, wishli
             {brand?.name}
           </div>
           <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.35, color: "var(--ink)", minHeight: 38 }}>{product.name}</div>
-          <div style={{ fontSize: 11.5, color: "var(--ink-4)", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>{product.sku}</div>
 
-          <div style={{ marginTop: 10, display: "flex", gap: 8, fontSize: 11.5, color: "var(--ink-3)" }}>
-            {product.power && <span>⚡ {product.power}</span>}
-            {product.capacity && <span>· {product.capacity}</span>}
+          <div style={{ marginTop: 8, fontSize: 12, color: "var(--ink-3)", display: "flex", gap: 4, alignItems: "center" }}>
+            <IconStarFill size={12} style={{ color: "var(--warm-1)" }}/>
+            <span style={{ color: "var(--ink-2)", fontVariantNumeric: "tabular-nums" }}>{product.rating}</span>
           </div>
 
           <div style={{ flex: 1 }}/>
@@ -79,9 +78,6 @@ const ProductCard = ({ product, navigate, compare, setCompare, addToCart, wishli
                 <div style={{ fontSize: 12, color: "var(--ink-4)", textDecoration: "line-through" }}>{KES(product.compareAt)}</div>
               )}
               <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{KES(product.price)}</div>
-              <div style={{ fontSize: 11.5, color: product.inStock > 0 ? "#2f7a4a" : "var(--ink-3)", marginTop: 2 }}>
-                {product.inStock > 0 ? `● ${product.inStock} in stock` : "Made to order"}
-              </div>
             </div>
             <button className="btn btn-primary btn-sm" data-stop onClick={(e) => { e.stopPropagation(); addToCart(product.slug); }}>
               <IconCart size={14} sw={1.8}/>
@@ -159,23 +155,15 @@ const ProductCard = ({ product, navigate, compare, setCompare, addToCart, wishli
           fontSize: 19, lineHeight: 1.2, marginTop: 6,
           color: "var(--ink)",
         }}>{product.name}</div>
-        <div style={{ marginTop: 8, fontSize: 13, color: "var(--ink-3)", display: "flex", gap: 10, alignItems: "center" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--ink-2)" }}>
-            <IconStarFill size={12} style={{ color: "var(--warm-1)" }}/> {product.rating}
-          </span>
-          <span>·</span>
-          <span>{product.reviews} reviews</span>
+        <div style={{ marginTop: 8, fontSize: 13, color: "var(--ink-2)", display: "flex", gap: 5, alignItems: "center" }}>
+          <IconStarFill size={12} style={{ color: "var(--warm-1)" }}/>
+          <span style={{ fontVariantNumeric: "tabular-nums" }}>{product.rating}</span>
         </div>
-        <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-          <div>
-            {product.compareAt && (
-              <span style={{ fontSize: 13, color: "var(--ink-4)", textDecoration: "line-through", marginRight: 8, whiteSpace: "nowrap" }}>{KES(product.compareAt)}</span>
-            )}
-            <span style={{ fontFamily: "var(--font-heading)", fontSize: 22, color: "var(--ink)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{KES(product.price)}</span>
-          </div>
-          <span style={{ fontSize: 12, color: product.inStock > 0 ? "var(--warm-3)" : "var(--ink-3)" }}>
-            {product.inStock > 0 ? "In stock" : "Made to order"}
-          </span>
+        <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ fontFamily: "var(--font-heading)", fontSize: 22, color: "var(--ink)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{KES(product.price)}</span>
+          {product.compareAt && (
+            <span style={{ fontSize: 13, color: "var(--ink-4)", textDecoration: "line-through", whiteSpace: "nowrap" }}>{KES(product.compareAt)}</span>
+          )}
         </div>
       </div>
     </article>

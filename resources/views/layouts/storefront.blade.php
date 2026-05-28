@@ -6,12 +6,6 @@
 </head>
 
 <body class="min-h-screen bg-white text-ink antialiased">
-    @php
-        $cartCount = \App\Support\StorefrontSession::cartCount();
-        $wishlistCount = \App\Support\StorefrontSession::wishlistCount();
-        $compareCount = \App\Support\StorefrontSession::compareCount();
-    @endphp
-
     {{-- Rows 1 & 2 pin together as a single sticky block --}}
     <div class="sticky top-0 z-40 bg-white">
         {{-- Row 1 — Promo banner --}}
@@ -36,29 +30,14 @@
                 </nav>
 
                 <div class="ml-auto flex items-center gap-1">
-                    {{-- Compare --}}
-                    <a href="#" wire:navigate aria-label="Compare"
-                        class="relative inline-flex size-10 items-center justify-center rounded-md text-ink-2 transition hover:bg-surface-sunken hover:text-ink">
-                        <flux:icon.scale variant="micro" class="size-5" />
-                        @if ($compareCount > 0)
-                            <span class="absolute top-1 right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white tabular-nums">{{ $compareCount }}</span>
-                        @endif
-                    </a>
+                    {{-- Each indicator is its own Livewire SFC so it re-renders on
+                         events dispatched from page components (see InteractsWithStorefront). --}}
+                    <livewire:storefront.compare-indicator />
+                    <livewire:storefront.wishlist-indicator />
 
-                    {{-- Wishlist --}}
-                    <a href="{{ route('wishlist') }}" wire:navigate aria-label="Wishlist"
-                        class="relative inline-flex size-10 items-center justify-center rounded-md text-ink-2 transition hover:bg-surface-sunken hover:text-ink">
-                        <flux:icon.heart variant="micro" class="size-5" />
-                        @if ($wishlistCount > 0)
-                            <span class="absolute top-1 right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white tabular-nums">{{ $wishlistCount }}</span>
-                        @endif
-                    </a>
-
-                    {{-- User dropdown --}}
                     @include('partials.storefront.user-dropdown')
 
-                    {{-- Cart dropdown --}}
-                    @include('partials.storefront.cart-dropdown', ['cartCount' => $cartCount])
+                    <livewire:storefront.cart-indicator />
                 </div>
             </div>
         </header>
