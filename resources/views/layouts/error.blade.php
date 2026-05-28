@@ -1,8 +1,3 @@
-{{--
-    Minimal layout for 500 / 503 error pages.
-    Must not use @inject, Livewire components, or anything that hits the database,
-    since these pages are shown when the application itself may be broken.
---}}
 <!DOCTYPE html>
 <html lang="en">
 

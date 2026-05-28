@@ -27,13 +27,9 @@ Route::prefix('webhooks')
         Route::post('/sap', SapWebhookController::class)->name('sap');
     });
 
-// SAP Product Sync API - Batch only
-Route::prefix('sap')
-    ->name('sap.')
-    ->withoutMiddleware([
-        ConvertEmptyStringsToNull::class,
-        TrimStrings::class,
-    ])
-    ->group(function () {
-        Route::post('/products/sync', SapProductSyncController::class)->name('products.sync');
-    });
+Route::withoutMiddleware([
+    ConvertEmptyStringsToNull::class,
+    TrimStrings::class,
+])->group(function () {
+    Route::post('/products/sync', SapProductSyncController::class)->name('products.sync');
+});

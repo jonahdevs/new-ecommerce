@@ -207,9 +207,9 @@ The handler is **idempotent** — if the same CU number arrives twice for the sa
 
 ### Endpoint
 
-**URL**: `POST /api/sap/products/sync`
+**URL**: `POST /api/products/sync`
 
-> Route registered in `routes/api.php` under the `sap.` name prefix.
+> Route registered in `routes/api.php` under the `products.sync` name.
 
 **Authentication**: `X-SAP-Secret` header
 

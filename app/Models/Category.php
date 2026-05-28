@@ -131,8 +131,8 @@ class Category extends Model
     {
         return Attribute::make(
             get: fn () => $this->image_path
-            ? asset('storage/'.$this->image_path)
-            : null
+                ? asset('storage/'.$this->image_path)
+                : null
         );
     }
 
@@ -147,8 +147,8 @@ class Category extends Model
     {
         return Attribute::make(
             get: fn () => $this->image_icon
-            ? asset('storage/'.$this->image_icon)
-            : null
+                ? asset('storage/'.$this->image_icon)
+                : null
         );
     }
 

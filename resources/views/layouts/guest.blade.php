@@ -114,9 +114,7 @@
 
     <x-toast-notification />
 
-    @persist('footer')
-        <x-footer />
-    @endpersist
+    <x-footer />
 
     {{-- WhatsApp Chat Widget --}}
     @inject('social', 'App\Settings\SocialSettings')
@@ -147,44 +145,63 @@
         }
     </style>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            @if (session('success'))
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: {
-                        variant: 'success',
-                        message: @js(session('success'))
-                    }
-                }));
-            @endif
+    {{--
+        Freeze main's height during wire:navigate so the page doesn't collapse and
+        re-expand when the new content morphs in. No opacity manipulation — setting
+        opacity:0 on main would expose body bg-white underneath, defeating the
+        bg-inverse-surface matching that hides flex-1 expansion below short content.
 
-            @if (session('error'))
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: {
-                        variant: 'danger',
-                        message: @js(session('error'))
-                    }
-                }));
-            @endif
-
-            @if (session('warning'))
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: {
-                        variant: 'warning',
-                        message: @js(session('warning'))
-                    }
-                }));
-            @endif
-
-            @if (session('info'))
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: {
-                        variant: 'info',
-                        message: @js(session('info'))
-                    }
-                }));
-            @endif
+        data-navigate-once: listeners attach to `document` (persists across navigations)
+        so we don't accumulate duplicates as body scripts re-execute on each navigate.
+    --}}
+    <script data-navigate-once>
+        document.addEventListener('livewire:navigating', function () {
+            var main = document.querySelector('body > main');
+            if (main) {
+                main.style.minHeight = main.offsetHeight + 'px';
+            }
         });
+
+        document.addEventListener('livewire:navigated', function () {
+            var main = document.querySelector('body > main');
+            if (main) {
+                setTimeout(function () {
+                    main.style.minHeight = '';
+                }, 150);
+            }
+        });
+    </script>
+
+    {{--
+        Session flash notifications.
+        No DOMContentLoaded needed — body scripts execute immediately on both the initial
+        page load and every wire:navigate (Livewire re-evaluates all body scripts on navigate).
+        The @if blocks are rendered server-side, so only pages with a flash message dispatch an event.
+    --}}
+    <script>
+        @if (session('success'))
+            window.dispatchEvent(new CustomEvent('notify', {
+                detail: { variant: 'success', message: @js(session('success')) }
+            }));
+        @endif
+
+        @if (session('error'))
+            window.dispatchEvent(new CustomEvent('notify', {
+                detail: { variant: 'danger', message: @js(session('error')) }
+            }));
+        @endif
+
+        @if (session('warning'))
+            window.dispatchEvent(new CustomEvent('notify', {
+                detail: { variant: 'warning', message: @js(session('warning')) }
+            }));
+        @endif
+
+        @if (session('info'))
+            window.dispatchEvent(new CustomEvent('notify', {
+                detail: { variant: 'info', message: @js(session('info')) }
+            }));
+        @endif
     </script>
 </body>
 

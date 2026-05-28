@@ -1,20 +1,24 @@
 <?php
 
-use Livewire\Component;
+use App\Enums\CategorySection;
+use App\Models\Category;
+use App\Models\Product;
+use Artesaos\SEOTools\Facades\JsonLd;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\TwitterCard;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
-use App\Models\{Category, Product};
-use App\Enums\CategorySection;
-use Illuminate\Support\Facades\Cache;
-use Artesaos\SEOTools\Facades\SEOMeta;
-use Artesaos\SEOTools\Facades\OpenGraph;
-use Artesaos\SEOTools\Facades\TwitterCard;
-use Artesaos\SEOTools\Facades\JsonLd;
+use Livewire\Component;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Layout('layouts.guest')] class extends Component
+{
     // Cache TTLs (centralised so they're easy to tune)
     const TTL_CATEGORIES = 60 * 60 * 6; // 6 hours - categories don't change often
+
     const TTL_NEW_ARRIVALS = 60 * 60 * 2; // 2 hours - new arrivals change more frequently
+
     const TTL_PRODUCTS = 60 * 60 * 3; // 3 hours - sales counts shift slowly
 
     #[Computed]
@@ -87,12 +91,12 @@ new #[Layout('layouts.guest')] class extends Component {
             return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'created_at'])
                 ->with([
                     'brand:id,name,slug',
-                    'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
-                    'variants' => fn($q) => $q
+                    'images' => fn ($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
+                    'variants' => fn ($q) => $q
                         ->where('is_active', true)
                         ->whereNotNull('price')
                         ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-                    'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
+                    'tags' => fn ($q) => $q->select(['id', 'name', 'order_column', 'color']),
                 ])
                 ->active()
                 ->visibleInCatalog()
@@ -110,12 +114,12 @@ new #[Layout('layouts.guest')] class extends Component {
             return Product::select(['id', 'name', 'slug', 'brand_id', 'price', 'sale_price', 'image_path', 'short_description', 'type', 'requires_quotation', 'reviews_enabled', 'stock_status', 'manage_stock', 'stock_quantity', 'average_rating', 'reviews_count', 'sales_count', 'created_at'])
                 ->with([
                     'brand:id,name,slug',
-                    'images' => fn($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
-                    'variants' => fn($q) => $q
+                    'images' => fn ($q) => $q->select(['id', 'product_id', 'image_path', 'alt_text', 'sort_order'])->limit(1),
+                    'variants' => fn ($q) => $q
                         ->where('is_active', true)
                         ->whereNotNull('price')
                         ->select(['id', 'product_id', 'price', 'sale_price', 'is_active']),
-                    'tags' => fn($q) => $q->select(['id', 'name', 'order_column', 'color']),
+                    'tags' => fn ($q) => $q->select(['id', 'name', 'order_column', 'color']),
                 ])
                 ->active()
                 ->visibleInCatalog()
@@ -197,8 +201,17 @@ new #[Layout('layouts.guest')] class extends Component {
                 <div class="swiper-wrapper">
                     @foreach ($this->heroBanners as $i => $banner)
                         <div class="swiper-slide">
-                            <img src="{{ $banner['image'] }}" alt="{{ $banner['alt'] }}" class="w-full h-auto"
-                                @if ($i === 0) fetchpriority="high" @else loading="lazy" @endif>
+                            {{-- <img src="{{ $banner['image'] }}" alt="{{ $banner['alt'] }}" class="w-full h-auto"
+                                @if ($i === 0) fetchpriority="high" @else loading="lazy" @endif> --}}
+
+                            <picture>
+                                <!-- On screens smaller than 640px, load the mobile image -->
+                                <source media="(max-width: 639px)"
+                                    srcset="{{ $banner['mobile_image'] ?? $banner['image'] }}">
+                                <!-- Default desktop image -->
+                                <img src="{{ $banner['image'] }}" alt="{{ $banner['alt'] }}" class="w-full h-auto"
+                                    @if ($i === 0) fetchpriority="high" @else loading="lazy" @endif>
+                            </picture>
                         </div>
                     @endforeach
                 </div>
@@ -340,14 +353,6 @@ new #[Layout('layouts.guest')] class extends Component {
         </div>
         @island('top-categories')
             @php
-                // Container-driven category grid:
-                //  base (<20rem)  1 col  — minimum-width phones
-                //  @xs  (20rem+)  2 cols — phone portrait
-                //  @md  (28rem+)  3 cols — large phones
-                //  @xl  (36rem+)  4 cols — tablets
-                //  @3xl (48rem+)  5 cols — small laptops
-                //  @5xl (64rem+)  6 cols — desktops
-                //  @7xl (80rem+)  7 cols — wide desktops
                 $catGrid =
                     'grid-cols-1 @xs/categories:grid-cols-2 @md/categories:grid-cols-3 @xl/categories:grid-cols-4 @3xl/categories:grid-cols-5 @5xl/categories:grid-cols-6 @7xl/categories:grid-cols-7';
             @endphp
@@ -426,17 +431,25 @@ new #[Layout('layouts.guest')] class extends Component {
             {{-- Products --}}
             @island('new-arrivals', defer: true)
                 @placeholder
-                    <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5">
+                    {{--
+                        Placeholder and actual section share the same min-height so the page
+                        can't shrink during the swap (which would expose flex-1 main bg-white
+                        between content and footer). One row of skeletons matches the rendered
+                        Swiper height once Alpine initialises it.
+                    --}}
+                    <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5 min-h-[300px] sm:min-h-[320px]">
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                            @for ($i = 0; $i < 5; $i++)
-                                <x-product-card-placeholder />
-                            @endfor
+                            <x-product-card-placeholder />
+                            <x-product-card-placeholder />
+                            <div class="hidden sm:block"><x-product-card-placeholder /></div>
+                            <div class="hidden md:block"><x-product-card-placeholder /></div>
+                            <div class="hidden lg:block"><x-product-card-placeholder /></div>
                         </div>
                     </section>
                 @endplaceholder
 
 
-                <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5">
+                <section class="@4xl/newarrivals:col-span-5 px-4 md:px-5 py-5 min-h-[300px] sm:min-h-[320px]">
                     <div class="relative" x-data="{
                         swiper: null,
                         init() {
@@ -501,14 +514,31 @@ new #[Layout('layouts.guest')] class extends Component {
 
             @island(name: 'products', defer: true)
                 @placeholder
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-6">
-                        @for ($i = 0; $i < 12; $i++)
-                            <x-product-card-placeholder />
-                        @endfor
+                    {{--
+                        Placeholder shows exactly 2 rows of skeletons at every breakpoint — matching the
+                        final 2-row Swiper grid. Combined with the matching min-height on the actual
+                        section, this keeps the page height constant through initial render → island
+                        load → Swiper init, so flex-1 main can't expand and show bg-white above the footer.
+                    --}}
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-6 min-h-[580px] md:min-h-[620px] lg:min-h-[640px]">
+                        {{-- Row 1 --}}
+                        <x-product-card-placeholder />
+                        <x-product-card-placeholder />
+                        <div class="hidden sm:block"><x-product-card-placeholder /></div>
+                        <div class="hidden md:block"><x-product-card-placeholder /></div>
+                        <div class="hidden lg:block"><x-product-card-placeholder /></div>
+                        <div class="hidden xl:block"><x-product-card-placeholder /></div>
+                        {{-- Row 2 --}}
+                        <x-product-card-placeholder />
+                        <x-product-card-placeholder />
+                        <div class="hidden sm:block"><x-product-card-placeholder /></div>
+                        <div class="hidden md:block"><x-product-card-placeholder /></div>
+                        <div class="hidden lg:block"><x-product-card-placeholder /></div>
+                        <div class="hidden xl:block"><x-product-card-placeholder /></div>
                     </div>
                 @endplaceholder
 
-                <section>
+                <section class="min-h-[580px] md:min-h-[620px] lg:min-h-[640px]">
                     <!-- Products slider -->
                     <div class="relative" x-data="{
                         swiper: null,

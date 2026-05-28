@@ -5,6 +5,7 @@ namespace App\Services\Sap;
 use App\Models\Order;
 use App\Models\SapSyncLog;
 use App\Services\Sap\ValueObjects\SapSyncResult;
+use App\Services\Sap\ValueObjects\SapValidationResult;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -103,6 +104,83 @@ class SapIntegrationService
         return new SapSyncResult(
             docEntry: $docEntry,
             docNumber: $docNumber,
+            rawResponse: $responseData,
+        );
+    }
+
+    // ================================================================
+    // Public API — called by ValidateSapInvoiceJob
+    // ================================================================
+
+    /**
+     * Calls the SAP validate endpoint for a previously created invoice.
+     * This is a blocking call — SAP waits for KRA validation to complete
+     * before responding, so the response always contains the cuNumber.
+     *
+     * Endpoint: POST /api/invoice/validate/{docEntry}
+     */
+    public function validateInvoice(Order $order): SapValidationResult
+    {
+        $docEntry = $order->sap_doc_entry;
+
+        $start = microtime(true);
+
+        // Allow a longer timeout — this call blocks until KRA validation finishes.
+        $http = Http::withOptions(['verify' => config('sap.verify_ssl', true)])->timeout(240);
+
+        if ($apiKey = config('sap.api_key')) {
+            $http = $http->withHeaders(['x-api-key' => $apiKey]);
+        }
+
+        $response = $http->post("{$this->baseUrl}/api/invoice/validate/{$docEntry}");
+
+        $durationMs = (int) ((microtime(true) - $start) * 1000);
+        $responseData = $response->json() ?? [];
+
+        $cuNumber = $responseData['cuNumber'] ?? null;
+        $success = $response->successful() && ($responseData['success'] ?? false) === true && $cuNumber;
+
+        SapSyncLog::create([
+            'order_id' => $order->id,
+            'operation' => 'validate_invoice',
+            'status' => $success ? 'success' : 'failed',
+            'endpoint' => "/api/invoice/validate/{$docEntry}",
+            'http_method' => 'POST',
+            'request_payload' => ['doc_entry' => $docEntry],
+            'response_payload' => $responseData,
+            'http_status_code' => $response->status(),
+            'error_message' => $success ? null : ($responseData['message'] ?? $response->body()),
+            'sap_document_number' => $success ? $cuNumber : null,
+            'duration_ms' => $durationMs,
+        ]);
+
+        if (! $success) {
+            $error = $responseData['message'] ?? "SAP validate returned HTTP {$response->status()} without cuNumber";
+
+            Log::error('SAP invoice validation failed', [
+                'order_id' => $order->id,
+                'doc_entry' => $docEntry,
+                'status' => $response->status(),
+                'error' => $error,
+                'duration_ms' => $durationMs,
+            ]);
+
+            throw new SapApiException(
+                message: $error,
+                httpStatus: $response->status(),
+                endpoint: "/api/invoice/validate/{$docEntry}",
+            );
+        }
+
+        Log::info('SAP invoice validated', [
+            'order_id' => $order->id,
+            'cu_number' => $cuNumber,
+            'duration_ms' => $durationMs,
+        ]);
+
+        return new SapValidationResult(
+            cuNumber: $cuNumber,
+            docEntry: $docEntry,
             rawResponse: $responseData,
         );
     }

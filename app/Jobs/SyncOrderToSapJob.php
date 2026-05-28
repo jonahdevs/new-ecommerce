@@ -21,52 +21,59 @@ class SyncOrderToSapJob implements ShouldQueue
 
     /**
      * Maximum number of attempts before the job is marked as permanently failed.
-     * Each attempt uses the corresponding backoff interval below.
      */
     public int $tries = 3;
 
     /**
      * Backoff intervals in seconds between retry attempts.
-     * Attempt 1 failure → wait 60s → attempt 2
-     * Attempt 2 failure → wait 300s → attempt 3
-     * Attempt 3 failure → failed() is called
      */
     public array $backoff = [60, 300, 900];
 
     /**
      * Prevent the job from running longer than 2 minutes.
-     * SAP Service Layer calls should resolve well within this window.
+     * The create call should resolve well within this window.
      */
     public int $timeout = 120;
 
     public function __construct(
         public Order $order
-    ) {}
+    ) {
+        $this->onQueue('sap');
+    }
 
     // -------------------------------------------------------
-    // Main execution
-    // POSTs the order to the SAP middleware (single call).
-    // The middleware handles Sales Order + A/R Invoice +
-    // Incoming Payment creation internally.
+    // Phase 1 of 2: POST /api/invoice/create
     //
-    // On success, status moves to cu_pending — we now wait for
-    // the KRA webhook to deliver the CU number.
+    // On success, status moves to VALIDATING and ValidateSapInvoiceJob
+    // is dispatched on the same queue to fetch the cuNumber.
     //
-    // On any exception the job throws so Laravel's retry
-    // mechanism picks it up at the next backoff interval.
-    // The failed() method below handles permanent failure.
+    // Saving sap_doc_entry before dispatching validate guards against
+    // partial failure: if this job crashes after create but before the
+    // dispatch, the idempotency check below catches it on retry and
+    // skips straight to dispatching validate again.
     // -------------------------------------------------------
     public function handle(SapIntegrationService $sap): void
     {
-        // Idempotency guard — if the job was dispatched more than once (e.g.
-        // from both a webhook and a 3DS redirect), skip if already completed.
         $fresh = $this->order->fresh();
-        $completedStatuses = [SapSyncStatus::CU_PENDING, SapSyncStatus::CU_RECEIVED];
-        if (in_array($fresh->sap_sync_status, $completedStatuses)) {
-            Log::info('SAP sync skipped — already completed', [
+
+        // Already fully complete (validate job finished or webhook arrived first)
+        if ($fresh->sap_sync_status === SapSyncStatus::CU_RECEIVED) {
+            Log::info('SAP sync skipped — already CU_RECEIVED', [
                 'order_id' => $this->order->id,
-                'sap_sync_status' => $fresh->sap_sync_status->value,
             ]);
+
+            return;
+        }
+
+        // Create already succeeded on a previous attempt but the validate dispatch
+        // was lost — skip create and re-dispatch validate to avoid a duplicate invoice.
+        if ($fresh->sap_doc_entry && $fresh->sap_sync_status === SapSyncStatus::VALIDATING) {
+            Log::info('SAP create already done — re-dispatching validate job', [
+                'order_id' => $this->order->id,
+                'sap_doc_entry' => $fresh->sap_doc_entry,
+            ]);
+
+            ValidateSapInvoiceJob::dispatch($fresh);
 
             return;
         }
@@ -81,15 +88,11 @@ class SyncOrderToSapJob implements ShouldQueue
             'sap_sync_status' => SapSyncStatus::SYNCING,
         ]);
 
-        // Single API call — the middleware handles Sales Order,
-        // A/R Invoice and Incoming Payment creation internally.
-        // Catch non-retryable SAP errors (e.g. 400 Bad Request) and fail
-        // immediately so we don't waste the remaining retry slots.
         try {
             $result = $sap->syncOrder($this->order);
         } catch (SapApiException $e) {
             if (! $e->isRetryable()) {
-                Log::error('SAP sync aborted — non-retryable error, skipping remaining attempts', [
+                Log::error('SAP sync aborted — non-retryable error', [
                     'order_id' => $this->order->id,
                     'http_status' => $e->httpStatus,
                     'error' => $e->getMessage(),
@@ -99,15 +102,16 @@ class SyncOrderToSapJob implements ShouldQueue
                 return;
             }
 
-            throw $e; // Retryable — let Laravel queue the next attempt
+            throw $e;
         }
 
-        // Move to CU_PENDING — SAP documents are created, now waiting for
-        // the KRA webhook to deliver the CU number and generate the invoice.
+        // Save doc refs before dispatching validate — if the dispatch below were to
+        // fail, the stored sap_doc_entry + VALIDATING status lets the next retry
+        // skip create entirely and go straight to re-dispatching validate.
         $this->order->update([
             'sap_doc_number' => $result->docNumber,
             'sap_doc_entry' => $result->docEntry,
-            'sap_sync_status' => SapSyncStatus::CU_PENDING,
+            'sap_sync_status' => SapSyncStatus::VALIDATING,
             'sap_synced_at' => now(),
             'sap_sync_attempts' => $this->attempts(),
             'sap_sync_error' => null,
@@ -122,24 +126,20 @@ class SyncOrderToSapJob implements ShouldQueue
             ])
             ->log('sap_sync_completed');
 
-        Log::info('SAP sync completed', [
+        Log::info('SAP invoice created — dispatching validate job', [
             'order_id' => $this->order->id,
-            'sap_doc_number' => $result->docNumber,
             'sap_doc_entry' => $result->docEntry,
         ]);
+
+        ValidateSapInvoiceJob::dispatch($this->order->fresh());
     }
 
     // -------------------------------------------------------
-    // Permanent failure handler
-    // Called by Laravel after all $tries are exhausted.
-    // Marks the order as failed and alerts administrators.
+    // Permanent failure handler — called after all $tries exhausted.
+    // Only covers create failures; validate failures have their own handler.
     // -------------------------------------------------------
     public function failed(\Throwable $exception): void
     {
-        // Guard against duplicate notifications when the job was dispatched more
-        // than once for the same order (e.g. webhook + payment redirect). If a
-        // concurrent instance already marked the order as failed and sent the
-        // alert, there is nothing left to do.
         $fresh = $this->order->fresh();
         if ($fresh->sap_sync_status === SapSyncStatus::FAILED) {
             return;
@@ -165,7 +165,6 @@ class SyncOrderToSapJob implements ShouldQueue
             ])
             ->log('sap_sync_failed');
 
-        // Send a single alert email to the system notification address
         Notification::route('mail', config('mail.from.address'))
             ->notify(new SapSyncFailedNotification($this->order, $exception));
     }
