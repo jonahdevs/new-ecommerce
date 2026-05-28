@@ -15,40 +15,41 @@
             'city' => 'Nairobi',
             'country' => 'Kenya',
             'isHQ' => true,
-            'address' => 'Sheffield House, Mombasa Road',
-            'suburb' => 'Industrial Area',
-            'phone' => '+254 20 234 5600',
+            'address' => 'Off Old Mombasa Road, before the Nairobi SGR Terminus',
+            'pobox' => 'P.O. Box 29 – 00606, Nairobi Kenya',
+            'phones' => ['+254 713 777 111', '+254 713 444 000'],
+            'email' => 'info@sheffieldafrica.com',
         ],
         [
             'city' => 'Mombasa',
             'country' => 'Kenya',
             'isHQ' => false,
-            'address' => 'Nyerere Avenue, Plot 14',
-            'suburb' => 'Mombasa Island',
-            'phone' => '+254 41 230 0120',
+            'address' => 'Petrocity Complex 1st Floor, Off Links Road, Nyali',
+            'phones' => ['+254 713 777 111', '+254 713 317 214'],
+            'email' => 'mombasa@sheffieldafrica.com',
         ],
         [
             'city' => 'Kampala',
             'country' => 'Uganda',
             'isHQ' => false,
-            'address' => 'Plot 42, Yusuf Lule Road',
-            'suburb' => 'Nakasero',
-            'phone' => '+256 414 250 600',
+            'address' => 'Bugolobi Hardware City, Block 3 Room 102, Mulwana Road',
+            'phones' => ['+256 741 177 711', '+256 741 177 712'],
+            'email' => 'uganda@sheffieldafrica.com',
         ],
         [
             'city' => 'Kigali',
             'country' => 'Rwanda',
             'isHQ' => false,
-            'address' => 'KG 11 Avenue, Kacyiru',
-            'suburb' => 'Kacyiru',
-            'phone' => '+250 788 305 600',
+            'address' => 'Kicukiro Street, KK 500 ST',
+            'phones' => ['+250 794 007 302'],
+            'email' => 'rwanda@sheffieldafrica.com',
         ],
     ];
 @endphp
 
 <footer class="mt-20 bg-brand-blue-500 pt-16 pb-8 text-[#e6ddc8]">
     <div class="shell">
-        <div class="grid grid-cols-1 gap-10 md:grid-cols-12">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-12">
             <div class="md:col-span-4">
                 <a href="{{ route('home') }}" class="inline-flex items-center" wire:navigate
                     aria-label="{{ config('app.name', 'Sheffield') }} — Home">
@@ -60,10 +61,10 @@
                 </p>
                 <div class="mt-5 flex flex-col gap-2 text-[13.5px] text-[#c9bea4]">
                     <span class="inline-flex items-center gap-2">
-                        <flux:icon.envelope variant="micro" class="size-3.5" /> sales@sheffield.co.ke
+                        <flux:icon.envelope variant="micro" class="size-3.5" /> info@sheffieldafrica.com
                     </span>
                     <span class="inline-flex items-center gap-2">
-                        <flux:icon.chat-bubble-left-right variant="micro" class="size-3.5" /> WhatsApp +254 711 234 567
+                        <flux:icon.phone variant="micro" class="size-3.5" /> +254 713 777 111
                     </span>
                 </div>
             </div>
@@ -82,11 +83,24 @@
                                     @endif
                                 </div>
                                 <div class="mt-1 text-[12px] leading-snug text-[#c9bea4]">
-                                    {{ $loc['address'] }}<br>
-                                    {{ $loc['suburb'] }}, {{ $loc['country'] }}
+                                    {{ $loc['address'] }}, {{ $loc['country'] }}
+                                    @if (!empty($loc['pobox']))
+                                        <br>{{ $loc['pobox'] }}
+                                    @endif
                                 </div>
-                                <a href="#"
-                                    class="mt-1 inline-block text-[12px] text-[#d8c79d] hover:text-white">{{ $loc['phone'] }}</a>
+                                <div class="mt-1.5 flex flex-col gap-0.5">
+                                    <div class="text-[12px] text-[#d8c79d]">
+                                        @foreach ($loc['phones'] as $i => $phone)
+                                            @if ($i > 0)
+                                                <span class="opacity-50">/</span>
+                                            @endif
+                                            <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
+                                                class="hover:text-white">{{ $phone }}</a>
+                                        @endforeach
+                                    </div>
+                                    <a href="mailto:{{ $loc['email'] }}"
+                                        class="text-[12px] text-[#d8c79d] hover:text-white">{{ $loc['email'] }}</a>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -117,7 +131,7 @@
         <div
             class="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[#e6ddc8]/15 pt-6 text-[12.5px] text-[#9c927c]">
             <div class="flex items-center gap-4">
-                <span>&copy; {{ date('Y') }} Sheffield East Africa Ltd.</span>
+                <span>&copy; {{ date('Y') }} Sheffield Steel Systems Ltd.</span>
                 <a href="#" class="hover:text-white">Terms</a>
                 <a href="#" class="hover:text-white">Privacy</a>
                 <a href="#" class="hover:text-white">Cookies</a>

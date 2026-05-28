@@ -15,12 +15,11 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extends Component {
     use InteractsWithStorefront;
-    use WithPagination;
+
+    public int $perPage = 24;
 
     public function mount(): void
     {
@@ -51,41 +50,45 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
 
     public function updating(string $prop): void
     {
-        // Reset pagination when any filter or sort changes.
-        $this->resetPage();
+        $this->perPage = 24;
+        unset($this->products);
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 12;
+        unset($this->products);
     }
 
     public function clearFilters(): void
     {
         $this->reset(['selectedCategories', 'selectedBrands', 'inStockOnly']);
         $this->priceMax = 6000000;
-        $this->resetPage();
+        $this->perPage = 24;
+        unset($this->products);
     }
 
     public function removeCategory(string $slug): void
     {
-        $this->selectedCategories = array_values(array_filter($this->selectedCategories, fn ($s) => $s !== $slug));
-        $this->resetPage();
+        $this->selectedCategories = array_values(array_filter($this->selectedCategories, fn($s) => $s !== $slug));
     }
 
     public function removeBrand(int $id): void
     {
-        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn ($b) => $b !== $id));
-        $this->resetPage();
+        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn($b) => $b !== $id));
     }
 
     #[Computed]
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible');
 
         if ($this->selectedCategories) {
             $catIds = Category::whereIn('slug', $this->selectedCategories)->pluck('id');
             $query->where(function ($q) use ($catIds) {
-                $q->whereIn('primary_category_id', $catIds)
-                    ->orWhereHas('categories', fn ($q2) => $q2->whereIn('categories.id', $catIds));
+                $q->whereIn('primary_category_id', $catIds)->orWhereHas('categories', fn($q2) => $q2->whereIn('categories.id', $catIds));
             });
         }
 
@@ -103,47 +106,37 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
         });
 
         match ($this->sort) {
-            'price-asc'  => $query->orderByRaw('price IS NULL, price ASC'),
+            'price-asc' => $query->orderByRaw('price IS NULL, price ASC'),
             'price-desc' => $query->orderByRaw('price IS NULL, price DESC'),
-            'name-asc'   => $query->orderBy('name'),
-            'newest'     => $query->latest('id'),
-            default      => $query->orderBy('sort_order')->orderByDesc('id'), // popularity proxy
+            'name-asc' => $query->orderBy('name'),
+            'newest' => $query->latest('id'),
+            default => $query->orderBy('sort_order')->orderByDesc('id'), // popularity proxy
         };
 
-        return $query->paginate(12)->withQueryString();
+        return $query->paginate($this->perPage);
     }
 
     #[Computed]
     public function categoriesList(): Collection
     {
-        return Category::query()
-            ->withCount('products')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+        return Category::query()->withCount('products')->orderBy('sort_order')->orderBy('name')->get();
     }
 
     #[Computed]
     public function brandsList(): Collection
     {
-        return Brand::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        return Brand::query()->where('is_active', true)->orderBy('name')->get();
     }
 
     public function hasActiveFilters(): bool
     {
-        return ! empty($this->selectedCategories)
-            || ! empty($this->selectedBrands)
-            || $this->inStockOnly
-            || $this->priceMax < 6000000;
+        return !empty($this->selectedCategories) || !empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
     }
 }; ?>
 
 @php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
-    $kesWhole = fn ($whole) => 'KES&nbsp;' . number_format($whole, 0, '.', ',');
+    $kes = fn($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
+    $kesWhole = fn($whole) => 'KES&nbsp;' . number_format($whole, 0, '.', ',');
 @endphp
 
 <div class="page-fade">
@@ -160,18 +153,21 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
             <div>
                 <h1 class="text-3xl font-semibold tracking-tight">Catalog</h1>
                 <p class="mt-2 max-w-xl text-[14.5px] text-ink-3">
-                    Commercial kitchen equipment across {{ $this->categoriesList->count() }} categories from {{ $this->brandsList->count() }} authorised brands.
+                    Commercial kitchen equipment across {{ $this->categoriesList->count() }} categories from
+                    {{ $this->brandsList->count() }} authorised brands.
                 </p>
             </div>
         </div>
 
         <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
             {{-- Filters sidebar --}}
-            <aside class="lg:sticky lg:top-44 lg:self-start" x-data="{ openBrands: false }">
+            <aside class="lg:sticky lg:top-32 lg:self-start" x-data="{ openBrands: false }">
                 <div class="flex flex-col gap-7 text-sm">
                     {{-- Category --}}
                     <div>
-                        <div class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Category</div>
+                        <div
+                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                            Category</div>
                         <div class="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
                             @foreach ($this->categoriesList as $cat)
                                 {{-- Verbose form: flux:label's `trailing` slot pushes the product count
@@ -181,7 +177,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                                     <flux:label>
                                         {{ $cat->name }}
                                         <x-slot:trailing>
-                                            <span class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
+                                            <span
+                                                class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
                                         </x-slot:trailing>
                                     </flux:label>
                                 </flux:field>
@@ -191,11 +188,12 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
 
                     {{-- Brand --}}
                     <div>
-                        <div class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Brand</div>
-                        <div class="flex flex-col gap-2"
-                            :class="openBrands ? 'max-h-96 overflow-y-auto pr-1' : ''">
+                        <div
+                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                            Brand</div>
+                        <div class="flex flex-col gap-2" :class="openBrands ? 'max-h-96 overflow-y-auto pr-1' : ''">
                             @foreach ($this->brandsList as $i => $brand)
-                                <div @if ($i >= 6) x-show="openBrands" @endif>
+                                <div @if ($i >= 6) x-show="openBrands" x-cloak @endif>
                                     <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}"
                                         :label="$brand->name" />
                                 </div>
@@ -203,8 +201,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                         </div>
                         @if ($this->brandsList->count() > 6)
                             <button type="button" @click="openBrands = !openBrands"
-                                class="mt-2 text-[12.5px] text-brand-500 hover:underline">
-                                <span x-show="!openBrands">Show all {{ $this->brandsList->count() }} brands →</span>
+                                class="mt-2 cursor-pointer text-[12.5px] text-brand-500 hover:underline">
+                                <span x-show="!openBrands" class="inline-flex items-center gap-1">Show all
+                                    {{ $this->brandsList->count() }} brands <flux:icon.arrow-right variant="micro"
+                                        class="size-3.5" /></span>
                                 <span x-show="openBrands" x-cloak>Show fewer</span>
                             </button>
                         @endif
@@ -212,19 +212,22 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
 
                     {{-- Price --}}
                     <div>
-                        <div class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Price</div>
+                        <div
+                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                            Price</div>
                         <div class="flex justify-between text-[12.5px] text-ink-3">
                             <span>KES 0</span>
                             <span class="font-semibold text-ink">up to {!! $kesWhole($priceMax) !!}</span>
                         </div>
                         <input type="range" min="50000" max="6000000" step="50000"
-                            wire:model.live.debounce.300ms="priceMax"
-                            class="mt-2 w-full accent-brand-500" />
+                            wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />
                     </div>
 
                     {{-- Availability --}}
                     <div>
-                        <div class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Availability</div>
+                        <div
+                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                            Availability</div>
                         <flux:checkbox wire:model.live="inStockOnly" label="In stock — ships now" />
                     </div>
                 </div>
@@ -233,13 +236,14 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
             {{-- Results --}}
             <div>
                 {{-- Toolbar --}}
-                <div class="mb-5 flex flex-col gap-3 border-b border-zinc-200 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                    class="mb-5 flex flex-col gap-3 border-b border-zinc-200 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="text-[13.5px] text-ink-3">
                         Showing <span class="font-semibold text-ink">{{ $this->products->total() }}</span>
                         {{ \Illuminate\Support\Str::plural('product', $this->products->total()) }}
                         @if ($this->hasActiveFilters())
                             <button type="button" wire:click="clearFilters"
-                                class="ml-2.5 text-[13px] text-brand-500 underline-offset-2 hover:underline">
+                                class="ml-2.5 cursor-pointer text-[13px] text-brand-500 underline-offset-2 hover:underline">
                                 Clear filters
                             </button>
                         @endif
@@ -264,7 +268,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                             @php $cat = $this->categoriesList->firstWhere('slug', $slug); @endphp
                             @if ($cat)
                                 <button type="button" wire:click="removeCategory('{{ $slug }}')"
-                                    class="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                    class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
                                     {{ $cat->name }}
                                     <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                                 </button>
@@ -274,7 +278,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                             @php $br = $this->brandsList->firstWhere('id', $id); @endphp
                             @if ($br)
                                 <button type="button" wire:click="removeBrand({{ $id }})"
-                                    class="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                    class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
                                     {{ $br->name }}
                                     <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                                 </button>
@@ -282,14 +286,14 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                         @endforeach
                         @if ($inStockOnly)
                             <button type="button" wire:click="$toggle('inStockOnly')"
-                                class="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
                                 In stock only
                                 <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                             </button>
                         @endif
                         @if ($priceMax < 6000000)
                             <button type="button" wire:click="$set('priceMax', 6000000)"
-                                class="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
                                 Up to {!! $kesWhole($priceMax) !!}
                                 <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                             </button>
@@ -299,10 +303,12 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
 
                 {{-- Results body --}}
                 @if ($this->products->isEmpty())
-                    <div class="rounded-lg bg-surface-sunken p-16 text-center">
+                    <div class="rounded-md bg-surface-sunken p-16 text-center">
                         <div class="font-serif text-2xl text-ink">No products match these filters</div>
-                        <p class="mt-2 text-ink-3">Try widening your price range, or removing brand/category constraints.</p>
-                        <flux:button variant="primary" wire:click="clearFilters" class="mt-5">Clear all filters</flux:button>
+                        <p class="mt-2 text-ink-3">Try widening your price range, or removing brand/category
+                            constraints.</p>
+                        <flux:button variant="primary" wire:click="clearFilters" class="mt-5">Clear all filters
+                        </flux:button>
                     </div>
                 @else
                     <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -312,10 +318,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                     </div>
                 @endif
 
-                {{-- Pagination --}}
-                @if ($this->products->hasPages())
-                    <div class="mt-10">
-                        <flux:pagination :paginator="$this->products" />
+                {{-- Infinite scroll sentinel --}}
+                @if ($this->products->hasMorePages())
+                    <div wire:intersect.margin.200px="loadMore" class="mt-10 flex justify-center py-6">
+                        <flux:icon.loading class="size-6 text-ink-4" />
                     </div>
                 @endif
             </div>

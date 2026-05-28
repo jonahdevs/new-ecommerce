@@ -9,6 +9,7 @@ use App\Observers\ProductObserver;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +37,19 @@ class Product extends Model
             'min_order_quantity' => 'integer',
             'sort_order' => 'integer',
         ];
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    protected function coverUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            $cover = $this->images->firstWhere('is_cover', true) ?? $this->images->first();
+
+            return $cover?->url;
+        });
     }
 
     // ==================================================

@@ -4,7 +4,7 @@
         <div class="flex items-center gap-7 overflow-hidden">
             <span class="flex items-center gap-1.5">
                 <flux:icon.truck variant="micro" class="size-3.5" />
-                Free installation on orders over KES&nbsp;500,000
+                Free delivery within Nairobi
             </span>
             <span class="hidden opacity-60 md:inline">·</span>
             <span class="hidden items-center gap-1.5 md:flex">
@@ -14,7 +14,7 @@
             <span class="hidden opacity-60 lg:inline">·</span>
             <span class="hidden items-center gap-1.5 lg:flex">
                 <flux:icon.phone variant="micro" class="size-3.5" />
-                +254&nbsp;20&nbsp;234&nbsp;5600
+                +254&nbsp;713&nbsp;777&nbsp;111
             </span>
         </div>
         <div class="flex items-center gap-3 text-[#d8c79d]">

@@ -50,6 +50,7 @@
     --color-accent: var(--color-brand-500);
     --color-accent-content: var(--color-brand-500);
     --color-accent-foreground: var(--color-white);
+    --color-primary: var(--color-brand-500);
 }
 
 @layer theme {
@@ -59,6 +60,9 @@
         --color-accent-foreground: var(--color-white);
     }
 }
+
+/* Hide Alpine-controlled elements before Alpine initialises to prevent flash */
+[x-cloak] { display: none !important; }
 
 @layer base {
     *,
@@ -75,13 +79,13 @@
 }
 
 [data-flux-label] {
-    @apply !mb-0 !leading-tight;
+    @apply mb-0! leading-tight!;
 }
 
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden ring-2 ring-accent ring-offset-2;
 }
 
 /* Storefront page shell — wider than max-w-7xl (1280px) to match the Workshop design spec.

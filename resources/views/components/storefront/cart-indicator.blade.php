@@ -6,28 +6,20 @@ use Livewire\Component;
 
 new class extends Component
 {
-    /**
-     * Re-render when the cart changes elsewhere on the page.
-     * The dispatch comes from InteractsWithStorefront::addToCart() (and any
-     * future cart mutation) — see app/Livewire/Concerns/InteractsWithStorefront.php.
-     */
     #[On('cart-updated')]
-    public function refresh(): void
-    {
-        // Empty: Livewire re-runs render() after any listener fires.
-    }
+    public function refresh(): void {}
 }; ?>
 
 @php
-    $cartCount = StorefrontSession::cartCount();
-    $lines = StorefrontSession::cartLines();
-    $subtotalCents = $lines->sum('line_total_cents');
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv($cents, 100), 0, '.', ',');
+    $cartCount    = StorefrontSession::cartCount();
+    $lines        = StorefrontSession::cartLines();
+    $totalCents   = $lines->sum('line_total_cents');
+    $kes          = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
 @endphp
 
 <flux:dropdown position="bottom" align="end" gap="10">
     <button type="button" aria-label="Cart"
-        class="relative inline-flex size-10 items-center justify-center rounded-md text-ink-2 transition hover:bg-surface-sunken hover:text-ink">
+        class="relative inline-flex size-10 cursor-pointer items-center justify-center rounded-md text-ink-2 transition hover:bg-surface-sunken hover:text-ink">
         <flux:icon.shopping-cart variant="micro" class="size-5" />
         @if ($cartCount > 0)
             <span class="absolute top-1 right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white tabular-nums">{{ $cartCount }}</span>
@@ -35,68 +27,51 @@ new class extends Component
     </button>
 
     <div popover="manual"
-        class="w-[420px] overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
-        {{-- Header --}}
-        <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-3.5">
-            <div>
-                <div class="font-serif text-lg">Your cart</div>
-                <div class="text-[12px] text-ink-3">{{ $lines->count() }} {{ \Illuminate\Support\Str::plural('item', $lines->count()) }}</div>
-            </div>
-            @if ($lines->isNotEmpty())
-                <a href="{{ route('cart') }}" wire:navigate class="text-[12px] text-ink-3 underline-offset-2 hover:text-ink hover:underline">View cart →</a>
-            @endif
-        </div>
+        class="w-80 overflow-hidden rounded-md border border-zinc-200 bg-white shadow-xl focus:outline-hidden">
 
         @if ($lines->isEmpty())
-            {{-- Empty state --}}
-            <div class="px-5 py-7 text-center">
-                <flux:icon.shopping-cart variant="outline" class="mx-auto size-7 text-ink-4" />
-                <div class="mt-2 font-serif text-lg">Cart is empty</div>
-                <p class="mt-1.5 text-[12.5px] text-ink-3">
-                    Browse equipment or request a quote for tendered projects.
-                </p>
-                <flux:button variant="primary" size="sm" :href="route('catalog')" wire:navigate class="mt-3.5">
+            <div class="px-5 py-8 text-center">
+                <flux:icon.shopping-cart variant="outline" class="mx-auto size-8 text-ink-4" />
+                <div class="mt-3 text-[14px] font-medium text-ink">Your cart is empty</div>
+                <p class="mt-1 text-[12.5px] text-ink-3">Browse equipment and add items to get started.</p>
+                <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate class="mt-4">
                     Shop the catalog
                 </flux:button>
             </div>
         @else
-            {{-- Items --}}
-            <div class="max-h-80 overflow-y-auto">
+            {{-- Line items --}}
+            <div class="max-h-72 overflow-y-auto divide-y divide-zinc-100 pt-2">
                 @foreach ($lines as $line)
-                    @php
-                        $product = $line['product'];
-                        $cover = $product->images->first();
-                    @endphp
-                    <div wire:key="dd-{{ $line['slug'] }}"
-                        class="grid grid-cols-[48px_1fr_auto] items-center gap-3 border-b border-zinc-200 px-5 py-3">
-                        <div class="size-12 overflow-hidden rounded bg-surface-sunken p-1.5">
-                            @if ($cover)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($cover->path) }}" alt="" class="size-full object-contain" loading="lazy" />
+                    @php $product = $line['product']; @endphp
+                    <div wire:key="dd-{{ $line['slug'] }}" class="flex items-center gap-3 px-4 py-3.5">
+                        <div class="size-12 shrink-0 overflow-hidden rounded-md border border-zinc-100 bg-surface-sunken p-1">
+                            @if ($product->cover_url)
+                                <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
                             @endif
                         </div>
-                        <div class="min-w-0">
-                            <a href="{{ route('cart') }}" wire:navigate class="line-clamp-2 text-[13px] leading-snug font-medium">{{ $product->name }}</a>
-                            <div class="mt-1 text-[11.5px] text-ink-3">Qty {{ $line['qty'] }} · {{ $product->sku }}</div>
+                        <div class="min-w-0 flex-1">
+                            <a href="{{ route('product.show', $product) }}" wire:navigate
+                               class="line-clamp-2 text-[13px] font-semibold leading-snug text-ink hover:text-brand-500">
+                                {{ $product->name }}
+                            </a>
+                            <div class="mt-0.5 text-[12px] text-brand-500 tabular-nums">
+                                {{ $line['qty'] }} × {!! $kes($product->sale_price ?? $product->price ?? 0) !!}
+                            </div>
                         </div>
-                        <div class="text-right text-[13px] font-semibold tabular-nums whitespace-nowrap">{!! $kes($line['line_total_cents']) !!}</div>
                     </div>
                 @endforeach
             </div>
 
-            {{-- Footer --}}
-            <div class="bg-surface-sunken px-5 py-3.5">
-                <div class="flex items-center justify-between text-[13px] text-ink-2">
-                    <span>Subtotal</span>
-                    <span class="font-semibold tabular-nums whitespace-nowrap">{!! $kes($subtotalCents) !!}</span>
+            {{-- Total + actions --}}
+            <div class="border-t border-zinc-100 px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-[13px] font-semibold text-ink">Total</span>
+                    <span class="text-[13px] font-bold text-brand-500 tabular-nums">{!! $kes($totalCents) !!}</span>
                 </div>
-                <div class="mt-1 text-[11.5px] text-ink-3">VAT &amp; delivery calculated at checkout</div>
                 <div class="mt-3 flex gap-2">
-                    <flux:button size="sm" :href="route('cart')" wire:navigate class="!flex-1">View cart</flux:button>
-                    <flux:button variant="primary" size="sm" href="#" wire:navigate class="!flex-1">Checkout</flux:button>
+                    <flux:button variant="customer-outline" size="customer" :href="route('cart')" wire:navigate class="flex-1!">View cart</flux:button>
+                    <flux:button variant="customer-primary" size="customer" href="#" class="flex-1!">Checkout</flux:button>
                 </div>
-                <a href="#" class="mt-2 block text-center text-[12.5px] text-brand-blue-600 hover:underline">
-                    Convert to a formal quote →
-                </a>
             </div>
         @endif
     </div>

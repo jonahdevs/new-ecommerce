@@ -14,11 +14,11 @@
 
 <nav class="bg-brand-blue-500 text-[#f2ead9]">
     <div class="shell">
-        {{-- grid-rows-2 + [grid-auto-rows:0] caps visible content at exactly 2 rows.
+        {{-- grid-rows-2 + auto-rows-[0] caps visible content at exactly 2 rows.
              Items in implicit (overflow) rows collapse to 0 height and get clipped.
              gap-px + a subtle divider color on the parent paints 1px dividers between cells. --}}
         <div
-            class="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden bg-brand-blue-700 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 [grid-auto-rows:0]">
+            class="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden border-x border-white/20 bg-white/20 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 auto-rows-[0]">
             @foreach ($navCategories as $category)
                 @php
                     $isActive =

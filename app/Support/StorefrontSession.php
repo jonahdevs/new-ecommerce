@@ -68,6 +68,11 @@ final class StorefrontSession
         return self::cartLines()->sum('line_total_cents');
     }
 
+    public static function cartQuantity(string $slug): int
+    {
+        return (int) (self::cart()[$slug] ?? 0);
+    }
+
     public static function addToCart(string $slug, int $qty = 1): void
     {
         $cart = self::cart();

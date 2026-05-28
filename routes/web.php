@@ -11,6 +11,7 @@ Route::livewire('/shop/{category:slug}', 'pages::storefront.category')->name('ca
 Route::livewire('/cart', 'pages::storefront.cart')->name('cart');
 Route::livewire('/wishlist', 'pages::storefront.wishlist')->name('wishlist');
 Route::livewire('/compare', 'pages::storefront.compare')->name('compare');
+Route::livewire('/contact', 'pages::storefront.contact')->name('contact');
 Route::livewire('/product/{product:slug}', 'pages::storefront.product')->name('product.show');
 
 // ---------------------------------------------------------------------------

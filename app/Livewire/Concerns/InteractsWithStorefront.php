@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Support\StorefrontSession;
+use Flux\Flux;
 
 /**
  * Mix into any Livewire page that renders <x-storefront.product-card> so
@@ -14,23 +15,50 @@ trait InteractsWithStorefront
     public function addToCart(string $slug, int $qty = 1): void
     {
         StorefrontSession::addToCart($slug, $qty);
+        $newQty = StorefrontSession::cartQuantity($slug);
 
-        // Notify the header cart indicator (which lives in the layout, outside
-        // this component's render tree) that it needs to recompute its count.
+        $this->skipRender();
         $this->dispatch('cart-updated');
+        $this->dispatch('cart-qty-changed', slug: $slug, qty: $newQty);
+        Flux::toast(heading: 'Added to cart', text: 'Item has been added to your cart.', variant: 'success');
+    }
+
+    public function decrementCart(string $slug): void
+    {
+        $current = StorefrontSession::cartQuantity($slug);
+
+        if ($current <= 1) {
+            StorefrontSession::removeFromCart($slug);
+        } else {
+            StorefrontSession::setCartQty($slug, $current - 1);
+        }
+
+        $this->skipRender();
+        $this->dispatch('cart-updated');
+        $this->dispatch('cart-qty-changed', slug: $slug, qty: StorefrontSession::cartQuantity($slug));
     }
 
     public function toggleWishlist(string $slug): void
     {
-        StorefrontSession::toggleWishlist($slug);
+        $added = StorefrontSession::toggleWishlist($slug);
 
         $this->dispatch('wishlist-updated');
+        Flux::toast(
+            heading: $added ? 'Saved to wishlist' : 'Removed from wishlist',
+            text: $added ? 'You can view your saved items on the wishlist page.' : 'Item has been removed from your wishlist.',
+            variant: $added ? 'success' : 'warning',
+        );
     }
 
     public function toggleCompare(string $slug): void
     {
-        StorefrontSession::toggleCompare($slug);
+        $added = StorefrontSession::toggleCompare($slug);
 
         $this->dispatch('compare-updated');
+        Flux::toast(
+            heading: $added ? 'Added to compare' : 'Removed from compare',
+            text: $added ? 'Head to the compare page to view products side by side.' : 'Item has been removed from your compare list.',
+            variant: $added ? 'success' : 'warning',
+        );
     }
 }

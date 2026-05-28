@@ -5,6 +5,7 @@ use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Product;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\SEOMeta;
+use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -24,19 +25,30 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
     {
         StorefrontSession::removeFromWishlist($slug);
         unset($this->products);
+        $this->dispatch('wishlist-updated');
+        Flux::toast(heading: 'Removed from wishlist', text: 'Item has been removed from your wishlist.', variant: 'warning');
     }
 
     public function clear(): void
     {
         StorefrontSession::clearWishlist();
         unset($this->products);
+        $this->dispatch('wishlist-updated');
+        Flux::toast(heading: 'Wishlist cleared', text: 'All saved items have been removed from your wishlist.', variant: 'danger');
     }
 
     public function addAllToCart(): void
     {
+        $count = $this->products->count();
         foreach ($this->products as $product) {
             StorefrontSession::addToCart($product->slug);
         }
+        $this->dispatch('cart-updated');
+        Flux::toast(
+            heading: 'Added to cart',
+            text: "{$count} " . str('item')->plural($count) . ' added to your cart.',
+            variant: 'success',
+        );
     }
 
     #[Computed]
@@ -79,8 +91,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
 
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <div class="text-[11px] font-semibold tracking-[0.14em] text-brand-500 uppercase">Saved for later</div>
-                <h1 class="mt-2 text-3xl font-semibold tracking-tight">Wishlist</h1>
+                <h1 class="text-3xl font-semibold tracking-tight">Wishlist</h1>
                 <p class="mt-2 text-[14.5px] text-ink-3">
                     @if ($this->products->isEmpty())
                         Nothing saved yet — tap the heart on any product.
@@ -101,7 +112,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
 
         @if ($this->products->isEmpty())
             {{-- Empty state --}}
-            <div class="mt-10 rounded-lg bg-surface-sunken p-16 text-center">
+            <div class="mt-10 rounded-md bg-surface-sunken p-16 text-center">
                 <flux:icon.heart variant="outline" class="mx-auto size-12 text-ink-4" />
                 <h2 class="mt-5 font-serif text-2xl">No saved items yet.</h2>
                 <p class="mx-auto mt-2 max-w-md text-ink-3">
@@ -119,18 +130,17 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
             <div class="mt-8 flex flex-col gap-3">
                 @foreach ($this->products as $product)
                     @php
-                        $cover = $product->images->first();
                         $price = $product->sale_price ?? $product->price ?? 0;
                         $compareAt = $product->sale_price ? $product->price : null;
                         $inStock = $product->stock_status === StockStatus::IN_STOCK;
                     @endphp
                     <article wire:key="wish-{{ $product->slug }}"
-                        class="grid grid-cols-[120px_1fr_auto_auto] items-center gap-5 rounded-lg border border-zinc-200 bg-white p-4">
+                        class="grid grid-cols-[120px_1fr_auto_auto] items-center gap-5 rounded-md border border-zinc-200 bg-white p-4">
                         <a href="#" wire:navigate
                             class="block size-30 overflow-hidden rounded bg-surface-sunken p-2"
                             style="width: 120px; height: 120px">
-                            @if ($cover)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($cover->path) }}" alt="" class="size-full object-contain" loading="lazy" />
+                            @if ($product->cover_url)
+                                <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
                             @endif
                         </a>
                         <div>
@@ -159,7 +169,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
                             <flux:button variant="primary" size="sm" wire:click="addToCart('{{ $product->slug }}')" icon="shopping-cart">Add to cart</flux:button>
                             <flux:button size="sm">Compare</flux:button>
                             <button type="button" wire:click="remove('{{ $product->slug }}')"
-                                class="text-[12px] text-ink-3 underline underline-offset-2 hover:text-brand-500">
+                                class="cursor-pointer text-[12px] text-ink-3 underline underline-offset-2 hover:text-brand-500">
                                 Remove
                             </button>
                         </div>
@@ -168,14 +178,14 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
             </div>
 
             {{-- Convert-to-quote band --}}
-            <div class="mt-8 grid grid-cols-1 items-center gap-6 rounded-lg p-6 text-[#f3eadd] sm:grid-cols-[1fr_auto]" style="background:#0c1421">
+            <div class="mt-8 grid grid-cols-1 items-center gap-6 rounded-md p-6 text-[#f3eadd] sm:grid-cols-[1fr_auto]" style="background:#0c1421">
                 <div>
                     <div class="font-serif text-xl">Need a formal quote for this list?</div>
                     <div class="mt-1 text-[13px] text-[#c9bea4]">
                         Convert your wishlist to a costed quotation with delivery, installation and lead times. Response in 24 business hours.
                     </div>
                 </div>
-                <flux:button variant="primary">Convert to quote →</flux:button>
+                <flux:button variant="primary" icon-trailing="arrow-right">Convert to quote</flux:button>
             </div>
         @endif
 
@@ -184,7 +194,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
             <section class="pt-20">
                 <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
                     <h2 class="text-[22px] font-semibold tracking-tight">You might also want</h2>
-                    <a href="{{ route('catalog') }}" wire:navigate class="text-[13px] text-zinc-600 hover:text-zinc-900">Browse all →</a>
+                    <a href="{{ route('catalog') }}" wire:navigate class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">Browse all <flux:icon.arrow-right variant="micro" class="size-3.5" /></a>
                 </div>
                 <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
                     @foreach ($this->recommendations as $product)

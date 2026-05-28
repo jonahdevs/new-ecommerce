@@ -63,9 +63,7 @@ new #[Layout('layouts::storefront')] class extends Component
             ?: ($product->short_description ?: Str::limit(strip_tags((string) $product->description), 160))
             ?: 'Authorised distributor for '.$product->name.' across East Africa. Install, service and spares from Sheffield.';
 
-        // Use cover image when present, falling back to the first image.
-        $cover = $product->images->where('is_cover', true)->first() ?? $product->images->first();
-        $imageUrl = $cover ? Storage::url($cover->path) : null;
+        $imageUrl = $product->cover_url;
 
         // ── Meta + OG + Twitter ─────────────────────────────────────────
         SEOMeta::setTitle($title)->setDescription($description);
@@ -166,7 +164,6 @@ new #[Layout('layouts::storefront')] class extends Component
     $isWished = StorefrontSession::isWishlisted($product->slug);
     $isCompared = StorefrontSession::isCompared($product->slug);
 
-    $coverImage = $product->images->where('is_cover', true)->first() ?? $product->images->first();
     $gallery = $product->images->take(6); // cap thumbnails
 
     // Add-on prices: 6% install, 4% extended warranty — same heuristic as the design.
@@ -200,7 +197,7 @@ new #[Layout('layouts::storefront')] class extends Component
     <div class="grid grid-cols-1 gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         {{-- Gallery --}}
         <div>
-            <div class="relative aspect-square overflow-hidden rounded-lg border border-zinc-200 bg-white p-10">
+            <div class="relative aspect-square overflow-hidden rounded-md border border-zinc-200 bg-white p-10">
                 @if ($isOnSale)
                     <span class="absolute top-5 left-5 text-[11px] font-bold tracking-[0.08em] text-brand-500 uppercase">
                         ● Sale
@@ -212,8 +209,8 @@ new #[Layout('layouts::storefront')] class extends Component
                         <button type="button" wire:click="toggleWishlist('{{ $product->slug }}')"
                             aria-label="{{ $isWished ? 'Remove from wishlist' : 'Save to wishlist' }}"
                             @class([
-                                'inline-flex size-9 items-center justify-center rounded-full border bg-white text-ink transition',
-                                '!bg-brand-500 !border-brand-500 !text-white' => $isWished,
+                                'inline-flex size-9 cursor-pointer items-center justify-center rounded-full border bg-white text-ink transition',
+                                'bg-brand-500! border-brand-500! text-white!' => $isWished,
                                 'border-zinc-200 hover:bg-surface-sunken' => ! $isWished,
                             ])>
                             <flux:icon.heart variant="micro" class="size-4" />
@@ -223,8 +220,8 @@ new #[Layout('layouts::storefront')] class extends Component
                         <button type="button" wire:click="toggleCompare('{{ $product->slug }}')"
                             aria-label="{{ $isCompared ? 'Remove from compare' : 'Add to compare'}}"
                             @class([
-                                'inline-flex size-9 items-center justify-center rounded-full border bg-white text-ink transition',
-                                '!bg-ink !border-ink !text-white' => $isCompared,
+                                'inline-flex size-9 cursor-pointer items-center justify-center rounded-full border bg-white text-ink transition',
+                                'bg-ink! border-ink! text-white!' => $isCompared,
                                 'border-zinc-200 hover:bg-surface-sunken' => ! $isCompared,
                             ])>
                             <flux:icon.scale variant="micro" class="size-4" />
@@ -232,9 +229,9 @@ new #[Layout('layouts::storefront')] class extends Component
                     </flux:tooltip>
                 </div>
 
-                @php $shown = $gallery->values()->get($galleryIdx) ?? $coverImage; @endphp
+                @php $shown = $gallery->values()->get($galleryIdx); @endphp
                 @if ($shown)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($shown->path) }}"
+                    <img src="{{ $shown->url }}"
                         alt="{{ $shown->alt ?? $product->name }}"
                         class="size-full object-contain" />
                 @else
@@ -255,11 +252,11 @@ new #[Layout('layouts::storefront')] class extends Component
                     @foreach ($gallery as $i => $img)
                         <button type="button" wire:click="$set('galleryIdx', {{ $i }})"
                             @class([
-                                'aspect-square overflow-hidden rounded border bg-white p-2 transition',
+                                'aspect-square cursor-pointer overflow-hidden rounded border bg-white p-2 transition',
                                 'border-brand-500 ring-1 ring-brand-500' => $i === $galleryIdx,
                                 'border-zinc-200 hover:border-zinc-400' => $i !== $galleryIdx,
                             ])>
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}" alt=""
+                            <img src="{{ $img->url }}" alt=""
                                 class="size-full object-contain" loading="lazy" />
                         </button>
                     @endforeach
@@ -354,24 +351,24 @@ new #[Layout('layouts::storefront')] class extends Component
             <div class="mt-6 flex flex-wrap items-center gap-3">
                 <div class="inline-flex h-12 items-stretch overflow-hidden rounded border border-zinc-200">
                     <button type="button" wire:click="decQty" aria-label="Decrease quantity"
-                        class="grid w-11 place-items-center text-ink-2 transition hover:bg-surface-sunken">
+                        class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
                         <flux:icon.minus variant="micro" class="size-4" />
                     </button>
                     <div class="grid w-12 place-items-center border-x border-zinc-200 text-[14px] font-semibold tabular-nums">
                         {{ $qty }}
                     </div>
                     <button type="button" wire:click="incQty" aria-label="Increase quantity"
-                        class="grid w-11 place-items-center text-ink-2 transition hover:bg-surface-sunken">
+                        class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
                         <flux:icon.plus variant="micro" class="size-4" />
                     </button>
                 </div>
 
-                <flux:button variant="primary" wire:click="addThisToCart" class="!h-12 !flex-1 !px-6"
+                <flux:button variant="primary" wire:click="addThisToCart" class="h-12! flex-1! px-6!"
                     icon="shopping-cart">
                     Add to cart · {!! $kes($unitPriceCents * $qty) ?? 'Request quote' !!}
                 </flux:button>
 
-                <flux:button class="!h-12 !px-5">Request quote</flux:button>
+                <flux:button class="h-12! px-5!">Request quote</flux:button>
             </div>
 
             {{-- Trust grid --}}
@@ -406,7 +403,7 @@ new #[Layout('layouts::storefront')] class extends Component
             ] as $id => $label)
                 <button type="button" wire:click="$set('activeTab', '{{ $id }}')"
                     @class([
-                        '-mb-px border-b-2 px-5 py-3.5 text-[14px] transition',
+                        '-mb-px cursor-pointer border-b-2 px-5 py-3.5 text-[14px] transition',
                         'border-brand-500 font-semibold text-ink' => $activeTab === $id,
                         'border-transparent text-ink-3 hover:text-ink' => $activeTab !== $id,
                     ])>
@@ -485,14 +482,14 @@ new #[Layout('layouts::storefront')] class extends Component
                             ['truck', '2. Delivery & commissioning', 'White-glove unboxing, levelling and first-run calibration with kitchen staff present.'],
                             ['wrench-screwdriver', '3. Service & spares', 'Quarterly preventive visits available. 98% of spares stocked locally for next-day dispatch.'],
                         ] as [$icon, $title, $body])
-                            <div class="rounded-lg bg-surface-sunken p-6">
+                            <div class="rounded-md bg-surface-sunken p-6">
                                 <flux:icon :name="$icon" variant="outline" class="size-5 text-brand-500" />
                                 <div class="mt-3 font-serif text-lg">{{ $title }}</div>
                                 <p class="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">{{ $body }}</p>
                             </div>
                         @endforeach
                     </div>
-                    <div class="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-ink p-6 text-[#f3eadd]">
+                    <div class="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-md bg-ink p-6 text-[#f3eadd]">
                         <div>
                             <div class="font-serif text-xl text-[#f3eadd]">Need a service contract?</div>
                             <div class="mt-1 text-[13px] text-[#c9bea4]">From KES&nbsp;24,000/year for one unit. Annual preventive + 48-hr response.</div>
@@ -519,7 +516,7 @@ new #[Layout('layouts::storefront')] class extends Component
                             <flux:icon.arrow-down-tray variant="micro" class="size-4 text-ink-2" />
                         </a>
                     @empty
-                        <div class="rounded-lg bg-surface-sunken p-10 text-center text-ink-3">
+                        <div class="rounded-md bg-surface-sunken p-10 text-center text-ink-3">
                             <flux:icon.document variant="outline" class="mx-auto size-7" />
                             <div class="mt-2 text-[14px]">No downloadable documents for this product yet.</div>
                             <div class="mt-1 text-[12.5px]">Request the spec sheet — we'll email it to you.</div>
@@ -530,7 +527,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
             {{-- Reviews --}}
             @if ($activeTab === 'reviews')
-                <div class="rounded-lg bg-surface-sunken p-10 text-center">
+                <div class="rounded-md bg-surface-sunken p-10 text-center">
                     <flux:icon.star variant="outline" class="mx-auto size-7 text-ink-4" />
                     <div class="mt-3 font-serif text-xl">No reviews yet.</div>
                     <p class="mt-1.5 text-[13.5px] text-ink-3">Be the first to share your experience after you've installed and used the unit.</p>
@@ -546,8 +543,8 @@ new #[Layout('layouts::storefront')] class extends Component
                 <h2 class="text-[22px] font-semibold tracking-tight">Related equipment</h2>
                 @if ($product->primaryCategory)
                     <a href="{{ route('category.show', $product->primaryCategory) }}" wire:navigate
-                        class="text-[13px] text-zinc-600 hover:text-zinc-900">
-                        More in {{ $product->primaryCategory->name }} →
+                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
+                        More in {{ $product->primaryCategory->name }} <flux:icon.arrow-right variant="micro" class="size-3.5" />
                     </a>
                 @endif
             </div>

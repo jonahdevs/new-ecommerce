@@ -14,7 +14,7 @@
     @endauth
 
     <div popover="manual"
-        class="w-[300px] rounded-lg border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
+        class="w-75 rounded-md border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
         @auth
             <div class="flex items-center gap-3 border-b border-zinc-200 px-4 py-4">
                 <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
@@ -81,8 +81,8 @@
                     Sign in to track orders, save quotes and manage your service contracts.
                 </p>
                 <div class="mt-4 flex flex-col gap-2">
-                    <flux:button variant="primary" :href="route('login')" wire:navigate class="!w-full">Sign in</flux:button>
-                    <flux:button :href="route('register')" wire:navigate class="!w-full">Create an account</flux:button>
+                    <flux:button variant="customer-primary" size="customer" :href="route('login')" wire:navigate class="w-full!">Sign in</flux:button>
+                    <flux:button variant="customer-outline" size="customer" :href="route('register')" wire:navigate class="w-full!">Create an account</flux:button>
                 </div>
             </div>
             <div class="border-t border-zinc-200 px-4 py-3.5">
@@ -90,7 +90,7 @@
                 <a href="{{ route('register') }}" wire:navigate
                     class="flex items-center gap-2.5 text-[13px] text-ink hover:text-brand-500">
                     <flux:icon.shield-check variant="micro" class="size-4 text-brand-500" />
-                    Apply for trade account &amp; Net 30 →
+                    Apply for trade account &amp; Net 30 <flux:icon.arrow-right variant="micro" class="size-3.5" />
                 </a>
             </div>
         @endauth

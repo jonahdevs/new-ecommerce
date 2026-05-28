@@ -103,7 +103,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
 
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="font-serif text-4xl leading-tight font-normal lg:text-5xl">Side by side.</h1>
+            <h1 class="text-3xl font-semibold tracking-tight">Side by side.</h1>
             <p class="mt-2 text-ink-3">
                 Comparing <span class="font-medium text-ink">{{ $this->products->count() }}</span> of 4 max
             </p>
@@ -115,7 +115,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
 
     @if ($this->products->isEmpty())
         {{-- Empty state --}}
-        <div class="mt-10 rounded-lg bg-surface-sunken p-14 text-center">
+        <div class="mt-10 rounded-md bg-surface-sunken p-14 text-center">
             <flux:icon.scale variant="outline" class="mx-auto size-10 text-ink-4" />
             <h2 class="mt-4 font-serif text-2xl font-normal">Nothing to compare yet.</h2>
             <p class="mt-2 text-ink-3">Add up to 4 products to compare specs side-by-side.</p>
@@ -125,33 +125,32 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
         </div>
     @else
         {{-- Comparison table --}}
-        <div class="mt-7 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <div class="mt-7 overflow-x-auto rounded-md border border-zinc-200 bg-white">
             <table class="w-full border-collapse text-left" style="min-width: {{ 200 + 220 * ($this->products->count() + min(1, $emptySlots)) }}px">
                 <thead>
                     <tr>
                         {{-- Sticky header corner --}}
-                        <th class="sticky left-0 z-10 w-[200px] border-b border-zinc-200 bg-surface-sunken px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                        <th class="sticky left-0 z-10 w-50 border-b border-zinc-200 bg-surface-sunken px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase">
                             Product
                         </th>
 
                         @foreach ($this->products as $product)
                             @php
-                                $cover = $product->images->first();
                                 $price = $product->sale_price ?? $product->price;
                             @endphp
                             <th wire:key="head-{{ $product->slug }}"
-                                class="relative min-w-[220px] border-b border-zinc-200 bg-white p-4 align-top">
+                                class="relative min-w-55 border-b border-zinc-200 bg-white p-4 align-top">
                                 <button type="button" wire:click="remove('{{ $product->slug }}')" aria-label="Remove from compare"
-                                    class="absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-full text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
+                                    class="absolute top-3 right-3 inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
                                     <flux:icon.x-mark variant="micro" class="size-4" />
                                 </button>
 
                                 {{-- Product card --}}
                                 <a href="{{ route('product.show', $product) }}" wire:navigate
                                     class="block aspect-square overflow-hidden rounded bg-surface-sunken p-3">
-                                    @if ($cover)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($cover->path) }}"
-                                            alt="{{ $cover->alt ?? $product->name }}"
+                                    @if ($product->cover_url)
+                                        <img src="{{ $product->cover_url }}"
+                                            alt="{{ $product->name }}"
                                             class="size-full object-contain" loading="lazy" />
                                     @endif
                                 </a>
@@ -169,7 +168,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
                                     {!! $kes($price) ?? '<span class="text-ink-3 text-sm">Quote on request</span>' !!}
                                 </div>
 
-                                <flux:button variant="primary" size="sm" class="!mt-3 !w-full"
+                                <flux:button variant="primary" size="sm" class="mt-3! w-full!"
                                     wire:click="addToCart('{{ $product->slug }}')">
                                     Add to cart
                                 </flux:button>
@@ -177,7 +176,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
                         @endforeach
 
                         @if ($emptySlots > 0)
-                            <th class="min-w-[220px] border-b border-zinc-200 bg-white p-4 align-top">
+                            <th class="min-w-55 border-b border-zinc-200 bg-white p-4 align-top">
                                 <a href="{{ route('catalog') }}" wire:navigate
                                     class="flex aspect-square flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-zinc-300 text-ink-3 transition hover:border-ink-3 hover:text-ink">
                                     <flux:icon.plus variant="micro" class="size-5" />
