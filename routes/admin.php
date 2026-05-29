@@ -19,4 +19,6 @@ Route::middleware(['auth', 'verified'])
         Route::livewire('/brands', 'pages::admin.brands.index')->name('brands.index');
         Route::livewire('/attributes', 'pages::admin.attributes.index')->name('attributes.index');
         Route::livewire('/attributes/{attribute}/edit', 'pages::admin.attributes.edit')->name('attributes.edit');
+        Route::livewire('/settings', 'pages::admin.settings.index')->name('settings.index');
+        Route::livewire('/staff', 'pages::admin.staff.index')->name('staff.index');
     });
