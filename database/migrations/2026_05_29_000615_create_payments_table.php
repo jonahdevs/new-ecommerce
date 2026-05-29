@@ -17,10 +17,13 @@ return new class extends Migration
             $table->string('provider')->default('mpesa');
             $table->string('status')->default('pending');
             $table->integer('amount_cents');
-            $table->string('phone');
+            $table->string('phone')->nullable();
             $table->string('account_reference');
             $table->string('merchant_request_id')->nullable();
             $table->string('checkout_request_id')->nullable()->index();
+            $table->string('stripe_session_id')->nullable()->index();
+            $table->string('stripe_payment_intent_id')->nullable();
+            $table->string('stripe_client_secret')->nullable();
             $table->string('mpesa_receipt')->nullable();
             $table->integer('result_code')->nullable();
             $table->string('result_desc')->nullable();

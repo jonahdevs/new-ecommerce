@@ -1,0 +1,48 @@
+<?php
+
+use App\Enums\PaymentStatus;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\User;
+use Livewire\Livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
+
+it('loads the payments admin index', function () {
+    $this->get(route('admin.payments.index'))->assertOk();
+});
+
+it('filters payments by status and provider', function () {
+    Payment::factory()->successful()->create(['mpesa_receipt' => 'AAA111']);
+    Payment::factory()->stripe()->create(['stripe_payment_intent_id' => 'pi_BBB']);
+
+    Livewire::test('pages::admin.payments.index')
+        ->set('filterProvider', 'mpesa')
+        ->assertSee('AAA111')
+        ->assertDontSee('pi_BBB')
+        ->set('filterProvider', '')
+        ->set('filterStatus', PaymentStatus::PENDING->value)
+        ->assertSee('pi_BBB')
+        ->assertDontSee('AAA111');
+});
+
+it('searches payments by order number', function () {
+    $order = Order::factory()->create(['order_number' => 'SHF-PAYME']);
+    Payment::factory()->create(['order_id' => $order->id]);
+    Payment::factory()->create(['mpesa_receipt' => 'OTHER999']);
+
+    Livewire::test('pages::admin.payments.index')
+        ->set('search', 'PAYME')
+        ->assertSee('SHF-PAYME')
+        ->assertDontSee('OTHER999');
+});
+
+it('shows a payment detail page', function () {
+    $payment = Payment::factory()->successful()->create();
+
+    $this->get(route('admin.payments.show', $payment))
+        ->assertOk()
+        ->assertSee($payment->mpesa_receipt);
+});

@@ -102,6 +102,16 @@ class Product extends Model
         return $this->hasMany(DownloadableFile::class)->orderBy('sort_order');
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(Review::class)->approved()->latest();
+    }
+
     public function bundleItems(): HasMany
     {
         return $this->hasMany(BundleItem::class, 'bundle_product_id')->orderBy('sort_order');

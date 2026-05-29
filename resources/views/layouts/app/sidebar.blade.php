@@ -38,20 +38,46 @@
                     :current="request()->routeIs('admin.attributes.*')" wire:navigate>
                     {{ __('Attributes') }}
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="hashtag" :href="route('admin.tags.index')"
+                    :current="request()->routeIs('admin.tags.*')" wire:navigate>
+                    {{ __('Tags') }}
+                </flux:sidebar.item>
             </flux:sidebar.group>
 
-            <flux:sidebar.group :heading="__('Commerce')" class="grid">
-                <flux:sidebar.item icon="shopping-cart" href="#" :current="request()->routeIs('admin.orders.*')"
+            <flux:sidebar.group :heading="__('Sales')" class="grid">
+                <flux:sidebar.item icon="document-text" :href="route('admin.quotes.index')" :current="request()->routeIs('admin.quotes.*')"
+                    wire:navigate>
+                    {{ __('Quotations') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="shopping-cart" :href="route('admin.orders.index')" :current="request()->routeIs('admin.orders.*')"
                     wire:navigate>
                     {{ __('Orders') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="users" href="#" :current="request()->routeIs('admin.customers.*')"
+                <flux:sidebar.item icon="credit-card" :href="route('admin.payments.index')" :current="request()->routeIs('admin.payments.*')"
                     wire:navigate>
-                    {{ __('Customers') }}
+                    {{ __('Payments') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="truck" :href="route('admin.delivery-zones')"
-                    :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
-                    {{ __('Delivery zones') }}
+            </flux:sidebar.group>
+
+            <flux:sidebar.group :heading="__('Customers')" class="grid">
+                <flux:sidebar.item icon="users" :href="route('admin.customers.index')" :current="request()->routeIs('admin.customers.*')"
+                    wire:navigate>
+                    {{ __('All customers') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="star" :href="route('admin.reviews.index')" :current="request()->routeIs('admin.reviews.*')"
+                    wire:navigate>
+                    {{ __('Reviews') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
+            <flux:sidebar.group :heading="__('Access')" class="grid">
+                <flux:sidebar.item icon="user-group" :href="route('admin.staff.index')" :current="request()->routeIs('admin.staff.*')"
+                    wire:navigate>
+                    {{ __('Staff') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="shield-check" :href="route('admin.roles.index')" :current="request()->routeIs('admin.roles.*')"
+                    wire:navigate>
+                    {{ __('Roles & permissions') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
@@ -60,9 +86,9 @@
                     wire:navigate>
                     {{ __('Settings') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="shield-check" :href="route('admin.staff.index')" :current="request()->routeIs('admin.staff.*')"
-                    wire:navigate>
-                    {{ __('Staff & Roles') }}
+                <flux:sidebar.item icon="truck" :href="route('admin.delivery-zones')"
+                    :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
+                    {{ __('Delivery zones') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>

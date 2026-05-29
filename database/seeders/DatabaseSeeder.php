@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            PermissionSeeder::class,
             UserSeeder::class,
             CategorySeeder::class,
             BrandSeeder::class,
@@ -28,6 +29,7 @@ class DatabaseSeeder extends Seeder
             AddressSeeder::class,
             OrderSeeder::class,
             QuoteSeeder::class,
+            ReviewSeeder::class,
         ]);
     }
 }

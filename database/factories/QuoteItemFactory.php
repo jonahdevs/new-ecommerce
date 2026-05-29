@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Product;
+use App\Models\Quote;
 use App\Models\QuoteItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,8 +19,29 @@ class QuoteItemFactory extends Factory
      */
     public function definition(): array
     {
+        $unitPrice = fake()->numberBetween(50000, 5000000) * 100;
+        $quantity = fake()->numberBetween(1, 4);
+
         return [
-            //
+            'quote_id' => Quote::factory(),
+            'product_id' => null,
+            'product_name' => fake()->words(3, true),
+            'product_sku' => 'SKU-'.fake()->unique()->numberBetween(1000, 99999),
+            'unit_price_cents' => $unitPrice,
+            'quantity' => $quantity,
+            'line_total_cents' => $unitPrice * $quantity,
         ];
+    }
+
+    /**
+     * Link the line item to a concrete product, snapshotting its details.
+     */
+    public function forProduct(Product $product): static
+    {
+        return $this->state(fn () => [
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'product_sku' => $product->sku,
+        ]);
     }
 }

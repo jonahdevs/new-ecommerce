@@ -33,7 +33,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
     #[Computed]
     public function staffMembers()
     {
-        return User::role(['admin', 'staff'])
+        return User::has('roles')
             ->with('roles')
             ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
@@ -46,7 +46,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
     #[Computed]
     public function roles(): \Illuminate\Database\Eloquent\Collection
     {
-        return Role::whereIn('name', ['admin', 'staff'])->get();
+        return Role::orderBy('name')->get();
     }
 
     public function openCreate(): void
@@ -74,7 +74,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingId)],
-            'role' => ['required', Rule::in(['admin', 'staff'])],
+            'role' => ['required', Rule::exists('roles', 'name')],
         ];
 
         if (! $this->editingId) {
@@ -241,11 +241,12 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
             <flux:field>
                 <flux:label>Role</flux:label>
                 <flux:select wire:model="role">
-                    <flux:select.option value="staff">Staff</flux:select.option>
-                    <flux:select.option value="admin">Admin</flux:select.option>
+                    @foreach ($this->roles as $roleOption)
+                        <flux:select.option value="{{ $roleOption->name }}">{{ ucfirst($roleOption->name) }}</flux:select.option>
+                    @endforeach
                 </flux:select>
                 <flux:description>
-                    Admins have full access. Staff have limited access.
+                    Roles determine which areas of the admin panel a member can access.
                 </flux:description>
             </flux:field>
 

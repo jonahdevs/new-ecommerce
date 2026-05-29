@@ -1,8 +1,10 @@
 <?php
 
+use App\Enums\ReviewStatus;
 use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Product;
+use Flux\Flux;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\JsonLdMulti;
 use Artesaos\SEOTools\Facades\OpenGraph;
@@ -30,6 +32,12 @@ new #[Layout('layouts::storefront')] class extends Component
     public string $activeTab = 'specs';
 
     public int $galleryIdx = 0;
+
+    public int $reviewRating = 5;
+
+    public string $reviewTitle = '';
+
+    public string $reviewBody = '';
 
     public function mount(Product $product): void
     {
@@ -149,6 +157,47 @@ new #[Layout('layouts::storefront')] class extends Component
             ->inRandomOrder()
             ->take(6)
             ->get();
+    }
+
+    #[Computed]
+    public function approvedReviews(): Collection
+    {
+        return $this->product->approvedReviews()->get();
+    }
+
+    #[Computed]
+    public function averageRating(): float
+    {
+        return round((float) $this->approvedReviews->avg('rating'), 1);
+    }
+
+    public function submitReview(): void
+    {
+        if (! auth()->check()) {
+            $this->redirectRoute('login');
+
+            return;
+        }
+
+        $this->validate([
+            'reviewRating' => ['required', 'integer', 'min:1', 'max:5'],
+            'reviewTitle' => ['nullable', 'string', 'max:120'],
+            'reviewBody' => ['required', 'string', 'min:10', 'max:2000'],
+        ]);
+
+        $this->product->reviews()->create([
+            'user_id' => auth()->id(),
+            'author_name' => auth()->user()->name,
+            'rating' => $this->reviewRating,
+            'title' => $this->reviewTitle ?: null,
+            'body' => $this->reviewBody,
+            'status' => ReviewStatus::PENDING,
+        ]);
+
+        $this->reset(['reviewTitle', 'reviewBody']);
+        $this->reviewRating = 5;
+
+        Flux::toast(heading: 'Thank you!', text: 'Your review has been submitted for moderation.', variant: 'success');
     }
 }; ?>
 
@@ -527,10 +576,82 @@ new #[Layout('layouts::storefront')] class extends Component
 
             {{-- Reviews --}}
             @if ($activeTab === 'reviews')
-                <div class="rounded-md bg-surface-sunken p-10 text-center">
-                    <flux:icon.star variant="outline" class="mx-auto size-7 text-ink-4" />
-                    <div class="mt-3 font-serif text-xl">No reviews yet.</div>
-                    <p class="mt-1.5 text-[13.5px] text-ink-3">Be the first to share your experience after you've installed and used the unit.</p>
+                <div class="grid max-w-5xl grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr]">
+
+                    {{-- Existing reviews --}}
+                    <div>
+                        @if ($this->approvedReviews->isNotEmpty())
+                            <div class="flex items-center gap-4 border-b border-zinc-200 pb-5">
+                                <div class="font-serif text-5xl tabular-nums">{{ number_format($this->averageRating, 1) }}</div>
+                                <div>
+                                    <div class="flex gap-0.5">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            <flux:icon.star :variant="$i <= round($this->averageRating) ? 'solid' : 'outline'"
+                                                class="size-4 text-amber-500" />
+                                        @endfor
+                                    </div>
+                                    <div class="mt-1 text-[13px] text-ink-3">
+                                        Based on {{ $this->approvedReviews->count() }} review{{ $this->approvedReviews->count() === 1 ? '' : 's' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="divide-y divide-zinc-200">
+                                @foreach ($this->approvedReviews as $review)
+                                    <div class="py-5" wire:key="review-{{ $review->id }}">
+                                        <div class="flex items-center gap-0.5">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <flux:icon.star :variant="$i <= $review->rating ? 'solid' : 'outline'"
+                                                    class="size-3.5 text-amber-500" />
+                                            @endfor
+                                        </div>
+                                        @if ($review->title)
+                                            <div class="mt-2 font-semibold text-ink">{{ $review->title }}</div>
+                                        @endif
+                                        <p class="mt-1.5 text-[14px] leading-relaxed text-ink-2">{{ $review->body }}</p>
+                                        <div class="mt-2 text-[12.5px] text-ink-3">
+                                            {{ $review->author_name }} · {{ $review->created_at->format('d M Y') }}
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="rounded-md bg-surface-sunken p-10 text-center">
+                                <flux:icon.star variant="outline" class="mx-auto size-7 text-ink-4" />
+                                <div class="mt-3 font-serif text-xl">No reviews yet.</div>
+                                <p class="mt-1.5 text-[13.5px] text-ink-3">Be the first to share your experience after you've installed and used the unit.</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Write a review --}}
+                    <div>
+                        <div class="rounded-md bg-surface-sunken p-6">
+                            <h3 class="font-serif text-xl">Write a review</h3>
+                            @auth
+                                <form wire:submit="submitReview" class="mt-4 space-y-4">
+                                    <flux:field>
+                                        <flux:label>Rating</flux:label>
+                                        <flux:select wire:model="reviewRating">
+                                            @foreach ([5 => 'Excellent', 4 => 'Good', 3 => 'Average', 2 => 'Poor', 1 => 'Terrible'] as $value => $label)
+                                                <flux:select.option value="{{ $value }}">{{ $value }} — {{ $label }}</flux:select.option>
+                                            @endforeach
+                                        </flux:select>
+                                    </flux:field>
+                                    <flux:input wire:model="reviewTitle" label="Title" placeholder="Sum it up (optional)" />
+                                    <flux:textarea wire:model="reviewBody" label="Your review" rows="4"
+                                        placeholder="How has this unit performed in your kitchen?" />
+                                    <flux:button type="submit" variant="primary" class="w-full">Submit review</flux:button>
+                                    <p class="text-[12px] text-ink-3">Reviews are published once approved by our team.</p>
+                                </form>
+                            @else
+                                <p class="mt-2 text-[13.5px] leading-relaxed text-ink-3">
+                                    Sign in to share your experience with this product.
+                                </p>
+                                <flux:button :href="route('login')" variant="primary" class="mt-4 w-full">Sign in to review</flux:button>
+                            @endauth
+                        </div>
+                    </div>
                 </div>
             @endif
         </div>
