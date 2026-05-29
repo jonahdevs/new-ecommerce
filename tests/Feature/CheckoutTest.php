@@ -7,6 +7,8 @@ use App\Enums\StockStatus;
 use App\Models\Address;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\DeliveryPromotion;
+use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -16,6 +18,12 @@ use Livewire\Livewire;
 beforeEach(function () {
     $this->brand = Brand::create(['name' => 'TestBrand', 'slug' => 'test-brand', 'is_active' => true, 'sort_order' => 1]);
     $this->cat = Category::create(['name' => 'TestCat', 'slug' => 'test-cat', 'status' => CategoryStatus::ACTIVE, 'sort_order' => 1]);
+
+    // A zone wide enough to cover all factory-generated Nairobi addresses.
+    $this->zone = DeliveryZone::factory()->centeredAt(-1.29, 36.81, 12000)->create([
+        'name' => 'Nairobi Metro',
+        'base_fee_cents' => 50000,
+    ]);
 
     Product::create([
         'name' => 'Wok Range', 'slug' => 'wok-range', 'sku' => 'WK-1',
@@ -51,7 +59,7 @@ it('places an order, snapshots totals, and clears the cart', function () {
 
     Livewire::test('pages::storefront.checkout')
         ->set('selectedAddressId', $address->id)
-        ->set('paymentMethod', 'mpesa')
+        ->set('paymentMethod', 'bank_transfer')
         ->call('placeOrder')
         ->assertHasNoErrors();
 
@@ -61,7 +69,7 @@ it('places an order, snapshots totals, and clears the cart', function () {
         ->and($order->status)->toBe(OrderStatus::PENDING)
         ->and($order->subtotal_cents)->toBe(395000)
         ->and($order->vat_cents)->toBe(63200)
-        ->and($order->payment_method)->toBe('mpesa')
+        ->and($order->payment_method)->toBe('bank_transfer')
         ->and($order->items)->toHaveCount(2);
 
     expect(StorefrontSession::cart())->toBeEmpty();
@@ -76,7 +84,77 @@ it('requires a delivery address when delivering', function () {
     Livewire::test('pages::storefront.checkout')
         ->set('selectedAddressId', null)
         ->set('deliveryMethod', 'delivery')
-        ->set('paymentMethod', 'mpesa')
+        ->set('paymentMethod', 'bank_transfer')
+        ->call('placeOrder')
+        ->assertHasErrors('selectedAddressId');
+
+    expect(Order::count())->toBe(0);
+});
+
+it('prices delivery from the resolved zone and snapshots it on the order', function () {
+    $user = User::factory()->create();
+    $address = Address::factory()->create([
+        'user_id' => $user->id,
+        'is_default' => true,
+        'latitude' => -1.2921,
+        'longitude' => 36.8219,
+    ]);
+    $this->actingAs($user);
+
+    StorefrontSession::addToCart('wok-range', 1);
+
+    Livewire::test('pages::storefront.checkout')
+        ->set('selectedAddressId', $address->id)
+        ->set('deliveryMethod', 'delivery')
+        ->set('paymentMethod', 'bank_transfer')
+        ->call('placeOrder')
+        ->assertHasNoErrors();
+
+    $order = Order::where('user_id', $user->id)->first();
+
+    expect($order->delivery_cents)->toBe(50000)
+        ->and($order->delivery_zone_id)->toBe($this->zone->id);
+});
+
+it('delivers free while a launch promotion is live', function () {
+    DeliveryPromotion::factory()->create(['name' => 'Launch free delivery']);
+
+    $user = User::factory()->create();
+    $address = Address::factory()->create([
+        'user_id' => $user->id,
+        'is_default' => true,
+        'latitude' => -1.2921,
+        'longitude' => 36.8219,
+    ]);
+    $this->actingAs($user);
+
+    StorefrontSession::addToCart('wok-range', 1);
+
+    Livewire::test('pages::storefront.checkout')
+        ->set('selectedAddressId', $address->id)
+        ->set('paymentMethod', 'bank_transfer')
+        ->call('placeOrder')
+        ->assertHasNoErrors();
+
+    expect(Order::where('user_id', $user->id)->first()->delivery_cents)->toBe(0);
+});
+
+it('blocks delivery to an unserviceable location', function () {
+    $user = User::factory()->create();
+    $address = Address::factory()->create([
+        'user_id' => $user->id,
+        'is_default' => true,
+        'latitude' => -4.0435, // Mombasa — outside every zone.
+        'longitude' => 39.6682,
+    ]);
+    $this->actingAs($user);
+
+    StorefrontSession::addToCart('wok-range', 1);
+
+    Livewire::test('pages::storefront.checkout')
+        ->set('selectedAddressId', $address->id)
+        ->set('deliveryMethod', 'delivery')
+        ->set('paymentMethod', 'bank_transfer')
         ->call('placeOrder')
         ->assertHasErrors('selectedAddressId');
 

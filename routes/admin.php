@@ -11,4 +11,5 @@ Route::middleware(['auth', 'verified'])
     ->name('admin.')
     ->group(function () {
         Route::view('/', 'pages.admin.dashboard')->name('dashboard');
+        Route::livewire('/delivery-zones', 'pages::admin.delivery-zones')->name('delivery-zones');
     });

@@ -91,7 +91,7 @@ new #[Layout('layouts::account')] #[Title('My Account — Sheffield')] class ext
             </flux:card>
         @else
             <flux:card class="p-0">
-                <flux:table>
+                <flux:table container:class="px-6">
                     <flux:table.columns>
                         <flux:table.column>Order</flux:table.column>
                         <flux:table.column>Date</flux:table.column>

@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Safaricom posts the STK result server-to-server, so it carries no CSRF token.
+        $middleware->validateCsrfTokens(except: [
+            'payments/mpesa/callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

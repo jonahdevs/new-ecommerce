@@ -1,10 +1,37 @@
-@assets
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
-@endassets
-
 @script
 <script>
+// Lazily load Leaflet (CSS + JS) on demand and resolve once `L` is available.
+// Shared across every map scope via window.__leafletReady so it loads once and
+// we never touch `L` before the script has finished executing.
+window.ensureLeaflet = window.ensureLeaflet || function () {
+    if (window.L) return Promise.resolve();
+    if (window.__leafletReady) return window.__leafletReady;
+
+    window.__leafletReady = new Promise((resolve, reject) => {
+        // Official Leaflet 1.9.4 CDN URLs + SRI hashes (leafletjs.com/download.html).
+        if (! document.querySelector('link[data-leaflet]')) {
+            const css = document.createElement('link');
+            css.rel = 'stylesheet';
+            css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+            css.crossOrigin = '';
+            css.setAttribute('data-leaflet', '');
+            document.head.appendChild(css);
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+        script.crossOrigin = '';
+        script.setAttribute('data-leaflet', '');
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Leaflet'));
+        document.head.appendChild(script);
+    });
+
+    return window.__leafletReady;
+};
+
 Alpine.data('addressMap', () => {
     // Non-reactive guard so x-effect doesn't re-init on every dependency change.
     let active = false;
@@ -19,11 +46,7 @@ Alpine.data('addressMap', () => {
             if (active) return;
             active = true;
             this.step = 1;
-            this.$nextTick(() => {
-                this.initMap();
-                // Flux animates the modal in; recalc once it has settled so tiles render.
-                setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 250);
-            });
+            this.$nextTick(() => this.initMap());
         },
 
         close() {
@@ -41,8 +64,17 @@ Alpine.data('addressMap', () => {
             this.$nextTick(() => { if (this.map) this.map.invalidateSize(); });
         },
 
-        initMap() {
+        async initMap() {
             if (! this.$refs.mapContainer) return;
+
+            try {
+                await window.ensureLeaflet();
+            } catch (e) {
+                console.error(e);
+                return;
+            }
+
+            if (! active || ! this.$refs.mapContainer) return;
             if (this.map) this.destroyMap();
 
             const lat = this.$wire.latitude ?? -1.2921;
@@ -64,7 +96,8 @@ Alpine.data('addressMap', () => {
                 this.placeMarker(e.latlng.lat, e.latlng.lng);
             });
 
-            this.$nextTick(() => { if (this.map) this.map.invalidateSize(); });
+            // Flux animates the modal in; recalc once it has settled so tiles render.
+            setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 300);
         },
 
         placeMarker(lat, lng) {

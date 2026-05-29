@@ -30,6 +30,9 @@ class AddressFactory extends Factory
             'postal_code' => fake()->numerify('#####'),
             'country' => 'KE',
             'is_default' => false,
+            // Jittered around central Nairobi so addresses fall within seeded zones.
+            'latitude' => fake()->randomFloat(7, -1.33, -1.25),
+            'longitude' => fake()->randomFloat(7, 36.76, 36.86),
         ];
     }
 

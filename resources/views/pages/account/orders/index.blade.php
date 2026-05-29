@@ -78,7 +78,7 @@ new #[Layout('layouts::account')] #[Title('Orders — Sheffield')] class extends
         </flux:card>
     @else
         <flux:card class="p-0">
-            <flux:table>
+            <flux:table :paginate="$this->orders" container:class="px-6">
                 <flux:table.columns>
                     <flux:table.column>Order</flux:table.column>
                     <flux:table.column class="hidden sm:table-cell">Date</flux:table.column>
@@ -119,8 +119,6 @@ new #[Layout('layouts::account')] #[Title('Orders — Sheffield')] class extends
                 </flux:table.rows>
             </flux:table>
         </flux:card>
-
-        <div>{{ $this->orders->links() }}</div>
     @endif
 
 </div>

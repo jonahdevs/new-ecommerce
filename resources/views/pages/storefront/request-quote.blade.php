@@ -308,8 +308,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
 
             {{-- ── Right: items panel ── --}}
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
-                <div class="rounded-md border border-zinc-200 bg-white p-6">
-                    <div class="-mx-6 flex items-center justify-between border-b border-zinc-200 px-6 pb-4">
+                <div class="rounded-md border border-zinc-200 bg-white">
+                    <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
                         <h2 class="text-[11px] font-bold tracking-[0.14em] text-ink uppercase">
                             Items <span class="ml-0.5 text-ink-4">({{ $this->lines->count() }})</span>
                         </h2>
@@ -318,9 +318,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                         </flux:button>
                     </div>
 
+                    <div class="p-6">
                     {{-- Added items --}}
                     @if ($this->lines->isEmpty())
-                        <div class="mt-4 rounded-md border border-dashed border-zinc-300 p-6 text-center">
+                        <div class="rounded-md border border-dashed border-zinc-300 p-6 text-center">
                             <flux:icon.cube variant="outline" class="mx-auto size-7 text-ink-4" />
                             <p class="mt-2 text-[12.5px] text-ink-3">No items yet. Add products, or just describe what you need in the notes.</p>
                             <flux:button type="button" variant="customer-outline" size="customer" icon="plus" wire:click="openItemModal" class="mt-3">
@@ -328,7 +329,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                             </flux:button>
                         </div>
                     @else
-                        <div class="mt-2 divide-y divide-zinc-100">
+                        <div class="divide-y divide-zinc-100">
                             @foreach ($this->lines as $line)
                                 <div wire:key="item-{{ $line['slug'] }}" class="flex gap-3 py-3.5">
                                     <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
@@ -390,6 +391,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                             No obligation — review before you commit
                         </span>
                     </div>
+                    </div>
                 </div>
             </aside>
         </form>
@@ -433,7 +435,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                         @foreach ($this->searchResults as $product)
                             @php $price = $product->sale_price ?? $product->price; @endphp
                             <div wire:key="res-{{ $product->slug }}"
-                                 class="group flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white transition hover:shadow-md">
+                                 class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">
                                 <div class="relative aspect-square overflow-hidden bg-surface-sunken p-2">
                                     @if ($product->cover_url)
                                         <img src="{{ $product->cover_url }}" alt="{{ $product->name }}" class="size-full object-contain" loading="lazy" />
@@ -473,7 +475,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
 
             <div class="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
                 <span class="text-[12.5px] text-ink-3">{{ $this->lines->count() }} item{{ $this->lines->count() === 1 ? '' : 's' }} in quote</span>
-                <flux:button type="button" variant="customer-primary" size="customer" x-on:click="$flux.close()">Done</flux:button>
+                <flux:button type="button" variant="customer-primary" size="customer" x-on:click="$flux.modals().close()">Done</flux:button>
             </div>
         </div>
     </flux:modal>

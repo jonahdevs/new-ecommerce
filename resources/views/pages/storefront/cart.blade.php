@@ -195,12 +195,13 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 
                 {{-- ── Cart summary sidebar ── --}}
                 <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
-                    <div class="rounded-md border border-zinc-200 bg-white p-6">
-                        <div class="-mx-6 border-b border-zinc-200 px-6 pb-4">
+                    <div class="rounded-md border border-zinc-200 bg-white">
+                        <div class="border-b border-zinc-200 px-6 py-4">
                             <h2 class="text-[11px] font-bold tracking-[0.14em] text-ink uppercase">Cart summary</h2>
                         </div>
 
-                        <div class="mt-5 flex flex-col gap-3">
+                        <div class="p-6">
+                        <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Subtotal</span>
                                 <span class="font-medium tabular-nums">{!! $kes($subtotalCents) !!}</span>
@@ -255,6 +256,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                                 <flux:icon.truck variant="micro" class="size-3.5 text-brand-500" />
                                 Free delivery within Nairobi
                             </span>
+                        </div>
                         </div>
                     </div>
                 </aside>

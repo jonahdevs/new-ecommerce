@@ -1,9 +1,14 @@
 <?php
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Services\DeliveryQuoteResult;
+use App\Services\DeliveryResolver;
+use App\Services\Mpesa\MpesaPaymentService;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
@@ -58,6 +63,15 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
     /** @var array<int, string> */
     public array $paymentMethods = ['mpesa', 'card', 'bank_transfer', 'net_30'];
 
+    // ─── M-Pesa ────────────────────────────────────────────────────────────
+    public string $mpesaPhone = '';
+
+    public bool $awaitingPayment = false;
+
+    public ?int $pendingPaymentId = null;
+
+    public int $pollAttempts = 0;
+
     public function mount(): void
     {
         SEOMeta::setRobots('noindex,nofollow');
@@ -68,9 +82,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             return;
         }
 
-        $this->selectedAddressId = auth()->user()->addresses()
-            ->orderByDesc('is_default')
-            ->value('id');
+        $default = auth()->user()->addresses()->orderByDesc('is_default')->first();
+        $this->selectedAddressId = $default?->id;
+        $this->mpesaPhone = (string) ($default?->phone ?? '');
     }
 
     #[Computed]
@@ -96,6 +110,38 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
         }
 
         return $this->addresses->firstWhere('id', $this->selectedAddressId);
+    }
+
+    /**
+     * Serviceability + price for the current delivery choice. Pickup is always
+     * free; delivery is resolved from the selected address pin through the
+     * zone + promotion matrix.
+     */
+    #[Computed]
+    public function deliveryQuote(): DeliveryQuoteResult
+    {
+        if ($this->deliveryMethod === 'pickup') {
+            return new DeliveryQuoteResult(serviceable: true, feeCents: 0, isFree: true);
+        }
+
+        $address = $this->selectedAddress;
+        $subtotalCents = (int) $this->lines->sum('line_total_cents');
+
+        return app(DeliveryResolver::class)->quoteForPin(
+            $address?->latitude,
+            $address?->longitude,
+            $subtotalCents,
+        );
+    }
+
+    /**
+     * The zone the in-progress map pin falls into, for live feedback while
+     * adding an address.
+     */
+    #[Computed]
+    public function pinnedZone(): ?\App\Models\DeliveryZone
+    {
+        return app(DeliveryResolver::class)->resolveZone($this->latitude, $this->longitude);
     }
 
     public function addressRules(): array
@@ -149,7 +195,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
     {
         if ($this->addresses->contains('id', $id)) {
             $this->selectedAddressId = $id;
-            unset($this->selectedAddress);
+            unset($this->selectedAddress, $this->deliveryQuote);
         }
 
         $this->showAddressModal = false;
@@ -167,11 +213,14 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             $data['is_default'] = true;
         }
 
+        $data['delivery_zone_id'] = app(DeliveryResolver::class)
+            ->resolveZone($data['latitude'] ?? null, $data['longitude'] ?? null)?->id;
+
         $address = auth()->user()->addresses()->create($data);
 
         $this->selectedAddressId = $address->id;
         $this->showAddressModal = false;
-        unset($this->addresses, $this->selectedAddress);
+        unset($this->addresses, $this->selectedAddress, $this->deliveryQuote);
 
         Flux::toast(heading: 'Address added', text: 'Your delivery address has been saved.', variant: 'success');
     }
@@ -185,6 +234,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
     {
         if (in_array($method, ['delivery', 'pickup'], true)) {
             $this->deliveryMethod = $method;
+            unset($this->deliveryQuote);
         }
 
         $this->showDeliveryModal = false;
@@ -219,9 +269,18 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             'deliveryMethod' => ['required', 'in:delivery,pickup'],
         ]);
 
-        $address = null;
+        if ($this->paymentMethod === 'mpesa' && ! MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
+            $this->addError('mpesaPhone', 'Enter a valid M-Pesa number, e.g. 0712 345 678.');
 
-        if ($this->deliveryMethod === 'delivery') {
+            return;
+        }
+
+        $address = null;
+        $subtotalCents = (int) $lines->sum('line_total_cents');
+
+        if ($this->deliveryMethod === 'pickup') {
+            $quote = new DeliveryQuoteResult(serviceable: true, feeCents: 0, isFree: true);
+        } else {
             $address = auth()->user()->addresses()->find($this->selectedAddressId);
 
             if (! $address) {
@@ -229,17 +288,29 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 
                 return;
             }
+
+            $quote = app(DeliveryResolver::class)->quoteForPin(
+                $address->latitude,
+                $address->longitude,
+                $subtotalCents,
+            );
+
+            if (! $quote->serviceable) {
+                $this->addError('selectedAddressId', "We don't deliver to this location yet — choose pickup or request a quote.");
+
+                return;
+            }
         }
 
-        $subtotalCents = (int) $lines->sum('line_total_cents');
         $vatCents = (int) round($subtotalCents * 0.16);
-        $deliveryCents = $this->deliveryMethod === 'pickup' ? 0 : ($subtotalCents > 50000000 ? 0 : 1200000);
+        $deliveryCents = $quote->feeCents;
         $totalCents = $subtotalCents + $vatCents + $deliveryCents;
 
-        $order = DB::transaction(function () use ($lines, $address, $subtotalCents, $vatCents, $deliveryCents, $totalCents) {
+        $order = DB::transaction(function () use ($lines, $address, $quote, $subtotalCents, $vatCents, $deliveryCents, $totalCents) {
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'address_id' => $address?->id,
+                'delivery_zone_id' => $quote->zone?->id,
                 'order_number' => $this->generateOrderNumber(),
                 'status' => OrderStatus::PENDING,
                 'subtotal_cents' => $subtotalCents,
@@ -267,12 +338,83 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             return $order;
         });
 
+        // M-Pesa: fire the STK Push prompt and wait for confirmation before
+        // clearing the cart. The cart stays intact so a failed attempt is retryable.
+        if ($this->paymentMethod === 'mpesa') {
+            $payment = app(MpesaPaymentService::class)->initiate($order, $this->mpesaPhone);
+
+            if ($payment->status === PaymentStatus::FAILED) {
+                $this->addError('mpesaPhone', $payment->result_desc ?: 'Could not start the M-Pesa prompt. Please try again.');
+
+                return;
+            }
+
+            $this->pendingPaymentId = $payment->id;
+            $this->awaitingPayment = true;
+            $this->pollAttempts = 0;
+
+            return;
+        }
+
         StorefrontSession::clearCart();
         $this->dispatch('cart-updated');
 
         Flux::toast(heading: 'Order placed', text: 'Order '.$order->order_number.' has been received.', variant: 'success');
 
         $this->redirectRoute('account.orders.show', $order, navigate: true);
+    }
+
+    /**
+     * Polled while awaiting M-Pesa: reconcile the payment via STK Query and
+     * advance the customer once Daraja reports a final result.
+     */
+    public function pollPayment(): void
+    {
+        if (! $this->awaitingPayment || ! $this->pendingPaymentId) {
+            return;
+        }
+
+        $payment = Payment::find($this->pendingPaymentId);
+
+        if (! $payment) {
+            $this->awaitingPayment = false;
+
+            return;
+        }
+
+        $status = app(MpesaPaymentService::class)->syncFromQuery($payment);
+        $this->pollAttempts++;
+
+        if ($status === PaymentStatus::SUCCESS) {
+            $this->awaitingPayment = false;
+            StorefrontSession::clearCart();
+            $this->dispatch('cart-updated');
+            Flux::toast(heading: 'Payment received', text: 'Order '.$payment->account_reference.' is confirmed.', variant: 'success');
+            $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
+
+            return;
+        }
+
+        if (in_array($status, [PaymentStatus::FAILED, PaymentStatus::CANCELLED], true)) {
+            $this->awaitingPayment = false;
+            $this->addError('mpesaPhone', $status === PaymentStatus::CANCELLED
+                ? 'Payment was cancelled on your phone. You can try again.'
+                : ($payment->result_desc ?: 'Payment failed. Please try again.'));
+
+            return;
+        }
+
+        // Still pending — give the customer ~80s to enter their PIN, then stop.
+        if ($this->pollAttempts >= 20) {
+            $this->awaitingPayment = false;
+            $this->addError('mpesaPhone', 'No response from M-Pesa yet. If you were charged your order will update shortly — otherwise try again.');
+        }
+    }
+
+    public function cancelPayment(): void
+    {
+        $this->awaitingPayment = false;
+        $this->pendingPaymentId = null;
     }
 
     private function generateOrderNumber(): string
@@ -286,10 +428,12 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 @php
     $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
 
+    $quote         = $this->deliveryQuote;
     $subtotalCents = $this->lines->sum('line_total_cents');
     $vatCents      = (int) round($subtotalCents * 0.16);
-    $deliveryCents = $this->deliveryMethod === 'pickup' ? 0 : ($subtotalCents > 50000000 ? 0 : 1200000);
+    $deliveryCents = $quote->feeCents;
     $totalCents    = $subtotalCents + $vatCents + $deliveryCents;
+    $unserviceable = $this->deliveryMethod === 'delivery' && $this->selectedAddress && ! $quote->serviceable;
 
     $paymentLabels = [
         'mpesa'         => 'M-Pesa',
@@ -301,11 +445,6 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
     $deliveryLabels = [
         'delivery' => 'Deliver to address',
         'pickup'   => 'Pickup in store',
-    ];
-
-    $deliveryDescriptions = [
-        'delivery' => 'Free within Nairobi over KES 500,000.',
-        'pickup'   => 'Collect from our Nairobi showroom — free.',
     ];
 @endphp
 
@@ -335,8 +474,8 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             <div class="flex-1 min-w-0 space-y-6">
 
                 {{-- Delivery address --}}
-                <section class="rounded-md border border-zinc-200 bg-white p-6">
-                    <div class="-mx-6 flex items-center justify-between border-b border-zinc-200 px-6 pb-4">
+                <section class="rounded-md border border-zinc-200 bg-white">
+                    <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
                         <h2 class="flex items-center gap-2 text-[11px] font-bold tracking-[0.14em] text-ink uppercase">
                             <flux:icon.map-pin variant="micro" class="size-4 text-brand-500" />
                             Delivery address
@@ -348,7 +487,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                         @endif
                     </div>
 
-                    <div class="mt-5">
+                    <div class="p-6">
                         @if ($this->deliveryMethod === 'pickup')
                             <p class="text-[13px] text-ink-3">Collecting from our Nairobi showroom — no delivery address required.</p>
                         @elseif ($this->selectedAddress)
@@ -380,8 +519,8 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                 </section>
 
                 {{-- Delivery method --}}
-                <section class="rounded-md border border-zinc-200 bg-white p-6">
-                    <div class="-mx-6 flex items-center justify-between border-b border-zinc-200 px-6 pb-4">
+                <section class="rounded-md border border-zinc-200 bg-white">
+                    <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
                         <h2 class="flex items-center gap-2 text-[11px] font-bold tracking-[0.14em] text-ink uppercase">
                             <flux:icon.truck variant="micro" class="size-4 text-brand-500" />
                             Delivery method
@@ -389,18 +528,33 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                         <flux:button type="button" variant="customer-outline" size="customer" icon="pencil-square" wire:click="openDeliveryModal">Change</flux:button>
                     </div>
 
-                    <div class="mt-5 flex items-start gap-3">
+                    <div class="flex items-start gap-3 p-6">
                         <flux:icon :name="$this->deliveryMethod === 'pickup' ? 'building-storefront' : 'truck'" variant="micro" class="mt-0.5 size-4 text-brand-500" />
                         <div>
                             <div class="text-[13.5px] font-semibold text-ink">{{ $deliveryLabels[$this->deliveryMethod] }}</div>
-                            <div class="mt-0.5 text-[12.5px] text-ink-3">{{ $deliveryDescriptions[$this->deliveryMethod] }}</div>
+                            @if ($this->deliveryMethod === 'pickup')
+                                <div class="mt-0.5 text-[12.5px] text-ink-3">Collect from our Nairobi showroom — free.</div>
+                            @elseif (! $this->selectedAddress)
+                                <div class="mt-0.5 text-[12.5px] text-ink-3">Add a delivery address to see availability and cost.</div>
+                            @elseif ($unserviceable)
+                                <div class="mt-0.5 text-[12.5px] text-red-500">We don't deliver to this location yet. Choose pickup or request a quote.</div>
+                            @else
+                                <div class="mt-0.5 text-[12.5px] text-ink-3">
+                                    {{ $quote->zone?->name }}{{ $quote->etaLabel ? ' · '.$quote->etaLabel : '' }} —
+                                    @if ($quote->isFree)
+                                        <span class="font-semibold text-emerald-600">Free{{ $quote->promotionName ? ' ('.$quote->promotionName.')' : '' }}</span>
+                                    @else
+                                        <span class="font-semibold text-ink-2">{!! $kes($quote->feeCents) !!}</span>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </section>
 
                 {{-- Payment method --}}
-                <section class="rounded-md border border-zinc-200 bg-white p-6">
-                    <div class="-mx-6 flex items-center justify-between border-b border-zinc-200 px-6 pb-4">
+                <section class="rounded-md border border-zinc-200 bg-white">
+                    <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
                         <h2 class="flex items-center gap-2 text-[11px] font-bold tracking-[0.14em] text-ink uppercase">
                             <flux:icon.credit-card variant="micro" class="size-4 text-brand-500" />
                             Payment method
@@ -408,25 +562,39 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                         <flux:button type="button" variant="customer-outline" size="customer" icon="pencil-square" wire:click="openPaymentModal">Change</flux:button>
                     </div>
 
-                    <div class="mt-5 flex items-center gap-3">
-                        <flux:icon.credit-card variant="micro" class="size-4 text-brand-500" />
-                        <span class="text-[13.5px] font-semibold text-ink">{{ $paymentLabels[$this->paymentMethod] }}</span>
+                    <div class="p-6">
+                        <div class="flex items-center gap-3">
+                            <flux:icon.credit-card variant="micro" class="size-4 text-brand-500" />
+                            <span class="text-[13.5px] font-semibold text-ink">{{ $paymentLabels[$this->paymentMethod] }}</span>
+                        </div>
+                        @error('paymentMethod')
+                            <p class="mt-2 text-[12.5px] text-red-500">{{ $message }}</p>
+                        @enderror
+
+                        @if ($this->paymentMethod === 'mpesa')
+                            <div class="mt-4">
+                                <flux:field>
+                                    <flux:label>M-Pesa phone number</flux:label>
+                                    <flux:input wire:model="mpesaPhone" type="tel" inputmode="tel" placeholder="0712 345 678" />
+                                    <flux:description>You'll get an STK push to enter your PIN and confirm payment.</flux:description>
+                                    <flux:error name="mpesaPhone" />
+                                </flux:field>
+                            </div>
+                        @endif
                     </div>
-                    @error('paymentMethod')
-                        <p class="mt-2 text-[12.5px] text-red-500">{{ $message }}</p>
-                    @enderror
                 </section>
             </div>
 
             {{-- ── Right: order summary ── --}}
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
-                <div class="rounded-md border border-zinc-200 bg-white p-6">
-                    <div class="-mx-6 border-b border-zinc-200 px-6 pb-4">
+                <div class="rounded-md border border-zinc-200 bg-white">
+                    <div class="border-b border-zinc-200 px-6 py-4">
                         <h2 class="text-[11px] font-bold tracking-[0.14em] text-ink uppercase">Order summary</h2>
                     </div>
 
+                    <div class="p-6">
                     {{-- Items --}}
-                    <div class="mt-4 space-y-3">
+                    <div class="space-y-3">
                         @foreach ($this->lines as $line)
                             <div wire:key="sum-{{ $line['slug'] }}" class="flex items-center gap-3">
                                 <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
@@ -452,9 +620,13 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                         </div>
                         <div class="flex items-center justify-between text-sm text-ink-2">
                             <span>{{ $this->deliveryMethod === 'pickup' ? 'Pickup' : 'Shipping' }}</span>
-                            <span class="{{ $deliveryCents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
-                                {!! $deliveryCents === 0 ? 'Free' : $kes($deliveryCents) !!}
-                            </span>
+                            @if ($unserviceable)
+                                <span class="font-medium text-red-500">Unavailable</span>
+                            @else
+                                <span class="{{ $deliveryCents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
+                                    {!! $deliveryCents === 0 ? 'Free' : $kes($deliveryCents) !!}
+                                </span>
+                            @endif
                         </div>
                         <div class="flex items-center justify-between text-sm text-ink-2">
                             <span>VAT (16%)</span>
@@ -469,8 +641,8 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                         <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! $kes($totalCents) !!}</span>
                     </div>
 
-                    <flux:button variant="customer-primary" size="customer-lg" wire:click="placeOrder" icon:trailing="arrow-right" class="mt-5! w-full!">
-                        Place order
+                    <flux:button variant="customer-primary" size="customer-lg" wire:click="placeOrder" icon:trailing="arrow-right" class="mt-5! w-full!" wire:loading.attr="disabled" wire:target="placeOrder">
+                        {{ $this->paymentMethod === 'mpesa' ? 'Pay with M-Pesa' : 'Place order' }}
                     </flux:button>
 
                     <div class="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-ink-4">
@@ -481,6 +653,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                     <div class="mt-4 border-t border-zinc-100 pt-4 text-center text-[12px] text-ink-3">
                         Need a formal quote for a tender?
                         <a href="{{ route('quote.request') }}" wire:navigate class="font-semibold text-brand-500 hover:text-brand-600">Request a quote</a>
+                    </div>
                     </div>
                 </div>
             </aside>
@@ -514,7 +687,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             </div>
 
             <div class="mt-5 flex items-center justify-between gap-3">
-                <flux:button type="button" variant="ghost" x-on:click="$flux.close()">Cancel</flux:button>
+                <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
                 <flux:button type="button" variant="customer-outline" size="customer" icon="plus" wire:click="startAddressCreate">Add new address</flux:button>
             </div>
         @else
@@ -534,7 +707,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                         @if ($this->addresses->isNotEmpty())
                             <flux:button type="button" variant="ghost" icon="arrow-left" wire:click="$set('addressModalMode', 'select')">Back</flux:button>
                         @else
-                            <flux:button type="button" variant="ghost" x-on:click="$flux.close()">Cancel</flux:button>
+                            <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
                         @endif
                         <flux:button type="button" variant="customer-primary" size="customer" icon:trailing="arrow-right" x-on:click="showDetails()">Next</flux:button>
                     </div>
@@ -565,7 +738,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                     <flux:icon :name="$value === 'pickup' ? 'building-storefront' : 'truck'" variant="micro" class="mt-0.5 size-4 {{ $this->deliveryMethod === $value ? 'text-brand-500' : 'text-ink-4' }}" />
                     <div>
                         <div class="text-[13.5px] font-semibold text-ink">{{ $title }}</div>
-                        <div class="mt-0.5 text-[12px] text-ink-3">{{ $value === 'pickup' ? 'Collect from our Nairobi showroom — free.' : 'Free within Nairobi over KES 500,000.' }}</div>
+                        <div class="mt-0.5 text-[12px] text-ink-3">{{ $value === 'pickup' ? 'Collect from our Nairobi showroom — free.' : 'Delivery across Nairobi & nearby areas — free for launch.' }}</div>
                     </div>
                 </button>
             @endforeach
@@ -589,6 +762,29 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                     <span class="text-[13.5px] font-semibold text-ink">{{ $title }}</span>
                 </button>
             @endforeach
+        </div>
+    </flux:modal>
+
+    {{-- M-Pesa STK Push — awaiting confirmation --}}
+    <flux:modal wire:model.self="awaitingPayment" class="md:w-[440px]" :dismissible="false" :closable="false">
+        <div wire:poll.4s="pollPayment" class="text-center">
+            <div class="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-50">
+                <flux:icon.device-phone-mobile variant="outline" class="size-7 text-emerald-600" />
+            </div>
+            <flux:heading class="mt-4">Check your phone</flux:heading>
+            <flux:subheading class="mt-1">
+                We sent an M-Pesa request to <span class="font-semibold text-ink">{{ $this->mpesaPhone }}</span>.
+                Enter your PIN to confirm payment.
+            </flux:subheading>
+
+            <div class="mt-5 flex items-center justify-center gap-2 text-[12.5px] text-ink-3">
+                <flux:icon.arrow-path variant="micro" class="size-4 animate-spin text-brand-500" />
+                Waiting for confirmation…
+            </div>
+
+            <flux:button type="button" variant="ghost" size="sm" wire:click="cancelPayment" class="mt-5">
+                Cancel
+            </flux:button>
         </div>
     </flux:modal>
 </div>

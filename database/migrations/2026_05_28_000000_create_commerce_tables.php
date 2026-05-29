@@ -8,9 +8,47 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Delivery zones are circular geofences (centre + radius) that decide
+        // serviceability and the base delivery fee. Created first so addresses
+        // and orders can reference them.
+        Schema::create('delivery_zones', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('county')->default('Nairobi');
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->integer('priority')->default(0);
+            $table->decimal('center_lat', 10, 7);
+            $table->decimal('center_lng', 10, 7);
+            $table->unsignedInteger('radius_meters');
+            $table->integer('base_fee_cents')->default(0);
+            $table->integer('free_over_cents')->nullable();
+            $table->string('eta_label')->nullable();
+            $table->timestamps();
+        });
+
+        // Time-bound overrides layered on top of zone base fees. The launch
+        // "free delivery" offer is a single global promotion row.
+        Schema::create('delivery_promotions', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->boolean('is_active')->default(true);
+            $table->integer('priority')->default(0);
+            $table->string('scope')->default('global');
+            $table->foreignId('zone_id')->nullable()->constrained('delivery_zones')->cascadeOnDelete();
+            $table->string('effect');
+            $table->integer('value_cents')->nullable();
+            $table->unsignedTinyInteger('percent')->nullable();
+            $table->integer('min_subtotal_cents')->default(0);
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('delivery_zone_id')->nullable()->constrained('delivery_zones')->nullOnDelete();
             $table->string('label')->default('Home');
             $table->string('first_name');
             $table->string('last_name');
@@ -30,6 +68,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('address_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('delivery_zone_id')->nullable()->constrained('delivery_zones')->nullOnDelete();
             $table->string('order_number')->unique();
             $table->string('status')->default('pending');
             $table->integer('subtotal_cents')->default(0);
@@ -90,5 +129,7 @@ return new class extends Migration
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
         Schema::dropIfExists('addresses');
+        Schema::dropIfExists('delivery_promotions');
+        Schema::dropIfExists('delivery_zones');
     }
 };

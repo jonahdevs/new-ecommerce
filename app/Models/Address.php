@@ -15,6 +15,7 @@ class Address extends Model
 
     protected $fillable = [
         'user_id',
+        'delivery_zone_id',
         'label',
         'first_name',
         'last_name',
@@ -46,6 +47,11 @@ class Address extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function deliveryZone(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryZone::class);
     }
 
     public function orders(): HasMany

@@ -49,10 +49,10 @@ new #[Layout('layouts::account')] #[Title('Order — Sheffield')] class extends 
 
             {{-- Items --}}
             <flux:card class="p-0">
-                <div class="-mx-0 border-b border-zinc-200 px-5 py-4">
+                <div class="border-b border-zinc-200 px-5 py-4">
                     <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Items ordered</flux:heading>
                 </div>
-                <flux:table>
+                <flux:table container:class="px-5">
                     <flux:table.rows>
                         @foreach ($order->items as $item)
                             <flux:table.row wire:key="item-{{ $item->id }}">

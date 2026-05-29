@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\DeliveryZone;
+use App\Services\DeliveryResolver;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
 use Livewire\Attributes\Computed;
@@ -92,9 +94,18 @@ new #[Layout('layouts::account')] #[Title('Addresses — Sheffield')] class exte
         $this->showModal = true;
     }
 
+    #[Computed]
+    public function pinnedZone(): ?DeliveryZone
+    {
+        return app(DeliveryResolver::class)->resolveZone($this->latitude, $this->longitude);
+    }
+
     public function save(): void
     {
         $data = $this->validate();
+
+        $data['delivery_zone_id'] = app(DeliveryResolver::class)
+            ->resolveZone($data['latitude'] ?? null, $data['longitude'] ?? null)?->id;
 
         if ($data['is_default']) {
             auth()->user()->addresses()->update(['is_default' => false]);
@@ -176,58 +187,53 @@ new #[Layout('layouts::account')] #[Title('Addresses — Sheffield')] class exte
         @else
             <div class="grid gap-4 sm:grid-cols-2">
                 @foreach ($this->addresses as $address)
-                    <div wire:key="addr-{{ $address->id }}"
-                         class="relative rounded-md border bg-white p-5 {{ $address->is_default ? 'border-brand-500' : 'border-zinc-200' }}">
+                    <flux:card wire:key="addr-{{ $address->id }}"
+                               class="flex h-full flex-col p-0 {{ $address->is_default ? 'border-brand-500 ring-1 ring-brand-500' : '' }}">
 
-                        @if ($address->is_default)
-                            <div class="absolute right-4 top-4">
-                                <span class="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-[10.5px] font-bold tracking-wide text-brand-500 uppercase">
-                                    Default
-                                </span>
-                            </div>
-                        @endif
-
-                        <div class="text-[10.5px] font-bold tracking-[0.1em] text-ink-3 uppercase">{{ $address->label }}</div>
-                        <div class="mt-1 font-semibold text-ink">{{ $address->fullName() }}</div>
-
-                        <div class="mt-2 space-y-0.5 text-[13px] leading-relaxed text-ink-2">
-                            <div>{{ $address->line1 }}</div>
-                            @if ($address->line2)
-                                <div>{{ $address->line2 }}</div>
-                            @endif
-                            <div>{{ $address->city }}{{ $address->postal_code ? ', ' . $address->postal_code : '' }}</div>
-                            @if ($address->phone)
-                                <flux:text size="sm" class="mt-1 text-ink-3">{{ $address->phone }}</flux:text>
+                        {{-- Label + default badge --}}
+                        <div class="flex items-center justify-between gap-2 border-b border-zinc-100 px-5 py-3">
+                            <span class="text-[10.5px] font-bold tracking-[0.12em] text-ink-3 uppercase">{{ $address->label }}</span>
+                            @if ($address->is_default)
+                                <span class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>
                             @endif
                         </div>
 
-                        {{-- Pin indicator --}}
-                        @if ($address->hasCoordinates())
-                            <a href="https://www.google.com/maps?q={{ $address->latitude }},{{ $address->longitude }}"
-                               target="_blank"
-                               class="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-brand-500 hover:text-brand-600">
-                                <flux:icon.map-pin variant="micro" class="size-3.5" />
-                                View on map
-                            </a>
-                        @endif
+                        {{-- Details — grows so every card's footer sits on the same baseline --}}
+                        <div class="flex-1 px-5 py-4">
+                            <div class="font-semibold text-ink">{{ $address->fullName() }}</div>
+                            <div class="mt-2 space-y-0.5 text-[13px] leading-relaxed text-ink-2">
+                                <div>{{ $address->line1 }}</div>
+                                @if ($address->line2)
+                                    <div>{{ $address->line2 }}</div>
+                                @endif
+                                <div>{{ $address->city }}{{ $address->postal_code ? ', ' . $address->postal_code : '' }}</div>
+                            </div>
+                            @if ($address->phone)
+                                <div class="mt-2 text-[12.5px] text-ink-3">{{ $address->phone }}</div>
+                            @endif
+                            @if ($address->hasCoordinates())
+                                <a href="https://www.google.com/maps?q={{ $address->latitude }},{{ $address->longitude }}"
+                                   target="_blank"
+                                   class="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-brand-500 hover:text-brand-600">
+                                    <flux:icon.map-pin variant="micro" class="size-3.5" />
+                                    View on map
+                                </a>
+                            @endif
+                        </div>
 
-                        <div class="mt-4 flex flex-wrap items-center gap-2">
-                            <flux:button variant="customer-outline" size="customer" wire:click="openEdit({{ $address->id }})">
-                                Edit
-                            </flux:button>
-                            @if (!$address->is_default)
-                                <flux:button variant="ghost" size="xs" wire:click="setDefault({{ $address->id }})">
-                                    Set as default
-                                </flux:button>
-                                <flux:button variant="ghost" size="xs"
+                        {{-- Actions --}}
+                        <div class="flex items-center gap-1 border-t border-zinc-100 px-3 py-2">
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="openEdit({{ $address->id }})">Edit</flux:button>
+                            @if (! $address->is_default)
+                                <flux:button variant="ghost" size="sm" wire:click="setDefault({{ $address->id }})">Set as default</flux:button>
+                                <flux:spacer />
+                                <flux:button variant="ghost" size="sm" icon="trash"
                                              wire:click="delete({{ $address->id }})"
                                              wire:confirm="Delete this address?"
-                                             class="text-red-500! hover:text-red-600!">
-                                    Delete
-                                </flux:button>
+                                             class="text-red-500! hover:text-red-600!" />
                             @endif
                         </div>
-                    </div>
+                    </flux:card>
                 @endforeach
             </div>
         @endif
@@ -248,7 +254,7 @@ new #[Layout('layouts::account')] #[Title('Addresses — Sheffield')] class exte
                 @include('partials.storefront.address-map-pin')
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <flux:button type="button" variant="ghost" x-on:click="$flux.close()">Cancel</flux:button>
+                    <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
                     <flux:button type="button" variant="customer-primary" size="customer" icon:trailing="arrow-right" x-on:click="showDetails()">Next</flux:button>
                 </div>
             </div>
