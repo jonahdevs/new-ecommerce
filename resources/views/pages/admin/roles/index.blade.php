@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Flux\Flux;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -15,10 +16,9 @@ use Spatie\Permission\Models\Role;
 new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Component {
     use WithPagination;
 
-    /** Roles that cannot be deleted to avoid locking admins out. */
-    private const PROTECTED_ROLES = ['admin', 'super-admin'];
+    private const PROTECTED_ROLES = PermissionSeeder::PROTECTED_ROLES;
 
-    // --- User modal state ---
+    // --- Edit user modal state ---
     public bool $showUserModal = false;
     public ?int $editingUserId = null;
     public string $userName = '';
@@ -112,14 +112,6 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
             ->paginate(10);
     }
 
-    public function openCreateUser(): void
-    {
-        $this->reset(['editingUserId', 'userName', 'userEmail', 'userPassword']);
-        $this->userRole = $this->roles->first()?->name ?? '';
-        $this->resetValidation();
-        $this->showUserModal = true;
-    }
-
     public function openEditUser(int $id): void
     {
         $user = User::with('roles')->findOrFail($id);
@@ -134,43 +126,28 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
 
     public function saveUser(): void
     {
-        $rules = [
+        $this->validate([
             'userName' => ['required', 'string', 'max:255'],
             'userEmail' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingUserId)],
             'userRole' => ['required', Rule::exists('roles', 'name')],
-        ];
+            ...($this->userPassword !== '' ? ['userPassword' => ['string', 'min:8']] : []),
+        ]);
 
-        if (! $this->editingUserId) {
-            $rules['userPassword'] = ['required', 'string', 'min:8'];
-        } elseif ($this->userPassword !== '') {
-            $rules['userPassword'] = ['string', 'min:8'];
+        $user = User::findOrFail($this->editingUserId);
+        $user->name = $this->userName;
+        $user->email = $this->userEmail;
+
+        if ($this->userPassword !== '') {
+            $user->password = $this->userPassword;
         }
 
-        $this->validate($rules);
-
-        if ($this->editingUserId) {
-            $user = User::findOrFail($this->editingUserId);
-            $user->name = $this->userName;
-            $user->email = $this->userEmail;
-            if ($this->userPassword !== '') {
-                $user->password = $this->userPassword;
-            }
-            $user->save();
-            $user->syncRoles([$this->userRole]);
-            Flux::toast(heading: 'User updated', text: $user->name.' has been saved.', variant: 'success');
-        } else {
-            $user = User::create([
-                'name' => $this->userName,
-                'email' => $this->userEmail,
-                'password' => $this->userPassword,
-                'email_verified_at' => now(),
-            ]);
-            $user->assignRole($this->userRole);
-            Flux::toast(heading: 'User added', text: $this->userName.' has been invited.', variant: 'success');
-        }
+        $user->save();
+        $user->syncRoles([$this->userRole]);
 
         $this->showUserModal = false;
         unset($this->users, $this->roles);
+
+        Flux::toast(heading: 'User updated', text: $user->name.' has been saved.', variant: 'success');
     }
 
     public function removeUser(int $id): void
@@ -254,7 +231,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
     <flux:card class="mt-6 p-0 overflow-hidden">
         <div class="flex items-center justify-between gap-4 px-6 py-4">
             <flux:heading size="lg">Users</flux:heading>
-            <flux:button variant="primary" icon="user-plus" wire:click="openCreateUser">Add user</flux:button>
+            <flux:button size="sm" variant="ghost" icon="user-plus" :href="route('admin.staff.create')" wire:navigate>Add user</flux:button>
         </div>
 
         {{-- Toolbar --}}
@@ -358,12 +335,10 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
         </div>
     </flux:card>
 
-    {{-- User modal --}}
+    {{-- Edit user modal --}}
     <flux:modal wire:model.self="showUserModal" class="md:w-[480px]" :dismissible="false">
-        <flux:heading>{{ $editingUserId ? 'Edit user' : 'Add user' }}</flux:heading>
-        <flux:subheading>
-            {{ $editingUserId ? 'Update this user and their role.' : 'Create a user and assign them a role.' }}
-        </flux:subheading>
+        <flux:heading>Edit user</flux:heading>
+        <flux:subheading>Update this user's details and role.</flux:subheading>
 
         <form wire:submit="saveUser" class="mt-5 space-y-4">
             <flux:input wire:model="userName" label="Name" placeholder="Jane Doe" required autofocus />
@@ -378,18 +353,13 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                 </flux:select>
             </flux:field>
 
-            <flux:input
-                wire:model="userPassword"
-                label="{{ $editingUserId ? 'New password' : 'Password' }}"
-                type="password"
-                :placeholder="$editingUserId ? 'Leave blank to keep current' : 'Min. 8 characters'"
-                :required="! $editingUserId" />
+            <flux:input wire:model="userPassword" label="New password" type="password" placeholder="Leave blank to keep current" />
 
             <div class="flex justify-end gap-3 pt-2">
                 <flux:modal.close>
                     <flux:button variant="ghost">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary">{{ $editingUserId ? 'Save changes' : 'Add user' }}</flux:button>
+                <flux:button type="submit" variant="primary">Save changes</flux:button>
             </div>
         </form>
     </flux:modal>

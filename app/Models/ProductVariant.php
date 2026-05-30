@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['product_id', 'sku', 'barcode', 'price', 'compare_at_price', 'cost_price', 'stock_status', 'stock_quantity', 'allow_backorder', 'weight', 'length', 'width', 'height', 'image', 'is_active', 'sort_order'])]
+#[Fillable(['product_id', 'sku', 'barcode', 'price', 'compare_at_price', 'cost_price', 'stock_status', 'stock_quantity', 'allow_backorder', 'weight', 'length', 'width', 'height', 'description', 'image', 'is_active', 'sort_order'])]
 class ProductVariant extends Model
 {
     use SoftDeletes;

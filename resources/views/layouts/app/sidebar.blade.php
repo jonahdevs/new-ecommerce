@@ -81,14 +81,17 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            <flux:sidebar.group :heading="__('Logistics')" class="grid">
+                <flux:sidebar.item icon="truck" :href="route('admin.delivery-zones')"
+                    :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
+                    {{ __('Delivery zones') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
             <flux:sidebar.group :heading="__('System')" class="grid">
                 <flux:sidebar.item icon="cog-6-tooth" :href="route('admin.settings.index')" :current="request()->routeIs('admin.settings.*')"
                     wire:navigate>
                     {{ __('Settings') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="truck" :href="route('admin.delivery-zones')"
-                    :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
-                    {{ __('Delivery zones') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>

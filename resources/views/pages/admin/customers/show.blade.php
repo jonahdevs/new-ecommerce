@@ -42,12 +42,15 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
     </flux:breadcrumbs>
 @endpush
 
-    <div class="mt-2 flex items-center gap-4">
-        <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="lg" />
-        <div>
-            <flux:heading size="xl">{{ $customer->name }}</flux:heading>
-            <flux:subheading>{{ $customer->email }} · Joined {{ $customer->created_at->format('d F Y') }}</flux:subheading>
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="lg" />
+            <div>
+                <flux:heading size="xl">{{ $customer->name }}</flux:heading>
+                <flux:subheading>{{ $customer->email }} · Joined {{ $customer->created_at->format('d F Y') }}</flux:subheading>
+            </div>
         </div>
+        <flux:button size="sm" variant="ghost" icon="pencil-square" :href="route('admin.customers.edit', $customer)" wire:navigate>Edit</flux:button>
     </div>
 
     <div class="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
@@ -67,11 +70,11 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                         <flux:table.column align="end">Total</flux:table.column>
                         <flux:table.column>Status</flux:table.column>
                         <flux:table.column align="end">Placed</flux:table.column>
+                        <flux:table.column></flux:table.column>
                     </flux:table.columns>
                     <flux:table.rows>
                         @forelse ($this->orders as $order)
-                            <flux:table.row :key="$order->id" class="cursor-pointer"
-                                wire:click="$navigate('{{ route('admin.orders.show', $order) }}')">
+                            <flux:table.row :key="$order->id">
                                 <flux:table.cell variant="strong"><span class="font-mono">{{ $order->order_number }}</span></flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $order->items_count }}</flux:table.cell>
                                 <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($order->total_cents) !!}</flux:table.cell>
@@ -81,10 +84,13 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                                     </flux:badge>
                                 </flux:table.cell>
                                 <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $order->created_at->format('M j, Y') }}</flux:table.cell>
+                                <flux:table.cell align="end">
+                                    <flux:button size="xs" variant="ghost" icon="eye" tooltip="View order" :href="route('admin.orders.show', $order)" wire:navigate />
+                                </flux:table.cell>
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="5" class="py-12 text-center text-zinc-400">
+                                <flux:table.cell colspan="6" class="py-12 text-center text-zinc-400">
                                     This customer hasn't placed any orders yet.
                                 </flux:table.cell>
                             </flux:table.row>
@@ -96,10 +102,13 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
 
         {{-- Addresses --}}
         <aside class="w-full shrink-0 lg:w-80">
-            <flux:card>
-                <flux:heading size="sm">Addresses</flux:heading>
+            <flux:card class="p-0 overflow-hidden">
+                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:heading size="sm">Addresses</flux:heading>
+                </div>
+                <div class="space-y-3 p-6">
                 @forelse ($customer->addresses as $address)
-                    <div class="mt-3 rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-700">
+                    <div class="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-700">
                         <div class="flex items-center justify-between">
                             <span class="font-medium dark:text-white">{{ $address->label ?: $address->fullName() }}</span>
                             @if ($address->is_default)
@@ -112,8 +121,9 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                         @endif
                     </div>
                 @empty
-                    <flux:text class="mt-3" size="sm">No saved addresses.</flux:text>
+                    <flux:text size="sm">No saved addresses.</flux:text>
                 @endforelse
+                </div>
             </flux:card>
         </aside>
     </div>

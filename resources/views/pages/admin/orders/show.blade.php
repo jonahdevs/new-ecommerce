@@ -138,23 +138,30 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
         <aside class="w-full shrink-0 space-y-6 lg:w-80">
 
             {{-- Status control --}}
-            <flux:card>
-                <flux:heading size="sm">Fulfilment</flux:heading>
-                <form wire:submit="updateStatus" class="mt-3 space-y-3">
-                    <flux:select wire:model="status">
-                        @foreach ($this->statuses() as $statusOption)
-                            <flux:select.option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:button type="submit" variant="primary" class="w-full">Update status</flux:button>
-                </form>
+            <flux:card class="p-0 overflow-hidden">
+                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:heading size="sm">Fulfilment</flux:heading>
+                </div>
+                <div class="p-6">
+                    <form wire:submit="updateStatus" class="space-y-3">
+                        <flux:select wire:model="status">
+                            @foreach ($this->statuses() as $statusOption)
+                                <flux:select.option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:button type="submit" variant="primary" class="w-full">Update status</flux:button>
+                    </form>
+                </div>
             </flux:card>
 
             {{-- Customer --}}
-            <flux:card>
-                <flux:heading size="sm">Customer</flux:heading>
+            <flux:card class="p-0 overflow-hidden">
+                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:heading size="sm">Customer</flux:heading>
+                </div>
+                <div class="p-6">
                 @if ($order->user)
-                    <div class="mt-3 flex items-center gap-3">
+                    <div class="flex items-center gap-3">
                         <flux:avatar :name="$order->user->name" :initials="$order->user->initials()" size="sm" />
                         <div class="min-w-0">
                             <a href="{{ route('admin.customers.show', $order->user) }}" wire:navigate
@@ -165,7 +172,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                         </div>
                     </div>
                 @else
-                    <flux:text class="mt-3" size="sm">Guest checkout</flux:text>
+                    <flux:text size="sm">Guest checkout</flux:text>
                 @endif
 
                 @if ($order->address)
@@ -182,6 +189,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                         @endif
                     </div>
                 @endif
+                </div>
             </flux:card>
 
             {{-- Totals --}}

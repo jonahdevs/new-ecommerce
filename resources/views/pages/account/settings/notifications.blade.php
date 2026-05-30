@@ -86,7 +86,7 @@ new #[Layout('layouts::settings')] #[Title('Notifications — Sheffield')] class
             {{-- Quotes --}}
             <flux:card class="space-y-5">
                 <div>
-                    <flux:heading size="sm">Quotes & RFQs</flux:heading>
+                    <flux:heading size="sm">Quotes</flux:heading>
                     <flux:text size="sm" class="mt-0.5 text-ink-3">Updates on your quotation requests.</flux:text>
                 </div>
                 <flux:separator />

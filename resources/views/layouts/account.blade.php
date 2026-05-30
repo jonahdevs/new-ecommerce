@@ -28,7 +28,7 @@
                                 Orders
                             </flux:navlist.item>
                             <flux:navlist.item icon="document-text" :href="route('account.quotes.index')" :current="request()->routeIs('account.quotes.*')" wire:navigate>
-                                Quotes & RFQs
+                                Quotes
                             </flux:navlist.item>
                             <flux:navlist.item icon="map-pin" :href="route('account.addresses.index')" :current="request()->routeIs('account.addresses.*')" wire:navigate>
                                 Addresses

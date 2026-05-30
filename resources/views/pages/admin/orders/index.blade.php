@@ -1,7 +1,9 @@
 <?php
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\Payment;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -61,7 +63,7 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
     public function stats(): array
     {
         return [
-            'total' => Order::count(),
+            'revenue' => (int) Payment::where('status', PaymentStatus::SUCCESS)->sum('amount_cents'),
             'pending' => Order::where('status', OrderStatus::PENDING)->count(),
             'processing' => Order::where('status', OrderStatus::PROCESSING)->count(),
         ];
@@ -95,10 +97,10 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
     {{-- Stat tiles --}}
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <flux:card class="flex items-center gap-4">
-            <flux:icon.shopping-cart class="size-9 text-zinc-400" />
+            <flux:icon.banknotes class="size-9 text-emerald-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['total'] }}</div>
-                <flux:text size="sm">Total orders</flux:text>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{!! $kes($this->stats['revenue']) !!}</div>
+                <flux:text size="sm">Total revenue</flux:text>
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
@@ -156,12 +158,12 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                 <flux:table.column>Payment</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end">Placed</flux:table.column>
+                <flux:table.column></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @forelse ($this->orders as $order)
-                    <flux:table.row :key="$order->id" class="cursor-pointer"
-                        wire:click="$navigate('{{ route('admin.orders.show', $order) }}')">
+                    <flux:table.row :key="$order->id">
                         <flux:table.cell variant="strong">
                             <span class="font-mono">{{ $order->order_number }}</span>
                         </flux:table.cell>
@@ -192,10 +194,13 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                         <flux:table.cell align="end" class="text-sm text-zinc-500">
                             {{ $order->created_at->format('M j, Y') }}
                         </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <flux:button size="xs" variant="ghost" icon="eye" tooltip="View order" :href="route('admin.orders.show', $order)" wire:navigate />
+                        </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="7" class="py-12 text-center text-zinc-400">
+                        <flux:table.cell colspan="8" class="py-12 text-center text-zinc-400">
                             No orders found.
                         </flux:table.cell>
                     </flux:table.row>

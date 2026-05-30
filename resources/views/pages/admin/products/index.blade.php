@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProductStatus;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
 use App\Models\Product;
@@ -16,6 +17,9 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
 
     #[Url(as: 'q')]
     public string $search = '';
+
+    #[Url]
+    public string $filterStatus = '';
 
     #[Url]
     public string $filterVisibility = '';
@@ -89,8 +93,8 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
     public function stats(): array
     {
         return [
-            'total' => Product::count(),
-            'visible' => Product::where('visibility', ProductVisibility::VISIBLE)->count(),
+            'published' => Product::where('status', ProductStatus::PUBLISHED)->count(),
+            'draft' => Product::where('status', ProductStatus::DRAFT)->count(),
             'out' => Product::where('stock_status', StockStatus::OUT_OF_STOCK)->count(),
             'low' => Product::whereNotNull('low_stock_threshold')
                 ->whereNotNull('stock_quantity')
@@ -110,6 +114,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                     $q->where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%');
                 }),
             )
+            ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterVisibility, fn($q) => $q->where('visibility', $this->filterVisibility))
             ->when($this->filterStock, fn($q) => $q->where('stock_status', $this->filterStock))
             ->orderBy($this->sortBy, $this->sortDirection)
@@ -188,17 +193,17 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
     {{-- KPIs --}}
     <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <flux:card class="flex items-center gap-4">
-            <flux:icon.cube class="size-9 text-zinc-400" />
+            <flux:icon.check-circle class="size-9 text-emerald-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ number_format($this->stats['total']) }}</div>
-                <flux:text size="sm">Total products</flux:text>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ number_format($this->stats['published']) }}</div>
+                <flux:text size="sm">Published</flux:text>
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
-            <flux:icon.eye class="size-9 text-emerald-400" />
+            <flux:icon.pencil-square class="size-9 text-zinc-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ number_format($this->stats['visible']) }}</div>
-                <flux:text size="sm">Live</flux:text>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ number_format($this->stats['draft']) }}</div>
+                <flux:text size="sm">Drafts</flux:text>
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
@@ -226,6 +231,13 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                 clearable class="max-w-xs" />
 
             <div class="flex items-center gap-2">
+                <flux:select wire:model.live="filterStatus" class="w-36">
+                    <flux:select.option value="">All statuses</flux:select.option>
+                    @foreach (ProductStatus::cases() as $s)
+                        <flux:select.option :value="$s->value">{{ $s->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
                 <flux:select wire:model.live="filterVisibility" class="w-40">
                     <flux:select.option value="">All visibility</flux:select.option>
                     @foreach (ProductVisibility::cases() as $v)

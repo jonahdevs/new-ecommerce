@@ -87,10 +87,13 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
 
         {{-- Order sidebar --}}
         <aside class="w-full shrink-0 lg:w-80">
-            <flux:card>
-                <flux:heading size="sm">Order</flux:heading>
+            <flux:card class="p-0 overflow-hidden">
+                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:heading size="sm">Order</flux:heading>
+                </div>
+                <div class="p-6">
                 @if ($payment->order)
-                    <div class="mt-3 space-y-2 text-sm">
+                    <div class="space-y-2 text-sm">
                         <a href="{{ route('admin.orders.show', $payment->order) }}" wire:navigate
                             class="font-mono font-medium hover:text-brand-500 dark:text-white">
                             {{ $payment->order->order_number }}
@@ -119,8 +122,9 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
                         </div>
                     @endif
                 @else
-                    <flux:text class="mt-3" size="sm">No order linked.</flux:text>
+                    <flux:text size="sm">No order linked.</flux:text>
                 @endif
+                </div>
             </flux:card>
         </aside>
     </div>

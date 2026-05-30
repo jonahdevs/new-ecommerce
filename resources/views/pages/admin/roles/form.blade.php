@@ -69,30 +69,26 @@ new #[Layout('layouts::app')] #[Title('Role — Admin')] class extends Component
         $this->redirectRoute('admin.roles.index', navigate: true);
     }
 
-    public function selectGroup(string $group, bool $checked): void
-    {
-        $names = $this->groupedPermissions->get($group)?->pluck('name')->all() ?? [];
-
-        $this->selectedPermissions = $checked
-            ? array_values(array_unique([...$this->selectedPermissions, ...$names]))
-            : array_values(array_diff($this->selectedPermissions, $names));
-    }
 }; ?>
 
 <div>
     @push('breadcrumbs')
-<flux:breadcrumbs>
-        <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('admin.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>{{ $roleId ? 'Edit' : 'New' }}</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
-@endpush
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item :href="route('admin.roles.index')" wire:navigate>Roles</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>{{ $roleId ? 'Edit' : 'New' }}</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    @endpush
 
     <form wire:submit="save">
-        <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
+
+        {{-- Header --}}
+        <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <flux:heading size="xl">{{ $roleId ? 'Edit role' : 'New role' }}</flux:heading>
-                <flux:subheading>Choose what this role can access in the admin panel.</flux:subheading>
+                <flux:heading size="xl">
+                    {{ $roleId ? 'Edit '.Str::headline($name).' Role' : 'New role' }}
+                </flux:heading>
+                <flux:subheading>Manage permissions assigned to this role.</flux:subheading>
             </div>
             <div class="flex items-center gap-3">
                 <flux:button variant="ghost" :href="route('admin.roles.index')" wire:navigate>Cancel</flux:button>
@@ -100,33 +96,37 @@ new #[Layout('layouts::app')] #[Title('Role — Admin')] class extends Component
             </div>
         </div>
 
-        <div class="mt-6 max-w-2xl space-y-6">
-            <flux:card>
-                <flux:input
-                    wire:model="name"
-                    label="Role name"
-                    placeholder="e.g. fulfilment"
-                    :disabled="$this->isProtected()"
-                    required
-                    autofocus />
-                @if ($this->isProtected())
-                    <flux:text size="sm" class="mt-2 text-zinc-500">This is a protected role — its name can't be changed.</flux:text>
-                @endif
-            </flux:card>
+        {{-- Role name — inline below header, no card --}}
+        <div class="mt-6 max-w-sm">
+            <flux:input
+                wire:model="name"
+                label="Role name"
+                placeholder="e.g. fulfilment"
+                :disabled="$this->isProtected()"
+                required
+                autofocus />
+            @if ($this->isProtected())
+                <flux:text size="sm" class="mt-1.5 text-zinc-400">This is a protected role — its name cannot be changed.</flux:text>
+            @endif
+        </div>
 
-            <flux:card class="space-y-4">
-                <flux:heading size="lg">Permissions</flux:heading>
+        {{-- Permissions table --}}
+        <flux:card class="mt-6 p-0 overflow-hidden">
+            <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                <flux:heading size="sm">Permissions</flux:heading>
+            </div>
+
+            <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @foreach ($this->groupedPermissions as $group => $permissions)
-                    @php $groupNames = $permissions->pluck('name')->all(); @endphp
-                    <div class="rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                        <label class="flex items-center justify-between">
-                            <span class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ Str::headline($group) }}</span>
-                            <flux:checkbox
-                                :checked="count(array_intersect($groupNames, $selectedPermissions)) === count($groupNames)"
-                                wire:click="selectGroup('{{ $group }}', $event.target.checked)" />
-                        </label>
-                        <flux:separator class="my-3" />
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div class="flex items-center gap-4 px-6 py-4">
+
+                        {{-- Resource label --}}
+                        <div class="w-44 shrink-0">
+                            <span class="text-sm font-semibold dark:text-white">{{ Str::headline($group) }}</span>
+                        </div>
+
+                        {{-- Action checkboxes --}}
+                        <div class="flex flex-1 flex-wrap gap-x-10 gap-y-2">
                             @foreach ($permissions as $permission)
                                 <flux:checkbox
                                     wire:model="selectedPermissions"
@@ -134,9 +134,11 @@ new #[Layout('layouts::app')] #[Title('Role — Admin')] class extends Component
                                     label="{{ Str::headline(Str::after($permission->name, '.')) }}" />
                             @endforeach
                         </div>
+
                     </div>
                 @endforeach
-            </flux:card>
-        </div>
+            </div>
+        </flux:card>
+
     </form>
 </div>

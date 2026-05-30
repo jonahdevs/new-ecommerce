@@ -178,12 +178,12 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                 <flux:table.column align="end">Amount</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end">Date</flux:table.column>
+                <flux:table.column></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @forelse ($this->payments as $payment)
-                    <flux:table.row :key="$payment->id" class="cursor-pointer"
-                        wire:click="$navigate('{{ route('admin.payments.show', $payment) }}')">
+                    <flux:table.row :key="$payment->id">
                         <flux:table.cell variant="strong">
                             <span class="font-mono text-xs">
                                 {{ $payment->mpesa_receipt ?? $payment->stripe_payment_intent_id ?? $payment->checkout_request_id ?? '—' }}
@@ -210,10 +210,13 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                         <flux:table.cell align="end" class="text-sm text-zinc-500">
                             {{ ($payment->paid_at ?? $payment->created_at)->format('M j, Y g:i A') }}
                         </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <flux:button size="xs" variant="ghost" icon="eye" tooltip="View payment" :href="route('admin.payments.show', $payment)" wire:navigate />
+                        </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="6" class="py-12 text-center text-zinc-400">No payments found.</flux:table.cell>
+                        <flux:table.cell colspan="7" class="py-12 text-center text-zinc-400">No payments found.</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
@@ -16,20 +17,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Tags\HasTags;
 
-#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'weight', 'length', 'width', 'height', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order'])]
+#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'status', 'published_at', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'weight', 'length', 'width', 'height', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order', 'default_variant_id'])]
 #[ObservedBy(ProductObserver::class)]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasTags, SoftDeletes;
 
     protected function casts(): array
     {
         return [
             'type' => ProductType::class,
+            'status' => ProductStatus::class,
             'stock_status' => StockStatus::class,
             'visibility' => ProductVisibility::class,
+            'published_at' => 'datetime',
             'is_taxable' => 'boolean',
             'requires_shipping' => 'boolean',
             'allow_backorder' => 'boolean',

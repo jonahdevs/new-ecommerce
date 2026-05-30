@@ -2,7 +2,6 @@
 
 use App\Enums\QuoteStatus;
 use App\Models\Quote;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -64,31 +63,10 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
     public function stats(): array
     {
         return [
-            'total' => Quote::count(),
+            'sent' => Quote::where('status', QuoteStatus::SENT)->count(),
             'awaiting' => Quote::where('status', QuoteStatus::AWAITING_APPROVAL)->count(),
             'approved' => Quote::where('status', QuoteStatus::APPROVED)->count(),
         ];
-    }
-
-    public function createDraft(): void
-    {
-        $quote = Quote::create([
-            'quote_number' => $this->generateQuoteNumber(),
-            'title' => 'New quote',
-            'status' => QuoteStatus::DRAFT,
-            'total_cents' => 0,
-        ]);
-
-        $this->redirectRoute('admin.quotes.show', $quote, navigate: true);
-    }
-
-    private function generateQuoteNumber(): string
-    {
-        do {
-            $number = 'RFQ-'.now()->year.'-'.Str::upper(Str::random(5));
-        } while (Quote::where('quote_number', $number)->exists());
-
-        return $number;
     }
 
     /** @return array<int, QuoteStatus> */
@@ -111,19 +89,19 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                 <flux:breadcrumbs.item>Quotes</flux:breadcrumbs.item>
             </flux:breadcrumbs>
 @endpush
-            <flux:heading size="xl">Quotes & RFQs</flux:heading>
+            <flux:heading size="xl">Quotes</flux:heading>
             <flux:subheading>Price and respond to quotation requests.</flux:subheading>
         </div>
-        <flux:button variant="primary" icon="plus" wire:click="createDraft">New quote</flux:button>
+        <flux:button variant="primary" icon="plus" :href="route('admin.quotes.create')" wire:navigate>New quote</flux:button>
     </div>
 
     {{-- Stat tiles --}}
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <flux:card class="flex items-center gap-4">
-            <flux:icon.document-text class="size-9 text-zinc-400" />
+            <flux:icon.paper-airplane class="size-9 text-blue-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['total'] }}</div>
-                <flux:text size="sm">Total quotes</flux:text>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['sent'] }}</div>
+                <flux:text size="sm">Sent to customer</flux:text>
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
@@ -180,12 +158,12 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                 <flux:table.column align="end">Total</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end">Expires</flux:table.column>
+                <flux:table.column></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @forelse ($this->quotes as $quote)
-                    <flux:table.row :key="$quote->id" class="cursor-pointer"
-                        wire:click="$navigate('{{ route('admin.quotes.show', $quote) }}')">
+                    <flux:table.row :key="$quote->id">
                         <flux:table.cell variant="strong">
                             <span class="font-mono">{{ $quote->quote_number }}</span>
                             <span class="block text-xs font-normal text-zinc-400">{{ Str::limit($quote->title, 40) }}</span>
@@ -212,10 +190,13 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                                 <span class="text-zinc-400">—</span>
                             @endif
                         </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <flux:button size="xs" variant="ghost" icon="eye" tooltip="View quote" :href="route('admin.quotes.show', $quote)" wire:navigate />
+                        </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="6" class="py-12 text-center text-zinc-400">
+                        <flux:table.cell colspan="7" class="py-12 text-center text-zinc-400">
                             No quotes found.
                         </flux:table.cell>
                     </flux:table.row>

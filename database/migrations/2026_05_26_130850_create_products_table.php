@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
@@ -7,7 +8,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -37,6 +39,10 @@ return new class extends Migration {
 
             // Type discriminator
             $table->string('type')->default(ProductType::SIMPLE->value);
+
+            // Publication status
+            $table->string('status')->default(ProductStatus::DRAFT->value);
+            $table->timestamp('published_at')->nullable();
 
             // Content
             $table->text('short_description')->nullable();
@@ -167,6 +173,9 @@ return new class extends Migration {
             $table->decimal('width', 8, 3)->nullable();
             $table->decimal('height', 8, 3)->nullable();
 
+            // Description override (null = fall back to product short_description)
+            $table->text('description')->nullable();
+
             // Variant image
             $table->string('image')->nullable();
 
@@ -185,6 +194,17 @@ return new class extends Migration {
             $table->foreignId('product_variant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('attribute_value_id')->constrained()->cascadeOnDelete();
             $table->primary(['product_variant_id', 'attribute_value_id']);
+        });
+
+        // ----------------------------------------------------------------
+        // DEFAULT VARIANT  (added after product_variants exists)
+        // ----------------------------------------------------------------
+        Schema::table('products', function (Blueprint $table) {
+            $table->foreignId('default_variant_id')
+                ->nullable()
+                ->after('sort_order')
+                ->constrained('product_variants')
+                ->nullOnDelete();
         });
 
         // ----------------------------------------------------------------
@@ -308,6 +328,11 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropForeign(['default_variant_id']);
+            $table->dropColumn('default_variant_id');
+        });
+
         Schema::dropIfExists('bundle_items');
         Schema::dropIfExists('grouped_product_items');
         Schema::dropIfExists('order_downloads');

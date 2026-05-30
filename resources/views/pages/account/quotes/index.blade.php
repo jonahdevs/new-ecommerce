@@ -9,7 +9,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::account')] #[Title('Quotes & RFQs — Sheffield')] class extends Component
+new #[Layout('layouts::account')] #[Title('Quotes — Sheffield')] class extends Component
 {
     use WithPagination;
 
@@ -43,7 +43,7 @@ new #[Layout('layouts::account')] #[Title('Quotes & RFQs — Sheffield')] class 
 
     {{-- Header --}}
     <div>
-        <flux:heading size="xl">Quotes & RFQs</flux:heading>
+        <flux:heading size="xl">Quotes</flux:heading>
         <flux:text class="mt-1">Pending and historical quotations. Approve a quote to convert it to an order.</flux:text>
     </div>
 
