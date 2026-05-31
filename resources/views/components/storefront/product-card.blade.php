@@ -2,8 +2,11 @@
 
 @php
     $brandName  = $product->brand?->name;
+    $tax        = app(\App\Support\TaxCalculator::class);
     $price      = $product->sale_price ?? $product->price;
     $compareAt  = $product->sale_price ? $product->price : null;
+    $price      = $price !== null ? $tax->displayPriceCents($product, (int) $price) : null;
+    $compareAt  = $compareAt !== null ? $tax->displayPriceCents($product, (int) $compareAt) : null;
     $priceLabel = $price ? 'KES&nbsp;' . number_format(intdiv($price, 100), 0, '.', ',') : 'Request quote';
     $compareLabel = $compareAt ? 'KES&nbsp;' . number_format(intdiv($compareAt, 100), 0, '.', ',') : null;
     $inStock    = $product->stock_status === \App\Enums\StockStatus::IN_STOCK;

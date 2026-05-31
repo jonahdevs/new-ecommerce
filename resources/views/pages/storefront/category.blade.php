@@ -92,7 +92,7 @@ new #[Layout('layouts::storefront')] class extends Component {
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->where(function ($q) {
                 $q->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn($q2) => $q2->where('categories.id', $this->category->id));

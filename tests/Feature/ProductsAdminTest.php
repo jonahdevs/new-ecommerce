@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProductStatus;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
 use App\Models\Product;
@@ -15,14 +16,14 @@ it('loads the products admin index', function () {
 });
 
 it('reports product KPIs', function () {
-    Product::factory()->count(2)->create(['visibility' => ProductVisibility::VISIBLE, 'stock_status' => StockStatus::IN_STOCK]);
-    Product::factory()->create(['visibility' => ProductVisibility::HIDDEN, 'stock_status' => StockStatus::OUT_OF_STOCK]);
-    Product::factory()->create(['visibility' => ProductVisibility::HIDDEN, 'stock_status' => StockStatus::IN_STOCK, 'stock_quantity' => 2, 'low_stock_threshold' => 5]);
+    Product::factory()->count(2)->create(['status' => ProductStatus::PUBLISHED, 'stock_status' => StockStatus::IN_STOCK]);
+    Product::factory()->create(['status' => ProductStatus::DRAFT, 'stock_status' => StockStatus::OUT_OF_STOCK]);
+    Product::factory()->create(['status' => ProductStatus::DRAFT, 'stock_status' => StockStatus::IN_STOCK, 'stock_quantity' => 2, 'low_stock_threshold' => 5]);
 
     $stats = Livewire::test('pages::admin.products.index')->get('stats');
 
-    expect($stats['total'])->toBe(4)
-        ->and($stats['visible'])->toBe(2)
+    expect($stats['published'])->toBe(2)
+        ->and($stats['draft'])->toBe(2)
         ->and($stats['out'])->toBe(1)
         ->and($stats['low'])->toBe(1);
 });

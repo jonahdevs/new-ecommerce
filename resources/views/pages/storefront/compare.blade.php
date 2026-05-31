@@ -89,7 +89,9 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
             return '—';
         }
 
-        return implode(' × ', array_map(fn ($v) => rtrim(rtrim((string) $v, '0'), '.').' cm', $parts));
+        $unit = $product->dimension_unit ?? 'cm';
+
+        return implode(' × ', array_map(fn ($v) => rtrim(rtrim((string) $v, '0'), '.').' '.$unit, $parts));
     };
 
     $emptySlots = max(0, 4 - $this->products->count());
@@ -221,7 +223,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Weight',
-                        'cells' => $this->products->map(fn ($p) => $p->weight ? rtrim(rtrim((string) $p->weight, '0'), '.').' kg' : '—'),
+                        'cells' => $this->products->map(fn ($p) => $p->weight ? rtrim(rtrim((string) $p->weight, '0'), '.').' '.($p->weight_unit ?? 'kg') : '—'),
                         'empty' => $emptySlots > 0,
                     ])
                     @include('partials.storefront.compare-row', [

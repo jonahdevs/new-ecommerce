@@ -17,12 +17,14 @@ new #[Layout('layouts::settings')] #[Title('Profile — Sheffield')] class exten
 
     public string $name = '';
     public string $email = '';
+    public bool $embedded = false;
 
     /**
      * Mount the component.
      */
-    public function mount(): void
+    public function mount(bool $embedded = false): void
     {
+        $this->embedded = $embedded;
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
     }
@@ -82,11 +84,11 @@ new #[Layout('layouts::settings')] #[Title('Profile — Sheffield')] class exten
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    @include('partials.settings-heading', ['embedded' => $embedded])
 
     <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::account.settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::account.settings.layout :embedded="$embedded" :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 

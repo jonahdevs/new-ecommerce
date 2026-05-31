@@ -11,7 +11,9 @@ use App\Models\DeliveryPromotion;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\TaxClass;
 use App\Models\User;
+use App\Settings\TaxSettings;
 use App\Support\StorefrontSession;
 use Livewire\Livewire;
 
@@ -37,6 +39,12 @@ beforeEach(function () {
         'type' => 'simple', 'price' => 95000, 'stock_status' => StockStatus::IN_STOCK->value,
         'visibility' => ProductVisibility::VISIBLE->value,
     ]);
+
+    // Products carry no class of their own, so set a 16% store default class.
+    $standard = TaxClass::create(['name' => 'Standard rated', 'slug' => 'standard-rated', 'rate' => 16, 'is_active' => true]);
+    $settings = app(TaxSettings::class);
+    $settings->default_tax_class_id = $standard->id;
+    $settings->save();
 });
 
 it('redirects guests to the login page', function () {
@@ -64,12 +72,18 @@ it('places an order, snapshots totals, and redirects to the payment page', funct
 
     $order = Order::where('user_id', $user->id)->first();
 
+    // Catalog prices include VAT (TaxSettings::prices_include_tax), so the VAT is
+    // the embedded 16% portion of the 395,000 subtotal, not added on top.
     expect($order)->not->toBeNull()
         ->and($order->status)->toBe(OrderStatus::PENDING)
         ->and($order->subtotal_cents)->toBe(395000)
-        ->and($order->vat_cents)->toBe(63200)
+        ->and($order->vat_cents)->toBe(54482)
         ->and($order->payment_method)->toBeNull()
         ->and($order->items)->toHaveCount(2);
+
+    // Each line snapshots the rate it was taxed at.
+    expect($order->items->pluck('tax_rate')->unique()->all())->toBe(['16.00'])
+        ->and((int) $order->items->sum('tax_cents'))->toBe(54482);
 
     // Cart stays intact until payment is confirmed on the payment page.
     expect(StorefrontSession::cart())->not->toBeEmpty();

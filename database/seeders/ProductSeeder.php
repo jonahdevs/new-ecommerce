@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProductLinkType;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
@@ -14,9 +15,9 @@ use App\Models\GroupedProductItem;
 use App\Models\Product;
 use App\Models\ProductAttribute;
 use App\Models\ProductImage;
+use App\Models\ProductLink;
 use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -94,6 +95,8 @@ class ProductSeeder extends Seeder
         $sku = $data['sku'];
         $name = $data['name'];
         $type = $this->resolveType($data);
+        $isVirtual = (bool) ($data['is_virtual'] ?? false);
+        $isDownloadable = (bool) ($data['is_downloadable'] ?? false);
         $price = $this->toMinorUnits($data['price'] ?? null);
         $salePrice = $this->toMinorUnits($data['sale_price'] ?? null);
         $quantity = $data['stock_quantity'] ?? $data['quantity'] ?? null;
@@ -122,7 +125,9 @@ class ProductSeeder extends Seeder
             'technical_specification' => $data['technical_specification'] ?? null,
             'price' => $price,
             'sale_price' => $salePrice,
-            'requires_shipping' => $this->resolveRequiresShipping($type),
+            'is_virtual' => $isVirtual,
+            'is_downloadable' => $isDownloadable,
+            'requires_shipping' => $this->resolveRequiresShipping($type, $isVirtual),
             'length' => $data['length'] ?? null,
             'width' => $data['width'] ?? null,
             'height' => $data['height'] ?? null,
@@ -151,7 +156,10 @@ class ProductSeeder extends Seeder
             return;
         }
 
-        $this->attachAccessories($productId, $data['accessories'] ?? []);
+        $this->attachProductLinks($productId, $data['accessories'] ?? [], ProductLinkType::ACCESSORY);
+        $this->attachProductLinks($productId, $data['spare_parts'] ?? [], ProductLinkType::SPARE_PART);
+        $this->attachProductLinks($productId, $data['upsells'] ?? [], ProductLinkType::UPSELL);
+        $this->attachProductLinks($productId, $data['cross_sells'] ?? [], ProductLinkType::CROSS_SELL);
         $this->attachGroupedChildren($productId, $data['grouped_children'] ?? []);
         $this->attachBundleChildren($productId, $data['bundle_children'] ?? []);
     }
@@ -161,27 +169,17 @@ class ProductSeeder extends Seeder
      */
     private function resolveType(array $data): ProductType
     {
-        if (! empty($data['is_virtual'])) {
-            return ProductType::VIRTUAL;
-        }
-
-        if (! empty($data['is_downloadable'])) {
-            return ProductType::DOWNLOADABLE;
-        }
-
         return match ($data['type'] ?? 'simple') {
             'variable' => ProductType::VARIABLE,
             'grouped' => ProductType::GROUPED,
             'bundle', 'bundled' => ProductType::BUNDLE,
-            'virtual' => ProductType::VIRTUAL,
-            'downloadable' => ProductType::DOWNLOADABLE,
             default => ProductType::SIMPLE,
         };
     }
 
-    private function resolveRequiresShipping(ProductType $type): bool
+    private function resolveRequiresShipping(ProductType $type, bool $isVirtual): bool
     {
-        return ! in_array($type, [ProductType::VIRTUAL, ProductType::DOWNLOADABLE, ProductType::GROUPED], true);
+        return ! ($isVirtual || $type === ProductType::GROUPED);
     }
 
     /**
@@ -300,26 +298,22 @@ class ProductSeeder extends Seeder
     }
 
     /**
-     * @param  array<int, string>  $accessorySkus
+     * @param  array<int, string>  $linkedSkus
      */
-    private function attachAccessories(int $productId, array $accessorySkus): void
+    private function attachProductLinks(int $productId, array $linkedSkus, ProductLinkType $type): void
     {
-        $rows = [];
-        foreach ($accessorySkus as $index => $sku) {
-            $accessoryId = $this->productIdBySku[$sku] ?? null;
-            if ($accessoryId === null || $accessoryId === $productId) {
+        foreach ($linkedSkus as $index => $sku) {
+            $linkedId = $this->productIdBySku[$sku] ?? null;
+            if ($linkedId === null || $linkedId === $productId) {
                 continue;
             }
 
-            $rows[] = [
+            ProductLink::create([
                 'product_id' => $productId,
-                'accessory_product_id' => $accessoryId,
+                'linked_product_id' => $linkedId,
+                'type' => $type,
                 'sort_order' => $index + 1,
-            ];
-        }
-
-        if ($rows !== []) {
-            DB::table('product_accessories')->insert($rows);
+            ]);
         }
     }
 

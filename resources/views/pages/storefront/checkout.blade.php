@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Services\DeliveryQuoteResult;
 use App\Services\DeliveryResolver;
 use App\Support\StorefrontSession;
+use App\Support\TaxCalculator;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
 use Illuminate\Support\Collection;
@@ -259,11 +260,16 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
             }
         }
 
-        $vatCents = (int) round($subtotalCents * 0.16);
+        $tax = app(TaxCalculator::class);
+        $vatCents = $tax->taxForCart($lines);
         $deliveryCents = $quote->feeCents;
-        $totalCents = $subtotalCents + $vatCents + $deliveryCents;
+        // When prices already include tax the VAT is embedded in the subtotal,
+        // so it must not be added again on top.
+        $totalCents = $tax->pricesIncludeTax()
+            ? $subtotalCents + $deliveryCents
+            : $subtotalCents + $vatCents + $deliveryCents;
 
-        $order = DB::transaction(function () use ($lines, $address, $quote, $subtotalCents, $vatCents, $deliveryCents, $totalCents) {
+        $order = DB::transaction(function () use ($tax, $lines, $address, $quote, $subtotalCents, $vatCents, $deliveryCents, $totalCents) {
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'address_id' => $address?->id,
@@ -281,6 +287,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 
             foreach ($lines as $line) {
                 $product = $line['product'];
+                $rate = $tax->rateForProduct($product);
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
@@ -289,6 +296,8 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                     'unit_price_cents' => $product->sale_price ?? $product->price ?? 0,
                     'quantity' => $line['qty'],
                     'line_total_cents' => $line['line_total_cents'],
+                    'tax_rate' => $rate,
+                    'tax_cents' => $tax->taxForLine((int) $line['line_total_cents'], $rate),
                 ]);
             }
 
@@ -309,11 +318,15 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 @php
     $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
 
+    $tax           = app(\App\Support\TaxCalculator::class);
     $quote         = $this->deliveryQuote;
     $subtotalCents = $this->lines->sum('line_total_cents');
-    $vatCents      = (int) round($subtotalCents * 0.16);
+    $vatCents      = $tax->taxForCart($this->lines);
+    $taxInclusive  = $tax->pricesIncludeTax();
     $deliveryCents = $quote->feeCents;
-    $totalCents    = $subtotalCents + $vatCents + $deliveryCents;
+    $totalCents    = $taxInclusive
+        ? $subtotalCents + $deliveryCents
+        : $subtotalCents + $vatCents + $deliveryCents;
     $unserviceable = $this->deliveryMethod === 'delivery' && $this->selectedAddress && ! $quote->serviceable;
 
     $deliveryLabels = [
@@ -470,10 +483,12 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                                 </span>
                             @endif
                         </div>
-                        <div class="flex items-center justify-between text-sm text-ink-2">
-                            <span>VAT (16%)</span>
-                            <span class="font-medium tabular-nums">{!! $kes($vatCents) !!}</span>
-                        </div>
+                        @if ($tax->enabled() && $vatCents > 0)
+                            <div class="flex items-center justify-between text-sm text-ink-2">
+                                <span>VAT{{ $taxInclusive ? ' (incl.)' : '' }}</span>
+                                <span class="font-medium tabular-nums">{!! $kes($vatCents) !!}</span>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="my-5 h-px bg-zinc-100"></div>

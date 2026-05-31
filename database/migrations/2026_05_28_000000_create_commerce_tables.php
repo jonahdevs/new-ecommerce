@@ -90,6 +90,11 @@ return new class extends Migration
             $table->integer('unit_price_cents');
             $table->integer('quantity');
             $table->integer('line_total_cents');
+            // Tax snapshot: the rate (%) applied and the tax portion in cents at
+            // the time of ordering, so later changes to a tax class never alter
+            // historical orders or their invoices.
+            $table->decimal('tax_rate', 5, 2)->default(0);
+            $table->integer('tax_cents')->default(0);
             $table->timestamps();
         });
 

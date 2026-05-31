@@ -1,4 +1,5 @@
 @php
+    use App\Enums\ProductLinkType;
     use App\Enums\ProductStatus;
     use App\Enums\ProductType;
     use App\Enums\ProductVisibility;
@@ -49,7 +50,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="space-y-4 p-6">
                             <flux:input wire:model.live.debounce.400ms="name" label="Product name" placeholder="e.g. Commercial Wok Range 4-Burner" required />
                             <div class="grid grid-cols-2 gap-4">
@@ -69,10 +70,10 @@
                             const t = $wire.type;
                             const tabs = ['general'];
                             if (['simple','variable','bundled'].includes(t)) tabs.push('inventory');
-                            if (['simple','variable','bundled'].includes(t)) tabs.push('shipping');
+                            if (['simple','variable','bundled'].includes(t) && !$wire.is_virtual) tabs.push('shipping');
                             if (t === 'variable') { tabs.push('attributes'); tabs.push('variations'); }
-                            if (t === 'downloadable') tabs.push('files');
-                            if (['grouped','bundled'].includes(t)) tabs.push('linked');
+                            if ($wire.is_downloadable) tabs.push('files');
+                            tabs.push('linked');
                             tabs.push('advanced');
                             return tabs;
                         },
@@ -86,20 +87,34 @@
                     {{-- Header with type selector --}}
                     <div class="flex items-center justify-between gap-4 px-6 py-4"
                          :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <button type="button" x-on:click="open = !open" class="flex items-center gap-2">
-                            <flux:heading size="base">Product data</flux:heading>
-                            <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
-                        <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
-                    </span>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                            <button type="button" x-on:click="open = !open">
+                                <flux:heading size="base">Product data</flux:heading>
+                            </button>
+                            <flux:select wire:model.live="type" size="sm" class="w-auto">
+                                @foreach (ProductType::cases() as $t)
+                                    <flux:select.option :value="$t->value">{{ ucfirst($t->value) }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            {{-- Fulfilment flags — only meaningful for simple & variable products --}}
+                            <div class="flex items-center gap-3" x-show="['simple','variable'].includes($wire.type)" x-cloak>
+                                <label class="flex cursor-pointer items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
+                                    <flux:checkbox wire:model.live="is_virtual" />
+                                    Virtual
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
+                                    <flux:checkbox wire:model.live="is_downloadable" />
+                                    Downloadable
+                                </label>
+                            </div>
+                        </div>
+                        <button type="button" x-on:click="open = !open"
+                                class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                            <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </button>
-                        <flux:select wire:model.live="type" size="sm" class="w-auto">
-                            @foreach (ProductType::cases() as $t)
-                                <flux:select.option :value="$t->value">{{ ucfirst($t->value) }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
                     </div>
 
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                     <div class="flex min-h-72">
 
                         {{-- Vertical subnav --}}
@@ -110,7 +125,7 @@
                             <button type="button" :class="tab === 'inventory' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="['simple','variable','bundled'].includes($wire.type)" x-on:click="tab = 'inventory'">
                                 <flux:icon.archive-box variant="micro" class="size-4 shrink-0" />Inventory
                             </button>
-                            <button type="button" :class="tab === 'shipping' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="['simple','variable','bundled'].includes($wire.type)" x-on:click="tab = 'shipping'">
+                            <button type="button" :class="tab === 'shipping' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="['simple','variable','bundled'].includes($wire.type) && !$wire.is_virtual" x-on:click="tab = 'shipping'">
                                 <flux:icon.truck variant="micro" class="size-4 shrink-0" />Shipping
                             </button>
                             <button type="button" :class="tab === 'attributes' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="$wire.type === 'variable'" x-on:click="tab = 'attributes'">
@@ -119,10 +134,10 @@
                             <button type="button" :class="tab === 'variations' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="$wire.type === 'variable'" x-on:click="tab = 'variations'">
                                 <flux:icon.squares-2x2 variant="micro" class="size-4 shrink-0" />Variations
                             </button>
-                            <button type="button" :class="tab === 'files' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="$wire.type === 'downloadable'" x-on:click="tab = 'files'">
+                            <button type="button" :class="tab === 'files' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="$wire.is_downloadable" x-on:click="tab = 'files'">
                                 <flux:icon.arrow-down-tray variant="micro" class="size-4 shrink-0" />Files
                             </button>
-                            <button type="button" :class="tab === 'linked' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-show="['grouped','bundled'].includes($wire.type)" x-on:click="tab = 'linked'">
+                            <button type="button" :class="tab === 'linked' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-on:click="tab = 'linked'">
                                 <flux:icon.link variant="micro" class="size-4 shrink-0" />Linked products
                             </button>
                             <button type="button" :class="tab === 'advanced' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-on:click="tab = 'advanced'">
@@ -142,9 +157,13 @@
                                 <div x-show="$wire.type !== 'grouped'">
                                     <flux:input wire:model="cost_price" label="Cost price (KES)" type="number" min="0" step="0.01" placeholder="0.00" />
                                 </div>
-                                <div x-show="$wire.type !== 'grouped'" class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                                    <flux:label>Taxable (VAT 16%)</flux:label>
-                                    <flux:switch wire:model="is_taxable" />
+                                <div x-show="$wire.type !== 'grouped'">
+                                    <flux:select wire:model="tax_class_id" label="Tax class">
+                                        <flux:select.option value="">Store default</flux:select.option>
+                                        @foreach ($this->taxClasses as $taxClass)
+                                            <flux:select.option :value="$taxClass->id">{{ $taxClass->name }} ({{ rtrim(rtrim(number_format((float) $taxClass->rate, 2), '0'), '.') }}%)</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
                                 </div>
                                 <div x-show="$wire.type === 'grouped'" class="py-4 text-center text-sm text-zinc-400">
                                     Grouped products have no direct price — customers purchase each item individually.
@@ -172,15 +191,11 @@
 
                             {{-- Shipping --}}
                             <div x-show="tab === 'shipping'" class="space-y-4 p-6">
-                                <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                                    <flux:label>Requires shipping</flux:label>
-                                    <flux:switch wire:model="requires_shipping" />
-                                </div>
-                                <flux:input wire:model="weight" label="Weight (kg)" type="number" min="0" step="0.001" placeholder="0.000" />
+                                <flux:input wire:model="weight" :label="'Weight (' . $weight_unit . ')'" type="number" min="0" step="0.001" placeholder="0.000" />
                                 <div class="grid grid-cols-3 gap-4">
-                                    <flux:input wire:model="length" label="Length (cm)" type="number" min="0" step="0.01" placeholder="0.00" />
-                                    <flux:input wire:model="width" label="Width (cm)" type="number" min="0" step="0.01" placeholder="0.00" />
-                                    <flux:input wire:model="height" label="Height (cm)" type="number" min="0" step="0.01" placeholder="0.00" />
+                                    <flux:input wire:model="length" :label="'Length (' . $dimension_unit . ')'" type="number" min="0" step="0.01" placeholder="0.00" />
+                                    <flux:input wire:model="width" :label="'Width (' . $dimension_unit . ')'" type="number" min="0" step="0.01" placeholder="0.00" />
+                                    <flux:input wire:model="height" :label="'Height (' . $dimension_unit . ')'" type="number" min="0" step="0.01" placeholder="0.00" />
                                 </div>
                             </div>
 
@@ -506,9 +521,9 @@
 
                                                                 {{-- Weight + Dimensions --}}
                                                                 <div class="grid grid-cols-2 gap-4">
-                                                                    <flux:input wire:model="variants.{{ $i }}.weight" label="Weight (kg)" type="number" min="0" step="0.001" placeholder="0.000" />
+                                                                    <flux:input wire:model="variants.{{ $i }}.weight" :label="'Weight (' . $weight_unit . ')'" type="number" min="0" step="0.001" placeholder="0.000" />
                                                                     <div>
-                                                                        <flux:label>Dimensions — L × W × H (cm)</flux:label>
+                                                                        <flux:label>Dimensions — L × W × H ({{ $dimension_unit }})</flux:label>
                                                                         <div class="mt-1 grid grid-cols-3 gap-2">
                                                                             <flux:input wire:model="variants.{{ $i }}.length" type="number" min="0" step="0.01" placeholder="Length" />
                                                                             <flux:input wire:model="variants.{{ $i }}.width" type="number" min="0" step="0.01" placeholder="Width" />
@@ -604,24 +619,41 @@
                                 @else
                                     <div class="space-y-4 p-6">
                                         @forelse ($downloadableFiles as $index => $file)
-                                            <div class="space-y-3 rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-sm font-medium dark:text-white">{{ $file['name'] ?: 'New file' }}</span>
-                                                    <flux:button size="xs" variant="ghost" icon="trash" type="button"
-                                                        wire:click="removeFile({{ $index }})"
-                                                        class="text-red-500! hover:text-red-600!" />
+                                            <div class="overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
+                                                <div @class(['flex items-center justify-between bg-zinc-50 px-4 py-3 dark:bg-zinc-800/60', 'border-b border-zinc-200 dark:border-zinc-700' => ! $file['collapsed']])>
+                                                    <span class="text-sm font-medium dark:text-white">
+                                                        {{ $file['name'] ?: 'New file' }}
+                                                    </span>
+                                                    <div class="flex items-center gap-1">
+                                                        <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                            wire:click="removeFile({{ $index }})"
+                                                            class="text-red-500! hover:text-red-600!" />
+                                                        <button type="button" wire:click="toggleFileCollapsed({{ $index }})"
+                                                            class="rounded p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700">
+                                                            @if ($file['collapsed'])
+                                                                <flux:icon.chevron-down variant="micro" class="size-4" />
+                                                            @else
+                                                                <flux:icon.chevron-up variant="micro" class="size-4" />
+                                                            @endif
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <flux:input wire:model="downloadableFiles.{{ $index }}.name" label="File name" placeholder="e.g. User Manual v2" />
-                                                <div class="grid grid-cols-3 gap-3">
-                                                    <flux:input wire:model="downloadableFiles.{{ $index }}.download_limit" label="Download limit" type="number" min="1" placeholder="Unlimited" />
-                                                    <flux:input wire:model="downloadableFiles.{{ $index }}.download_expiry_days" label="Expiry (days)" type="number" min="1" placeholder="Never" />
-                                                    <flux:input wire:model="downloadableFiles.{{ $index }}.version" label="Version" placeholder="e.g. 1.0.0" />
-                                                </div>
+
+                                                @if (! $file['collapsed'])
+                                                    <div class="space-y-4 p-4">
+                                                        <flux:input wire:model="downloadableFiles.{{ $index }}.name" label="File name" placeholder="e.g. User Manual v2" />
+                                                        <div class="grid grid-cols-3 gap-3">
+                                                            <flux:input wire:model="downloadableFiles.{{ $index }}.download_limit" label="Download limit" type="number" min="1" placeholder="Unlimited" />
+                                                            <flux:input wire:model="downloadableFiles.{{ $index }}.download_expiry_days" label="Expiry (days)" type="number" min="1" placeholder="Never" />
+                                                            <flux:input wire:model="downloadableFiles.{{ $index }}.version" label="Version" placeholder="e.g. 1.0.0" />
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         @empty
                                             <p class="text-center text-sm text-zinc-400">No files added yet.</p>
                                         @endforelse
-                                        <flux:button variant="ghost" icon="plus" type="button" wire:click="addFile">Add file</flux:button>
+                                        <flux:button icon="plus" type="button" wire:click="addFile">Add file</flux:button>
                                     </div>
                                 @endif
                             </div>
@@ -631,57 +663,158 @@
                                 @if (! $productId)
                                     <div class="p-6 text-center text-sm text-zinc-400">Save the product first to link products.</div>
                                 @else
-                                    <div class="space-y-4 p-6">
-                                        @forelse ($linkedProducts as $index => $linked)
-                                            <div class="flex flex-wrap items-center gap-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
-                                                <div class="min-w-0 flex-1">
-                                                    <div class="text-sm font-medium dark:text-white">{{ $linked['name'] }}</div>
-                                                    @if ($linked['sku'])
-                                                        <div class="font-mono text-xs text-zinc-400">{{ $linked['sku'] }}</div>
+                                    <div class="space-y-6 p-6">
+
+                                        {{-- Components: grouped children / bundle items --}}
+                                        @if (in_array($type, ['grouped', 'bundled']))
+                                            <div class="space-y-3">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <flux:heading size="sm">{{ $type === 'grouped' ? 'Grouped products' : 'Bundle components' }}</flux:heading>
+                                                    <flux:button size="xs" icon="plus" type="button" wire:click="openLinkPicker('component')">Add</flux:button>
+                                                </div>
+
+                                                @forelse ($linkedProducts as $index => $linked)
+                                                    <div wire:key="comp-{{ $linked['product_id'] }}" class="flex flex-wrap items-center gap-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
+                                                        <div class="min-w-0 flex-1">
+                                                            <div class="text-sm font-medium dark:text-white">{{ $linked['name'] }}</div>
+                                                            @if ($linked['sku'])
+                                                                <div class="font-mono text-xs text-zinc-400">{{ $linked['sku'] }}</div>
+                                                            @endif
+                                                        </div>
+                                                        @if ($type === 'bundled')
+                                                            <flux:input wire:model="linkedProducts.{{ $index }}.quantity" type="number" min="1" placeholder="Qty" class="w-16 text-right" />
+                                                            <label class="flex items-center gap-1.5 text-xs text-zinc-500">
+                                                                <flux:checkbox wire:model="linkedProducts.{{ $index }}.is_optional" />
+                                                                Optional
+                                                            </label>
+                                                            <flux:input wire:model="linkedProducts.{{ $index }}.price_override" type="number" min="0" step="0.01" placeholder="Price override" class="w-32" />
+                                                        @endif
+                                                        <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                            wire:click="removeLinkedProduct({{ $index }})"
+                                                            class="text-red-500! hover:text-red-600!" />
+                                                    </div>
+                                                @empty
+                                                    <p class="text-sm text-zinc-400">
+                                                        {{ $type === 'grouped' ? 'No products linked to this group yet.' : 'No components added to this bundle yet.' }}
+                                                    </p>
+                                                @endforelse
+                                            </div>
+                                        @endif
+
+                                        {{-- Recommendations: upsells / cross-sells / accessories / spare parts --}}
+                                        @if (in_array($type, ['simple', 'variable', 'bundled']))
+                                            @if ($type === 'bundled')
+                                                <flux:separator />
+                                            @endif
+                                            @foreach (ProductLinkType::cases() as $linkType)
+                                                @php $tKey = $linkType->value; @endphp
+                                                <div class="space-y-3">
+                                                    <div class="flex items-center justify-between gap-3">
+                                                        <div class="flex items-center gap-2">
+                                                            <flux:icon :icon="$linkType->icon()" variant="micro" class="size-4 text-zinc-400" />
+                                                            <flux:heading size="sm">{{ $linkType->label() }}</flux:heading>
+                                                        </div>
+                                                        <flux:button size="xs" icon="plus" type="button" wire:click="openLinkPicker('{{ $tKey }}')">Add</flux:button>
+                                                    </div>
+
+                                                    @forelse ($productLinks[$tKey] as $index => $linked)
+                                                        <div wire:key="link-{{ $tKey }}-{{ $linked['product_id'] }}" class="flex flex-wrap items-center gap-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
+                                                            <div class="min-w-0 flex-1">
+                                                                <div class="text-sm font-medium dark:text-white">{{ $linked['name'] }}</div>
+                                                                @if ($linked['sku'])
+                                                                    <div class="font-mono text-xs text-zinc-400">{{ $linked['sku'] }}</div>
+                                                                @endif
+                                                            </div>
+                                                            <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                                wire:click="removeProductLink('{{ $tKey }}', {{ $index }})"
+                                                                class="text-red-500! hover:text-red-600!" />
+                                                        </div>
+                                                    @empty
+                                                        <p class="text-sm text-zinc-400">No {{ strtolower($linkType->label()) }} added yet.</p>
+                                                    @endforelse
+                                                </div>
+
+                                                @if (! $loop->last)
+                                                    <flux:separator />
+                                                @endif
+                                            @endforeach
+                                        @endif
+
+                                        {{-- Shared product picker modal --}}
+                                        <flux:modal wire:model.self="showLinkPicker" class="md:w-[900px] lg:w-[1040px]">
+                                            @php
+                                                $pickerTitles = [
+                                                    'component' => $type === 'grouped' ? 'Add grouped products' : 'Add bundle components',
+                                                    'upsell' => 'Add upsells',
+                                                    'cross_sell' => 'Add cross-sells',
+                                                    'accessory' => 'Add accessories',
+                                                    'spare_part' => 'Add spare parts',
+                                                ];
+                                            @endphp
+                                            <flux:heading size="lg">{{ $pickerTitles[$linkPickerTarget] ?? 'Add products' }}</flux:heading>
+                                            <flux:subheading>Search the catalog and add as many as you need.</flux:subheading>
+
+                                            <div class="mt-4 space-y-4">
+                                                <flux:input
+                                                    wire:model.live.debounce.300ms="linkPickerSearch"
+                                                    icon="magnifying-glass"
+                                                    placeholder="Search by name, SKU or model number…"
+                                                    autofocus
+                                                    clearable />
+
+                                                <div class="max-h-96 overflow-y-auto">
+                                                    @if ($this->linkPickerResults->isEmpty())
+                                                        <div class="py-12 text-center text-sm text-zinc-400">
+                                                            {{ strlen(trim($linkPickerSearch)) >= 2 ? 'No matching products.' : 'No products available to add.' }}
+                                                        </div>
+                                                    @else
+                                                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                                                            @foreach ($this->linkPickerResults as $result)
+                                                                <div wire:key="pick-{{ $result->id }}"
+                                                                    class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+                                                                    <div class="relative aspect-square overflow-hidden bg-zinc-50 p-2 dark:bg-zinc-800">
+                                                                        @if ($result->cover_url)
+                                                                            <img src="{{ $result->cover_url }}" alt="{{ $result->name }}" class="size-full object-contain" loading="lazy" />
+                                                                        @else
+                                                                            <div class="flex size-full items-center justify-center text-zinc-300 dark:text-zinc-600">
+                                                                                <flux:icon.photo class="size-7" />
+                                                                            </div>
+                                                                        @endif
+                                                                        <flux:tooltip content="Add">
+                                                                            <button type="button" wire:click="pickLink({{ $result->id }})"
+                                                                                aria-label="Add {{ $result->name }}"
+                                                                                class="absolute right-2 bottom-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-brand-500 text-white shadow-md transition hover:bg-brand-600">
+                                                                                <flux:icon.plus variant="micro" class="size-4" />
+                                                                            </button>
+                                                                        </flux:tooltip>
+                                                                    </div>
+                                                                    <div class="flex flex-1 flex-col border-t border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
+                                                                        @if ($result->brand)
+                                                                            <div class="truncate text-[9.5px] font-bold tracking-[0.08em] text-brand-600 uppercase dark:text-brand-400">{{ $result->brand->name }}</div>
+                                                                        @endif
+                                                                        <div class="mt-0.5 line-clamp-2 min-h-8 text-[12px] font-medium leading-snug dark:text-white">{{ $result->name }}</div>
+                                                                        @if ($result->sku)
+                                                                            <div class="mt-1 truncate font-mono text-[11px] text-zinc-400">{{ $result->sku }}</div>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+
+                                                        @if ($this->linkPickerResults->hasMorePages())
+                                                            <div wire:intersect="loadMoreLinks" class="flex justify-center py-4">
+                                                                <flux:icon.loading class="size-5 text-zinc-400" />
+                                                            </div>
+                                                        @endif
                                                     @endif
                                                 </div>
-                                                @if ($type === 'bundled')
-                                                    <flux:input wire:model="linkedProducts.{{ $index }}.quantity" type="number" min="1" placeholder="Qty" class="w-16 text-right" />
-                                                    <label class="flex items-center gap-1.5 text-xs text-zinc-500">
-                                                        <flux:checkbox wire:model="linkedProducts.{{ $index }}.is_optional" />
-                                                        Optional
-                                                    </label>
-                                                    <flux:input wire:model="linkedProducts.{{ $index }}.price_override" type="number" min="0" step="0.01" placeholder="Price override" class="w-32" />
-                                                @endif
-                                                <flux:button size="xs" variant="ghost" icon="trash" type="button"
-                                                    wire:click="removeLinkedProduct({{ $index }})"
-                                                    class="text-red-500! hover:text-red-600!" />
-                                            </div>
-                                        @empty
-                                            <p class="text-center text-sm text-zinc-400">
-                                                {{ $type === 'grouped' ? 'No products linked to this group yet.' : 'No components added to this bundle yet.' }}
-                                            </p>
-                                        @endforelse
 
-                                        {{-- Product search --}}
-                                        <div class="relative">
-                                            <flux:input
-                                                wire:model.live.debounce.300ms="linkedProductSearch"
-                                                placeholder="Search products to link…"
-                                                icon="magnifying-glass"
-                                                clearable />
-                                            @if ($this->linkedProductResults->isNotEmpty())
-                                                <div class="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-                                                    @foreach ($this->linkedProductResults as $result)
-                                                        <button type="button" wire:click="addLinkedProduct({{ $result->id }})"
-                                                            class="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700">
-                                                            <span>
-                                                                <span class="font-medium dark:text-white">{{ $result->name }}</span>
-                                                                @if ($result->sku)
-                                                                    <span class="ml-1 font-mono text-xs text-zinc-400">{{ $result->sku }}</span>
-                                                                @endif
-                                                            </span>
-                                                            <flux:icon.plus variant="micro" class="size-4 text-zinc-400" />
-                                                        </button>
-                                                    @endforeach
+                                                <div class="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                                                    <span class="text-xs text-zinc-400">{{ $this->linkPickerResults->total() }} product(s)</span>
+                                                    <flux:button variant="primary" type="button" wire:click="$set('showLinkPicker', false)">Done</flux:button>
                                                 </div>
-                                            @endif
-                                        </div>
+                                            </div>
+                                        </flux:modal>
                                     </div>
                                 @endif
                             </div>
@@ -719,7 +852,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="space-y-4 p-6">
                             <flux:textarea wire:model="short_description" label="Short description"
                                 rows="3" placeholder="One or two sentences summarising the product…" />
@@ -742,7 +875,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="space-y-4 p-6">
                             <flux:input wire:model="meta_title" label="Meta title" placeholder="Defaults to product name" />
                             <flux:textarea wire:model="meta_description" label="Meta description" rows="3"
@@ -761,17 +894,20 @@
                 <flux:card x-data="{ open: true }" class="p-0 overflow-hidden">
                     <div class="flex items-center justify-between px-6 py-4"
                          :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <button type="button" x-on:click="open = !open" class="flex items-center gap-2">
-                            <flux:heading size="sm">Status & visibility</flux:heading>
-                            <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
-                        <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
-                    </span>
+                        <div class="flex items-center gap-3">
+                            <button type="button" x-on:click="open = !open">
+                                <flux:heading size="sm">Status & visibility</flux:heading>
+                            </button>
+                            <flux:badge size="sm" :color="ProductStatus::from($status)->badgeColor()">
+                                {{ ProductStatus::from($status)->label() }}
+                            </flux:badge>
+                        </div>
+                        <button type="button" x-on:click="open = !open"
+                                class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                            <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </button>
-                        <flux:badge size="sm" :color="ProductStatus::from($status)->badgeColor()">
-                            {{ ProductStatus::from($status)->label() }}
-                        </flux:badge>
                     </div>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="space-y-4 p-6">
                             <flux:select wire:model.live="status" label="Status">
                                 @foreach (ProductStatus::cases() as $s)
@@ -779,7 +915,14 @@
                                 @endforeach
                             </flux:select>
                             @if ($status === 'scheduled')
-                                <flux:input wire:model="published_at" type="datetime-local" label="Publish on" required />
+                                <flux:input wire:model="published_at" type="datetime-local" label="Publish on"
+                                    min="{{ now()->format('Y-m-d\TH:i') }}"
+                                    description="The product goes live automatically at this time."
+                                    required />
+                            @elseif ($status === 'published' && $published_at)
+                                <flux:text size="sm" class="text-zinc-500">
+                                    Published {{ \Illuminate\Support\Carbon::parse($published_at)->format('M j, Y · g:i A') }}
+                                </flux:text>
                             @endif
                             <flux:select wire:model="visibility" label="Visibility">
                                 @foreach (ProductVisibility::cases() as $v)
@@ -800,7 +943,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                     <div class="p-6">
                         @if ($pendingCoverImage)
                             <div class="group relative overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
@@ -843,7 +986,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                     <div class="p-6 space-y-3">
                         @if (!empty($galleryImages) || !empty($pendingGalleryImages))
                             <div class="grid grid-cols-3 gap-2">
@@ -888,7 +1031,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="p-6">
                             <flux:select wire:model="brand_id">
                                 <flux:select.option value="">No brand</flux:select.option>
@@ -910,7 +1053,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="p-6">
                             <flux:select wire:model="primary_category_id">
                                 <flux:select.option value="">No category</flux:select.option>
@@ -935,7 +1078,7 @@
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
                     </button>
-                    <div x-show="open" x-collapse>
+                    <div x-show="open" x-collapse x-cloak>
                         <div class="space-y-3 p-6">
                             @if (!empty($selectedTags))
                                 <div class="flex flex-wrap gap-1.5">

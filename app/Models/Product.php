@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductLinkType;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
@@ -10,6 +11,7 @@ use App\Observers\ProductObserver;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Tags\HasTags;
 
-#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'status', 'published_at', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'weight', 'length', 'width', 'height', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order', 'default_variant_id'])]
+#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'status', 'published_at', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'is_virtual', 'is_downloadable', 'weight', 'length', 'width', 'height', 'weight_unit', 'dimension_unit', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order', 'default_variant_id'])]
 #[ObservedBy(ProductObserver::class)]
 class Product extends Model
 {
@@ -36,11 +38,44 @@ class Product extends Model
             'published_at' => 'datetime',
             'is_taxable' => 'boolean',
             'requires_shipping' => 'boolean',
+            'is_virtual' => 'boolean',
+            'is_downloadable' => 'boolean',
             'allow_backorder' => 'boolean',
             'requires_quotation' => 'boolean',
             'min_order_quantity' => 'integer',
             'sort_order' => 'integer',
         ];
+    }
+
+    // ==================================================
+    // SCOPES
+    // ==================================================
+
+    /**
+     * Products that are live right now: explicitly published, or scheduled
+     * with a publish time that has already passed.
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where(function (Builder $q) {
+            $q->where('status', ProductStatus::PUBLISHED)
+                ->orWhere(fn (Builder $scheduled) => $scheduled
+                    ->where('status', ProductStatus::SCHEDULED)
+                    ->whereNotNull('published_at')
+                    ->where('published_at', '<=', now()));
+        });
+    }
+
+    /** Whether this product is currently live to the public. */
+    public function isPublished(): bool
+    {
+        if ($this->status === ProductStatus::PUBLISHED) {
+            return true;
+        }
+
+        return $this->status === ProductStatus::SCHEDULED
+            && $this->published_at !== null
+            && $this->published_at->isPast();
     }
 
     // ==================================================
@@ -80,10 +115,41 @@ class Product extends Model
         return $this->belongsTo(Category::class, 'primary_category_id');
     }
 
+    /**
+     * All curated link rows owned by this product (upsells, cross-sells,
+     * accessories, spare parts), ordered for editing.
+     */
+    public function links(): HasMany
+    {
+        return $this->hasMany(ProductLink::class)->orderBy('sort_order');
+    }
+
+    public function upsells(): BelongsToMany
+    {
+        return $this->linkedProductsOfType(ProductLinkType::UPSELL);
+    }
+
+    public function crossSells(): BelongsToMany
+    {
+        return $this->linkedProductsOfType(ProductLinkType::CROSS_SELL);
+    }
+
     public function accessories(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'product_accessories', 'product_id', 'accessory_product_id')
-            ->withPivot('sort_order');
+        return $this->linkedProductsOfType(ProductLinkType::ACCESSORY);
+    }
+
+    public function spareParts(): BelongsToMany
+    {
+        return $this->linkedProductsOfType(ProductLinkType::SPARE_PART);
+    }
+
+    private function linkedProductsOfType(ProductLinkType $type): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_links', 'product_id', 'linked_product_id')
+            ->wherePivot('type', $type->value)
+            ->withPivot('type', 'sort_order')
+            ->orderByPivot('sort_order');
     }
 
     public function images(): HasMany

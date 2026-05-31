@@ -62,7 +62,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
     public function featuredProducts(): Collection
     {
         return Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('id', $this->featuredProductIds)
             ->get()
             ->sortBy(fn($p) => array_search($p->id, $this->featuredProductIds))
@@ -73,7 +73,7 @@ new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen E
     public function newArrivals(): Collection
     {
         return Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->where('stock_status', StockStatus::IN_STOCK)
             ->whereNotNull('price')

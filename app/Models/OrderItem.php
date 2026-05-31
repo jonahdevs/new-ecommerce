@@ -20,7 +20,16 @@ class OrderItem extends Model
         'unit_price_cents',
         'quantity',
         'line_total_cents',
+        'tax_rate',
+        'tax_cents',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tax_rate' => 'decimal:2',
+        ];
+    }
 
     public function order(): BelongsTo
     {

@@ -13,8 +13,12 @@ use App\Models\GroupedProductItem;
 use App\Models\Product;
 use App\Models\ProductAttribute;
 use App\Models\ProductImage;
+use App\Models\ProductLink;
 use App\Models\ProductVariant;
+use App\Models\TaxClass;
+use App\Settings\LocalizationSettings;
 use Flux\Flux;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -63,6 +67,8 @@ new #[Layout('layouts::app')] class extends Component
 
     public bool $is_taxable = true;
 
+    public ?int $tax_class_id = null;
+
     // ─── Inventory ─────────────────────────────────────────────────────────────
     public string $sku = '';
 
@@ -76,6 +82,11 @@ new #[Layout('layouts::app')] class extends Component
 
     public ?int $min_order_quantity = null;
 
+    // ─── Fulfilment flags ──────────────────────────────────────────────────────
+    public bool $is_virtual = false;
+
+    public bool $is_downloadable = false;
+
     // ─── Shipping ──────────────────────────────────────────────────────────────
     public bool $requires_shipping = true;
 
@@ -86,6 +97,11 @@ new #[Layout('layouts::app')] class extends Component
     public ?float $width = null;
 
     public ?float $height = null;
+
+    /** Units snapshotted on the product (current store defaults for new products). */
+    public string $weight_unit = 'g';
+
+    public string $dimension_unit = 'mm';
 
     // ─── Status & Visibility (sidebar) ────────────────────────────────────────
     public string $status = 'draft';
@@ -142,7 +158,7 @@ new #[Layout('layouts::app')] class extends Component
 
     // ─── Downloadable Files (edit mode) ────────────────────────────────────────
     /**
-     * @var array<int, array{id: ?int, name: string, download_limit: ?int, download_expiry_days: ?int, version: string}>
+     * @var array<int, array{id: ?int, name: string, download_limit: ?int, download_expiry_days: ?int, version: string, collapsed: bool}>
      */
     public array $downloadableFiles = [];
 
@@ -152,7 +168,26 @@ new #[Layout('layouts::app')] class extends Component
      */
     public array $linkedProducts = [];
 
-    public string $linkedProductSearch = '';
+    // ─── Product links: upsells / cross-sells / accessories / spare parts ──────
+    /**
+     * @var array<string, array<int, array{product_id: int, name: string, sku: ?string}>>
+     */
+    public array $productLinks = [
+        'upsell' => [],
+        'cross_sell' => [],
+        'accessory' => [],
+        'spare_part' => [],
+    ];
+
+    // ─── Product picker modal (shared by components + links) ───────────────────
+    public bool $showLinkPicker = false;
+
+    /** Target list the picker adds to: 'component' or a ProductLinkType value. */
+    public string $linkPickerTarget = '';
+
+    public string $linkPickerSearch = '';
+
+    public int $linkPickerPerPage = 18;
 
     // ─── Tags (sidebar) ────────────────────────────────────────────────────────
     /**
@@ -179,6 +214,12 @@ new #[Layout('layouts::app')] class extends Component
 
     public function mount(?Product $product = null): void
     {
+        // New products default to the current store units; existing products
+        // keep the units they were created under (snapshot below).
+        $localization = app(LocalizationSettings::class);
+        $this->weight_unit = $localization->weight_unit;
+        $this->dimension_unit = $localization->dimension_unit;
+
         if (! $product) {
             return;
         }
@@ -200,16 +241,21 @@ new #[Layout('layouts::app')] class extends Component
         $this->sale_price = $product->sale_price ? round($product->sale_price / 100, 2) : null;
         $this->cost_price = $product->cost_price ? round($product->cost_price / 100, 2) : null;
         $this->is_taxable = (bool) $product->is_taxable;
+        $this->tax_class_id = $product->tax_class_id;
         $this->stock_status = $product->stock_status->value;
         $this->stock_quantity = $product->stock_quantity;
         $this->allow_backorder = (bool) $product->allow_backorder;
         $this->low_stock_threshold = $product->low_stock_threshold;
         $this->min_order_quantity = $product->min_order_quantity;
+        $this->is_virtual = (bool) $product->is_virtual;
+        $this->is_downloadable = (bool) $product->is_downloadable;
         $this->requires_shipping = (bool) $product->requires_shipping;
         $this->weight = $product->weight ? (float) $product->weight : null;
         $this->length = $product->length ? (float) $product->length : null;
         $this->width = $product->width ? (float) $product->width : null;
         $this->height = $product->height ? (float) $product->height : null;
+        $this->weight_unit = $product->weight_unit ?? $this->weight_unit;
+        $this->dimension_unit = $product->dimension_unit ?? $this->dimension_unit;
         $this->status = $product->status->value;
         $this->published_at = $product->published_at?->format('Y-m-d\TH:i') ?? '';
         $this->visibility = $product->visibility->value;
@@ -286,6 +332,7 @@ new #[Layout('layouts::app')] class extends Component
                 'download_limit' => $f->download_limit,
                 'download_expiry_days' => $f->download_expiry_days,
                 'version' => (string) $f->version,
+                'collapsed' => true,
             ])->all();
 
         // Linked products
@@ -313,6 +360,15 @@ new #[Layout('layouts::app')] class extends Component
                     'is_optional' => (bool) $bi->is_optional,
                     'price_override' => $bi->price_override ? round($bi->price_override / 100, 2) : null,
                 ])->all();
+        }
+
+        // Product links (upsells / cross-sells / accessories / spare parts)
+        foreach ($product->links()->with('linkedProduct')->get() as $link) {
+            $this->productLinks[$link->type->value][] = [
+                'product_id' => $link->linked_product_id,
+                'name' => $link->linkedProduct->name,
+                'sku' => $link->linkedProduct->sku,
+            ];
         }
 
         // Tags
@@ -346,6 +402,23 @@ new #[Layout('layouts::app')] class extends Component
     {
         $this->slugManuallyEdited = true;
         $this->slug = Str::slug($this->slug);
+    }
+
+    // ==================================================
+    // STATUS
+    // ==================================================
+
+    public function updatedStatus(): void
+    {
+        if ($this->status === ProductStatus::SCHEDULED->value) {
+            // Default scheduled products to a sensible future time.
+            if ($this->published_at === '' || strtotime($this->published_at) <= time()) {
+                $this->published_at = now()->addDay()->format('Y-m-d\TH:i');
+            }
+        } elseif (in_array($this->status, [ProductStatus::DRAFT->value, ProductStatus::ARCHIVED->value], true)) {
+            // Draft/archived products carry no publish date.
+            $this->published_at = '';
+        }
     }
 
     // ==================================================
@@ -688,7 +761,13 @@ new #[Layout('layouts::app')] class extends Component
             'download_limit' => null,
             'download_expiry_days' => null,
             'version' => '',
+            'collapsed' => false,
         ];
+    }
+
+    public function toggleFileCollapsed(int $index): void
+    {
+        $this->downloadableFiles[$index]['collapsed'] = ! $this->downloadableFiles[$index]['collapsed'];
     }
 
     public function removeFile(int $index): void
@@ -704,8 +783,44 @@ new #[Layout('layouts::app')] class extends Component
     }
 
     // ==================================================
-    // LINKED PRODUCTS
+    // LINKED PRODUCTS & RECOMMENDATIONS
     // ==================================================
+
+    /**
+     * Open the shared product picker for a given target list
+     * ('component' for grouped/bundle children, or a ProductLinkType value).
+     */
+    public function openLinkPicker(string $target): void
+    {
+        $this->linkPickerTarget = $target;
+        $this->linkPickerSearch = '';
+        $this->linkPickerPerPage = 18;
+        unset($this->linkPickerResults);
+        $this->showLinkPicker = true;
+    }
+
+    public function updatedLinkPickerSearch(): void
+    {
+        $this->linkPickerPerPage = 18;
+        unset($this->linkPickerResults);
+    }
+
+    public function loadMoreLinks(): void
+    {
+        $this->linkPickerPerPage += 12;
+        unset($this->linkPickerResults);
+    }
+
+    public function pickLink(int $productId): void
+    {
+        if ($this->linkPickerTarget === 'component') {
+            $this->addLinkedProduct($productId);
+        } else {
+            $this->addProductLink($this->linkPickerTarget, $productId);
+        }
+
+        unset($this->linkPickerResults);
+    }
 
     public function addLinkedProduct(int $productId): void
     {
@@ -723,15 +838,41 @@ new #[Layout('layouts::app')] class extends Component
             'is_optional' => false,
             'price_override' => null,
         ];
-
-        $this->linkedProductSearch = '';
-        unset($this->linkedProductResults);
     }
 
     public function removeLinkedProduct(int $index): void
     {
         unset($this->linkedProducts[$index]);
         $this->linkedProducts = array_values($this->linkedProducts);
+    }
+
+    public function addProductLink(string $type, int $productId): void
+    {
+        if (! array_key_exists($type, $this->productLinks)) {
+            return;
+        }
+
+        if (collect($this->productLinks[$type])->contains('product_id', $productId)) {
+            return;
+        }
+
+        $product = Product::findOrFail($productId);
+
+        $this->productLinks[$type][] = [
+            'product_id' => $productId,
+            'name' => $product->name,
+            'sku' => $product->sku,
+        ];
+    }
+
+    public function removeProductLink(string $type, int $index): void
+    {
+        if (! isset($this->productLinks[$type][$index])) {
+            return;
+        }
+
+        unset($this->productLinks[$type][$index]);
+        $this->productLinks[$type] = array_values($this->productLinks[$type]);
     }
 
     // ==================================================
@@ -785,6 +926,21 @@ new #[Layout('layouts::app')] class extends Component
     // SAVE
     // ==================================================
 
+    /**
+     * Resolve the publish timestamp from the chosen status:
+     *  - scheduled → the (validated, future) datetime entered
+     *  - published → the entered datetime, or now() if left blank
+     *  - draft / archived → null (no publish date)
+     */
+    private function resolvePublishedAt(): ?string
+    {
+        return match ($this->status) {
+            ProductStatus::SCHEDULED->value => $this->published_at ?: null,
+            ProductStatus::PUBLISHED->value => $this->published_at ?: now()->format('Y-m-d H:i:s'),
+            default => null,
+        };
+    }
+
     public function save(): void
     {
         $this->validate([
@@ -792,6 +948,8 @@ new #[Layout('layouts::app')] class extends Component
             'slug' => ['required', 'string', 'max:255', Rule::unique('products', 'slug')->ignore($this->productId)],
             'sku' => ['nullable', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($this->productId)->whereNull('deleted_at')],
             'type' => ['required', Rule::in(array_column(ProductType::cases(), 'value'))],
+            'is_virtual' => ['boolean'],
+            'is_downloadable' => ['boolean'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
@@ -804,11 +962,17 @@ new #[Layout('layouts::app')] class extends Component
             'width' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(array_column(ProductStatus::cases(), 'value'))],
-            'published_at' => ['nullable', 'date', 'required_if:status,scheduled'],
+            'published_at' => [
+                'nullable',
+                'date',
+                'required_if:status,scheduled',
+                Rule::when($this->status === ProductStatus::SCHEDULED->value, ['after:now']),
+            ],
             'visibility' => ['required', Rule::in(array_column(ProductVisibility::cases(), 'value'))],
             'sort_order' => ['integer', 'min:0'],
             'brand_id' => ['nullable', 'exists:brands,id'],
             'primary_category_id' => ['nullable', 'exists:categories,id'],
+            'tax_class_id' => ['nullable', 'exists:tax_classes,id'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'canonical_url' => ['nullable', 'url', 'max:500'],
@@ -841,18 +1005,22 @@ new #[Layout('layouts::app')] class extends Component
             'sale_price' => $this->sale_price !== null ? (int) round($this->sale_price * 100) : null,
             'cost_price' => $this->cost_price !== null ? (int) round($this->cost_price * 100) : null,
             'is_taxable' => $this->is_taxable,
+            'tax_class_id' => $this->tax_class_id ?: null,
             'stock_status' => $this->stock_status,
             'stock_quantity' => $this->stock_quantity,
             'allow_backorder' => $this->allow_backorder,
             'low_stock_threshold' => $this->low_stock_threshold,
             'min_order_quantity' => $this->min_order_quantity,
-            'requires_shipping' => $this->requires_shipping,
+            'is_virtual' => $this->is_virtual,
+            'is_downloadable' => $this->is_downloadable,
+            // Virtual products and grouped containers never ship.
+            'requires_shipping' => ! ($this->is_virtual || $this->type === ProductType::GROUPED->value),
             'weight' => $this->weight,
             'length' => $this->length,
             'width' => $this->width,
             'height' => $this->height,
             'status' => $this->status,
-            'published_at' => $this->published_at ?: null,
+            'published_at' => $this->resolvePublishedAt(),
             'visibility' => $this->visibility,
             'sort_order' => $this->sort_order,
             'requires_quotation' => $this->requires_quotation,
@@ -987,6 +1155,19 @@ new #[Layout('layouts::app')] class extends Component
             }
         }
 
+        // ─── Product Links ─────────────────────────────────────────────────────
+        $product->links()->delete();
+        foreach ($this->productLinks as $type => $items) {
+            foreach ($items as $i => $item) {
+                ProductLink::create([
+                    'product_id' => $product->id,
+                    'linked_product_id' => $item['product_id'],
+                    'type' => $type,
+                    'sort_order' => $i,
+                ]);
+            }
+        }
+
         // ─── Tags ──────────────────────────────────────────────────────────────
         $product->syncTags(collect($this->selectedTags)->pluck('name')->all());
 
@@ -1042,6 +1223,14 @@ new #[Layout('layouts::app')] class extends Component
             ->get(['id', 'name', 'parent_id']);
     }
 
+    #[Computed]
+    public function taxClasses(): Collection
+    {
+        return TaxClass::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'rate']);
+    }
+
     /** Attributes from catalog not yet added to this product. */
     #[Computed]
     public function allAttributes(): Collection
@@ -1054,22 +1243,33 @@ new #[Layout('layouts::app')] class extends Component
             ->reject(fn ($a) => in_array($a->id, $selectedIds));
     }
 
+    /**
+     * Catalog results for the shared product picker, scoped to its current
+     * target. Paginated (page 1, growing per-page) to drive infinite scroll.
+     *
+     * @return LengthAwarePaginator<int, Product>
+     */
     #[Computed]
-    public function linkedProductResults(): Collection
+    public function linkPickerResults(): LengthAwarePaginator
     {
-        if (strlen(trim($this->linkedProductSearch)) < 2) {
-            return collect();
-        }
+        $alreadyLinkedIds = $this->linkPickerTarget === 'component'
+            ? collect($this->linkedProducts)->pluck('product_id')->all()
+            : collect($this->productLinks[$this->linkPickerTarget] ?? [])->pluck('product_id')->all();
 
-        $linkedIds = collect($this->linkedProducts)->pluck('product_id')->all();
-        $term = '%'.$this->linkedProductSearch.'%';
-
-        return Product::where(fn ($q) => $q->where('name', 'like', $term)->orWhere('sku', 'like', $term))
-            ->whereNotIn('id', $linkedIds)
+        $query = Product::query()
+            ->whereNotIn('id', $alreadyLinkedIds)
             ->when($this->productId, fn ($q) => $q->where('id', '!=', $this->productId))
             ->whereNotIn('type', [ProductType::GROUPED->value, ProductType::BUNDLE->value])
-            ->limit(8)
-            ->get(['id', 'name', 'sku']);
+            ->with(['brand:id,name', 'images' => fn ($q) => $q->where('is_cover', true)]);
+
+        if (strlen(trim($this->linkPickerSearch)) >= 2) {
+            $term = '%'.$this->linkPickerSearch.'%';
+            $query->where(fn ($q) => $q->where('name', 'like', $term)
+                ->orWhere('sku', 'like', $term)
+                ->orWhere('model_number', 'like', $term));
+        }
+
+        return $query->orderBy('name')->paginate($this->linkPickerPerPage, ['*'], 'page', 1);
     }
 
     #[Computed]

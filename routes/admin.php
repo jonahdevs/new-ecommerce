@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])
         Route::livewire('/attributes', 'pages::admin.attributes.index')->name('attributes.index');
         Route::livewire('/attributes/{attribute}/edit', 'pages::admin.attributes.edit')->name('attributes.edit');
         Route::livewire('/tags', 'pages::admin.tags.index')->name('tags.index');
+        Route::livewire('/tax-classes', 'pages::admin.tax-classes.index')->name('tax-classes.index');
         Route::livewire('/orders', 'pages::admin.orders.index')->name('orders.index');
         Route::livewire('/orders/{order}', 'pages::admin.orders.show')->name('orders.show');
         Route::livewire('/quotes', 'pages::admin.quotes.index')->name('quotes.index');
@@ -32,7 +33,13 @@ Route::middleware(['auth', 'verified'])
         Route::livewire('/customers/{customer}/edit', 'pages::admin.customers.edit')->name('customers.edit');
         Route::livewire('/customers/{customer}', 'pages::admin.customers.show')->name('customers.show');
         Route::livewire('/reviews', 'pages::admin.reviews.index')->name('reviews.index');
-        Route::livewire('/settings', 'pages::admin.settings.index')->name('settings.index');
+        Route::redirect('/settings', '/admin/settings/general');
+        Route::livewire('/settings/general', 'pages::admin.settings.general')->name('settings.general');
+        Route::livewire('/settings/website', 'pages::admin.settings.website')->name('settings.website');
+        Route::livewire('/settings/app', 'pages::admin.settings.app')->name('settings.app');
+        Route::livewire('/settings/financial', 'pages::admin.settings.financial')->name('settings.financial');
+        Route::livewire('/settings/system', 'pages::admin.settings.system')->name('settings.system');
+        Route::livewire('/settings/other', 'pages::admin.settings.other')->name('settings.other');
         Route::livewire('/staff', 'pages::admin.staff.index')->name('staff.index');
         Route::livewire('/staff/create', 'pages::admin.staff.create')->name('staff.create');
         Route::livewire('/roles', 'pages::admin.roles.index')->name('roles.index');

@@ -63,7 +63,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
         $wishlistSlugs = StorefrontSession::wishlist();
 
         return Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->where('stock_status', StockStatus::IN_STOCK->value)
             ->whereNotNull('price')

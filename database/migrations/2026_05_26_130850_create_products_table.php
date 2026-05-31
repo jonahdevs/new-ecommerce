@@ -13,13 +13,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * Product types supported:
-     *  - simple       → single SKU physical product
-     *  - variable     → physical product with attribute-driven variants
-     *  - virtual      → service / non-shippable, no file delivery
-     *  - downloadable → digital file(s) delivered after purchase
+     * Product types supported (structural):
+     *  - simple       → single SKU product
+     *  - variable     → product with attribute-driven variants
      *  - grouped      → display collection of independent products on one page
      *  - bundled      → sold as one SKU composed of multiple component products
+     *
+     * Fulfilment flags (orthogonal to type, may combine):
+     *  - is_virtual      → non-shippable (service / digital); forces requires_shipping=false
+     *  - is_downloadable → grants access to downloadable file(s) after purchase
      */
     public function up(): void
     {
@@ -58,15 +60,25 @@ return new class extends Migration
             $table->boolean('is_taxable')->default(true);
             $table->foreignId('tax_class_id')->nullable()->constrained('tax_classes')->nullOnDelete();
 
+            // Fulfilment flags (orthogonal to type)
+            // is_virtual → non-shippable; is_downloadable → has downloadable files
+            $table->boolean('is_virtual')->default(false);
+            $table->boolean('is_downloadable')->default(false);
+
             // Shipping (relevant for simple, variable, bundled)
-            // virtual → requires_shipping=false
+            // is_virtual → requires_shipping=false
             // grouped → requires_shipping=false (children manage their own)
             // bundled → true if any component requires shipping (enforced in app layer)
             $table->boolean('requires_shipping')->default(true);
-            $table->decimal('weight', 8, 3)->nullable(); // kg
-            $table->decimal('length', 8, 3)->nullable(); // cm
+            // Measurements are stored in the unit snapshotted on the product at
+            // creation time (weight_unit / dimension_unit), so changing the
+            // store-wide localization units never reinterprets existing values.
+            $table->decimal('weight', 8, 3)->nullable();
+            $table->string('weight_unit', 8)->nullable();
+            $table->decimal('length', 8, 3)->nullable();
             $table->decimal('width', 8, 3)->nullable();
             $table->decimal('height', 8, 3)->nullable();
+            $table->string('dimension_unit', 8)->nullable();
 
             // Inventory (stock_quantity NULL = stock not tracked for this product;
             //            variable tracks per-variant; grouped/bundled defer to children)
@@ -106,13 +118,24 @@ return new class extends Migration
         });
 
         // ----------------------------------------------------------------
-        // PRODUCT ACCESSORIES (recommended/required add-on products)
+        // PRODUCT LINKS  (curated product → product recommendations)
+        //
+        // One typed table for all "soft" relationships — upsells, cross-sells,
+        // accessories, spare parts. They share the same shape (a directed,
+        // ordered pointer to another product) and differ only by `type`.
+        // Hard composition (grouped/bundle) lives in its own tables because it
+        // carries quantity/price semantics and drives checkout.
         // ----------------------------------------------------------------
-        Schema::create('product_accessories', function (Blueprint $table) {
+        Schema::create('product_links', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('accessory_product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('linked_product_id')->constrained('products')->cascadeOnDelete();
+            $table->string('type'); // ProductLinkType: upsell | cross_sell | accessory | spare_part
             $table->unsignedInteger('sort_order')->default(0);
-            $table->primary(['product_id', 'accessory_product_id']);
+            $table->timestamps();
+
+            $table->unique(['product_id', 'linked_product_id', 'type']);
+            $table->index(['product_id', 'type']);
         });
 
         // ----------------------------------------------------------------
@@ -341,7 +364,7 @@ return new class extends Migration
         Schema::dropIfExists('product_variants');
         Schema::dropIfExists('product_attributes');
         Schema::dropIfExists('product_images');
-        Schema::dropIfExists('product_accessories');
+        Schema::dropIfExists('product_links');
         Schema::dropIfExists('category_product');
         Schema::dropIfExists('products');
     }

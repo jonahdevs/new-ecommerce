@@ -82,7 +82,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible');
 
         if ($this->selectedCategories) {

@@ -19,6 +19,10 @@ return new class extends Migration
             $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->rememberToken();
             $table->json('notification_preferences')->nullable();
+            // Personal preferences for admin/staff users — operational alert
+            // opt-ins and UI preferences. Kept separate from the customer-facing
+            // notification_preferences column, which the account area overwrites wholesale.
+            $table->json('staff_preferences')->nullable();
             $table->timestamps();
         });
 

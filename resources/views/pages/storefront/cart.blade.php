@@ -60,10 +60,14 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 
 @php
     $kes           = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
+    $tax           = app(\App\Support\TaxCalculator::class);
     $subtotalCents = $this->lines->sum('line_total_cents');
-    $vatCents      = (int) round($subtotalCents * 0.16);
+    $vatCents      = $tax->taxForCart($this->lines);
+    $taxInclusive  = $tax->pricesIncludeTax();
     $deliveryCents = $subtotalCents > 50000000 ? 0 : 1200000;
-    $totalCents    = $subtotalCents + $vatCents + $deliveryCents;
+    $totalCents    = $taxInclusive
+        ? $subtotalCents + $deliveryCents
+        : $subtotalCents + $vatCents + $deliveryCents;
 @endphp
 
 <div class="page-fade">
@@ -212,10 +216,12 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                                     {!! $deliveryCents === 0 ? 'Free' : $kes($deliveryCents) !!}
                                 </span>
                             </div>
-                            <div class="flex items-center justify-between text-sm text-ink-2">
-                                <span>VAT (16%)</span>
-                                <span class="font-medium tabular-nums">{!! $kes($vatCents) !!}</span>
-                            </div>
+                            @if ($tax->enabled() && $vatCents > 0)
+                                <div class="flex items-center justify-between text-sm text-ink-2">
+                                    <span>VAT{{ $taxInclusive ? ' (incl.)' : '' }}</span>
+                                    <span class="font-medium tabular-nums">{!! $kes($vatCents) !!}</span>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="my-5 h-px bg-zinc-100"></div>

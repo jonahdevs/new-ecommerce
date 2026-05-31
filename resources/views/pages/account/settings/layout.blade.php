@@ -1,6 +1,18 @@
+@props(['heading' => null, 'subheading' => null, 'embedded' => false])
+
 @php $isAdmin = auth()->user()?->hasRole(['admin', 'staff']) ?? false; @endphp
 
-@if ($isAdmin)
+@if ($embedded)
+    {{-- Rendered as a section inside the admin settings shell: the shell already
+         provides tab + section navigation, so render just the section card. --}}
+    <flux:card>
+        <flux:heading>{{ $heading ?? '' }}</flux:heading>
+        <flux:subheading>{{ $subheading ?? '' }}</flux:subheading>
+        <div class="mt-5">
+            {{ $slot }}
+        </div>
+    </flux:card>
+@elseif ($isAdmin)
     <div class="flex items-start max-md:flex-col">
         <div class="me-10 w-full pb-4 md:w-55">
             <flux:navlist aria-label="{{ __('Settings') }}">

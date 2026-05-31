@@ -42,6 +42,10 @@
                     :current="request()->routeIs('admin.tags.*')" wire:navigate>
                     {{ __('Tags') }}
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="receipt-percent" :href="route('admin.tax-classes.index')"
+                    :current="request()->routeIs('admin.tax-classes.*')" wire:navigate>
+                    {{ __('Tax classes') }}
+                </flux:sidebar.item>
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Sales')" class="grid">
@@ -89,7 +93,7 @@
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('System')" class="grid">
-                <flux:sidebar.item icon="cog-6-tooth" :href="route('admin.settings.index')" :current="request()->routeIs('admin.settings.*')"
+                <flux:sidebar.item icon="cog-6-tooth" :href="route('admin.settings.general')" :current="request()->routeIs('admin.settings.*')"
                     wire:navigate>
                     {{ __('Settings') }}
                 </flux:sidebar.item>
@@ -146,7 +150,7 @@
 
                 <flux:menu.separator />
 
-                <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>Settings</flux:menu.item>
+                <flux:menu.item :href="auth()->user()->hasRole(['admin', 'staff']) ? route('admin.settings.general', ['section' => 'profile']) : route('profile.edit')" icon="cog" wire:navigate>Settings</flux:menu.item>
                 <flux:menu.item :href="route('home')" icon="arrow-top-right-on-square" target="_blank">View storefront</flux:menu.item>
 
                 <flux:menu.separator />

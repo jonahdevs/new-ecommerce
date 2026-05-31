@@ -46,7 +46,7 @@ final class StorefrontSession
         }
 
         $products = Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('slug', array_keys($cart))
             ->where('visibility', 'visible')
             ->get()

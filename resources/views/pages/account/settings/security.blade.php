@@ -25,6 +25,8 @@ new #[Layout('layouts::settings')] #[Title('Security — Sheffield')] class exte
     public string $password = '';
     public string $password_confirmation = '';
 
+    public bool $embedded = false;
+
     /* @chisel-2fa */
     public bool $canManageTwoFactor;
 
@@ -52,8 +54,10 @@ new #[Layout('layouts::settings')] #[Title('Security — Sheffield')] class exte
     /**
      * Mount the component.
      */
-    public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
+    public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication, bool $embedded = false): void
     {
+        $this->embedded = $embedded;
+
         /* @chisel-2fa */
         $this->canManageTwoFactor = Features::canManageTwoFactorAuthentication();
 
@@ -184,11 +188,11 @@ new #[Layout('layouts::settings')] #[Title('Security — Sheffield')] class exte
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    @include('partials.settings-heading', ['embedded' => $embedded])
 
     <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
 
-    <x-pages::account.settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+    <x-pages::account.settings.layout :embedded="$embedded" :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
         <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
             <flux:input
                 wire:model="current_password"

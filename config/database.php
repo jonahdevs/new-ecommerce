@@ -62,6 +62,12 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+            // Used by spatie/laravel-backup (db-dumper). Set DB_DUMP_BINARY_PATH to
+            // the directory containing mysqldump (e.g. Herd's MySQL bin) when it is
+            // not on the system PATH. Leave empty to rely on PATH.
+            'dump' => [
+                'dump_binary_path' => env('DB_DUMP_BINARY_PATH', ''),
+            ],
         ],
 
         'mariadb' => [
@@ -82,6 +88,12 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+            // Used by spatie/laravel-backup (db-dumper). Set DB_DUMP_BINARY_PATH to
+            // the directory containing mysqldump (e.g. Herd's MySQL bin) when it is
+            // not on the system PATH. Leave empty to rely on PATH.
+            'dump' => [
+                'dump_binary_path' => env('DB_DUMP_BINARY_PATH', ''),
+            ],
         ],
 
         'pgsql' => [

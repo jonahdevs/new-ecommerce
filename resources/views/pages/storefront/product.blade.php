@@ -91,6 +91,9 @@ new #[Layout('layouts::storefront')] class extends Component
 
         // ── JSON-LD Product schema ──────────────────────────────────────
         $price = $product->sale_price ?? $product->price;
+        if ($price !== null) {
+            $price = app(\App\Support\TaxCalculator::class)->displayPriceCents($product, (int) $price);
+        }
         $availability = $product->stock_status === StockStatus::IN_STOCK
             ? 'https://schema.org/InStock'
             : 'https://schema.org/MadeToOrder';
@@ -147,7 +150,7 @@ new #[Layout('layouts::storefront')] class extends Component
         $categoryId = $this->product->primary_category_id;
 
         return Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->where('stock_status', StockStatus::IN_STOCK)
             ->whereNotNull('price')
@@ -206,6 +209,11 @@ new #[Layout('layouts::storefront')] class extends Component
 
     $price = $product->sale_price ?? $product->price;
     $compareAt = $product->sale_price ? $product->price : null;
+    // Headline display prices honour the store's tax display setting; $price stays
+    // the stored (charged) amount that feeds the add-to-cart total below.
+    $tax = app(\App\Support\TaxCalculator::class);
+    $displayPrice = $price !== null ? $tax->displayPriceCents($product, (int) $price) : null;
+    $displayCompareAt = $compareAt !== null ? $tax->displayPriceCents($product, (int) $compareAt) : null;
     $isOnSale = $compareAt !== null;
     $inStock = $product->stock_status === \App\Enums\StockStatus::IN_STOCK;
     $stockQty = $product->stock_quantity;
@@ -227,7 +235,7 @@ new #[Layout('layouts::storefront')] class extends Component
         $product->length ? rtrim(rtrim((string) $product->length, '0'), '.') : null,
         $product->height ? rtrim(rtrim((string) $product->height, '0'), '.') : null,
     ])->filter()->implode(' × ');
-    $dimensionStr = $dimensionStr !== '' ? $dimensionStr.' cm' : null;
+    $dimensionStr = $dimensionStr !== '' ? $dimensionStr.' '.($product->dimension_unit ?? 'cm') : null;
 @endphp
 
 <div class="shell page-fade pt-4 pb-20">
@@ -338,14 +346,14 @@ new #[Layout('layouts::storefront')] class extends Component
             {{-- Price block --}}
             <div class="mt-6 border-y border-zinc-200 py-5">
                 <div class="flex flex-wrap items-baseline gap-3.5">
-                    @if ($compareAt)
-                        <span class="text-lg text-ink-4 line-through tabular-nums whitespace-nowrap">{!! $kes($compareAt) !!}</span>
+                    @if ($displayCompareAt)
+                        <span class="text-lg text-ink-4 line-through tabular-nums whitespace-nowrap">{!! $kes($displayCompareAt) !!}</span>
                     @endif
                     <span class="font-serif text-4xl tabular-nums">
-                        {!! $kes($price) ?? '<span class="text-ink-3 text-base">Quote on request</span>' !!}
+                        {!! $kes($displayPrice) ?? '<span class="text-ink-3 text-base">Quote on request</span>' !!}
                     </span>
-                    @if ($price)
-                        <span class="text-[12.5px] text-ink-3">excl. 16% VAT</span>
+                    @if ($displayPrice && $tax->priceDisplaySuffix())
+                        <span class="text-[12.5px] text-ink-3">{{ $tax->priceDisplaySuffix() }}</span>
                     @endif
                 </div>
 
@@ -477,7 +485,7 @@ new #[Layout('layouts::storefront')] class extends Component
                             $rows->push(['Brand', $product->brand->name]);
                         }
                         if ($product->weight) {
-                            $rows->push(['Weight', rtrim(rtrim((string) $product->weight, '0'), '.').' kg']);
+                            $rows->push(['Weight', rtrim(rtrim((string) $product->weight, '0'), '.').' '.($product->weight_unit ?? 'kg')]);
                         }
                         if ($dimensionStr) {
                             $rows->push(['Dimensions (W × L × H)', $dimensionStr]);
