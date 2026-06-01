@@ -252,10 +252,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     @push('breadcrumbs')
         <flux:breadcrumbs>
@@ -389,7 +385,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                                         @if ($isEditing)
                                             <flux:input wire:model.live.debounce.500ms="lineItems.{{ $index }}.unit_price" type="number" min="0" step="0.01" class="text-right" />
                                         @else
-                                            <span class="tabular-nums text-zinc-500">{!! $kes(round((float) $item['unit_price'] * 100)) !!}</span>
+                                            <span class="tabular-nums text-zinc-500">{!! money(round((float) $item['unit_price'] * 100)) !!}</span>
                                         @endif
                                     </flux:table.cell>
                                     <flux:table.cell align="{{ $isEditing ? 'left' : 'end' }}">
@@ -399,7 +395,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                                             <span class="tabular-nums text-zinc-500">{{ $item['quantity'] }}</span>
                                         @endif
                                     </flux:table.cell>
-                                    <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($lineTotal) !!}</flux:table.cell>
+                                    <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($lineTotal) !!}</flux:table.cell>
                                     @if ($isEditing)
                                         <flux:table.cell align="end">
                                             <flux:button size="xs" variant="ghost" icon="trash" tooltip="Remove line" wire:click="removeLine({{ $index }})" type="button"
@@ -425,7 +421,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                         @endif
                         <div class="text-right">
                             <span class="text-xs font-bold uppercase tracking-wide text-zinc-500">Total</span>
-                            <span class="ml-3 text-xl font-semibold text-brand-500 tabular-nums">{!! $kes($this->totalCents) !!}</span>
+                            <span class="ml-3 text-xl font-semibold text-brand-500 tabular-nums">{!! money($this->totalCents) !!}</span>
                         </div>
                     </div>
                 </flux:card>

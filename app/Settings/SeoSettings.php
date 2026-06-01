@@ -10,8 +10,6 @@ class SeoSettings extends Settings
 
     public string $default_meta_description;
 
-    public string $default_meta_keywords;
-
     public bool $index_site;
 
     public bool $generate_sitemap;

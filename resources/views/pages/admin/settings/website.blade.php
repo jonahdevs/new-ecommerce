@@ -9,7 +9,6 @@ use App\Settings\SeoSettings;
 use App\Settings\SocialSettings;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -25,8 +24,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     // ─── Business info ───────────────────────────────────────────────────────────
     public string $legal_name = '';
-
-    public string $trading_name = '';
 
     public string $registration_number = '';
 
@@ -48,22 +45,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public ?string $favicon_path = null;
 
-    public string $brand_color = '#b91c1c';
-
     public $pendingLogo = null;
 
     public $pendingFavicon = null;
 
     // ─── Localization ──────────────────────────────────────────────────────────
-    public string $country = 'KE';
-
-    public string $language = 'en';
-
     public string $currency = 'KES';
-
-    public string $timezone = 'Africa/Nairobi';
-
-    public string $date_format = 'd M Y';
 
     public string $weight_unit = 'g';
 
@@ -73,8 +60,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
     public string $meta_title_pattern = '';
 
     public string $default_meta_description = '';
-
-    public string $default_meta_keywords = '';
 
     public bool $index_site = true;
 
@@ -97,8 +82,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public string $youtube_url = '';
 
-    public string $tiktok_url = '';
-
     public string $whatsapp_number = '';
 
     // ─── Analytics ─────────────────────────────────────────────────────────────
@@ -108,17 +91,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public string $meta_pixel_id = '';
 
-    public string $tiktok_pixel_id = '';
-
     // ─── Legal ─────────────────────────────────────────────────────────────────
-    public string $terms_conditions = '';
-
-    public string $privacy_policy = '';
-
-    public string $returns_policy = '';
-
-    public string $shipping_policy = '';
-
     public bool $cookie_consent_enabled = false;
 
     public function mount(
@@ -131,7 +104,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         LegalSettings $legal,
     ): void {
         $this->legal_name = $business->legal_name;
-        $this->trading_name = $business->trading_name;
         $this->registration_number = $business->registration_number;
         $this->tax_pin = $business->tax_pin;
         $this->contact_email = $business->contact_email;
@@ -143,19 +115,13 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         $this->tagline = $branding->tagline;
         $this->logo_path = $branding->logo_path;
         $this->favicon_path = $branding->favicon_path;
-        $this->brand_color = $branding->brand_color;
 
-        $this->country = $localization->country;
-        $this->language = $localization->language;
         $this->currency = $localization->currency;
-        $this->timezone = $localization->timezone;
-        $this->date_format = $localization->date_format;
         $this->weight_unit = $localization->weight_unit;
         $this->dimension_unit = $localization->dimension_unit;
 
         $this->meta_title_pattern = $seo->meta_title_pattern;
         $this->default_meta_description = $seo->default_meta_description;
-        $this->default_meta_keywords = $seo->default_meta_keywords;
         $this->index_site = $seo->index_site;
         $this->generate_sitemap = $seo->generate_sitemap;
 
@@ -166,18 +132,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         $this->x_url = $social->x_url;
         $this->linkedin_url = $social->linkedin_url;
         $this->youtube_url = $social->youtube_url;
-        $this->tiktok_url = $social->tiktok_url;
         $this->whatsapp_number = $social->whatsapp_number;
 
         $this->ga4_id = $analytics->ga4_id;
         $this->gtm_id = $analytics->gtm_id;
         $this->meta_pixel_id = $analytics->meta_pixel_id;
-        $this->tiktok_pixel_id = $analytics->tiktok_pixel_id;
 
-        $this->terms_conditions = $legal->terms_conditions;
-        $this->privacy_policy = $legal->privacy_policy;
-        $this->returns_policy = $legal->returns_policy;
-        $this->shipping_policy = $legal->shipping_policy;
         $this->cookie_consent_enabled = $legal->cookie_consent_enabled;
     }
 
@@ -185,7 +145,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
     {
         $this->validate([
             'legal_name' => ['required', 'string', 'max:255'],
-            'trading_name' => ['required', 'string', 'max:255'],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'tax_pin' => ['nullable', 'string', 'max:100'],
             'contact_email' => ['nullable', 'email', 'max:255'],
@@ -194,7 +153,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'business_hours' => ['nullable', 'string', 'max:255'],
             'store_name' => ['required', 'string', 'max:255'],
             'tagline' => ['nullable', 'string', 'max:255'],
-            'brand_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'pendingLogo' => ['nullable', 'image', 'max:2048'],
             'pendingFavicon' => ['nullable', 'image', 'max:512'],
         ]);
@@ -217,7 +175,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
         $business->fill([
             'legal_name' => $this->legal_name,
-            'trading_name' => $this->trading_name,
             'registration_number' => $this->registration_number,
             'tax_pin' => $this->tax_pin,
             'contact_email' => $this->contact_email,
@@ -231,7 +188,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'tagline' => $this->tagline,
             'logo_path' => $this->logo_path,
             'favicon_path' => $this->favicon_path,
-            'brand_color' => $this->brand_color,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Business info updated.', variant: 'success');
@@ -251,21 +207,13 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
     public function saveLocalization(LocalizationSettings $settings): void
     {
         $this->validate([
-            'country' => ['required', 'string', 'size:2'],
-            'language' => ['required', 'string', 'max:10'],
             'currency' => ['required', 'string', 'size:3'],
-            'timezone' => ['required', 'string', 'timezone'],
-            'date_format' => ['required', 'string', 'max:20'],
             'weight_unit' => ['required', 'string', 'in:kg,g,lb'],
             'dimension_unit' => ['required', 'string', 'in:cm,mm,in'],
         ]);
 
         $settings->fill([
-            'country' => strtoupper($this->country),
-            'language' => $this->language,
             'currency' => strtoupper($this->currency),
-            'timezone' => $this->timezone,
-            'date_format' => $this->date_format,
             'weight_unit' => $this->weight_unit,
             'dimension_unit' => $this->dimension_unit,
         ])->save();
@@ -278,13 +226,11 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         $this->validate([
             'meta_title_pattern' => ['required', 'string', 'max:255'],
             'default_meta_description' => ['nullable', 'string', 'max:500'],
-            'default_meta_keywords' => ['nullable', 'string', 'max:500'],
         ]);
 
         $settings->fill([
             'meta_title_pattern' => $this->meta_title_pattern,
             'default_meta_description' => $this->default_meta_description,
-            'default_meta_keywords' => $this->default_meta_keywords,
             'index_site' => $this->index_site,
             'generate_sitemap' => $this->generate_sitemap,
         ])->save();
@@ -301,7 +247,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'x_url' => ['nullable', 'url', 'max:255'],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
             'youtube_url' => ['nullable', 'url', 'max:255'],
-            'tiktok_url' => ['nullable', 'url', 'max:255'],
             'whatsapp_number' => ['nullable', 'string', 'max:30'],
             'pendingOgImage' => ['nullable', 'image', 'max:2048'],
         ]);
@@ -322,7 +267,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'x_url' => $this->x_url,
             'linkedin_url' => $this->linkedin_url,
             'youtube_url' => $this->youtube_url,
-            'tiktok_url' => $this->tiktok_url,
             'whatsapp_number' => $this->whatsapp_number,
         ])->save();
 
@@ -335,14 +279,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'ga4_id' => ['nullable', 'string', 'max:50'],
             'gtm_id' => ['nullable', 'string', 'max:50'],
             'meta_pixel_id' => ['nullable', 'string', 'max:50'],
-            'tiktok_pixel_id' => ['nullable', 'string', 'max:50'],
         ]);
 
         $settings->fill([
             'ga4_id' => $this->ga4_id,
             'gtm_id' => $this->gtm_id,
             'meta_pixel_id' => $this->meta_pixel_id,
-            'tiktok_pixel_id' => $this->tiktok_pixel_id,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Analytics updated.', variant: 'success');
@@ -350,29 +292,11 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public function saveLegal(LegalSettings $settings): void
     {
-        $this->validate([
-            'terms_conditions' => ['nullable', 'string', 'max:50000'],
-            'privacy_policy' => ['nullable', 'string', 'max:50000'],
-            'returns_policy' => ['nullable', 'string', 'max:50000'],
-            'shipping_policy' => ['nullable', 'string', 'max:50000'],
-        ]);
-
         $settings->fill([
-            'terms_conditions' => $this->terms_conditions,
-            'privacy_policy' => $this->privacy_policy,
-            'returns_policy' => $this->returns_policy,
-            'shipping_policy' => $this->shipping_policy,
             'cookie_consent_enabled' => $this->cookie_consent_enabled,
         ])->save();
 
-        Flux::toast(heading: 'Saved', text: 'Legal pages updated.', variant: 'success');
-    }
-
-    /** @return array<int, string> */
-    #[Computed]
-    public function timezones(): array
-    {
-        return \DateTimeZone::listIdentifiers();
+        Flux::toast(heading: 'Saved', text: 'Legal settings updated.', variant: 'success');
     }
 
     public function getLogoPreview(): ?string
@@ -403,10 +327,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             <flux:subheading>Legal, contact and brand details for your company.</flux:subheading>
 
             <form wire:submit="saveBusiness" class="mt-6 space-y-5">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="legal_name" label="Legal name" required />
-                    <flux:input wire:model="trading_name" label="Trading name" required />
-                </div>
+                <flux:input wire:model="legal_name" label="Legal name" required />
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:input wire:model="registration_number" label="Registration no." placeholder="e.g. PVT-XXXXXX" />
                     <flux:input wire:model="tax_pin" label="Tax PIN / VAT no." placeholder="e.g. P05XXXXXXX" />
@@ -417,6 +338,11 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                 </div>
                 <flux:textarea wire:model="address" label="Address" rows="3" placeholder="123 Main St, Nairobi, Kenya" />
                 <flux:input wire:model="business_hours" label="Business hours" placeholder="Mon–Fri 8am–5pm, Sat 9am–1pm" />
+
+                <flux:text size="sm" class="text-zinc-500">
+                    Branches in multiple cities?
+                    <flux:link :href="route('admin.showrooms.index')" wire:navigate>Manage showrooms →</flux:link>
+                </flux:text>
 
                 <flux:separator />
                 <flux:text size="sm" class="font-medium text-zinc-500">Branding</flux:text>
@@ -452,16 +378,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                     @error('pendingFavicon') <flux:error>{{ $message }}</flux:error> @enderror
                 </div>
 
-                {{-- Brand color --}}
-                <div>
-                    <flux:label>Brand color</flux:label>
-                    <div class="mt-2 flex items-center gap-3">
-                        <input type="color" wire:model="brand_color" class="h-10 w-14 cursor-pointer rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900" />
-                        <flux:input wire:model="brand_color" class="w-36 font-mono" />
-                    </div>
-                    @error('brand_color') <flux:error>{{ $message }}</flux:error> @enderror
-                </div>
-
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
                 </div>
@@ -476,37 +392,14 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             <flux:subheading>Regional formats, currency and units.</flux:subheading>
 
             <form wire:submit="saveLocalization" class="mt-6 space-y-5">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="country" label="Country code" placeholder="KE" maxlength="2" class="uppercase" />
-                    <flux:select wire:model="language" label="Language">
-                        <flux:select.option value="en">English</flux:select.option>
-                        <flux:select.option value="sw">Swahili</flux:select.option>
-                        <flux:select.option value="fr">French</flux:select.option>
-                    </flux:select>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <flux:select wire:model="currency" label="Currency">
-                        <flux:select.option value="KES">KES — Kenyan Shilling</flux:select.option>
-                        <flux:select.option value="USD">USD — US Dollar</flux:select.option>
-                        <flux:select.option value="EUR">EUR — Euro</flux:select.option>
-                        <flux:select.option value="GBP">GBP — British Pound</flux:select.option>
-                        <flux:select.option value="UGX">UGX — Ugandan Shilling</flux:select.option>
-                        <flux:select.option value="TZS">TZS — Tanzanian Shilling</flux:select.option>
-                        <flux:select.option value="ZAR">ZAR — South African Rand</flux:select.option>
-                    </flux:select>
-                    <flux:select wire:model="timezone" label="Timezone" searchable>
-                        @foreach ($this->timezones as $tz)
-                            <flux:select.option :value="$tz">{{ $tz }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                </div>
-
-                <flux:select wire:model="date_format" label="Date format">
-                    <flux:select.option value="d M Y">{{ now()->format('d M Y') }} (d M Y)</flux:select.option>
-                    <flux:select.option value="d/m/Y">{{ now()->format('d/m/Y') }} (d/m/Y)</flux:select.option>
-                    <flux:select.option value="m/d/Y">{{ now()->format('m/d/Y') }} (m/d/Y)</flux:select.option>
-                    <flux:select.option value="Y-m-d">{{ now()->format('Y-m-d') }} (Y-m-d)</flux:select.option>
+                <flux:select wire:model="currency" label="Currency">
+                    <flux:select.option value="KES">KES — Kenyan Shilling</flux:select.option>
+                    <flux:select.option value="USD">USD — US Dollar</flux:select.option>
+                    <flux:select.option value="EUR">EUR — Euro</flux:select.option>
+                    <flux:select.option value="GBP">GBP — British Pound</flux:select.option>
+                    <flux:select.option value="UGX">UGX — Ugandan Shilling</flux:select.option>
+                    <flux:select.option value="TZS">TZS — Tanzanian Shilling</flux:select.option>
+                    <flux:select.option value="ZAR">ZAR — South African Rand</flux:select.option>
                 </flux:select>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -540,7 +433,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                     description="Use {page} and {site} as placeholders." required />
                 <flux:textarea wire:model="default_meta_description" label="Default meta description" rows="3"
                     placeholder="Shown when a page has no description of its own." />
-                <flux:input wire:model="default_meta_keywords" label="Default meta keywords" placeholder="comma, separated, keywords" />
 
                 <flux:separator />
 
@@ -596,7 +488,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                     <flux:input wire:model="x_url" label="X / Twitter" icon="link" placeholder="https://x.com/…" />
                     <flux:input wire:model="linkedin_url" label="LinkedIn" icon="link" placeholder="https://linkedin.com/…" />
                     <flux:input wire:model="youtube_url" label="YouTube" icon="link" placeholder="https://youtube.com/…" />
-                    <flux:input wire:model="tiktok_url" label="TikTok" icon="link" placeholder="https://tiktok.com/@…" />
                     <flux:input wire:model="whatsapp_number" label="WhatsApp number" placeholder="+254 700 000 000" />
                 </div>
 
@@ -617,7 +508,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                 <flux:input wire:model="ga4_id" label="Google Analytics 4 (Measurement ID)" placeholder="G-XXXXXXXXXX" />
                 <flux:input wire:model="gtm_id" label="Google Tag Manager ID" placeholder="GTM-XXXXXXX" />
                 <flux:input wire:model="meta_pixel_id" label="Meta (Facebook) Pixel ID" placeholder="000000000000000" />
-                <flux:input wire:model="tiktok_pixel_id" label="TikTok Pixel ID" placeholder="XXXXXXXXXXXXXXXXXXXX" />
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
@@ -629,15 +519,15 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
     {{-- Legal pages --}}
     @if ($section === 'legal')
         <flux:card>
-            <flux:heading>Legal pages</flux:heading>
-            <flux:subheading>Policy content shown across your storefront.</flux:subheading>
+            <flux:heading>Legal</flux:heading>
+            <flux:subheading>Policy content lives in content pages; this controls the cookie banner.</flux:subheading>
+
+            <flux:text size="sm" class="mt-4 text-zinc-500">
+                Terms, Privacy, Returns and Shipping are managed as
+                <flux:link :href="route('admin.pages.index')" wire:navigate>content pages →</flux:link>
+            </flux:text>
 
             <form wire:submit="saveLegal" class="mt-6 space-y-5">
-                <flux:textarea wire:model="terms_conditions" label="Terms & conditions" rows="5" />
-                <flux:textarea wire:model="privacy_policy" label="Privacy policy" rows="5" />
-                <flux:textarea wire:model="returns_policy" label="Returns policy" rows="5" />
-                <flux:textarea wire:model="shipping_policy" label="Shipping policy" rows="5" />
-
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <div>
                         <flux:label>Cookie consent banner</flux:label>

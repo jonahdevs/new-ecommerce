@@ -20,8 +20,6 @@ class SocialSettings extends Settings
 
     public string $youtube_url;
 
-    public string $tiktok_url;
-
     public string $whatsapp_number;
 
     public static function group(): string

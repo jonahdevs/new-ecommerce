@@ -2,7 +2,6 @@
 
 use App\Models\TaxClass;
 use App\Settings\CurrencySettings;
-use App\Settings\InvoiceSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\TaxSettings;
 use Flux\Flux;
@@ -25,9 +24,9 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public string $mpesa_type = 'paybill';
 
-    public bool $card_enabled = false;
+    public bool $card_enabled = true;
 
-    public string $card_provider = 'flutterwave';
+    public string $card_provider = 'stripe';
 
     public bool $bank_transfer_enabled = false;
 
@@ -55,16 +54,7 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public string $decimal_separator = '.';
 
-    // ─── Invoicing ─────────────────────────────────────────────────────────────
-    public string $invoice_prefix = 'INV-';
-
-    public int $invoice_next_number = 1001;
-
-    public string $invoice_footer = '';
-
-    public bool $show_tax_pin = true;
-
-    public function mount(PaymentSettings $payments, TaxSettings $tax, CurrencySettings $currency, InvoiceSettings $invoice): void
+    public function mount(PaymentSettings $payments, TaxSettings $tax, CurrencySettings $currency): void
     {
         $this->mpesa_enabled = $payments->mpesa_enabled;
         $this->mpesa_shortcode = $payments->mpesa_shortcode;
@@ -85,11 +75,6 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         $this->decimals = $currency->decimals;
         $this->thousand_separator = $currency->thousand_separator;
         $this->decimal_separator = $currency->decimal_separator;
-
-        $this->invoice_prefix = $invoice->invoice_prefix;
-        $this->invoice_next_number = $invoice->invoice_next_number;
-        $this->invoice_footer = $invoice->invoice_footer;
-        $this->show_tax_pin = $invoice->show_tax_pin;
     }
 
     public function savePayments(PaymentSettings $settings): void
@@ -158,24 +143,6 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Currency settings updated.', variant: 'success');
-    }
-
-    public function saveInvoicing(InvoiceSettings $settings): void
-    {
-        $this->validate([
-            'invoice_prefix' => ['required', 'string', 'max:10'],
-            'invoice_next_number' => ['required', 'integer', 'min:1'],
-            'invoice_footer' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $settings->fill([
-            'invoice_prefix' => $this->invoice_prefix,
-            'invoice_next_number' => (int) $this->invoice_next_number,
-            'invoice_footer' => $this->invoice_footer,
-            'show_tax_pin' => $this->show_tax_pin,
-        ])->save();
-
-        Flux::toast(heading: 'Saved', text: 'Invoicing settings updated.', variant: 'success');
     }
 
     /** Preview of how a price renders with the current currency settings. */
@@ -325,31 +292,6 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
                 <div class="rounded-md bg-zinc-50 px-4 py-3 dark:bg-zinc-800">
                     <flux:text size="sm" class="text-zinc-500">Preview</flux:text>
                     <div class="mt-1 text-lg font-semibold tabular-nums dark:text-white">{{ $this->getPricePreview() }}</div>
-                </div>
-
-                <div class="flex justify-end pt-2">
-                    <flux:button type="submit" variant="primary">Save changes</flux:button>
-                </div>
-            </form>
-        </flux:card>
-    @endif
-
-    {{-- Invoicing --}}
-    @if ($section === 'invoicing')
-        <flux:card>
-            <flux:heading>Invoicing</flux:heading>
-            <flux:subheading>How invoices are numbered and presented.</flux:subheading>
-
-            <form wire:submit="saveInvoicing" class="mt-6 space-y-5">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="invoice_prefix" label="Invoice prefix" placeholder="INV-" />
-                    <flux:input wire:model="invoice_next_number" type="number" min="1" label="Next invoice number" />
-                </div>
-                <flux:textarea wire:model="invoice_footer" label="Invoice footer note" rows="3"
-                    placeholder="Thank you for your business." />
-                <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                    <flux:label>Show tax PIN on invoices</flux:label>
-                    <flux:switch wire:model="show_tax_pin" />
                 </div>
 
                 <div class="flex justify-end pt-2">

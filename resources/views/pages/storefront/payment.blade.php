@@ -19,6 +19,10 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
 
     public string $selectedMethod = 'card';
 
+    public bool $cardEnabled = true;
+
+    public bool $mpesaEnabled = true;
+
     // ─── Stripe card ─────────────────────────────────────────────────────────
     public ?string $stripeClientSecret = null;
 
@@ -48,9 +52,16 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
         $order->load('items.product');
         $this->order = $order;
 
-        $stripePayment = app(StripePaymentService::class)->createPaymentIntent($order);
-        $this->stripeClientSecret = $stripePayment->stripe_client_secret;
-        $this->stripePaymentId = $stripePayment->id;
+        $payments = app(\App\Settings\PaymentSettings::class);
+        $this->cardEnabled = $payments->card_enabled;
+        $this->mpesaEnabled = $payments->mpesa_enabled;
+        $this->selectedMethod = $this->cardEnabled ? 'card' : 'mpesa';
+
+        if ($this->cardEnabled) {
+            $stripePayment = app(StripePaymentService::class)->createPaymentIntent($order);
+            $this->stripeClientSecret = $stripePayment->stripe_client_secret;
+            $this->stripePaymentId = $stripePayment->id;
+        }
 
         $defaultPhone = auth()->user()->addresses()->orderByDesc('is_default')->value('phone');
         $this->mpesaPhone = (string) ($defaultPhone ?? '');
@@ -58,8 +69,10 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
 
     public function selectMethod(string $method): void
     {
-        if (in_array($method, ['card', 'mpesa'], true)) {
-            $this->selectedMethod = $method;
+        if ($method === 'card' && $this->cardEnabled) {
+            $this->selectedMethod = 'card';
+        } elseif ($method === 'mpesa' && $this->mpesaEnabled) {
+            $this->selectedMethod = 'mpesa';
         }
     }
 
@@ -167,13 +180,14 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
 }; ?>
 
 @php
-    $kes = fn ($cents) => 'KES ' . number_format(intdiv($cents, 100), 2, '.', ',');
     $stripeKey = config('services.stripe.key');
 @endphp
 
-@assets
-<script src="https://js.stripe.com/v3/"></script>
-@endassets
+@if ($cardEnabled)
+    @assets
+    <script src="https://js.stripe.com/v3/"></script>
+    @endassets
+@endif
 
 <div class="page-fade">
     <div class="shell pt-4 pb-20">
@@ -190,13 +204,16 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
 
             {{-- ── Left: payment methods ── --}}
             <div class="flex-1 min-w-0 space-y-3"
+                 @if ($cardEnabled)
                  x-data="stripeCardForm(@js($stripeKey), @js($this->stripeClientSecret))"
-                 @stripe-payment-confirmed.window="$wire.stripePaymentConfirmed($event.detail.paymentIntentId)">
+                 @stripe-payment-confirmed.window="$wire.stripePaymentConfirmed($event.detail.paymentIntentId)"
+                 @endif>
 
                 @error('card')
                     <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">{{ $message }}</div>
                 @enderror
 
+                @if ($cardEnabled)
                 {{-- ── Card Payment ── --}}
                 <div class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'card' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
                     {{-- Header row --}}
@@ -263,7 +280,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
                                 <template x-if="processing">
                                     <flux:icon.arrow-path variant="micro" class="size-4 animate-spin" />
                                 </template>
-                                <span x-text="processing ? 'Processing…' : 'Pay {{ $kes($order->total_cents) }}'"></span>
+                                <span x-text="processing ? 'Processing…' : 'Pay {{ money($order->total_cents) }}'"></span>
                             </button>
 
                             <p class="flex items-center justify-center gap-1.5 text-[11px] text-ink-4">
@@ -273,7 +290,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
                         </div>
                     </div>
                 </div>
+                @endif
 
+                @if ($mpesaEnabled)
                 {{-- ── M-Pesa ── --}}
                 <div class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
                     {{-- Header row --}}
@@ -300,11 +319,18 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
                             </flux:field>
 
                             <flux:button variant="customer-primary" size="customer-lg" wire:click="payWithMpesa" wire:loading.attr="disabled" wire:target="payWithMpesa" class="w-full!">
-                                Pay {!! $kes($order->total_cents) !!} via M-Pesa
+                                Pay {!! money($order->total_cents) !!} via M-Pesa
                             </flux:button>
                         </div>
                     @endif
                 </div>
+                @endif
+
+                @unless ($cardEnabled || $mpesaEnabled)
+                    <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
+                        No online payment methods are currently available. Please contact us to complete your order.
+                    </div>
+                @endunless
 
             </div>
 
@@ -329,7 +355,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
                                         <div class="truncate text-[12.5px] font-semibold text-ink">{{ $item->product_name }}</div>
                                         <div class="text-[11.5px] text-ink-4">Qty {{ $item->quantity }}</div>
                                     </div>
-                                    <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">{!! $kes($item->line_total_cents) !!}</div>
+                                    <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">{!! money($item->line_total_cents) !!}</div>
                                 </div>
                             @endforeach
                         </div>
@@ -339,17 +365,17 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Subtotal</span>
-                                <span class="font-medium tabular-nums">{!! $kes($order->subtotal_cents) !!}</span>
+                                <span class="font-medium tabular-nums">{!! money($order->subtotal_cents) !!}</span>
                             </div>
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Shipping</span>
                                 <span class="{{ $order->delivery_cents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
-                                    {!! $order->delivery_cents === 0 ? 'Free' : $kes($order->delivery_cents) !!}
+                                    {!! $order->delivery_cents === 0 ? 'Free' : money($order->delivery_cents) !!}
                                 </span>
                             </div>
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>VAT (16%)</span>
-                                <span class="font-medium tabular-nums">{!! $kes($order->vat_cents) !!}</span>
+                                <span class="font-medium tabular-nums">{!! money($order->vat_cents) !!}</span>
                             </div>
                         </div>
 
@@ -357,7 +383,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class ext
 
                         <div class="flex items-center justify-between">
                             <span class="text-[13px] font-bold tracking-wide uppercase">Total</span>
-                            <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! $kes($order->total_cents) !!}</span>
+                            <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! money($order->total_cents) !!}</span>
                         </div>
 
                         <div class="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-ink-4">

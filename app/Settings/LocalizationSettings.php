@@ -6,15 +6,7 @@ use Spatie\LaravelSettings\Settings;
 
 class LocalizationSettings extends Settings
 {
-    public string $country;
-
-    public string $language;
-
     public string $currency;
-
-    public string $timezone;
-
-    public string $date_format;
 
     public string $weight_unit;
 

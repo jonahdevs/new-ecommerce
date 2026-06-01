@@ -76,10 +76,6 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     <div class="flex items-center justify-between">
         <div>
@@ -175,7 +171,7 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                             <div class="text-xs text-zinc-500">{{ $quote->user?->email ?? $quote->contact_email }}</div>
                         </flux:table.cell>
                         <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $quote->items_count }}</flux:table.cell>
-                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($quote->total_cents) !!}</flux:table.cell>
+                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($quote->total_cents) !!}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" inset="top bottom" :color="$quote->status->badgeColor()">
                                 {{ $quote->status->label() }}

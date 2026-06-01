@@ -29,10 +29,6 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     @push('breadcrumbs')
 <flux:breadcrumbs>
@@ -60,7 +56,7 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
             <flux:card class="p-0 overflow-hidden">
                 <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
                     <flux:heading size="sm">Orders</flux:heading>
-                    <flux:text size="sm">Lifetime spend: <span class="font-semibold">{!! $kes($this->totalSpentCents) !!}</span></flux:text>
+                    <flux:text size="sm">Lifetime spend: <span class="font-semibold">{!! money($this->totalSpentCents) !!}</span></flux:text>
                 </div>
                 <flux:table
                     container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
@@ -77,7 +73,7 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                             <flux:table.row :key="$order->id">
                                 <flux:table.cell variant="strong"><span class="font-mono">{{ $order->order_number }}</span></flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $order->items_count }}</flux:table.cell>
-                                <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($order->total_cents) !!}</flux:table.cell>
+                                <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($order->total_cents) !!}</flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge size="sm" inset="top bottom" :color="$order->status->badgeColor()">
                                         {{ $order->status->label() }}

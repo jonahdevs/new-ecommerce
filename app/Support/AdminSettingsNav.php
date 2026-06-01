@@ -32,20 +32,18 @@ class AdminSettingsNav
                 'reviews' => ['label' => 'Reviews', 'icon' => 'star'],
                 'checkout' => ['label' => 'Checkout & cart', 'icon' => 'shopping-cart'],
                 'quotations' => ['label' => 'Quotations', 'icon' => 'document-text'],
-                'downloads' => ['label' => 'Downloads', 'icon' => 'arrow-down-tray'],
                 'shipping' => ['label' => 'Shipping & delivery', 'icon' => 'truck'],
             ]],
             'financial' => ['label' => 'Financial', 'icon' => 'banknotes', 'sections' => [
                 'payments' => ['label' => 'Payments', 'icon' => 'credit-card'],
                 'tax' => ['label' => 'Tax', 'icon' => 'receipt-percent'],
                 'currency' => ['label' => 'Currency & pricing', 'icon' => 'currency-dollar'],
-                'invoicing' => ['label' => 'Invoicing', 'icon' => 'document-text'],
             ]],
             'system' => ['label' => 'System', 'icon' => 'cog-6-tooth', 'sections' => [
                 'email' => ['label' => 'Email & SMS', 'icon' => 'envelope'],
                 'integrations' => ['label' => 'Integrations', 'icon' => 'puzzle-piece'],
                 'security' => ['label' => 'Security', 'icon' => 'shield-check'],
-                'maintenance' => ['label' => 'Maintenance & cache', 'icon' => 'wrench-screwdriver'],
+                'maintenance' => ['label' => 'Maintenance', 'icon' => 'wrench-screwdriver'],
             ]],
             'other' => ['label' => 'Other', 'icon' => 'ellipsis-horizontal', 'sections' => [
                 'backup' => ['label' => 'Backup', 'icon' => 'circle-stack'],

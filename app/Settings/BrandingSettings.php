@@ -14,8 +14,6 @@ class BrandingSettings extends Settings
 
     public ?string $favicon_path;
 
-    public string $brand_color;
-
     public static function group(): string
     {
         return 'branding';

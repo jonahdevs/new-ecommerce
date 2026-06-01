@@ -1,3 +1,12 @@
+@php
+    $branding = app(\App\Settings\BrandingSettings::class);
+    $analytics = app(\App\Settings\AnalyticsSettings::class);
+    $legal = app(\App\Settings\LegalSettings::class);
+    $storeName = $branding->store_name ?: config('app.name', 'Sheffield');
+    $headerLogo = $branding->logo_path
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($branding->logo_path)
+        : '/logo.png';
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -6,6 +15,11 @@
 </head>
 
 <body class="min-h-screen bg-white text-ink antialiased">
+    @if (filled($analytics->gtm_id))
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ $analytics->gtm_id }}"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    @endif
+
     {{-- Rows 1 & 2 pin together as a single sticky block --}}
     <div class="sticky top-0 z-40 bg-white">
         {{-- Row 1 — Promo banner --}}
@@ -14,8 +28,8 @@
         {{-- Row 2 — Logo + search + nav + actions --}}
         <header style="background-image: url('/images/navbar-bg.webp'); background-size: cover; background-position: center;">
             <div class="shell flex h-18 items-center gap-6">
-                <a href="{{ route('home') }}" class="flex shrink-0 items-center" wire:navigate aria-label="{{ config('app.name', 'Sheffield') }} — Home">
-                    <img src="/logo.png" alt="{{ config('app.name', 'Sheffield') }}" class="h-10 w-auto" />
+                <a href="{{ route('home') }}" class="flex shrink-0 items-center" wire:navigate aria-label="{{ $storeName }} — Home">
+                    <img src="{{ $headerLogo }}" alt="{{ $storeName }}" class="h-10 w-auto" />
                 </a>
 
                 <livewire:storefront.search-dropdown />
@@ -59,6 +73,10 @@
             <flux:toast />
         </flux:toast.group>
     @endpersist
+
+    @if ($legal->cookie_consent_enabled)
+        @include('partials.storefront.cookie-banner')
+    @endif
 
     <script>
         document.addEventListener('keydown', e => {

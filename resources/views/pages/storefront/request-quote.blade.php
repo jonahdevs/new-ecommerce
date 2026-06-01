@@ -38,6 +38,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
 
     public function mount(): void
     {
+        abort_unless(app(\App\Settings\QuotationSettings::class)->quotes_enabled, 404);
+
         SEOMeta::setRobots('noindex,follow');
 
         $this->items = StorefrontSession::cart();
@@ -185,11 +187,12 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                 'contact_email' => $this->contact_email,
                 'contact_phone' => $this->contact_phone ?: null,
                 'contact_company' => $this->contact_company ?: null,
-                'quote_number' => $this->generateQuoteNumber(),
+                'quote_number' => Quote::generateNumber(),
                 'title' => $title,
                 'status' => QuoteStatus::SENT,
                 'total_cents' => (int) $lines->sum('line_total_cents'),
                 'notes' => $this->notes ?: null,
+                'expires_at' => now()->addDays(app(\App\Settings\QuotationSettings::class)->default_validity_days),
             ]);
 
             foreach ($lines as $line) {
@@ -225,16 +228,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
         return $who !== '' ? "Quote request — {$who}" : 'Quote request';
     }
 
-    private function generateQuoteNumber(): string
-    {
-        $sequence = Quote::whereYear('created_at', now()->year)->count() + 1;
-
-        return 'RFQ-'.now()->year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
-    }
 }; ?>
 
 @php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
     $totalCents = $this->lines->sum('line_total_cents');
 @endphp
 
@@ -352,7 +348,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                                                 </button>
                                             </div>
                                             <span class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                                {!! $line['unit_price_cents'] > 0 ? $kes($line['line_total_cents']) : 'POA' !!}
+                                                {!! $line['unit_price_cents'] > 0 ? money($line['line_total_cents']) : 'POA' !!}
                                             </span>
                                         </div>
                                     </div>
@@ -369,7 +365,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
 
                     <div class="flex items-center justify-between">
                         <span class="text-[13px] font-bold tracking-wide uppercase">Indicative total</span>
-                        <span class="text-xl font-bold text-brand-500 tabular-nums">{!! $totalCents > 0 ? $kes($totalCents) : '—' !!}</span>
+                        <span class="text-xl font-bold text-brand-500 tabular-nums">{!! $totalCents > 0 ? money($totalCents) : '—' !!}</span>
                     </div>
 
                     <p class="mt-3 text-[11.5px] leading-relaxed text-ink-4">
@@ -418,8 +414,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
             </div>
 
             <div class="max-h-96 overflow-y-auto">
-                @php $kesModal = fn ($cents) => $cents ? 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',') : null; @endphp
-
                 @if ($this->searchResults->isEmpty())
                     <div class="py-12 text-center">
                         @if (strlen(trim($itemSearch)) >= 2)
@@ -458,7 +452,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                                     @endif
                                     <div class="mt-0.5 line-clamp-2 min-h-8 text-[12px] font-medium leading-snug text-ink">{{ $product->name }}</div>
                                     <div class="mt-1.5 text-[12.5px] font-bold text-ink tabular-nums whitespace-nowrap">
-                                        {!! $price ? $kesModal($price) : 'POA' !!}
+                                        {!! $price ? money($price) : 'POA' !!}
                                     </div>
                                 </div>
                             </div>

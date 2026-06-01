@@ -65,7 +65,6 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
 }; ?>
 
 @php
-    $kes = fn ($cents) => $cents ? 'KES&nbsp;'.number_format(intdiv($cents, 100), 0, '.', ',') : null;
 
     // Find a productAttribute by attribute name; returns a presentable string or '—'.
     $specFor = function ($product, string $label): string {
@@ -167,7 +166,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare — Sheffield')] class ext
                                     {{ $product->name }}
                                 </a>
                                 <div class="mt-2 font-serif text-xl tabular-nums">
-                                    {!! $kes($price) ?? '<span class="text-ink-3 text-sm">Quote on request</span>' !!}
+                                    {!! $price ? money($price) : '<span class="text-ink-3 text-sm">Quote on request</span>' !!}
                                 </div>
 
                                 <flux:button variant="primary" size="sm" class="mt-3! w-full!"

@@ -35,10 +35,6 @@ new #[Layout('layouts::account')] #[Title('Quotes — Sheffield')] class extends
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
-@endphp
-
 <div class="page-fade space-y-6">
 
     {{-- Header --}}
@@ -81,7 +77,7 @@ new #[Layout('layouts::account')] #[Title('Quotes — Sheffield')] class extends
                         </div>
 
                         <div class="flex shrink-0 items-center gap-4">
-                            <span class="font-serif text-xl tabular-nums text-ink">{!! $kes($quote->total_cents) !!}</span>
+                            <span class="font-serif text-xl tabular-nums text-ink">{!! money($quote->total_cents) !!}</span>
                             <div class="flex gap-2">
                                 @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
                                     <flux:button variant="customer-primary" size="customer"

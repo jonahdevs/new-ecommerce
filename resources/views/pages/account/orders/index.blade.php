@@ -37,10 +37,6 @@ new #[Layout('layouts::account')] #[Title('Orders — Sheffield')] class extends
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
-@endphp
-
 <div class="page-fade space-y-6">
 
     {{-- Header --}}
@@ -105,7 +101,7 @@ new #[Layout('layouts::account')] #[Title('Orders — Sheffield')] class extends
                             </flux:table.cell>
                             <flux:table.cell class="hidden md:table-cell" align="end">
                                 <flux:text size="sm" class="font-semibold tabular-nums">
-                                    {!! $kes($order->total_cents) !!}
+                                    {!! money($order->total_cents) !!}
                                 </flux:text>
                             </flux:table.cell>
                             <flux:table.cell align="end">

@@ -12,8 +12,6 @@ class AnalyticsSettings extends Settings
 
     public string $meta_pixel_id;
 
-    public string $tiktok_pixel_id;
-
     public static function group(): string
     {
         return 'analytics';

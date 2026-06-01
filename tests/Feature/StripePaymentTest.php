@@ -14,6 +14,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Stripe\StripePaymentService;
+use App\Settings\PaymentSettings;
 use App\Support\StorefrontSession;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -77,6 +78,24 @@ it('payment page creates a stripe payment intent on mount', function () {
         ->test('pages::storefront.payment', ['order' => $order]);
 
     expect($component->get('stripeClientSecret'))->toBe('pi_test_abc_secret_xyz');
+});
+
+it('hides card payments and skips the stripe intent when card is disabled', function () {
+    app(PaymentSettings::class)->fill([
+        'card_enabled' => false,
+        'mpesa_enabled' => true,
+    ])->save();
+
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
+
+    $component = Livewire::actingAs($order->user)
+        ->test('pages::storefront.payment', ['order' => $order]);
+
+    expect($component->get('stripeClientSecret'))->toBeNull();
+
+    $component->assertSet('selectedMethod', 'mpesa')
+        ->assertDontSee('Card Payment')
+        ->assertSee('M-Pesa');
 });
 
 it('confirms card payment and advances order when stripe reports success', function () {

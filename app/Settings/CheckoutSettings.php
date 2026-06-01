@@ -10,8 +10,6 @@ class CheckoutSettings extends Settings
 
     public string $order_prefix;
 
-    public int $order_next_number;
-
     public static function group(): string
     {
         return 'checkout';

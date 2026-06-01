@@ -76,7 +76,6 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
 }; ?>
 
 @php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
     $totalCents = $this->products->sum(fn ($p) => $p->sale_price ?? $p->price ?? 0);
 @endphp
 
@@ -96,7 +95,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
                         Nothing saved yet — tap the heart on any product.
                     @else
                         {{ $this->products->count() }} {{ \Illuminate\Support\Str::plural('item', $this->products->count()) }} ·
-                        Estimated total {!! $kes($totalCents) !!}
+                        Estimated total {!! money($totalCents) !!}
                     @endif
                 </p>
             </div>
@@ -160,9 +159,9 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class ex
                         </div>
                         <div class="min-w-32 text-right">
                             @if ($compareAt)
-                                <div class="text-[12px] text-ink-4 line-through whitespace-nowrap">{!! $kes($compareAt) !!}</div>
+                                <div class="text-[12px] text-ink-4 line-through whitespace-nowrap">{!! money($compareAt) !!}</div>
                             @endif
-                            <div class="font-serif text-xl tabular-nums whitespace-nowrap">{!! $price ? $kes($price) : 'Request quote' !!}</div>
+                            <div class="font-serif text-xl tabular-nums whitespace-nowrap">{!! $price ? money($price) : 'Request quote' !!}</div>
                         </div>
                         <div class="flex min-w-36 flex-col gap-1.5">
                             <flux:button variant="primary" size="sm" wire:click="addToCart('{{ $product->slug }}')" icon="shopping-cart">Add to cart</flux:button>

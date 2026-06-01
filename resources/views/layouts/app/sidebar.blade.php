@@ -85,10 +85,21 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            <flux:sidebar.group :heading="__('Content')" class="grid">
+                <flux:sidebar.item icon="document-text" :href="route('admin.pages.index')"
+                    :current="request()->routeIs('admin.pages.*')" wire:navigate>
+                    {{ __('Pages') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
             <flux:sidebar.group :heading="__('Logistics')" class="grid">
                 <flux:sidebar.item icon="truck" :href="route('admin.delivery-zones')"
                     :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
                     {{ __('Delivery zones') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="building-storefront" :href="route('admin.showrooms.index')"
+                    :current="request()->routeIs('admin.showrooms.*')" wire:navigate>
+                    {{ __('Showrooms') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
 

@@ -236,6 +236,13 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
         $address = null;
         $subtotalCents = (int) $lines->sum('line_total_cents');
 
+        $minOrderCents = app(\App\Settings\CheckoutSettings::class)->min_order_value * 100;
+        if ($minOrderCents > 0 && $subtotalCents < $minOrderCents) {
+            Flux::toast(heading: 'Order below minimum', text: 'The minimum order value is '.money($minOrderCents).'.', variant: 'warning');
+
+            return;
+        }
+
         if ($this->deliveryMethod === 'pickup') {
             $quote = new DeliveryQuoteResult(serviceable: true, feeCents: 0, isFree: true);
         } else {
@@ -274,7 +281,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                 'user_id' => auth()->id(),
                 'address_id' => $address?->id,
                 'delivery_zone_id' => $quote->zone?->id,
-                'order_number' => $this->generateOrderNumber(),
+                'order_number' => Order::generateNumber(),
                 'status' => OrderStatus::PENDING,
                 'subtotal_cents' => $subtotalCents,
                 'vat_cents' => $vatCents,
@@ -306,17 +313,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 
         $this->redirectRoute('payment.page', $order, navigate: true);
     }
-
-    private function generateOrderNumber(): string
-    {
-        $sequence = Order::whereYear('created_at', now()->year)->count() + 1;
-
-        return 'SHF-'.now()->year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
-    }
 }; ?>
 
 @php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
 
     $tax           = app(\App\Support\TaxCalculator::class);
     $quote         = $this->deliveryQuote;
@@ -431,7 +430,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                                     @if ($quote->isFree)
                                         <span class="font-semibold text-emerald-600">Free{{ $quote->promotionName ? ' ('.$quote->promotionName.')' : '' }}</span>
                                     @else
-                                        <span class="font-semibold text-ink-2">{!! $kes($quote->feeCents) !!}</span>
+                                        <span class="font-semibold text-ink-2">{!! money($quote->feeCents) !!}</span>
                                     @endif
                                 </div>
                             @endif
@@ -461,7 +460,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                                     <div class="truncate text-[12.5px] font-semibold text-ink">{{ $line['product']->name }}</div>
                                     <div class="text-[11.5px] text-ink-4">Qty {{ $line['qty'] }}</div>
                                 </div>
-                                <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">{!! $kes($line['line_total_cents']) !!}</div>
+                                <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">{!! money($line['line_total_cents']) !!}</div>
                             </div>
                         @endforeach
                     </div>
@@ -471,7 +470,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                     <div class="flex flex-col gap-3">
                         <div class="flex items-center justify-between text-sm text-ink-2">
                             <span>Subtotal</span>
-                            <span class="font-medium tabular-nums">{!! $kes($subtotalCents) !!}</span>
+                            <span class="font-medium tabular-nums">{!! money($subtotalCents) !!}</span>
                         </div>
                         <div class="flex items-center justify-between text-sm text-ink-2">
                             <span>{{ $this->deliveryMethod === 'pickup' ? 'Pickup' : 'Shipping' }}</span>
@@ -479,14 +478,14 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                                 <span class="font-medium text-red-500">Unavailable</span>
                             @else
                                 <span class="{{ $deliveryCents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
-                                    {!! $deliveryCents === 0 ? 'Free' : $kes($deliveryCents) !!}
+                                    {!! $deliveryCents === 0 ? 'Free' : money($deliveryCents) !!}
                                 </span>
                             @endif
                         </div>
                         @if ($tax->enabled() && $vatCents > 0)
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>VAT{{ $taxInclusive ? ' (incl.)' : '' }}</span>
-                                <span class="font-medium tabular-nums">{!! $kes($vatCents) !!}</span>
+                                <span class="font-medium tabular-nums">{!! money($vatCents) !!}</span>
                             </div>
                         @endif
                     </div>
@@ -495,7 +494,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 
                     <div class="flex items-center justify-between">
                         <span class="text-[13px] font-bold tracking-wide uppercase">Total</span>
-                        <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! $kes($totalCents) !!}</span>
+                        <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! money($totalCents) !!}</span>
                     </div>
 
                     <flux:button variant="customer-primary" size="customer-lg" wire:click="placeOrder" icon:trailing="arrow-right" class="mt-5! w-full!" wire:loading.attr="disabled" wire:target="placeOrder">

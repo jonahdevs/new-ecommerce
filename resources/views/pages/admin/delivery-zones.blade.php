@@ -270,10 +270,6 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES ' . number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 @include('partials.admin.zone-map-scripts')
 
 <div class="space-y-10" x-data="zoneMap()"
@@ -322,8 +318,8 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                             </td>
                             <td class="px-4 py-3 text-zinc-500">{{ $zone->county }}</td>
                             <td class="px-4 py-3 tabular-nums text-zinc-500">{{ number_format($zone->radius_meters / 1000, 1) }} km</td>
-                            <td class="px-4 py-3 tabular-nums">{{ $kes($zone->base_fee_cents) }}</td>
-                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $zone->free_over_cents !== null ? $kes($zone->free_over_cents) : '—' }}</td>
+                            <td class="px-4 py-3 tabular-nums">{{ money($zone->base_fee_cents) }}</td>
+                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $zone->free_over_cents !== null ? money($zone->free_over_cents) : '—' }}</td>
                             <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $zone->priority }}</td>
                             <td class="px-4 py-3">
                                 <button type="button" wire:click="toggleZoneActive({{ $zone->id }})">
@@ -381,9 +377,9 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                             <td class="px-4 py-3 font-medium">{{ $promo->name }}</td>
                             <td class="px-4 py-3 text-zinc-500">{{ $promo->scope->label() }}{{ $promo->zone ? ': '.$promo->zone->name : '' }}</td>
                             <td class="px-4 py-3 text-zinc-500">
-                                {{ $promo->effect->label() }}@if ($promo->effect === DeliveryPromotionEffect::FLAT_FEE) ({{ $kes($promo->value_cents) }})@elseif ($promo->effect === DeliveryPromotionEffect::PERCENT_OFF) ({{ $promo->percent }}%)@endif
+                                {{ $promo->effect->label() }}@if ($promo->effect === DeliveryPromotionEffect::FLAT_FEE) ({{ money($promo->value_cents) }})@elseif ($promo->effect === DeliveryPromotionEffect::PERCENT_OFF) ({{ $promo->percent }}%)@endif
                             </td>
-                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $promo->min_subtotal_cents > 0 ? $kes($promo->min_subtotal_cents) : '—' }}</td>
+                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $promo->min_subtotal_cents > 0 ? money($promo->min_subtotal_cents) : '—' }}</td>
                             <td class="px-4 py-3 text-[12px] text-zinc-500">
                                 {{ $promo->starts_at?->format('d M Y') ?? 'now' }} – {{ $promo->ends_at?->format('d M Y') ?? 'open' }}
                             </td>

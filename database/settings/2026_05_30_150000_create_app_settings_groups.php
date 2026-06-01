@@ -19,23 +19,17 @@ return new class extends SettingsMigration
 
         // ── Checkout & cart ────────────────────────────────────────────────
         $this->migrator->add('checkout.min_order_value', 0);
-        $this->migrator->add('checkout.order_prefix', 'SO-');
-        $this->migrator->add('checkout.order_next_number', 1001);
+        $this->migrator->add('checkout.order_prefix', 'SHF-');
 
         // ── Quotations ─────────────────────────────────────────────────────
         $this->migrator->add('quotations.quotes_enabled', true);
         $this->migrator->add('quotations.default_validity_days', 30);
-        $this->migrator->add('quotations.quote_prefix', 'QT-');
+        $this->migrator->add('quotations.quote_prefix', 'RFQ-');
         $this->migrator->add('quotations.quote_terms', '');
 
-        // ── Downloads ──────────────────────────────────────────────────────
-        $this->migrator->add('downloads.default_download_limit', 0);
-        $this->migrator->add('downloads.default_expiry_days', 0);
-        $this->migrator->add('downloads.secure_downloads', true);
-
         // ── Shipping & delivery ────────────────────────────────────────────
-        $this->migrator->add('shipping.free_shipping_threshold', 0);
-        $this->migrator->add('shipping.handling_fee', 0);
+        // Delivery pricing (free-over thresholds, per-area fees, promotions)
+        // lives in the Delivery Zones admin; these settings only cover pickup.
         $this->migrator->add('shipping.local_pickup_enabled', true);
         $this->migrator->add('shipping.pickup_address', '');
     }

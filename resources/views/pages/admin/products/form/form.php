@@ -16,6 +16,7 @@ use App\Models\ProductImage;
 use App\Models\ProductLink;
 use App\Models\ProductVariant;
 use App\Models\TaxClass;
+use App\Settings\InventorySettings;
 use App\Settings\LocalizationSettings;
 use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -221,6 +222,15 @@ new #[Layout('layouts::app')] class extends Component
         $this->dimension_unit = $localization->dimension_unit;
 
         if (! $product) {
+            // New products inherit the store-wide inventory defaults.
+            $inventory = app(InventorySettings::class);
+            $this->allow_backorder = $inventory->allow_backorders_by_default;
+            $this->low_stock_threshold = $inventory->low_stock_threshold;
+
+            if ($inventory->track_stock_by_default) {
+                $this->stock_quantity = 0;
+            }
+
             return;
         }
 

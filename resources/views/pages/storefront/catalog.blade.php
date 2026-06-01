@@ -83,7 +83,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
     {
         $query = Product::query()
             ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible');
+            ->where('visibility', 'visible')
+            ->honorStockVisibility();
 
         if ($this->selectedCategories) {
             $catIds = Category::whereIn('slug', $this->selectedCategories)->pluck('id');
@@ -133,11 +134,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
         return !empty($this->selectedCategories) || !empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
     }
 }; ?>
-
-@php
-    $kes = fn($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
-    $kesWhole = fn($whole) => 'KES&nbsp;' . number_format($whole, 0, '.', ',');
-@endphp
 
 <div class="page-fade">
     <div class="shell pt-4 pb-20">
@@ -215,8 +211,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                             class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
                             Price</div>
                         <div class="flex justify-between text-[12.5px] text-ink-3">
-                            <span>KES 0</span>
-                            <span class="font-semibold text-ink">up to {!! $kesWhole($priceMax) !!}</span>
+                            <span>{{ money(0) }}</span>
+                            <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
                         </div>
                         <input type="range" min="50000" max="6000000" step="50000"
                             wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />
@@ -293,7 +289,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extend
                         @if ($priceMax < 6000000)
                             <button type="button" wire:click="$set('priceMax', 6000000)"
                                 class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
-                                Up to {!! $kesWhole($priceMax) !!}
+                                Up to {{ money($priceMax * 100) }}
                                 <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                             </button>
                         @endif

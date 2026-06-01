@@ -5,7 +5,6 @@ use App\Settings\IntegrationSettings;
 use App\Settings\MaintenanceSettings;
 use App\Settings\SecuritySettings;
 use Flux\Flux;
-use Illuminate\Support\Facades\Artisan;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -141,13 +140,6 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         );
     }
 
-    public function clearCache(): void
-    {
-        Artisan::call('cache:clear');
-        Artisan::call('view:clear');
-
-        Flux::toast(heading: 'Cache cleared', text: 'Application and view caches were flushed.', variant: 'success');
-    }
 }; ?>
 
 <x-admin.settings-shell tab="system" :section="$section">
@@ -240,11 +232,11 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         </flux:card>
     @endif
 
-    {{-- Maintenance & cache --}}
+    {{-- Maintenance --}}
     @if ($section === 'maintenance')
         <flux:card>
-            <flux:heading>Maintenance & cache</flux:heading>
-            <flux:subheading>Storefront availability and cached data.</flux:subheading>
+            <flux:heading>Maintenance</flux:heading>
+            <flux:subheading>Storefront availability.</flux:subheading>
 
             <form wire:submit="saveMaintenance" class="mt-6 space-y-5">
                 <div class="flex items-center justify-between rounded-md border border-zinc-200 px-4 py-3 dark:border-zinc-700">
@@ -265,16 +257,6 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
                 </div>
             </form>
-
-            <flux:separator class="my-6" />
-
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <flux:heading size="sm">Clear cache</flux:heading>
-                    <flux:text size="sm" class="text-zinc-500">Flush the application and compiled view caches.</flux:text>
-                </div>
-                <flux:button type="button" variant="ghost" icon="trash" wire:click="clearCache">Clear cache</flux:button>
-            </div>
         </flux:card>
     @endif
 

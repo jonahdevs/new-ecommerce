@@ -10,8 +10,8 @@ return new class extends SettingsMigration
         $this->migrator->add('payments.mpesa_enabled', true);
         $this->migrator->add('payments.mpesa_shortcode', '');
         $this->migrator->add('payments.mpesa_type', 'paybill');
-        $this->migrator->add('payments.card_enabled', false);
-        $this->migrator->add('payments.card_provider', 'flutterwave');
+        $this->migrator->add('payments.card_enabled', true);
+        $this->migrator->add('payments.card_provider', 'stripe');
         $this->migrator->add('payments.bank_transfer_enabled', false);
         $this->migrator->add('payments.bank_details', '');
         $this->migrator->add('payments.cash_on_delivery_enabled', false);
@@ -25,16 +25,10 @@ return new class extends SettingsMigration
         $this->migrator->add('tax.price_display', 'including');
 
         // ── Currency & pricing ─────────────────────────────────────────────
-        $this->migrator->add('currency.symbol', 'KSh');
+        $this->migrator->add('currency.symbol', 'KES');
         $this->migrator->add('currency.symbol_position', 'before');
         $this->migrator->add('currency.decimals', 0);
         $this->migrator->add('currency.thousand_separator', ',');
         $this->migrator->add('currency.decimal_separator', '.');
-
-        // ── Invoicing ──────────────────────────────────────────────────────
-        $this->migrator->add('invoicing.invoice_prefix', 'INV-');
-        $this->migrator->add('invoicing.invoice_next_number', 1001);
-        $this->migrator->add('invoicing.invoice_footer', 'Thank you for your business.');
-        $this->migrator->add('invoicing.show_tax_pin', true);
     }
 };

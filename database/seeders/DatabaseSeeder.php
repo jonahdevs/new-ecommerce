@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             AttributeSeeder::class,
             TaxClassSeeder::class,
             ProductSeeder::class,
+            ShowroomSeeder::class,
+            PageSeeder::class,
             DeliveryZoneSeeder::class,
             AddressSeeder::class,
             OrderSeeder::class,

@@ -115,7 +115,7 @@ new #[Layout('layouts::storefront')] class extends Component
             JsonLdMulti::addValue('offers', [
                 '@type' => 'Offer',
                 'price' => number_format($price / 100, 2, '.', ''),
-                'priceCurrency' => 'KES',
+                'priceCurrency' => app(\App\Settings\LocalizationSettings::class)->currency,
                 'availability' => $availability,
                 'url' => url()->current(),
                 'seller' => ['@type' => 'Organization', 'name' => 'Sheffield'],
@@ -174,8 +174,20 @@ new #[Layout('layouts::storefront')] class extends Component
         return round((float) $this->approvedReviews->avg('rating'), 1);
     }
 
+    #[Computed]
+    public function reviewsEnabled(): bool
+    {
+        return app(\App\Settings\ReviewSettings::class)->reviews_enabled;
+    }
+
     public function submitReview(): void
     {
+        $settings = app(\App\Settings\ReviewSettings::class);
+
+        if (! $settings->reviews_enabled) {
+            return;
+        }
+
         if (! auth()->check()) {
             $this->redirectRoute('login');
 
@@ -188,25 +200,50 @@ new #[Layout('layouts::storefront')] class extends Component
             'reviewBody' => ['required', 'string', 'min:10', 'max:2000'],
         ]);
 
+        if ($settings->require_verified_purchase && ! $this->hasPurchasedProduct()) {
+            $this->addError('reviewBody', 'Only customers who have purchased this product can review it.');
+
+            return;
+        }
+
+        $approved = $settings->auto_approve;
+
         $this->product->reviews()->create([
             'user_id' => auth()->id(),
             'author_name' => auth()->user()->name,
             'rating' => $this->reviewRating,
             'title' => $this->reviewTitle ?: null,
             'body' => $this->reviewBody,
-            'status' => ReviewStatus::PENDING,
+            'status' => $approved ? ReviewStatus::APPROVED : ReviewStatus::PENDING,
         ]);
 
         $this->reset(['reviewTitle', 'reviewBody']);
         $this->reviewRating = 5;
 
-        Flux::toast(heading: 'Thank you!', text: 'Your review has been submitted for moderation.', variant: 'success');
+        if ($approved) {
+            unset($this->approvedReviews);
+        }
+
+        Flux::toast(
+            heading: 'Thank you!',
+            text: $approved
+                ? 'Your review is now live.'
+                : 'Your review has been submitted for moderation.',
+            variant: 'success',
+        );
+    }
+
+    /** Whether the signed-in user has an order containing this product. */
+    private function hasPurchasedProduct(): bool
+    {
+        return auth()->user()
+            ->orders()
+            ->whereHas('items', fn ($query) => $query->where('product_id', $this->product->id))
+            ->exists();
     }
 }; ?>
 
 @php
-    $kes = fn ($cents) => $cents ? 'KES&nbsp;'.number_format(intdiv($cents, 100), 0, '.', ',') : null;
-
     $price = $product->sale_price ?? $product->price;
     $compareAt = $product->sale_price ? $product->price : null;
     // Headline display prices honour the store's tax display setting; $price stays
@@ -347,10 +384,10 @@ new #[Layout('layouts::storefront')] class extends Component
             <div class="mt-6 border-y border-zinc-200 py-5">
                 <div class="flex flex-wrap items-baseline gap-3.5">
                     @if ($displayCompareAt)
-                        <span class="text-lg text-ink-4 line-through tabular-nums whitespace-nowrap">{!! $kes($displayCompareAt) !!}</span>
+                        <span class="text-lg text-ink-4 line-through tabular-nums whitespace-nowrap">{{ money($displayCompareAt) }}</span>
                     @endif
                     <span class="font-serif text-4xl tabular-nums">
-                        {!! $kes($displayPrice) ?? '<span class="text-ink-3 text-base">Quote on request</span>' !!}
+                        {!! $displayPrice ? money($displayPrice) : '<span class="text-ink-3 text-base">Quote on request</span>' !!}
                     </span>
                     @if ($displayPrice && $tax->priceDisplaySuffix())
                         <span class="text-[12.5px] text-ink-3">{{ $tax->priceDisplaySuffix() }}</span>
@@ -386,7 +423,7 @@ new #[Layout('layouts::storefront')] class extends Component
                             <div class="text-[14px] font-medium">Professional installation & commissioning</div>
                             <div class="mt-0.5 text-[12.5px] text-ink-3">Factory-trained engineer, on-site, parts & connections included.</div>
                         </div>
-                        <div class="font-semibold tabular-nums whitespace-nowrap">+ {!! $kes($installPriceCents) !!}</div>
+                        <div class="font-semibold tabular-nums whitespace-nowrap">+ {{ money($installPriceCents) }}</div>
                     </label>
 
                     <label @class([
@@ -399,7 +436,7 @@ new #[Layout('layouts::storefront')] class extends Component
                             <div class="text-[14px] font-medium">Extended warranty +24 months</div>
                             <div class="mt-0.5 text-[12.5px] text-ink-3">Adds 2 years to factory cover. Annual service visits included.</div>
                         </div>
-                        <div class="font-semibold tabular-nums whitespace-nowrap">+ {!! $kes($warrantyPriceCents) !!}</div>
+                        <div class="font-semibold tabular-nums whitespace-nowrap">+ {{ money($warrantyPriceCents) }}</div>
                     </label>
                 </div>
             @endif
@@ -422,7 +459,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
                 <flux:button variant="primary" wire:click="addThisToCart" class="h-12! flex-1! px-6!"
                     icon="shopping-cart">
-                    Add to cart · {!! $kes($unitPriceCents * $qty) ?? 'Request quote' !!}
+                    Add to cart · {{ ($unitPriceCents * $qty) ? money($unitPriceCents * $qty) : 'Request quote' }}
                 </flux:button>
 
                 <flux:button class="h-12! px-5!">Request quote</flux:button>
@@ -451,13 +488,18 @@ new #[Layout('layouts::storefront')] class extends Component
     {{-- Tabs --}}
     <div class="mt-20">
         <div class="flex border-b border-zinc-200">
-            @foreach ([
-                'specs' => 'Specifications',
-                'overview' => 'Overview',
-                'install' => 'Installation & service',
-                'documents' => 'Documents',
-                'reviews' => 'Reviews',
-            ] as $id => $label)
+            @php
+                $productTabs = [
+                    'specs' => 'Specifications',
+                    'overview' => 'Overview',
+                    'install' => 'Installation & service',
+                    'documents' => 'Documents',
+                ];
+                if ($this->reviewsEnabled) {
+                    $productTabs['reviews'] = 'Reviews';
+                }
+            @endphp
+            @foreach ($productTabs as $id => $label)
                 <button type="button" wire:click="$set('activeTab', '{{ $id }}')"
                     @class([
                         '-mb-px cursor-pointer border-b-2 px-5 py-3.5 text-[14px] transition',
@@ -583,7 +625,7 @@ new #[Layout('layouts::storefront')] class extends Component
             @endif
 
             {{-- Reviews --}}
-            @if ($activeTab === 'reviews')
+            @if ($activeTab === 'reviews' && $this->reviewsEnabled)
                 <div class="grid max-w-5xl grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr]">
 
                     {{-- Existing reviews --}}

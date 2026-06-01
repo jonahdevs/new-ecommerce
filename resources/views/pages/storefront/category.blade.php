@@ -94,6 +94,7 @@ new #[Layout('layouts::storefront')] class extends Component {
         $query = Product::query()
             ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
+            ->honorStockVisibility()
             ->where(function ($q) {
                 $q->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn($q2) => $q2->where('categories.id', $this->category->id));
             });
@@ -142,10 +143,6 @@ new #[Layout('layouts::storefront')] class extends Component {
     }
 }; ?>
 
-@php
-    $kes = fn($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
-    $kesWhole = fn($whole) => 'KES&nbsp;' . number_format($whole, 0, '.', ',');
-@endphp
 
 <div class="page-fade">
     {{-- Category hero --}}
@@ -214,8 +211,8 @@ new #[Layout('layouts::storefront')] class extends Component {
                             class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
                             Price</div>
                         <div class="flex justify-between text-[12.5px] text-ink-3">
-                            <span>KES 0</span>
-                            <span class="font-semibold text-ink">up to {!! $kesWhole($priceMax) !!}</span>
+                            <span>{{ money(0) }}</span>
+                            <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
                         </div>
                         <input type="range" min="50000" max="6000000" step="50000"
                             wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />

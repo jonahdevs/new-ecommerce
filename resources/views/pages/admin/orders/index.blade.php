@@ -76,10 +76,6 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv($cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     <div class="flex items-center justify-between">
         <div>
@@ -99,7 +95,7 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
         <flux:card class="flex items-center gap-4">
             <flux:icon.banknotes class="size-9 text-emerald-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{!! $kes($this->stats['revenue']) !!}</div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{!! money($this->stats['revenue']) !!}</div>
                 <flux:text size="sm">Total revenue</flux:text>
             </div>
         </flux:card>
@@ -176,7 +172,7 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                             @endif
                         </flux:table.cell>
                         <flux:table.cell class="tabular-nums text-zinc-500">{{ $order->items_count }}</flux:table.cell>
-                        <flux:table.cell class="font-medium tabular-nums">{!! $kes($order->total_cents) !!}</flux:table.cell>
+                        <flux:table.cell class="font-medium tabular-nums">{!! money($order->total_cents) !!}</flux:table.cell>
                         <flux:table.cell>
                             @if ($order->latestPayment)
                                 <flux:badge size="sm" inset="top bottom" :color="$order->latestPayment->status->badgeColor()">

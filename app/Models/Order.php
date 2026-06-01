@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Settings\CheckoutSettings;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -71,5 +72,17 @@ class Order extends Model
     public function isPaid(): bool
     {
         return $this->payments()->where('status', PaymentStatus::SUCCESS)->exists();
+    }
+
+    /**
+     * Next order number, formatted {prefix}{year}-{sequence} (e.g. SHF-2026-00001).
+     * The prefix comes from {@see CheckoutSettings}.
+     */
+    public static function generateNumber(): string
+    {
+        $prefix = app(CheckoutSettings::class)->order_prefix;
+        $sequence = static::whereYear('created_at', now()->year)->count() + 1;
+
+        return $prefix.now()->year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
     }
 }

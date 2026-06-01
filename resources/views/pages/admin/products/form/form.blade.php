@@ -8,7 +8,6 @@
     $tabBtn = 'flex w-full items-center gap-2 border-l-2 px-4 py-2.5 text-sm font-medium text-left transition-colors';
     $tabActive = 'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400';
     $tabInactive = 'border-transparent text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200';
-    $kes = fn ($cents) => 'KES '.number_format(intdiv((int) $cents, 100), 0, '.', ',');
 @endphp
 
 <div>

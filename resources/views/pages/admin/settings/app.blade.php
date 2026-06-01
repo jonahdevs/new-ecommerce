@@ -1,7 +1,6 @@
 <?php
 
 use App\Settings\CheckoutSettings;
-use App\Settings\DownloadSettings;
 use App\Settings\InventorySettings;
 use App\Settings\QuotationSettings;
 use App\Settings\ReviewSettings;
@@ -37,31 +36,18 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     public int $min_order_value = 0;
 
-    public string $order_prefix = 'SO-';
-
-    public int $order_next_number = 1001;
+    public string $order_prefix = 'SHF-';
 
     // ─── Quotations ────────────────────────────────────────────────────────────
     public bool $quotes_enabled = true;
 
     public int $default_validity_days = 30;
 
-    public string $quote_prefix = 'QT-';
+    public string $quote_prefix = 'RFQ-';
 
     public string $quote_terms = '';
 
-    // ─── Downloads ─────────────────────────────────────────────────────────────
-    public int $default_download_limit = 0;
-
-    public int $default_expiry_days = 0;
-
-    public bool $secure_downloads = true;
-
     // ─── Shipping ──────────────────────────────────────────────────────────────
-    public int $free_shipping_threshold = 0;
-
-    public int $handling_fee = 0;
-
     public bool $local_pickup_enabled = true;
 
     public string $pickup_address = '';
@@ -71,7 +57,6 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
         ReviewSettings $reviews,
         CheckoutSettings $checkout,
         QuotationSettings $quotations,
-        DownloadSettings $downloads,
         ShippingSettings $shipping,
     ): void {
         $this->track_stock_by_default = $inventory->track_stock_by_default;
@@ -85,19 +70,12 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
         $this->min_order_value = $checkout->min_order_value;
         $this->order_prefix = $checkout->order_prefix;
-        $this->order_next_number = $checkout->order_next_number;
 
         $this->quotes_enabled = $quotations->quotes_enabled;
         $this->default_validity_days = $quotations->default_validity_days;
         $this->quote_prefix = $quotations->quote_prefix;
         $this->quote_terms = $quotations->quote_terms;
 
-        $this->default_download_limit = $downloads->default_download_limit;
-        $this->default_expiry_days = $downloads->default_expiry_days;
-        $this->secure_downloads = $downloads->secure_downloads;
-
-        $this->free_shipping_threshold = $shipping->free_shipping_threshold;
-        $this->handling_fee = $shipping->handling_fee;
         $this->local_pickup_enabled = $shipping->local_pickup_enabled;
         $this->pickup_address = $shipping->pickup_address;
     }
@@ -135,13 +113,11 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
         $this->validate([
             'min_order_value' => ['required', 'integer', 'min:0'],
             'order_prefix' => ['required', 'string', 'max:10'],
-            'order_next_number' => ['required', 'integer', 'min:1'],
         ]);
 
         $settings->fill([
             'min_order_value' => (int) $this->min_order_value,
             'order_prefix' => $this->order_prefix,
-            'order_next_number' => (int) $this->order_next_number,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Checkout settings updated.', variant: 'success');
@@ -165,33 +141,13 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
         Flux::toast(heading: 'Saved', text: 'Quotation settings updated.', variant: 'success');
     }
 
-    public function saveDownloads(DownloadSettings $settings): void
-    {
-        $this->validate([
-            'default_download_limit' => ['required', 'integer', 'min:0'],
-            'default_expiry_days' => ['required', 'integer', 'min:0'],
-        ]);
-
-        $settings->fill([
-            'default_download_limit' => (int) $this->default_download_limit,
-            'default_expiry_days' => (int) $this->default_expiry_days,
-            'secure_downloads' => $this->secure_downloads,
-        ])->save();
-
-        Flux::toast(heading: 'Saved', text: 'Download settings updated.', variant: 'success');
-    }
-
     public function saveShipping(ShippingSettings $settings): void
     {
         $this->validate([
-            'free_shipping_threshold' => ['required', 'integer', 'min:0'],
-            'handling_fee' => ['required', 'integer', 'min:0'],
             'pickup_address' => ['nullable', 'string', 'max:500'],
         ]);
 
         $settings->fill([
-            'free_shipping_threshold' => (int) $this->free_shipping_threshold,
-            'handling_fee' => (int) $this->handling_fee,
             'local_pickup_enabled' => $this->local_pickup_enabled,
             'pickup_address' => $this->pickup_address,
         ])->save();
@@ -280,10 +236,8 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 <flux:input wire:model="min_order_value" type="number" min="0" label="Minimum order value (KES)"
                     description="0 means no minimum." />
                 <flux:separator />
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="order_prefix" label="Order number prefix" placeholder="SO-" />
-                    <flux:input wire:model="order_next_number" type="number" min="1" label="Next order number" />
-                </div>
+                <flux:input wire:model="order_prefix" label="Order number prefix" placeholder="SHF-"
+                    description="Order numbers are formatted {prefix}{year}-{sequence}." />
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
@@ -313,37 +267,11 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 @if ($quotes_enabled)
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <flux:input wire:model="default_validity_days" type="number" min="1" max="365" label="Default validity (days)" />
-                        <flux:input wire:model="quote_prefix" label="Quote number prefix" placeholder="QT-" />
+                        <flux:input wire:model="quote_prefix" label="Quote number prefix" placeholder="RFQ-" />
                     </div>
                     <flux:textarea wire:model="quote_terms" label="Default quote terms" rows="4"
                         placeholder="Terms shown on every quotation…" />
                 @endif
-
-                <div class="flex justify-end pt-2">
-                    <flux:button type="submit" variant="primary">Save changes</flux:button>
-                </div>
-            </form>
-        </flux:card>
-    @endif
-
-    {{-- Downloads --}}
-    @if ($section === 'downloads')
-        <flux:card>
-            <flux:heading>Downloads</flux:heading>
-            <flux:subheading>Defaults for downloadable products.</flux:subheading>
-
-            <form wire:submit="saveDownloads" class="mt-6 space-y-5">
-                <flux:input wire:model="default_download_limit" type="number" min="0" label="Default download limit"
-                    description="0 means unlimited downloads." />
-                <flux:input wire:model="default_expiry_days" type="number" min="0" label="Default expiry (days)"
-                    description="0 means the link never expires." />
-                <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                    <div>
-                        <flux:label>Secure downloads</flux:label>
-                        <flux:text size="sm" class="text-xs">Serve files through signed, expiring links.</flux:text>
-                    </div>
-                    <flux:switch wire:model="secure_downloads" />
-                </div>
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
@@ -358,7 +286,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <flux:heading>Shipping & delivery</flux:heading>
-                    <flux:subheading>Global delivery defaults. Per-area rates live in Delivery Zones.</flux:subheading>
+                    <flux:subheading>Local pickup option. Per-area delivery rates live in Delivery Zones.</flux:subheading>
                 </div>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square" :href="route('admin.delivery-zones')" wire:navigate>
                     Delivery zones
@@ -366,11 +294,6 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
             </div>
 
             <form wire:submit="saveShipping" class="mt-6 space-y-5">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="free_shipping_threshold" type="number" min="0" label="Free shipping threshold (KES)"
-                        description="0 disables free shipping." />
-                    <flux:input wire:model="handling_fee" type="number" min="0" label="Handling fee (KES)" />
-                </div>
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <flux:label>Offer local pickup</flux:label>
                     <flux:switch wire:model.live="local_pickup_enabled" />

@@ -69,7 +69,6 @@ new class extends Component
 
 @php
     $trending = ['Combi oven', 'Blast chiller', 'Rational', 'Hobart mixer', 'Espresso machine', 'Refrigeration'];
-    $kes = fn ($cents) => $cents ? 'KES ' . number_format(intdiv($cents, 100), 0, '.', ',') : null;
 @endphp
 
 <div class="relative flex-1 max-w-xl"
@@ -206,7 +205,7 @@ new class extends Component
                                 </div>
                                 @if ($price)
                                     <div class="text-right text-[13px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                        {!! $kes($price) !!}
+                                        {{ money($price) }}
                                     </div>
                                 @endif
                             </a>

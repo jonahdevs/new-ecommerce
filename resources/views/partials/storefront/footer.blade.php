@@ -9,42 +9,31 @@
         ->pluck('category')
         ->filter();
 
-    // TODO: move to a Settings model / table — phones, addresses come from config for now
-    $showrooms = [
-        [
-            'city' => 'Nairobi',
-            'country' => 'Kenya',
-            'isHQ' => true,
-            'address' => 'Off Old Mombasa Road, before the Nairobi SGR Terminus',
-            'pobox' => 'P.O. Box 29 – 00606, Nairobi Kenya',
-            'phones' => ['+254 713 777 111', '+254 713 444 000'],
-            'email' => 'info@sheffieldafrica.com',
-        ],
-        [
-            'city' => 'Mombasa',
-            'country' => 'Kenya',
-            'isHQ' => false,
-            'address' => 'Petrocity Complex 1st Floor, Off Links Road, Nyali',
-            'phones' => ['+254 713 777 111', '+254 713 317 214'],
-            'email' => 'mombasa@sheffieldafrica.com',
-        ],
-        [
-            'city' => 'Kampala',
-            'country' => 'Uganda',
-            'isHQ' => false,
-            'address' => 'Bugolobi Hardware City, Block 3 Room 102, Mulwana Road',
-            'phones' => ['+256 741 177 711', '+256 741 177 712'],
-            'email' => 'uganda@sheffieldafrica.com',
-        ],
-        [
-            'city' => 'Kigali',
-            'country' => 'Rwanda',
-            'isHQ' => false,
-            'address' => 'Kicukiro Street, KK 500 ST',
-            'phones' => ['+250 794 007 302'],
-            'email' => 'rwanda@sheffieldafrica.com',
-        ],
-    ];
+    // TODO: extract into a view composer + cache once this becomes hot
+    $showrooms = \App\Models\Showroom::query()
+        ->orderBy('sort_order')
+        ->orderBy('city')
+        ->get();
+
+    $business = app(\App\Settings\BusinessSettings::class);
+    $branding = app(\App\Settings\BrandingSettings::class);
+    $social = app(\App\Settings\SocialSettings::class);
+
+    // Fall back to the founding defaults until an admin fills the settings.
+    $storeName = $branding->store_name ?: config('app.name', 'Sheffield');
+    $tagline = $branding->tagline ?: 'Commercial kitchen equipment for restaurants, hotels and catering operations across East Africa. Since 2003.';
+    $contactEmail = $business->contact_email ?: 'info@sheffieldafrica.com';
+    $contactPhone = $business->contact_phone ?: '+254 713 777 111';
+    $legalName = $business->legal_name ?: 'Sheffield Steel Systems Ltd';
+
+    $socialLinks = array_filter([
+        'Facebook' => $social->facebook_url,
+        'Instagram' => $social->instagram_url,
+        'X' => $social->x_url,
+        'LinkedIn' => $social->linkedin_url,
+        'YouTube' => $social->youtube_url,
+    ]);
+    $whatsapp = preg_replace('/\D+/', '', (string) $social->whatsapp_number);
 @endphp
 
 <footer class="mt-20 bg-brand-blue-500 pt-16 pb-8 text-[#e6ddc8]">
@@ -52,45 +41,54 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-12">
             <div class="md:col-span-4">
                 <a href="{{ route('home') }}" class="inline-flex items-center" wire:navigate
-                    aria-label="{{ config('app.name', 'Sheffield') }} — Home">
-                    <img src="/logo-inverse.png" alt="{{ config('app.name', 'Sheffield') }}" class="h-9 w-auto" />
+                    aria-label="{{ $storeName }} — Home">
+                    <img src="/logo-inverse.png" alt="{{ $storeName }}" class="h-9 w-auto" />
                 </a>
                 <p class="mt-4 max-w-xs text-sm leading-relaxed text-[#c9bea4]">
-                    Commercial kitchen equipment for restaurants, hotels and catering operations across East Africa.
-                    Since 2003.
+                    {{ $tagline }}
                 </p>
                 <div class="mt-5 flex flex-col gap-2 text-[13.5px] text-[#c9bea4]">
-                    <span class="inline-flex items-center gap-2">
-                        <flux:icon.envelope variant="micro" class="size-3.5" /> info@sheffieldafrica.com
-                    </span>
-                    <span class="inline-flex items-center gap-2">
-                        <flux:icon.phone variant="micro" class="size-3.5" /> +254 713 777 111
-                    </span>
+                    <a href="mailto:{{ $contactEmail }}" class="inline-flex items-center gap-2 hover:text-white">
+                        <flux:icon.envelope variant="micro" class="size-3.5" /> {{ $contactEmail }}
+                    </a>
+                    <a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}" class="inline-flex items-center gap-2 hover:text-white">
+                        <flux:icon.phone variant="micro" class="size-3.5" /> {{ $contactPhone }}
+                    </a>
                 </div>
+                @if (count($socialLinks) || $whatsapp)
+                    <div class="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[12px] font-medium tracking-wide text-[#d8c79d]">
+                        @foreach ($socialLinks as $label => $url)
+                            <a href="{{ $url }}" target="_blank" rel="noopener" class="hover:text-white">{{ $label }}</a>
+                        @endforeach
+                        @if ($whatsapp)
+                            <a href="https://wa.me/{{ $whatsapp }}" target="_blank" rel="noopener" class="hover:text-white">WhatsApp</a>
+                        @endif
+                    </div>
+                @endif
             </div>
 
-            @foreach (array_chunk($showrooms, 2) as $group)
+            @foreach ($showrooms->chunk(2) as $group)
                 <div class="md:col-span-2">
                     <h3 class="mb-4 text-xs font-bold tracking-[0.1em] text-[#d8c79d] uppercase">Showrooms</h3>
                     <div class="flex flex-col gap-5">
                         @foreach ($group as $loc)
                             <div>
                                 <div class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#f3eadd]">
-                                    {{ $loc['city'] }}
-                                    @if ($loc['isHQ'])
+                                    {{ $loc->city }}
+                                    @if ($loc->is_hq)
                                         <span
                                             class="rounded-sm bg-brand-500 px-1.5 py-px text-[9px] tracking-wider text-white">HQ</span>
                                     @endif
                                 </div>
                                 <div class="mt-1 text-[12px] leading-snug text-[#c9bea4]">
-                                    {{ $loc['address'] }}, {{ $loc['country'] }}
-                                    @if (!empty($loc['pobox']))
-                                        <br>{{ $loc['pobox'] }}
+                                    {{ $loc->address }}, {{ $loc->country }}
+                                    @if (!empty($loc->pobox))
+                                        <br>{{ $loc->pobox }}
                                     @endif
                                 </div>
                                 <div class="mt-1.5 flex flex-col gap-0.5">
                                     <div class="text-[12px] text-[#d8c79d]">
-                                        @foreach ($loc['phones'] as $i => $phone)
+                                        @foreach ($loc->phones as $i => $phone)
                                             @if ($i > 0)
                                                 <span class="opacity-50">/</span>
                                             @endif
@@ -98,8 +96,10 @@
                                                 class="hover:text-white">{{ $phone }}</a>
                                         @endforeach
                                     </div>
-                                    <a href="mailto:{{ $loc['email'] }}"
-                                        class="text-[12px] text-[#d8c79d] hover:text-white">{{ $loc['email'] }}</a>
+                                    @if ($loc->email)
+                                        <a href="mailto:{{ $loc->email }}"
+                                            class="text-[12px] text-[#d8c79d] hover:text-white">{{ $loc->email }}</a>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
@@ -111,10 +111,10 @@
                 <h3 class="mb-4 text-xs font-bold tracking-[0.1em] text-[#d8c79d] uppercase">Business</h3>
                 <ul class="space-y-2.5 text-[13.5px] text-[#c9bea4]">
                     <li><a href="{{ route('quote.request') }}" class="hover:text-white" wire:navigate>Request a quote</a></li>
-                    <li><a href="#" class="hover:text-white">Trade accounts</a></li>
-                    <li><a href="#" class="hover:text-white">Installation</a></li>
-                    <li><a href="#" class="hover:text-white">Service contracts</a></li>
-                    <li><a href="#" class="hover:text-white">Spec sheets</a></li>
+                    <li><a href="{{ route('page.show', 'trade-accounts') }}" class="hover:text-white" wire:navigate>Trade accounts</a></li>
+                    <li><a href="{{ route('page.show', 'installation') }}" class="hover:text-white" wire:navigate>Installation</a></li>
+                    <li><a href="{{ route('page.show', 'service-contracts') }}" class="hover:text-white" wire:navigate>Service contracts</a></li>
+                    <li><a href="{{ route('page.show', 'spec-sheets') }}" class="hover:text-white" wire:navigate>Spec sheets</a></li>
                 </ul>
             </div>
 
@@ -131,10 +131,10 @@
         <div
             class="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[#e6ddc8]/15 pt-6 text-[12.5px] text-[#9c927c]">
             <div class="flex items-center gap-4">
-                <span>&copy; {{ date('Y') }} Sheffield Steel Systems Ltd.</span>
-                <a href="#" class="hover:text-white">Terms</a>
-                <a href="#" class="hover:text-white">Privacy</a>
-                <a href="#" class="hover:text-white">Cookies</a>
+                <span>&copy; {{ date('Y') }} {{ $legalName }}.</span>
+                <a href="{{ route('page.show', 'terms-and-conditions') }}" class="hover:text-white" wire:navigate>Terms</a>
+                <a href="{{ route('page.show', 'privacy-policy') }}" class="hover:text-white" wire:navigate>Privacy</a>
+                <a href="{{ route('page.show', 'cookie-policy') }}" class="hover:text-white" wire:navigate>Cookies</a>
             </div>
             <div class="flex items-center gap-4">
                 <span>Authorised distributor</span>

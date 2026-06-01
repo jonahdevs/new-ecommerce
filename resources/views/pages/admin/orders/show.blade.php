@@ -40,10 +40,6 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv($cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     @push('breadcrumbs')
 <flux:breadcrumbs>
@@ -88,9 +84,9 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                                         <span class="block font-mono text-xs font-normal text-zinc-400">{{ $item->product_sku }}</span>
                                     @endif
                                 </flux:table.cell>
-                                <flux:table.cell align="end" class="tabular-nums text-zinc-500">{!! $kes($item->unit_price_cents) !!}</flux:table.cell>
+                                <flux:table.cell align="end" class="tabular-nums text-zinc-500">{!! money($item->unit_price_cents) !!}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $item->quantity }}</flux:table.cell>
-                                <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($item->line_total_cents) !!}</flux:table.cell>
+                                <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($item->line_total_cents) !!}</flux:table.cell>
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>
@@ -118,7 +114,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                                     <flux:table.cell class="font-mono text-xs text-zinc-500">
                                         {{ $payment->mpesa_receipt ?? $payment->stripe_payment_intent_id ?? $payment->checkout_request_id ?? '—' }}
                                     </flux:table.cell>
-                                    <flux:table.cell align="end" class="tabular-nums">{!! $kes($payment->amount_cents) !!}</flux:table.cell>
+                                    <flux:table.cell align="end" class="tabular-nums">{!! money($payment->amount_cents) !!}</flux:table.cell>
                                     <flux:table.cell align="end">
                                         <flux:badge size="sm" inset="top bottom" :color="$payment->status->badgeColor()">
                                             {{ $payment->status->label() }}
@@ -197,27 +193,27 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                 <div class="space-y-3 px-5 py-4">
                     <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-300">
                         <span>Subtotal</span>
-                        <span class="font-medium tabular-nums">{!! $kes($order->subtotal_cents) !!}</span>
+                        <span class="font-medium tabular-nums">{!! money($order->subtotal_cents) !!}</span>
                     </div>
                     <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-300">
                         <span>Delivery</span>
-                        <span class="font-medium tabular-nums">{!! $order->delivery_cents > 0 ? $kes($order->delivery_cents) : 'Free' !!}</span>
+                        <span class="font-medium tabular-nums">{!! $order->delivery_cents > 0 ? money($order->delivery_cents) : 'Free' !!}</span>
                     </div>
                     @if ($order->installation_cents > 0)
                         <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-300">
                             <span>Installation</span>
-                            <span class="font-medium tabular-nums">{!! $kes($order->installation_cents) !!}</span>
+                            <span class="font-medium tabular-nums">{!! money($order->installation_cents) !!}</span>
                         </div>
                     @endif
                     <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-300">
                         <span>VAT (16%)</span>
-                        <span class="font-medium tabular-nums">{!! $kes($order->vat_cents) !!}</span>
+                        <span class="font-medium tabular-nums">{!! money($order->vat_cents) !!}</span>
                     </div>
                 </div>
                 <flux:separator />
                 <div class="flex items-baseline justify-between px-5 py-4">
                     <span class="text-xs font-bold uppercase tracking-wide">Total</span>
-                    <span class="text-xl font-semibold text-brand-500 tabular-nums">{!! $kes($order->total_cents) !!}</span>
+                    <span class="text-xl font-semibold text-brand-500 tabular-nums">{!! money($order->total_cents) !!}</span>
                 </div>
                 @if ($order->payment_method)
                     <flux:separator />

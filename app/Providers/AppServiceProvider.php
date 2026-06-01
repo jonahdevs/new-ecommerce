@@ -3,10 +3,13 @@
 namespace App\Providers;
 
 use App\Services\Mpesa\DarajaClient;
+use App\Settings\SecuritySettings;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -18,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(DarajaClient::class, fn (): DarajaClient => DarajaClient::fromConfig());
+        $this->app->singleton(Money::class);
     }
 
     /**
@@ -51,14 +55,31 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
-        );
+        // Minimum password length is admin-configurable. The closure runs at
+        // validation time (not boot), so it reads the current setting safely.
+        Password::defaults(function (): Password {
+            $rule = Password::min(app(SecuritySettings::class)->min_password_length);
+
+            return app()->isProduction()
+                ? $rule->mixedCase()->letters()->numbers()->symbols()->uncompromised()
+                : $rule;
+        });
+
+        $this->configureSessionLifetime();
+    }
+
+    /**
+     * Apply the admin-configurable session lifetime. Guarded so early boot and
+     * fresh migrations (settings table not yet present) never error.
+     */
+    protected function configureSessionLifetime(): void
+    {
+        try {
+            if (Schema::hasTable('settings')) {
+                config(['session.lifetime' => app(SecuritySettings::class)->session_lifetime]);
+            }
+        } catch (\Throwable) {
+            // Settings unavailable (e.g. mid-migration) — keep the config default.
+        }
     }
 }

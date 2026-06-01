@@ -90,10 +90,6 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     <div class="flex items-center justify-between">
         <div>
@@ -113,7 +109,7 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
         <flux:card class="flex items-center gap-4">
             <flux:icon.banknotes class="size-9 text-emerald-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{!! $kes($this->stats['collected']) !!}</div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{!! money($this->stats['collected']) !!}</div>
                 <flux:text size="sm">Collected</flux:text>
             </div>
         </flux:card>
@@ -201,7 +197,7 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                             @endif
                         </flux:table.cell>
                         <flux:table.cell class="capitalize text-zinc-500">{{ str_replace('_', ' ', (string) $payment->provider) }}</flux:table.cell>
-                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($payment->amount_cents) !!}</flux:table.cell>
+                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($payment->amount_cents) !!}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" inset="top bottom" :color="$payment->status->badgeColor()">
                                 {{ $payment->status->label() }}

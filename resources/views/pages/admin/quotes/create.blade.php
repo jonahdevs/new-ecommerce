@@ -5,7 +5,6 @@ use App\Models\Product;
 use App\Models\Quote;
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -25,6 +24,11 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
 
     /** @var array<int, array{product_name: string, product_sku: string, unit_price: float|string, quantity: int}> */
     public array $lineItems = [];
+
+    public function mount(): void
+    {
+        $this->expires_at = now()->addDays(app(\App\Settings\QuotationSettings::class)->default_validity_days)->format('Y-m-d');
+    }
 
     /** @return Collection<int, Product> */
     #[Computed]
@@ -134,7 +138,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
 
         $quote = Quote::create([
             'user_id' => $this->selectedUserId,
-            'quote_number' => $this->generateQuoteNumber(),
+            'quote_number' => Quote::generateNumber(),
             'title' => $this->title,
             'status' => QuoteStatus::DRAFT,
             'contact_name' => $this->contact_name ?: null,
@@ -161,20 +165,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
 
         $this->redirectRoute('admin.quotes.show', $quote, navigate: true);
     }
-
-    private function generateQuoteNumber(): string
-    {
-        do {
-            $number = 'RFQ-'.now()->year.'-'.Str::upper(Str::random(5));
-        } while (Quote::where('quote_number', $number)->exists());
-
-        return $number;
-    }
 }; ?>
-
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
 
 <div>
     @push('breadcrumbs')
@@ -272,7 +263,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                                     <flux:table.cell>
                                         <flux:input wire:model.live.debounce.500ms="lineItems.{{ $index }}.quantity" type="number" min="1" class="text-right" />
                                     </flux:table.cell>
-                                    <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($lineTotal) !!}</flux:table.cell>
+                                    <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($lineTotal) !!}</flux:table.cell>
                                     <flux:table.cell align="end">
                                         <flux:button size="xs" variant="ghost" icon="trash" tooltip="Remove line" wire:click="removeLine({{ $index }})" type="button"
                                             class="text-red-500! hover:text-red-600!" />
@@ -292,7 +283,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                         <flux:button size="sm" variant="ghost" icon="plus" wire:click="addBlankLine" type="button">Add blank line</flux:button>
                         <div class="text-right">
                             <span class="text-xs font-bold uppercase tracking-wide text-zinc-500">Total</span>
-                            <span class="ml-3 text-xl font-semibold text-brand-500 tabular-nums">{!! $kes($this->totalCents) !!}</span>
+                            <span class="ml-3 text-xl font-semibold text-brand-500 tabular-nums">{!! money($this->totalCents) !!}</span>
                         </div>
                     </div>
                 </flux:card>

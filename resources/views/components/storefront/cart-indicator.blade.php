@@ -14,7 +14,6 @@ new class extends Component
     $cartCount    = StorefrontSession::cartCount();
     $lines        = StorefrontSession::cartLines();
     $totalCents   = $lines->sum('line_total_cents');
-    $kes          = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
 @endphp
 
 <flux:dropdown position="bottom" align="end" gap="10">
@@ -55,7 +54,7 @@ new class extends Component
                                 {{ $product->name }}
                             </a>
                             <div class="mt-0.5 text-[12px] text-brand-500 tabular-nums">
-                                {{ $line['qty'] }} × {!! $kes($product->sale_price ?? $product->price ?? 0) !!}
+                                {{ $line['qty'] }} × {!! money($product->sale_price ?? $product->price ?? 0) !!}
                             </div>
                         </div>
                     </div>
@@ -66,7 +65,7 @@ new class extends Component
             <div class="border-t border-zinc-100 px-4 py-4">
                 <div class="flex items-center justify-between">
                     <span class="text-[13px] font-semibold text-ink">Total</span>
-                    <span class="text-[13px] font-bold text-brand-500 tabular-nums">{!! $kes($totalCents) !!}</span>
+                    <span class="text-[13px] font-bold text-brand-500 tabular-nums">{!! money($totalCents) !!}</span>
                 </div>
                 <div class="mt-3 flex gap-2">
                     <flux:button variant="customer-outline" size="customer" :href="route('cart')" wire:navigate class="flex-1!">View cart</flux:button>

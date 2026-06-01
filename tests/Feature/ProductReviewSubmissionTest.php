@@ -6,9 +6,12 @@ use App\Enums\ReviewStatus;
 use App\Enums\StockStatus;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\User;
+use App\Settings\ReviewSettings;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -24,6 +27,8 @@ beforeEach(function () {
 });
 
 it('lets an authenticated customer submit a review for moderation', function () {
+    app(ReviewSettings::class)->fill(['require_verified_purchase' => false])->save();
+
     $user = User::factory()->create(['name' => 'Anita Wanjiru']);
     $this->actingAs($user);
 
@@ -74,4 +79,62 @@ it('shows approved reviews but hides pending ones', function () {
         ->set('activeTab', 'reviews')
         ->assertSee('Approved and visible review body.')
         ->assertDontSee('Pending hidden review body.');
+});
+
+it('blocks a review from a customer who has not purchased the product', function () {
+    // require_verified_purchase defaults to true.
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test('pages::storefront.product', ['product' => $this->product])
+        ->set('reviewRating', 5)
+        ->set('reviewBody', 'I have not actually purchased this product yet.')
+        ->call('submitReview')
+        ->assertHasErrors('reviewBody');
+
+    expect(Review::count())->toBe(0);
+});
+
+it('lets a verified purchaser submit, and auto-approves when configured', function () {
+    app(ReviewSettings::class)->fill(['auto_approve' => true])->save();
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $order = Order::factory()->create(['user_id' => $user->id]);
+    OrderItem::create([
+        'order_id' => $order->id,
+        'product_id' => $this->product->id,
+        'product_name' => $this->product->name,
+        'product_sku' => $this->product->sku,
+        'unit_price_cents' => 150000,
+        'quantity' => 1,
+        'line_total_cents' => 150000,
+        'tax_rate' => 0,
+        'tax_cents' => 0,
+    ]);
+
+    Livewire::test('pages::storefront.product', ['product' => $this->product])
+        ->set('reviewRating', 5)
+        ->set('reviewBody', 'Bought it and it performs well in our kitchen.')
+        ->call('submitReview')
+        ->assertHasNoErrors();
+
+    expect(Review::first()?->status)->toBe(ReviewStatus::APPROVED);
+});
+
+it('hides reviews and rejects submissions when reviews are disabled', function () {
+    app(ReviewSettings::class)->fill(['reviews_enabled' => false])->save();
+
+    Review::factory()->approved()->create([
+        'product_id' => $this->product->id,
+        'body' => 'Approved review that should now be hidden.',
+    ]);
+
+    Livewire::test('pages::storefront.product', ['product' => $this->product])
+        ->assertDontSee('Approved review that should now be hidden.')
+        ->set('reviewRating', 5)
+        ->set('reviewBody', 'Trying to review while reviews are switched off.')
+        ->call('submitReview');
+
+    expect(Review::where('body', 'Trying to review while reviews are switched off.')->exists())->toBeFalse();
 });

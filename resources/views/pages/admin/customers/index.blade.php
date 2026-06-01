@@ -73,10 +73,6 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     <div class="flex items-center justify-between">
         <div>
@@ -160,7 +156,7 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                             </div>
                         </flux:table.cell>
                         <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $customer->orders_count }}</flux:table.cell>
-                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! $kes($customer->orders_sum_total_cents) !!}</flux:table.cell>
+                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($customer->orders_sum_total_cents) !!}</flux:table.cell>
                         <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $customer->created_at->format('M j, Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">

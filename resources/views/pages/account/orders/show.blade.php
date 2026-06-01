@@ -20,10 +20,6 @@ new #[Layout('layouts::account')] #[Title('Order — Sheffield')] class extends 
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
-@endphp
-
 <div class="page-fade space-y-6">
 
     {{-- Back --}}
@@ -79,7 +75,7 @@ new #[Layout('layouts::account')] #[Title('Order — Sheffield')] class extends 
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell align="end">
-                                    <flux:text class="font-semibold tabular-nums">{!! $kes($item->line_total_cents) !!}</flux:text>
+                                    <flux:text class="font-semibold tabular-nums">{!! money($item->line_total_cents) !!}</flux:text>
                                     <flux:text size="sm" class="mt-0.5 text-ink-4">Qty {{ $item->quantity }}</flux:text>
                                 </flux:table.cell>
                             </flux:table.row>
@@ -113,12 +109,12 @@ new #[Layout('layouts::account')] #[Title('Order — Sheffield')] class extends 
                 <div class="space-y-3 px-5 py-4">
                     <div class="flex justify-between text-sm text-ink-2">
                         <flux:text size="sm">Subtotal</flux:text>
-                        <flux:text size="sm" class="font-medium tabular-nums">{!! $kes($order->subtotal_cents) !!}</flux:text>
+                        <flux:text size="sm" class="font-medium tabular-nums">{!! money($order->subtotal_cents) !!}</flux:text>
                     </div>
                     <div class="flex justify-between">
                         <flux:text size="sm">Delivery</flux:text>
                         @if ($order->delivery_cents > 0)
-                            <flux:text size="sm" class="font-medium tabular-nums">{!! $kes($order->delivery_cents) !!}</flux:text>
+                            <flux:text size="sm" class="font-medium tabular-nums">{!! money($order->delivery_cents) !!}</flux:text>
                         @else
                             <flux:text size="sm" class="font-medium text-emerald-600">Free</flux:text>
                         @endif
@@ -126,18 +122,18 @@ new #[Layout('layouts::account')] #[Title('Order — Sheffield')] class extends 
                     @if ($order->installation_cents > 0)
                         <div class="flex justify-between">
                             <flux:text size="sm">Installation</flux:text>
-                            <flux:text size="sm" class="font-medium tabular-nums">{!! $kes($order->installation_cents) !!}</flux:text>
+                            <flux:text size="sm" class="font-medium tabular-nums">{!! money($order->installation_cents) !!}</flux:text>
                         </div>
                     @endif
                     <div class="flex justify-between">
                         <flux:text size="sm">VAT (16%)</flux:text>
-                        <flux:text size="sm" class="font-medium tabular-nums">{!! $kes($order->vat_cents) !!}</flux:text>
+                        <flux:text size="sm" class="font-medium tabular-nums">{!! money($order->vat_cents) !!}</flux:text>
                     </div>
                 </div>
                 <flux:separator />
                 <div class="flex items-baseline justify-between px-5 py-4">
                     <flux:text class="text-[12px] font-bold uppercase tracking-wide">Total</flux:text>
-                    <span class="font-serif text-2xl text-brand-500 tabular-nums">{!! $kes($order->total_cents) !!}</span>
+                    <span class="font-serif text-2xl text-brand-500 tabular-nums">{!! money($order->total_cents) !!}</span>
                 </div>
                 @if ($order->payment_method)
                     <flux:separator />

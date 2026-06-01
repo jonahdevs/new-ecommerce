@@ -8,6 +8,7 @@ use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
 use App\Observers\ProductObserver;
+use App\Settings\InventorySettings;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -64,6 +65,18 @@ class Product extends Model
                     ->whereNotNull('published_at')
                     ->where('published_at', '<=', now()));
         });
+    }
+
+    /**
+     * Apply the store-wide out-of-stock display rule from {@see InventorySettings}.
+     * When set to "hide", out-of-stock products are excluded from storefront
+     * listings; in-stock and backorderable products are unaffected.
+     */
+    public function scopeHonorStockVisibility(Builder $query): void
+    {
+        if (app(InventorySettings::class)->out_of_stock_behavior === 'hide') {
+            $query->where('stock_status', '!=', StockStatus::OUT_OF_STOCK);
+        }
     }
 
     /** Whether this product is currently live to the public. */

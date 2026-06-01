@@ -51,17 +51,14 @@ test('admin can save business info including branding', function () {
 
     Livewire::test('pages::admin.settings.website')
         ->set('legal_name', 'Acme Trading Ltd')
-        ->set('trading_name', 'Acme')
         ->set('contact_email', 'test@example.com')
         ->set('store_name', 'Acme Store')
-        ->set('brand_color', '#112233')
         ->call('saveBusiness')
         ->assertHasNoErrors();
 
     expect(app(BusinessSettings::class)->legal_name)->toBe('Acme Trading Ltd')
         ->and(app(BusinessSettings::class)->contact_email)->toBe('test@example.com')
-        ->and(app(BrandingSettings::class)->store_name)->toBe('Acme Store')
-        ->and(app(BrandingSettings::class)->brand_color)->toBe('#112233');
+        ->and(app(BrandingSettings::class)->store_name)->toBe('Acme Store');
 });
 
 test('business info validates required legal name', function () {
@@ -78,12 +75,10 @@ test('admin can save localization', function () {
 
     Livewire::test('pages::admin.settings.website')
         ->set('currency', 'USD')
-        ->set('timezone', 'UTC')
         ->call('saveLocalization')
         ->assertHasNoErrors();
 
-    expect(app(LocalizationSettings::class)->currency)->toBe('USD')
-        ->and(app(LocalizationSettings::class)->timezone)->toBe('UTC');
+    expect(app(LocalizationSettings::class)->currency)->toBe('USD');
 });
 
 test('the general tab renders the embedded personal sections', function (string $section) {

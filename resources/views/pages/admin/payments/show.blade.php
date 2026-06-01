@@ -35,10 +35,6 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
     }
 }; ?>
 
-@php
-    $kes = fn ($cents) => 'KES&nbsp;'.number_format(intdiv((int) $cents, 100), 0, '.', ',');
-@endphp
-
 <div>
     @push('breadcrumbs')
 <flux:breadcrumbs>
@@ -50,7 +46,7 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
 
     <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" class="tabular-nums">{!! $kes($payment->amount_cents) !!}</flux:heading>
+            <flux:heading size="xl" class="tabular-nums">{!! money($payment->amount_cents) !!}</flux:heading>
             <flux:subheading>{{ ($payment->paid_at ?? $payment->created_at)->format('d F Y, g:i A') }}</flux:subheading>
         </div>
         <flux:badge size="lg" :color="$payment->status->badgeColor()">{{ $payment->status->label() }}</flux:badge>
@@ -100,7 +96,7 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
                         </a>
                         <div class="flex items-center justify-between text-zinc-500">
                             <span>Order total</span>
-                            <span class="tabular-nums">{!! $kes($payment->order->total_cents) !!}</span>
+                            <span class="tabular-nums">{!! money($payment->order->total_cents) !!}</span>
                         </div>
                         <flux:badge size="sm" inset="top bottom" :color="$payment->order->status->badgeColor()">
                             {{ $payment->order->status->label() }}

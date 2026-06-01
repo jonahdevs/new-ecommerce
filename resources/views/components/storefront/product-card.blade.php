@@ -7,8 +7,8 @@
     $compareAt  = $product->sale_price ? $product->price : null;
     $price      = $price !== null ? $tax->displayPriceCents($product, (int) $price) : null;
     $compareAt  = $compareAt !== null ? $tax->displayPriceCents($product, (int) $compareAt) : null;
-    $priceLabel = $price ? 'KES&nbsp;' . number_format(intdiv($price, 100), 0, '.', ',') : 'Request quote';
-    $compareLabel = $compareAt ? 'KES&nbsp;' . number_format(intdiv($compareAt, 100), 0, '.', ',') : null;
+    $priceLabel = $price ? money($price) : 'Request quote';
+    $compareLabel = $compareAt ? money($compareAt) : null;
     $inStock    = $product->stock_status === \App\Enums\StockStatus::IN_STOCK;
     $isWished   = \App\Support\StorefrontSession::isWishlisted($product->slug);
     $isCompared = \App\Support\StorefrontSession::isCompared($product->slug);

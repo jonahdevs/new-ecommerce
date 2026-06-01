@@ -8,8 +8,6 @@ class BusinessSettings extends Settings
 {
     public string $legal_name;
 
-    public string $trading_name;
-
     public string $registration_number;
 
     public string $tax_pin;

@@ -27,6 +27,7 @@
         "spatie/laravel-pdf": "^2.11",
         "spatie/laravel-permission": "^7.4",
         "spatie/laravel-settings": "^3.9",
+        "spatie/laravel-sitemap": "^8.1",
         "spatie/laravel-tags": "^4.11",
         "stripe/stripe-php": "^20.2"
     },
@@ -48,7 +49,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

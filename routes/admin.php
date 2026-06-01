@@ -1,17 +1,22 @@
 <?php
 
+use App\Http\Middleware\EnsureTwoFactorWhenRequired;
 use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------------------------------
 // Admin / Staff
 // TODO: add ->middleware('role:admin') once spatie/laravel-permission is installed.
 // ---------------------------------------------------------------------------
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::view('/', 'pages.admin.dashboard')->name('dashboard');
         Route::livewire('/delivery-zones', 'pages::admin.delivery-zones')->name('delivery-zones');
+        Route::livewire('/showrooms', 'pages::admin.showrooms')->name('showrooms.index');
+        Route::livewire('/pages', 'pages::admin.pages.index')->name('pages.index');
+        Route::livewire('/pages/create', 'pages::admin.pages.form')->name('pages.create');
+        Route::livewire('/pages/{page}/edit', 'pages::admin.pages.form')->name('pages.edit');
         Route::livewire('/products', 'pages::admin.products.index')->name('products.index');
         Route::livewire('/products/create', 'pages::admin.products.form')->name('products.create');
         Route::livewire('/products/{product}/edit', 'pages::admin.products.form')->name('products.edit');

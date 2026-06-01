@@ -59,7 +59,6 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 }; ?>
 
 @php
-    $kes           = fn ($cents) => 'KES&nbsp;' . number_format(intdiv($cents, 100), 0, '.', ',');
     $tax           = app(\App\Support\TaxCalculator::class);
     $subtotalCents = $this->lines->sum('line_total_cents');
     $vatCents      = $tax->taxForCart($this->lines);
@@ -161,7 +160,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 
                                 {{-- Unit price --}}
                                 <td class="px-6 py-5 text-center text-[14px] font-medium text-ink tabular-nums whitespace-nowrap">
-                                    {!! $kes($unitPrice) !!}
+                                    {!! money($unitPrice) !!}
                                 </td>
 
                                 {{-- Qty stepper --}}
@@ -181,7 +180,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 
                                 {{-- Line total --}}
                                 <td class="px-6 py-5 text-right text-[14px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                    {!! $kes($lineTotal) !!}
+                                    {!! money($lineTotal) !!}
                                 </td>
                             </tr>
                         @endforeach
@@ -208,18 +207,18 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Subtotal</span>
-                                <span class="font-medium tabular-nums">{!! $kes($subtotalCents) !!}</span>
+                                <span class="font-medium tabular-nums">{!! money($subtotalCents) !!}</span>
                             </div>
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Shipping</span>
                                 <span class="{{ $deliveryCents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
-                                    {!! $deliveryCents === 0 ? 'Free' : $kes($deliveryCents) !!}
+                                    {!! $deliveryCents === 0 ? 'Free' : money($deliveryCents) !!}
                                 </span>
                             </div>
                             @if ($tax->enabled() && $vatCents > 0)
                                 <div class="flex items-center justify-between text-sm text-ink-2">
                                     <span>VAT{{ $taxInclusive ? ' (incl.)' : '' }}</span>
-                                    <span class="font-medium tabular-nums">{!! $kes($vatCents) !!}</span>
+                                    <span class="font-medium tabular-nums">{!! money($vatCents) !!}</span>
                                 </div>
                             @endif
                         </div>
@@ -228,7 +227,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
 
                         <div class="flex items-center justify-between">
                             <span class="text-[13px] font-bold tracking-wide uppercase">Total</span>
-                            <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! $kes($totalCents) !!}</span>
+                            <span class="text-2xl font-bold text-brand-500 tabular-nums">{!! money($totalCents) !!}</span>
                         </div>
 
                         <flux:button variant="customer-primary" size="customer-lg" :href="route('checkout')" wire:navigate icon:trailing="arrow-right" class="mt-5! w-full!">
