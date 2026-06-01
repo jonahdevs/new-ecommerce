@@ -19,25 +19,25 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
         SEOMeta::setRobots('noindex,follow');
     }
 
-    public function increment(string $slug): void
+    public function increment(string $key): void
     {
         $cart = StorefrontSession::cart();
-        StorefrontSession::setCartQty($slug, ($cart[$slug] ?? 0) + 1);
+        StorefrontSession::setCartQty($key, ($cart[$key] ?? 0) + 1);
         unset($this->lines);
         $this->dispatch('cart-updated');
     }
 
-    public function decrement(string $slug): void
+    public function decrement(string $key): void
     {
         $cart = StorefrontSession::cart();
-        StorefrontSession::setCartQty($slug, max(1, ($cart[$slug] ?? 1) - 1));
+        StorefrontSession::setCartQty($key, max(1, ($cart[$key] ?? 1) - 1));
         unset($this->lines);
         $this->dispatch('cart-updated');
     }
 
-    public function remove(string $slug): void
+    public function remove(string $key): void
     {
-        StorefrontSession::removeFromCart($slug);
+        StorefrontSession::removeFromCart($key);
         unset($this->lines);
         $this->dispatch('cart-updated');
         Flux::toast(heading: 'Item removed', text: 'The item has been removed from your cart.', variant: 'warning');
@@ -117,12 +117,12 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                         @foreach ($this->lines as $line)
                             @php
                                 $product   = $line['product'];
-                                $unitPrice = $product->sale_price ?? $product->price ?? 0;
+                                $unitPrice = $line['unit_price_cents'];
                                 $lineTotal = $line['line_total_cents'];
                                 $inStock   = $product->stock_status === StockStatus::IN_STOCK;
                                 $isWished  = StorefrontSession::isWishlisted($product->slug);
                             @endphp
-                            <tr wire:key="line-{{ $line['slug'] }}" class="{{ ! $loop->last ? 'border-b border-zinc-100' : '' }}">
+                            <tr wire:key="line-{{ $line['key'] }}" class="{{ ! $loop->last ? 'border-b border-zinc-100' : '' }}">
 
                                 {{-- Product --}}
                                 <td class="px-6 py-5">
@@ -141,6 +141,9 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                                                class="mt-0.5 block text-[14px] font-semibold leading-snug text-ink hover:text-brand-500">
                                                 {{ $product->name }}
                                             </a>
+                                            @if ($line['label'])
+                                                <div class="mt-0.5 text-[11.5px] text-ink-3">{{ $line['label'] }}</div>
+                                            @endif
                                             <div class="mt-2 flex items-center gap-3 text-[11.5px] text-ink-4">
                                                 <button type="button" wire:click="toggleWishlist('{{ $product->slug }}')"
                                                         class="inline-flex cursor-pointer items-center gap-1 transition hover:text-brand-500">
@@ -148,7 +151,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                                                     {{ $isWished ? 'Saved' : 'Save for later' }}
                                                 </button>
                                                 <span class="text-zinc-300">|</span>
-                                                <button type="button" wire:click="remove('{{ $product->slug }}')"
+                                                <button type="button" wire:click="remove('{{ $line['key'] }}')"
                                                         class="inline-flex cursor-pointer items-center gap-1 transition hover:text-brand-500">
                                                     <flux:icon.trash variant="micro" class="size-3.5" />
                                                     Remove
@@ -166,12 +169,12 @@ new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extend
                                 {{-- Qty stepper --}}
                                 <td class="px-6 py-5 text-center">
                                     <div class="inline-flex items-center rounded border border-zinc-200">
-                                        <button type="button" wire:click="decrement('{{ $line['slug'] }}')"
+                                        <button type="button" wire:click="decrement('{{ $line['key'] }}')"
                                                 class="flex size-9 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
                                             <span class="text-base leading-none">−</span>
                                         </button>
                                         <span class="min-w-8 text-center text-sm font-semibold tabular-nums">{{ $line['qty'] }}</span>
-                                        <button type="button" wire:click="increment('{{ $line['slug'] }}')"
+                                        <button type="button" wire:click="increment('{{ $line['key'] }}')"
                                                 class="flex size-9 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
                                             <span class="text-base leading-none">+</span>
                                         </button>

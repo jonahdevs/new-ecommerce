@@ -112,6 +112,13 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
             ->paginate(10);
     }
 
+    public function openCreateUser(): void
+    {
+        $this->reset(['editingUserId', 'userName', 'userEmail', 'userPassword', 'userRole']);
+        $this->resetValidation();
+        $this->showUserModal = true;
+    }
+
     public function openEditUser(int $id): void
     {
         $user = User::with('roles')->findOrFail($id);
@@ -126,14 +133,16 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
 
     public function saveUser(): void
     {
+        $isCreating = $this->editingUserId === null;
+
         $this->validate([
             'userName' => ['required', 'string', 'max:255'],
             'userEmail' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingUserId)],
             'userRole' => ['required', Rule::exists('roles', 'name')],
-            ...($this->userPassword !== '' ? ['userPassword' => ['string', 'min:8']] : []),
+            ...($isCreating || $this->userPassword !== '' ? ['userPassword' => ['required', 'string', 'min:8']] : []),
         ]);
 
-        $user = User::findOrFail($this->editingUserId);
+        $user = $isCreating ? new User : User::findOrFail($this->editingUserId);
         $user->name = $this->userName;
         $user->email = $this->userEmail;
 
@@ -147,7 +156,11 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
         $this->showUserModal = false;
         unset($this->users, $this->roles);
 
-        Flux::toast(heading: 'User updated', text: $user->name.' has been saved.', variant: 'success');
+        Flux::toast(
+            heading: $isCreating ? 'User created' : 'User updated',
+            text: $user->name.' has been saved.',
+            variant: 'success',
+        );
     }
 
     public function removeUser(int $id): void
@@ -231,7 +244,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
     <flux:card class="mt-6 p-0 overflow-hidden">
         <div class="flex items-center justify-between gap-4 px-6 py-4">
             <flux:heading size="lg">Users</flux:heading>
-            <flux:button size="sm" variant="ghost" icon="user-plus" :href="route('admin.staff.create')" wire:navigate>Add user</flux:button>
+            <flux:button size="sm" variant="ghost" icon="user-plus" wire:click="openCreateUser">Add user</flux:button>
         </div>
 
         {{-- Toolbar --}}
@@ -335,10 +348,10 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
         </div>
     </flux:card>
 
-    {{-- Edit user modal --}}
+    {{-- Create / edit user modal --}}
     <flux:modal wire:model.self="showUserModal" class="md:w-[480px]" :dismissible="false">
-        <flux:heading>Edit user</flux:heading>
-        <flux:subheading>Update this user's details and role.</flux:subheading>
+        <flux:heading>{{ $editingUserId ? 'Edit user' : 'Add user' }}</flux:heading>
+        <flux:subheading>{{ $editingUserId ? "Update this user's details and role." : 'Create a user and assign a role.' }}</flux:subheading>
 
         <form wire:submit="saveUser" class="mt-5 space-y-4">
             <flux:input wire:model="userName" label="Name" placeholder="Jane Doe" required autofocus />
@@ -346,14 +359,14 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
 
             <flux:field>
                 <flux:label>Role</flux:label>
-                <flux:select wire:model="userRole">
+                <flux:select wire:model="userRole" placeholder="Select a role…">
                     @foreach ($this->roles as $role)
                         <flux:select.option value="{{ $role->name }}">{{ Str::headline($role->name) }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </flux:field>
 
-            <flux:input wire:model="userPassword" label="New password" type="password" placeholder="Leave blank to keep current" />
+            <flux:input wire:model="userPassword" label="{{ $editingUserId ? 'New password' : 'Password' }}" type="password" :placeholder="$editingUserId ? 'Leave blank to keep current' : 'Minimum 8 characters'" :required="! $editingUserId" />
 
             <div class="flex justify-end gap-3 pt-2">
                 <flux:modal.close>

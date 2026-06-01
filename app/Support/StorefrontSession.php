@@ -3,17 +3,24 @@
 namespace App\Support;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 
 /**
  * Session-backed cart and wishlist for guests (and authed users until we move
- * them into the DB). Cart shape: ['slug' => qty]. Wishlist shape: ['slug', ...].
+ * them into the DB).
+ *
+ * Cart shape: ['lineKey' => qty]. A line key is the product slug for a simple
+ * line, or "{slug}|{variantId}" when a specific variant was chosen (the pipe
+ * never appears in a kebab-case slug). Wishlist/compare stay slug-only.
  */
 final class StorefrontSession
 {
     private const CART_KEY = 'cart';
+
+    private const VARIANT_SEPARATOR = '|';
 
     private const WISHLIST_KEY = 'wishlist';
 
@@ -33,10 +40,33 @@ final class StorefrontSession
     }
 
     /**
-     * Eager-loaded line items with their Product. Lines are skipped if the
-     * product was deleted/hidden since being added.
+     * Split a cart line key into its product slug and optional variant id.
      *
-     * @return Collection<int, array{slug: string, qty: int, product: Product, line_total_cents: int}>
+     * @return array{slug: string, variantId: ?int}
+     */
+    public static function splitKey(string $key): array
+    {
+        if (! str_contains($key, self::VARIANT_SEPARATOR)) {
+            return ['slug' => $key, 'variantId' => null];
+        }
+
+        [$slug, $variantId] = explode(self::VARIANT_SEPARATOR, $key, 2);
+
+        return ['slug' => $slug, 'variantId' => is_numeric($variantId) ? (int) $variantId : null];
+    }
+
+    /** Build the cart line key for a slug (+ optional variant). */
+    public static function lineKey(string $slug, ?int $variantId = null): string
+    {
+        return $variantId ? $slug.self::VARIANT_SEPARATOR.$variantId : $slug;
+    }
+
+    /**
+     * Eager-loaded line items with their Product (and variant, when chosen).
+     * Lines are skipped if the product/variant was deleted or hidden since
+     * being added.
+     *
+     * @return Collection<int, array{key: string, slug: string, qty: int, product: Product, variant: ?ProductVariant, label: ?string, unit_price_cents: int, line_total_cents: int}>
      */
     public static function cartLines(): Collection
     {
@@ -45,20 +75,54 @@ final class StorefrontSession
             return collect();
         }
 
+        $keys = collect($cart)->keys()->map(fn ($key) => self::splitKey($key));
+
         $products = Product::query()
             ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
-            ->whereIn('slug', array_keys($cart))
+            ->whereIn('slug', $keys->pluck('slug')->unique()->all())
             ->where('visibility', 'visible')
             ->get()
             ->keyBy('slug');
 
+        $variants = ProductVariant::query()
+            ->with('attributeValues')
+            ->whereIn('id', $keys->pluck('variantId')->filter()->unique()->all())
+            ->get()
+            ->keyBy('id');
+
         return collect($cart)
-            ->map(fn ($qty, $slug) => $products->has($slug) ? [
-                'slug' => $slug,
-                'qty' => (int) $qty,
-                'product' => $products[$slug],
-                'line_total_cents' => ($products[$slug]->sale_price ?? $products[$slug]->price ?? 0) * $qty,
-            ] : null)
+            ->map(function ($qty, $key) use ($products, $variants) {
+                ['slug' => $slug, 'variantId' => $variantId] = self::splitKey($key);
+
+                $product = $products->get($slug);
+                if (! $product) {
+                    return null;
+                }
+
+                $variant = $variantId ? $variants->get($variantId) : null;
+                if ($variantId && ! $variant) {
+                    return null;
+                }
+
+                $unit = $variant
+                    ? (int) ($variant->compare_at_price ?? $variant->price ?? 0)
+                    : (int) ($product->sale_price ?? $product->price ?? 0);
+
+                $label = $variant
+                    ? $variant->attributeValues->map(fn ($v) => $v->label ?: $v->value)->filter()->implode(' / ')
+                    : null;
+
+                return [
+                    'key' => $key,
+                    'slug' => $slug,
+                    'qty' => (int) $qty,
+                    'product' => $product,
+                    'variant' => $variant,
+                    'label' => $label ?: null,
+                    'unit_price_cents' => $unit,
+                    'line_total_cents' => $unit * (int) $qty,
+                ];
+            })
             ->filter()
             ->values();
     }
@@ -68,33 +132,34 @@ final class StorefrontSession
         return self::cartLines()->sum('line_total_cents');
     }
 
-    public static function cartQuantity(string $slug): int
+    public static function cartQuantity(string $key): int
     {
-        return (int) (self::cart()[$slug] ?? 0);
+        return (int) (self::cart()[$key] ?? 0);
     }
 
-    public static function addToCart(string $slug, int $qty = 1): void
+    public static function addToCart(string $slug, int $qty = 1, ?int $variantId = null): void
     {
+        $key = self::lineKey($slug, $variantId);
         $cart = self::cart();
-        $cart[$slug] = ($cart[$slug] ?? 0) + max(1, $qty);
+        $cart[$key] = ($cart[$key] ?? 0) + max(1, $qty);
         Session::put(self::CART_KEY, $cart);
     }
 
-    public static function setCartQty(string $slug, int $qty): void
+    public static function setCartQty(string $key, int $qty): void
     {
         $cart = self::cart();
         if ($qty <= 0) {
-            unset($cart[$slug]);
+            unset($cart[$key]);
         } else {
-            $cart[$slug] = $qty;
+            $cart[$key] = $qty;
         }
         Session::put(self::CART_KEY, $cart);
     }
 
-    public static function removeFromCart(string $slug): void
+    public static function removeFromCart(string $key): void
     {
         $cart = self::cart();
-        unset($cart[$slug]);
+        unset($cart[$key]);
         Session::put(self::CART_KEY, $cart);
     }
 

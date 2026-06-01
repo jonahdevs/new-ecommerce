@@ -36,6 +36,13 @@ it('prefills line items from the cart', function () {
         ->assertSee('Wok Range');
 });
 
+it('seeds a product passed via the query string', function () {
+    Livewire::withQueryParams(['product' => 'wok-range'])
+        ->test('pages::storefront.request-quote')
+        ->assertSet('items', ['wok-range' => 1])
+        ->assertSee('Wok Range');
+});
+
 it('lets a guest submit a quote request', function () {
     StorefrontSession::addToCart('wok-range', 2);
 

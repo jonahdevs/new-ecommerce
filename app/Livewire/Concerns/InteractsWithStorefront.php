@@ -12,10 +12,11 @@ use Flux\Flux;
  */
 trait InteractsWithStorefront
 {
-    public function addToCart(string $slug, int $qty = 1): void
+    public function addToCart(string $slug, int $qty = 1, ?int $variantId = null): void
     {
-        StorefrontSession::addToCart($slug, $qty);
-        $newQty = StorefrontSession::cartQuantity($slug);
+        StorefrontSession::addToCart($slug, $qty, $variantId);
+        $key = StorefrontSession::lineKey($slug, $variantId);
+        $newQty = StorefrontSession::cartQuantity($key);
 
         $this->skipRender();
         $this->dispatch('cart-updated');

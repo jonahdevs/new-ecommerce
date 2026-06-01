@@ -9975,9 +9975,12 @@
         "category": "Test Products",
         "type": "simple",
         "price": 4500,
+        "sale_price": 3990,
+        "quantity": 24,
         "image": "products/1686497004_9 GN1410TN.jpg",
-        "short_description": "Test simple product — single SKU, no variants. Used as a child of TEST grouped and bundle products.",
-        "description": "<p>This is a <strong>simple product</strong> used to test the simplest product type the platform supports. It has a single SKU, a fixed price, and standard add-to-cart behaviour.</p>"
+        "short_description": "Test simple product — single SKU, currently on sale. Used as a child of TEST grouped and bundle products.",
+        "description": "<p>This is a <strong>simple product</strong> used to test the simplest product type the platform supports. It has a single SKU, a fixed price, and standard add-to-cart behaviour.</p>",
+        "technical_specification": "Blade: high-carbon stainless steel, 200 mm.\nHandle: triple-riveted POM.\nWeight: 0.21 kg.\nDishwasher safe: no — hand wash only."
     },
     {
         "sku": "TEST/SIMPLE/002",
@@ -10220,7 +10223,8 @@
         "price": 6500,
         "image": "products/1686651045__gallery_20 GN3100TN.jpg",
         "short_description": "Test bundle product — fixed-price kit of three items, sold as one SKU at a discount versus buying separately.",
-        "description": "<p>This is a <strong>bundle product</strong>. The customer pays a single bundled price (KES 6,500) instead of the sum of the children (KES 7,500). The platform calculates the savings percentage automatically.</p>",
+        "description": "<p>This is a <strong>bundle product</strong>. The customer pays a single bundled price (KES 6,500) instead of the sum of the children. The platform calculates the savings percentage automatically.</p>",
+        "technical_specification": "Bundle contents: 1× chef knife, 1× chopping board, optional honing rod.\nPackaging: single boxed kit.\nSold as one SKU.",
         "bundle_children": [
             {
                 "sku": "TEST/SIMPLE/001",
@@ -10228,11 +10232,13 @@
             },
             {
                 "sku": "TEST/SIMPLE/002",
-                "quantity": 1
+                "quantity": 1,
+                "price_override": 1500
             },
             {
                 "sku": "TEST/SIMPLE/003",
-                "quantity": 1
+                "quantity": 1,
+                "is_optional": true
             }
         ]
     },
@@ -10260,7 +10266,63 @@
         "download_expiry": 30,
         "price": 999,
         "image": "products/1686680345__gallery_juice-dispenser.jpg",
-        "short_description": "Test downloadable product — digital guide. Five downloads, link expires 30 days after purchase."
+        "short_description": "Test downloadable product — digital guide. Five downloads, link expires 30 days after purchase.",
+        "technical_specification": "Format: PDF.\nPages: 48.\nDownloads: 5 per purchase.\nLink expiry: 30 days.",
+        "downloadable_files": [
+            {
+                "name": "Setup Guide (PDF)",
+                "file_path": "downloads/test/commercial-kitchen-setup-guide.pdf",
+                "file_name": "commercial-kitchen-setup-guide.pdf",
+                "mime_type": "application/pdf",
+                "file_size": 2516582,
+                "version": "1.0"
+            },
+            {
+                "name": "Quick-start Checklist (PDF)",
+                "file_path": "downloads/test/quick-start-checklist.pdf",
+                "file_name": "quick-start-checklist.pdf",
+                "mime_type": "application/pdf",
+                "file_size": 184320
+            }
+        ]
+    },
+    {
+        "sku": "TEST/MTO/001",
+        "name": "[TEST] Made-to-Order Prep Table",
+        "brand": "Sheffield Test",
+        "model_number": "TST-MTO-001",
+        "category": "Test Products",
+        "type": "simple",
+        "price": 38000,
+        "quantity": 0,
+        "stock_status": "out_of_stock",
+        "image": "products/1686650620__gallery_19 GN2100TN.jpg",
+        "short_description": "Test simple product — made to order. No stock on hand; shows the 'Made to order' stock state.",
+        "description": "<p>This is a <strong>made-to-order simple product</strong>. It has a price but no on-hand stock, so the product page shows the made-to-order state instead of a stock count.</p>",
+        "technical_specification": "Build time: 2–3 weeks.\nMaterial: 304 stainless steel.\nDimensions: 1500 × 700 × 850 mm."
+    },
+    {
+        "sku": "TEST/BNDL/002",
+        "name": "[TEST] Build-Your-Own Knife Set (Priced from Components)",
+        "brand": "Sheffield Test",
+        "model_number": "TST-BNDL-002",
+        "category": "Test Products",
+        "type": "bundle",
+        "price": null,
+        "image": "products/1686651045__gallery_20 GN3100TN.jpg",
+        "short_description": "Test bundle product without its own price — the bundle total is computed from the required components.",
+        "description": "<p>This is a <strong>bundle with no parent price</strong>. The product page sums the required components to show the bundle total, exercising the computed-price path.</p>",
+        "bundle_children": [
+            {
+                "sku": "TEST/SIMPLE/001",
+                "quantity": 1
+            },
+            {
+                "sku": "TEST/SIMPLE/003",
+                "quantity": 2,
+                "is_optional": true
+            }
+        ]
     },
     {
         "sku": "TEST/QUOTE/001",
@@ -10274,6 +10336,7 @@
         "quotation_notes": "Built-to-order industrial unit. Provide floor dimensions, voltage requirements, and intended storage temperature when requesting a quote.",
         "price": null,
         "image": "products/1686743008__gallery_Minibar-S2+SC10.jpg",
-        "short_description": "Test B2B quotation product — price-on-request, routed through the quote basket instead of normal checkout."
+        "short_description": "Test B2B quotation product — price-on-request, routed through the quote basket instead of normal checkout.",
+        "technical_specification": "Construction: insulated modular panels.\nTemperature range: −5 °C to +5 °C.\nPower: 3-phase, configured per site."
     }
 ]

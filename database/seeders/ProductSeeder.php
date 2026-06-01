@@ -11,6 +11,7 @@ use App\Models\AttributeValue;
 use App\Models\Brand;
 use App\Models\BundleItem;
 use App\Models\Category;
+use App\Models\DownloadableFile;
 use App\Models\GroupedProductItem;
 use App\Models\Product;
 use App\Models\ProductAttribute;
@@ -144,6 +145,7 @@ class ProductSeeder extends Seeder
         $this->createImages($product, $data);
         $this->createProductAttributes($product, $data['attributes'] ?? []);
         $this->createVariants($product, $data['variants'] ?? []);
+        $this->createDownloadableFiles($product, $data);
     }
 
     /**
@@ -351,7 +353,30 @@ class ProductSeeder extends Seeder
                 'bundle_product_id' => $bundleProductId,
                 'product_id' => $childId,
                 'quantity' => $child['quantity'] ?? 1,
+                'is_optional' => $child['is_optional'] ?? false,
+                'price_override' => $this->toMinorUnits($child['price_override'] ?? null),
                 'sort_order' => $index + 1,
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function createDownloadableFiles(Product $product, array $data): void
+    {
+        foreach ($data['downloadable_files'] ?? [] as $index => $file) {
+            DownloadableFile::create([
+                'product_id' => $product->id,
+                'name' => $file['name'],
+                'file_path' => $file['file_path'],
+                'file_name' => $file['file_name'] ?? basename($file['file_path']),
+                'mime_type' => $file['mime_type'] ?? null,
+                'file_size' => $file['file_size'] ?? null,
+                'download_limit' => $file['download_limit'] ?? $data['download_limit'] ?? null,
+                'download_expiry_days' => $file['download_expiry_days'] ?? $data['download_expiry'] ?? null,
+                'version' => $file['version'] ?? null,
+                'sort_order' => $index,
             ]);
         }
     }

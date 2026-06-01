@@ -16,6 +16,9 @@
     $discount   = ($compareAt && $price && $compareAt > $price)
         ? (int) round((1 - $price / $compareAt) * 100)
         : null;
+    // Variable + grouped products need a choice made on the product page, so they
+    // link there instead of quick-adding the parent from the card.
+    $needsOptions = in_array($product->type, [\App\Enums\ProductType::VARIABLE, \App\Enums\ProductType::GROUPED], true);
 @endphp
 
 <article class="group flex flex-col overflow-hidden rounded border border-zinc-200 bg-white transition hover:shadow-md">
@@ -69,6 +72,14 @@
             </flux:tooltip>
         </div>
 
+        {{-- Variable / grouped: route to the product page to choose options --}}
+        @if ($needsOptions)
+            <a href="{{ route('product.show', $product) }}" wire:navigate aria-label="Select options"
+               class="absolute right-2.5 bottom-2.5 z-10 inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-500 px-3.5 text-[12px] font-semibold text-white shadow-md transition hover:bg-brand-600">
+                <flux:icon.adjustments-horizontal variant="micro" class="size-3.5" />
+                Options
+            </a>
+        @else
         {{-- Add to cart stepper — single expanding pill, no element swapping --}}
         <div wire:key="cart-{{ $product->slug }}"
              x-data="{
@@ -128,6 +139,7 @@
                 </button>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- Info — purely informational, no buttons --}}

@@ -294,13 +294,15 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
 
             foreach ($lines as $line) {
                 $product = $line['product'];
+                $variant = $line['variant'];
                 $rate = $tax->rateForProduct($product);
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_sku' => $product->sku,
-                    'unit_price_cents' => $product->sale_price ?? $product->price ?? 0,
+                    'product_variant_id' => $variant?->id,
+                    'product_name' => $product->name.($line['label'] ? ' — '.$line['label'] : ''),
+                    'product_sku' => $variant?->sku ?? $product->sku,
+                    'unit_price_cents' => $line['unit_price_cents'],
                     'quantity' => $line['qty'],
                     'line_total_cents' => $line['line_total_cents'],
                     'tax_rate' => $rate,
@@ -450,7 +452,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                     {{-- Items --}}
                     <div class="space-y-3">
                         @foreach ($this->lines as $line)
-                            <div wire:key="sum-{{ $line['slug'] }}" class="flex items-center gap-3">
+                            <div wire:key="sum-{{ $line['key'] }}" class="flex items-center gap-3">
                                 <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
                                     @if ($line['product']->cover_url)
                                         <img src="{{ $line['product']->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
@@ -458,6 +460,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="truncate text-[12.5px] font-semibold text-ink">{{ $line['product']->name }}</div>
+                                    @if ($line['label'])
+                                        <div class="truncate text-[11px] text-ink-3">{{ $line['label'] }}</div>
+                                    @endif
                                     <div class="text-[11.5px] text-ink-4">Qty {{ $line['qty'] }}</div>
                                 </div>
                                 <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">{!! money($line['line_total_cents']) !!}</div>

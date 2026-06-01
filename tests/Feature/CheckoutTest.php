@@ -5,12 +5,15 @@ use App\Enums\OrderStatus;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
 use App\Models\Address;
+use App\Models\Attribute;
+use App\Models\AttributeValue;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\DeliveryPromotion;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\TaxClass;
 use App\Models\User;
 use App\Settings\TaxSettings;
@@ -87,6 +90,41 @@ it('places an order, snapshots totals, and redirects to the payment page', funct
 
     // Cart stays intact until payment is confirmed on the payment page.
     expect(StorefrontSession::cart())->not->toBeEmpty();
+});
+
+it('records the chosen variant on the order line', function () {
+    $user = User::factory()->create();
+    $address = Address::factory()->create(['user_id' => $user->id, 'is_default' => true]);
+    $this->actingAs($user);
+
+    $attr = Attribute::create(['name' => 'Color', 'slug' => 'color', 'type' => 'color', 'is_active' => true, 'sort_order' => 1]);
+    $blue = AttributeValue::create(['attribute_id' => $attr->id, 'value' => 'Blue', 'label' => 'Blue', 'slug' => 'blue', 'sort_order' => 1, 'is_active' => true]);
+
+    $apron = Product::create([
+        'name' => 'Chef Apron', 'slug' => 'apron', 'sku' => 'APR',
+        'brand_id' => $this->brand->id, 'primary_category_id' => $this->cat->id,
+        'type' => 'variable', 'price' => 150000, 'stock_status' => StockStatus::IN_STOCK->value,
+        'visibility' => ProductVisibility::VISIBLE->value,
+    ]);
+    $variant = ProductVariant::create([
+        'product_id' => $apron->id, 'sku' => 'APR-BLUE', 'price' => 150000, 'compare_at_price' => 129900,
+        'stock_status' => StockStatus::IN_STOCK->value, 'stock_quantity' => 5, 'is_active' => true, 'sort_order' => 1,
+    ]);
+    $variant->attributeValues()->attach($blue->id);
+
+    StorefrontSession::addToCart('apron', 1, $variant->id);
+
+    Livewire::test('pages::storefront.checkout')
+        ->set('selectedAddressId', $address->id)
+        ->call('placeOrder')
+        ->assertHasNoErrors();
+
+    $item = Order::where('user_id', $user->id)->first()->items->first();
+
+    expect($item->product_variant_id)->toBe($variant->id)
+        ->and($item->product_sku)->toBe('APR-BLUE')
+        ->and($item->unit_price_cents)->toBe(129900)
+        ->and($item->product_name)->toContain('Blue');
 });
 
 it('requires a delivery address when delivering', function () {

@@ -36,6 +36,20 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
         $this->resetPage();
     }
 
+    /**
+     * Spin up a blank draft and drop the user straight into the editable quote page.
+     */
+    public function createDraft(): void
+    {
+        $quote = Quote::create([
+            'quote_number' => Quote::generateNumber(),
+            'title' => 'Untitled quote',
+            'status' => QuoteStatus::DRAFT,
+        ]);
+
+        $this->redirectRoute('admin.quotes.show', $quote, navigate: true);
+    }
+
     #[Computed]
     public function quotes()
     {
@@ -88,7 +102,7 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
             <flux:heading size="xl">Quotes</flux:heading>
             <flux:subheading>Price and respond to quotation requests.</flux:subheading>
         </div>
-        <flux:button variant="primary" icon="plus" :href="route('admin.quotes.create')" wire:navigate>New quote</flux:button>
+        <flux:button variant="primary" icon="plus" wire:click="createDraft">New quote</flux:button>
     </div>
 
     {{-- Stat tiles --}}

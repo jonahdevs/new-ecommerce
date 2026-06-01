@@ -44,6 +44,14 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
 
         $this->items = StorefrontSession::cart();
 
+        // Allow deep-linking a single product into the request, e.g. from the product page.
+        if ($slug = (string) request()->query('product')) {
+            $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
+            if ($exists && ! isset($this->items[$slug])) {
+                $this->items[$slug] = 1;
+            }
+        }
+
         if ($user = auth()->user()) {
             $this->contact_name = $user->name;
             $this->contact_email = $user->email;
@@ -52,7 +60,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
     }
 
     /**
-     * @return Collection<int, array{slug: string, qty: int, product: Product, unit_price_cents: int, line_total_cents: int}>
+     * @return Collection<int, array{key: string, slug: string, qty: int, product: Product, variant: ?\App\Models\ProductVariant, label: ?string, unit_price_cents: int, line_total_cents: int}>
      */
     #[Computed]
     public function lines(): Collection
@@ -61,28 +69,52 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
             return collect();
         }
 
+        $keys = collect($this->items)->keys()->map(fn ($key) => StorefrontSession::splitKey($key));
+
         $products = Product::query()
             ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
-            ->whereIn('slug', array_keys($this->items))
+            ->whereIn('slug', $keys->pluck('slug')->unique()->all())
             ->where('visibility', 'visible')
             ->get()
             ->keyBy('slug');
 
+        $variants = \App\Models\ProductVariant::query()
+            ->with('attributeValues')
+            ->whereIn('id', $keys->pluck('variantId')->filter()->unique()->all())
+            ->get()
+            ->keyBy('id');
+
         return collect($this->items)
-            ->map(function ($qty, $slug) use ($products) {
-                if (! $products->has($slug)) {
+            ->map(function ($qty, $key) use ($products, $variants) {
+                ['slug' => $slug, 'variantId' => $variantId] = StorefrontSession::splitKey($key);
+
+                $product = $products->get($slug);
+                if (! $product) {
                     return null;
                 }
 
-                $product = $products[$slug];
-                $unit = $product->sale_price ?? $product->price ?? 0;
+                $variant = $variantId ? $variants->get($variantId) : null;
+                if ($variantId && ! $variant) {
+                    return null;
+                }
+
+                $unit = $variant
+                    ? (int) ($variant->compare_at_price ?? $variant->price ?? 0)
+                    : (int) ($product->sale_price ?? $product->price ?? 0);
+
+                $label = $variant
+                    ? $variant->attributeValues->map(fn ($v) => $v->label ?: $v->value)->filter()->implode(' / ')
+                    : null;
 
                 return [
+                    'key' => $key,
                     'slug' => $slug,
                     'qty' => (int) $qty,
                     'product' => $product,
-                    'unit_price_cents' => (int) $unit,
-                    'line_total_cents' => (int) $unit * (int) $qty,
+                    'variant' => $variant,
+                    'label' => $label ?: null,
+                    'unit_price_cents' => $unit,
+                    'line_total_cents' => $unit * (int) $qty,
                 ];
             })
             ->filter()
@@ -144,24 +176,24 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
         unset($this->lines, $this->searchResults);
     }
 
-    public function removeItem(string $slug): void
+    public function removeItem(string $key): void
     {
-        unset($this->items[$slug]);
+        unset($this->items[$key]);
         unset($this->lines, $this->searchResults);
     }
 
-    public function incrementItem(string $slug): void
+    public function incrementItem(string $key): void
     {
-        if (isset($this->items[$slug])) {
-            $this->items[$slug]++;
+        if (isset($this->items[$key])) {
+            $this->items[$key]++;
             unset($this->lines);
         }
     }
 
-    public function decrementItem(string $slug): void
+    public function decrementItem(string $key): void
     {
-        if (isset($this->items[$slug]) && $this->items[$slug] > 1) {
-            $this->items[$slug]--;
+        if (isset($this->items[$key]) && $this->items[$key] > 1) {
+            $this->items[$key]--;
             unset($this->lines);
         }
     }
@@ -199,8 +231,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'product_id' => $line['product']->id,
-                    'product_name' => $line['product']->name,
-                    'product_sku' => $line['product']->sku,
+                    'product_name' => $line['product']->name.($line['label'] ? ' — '.$line['label'] : ''),
+                    'product_sku' => $line['variant']?->sku ?? $line['product']->sku,
                     'unit_price_cents' => $line['unit_price_cents'],
                     'quantity' => $line['qty'],
                     'line_total_cents' => $line['line_total_cents'],
@@ -327,7 +359,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                     @else
                         <div class="divide-y divide-zinc-100">
                             @foreach ($this->lines as $line)
-                                <div wire:key="item-{{ $line['slug'] }}" class="flex gap-3 py-3.5">
+                                <div wire:key="item-{{ $line['key'] }}" class="flex gap-3 py-3.5">
                                     <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
                                         @if ($line['product']->cover_url)
                                             <img src="{{ $line['product']->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
@@ -335,14 +367,17 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <div class="truncate text-[12.5px] font-semibold leading-snug text-ink">{{ $line['product']->name }}</div>
+                                        @if ($line['label'])
+                                            <div class="truncate text-[11px] text-ink-3">{{ $line['label'] }}</div>
+                                        @endif
                                         <div class="mt-1 flex items-center justify-between gap-2">
                                             <div class="inline-flex items-center rounded border border-zinc-200">
-                                                <button type="button" wire:click="decrementItem('{{ $line['slug'] }}')"
+                                                <button type="button" wire:click="decrementItem('{{ $line['key'] }}')"
                                                         class="flex size-7 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
                                                     <span class="text-sm leading-none">−</span>
                                                 </button>
                                                 <span class="min-w-7 text-center text-[12.5px] font-semibold tabular-nums">{{ $line['qty'] }}</span>
-                                                <button type="button" wire:click="incrementItem('{{ $line['slug'] }}')"
+                                                <button type="button" wire:click="incrementItem('{{ $line['key'] }}')"
                                                         class="flex size-7 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
                                                     <span class="text-sm leading-none">+</span>
                                                 </button>
@@ -352,7 +387,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                                             </span>
                                         </div>
                                     </div>
-                                    <button type="button" wire:click="removeItem('{{ $line['slug'] }}')"
+                                    <button type="button" wire:click="removeItem('{{ $line['key'] }}')"
                                             class="shrink-0 cursor-pointer self-start text-ink-4 transition hover:text-brand-500" title="Remove">
                                         <flux:icon.x-mark variant="micro" class="size-4" />
                                     </button>

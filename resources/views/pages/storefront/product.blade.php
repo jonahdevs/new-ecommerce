@@ -1,9 +1,16 @@
 <?php
 
+use App\Enums\ProductType;
 use App\Enums\ReviewStatus;
 use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
+use App\Models\AttributeValue;
+use App\Models\DeliveryZone;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Showroom;
+use App\Settings\QuotationSettings;
+use App\Settings\ShippingSettings;
 use Flux\Flux;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\JsonLdMulti;
@@ -25,9 +32,13 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public int $qty = 1;
 
-    public bool $installation = false;
+    public bool $showBundleModal = false;
 
-    public bool $extWarranty = false;
+    /** @var array<string, int> Selected quantities per grouped-child slug. */
+    public array $groupedQty = [];
+
+    /** @var array<string, string> Selected variation option per attribute slug (variable products). */
+    public array $selectedOptions = [];
 
     public string $activeTab = 'specs';
 
@@ -48,11 +59,76 @@ new #[Layout('layouts::storefront')] class extends Component
             'productAttributes' => fn ($q) => $q->where('is_visible', true)->orderBy('sort_order'),
             'productAttributes.attribute',
             'downloadableFiles',
-            'accessories.brand',
-            'accessories.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
         ]);
 
+        if ($this->product->type === ProductType::BUNDLE) {
+            $this->product->load([
+                'bundleItems.product.brand',
+                'bundleItems.product.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
+                'bundleItems.variant',
+            ]);
+        } elseif ($this->product->type === ProductType::GROUPED) {
+            $this->product->load([
+                'groupedItems.brand',
+                'groupedItems.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
+            ]);
+        } elseif ($this->product->type === ProductType::VARIABLE) {
+            $this->product->load([
+                'variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
+                'variants.attributeValues.attribute',
+            ]);
+            $this->preselectDefaultVariant();
+        }
+
         $this->applySeo();
+    }
+
+    /**
+     * Pre-select the default variant (or the first in-stock one) so the page
+     * opens with a concrete price/stock rather than an empty selection.
+     */
+    private function preselectDefaultVariant(): void
+    {
+        $default = $this->product->variants->firstWhere('id', $this->product->default_variant_id)
+            ?? $this->product->variants->first(fn ($v) => $v->stock_status === StockStatus::IN_STOCK)
+            ?? $this->product->variants->first();
+
+        if ($default) {
+            $this->selectedOptions = $default->attributeValues
+                ->mapWithKeys(fn ($value) => [$value->attribute->slug => $value->slug])
+                ->all();
+        }
+    }
+
+    public function selectOption(string $attributeSlug, string $valueSlug): void
+    {
+        $this->selectedOptions[$attributeSlug] = $valueSlug;
+        $this->resetErrorBag('variant');
+    }
+
+    /**
+     * Whether an in-stock variant exists for this option value given the other
+     * currently-selected options (so impossible combinations are disabled).
+     */
+    public function isOptionAvailable(string $attributeSlug, string $valueSlug): bool
+    {
+        $others = collect($this->selectedOptions)->filter(fn ($v, $k) => $k !== $attributeSlug && $v !== '');
+
+        return $this->product->variants->contains(function (ProductVariant $variant) use ($attributeSlug, $valueSlug, $others) {
+            $combo = $variant->attributeValues->mapWithKeys(fn ($value) => [$value->attribute->slug => $value->slug]);
+
+            if (($combo[$attributeSlug] ?? null) !== $valueSlug) {
+                return false;
+            }
+
+            foreach ($others as $slug => $value) {
+                if (($combo[$slug] ?? null) !== $value) {
+                    return false;
+                }
+            }
+
+            return $variant->stock_status === StockStatus::IN_STOCK;
+        });
     }
 
     /**
@@ -139,9 +215,88 @@ new #[Layout('layouts::storefront')] class extends Component
         $this->qty = max(1, $this->qty - 1);
     }
 
+    public function incGroupedQty(string $slug): void
+    {
+        $this->groupedQty[$slug] = min(99, ($this->groupedQty[$slug] ?? 0) + 1);
+    }
+
+    public function decGroupedQty(string $slug): void
+    {
+        $this->groupedQty[$slug] = max(0, ($this->groupedQty[$slug] ?? 0) - 1);
+    }
+
+    /**
+     * Bundles and grouped products open a configuration modal first; everything
+     * else goes straight into the cart.
+     */
     public function addThisToCart(): void
     {
+        if ($this->product->type === ProductType::VARIABLE) {
+            $variant = $this->selectedVariant;
+
+            if (! $variant) {
+                $this->addError('variant', 'Please select '.$this->variationAttributes->pluck('name')->join(' and ').'.');
+
+                return;
+            }
+
+            if ($variant->stock_status !== StockStatus::IN_STOCK) {
+                $this->addError('variant', 'Sorry, that combination is out of stock.');
+
+                return;
+            }
+
+            $this->addToCart($this->product->slug, $this->qty, $variant->id);
+
+            return;
+        }
+
+        if (in_array($this->product->type, [ProductType::BUNDLE, ProductType::GROUPED], true)) {
+            $this->showBundleModal = true;
+
+            return;
+        }
+
         $this->addToCart($this->product->slug, $this->qty);
+    }
+
+    /** Add the bundle to the cart as a single SKU. */
+    public function addBundleToCart(): void
+    {
+        StorefrontSession::addToCart($this->product->slug, $this->qty);
+        $this->showBundleModal = false;
+
+        $this->dispatch('cart-updated');
+        $this->dispatch('cart-qty-changed', slug: $this->product->slug, qty: StorefrontSession::cartQuantity($this->product->slug));
+        Flux::toast(heading: 'Added to cart', text: 'Bundle has been added to your cart.', variant: 'success');
+    }
+
+    /** Add each chosen grouped-child product to the cart as its own line. */
+    public function addGroupedToCart(): void
+    {
+        $children = $this->product->groupedItems->keyBy('slug');
+        $added = 0;
+
+        foreach ($this->groupedQty as $slug => $qty) {
+            $qty = max(0, (int) $qty);
+
+            if ($qty > 0 && $children->has($slug)) {
+                StorefrontSession::addToCart($slug, $qty);
+                $added += $qty;
+            }
+        }
+
+        if ($added === 0) {
+            $this->addError('groupedQty', 'Choose a quantity for at least one item.');
+
+            return;
+        }
+
+        $this->groupedQty = [];
+        $this->showBundleModal = false;
+
+        $this->dispatch('cart-updated');
+        Flux::toast(heading: 'Added to cart', text: $added.' '.\Illuminate\Support\Str::plural('item', $added).' added to your cart.', variant: 'success');
     }
 
     #[Computed]
@@ -178,6 +333,108 @@ new #[Layout('layouts::storefront')] class extends Component
     public function reviewsEnabled(): bool
     {
         return app(\App\Settings\ReviewSettings::class)->reviews_enabled;
+    }
+
+    #[Computed]
+    public function quotesEnabled(): bool
+    {
+        return app(QuotationSettings::class)->quotes_enabled;
+    }
+
+    /** City of the head-office showroom, used as the real stock location. */
+    #[Computed]
+    public function stockLocation(): ?string
+    {
+        return Showroom::where('is_hq', true)->value('city')
+            ?? Showroom::orderBy('sort_order')->value('city');
+    }
+
+    /** Active delivery zones, powering the real delivery coverage badge. */
+    #[Computed]
+    public function deliveryZones(): Collection
+    {
+        return DeliveryZone::query()->active()->orderBy('sort_order')->get();
+    }
+
+    /**
+     * Bundle price: the parent's own price when set, otherwise the summed
+     * required-component total (price_override ?? the component's own price).
+     */
+    #[Computed]
+    public function bundlePriceCents(): ?int
+    {
+        if ($this->product->type !== ProductType::BUNDLE) {
+            return null;
+        }
+
+        $parent = $this->product->sale_price ?? $this->product->price;
+        if ($parent !== null) {
+            return (int) $parent;
+        }
+
+        $sum = $this->product->bundleItems
+            ->reject(fn ($item) => $item->is_optional)
+            ->sum(fn ($item) => (int) ($item->price_override ?? $item->product?->sale_price ?? $item->product?->price ?? 0) * max(1, (int) $item->quantity));
+
+        return $sum > 0 ? (int) $sum : null;
+    }
+
+    /**
+     * Variation attributes with their selectable values (resolved to
+     * AttributeValue models for labels and colour swatches).
+     *
+     * @return \Illuminate\Support\Collection<int, array{slug: string, name: string, values: \Illuminate\Support\Collection<int, AttributeValue>}>
+     */
+    #[Computed]
+    public function variationAttributes(): \Illuminate\Support\Collection
+    {
+        if ($this->product->type !== ProductType::VARIABLE) {
+            return collect();
+        }
+
+        return $this->product->productAttributes
+            ->filter(fn ($pa) => $pa->is_variation_attribute && $pa->attribute)
+            ->sortBy('sort_order')
+            ->map(function ($pa) {
+                $slugs = is_array($pa->values) ? $pa->values : [];
+
+                return [
+                    'slug' => $pa->attribute->slug,
+                    'name' => $pa->attribute->name,
+                    'values' => AttributeValue::where('attribute_id', $pa->attribute_id)
+                        ->whereIn('slug', $slugs)
+                        ->orderBy('sort_order')
+                        ->get(),
+                ];
+            })
+            ->values();
+    }
+
+    /** The variant matching the full current selection, if any. */
+    #[Computed]
+    public function selectedVariant(): ?ProductVariant
+    {
+        if ($this->product->type !== ProductType::VARIABLE) {
+            return null;
+        }
+
+        $selected = collect($this->selectedOptions)->filter(fn ($v) => $v !== '');
+
+        if ($selected->count() < $this->variationAttributes->count()) {
+            return null;
+        }
+
+        return $this->product->variants->first(function (ProductVariant $variant) use ($selected) {
+            $combo = $variant->attributeValues->mapWithKeys(fn ($value) => [$value->attribute->slug => $value->slug]);
+
+            foreach ($selected as $slug => $value) {
+                if (($combo[$slug] ?? null) !== $value) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
     }
 
     public function submitReview(): void
@@ -244,28 +501,44 @@ new #[Layout('layouts::storefront')] class extends Component
 }; ?>
 
 @php
-    $price = $product->sale_price ?? $product->price;
-    $compareAt = $product->sale_price ? $product->price : null;
+    // For variable products the headline figures track the chosen variant
+    // (its compare_at_price holds the sale price, mirroring product.sale_price).
+    $variant = $product->type === \App\Enums\ProductType::VARIABLE ? $this->selectedVariant : null;
+
+    if ($variant) {
+        $price = $variant->compare_at_price ?? $variant->price;
+        $compareAt = $variant->compare_at_price ? $variant->price : null;
+        $inStock = $variant->stock_status === \App\Enums\StockStatus::IN_STOCK;
+        $stockQty = $variant->stock_quantity;
+        $skuDisplay = $variant->sku;
+    } else {
+        $price = $product->sale_price ?? $product->price;
+        $compareAt = $product->sale_price ? $product->price : null;
+        $inStock = $product->stock_status === \App\Enums\StockStatus::IN_STOCK;
+        $stockQty = $product->stock_quantity;
+        $skuDisplay = $product->sku;
+    }
+
     // Headline display prices honour the store's tax display setting; $price stays
     // the stored (charged) amount that feeds the add-to-cart total below.
     $tax = app(\App\Support\TaxCalculator::class);
     $displayPrice = $price !== null ? $tax->displayPriceCents($product, (int) $price) : null;
     $displayCompareAt = $compareAt !== null ? $tax->displayPriceCents($product, (int) $compareAt) : null;
     $isOnSale = $compareAt !== null;
-    $inStock = $product->stock_status === \App\Enums\StockStatus::IN_STOCK;
-    $stockQty = $product->stock_quantity;
 
     $isWished = StorefrontSession::isWishlisted($product->slug);
     $isCompared = StorefrontSession::isCompared($product->slug);
 
     $gallery = $product->images->take(6); // cap thumbnails
 
-    // Add-on prices: 6% install, 4% extended warranty — same heuristic as the design.
-    $installPriceCents = $price ? (int) round($price * 0.06) : 0;
-    $warrantyPriceCents = $price ? (int) round($price * 0.04) : 0;
-    $unitPriceCents = (int) ($price ?? 0)
-        + ($installation ? $installPriceCents : 0)
-        + ($extWarranty ? $warrantyPriceCents : 0);
+    // Grouped products have no parent price; surface the cheapest child as a "from" price.
+    $groupedFromCents = null;
+    if ($product->type === \App\Enums\ProductType::GROUPED && $displayPrice === null) {
+        $groupedFromCents = $product->groupedItems
+            ->map(fn ($child) => $child->sale_price ?? $child->price)
+            ->filter()
+            ->min();
+    }
 
     $dimensionStr = collect([
         $product->width ? rtrim(rtrim((string) $product->width, '0'), '.') : null,
@@ -371,8 +644,8 @@ new #[Layout('layouts::storefront')] class extends Component
             @endif
 
             <div class="mt-5 flex items-center gap-4 text-[13px] text-ink-3">
-                @if ($product->sku)
-                    <span>SKU: <span class="text-ink-2 tabular-nums">{{ $product->sku }}</span></span>
+                @if ($skuDisplay)
+                    <span>SKU: <span class="text-ink-2 tabular-nums">{{ $skuDisplay }}</span></span>
                 @endif
                 @if ($product->model_number)
                     <span>·</span>
@@ -387,7 +660,13 @@ new #[Layout('layouts::storefront')] class extends Component
                         <span class="text-lg text-ink-4 line-through tabular-nums whitespace-nowrap">{{ money($displayCompareAt) }}</span>
                     @endif
                     <span class="font-serif text-4xl tabular-nums">
-                        {!! $displayPrice ? money($displayPrice) : '<span class="text-ink-3 text-base">Quote on request</span>' !!}
+                        @if ($displayPrice)
+                            {{ money($displayPrice) }}
+                        @elseif ($groupedFromCents)
+                            <span class="text-base text-ink-3">From</span> {{ money($groupedFromCents) }}
+                        @else
+                            <span class="text-base text-ink-3">Quote on request</span>
+                        @endif
                     </span>
                     @if ($displayPrice && $tax->priceDisplaySuffix())
                         <span class="text-[12.5px] text-ink-3">{{ $tax->priceDisplaySuffix() }}</span>
@@ -401,87 +680,144 @@ new #[Layout('layouts::storefront')] class extends Component
                             'bg-emerald-600' => $inStock && $stockQty,
                             'bg-amber-500' => ! $inStock || ! $stockQty,
                         ])></span>
-                        {{ $inStock && $stockQty ? $stockQty.' in stock — Nairobi warehouse' : 'Made to order' }}
+                        {{ $inStock && $stockQty ? $stockQty.' in stock'.($this->stockLocation ? ' — '.$this->stockLocation : '') : 'Made to order' }}
                     </span>
                 </div>
             </div>
 
-            {{-- Add-ons --}}
-            @if ($price)
-                <div class="mt-6">
-                    <div class="mb-2.5 text-[11.5px] font-bold tracking-[0.08em] text-ink-3 uppercase">
-                        Bundle add-ons
-                    </div>
-
-                    <label @class([
-                        'flex cursor-pointer items-start gap-3.5 rounded border p-3.5 transition mb-2',
-                        'border-ink-2 bg-surface-sunken' => $installation,
-                        'border-zinc-200 hover:border-zinc-400' => ! $installation,
-                    ])>
-                        <input type="checkbox" wire:model.live="installation" class="mt-1 accent-brand-500" />
-                        <div class="flex-1">
-                            <div class="text-[14px] font-medium">Professional installation & commissioning</div>
-                            <div class="mt-0.5 text-[12.5px] text-ink-3">Factory-trained engineer, on-site, parts & connections included.</div>
+            {{-- Variation selector --}}
+            @if ($product->type === \App\Enums\ProductType::VARIABLE && $this->variationAttributes->isNotEmpty())
+                <div class="mt-6 space-y-4">
+                    @foreach ($this->variationAttributes as $attr)
+                        @php $chosen = $selectedOptions[$attr['slug']] ?? null; @endphp
+                        <div wire:key="attr-{{ $attr['slug'] }}">
+                            <div class="mb-2 text-[12px] font-semibold text-ink-2">
+                                {{ $attr['name'] }}
+                                @if ($chosen)
+                                    <span class="font-normal text-ink-3">· {{ optional($attr['values']->firstWhere('slug', $chosen))->label ?: $chosen }}</span>
+                                @endif
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($attr['values'] as $val)
+                                    @php
+                                        $isSel = $chosen === $val->slug;
+                                        $avail = $this->isOptionAvailable($attr['slug'], $val->slug);
+                                    @endphp
+                                    @if ($val->color_code)
+                                        <button type="button" wire:click="selectOption('{{ $attr['slug'] }}', '{{ $val->slug }}')"
+                                            @disabled(! $avail)
+                                            title="{{ $val->label ?: $val->value }}{{ $avail ? '' : ' — out of stock' }}"
+                                            @class([
+                                                'size-9 rounded-full border-2 transition',
+                                                'border-ink ring-1 ring-ink ring-offset-1' => $isSel,
+                                                'border-zinc-200' => ! $isSel,
+                                                'cursor-pointer hover:border-zinc-400' => $avail,
+                                                'cursor-not-allowed opacity-30' => ! $avail,
+                                            ])
+                                            style="background-color: {{ $val->color_code }}">
+                                            <span class="sr-only">{{ $val->label ?: $val->value }}</span>
+                                        </button>
+                                    @else
+                                        <button type="button" wire:click="selectOption('{{ $attr['slug'] }}', '{{ $val->slug }}')"
+                                            @disabled(! $avail)
+                                            @class([
+                                                'min-w-11 rounded border px-3 py-2 text-[13px] font-medium transition',
+                                                'border-ink bg-ink text-white' => $isSel,
+                                                'border-zinc-200 text-ink hover:border-zinc-400 cursor-pointer' => ! $isSel && $avail,
+                                                'cursor-not-allowed text-ink-4 line-through opacity-50' => ! $avail,
+                                            ])>
+                                            {{ $val->label ?: $val->value }}
+                                        </button>
+                                    @endif
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="font-semibold tabular-nums whitespace-nowrap">+ {{ money($installPriceCents) }}</div>
-                    </label>
-
-                    <label @class([
-                        'flex cursor-pointer items-start gap-3.5 rounded border p-3.5 transition',
-                        'border-ink-2 bg-surface-sunken' => $extWarranty,
-                        'border-zinc-200 hover:border-zinc-400' => ! $extWarranty,
-                    ])>
-                        <input type="checkbox" wire:model.live="extWarranty" class="mt-1 accent-brand-500" />
-                        <div class="flex-1">
-                            <div class="text-[14px] font-medium">Extended warranty +24 months</div>
-                            <div class="mt-0.5 text-[12.5px] text-ink-3">Adds 2 years to factory cover. Annual service visits included.</div>
-                        </div>
-                        <div class="font-semibold tabular-nums whitespace-nowrap">+ {{ money($warrantyPriceCents) }}</div>
-                    </label>
+                    @endforeach
+                    <flux:error name="variant" />
                 </div>
             @endif
 
             {{-- Qty + CTAs --}}
-            <div class="mt-6 flex flex-wrap items-center gap-3">
-                <div class="inline-flex h-12 items-stretch overflow-hidden rounded border border-zinc-200">
-                    <button type="button" wire:click="decQty" aria-label="Decrease quantity"
-                        class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
-                        <flux:icon.minus variant="micro" class="size-4" />
-                    </button>
-                    <div class="grid w-12 place-items-center border-x border-zinc-200 text-[14px] font-semibold tabular-nums">
-                        {{ $qty }}
-                    </div>
-                    <button type="button" wire:click="incQty" aria-label="Increase quantity"
-                        class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
-                        <flux:icon.plus variant="micro" class="size-4" />
-                    </button>
+            @php $isGrouped = $product->type === \App\Enums\ProductType::GROUPED; @endphp
+            @if ($product->requires_quotation)
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                    @if ($this->quotesEnabled)
+                        <flux:button variant="primary" icon="document-text" class="h-12! flex-1! px-6!"
+                            :href="route('quote.request', ['product' => $product->slug])" wire:navigate>
+                            Request a quote
+                        </flux:button>
+                    @else
+                        <flux:button variant="primary" icon="chat-bubble-left-right" class="h-12! flex-1! px-6!"
+                            :href="route('contact')" wire:navigate>
+                            Contact for pricing
+                        </flux:button>
+                    @endif
                 </div>
-
-                <flux:button variant="primary" wire:click="addThisToCart" class="h-12! flex-1! px-6!"
-                    icon="shopping-cart">
-                    Add to cart · {{ ($unitPriceCents * $qty) ? money($unitPriceCents * $qty) : 'Request quote' }}
-                </flux:button>
-
-                <flux:button class="h-12! px-5!">Request quote</flux:button>
-            </div>
-
-            {{-- Trust grid --}}
-            <div class="mt-7 grid grid-cols-2 gap-3 border-t border-zinc-200 pt-5 text-[12.5px]">
-                @foreach ([
-                    ['truck', 'Regional delivery', 'KE · UG · TZ · RW'],
-                    ['wrench-screwdriver', 'Install & commission', 'Factory-trained'],
-                    ['shield-check', 'Spares in stock', '98% next-day'],
-                    ['check-badge', 'Trade-tested', 'Net 30 available'],
-                ] as [$icon, $title, $sub])
-                    <div class="flex items-start gap-2.5">
-                        <flux:icon :name="$icon" variant="outline" class="size-4 shrink-0 text-brand-500" />
-                        <div>
-                            <div class="font-semibold text-ink">{{ $title }}</div>
-                            <div class="text-ink-3">{{ $sub }}</div>
+            @else
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                    {{-- Grouped products pick a quantity per child inside the modal, so no single counter here. --}}
+                    @unless ($isGrouped)
+                        <div class="inline-flex h-12 items-stretch overflow-hidden rounded border border-zinc-200">
+                            <button type="button" wire:click="decQty" aria-label="Decrease quantity"
+                                class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
+                                <flux:icon.minus variant="micro" class="size-4" />
+                            </button>
+                            <div class="grid w-12 place-items-center border-x border-zinc-200 text-[14px] font-semibold tabular-nums">
+                                {{ $qty }}
+                            </div>
+                            <button type="button" wire:click="incQty" aria-label="Increase quantity"
+                                class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
+                                <flux:icon.plus variant="micro" class="size-4" />
+                            </button>
                         </div>
-                    </div>
-                @endforeach
-            </div>
+                    @endunless
+
+                    <flux:button variant="primary" wire:click="addThisToCart" class="h-12! flex-1! px-6!"
+                        icon="shopping-cart">
+                        Add to cart{{ ! $isGrouped && $displayPrice ? ' · '.money($displayPrice * $qty) : '' }}
+                    </flux:button>
+
+                    @if ($this->quotesEnabled)
+                        <flux:button class="h-12! px-5!" :href="route('quote.request', ['product' => $product->slug])" wire:navigate>
+                            Request a quote
+                        </flux:button>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Trust grid — real signals only --}}
+            @php
+                $trust = collect();
+                if ($product->brand) {
+                    $trust->push(['check-badge', 'Authorised distributor', $product->brand->name]);
+                }
+                if ($this->deliveryZones->isNotEmpty()) {
+                    $counties = $this->deliveryZones->pluck('county')->filter()->unique()->values();
+                    $coverage = $counties->isNotEmpty()
+                        ? $counties->take(3)->implode(', ').($counties->count() > 3 ? ' +'.($counties->count() - 3).' more' : '')
+                        : $this->deliveryZones->count().' '.\Illuminate\Support\Str::plural('zone', $this->deliveryZones->count());
+                    $trust->push(['truck', 'Delivery coverage', $coverage]);
+                }
+                if ($this->stockLocation) {
+                    $trust->push(['building-storefront', 'Ships from', $this->stockLocation]);
+                }
+                if ($product->downloadableFiles->isNotEmpty()) {
+                    $trust->push(['document-text', 'Spec sheets & manuals', $product->downloadableFiles->count().' '.\Illuminate\Support\Str::plural('document', $product->downloadableFiles->count())]);
+                }
+            @endphp
+            @if ($trust->count() >= 2)
+                <div class="mt-7 grid grid-cols-2 gap-3 border-t border-zinc-200 pt-5 text-[12.5px]">
+                    @foreach ($trust as [$icon, $title, $sub])
+                        <div class="flex items-start gap-2.5">
+                            <flux:icon :name="$icon" variant="outline" class="size-4 shrink-0 text-brand-500" />
+                            <div>
+                                <div class="font-semibold text-ink">{{ $title }}</div>
+                                <div class="text-ink-3">{{ $sub }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 
@@ -492,7 +828,6 @@ new #[Layout('layouts::storefront')] class extends Component
                 $productTabs = [
                     'specs' => 'Specifications',
                     'overview' => 'Overview',
-                    'install' => 'Installation & service',
                     'documents' => 'Documents',
                 ];
                 if ($this->reviewsEnabled) {
@@ -546,56 +881,40 @@ new #[Layout('layouts::storefront')] class extends Component
                         </div>
                     @endforeach
                 </div>
+
+                @if (filled($product->technical_specification))
+                    <div class="mt-8 max-w-5xl">
+                        <h3 class="font-serif text-xl">Technical specification</h3>
+                        <div class="mt-3 text-[14px] leading-relaxed text-ink-2">{!! nl2br(e($product->technical_specification)) !!}</div>
+                    </div>
+                @endif
+
+                @if ($rows->isEmpty() && blank($product->technical_specification))
+                    <div class="max-w-5xl text-[14px] text-ink-3">No specifications listed for this product yet.</div>
+                @endif
             @endif
 
             {{-- Overview --}}
             @if ($activeTab === 'overview')
-                <div class="grid max-w-5xl grid-cols-1 gap-12 md:grid-cols-2">
-                    <div>
-                        <h3 class="font-serif text-2xl">About this product</h3>
-                        <div class="mt-4 text-[14.5px] leading-relaxed text-ink-2">
-                            @if ($product->description)
-                                {!! nl2br(e($product->description)) !!}
-                            @else
-                                <p>Sheffield supplies this unit with full factory commissioning, on-site training for kitchen staff, and access to our regional service network. Parts inventory is maintained in Nairobi, with most components available next-day across East Africa.</p>
-                            @endif
-                        </div>
-                    </div>
-                    @if ($product->brand)
-                        <div>
-                            <h3 class="font-serif text-2xl">About {{ $product->brand->name }}</h3>
-                            <p class="mt-4 text-[14.5px] leading-relaxed text-ink-2">
-                                Authorised distributor for {{ $product->brand->name }} across East Africa. Full parts and service support from the Nairobi headquarters.
-                            </p>
-                        </div>
-                    @endif
-                </div>
-            @endif
-
-            {{-- Install --}}
-            @if ($activeTab === 'install')
-                <div class="max-w-5xl">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        @foreach ([
-                            ['map-pin', '1. Site survey', 'Engineer visits to confirm utilities, ventilation and access. Free within 50 km of Nairobi.'],
-                            ['truck', '2. Delivery & commissioning', 'White-glove unboxing, levelling and first-run calibration with kitchen staff present.'],
-                            ['wrench-screwdriver', '3. Service & spares', 'Quarterly preventive visits available. 98% of spares stocked locally for next-day dispatch.'],
-                        ] as [$icon, $title, $body])
-                            <div class="rounded-md bg-surface-sunken p-6">
-                                <flux:icon :name="$icon" variant="outline" class="size-5 text-brand-500" />
-                                <div class="mt-3 font-serif text-lg">{{ $title }}</div>
-                                <p class="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">{{ $body }}</p>
+                @php $brandBlurb = $product->brand?->description; @endphp
+                @if (filled($product->description) || filled($brandBlurb))
+                    <div class="grid max-w-5xl grid-cols-1 gap-12 md:grid-cols-2">
+                        @if (filled($product->description))
+                            <div>
+                                <h3 class="font-serif text-2xl">About this product</h3>
+                                <div class="mt-4 text-[14.5px] leading-relaxed text-ink-2">{!! nl2br(e($product->description)) !!}</div>
                             </div>
-                        @endforeach
+                        @endif
+                        @if (filled($brandBlurb))
+                            <div>
+                                <h3 class="font-serif text-2xl">About {{ $product->brand->name }}</h3>
+                                <div class="mt-4 text-[14.5px] leading-relaxed text-ink-2">{!! nl2br(e($brandBlurb)) !!}</div>
+                            </div>
+                        @endif
                     </div>
-                    <div class="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-md bg-ink p-6 text-[#f3eadd]">
-                        <div>
-                            <div class="font-serif text-xl text-[#f3eadd]">Need a service contract?</div>
-                            <div class="mt-1 text-[13px] text-[#c9bea4]">From KES&nbsp;24,000/year for one unit. Annual preventive + 48-hr response.</div>
-                        </div>
-                        <flux:button variant="primary">Get a service quote</flux:button>
-                    </div>
-                </div>
+                @else
+                    <div class="max-w-5xl text-[14px] text-ink-3">No overview available for this product yet.</div>
+                @endif
             @endif
 
             {{-- Documents --}}
@@ -725,5 +1044,95 @@ new #[Layout('layouts::storefront')] class extends Component
                 @endforeach
             </div>
         </div>
+    @endif
+
+    {{-- Bundle / grouped add-to-cart modal --}}
+    @if (in_array($product->type, [\App\Enums\ProductType::BUNDLE, \App\Enums\ProductType::GROUPED], true))
+        <flux:modal wire:model.self="showBundleModal" class="md:w-[560px]">
+            @if ($product->type === \App\Enums\ProductType::BUNDLE)
+                <flux:heading>What's in this bundle</flux:heading>
+                <flux:subheading>{{ $product->name }} ships as a single package made up of the components below.</flux:subheading>
+
+                <div class="mt-5 divide-y divide-zinc-100">
+                    @foreach ($product->bundleItems as $item)
+                        @php
+                            $child = $item->product;
+                            $lineCents = (int) ($item->price_override ?? $child?->sale_price ?? $child?->price ?? 0);
+                        @endphp
+                        <div class="flex items-center gap-3 py-3" wire:key="bundle-{{ $item->id }}">
+                            <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
+                                @if ($child?->cover_url)
+                                    <img src="{{ $child->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
+                                @else
+                                    <div class="grid size-full place-items-center text-ink-4"><flux:icon.cube variant="micro" class="size-4" /></div>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate text-[13px] font-semibold text-ink">{{ $child?->name ?? 'Component unavailable' }}</div>
+                                <div class="mt-0.5 flex items-center gap-2 text-[12px] text-ink-3">
+                                    <span class="tabular-nums">Qty {{ $item->quantity }}</span>
+                                    @if ($item->is_optional)
+                                        <flux:badge size="sm" color="zinc" inset="top bottom">Optional</flux:badge>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="text-[12.5px] font-semibold tabular-nums text-ink">{!! $lineCents ? money($lineCents) : '—' !!}</div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-5 flex items-center justify-between border-t border-zinc-200 pt-4">
+                    <div>
+                        <div class="text-[11px] font-bold uppercase tracking-wide text-ink-3">Bundle price</div>
+                        <div class="font-serif text-2xl tabular-nums">{!! $this->bundlePriceCents ? money($this->bundlePriceCents) : 'Quote on request' !!}</div>
+                    </div>
+                    <flux:button variant="primary" icon="shopping-cart" wire:click="addBundleToCart">Add to cart</flux:button>
+                </div>
+            @else
+                <flux:heading>Choose your items</flux:heading>
+                <flux:subheading>Set a quantity for any product in this set — each is added to your cart on its own.</flux:subheading>
+
+                <div class="mt-5 divide-y divide-zinc-100">
+                    @foreach ($product->groupedItems as $child)
+                        @php $childPrice = $child->sale_price ?? $child->price; @endphp
+                        <div class="flex items-center gap-3 py-3" wire:key="grouped-{{ $child->id }}">
+                            <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
+                                @if ($child->cover_url)
+                                    <img src="{{ $child->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
+                                @else
+                                    <div class="grid size-full place-items-center text-ink-4"><flux:icon.cube variant="micro" class="size-4" /></div>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate text-[13px] font-semibold text-ink">{{ $child->name }}</div>
+                                <div class="text-[12px] text-ink-3 tabular-nums">{!! $childPrice ? money($childPrice) : 'POA' !!}</div>
+                            </div>
+                            <div class="inline-flex h-9 shrink-0 items-stretch overflow-hidden rounded border border-zinc-200">
+                                <button type="button" wire:click="decGroupedQty('{{ $child->slug }}')" aria-label="Decrease quantity"
+                                    class="grid w-8 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
+                                    <flux:icon.minus variant="micro" class="size-3.5" />
+                                </button>
+                                <div class="grid w-9 place-items-center border-x border-zinc-200 text-[13px] font-semibold tabular-nums">
+                                    {{ $groupedQty[$child->slug] ?? 0 }}
+                                </div>
+                                <button type="button" wire:click="incGroupedQty('{{ $child->slug }}')" aria-label="Increase quantity"
+                                    class="grid w-8 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
+                                    <flux:icon.plus variant="micro" class="size-3.5" />
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <flux:error name="groupedQty" class="mt-3" />
+
+                <div class="mt-5 flex justify-end gap-3 border-t border-zinc-200 pt-4">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button variant="primary" icon="shopping-cart" wire:click="addGroupedToCart">Add to cart</flux:button>
+                </div>
+            @endif
+        </flux:modal>
     @endif
 </div>
