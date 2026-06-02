@@ -3,26 +3,17 @@
 namespace App\Models;
 
 use Database\Factories\PageFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[Fillable(['slug', 'title', 'body', 'meta_description', 'is_published'])]
 class Page extends Model
 {
     /** @use HasFactory<PageFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'slug',
-        'title',
-        'body',
-        'meta_description',
-        'is_published',
-    ];
-
-    /**
-     * @return array{is_published: 'boolean'}
-     */
     protected function casts(): array
     {
         return [

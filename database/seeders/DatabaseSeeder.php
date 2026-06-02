@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             ShowroomSeeder::class,
             PageSeeder::class,
             DeliveryZoneSeeder::class,
+            LogisticsSeeder::class,
             AddressSeeder::class,
             OrderSeeder::class,
             QuoteSeeder::class,

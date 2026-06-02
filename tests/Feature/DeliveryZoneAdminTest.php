@@ -13,34 +13,32 @@ it('loads the delivery zones admin page', function () {
     $this->get(route('admin.delivery-zones'))->assertOk();
 });
 
-it('creates a delivery zone with a fee entered in KES', function () {
+it('creates a delivery zone', function () {
+    $polygon = [
+        ['lat' => -1.24, 'lng' => 36.75],
+        ['lat' => -1.24, 'lng' => 36.85],
+        ['lat' => -1.34, 'lng' => 36.85],
+        ['lat' => -1.34, 'lng' => 36.75],
+    ];
+
     Livewire::test('pages::admin.delivery-zones')
         ->call('openCreateZone')
         ->set('name', 'Westlands')
         ->set('county', 'Nairobi')
-        ->set('center_lat', -1.2649)
-        ->set('center_lng', 36.8025)
-        ->set('radius_meters', 4500)
-        ->set('base_fee', 350)
-        ->set('eta_label', 'Same day')
+        ->set('polygon', $polygon)
         ->call('saveZone')
         ->assertHasNoErrors()
         ->assertSet('showZoneModal', false);
 
-    $zone = DeliveryZone::firstWhere('name', 'Westlands');
-
-    expect($zone)->not->toBeNull()
-        ->and($zone->base_fee_cents)->toBe(35000)
-        ->and($zone->radius_meters)->toBe(4500);
+    expect(DeliveryZone::firstWhere('name', 'Westlands'))->not->toBeNull();
 });
 
-it('requires a map pin when creating a zone', function () {
+it('requires a polygon with at least 3 points when creating a zone', function () {
     Livewire::test('pages::admin.delivery-zones')
         ->call('openCreateZone')
-        ->set('name', 'No Pin')
-        ->set('base_fee', 100)
+        ->set('name', 'No Polygon')
         ->call('saveZone')
-        ->assertHasErrors(['center_lat', 'center_lng']);
+        ->assertHasErrors(['polygon']);
 
     expect(DeliveryZone::count())->toBe(0);
 });
@@ -57,8 +55,12 @@ it('toggles and deletes a zone', function () {
     expect(DeliveryZone::find($zone->id))->toBeNull();
 });
 
+it('loads the delivery promotions admin page', function () {
+    $this->get(route('admin.delivery-promotions'))->assertOk();
+});
+
 it('creates a global free-delivery promotion', function () {
-    Livewire::test('pages::admin.delivery-zones')
+    Livewire::test('pages::admin.delivery-promotions')
         ->call('openCreatePromo')
         ->set('pName', 'Launch free delivery')
         ->set('pScope', 'global')
@@ -73,7 +75,7 @@ it('creates a global free-delivery promotion', function () {
 });
 
 it('requires a zone for a zone-scoped promotion', function () {
-    Livewire::test('pages::admin.delivery-zones')
+    Livewire::test('pages::admin.delivery-promotions')
         ->call('openCreatePromo')
         ->set('pName', 'Bad promo')
         ->set('pScope', 'zone')

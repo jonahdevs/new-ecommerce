@@ -1,18 +1,29 @@
 <?php
 
-use App\Enums\DeliveryPromotionEffect;
-use App\Enums\DeliveryPromotionScope;
-use App\Models\DeliveryPromotion;
 use App\Models\DeliveryZone;
 use Flux\Flux;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends Component
 {
+    // ─── Search & filter ─────────────────────────────────────────────────────
+    #[Url(as: 'q')]
+    public string $search = '';
+
+    #[Url]
+    public string $filterStatus = '';
+
+    // ─── Bulk selection ───────────────────────────────────────────────────────
+    /** @var array<int, string> */
+    public array $selected = [];
+
+    public bool $selectAll = false;
+
     // ─── Zone form ─────────────────────────────────────────────────────────
     public bool $showZoneModal = false;
 
@@ -28,66 +39,48 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
 
     public int $priority = 0;
 
-    public ?float $center_lat = null;
-
-    public ?float $center_lng = null;
-
-    public int $radius_meters = 5000;
-
-    public float $base_fee = 0;
-
-    public ?float $free_over = null;
-
-    public string $eta_label = '';
-
-    // ─── Promotion form ──────────────────────────────────────────────────────
-    public bool $showPromoModal = false;
-
-    public ?int $editingPromoId = null;
-
-    public string $pName = '';
-
-    public bool $pIsActive = true;
-
-    public int $pPriority = 0;
-
-    public string $pScope = 'global';
-
-    public ?int $pZoneId = null;
-
-    public string $pEffect = 'free';
-
-    public ?float $pValue = null;
-
-    public ?int $pPercent = null;
-
-    public float $pMinSubtotal = 0;
-
-    public ?string $pStartsAt = null;
-
-    public ?string $pEndsAt = null;
+    /** @var array<int, array{lat: float, lng: float}> */
+    public array $polygon = [];
 
     #[Computed]
     public function zones(): Collection
     {
         return DeliveryZone::query()
-            ->withCount('promotions')
+            ->withCount(['promotions', 'carrierZones'])
+            ->when($this->search, fn ($q) => $q->where(function ($q) {
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('county', 'like', '%'.$this->search.'%');
+            }))
+            ->when($this->filterStatus !== '', fn ($q) => $q->where('is_active', $this->filterStatus === 'active'))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
     }
 
-    #[Computed]
-    public function promotions(): Collection
+    public function updatedSearch(): void
     {
-        return DeliveryPromotion::query()
-            ->with('zone')
-            ->orderByDesc('priority')
-            ->orderBy('name')
-            ->get();
+        $this->clearSelection();
     }
 
-    // ─── Zone actions ──────────────────────────────────────────────────────
+    public function updatedFilterStatus(): void
+    {
+        $this->clearSelection();
+    }
+
+    public function updatedSelectAll(bool $value): void
+    {
+        $this->selected = $value
+            ? $this->zones->pluck('id')->map(fn ($id) => (string) $id)->all()
+            : [];
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+        $this->selectAll = false;
+    }
+
+    // ─── Zone CRUD ─────────────────────────────────────────────────────────
     public function zoneRules(): array
     {
         return [
@@ -96,22 +89,18 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
             'is_active' => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
             'priority' => ['integer', 'min:0'],
-            'center_lat' => ['required', 'numeric', 'between:-90,90'],
-            'center_lng' => ['required', 'numeric', 'between:-180,180'],
-            'radius_meters' => ['required', 'integer', 'min:100', 'max:200000'],
-            'base_fee' => ['required', 'numeric', 'min:0'],
-            'free_over' => ['nullable', 'numeric', 'min:0'],
-            'eta_label' => ['nullable', 'string', 'max:50'],
+            'polygon' => ['required', 'array', 'min:3'],
+            'polygon.*.lat' => ['required', 'numeric', 'between:-90,90'],
+            'polygon.*.lng' => ['required', 'numeric', 'between:-180,180'],
         ];
     }
 
     public function openCreateZone(): void
     {
         $this->resetValidation();
-        $this->reset(['editingZoneId', 'name', 'county', 'is_active', 'sort_order', 'priority', 'center_lat', 'center_lng', 'radius_meters', 'base_fee', 'free_over', 'eta_label']);
+        $this->reset(['editingZoneId', 'name', 'county', 'is_active', 'sort_order', 'priority', 'polygon']);
         $this->county = 'Nairobi';
         $this->is_active = true;
-        $this->radius_meters = 5000;
         $this->showZoneModal = true;
     }
 
@@ -125,12 +114,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
         $this->is_active = $zone->is_active;
         $this->sort_order = $zone->sort_order;
         $this->priority = $zone->priority;
-        $this->center_lat = $zone->center_lat;
-        $this->center_lng = $zone->center_lng;
-        $this->radius_meters = $zone->radius_meters;
-        $this->base_fee = $zone->base_fee_cents / 100;
-        $this->free_over = $zone->free_over_cents !== null ? $zone->free_over_cents / 100 : null;
-        $this->eta_label = $zone->eta_label ?? '';
+        $this->polygon = $zone->polygon ?? [];
         $this->showZoneModal = true;
     }
 
@@ -144,12 +128,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
             'is_active' => $data['is_active'],
             'sort_order' => $data['sort_order'],
             'priority' => $data['priority'],
-            'center_lat' => $data['center_lat'],
-            'center_lng' => $data['center_lng'],
-            'radius_meters' => $data['radius_meters'],
-            'base_fee_cents' => (int) round($data['base_fee'] * 100),
-            'free_over_cents' => $data['free_over'] !== null ? (int) round($data['free_over'] * 100) : null,
-            'eta_label' => $data['eta_label'] !== '' ? $data['eta_label'] : null,
+            'polygon' => $data['polygon'],
         ];
 
         if ($this->editingZoneId) {
@@ -174,255 +153,185 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
     public function deleteZone(int $id): void
     {
         DeliveryZone::findOrFail($id)->delete();
-        unset($this->zones, $this->promotions);
+        unset($this->zones);
         Flux::toast(heading: 'Zone removed', text: 'The delivery area has been deleted.', variant: 'warning');
     }
 
-    // ─── Promotion actions ─────────────────────────────────────────────────
-    public function promoRules(): array
+    // ─── Bulk actions ─────────────────────────────────────────────────────────
+    public function bulkActivate(): void
     {
-        return [
-            'pName' => ['required', 'string', 'max:100'],
-            'pIsActive' => ['boolean'],
-            'pPriority' => ['integer', 'min:0'],
-            'pScope' => ['required', 'in:global,zone'],
-            'pZoneId' => ['nullable', 'required_if:pScope,zone', 'exists:delivery_zones,id'],
-            'pEffect' => ['required', 'in:free,flat_fee,percent_off'],
-            'pValue' => ['nullable', 'required_if:pEffect,flat_fee', 'numeric', 'min:0'],
-            'pPercent' => ['nullable', 'required_if:pEffect,percent_off', 'integer', 'between:1,100'],
-            'pMinSubtotal' => ['numeric', 'min:0'],
-            'pStartsAt' => ['nullable', 'date'],
-            'pEndsAt' => ['nullable', 'date', 'after_or_equal:pStartsAt'],
-        ];
-    }
-
-    public function openCreatePromo(): void
-    {
-        $this->resetValidation();
-        $this->reset(['editingPromoId', 'pName', 'pIsActive', 'pPriority', 'pScope', 'pZoneId', 'pEffect', 'pValue', 'pPercent', 'pMinSubtotal', 'pStartsAt', 'pEndsAt']);
-        $this->pIsActive = true;
-        $this->pScope = 'global';
-        $this->pEffect = 'free';
-        $this->showPromoModal = true;
-    }
-
-    public function openEditPromo(int $id): void
-    {
-        $this->resetValidation();
-        $promo = DeliveryPromotion::findOrFail($id);
-        $this->editingPromoId = $promo->id;
-        $this->pName = $promo->name;
-        $this->pIsActive = $promo->is_active;
-        $this->pPriority = $promo->priority;
-        $this->pScope = $promo->scope->value;
-        $this->pZoneId = $promo->zone_id;
-        $this->pEffect = $promo->effect->value;
-        $this->pValue = $promo->value_cents !== null ? $promo->value_cents / 100 : null;
-        $this->pPercent = $promo->percent;
-        $this->pMinSubtotal = $promo->min_subtotal_cents / 100;
-        $this->pStartsAt = $promo->starts_at?->format('Y-m-d\TH:i');
-        $this->pEndsAt = $promo->ends_at?->format('Y-m-d\TH:i');
-        $this->showPromoModal = true;
-    }
-
-    public function savePromo(): void
-    {
-        $data = $this->validate($this->promoRules());
-
-        $payload = [
-            'name' => $data['pName'],
-            'is_active' => $data['pIsActive'],
-            'priority' => $data['pPriority'],
-            'scope' => $data['pScope'],
-            'zone_id' => $data['pScope'] === 'zone' ? $data['pZoneId'] : null,
-            'effect' => $data['pEffect'],
-            'value_cents' => $data['pEffect'] === 'flat_fee' && $data['pValue'] !== null ? (int) round($data['pValue'] * 100) : null,
-            'percent' => $data['pEffect'] === 'percent_off' ? $data['pPercent'] : null,
-            'min_subtotal_cents' => (int) round($data['pMinSubtotal'] * 100),
-            'starts_at' => $data['pStartsAt'] ?: null,
-            'ends_at' => $data['pEndsAt'] ?: null,
-        ];
-
-        if ($this->editingPromoId) {
-            DeliveryPromotion::findOrFail($this->editingPromoId)->update($payload);
-            Flux::toast(heading: 'Promotion updated', text: $payload['name'].' has been saved.', variant: 'success');
-        } else {
-            DeliveryPromotion::create($payload);
-            Flux::toast(heading: 'Promotion created', text: $payload['name'].' is now live.', variant: 'success');
+        if ($this->selected === []) {
+            return;
         }
 
-        $this->showPromoModal = false;
-        unset($this->promotions);
+        $count = DeliveryZone::whereIn('id', $this->selected)->update(['is_active' => true]);
+        $this->afterBulk();
+        Flux::toast(heading: 'Zones activated', text: $count.' zone(s) set to active.', variant: 'success');
     }
 
-    public function togglePromoActive(int $id): void
+    public function bulkDeactivate(): void
     {
-        $promo = DeliveryPromotion::findOrFail($id);
-        $promo->update(['is_active' => ! $promo->is_active]);
-        unset($this->promotions);
+        if ($this->selected === []) {
+            return;
+        }
+
+        $count = DeliveryZone::whereIn('id', $this->selected)->update(['is_active' => false]);
+        $this->afterBulk();
+        Flux::toast(heading: 'Zones deactivated', text: $count.' zone(s) turned off.', variant: 'success');
     }
 
-    public function deletePromo(int $id): void
+    public function bulkDelete(): void
     {
-        DeliveryPromotion::findOrFail($id)->delete();
-        unset($this->promotions);
-        Flux::toast(heading: 'Promotion removed', text: 'The promotion has been deleted.', variant: 'warning');
+        if ($this->selected === []) {
+            return;
+        }
+
+        $count = DeliveryZone::whereIn('id', $this->selected)->delete();
+        $this->afterBulk();
+        Flux::toast(heading: 'Zones deleted', text: $count.' zone(s) have been removed.', variant: 'warning');
+    }
+
+    private function afterBulk(): void
+    {
+        $this->clearSelection();
+        unset($this->zones);
     }
 }; ?>
 
 @include('partials.admin.zone-map-scripts')
 
-<div class="space-y-10" x-data="zoneMap()"
-     x-effect="$wire.showZoneModal ? open() : close()">
+<div x-data="zoneMap()" x-effect="$wire.showZoneModal ? open() : close()">
 
-    {{-- Page breadcrumbs --}}
     @push('breadcrumbs')
-<flux:breadcrumbs>
-        <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Delivery zones</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
-@endpush
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>Delivery zones</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    @endpush
 
-    {{-- ── Zones ── --}}
-    <section>
-        <div class="flex items-center justify-between">
-            <div>
-                <flux:heading size="xl">Delivery zones</flux:heading>
-                <flux:text class="mt-1">Circular areas you deliver to. A customer's map pin must fall inside an active zone.</flux:text>
+    <div class="flex items-center justify-between">
+        <div>
+            <flux:heading size="xl">Delivery zones</flux:heading>
+            <flux:text class="mt-1">Circular areas you deliver to. A customer's map pin must fall inside an active zone.</flux:text>
+        </div>
+        <flux:button variant="primary" icon="plus" wire:click="openCreateZone">Add zone</flux:button>
+    </div>
+
+    <flux:card class="mt-6 p-0 overflow-hidden">
+
+        {{-- Toolbar --}}
+        <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search name or county…"
+                icon="magnifying-glass" clearable class="max-w-xs" />
+            <flux:select wire:model.live="filterStatus" class="w-36">
+                <flux:select.option value="">All statuses</flux:select.option>
+                <flux:select.option value="active">Active</flux:select.option>
+                <flux:select.option value="inactive">Inactive</flux:select.option>
+            </flux:select>
+        </div>
+
+        {{-- Bulk action bar --}}
+        @if (count($selected) > 0)
+            <div class="flex flex-wrap items-center gap-3 border-b border-zinc-200 bg-brand-50 px-6 py-2.5 dark:border-zinc-700 dark:bg-brand-500/10">
+                <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
+                <flux:button size="sm" variant="ghost" wire:click="bulkActivate">Activate</flux:button>
+                <flux:button size="sm" variant="ghost" wire:click="bulkDeactivate">Deactivate</flux:button>
+                <flux:button size="sm" variant="ghost" icon="trash"
+                    wire:click="bulkDelete"
+                    wire:confirm="Delete {{ count($selected) }} zone(s)? This cannot be undone."
+                    class="text-red-500! hover:text-red-600!">Delete</flux:button>
+                <flux:spacer />
+                <flux:button size="sm" variant="ghost" wire:click="clearSelection">Clear</flux:button>
             </div>
-            <flux:button variant="primary" icon="plus" wire:click="openCreateZone">Add zone</flux:button>
-        </div>
+        @endif
 
-        <div class="mt-6 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
-            <table class="w-full text-sm">
-                <thead class="bg-zinc-50 text-left text-[11px] font-bold tracking-wide text-zinc-500 uppercase dark:bg-zinc-900">
-                    <tr>
-                        <th class="px-4 py-3">Zone</th>
-                        <th class="px-4 py-3">County</th>
-                        <th class="px-4 py-3">Radius</th>
-                        <th class="px-4 py-3">Base fee</th>
-                        <th class="px-4 py-3">Free over</th>
-                        <th class="px-4 py-3">Priority</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    @forelse ($this->zones as $zone)
-                        <tr wire:key="zone-{{ $zone->id }}">
-                            <td class="px-4 py-3 font-medium">
-                                {{ $zone->name }}
-                                @if ($zone->eta_label)
-                                    <span class="block text-[11px] text-zinc-400">{{ $zone->eta_label }}</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-zinc-500">{{ $zone->county }}</td>
-                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ number_format($zone->radius_meters / 1000, 1) }} km</td>
-                            <td class="px-4 py-3 tabular-nums">{{ money($zone->base_fee_cents) }}</td>
-                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $zone->free_over_cents !== null ? money($zone->free_over_cents) : '—' }}</td>
-                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $zone->priority }}</td>
-                            <td class="px-4 py-3">
-                                <button type="button" wire:click="toggleZoneActive({{ $zone->id }})">
-                                    <flux:badge :color="$zone->is_active ? 'green' : 'zinc'" size="sm">
-                                        {{ $zone->is_active ? 'Active' : 'Off' }}
-                                    </flux:badge>
-                                </button>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center justify-end gap-1">
-                                    <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="openEditZone({{ $zone->id }})" />
-                                    <flux:button size="xs" variant="ghost" icon="trash"
-                                                 wire:click="deleteZone({{ $zone->id }})"
-                                                 wire:confirm="Delete {{ $zone->name }}? Addresses in this zone will lose their assignment."
-                                                 class="text-red-500! hover:text-red-600!" />
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-10 text-center text-zinc-400">No delivery zones yet. Add your first area.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </section>
+        <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
+            <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
+                <flux:table.column class="w-10">
+                    <flux:checkbox wire:model.live="selectAll" />
+                </flux:table.column>
+                <flux:table.column>Zone</flux:table.column>
+                <flux:table.column>County</flux:table.column>
+                <flux:table.column>Points</flux:table.column>
+                <flux:table.column>Carriers</flux:table.column>
+                <flux:table.column>Priority</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
+                <flux:table.column align="end">Actions</flux:table.column>
+            </flux:table.columns>
 
-    {{-- ── Promotions ── --}}
-    <section>
-        <div class="flex items-center justify-between">
-            <div>
-                <flux:heading size="xl">Delivery promotions</flux:heading>
-                <flux:text class="mt-1">Overrides applied on top of zone fees. The launch free-delivery offer lives here.</flux:text>
-            </div>
-            <flux:button variant="primary" icon="plus" wire:click="openCreatePromo">Add promotion</flux:button>
-        </div>
-
-        <div class="mt-6 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
-            <table class="w-full text-sm">
-                <thead class="bg-zinc-50 text-left text-[11px] font-bold tracking-wide text-zinc-500 uppercase dark:bg-zinc-900">
-                    <tr>
-                        <th class="px-4 py-3">Promotion</th>
-                        <th class="px-4 py-3">Applies to</th>
-                        <th class="px-4 py-3">Effect</th>
-                        <th class="px-4 py-3">Min order</th>
-                        <th class="px-4 py-3">Window</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    @forelse ($this->promotions as $promo)
-                        <tr wire:key="promo-{{ $promo->id }}">
-                            <td class="px-4 py-3 font-medium">{{ $promo->name }}</td>
-                            <td class="px-4 py-3 text-zinc-500">{{ $promo->scope->label() }}{{ $promo->zone ? ': '.$promo->zone->name : '' }}</td>
-                            <td class="px-4 py-3 text-zinc-500">
-                                {{ $promo->effect->label() }}@if ($promo->effect === DeliveryPromotionEffect::FLAT_FEE) ({{ money($promo->value_cents) }})@elseif ($promo->effect === DeliveryPromotionEffect::PERCENT_OFF) ({{ $promo->percent }}%)@endif
-                            </td>
-                            <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $promo->min_subtotal_cents > 0 ? money($promo->min_subtotal_cents) : '—' }}</td>
-                            <td class="px-4 py-3 text-[12px] text-zinc-500">
-                                {{ $promo->starts_at?->format('d M Y') ?? 'now' }} – {{ $promo->ends_at?->format('d M Y') ?? 'open' }}
-                            </td>
-                            <td class="px-4 py-3">
-                                <button type="button" wire:click="togglePromoActive({{ $promo->id }})">
-                                    <flux:badge :color="$promo->isLiveNow() ? 'green' : 'zinc'" size="sm">
-                                        {{ $promo->isLiveNow() ? 'Live' : ($promo->is_active ? 'Scheduled' : 'Off') }}
-                                    </flux:badge>
-                                </button>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center justify-end gap-1">
-                                    <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="openEditPromo({{ $promo->id }})" />
-                                    <flux:button size="xs" variant="ghost" icon="trash"
-                                                 wire:click="deletePromo({{ $promo->id }})"
-                                                 wire:confirm="Delete the {{ $promo->name }} promotion?"
-                                                 class="text-red-500! hover:text-red-600!" />
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-4 py-10 text-center text-zinc-400">No promotions. Add a global "free delivery" promo for launch.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <flux:table.rows>
+                @forelse ($this->zones as $zone)
+                    <flux:table.row :key="$zone->id" wire:key="zone-{{ $zone->id }}">
+                        <flux:table.cell>
+                            <flux:checkbox wire:model.live="selected" value="{{ $zone->id }}" />
+                        </flux:table.cell>
+                        <flux:table.cell variant="strong">{{ $zone->name }}</flux:table.cell>
+                        <flux:table.cell class="text-zinc-500">{{ $zone->county }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums text-zinc-500">{{ count($zone->polygon ?? []) }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums text-zinc-500">{{ $zone->carrier_zones_count }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums text-zinc-500">{{ $zone->priority }}</flux:table.cell>
+                        <flux:table.cell>
+                            <button type="button" wire:click="toggleZoneActive({{ $zone->id }})">
+                                <flux:badge :color="$zone->is_active ? 'green' : 'zinc'" size="sm" inset="top bottom">
+                                    {{ $zone->is_active ? 'Active' : 'Off' }}
+                                </flux:badge>
+                            </button>
+                        </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <div class="flex items-center justify-end gap-1">
+                                <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
+                                    wire:click="openEditZone({{ $zone->id }})" />
+                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                    wire:click="deleteZone({{ $zone->id }})"
+                                    wire:confirm="Delete {{ $zone->name }}? Addresses in this zone will lose their assignment."
+                                    class="text-red-500! hover:text-red-600!" />
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="8" class="py-12 text-center text-zinc-400">
+                            @if ($search || $filterStatus)
+                                No zones match your filters.
+                            @else
+                                No delivery zones yet. Add your first area.
+                            @endif
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- ── Zone modal ── --}}
     <flux:modal wire:model.self="showZoneModal" class="md:w-[640px]" :dismissible="false">
         <flux:heading>{{ $editingZoneId ? 'Edit zone' : 'New delivery zone' }}</flux:heading>
-        <flux:subheading>Click the map to set the centre, then set the radius. Drag the pin to fine-tune.</flux:subheading>
+        <flux:subheading>Click the map to draw the zone boundary. Drag a point to adjust it, double-click to remove it.</flux:subheading>
 
         <form wire:submit="saveZone" class="mt-6 space-y-4">
-            <div x-ref="zoneMapContainer" class="h-64 w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-700"></div>
-            @error('center_lat') <flux:error>Drop a pin on the map to set the zone centre.</flux:error> @enderror
+
+            {{-- Polygon map --}}
+            <div id="zone-map-container" class="h-72 w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-700"></div>
+
+            <div class="flex items-center justify-between">
+                <flux:text size="sm" class="text-zinc-500">
+                    <span x-text="$wire.polygon.length"></span> point(s) — click map to add, double-click a point to remove
+                </flux:text>
+                <div class="flex items-center gap-2">
+                    <flux:button size="xs" variant="ghost" x-on:click="undoLast" x-bind:disabled="!$wire.polygon.length">
+                        Undo
+                    </flux:button>
+                    <flux:button size="xs" variant="ghost" x-on:click="clearAll" x-bind:disabled="!$wire.polygon.length">
+                        Clear
+                    </flux:button>
+                </div>
+            </div>
+            @error('polygon') <flux:error>Draw at least 3 points on the map to define the zone boundary.</flux:error> @enderror
 
             <div class="grid grid-cols-2 gap-4">
                 <flux:field>
                     <flux:label>Name</flux:label>
-                    <flux:input wire:model="name" placeholder="Westlands" />
+                    <flux:input wire:model="name" placeholder="Nairobi & Surroundings" />
                     <flux:error name="name" />
                 </flux:field>
                 <flux:field>
@@ -432,34 +341,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                 </flux:field>
             </div>
 
-            <flux:field>
-                <flux:label>Radius (metres)</flux:label>
-                <flux:input type="number" wire:model.live="radius_meters" min="100" max="200000" step="100" />
-                <flux:description>Circle covering the area. e.g. 5000 = 5 km.</flux:description>
-                <flux:error name="radius_meters" />
-            </flux:field>
-
             <div class="grid grid-cols-2 gap-4">
-                <flux:field>
-                    <flux:label>Base fee (KES)</flux:label>
-                    <flux:input type="number" wire:model="base_fee" min="0" step="1" />
-                    <flux:description>The real charge once promos end.</flux:description>
-                    <flux:error name="base_fee" />
-                </flux:field>
-                <flux:field>
-                    <flux:label>Free over (KES)</flux:label>
-                    <flux:input type="number" wire:model="free_over" min="0" step="1" placeholder="Optional" />
-                    <flux:description>Free if the order subtotal exceeds this.</flux:description>
-                    <flux:error name="free_over" />
-                </flux:field>
-            </div>
-
-            <div class="grid grid-cols-3 gap-4">
-                <flux:field>
-                    <flux:label>ETA label</flux:label>
-                    <flux:input wire:model="eta_label" placeholder="Same day" />
-                    <flux:error name="eta_label" />
-                </flux:field>
                 <flux:field>
                     <flux:label>Priority</flux:label>
                     <flux:input type="number" wire:model="priority" min="0" />
@@ -478,95 +360,6 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
             <div class="flex justify-end gap-3 pt-2">
                 <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
                 <flux:button type="submit" variant="primary">{{ $editingZoneId ? 'Save zone' : 'Create zone' }}</flux:button>
-            </div>
-        </form>
-    </flux:modal>
-
-    {{-- ── Promotion modal ── --}}
-    <flux:modal wire:model.self="showPromoModal" class="md:w-[560px]" :dismissible="false">
-        <flux:heading>{{ $editingPromoId ? 'Edit promotion' : 'New promotion' }}</flux:heading>
-        <flux:subheading>Layer a discount or free delivery on top of zone fees.</flux:subheading>
-
-        <form wire:submit="savePromo" class="mt-6 space-y-4">
-            <flux:field>
-                <flux:label>Name</flux:label>
-                <flux:input wire:model="pName" placeholder="Launch free delivery" />
-                <flux:error name="pName" />
-            </flux:field>
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:field>
-                    <flux:label>Applies to</flux:label>
-                    <flux:select wire:model.live="pScope">
-                        <flux:select.option value="global">All zones</flux:select.option>
-                        <flux:select.option value="zone">Specific zone</flux:select.option>
-                    </flux:select>
-                    <flux:error name="pScope" />
-                </flux:field>
-                <flux:field x-show="$wire.pScope === 'zone'">
-                    <flux:label>Zone</flux:label>
-                    <flux:select wire:model="pZoneId" placeholder="Choose a zone…">
-                        @foreach ($this->zones as $zone)
-                            <flux:select.option :value="$zone->id">{{ $zone->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:error name="pZoneId" />
-                </flux:field>
-            </div>
-
-            <flux:field>
-                <flux:label>Effect</flux:label>
-                <flux:select wire:model.live="pEffect">
-                    <flux:select.option value="free">Free delivery</flux:select.option>
-                    <flux:select.option value="flat_fee">Flat fee</flux:select.option>
-                    <flux:select.option value="percent_off">Percent off</flux:select.option>
-                </flux:select>
-                <flux:error name="pEffect" />
-            </flux:field>
-
-            <flux:field x-show="$wire.pEffect === 'flat_fee'">
-                <flux:label>Flat fee (KES)</flux:label>
-                <flux:input type="number" wire:model="pValue" min="0" step="1" />
-                <flux:error name="pValue" />
-            </flux:field>
-
-            <flux:field x-show="$wire.pEffect === 'percent_off'">
-                <flux:label>Percent off</flux:label>
-                <flux:input type="number" wire:model="pPercent" min="1" max="100" />
-                <flux:error name="pPercent" />
-            </flux:field>
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:field>
-                    <flux:label>Min order (KES)</flux:label>
-                    <flux:input type="number" wire:model="pMinSubtotal" min="0" step="1" />
-                    <flux:error name="pMinSubtotal" />
-                </flux:field>
-                <flux:field>
-                    <flux:label>Priority</flux:label>
-                    <flux:input type="number" wire:model="pPriority" min="0" />
-                    <flux:error name="pPriority" />
-                </flux:field>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:field>
-                    <flux:label>Starts at</flux:label>
-                    <flux:input type="datetime-local" wire:model="pStartsAt" />
-                    <flux:error name="pStartsAt" />
-                </flux:field>
-                <flux:field>
-                    <flux:label>Ends at</flux:label>
-                    <flux:input type="datetime-local" wire:model="pEndsAt" />
-                    <flux:error name="pEndsAt" />
-                </flux:field>
-            </div>
-
-            <flux:checkbox wire:model="pIsActive" label="Active" />
-
-            <div class="flex justify-end gap-3 pt-2">
-                <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
-                <flux:button type="submit" variant="primary">{{ $editingPromoId ? 'Save promotion' : 'Create promotion' }}</flux:button>
             </div>
         </form>
     </flux:modal>

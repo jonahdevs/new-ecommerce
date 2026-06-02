@@ -8,9 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Delivery zones are circular geofences (centre + radius) that decide
-        // serviceability and the base delivery fee. Created first so addresses
-        // and orders can reference them.
+        // Delivery zones are precise polygon geofences drawn by admin on a map.
+        // The polygon JSON stores an ordered array of {lat, lng} coordinate pairs.
+        // Serviceability is determined by a ray-casting point-in-polygon check.
+        // Pricing lives on carrier_rates — the zone is geography only.
         Schema::create('delivery_zones', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -18,12 +19,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->integer('priority')->default(0);
-            $table->decimal('center_lat', 10, 7);
-            $table->decimal('center_lng', 10, 7);
-            $table->unsignedInteger('radius_meters');
-            $table->integer('base_fee_cents')->default(0);
-            $table->integer('free_over_cents')->nullable();
-            $table->string('eta_label')->nullable();
+            $table->json('polygon')->nullable(); // [{lat: -1.28, lng: 36.82}, …]
             $table->timestamps();
         });
 

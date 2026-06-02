@@ -3,29 +3,17 @@
 namespace App\Models;
 
 use Database\Factories\DeliveryZoneFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[Fillable(['name', 'county', 'is_active', 'sort_order', 'priority', 'polygon'])]
 class DeliveryZone extends Model
 {
     /** @use HasFactory<DeliveryZoneFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'name',
-        'county',
-        'is_active',
-        'sort_order',
-        'priority',
-        'center_lat',
-        'center_lng',
-        'radius_meters',
-        'base_fee_cents',
-        'free_over_cents',
-        'eta_label',
-    ];
 
     protected function casts(): array
     {
@@ -33,23 +21,37 @@ class DeliveryZone extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
             'priority' => 'integer',
-            'center_lat' => 'float',
-            'center_lng' => 'float',
-            'radius_meters' => 'integer',
-            'base_fee_cents' => 'integer',
-            'free_over_cents' => 'integer',
+            'polygon' => 'array', // [{lat: float, lng: float}, …]
         ];
     }
+
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
 
     public function promotions(): HasMany
     {
         return $this->hasMany(DeliveryPromotion::class, 'zone_id');
     }
 
+    public function carrierZones(): HasMany
+    {
+        return $this->hasMany(CarrierZone::class);
+    }
+
+    public function carrierRates(): HasMany
+    {
+        return $this->hasMany(CarrierRate::class);
+    }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
+
+    // ==================================================
+    // SCOPES
+    // ==================================================
 
     /**
      * @param  Builder<DeliveryZone>  $query
@@ -59,27 +61,45 @@ class DeliveryZone extends Model
         $query->where('is_active', true);
     }
 
+    // ==================================================
+    // GEO
+    // ==================================================
+
     /**
-     * Whether the given coordinates fall inside this circular zone, using the
-     * haversine great-circle distance against the zone radius.
+     * Whether the given coordinates fall inside this polygon zone.
+     * Uses the ray-casting (even-odd) algorithm for point-in-polygon detection.
+     * Works correctly for convex and concave polygons.
+     *
+     * @param  float  $latitude  The point's latitude
+     * @param  float  $longitude  The point's longitude
      */
     public function containsPoint(float $latitude, float $longitude): bool
     {
-        return $this->distanceMetersTo($latitude, $longitude) <= $this->radius_meters;
-    }
+        $polygon = $this->polygon;
 
-    public function distanceMetersTo(float $latitude, float $longitude): float
-    {
-        $earthRadius = 6_371_000; // metres
+        if (empty($polygon) || count($polygon) < 3) {
+            return false;
+        }
 
-        $latFrom = deg2rad($this->center_lat);
-        $latTo = deg2rad($latitude);
-        $latDelta = deg2rad($latitude - $this->center_lat);
-        $lngDelta = deg2rad($longitude - $this->center_lng);
+        $n = count($polygon);
+        $inside = false;
+        $j = $n - 1;
 
-        $a = sin($latDelta / 2) ** 2
-            + cos($latFrom) * cos($latTo) * sin($lngDelta / 2) ** 2;
+        for ($i = 0; $i < $n; $i++) {
+            $xi = (float) $polygon[$i]['lng'];
+            $yi = (float) $polygon[$i]['lat'];
+            $xj = (float) $polygon[$j]['lng'];
+            $yj = (float) $polygon[$j]['lat'];
 
-        return $earthRadius * 2 * asin(min(1.0, sqrt($a)));
+            // Cast a ray eastward from the point and count intersections.
+            if ((($yi > $latitude) !== ($yj > $latitude)) &&
+                ($longitude < ($xj - $xi) * ($latitude - $yi) / ($yj - $yi) + $xi)) {
+                $inside = ! $inside;
+            }
+
+            $j = $i;
+        }
+
+        return $inside;
     }
 }

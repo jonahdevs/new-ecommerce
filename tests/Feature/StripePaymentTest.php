@@ -7,11 +7,15 @@ use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
 use App\Models\Address;
 use App\Models\Brand;
+use App\Models\CarrierRate;
+use App\Models\CarrierZone;
 use App\Models\Category;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ShippingCarrier;
+use App\Models\ShippingMethod;
 use App\Models\User;
 use App\Services\Stripe\StripePaymentService;
 use App\Settings\PaymentSettings;
@@ -37,7 +41,20 @@ it('checkout creates the order and redirects to the payment page', function () {
         'type' => 'simple', 'price' => 150000, 'stock_status' => StockStatus::IN_STOCK->value,
         'visibility' => ProductVisibility::VISIBLE->value,
     ]);
-    DeliveryZone::factory()->centeredAt(-1.29, 36.81, 12000)->create(['name' => 'Metro', 'base_fee_cents' => 0]);
+    $zone = DeliveryZone::factory()->centeredAt(-1.29, 36.81, 12000)->create(['name' => 'Metro']);
+    $carrier = ShippingCarrier::create([
+        'name' => 'Sheffield', 'slug' => 'sheffield-stripe', 'driver' => 'self_managed',
+        'priority' => 10, 'is_active' => true, 'sort_order' => 1,
+    ]);
+    $method = ShippingMethod::create([
+        'name' => 'Standard', 'slug' => 'standard-stripe', 'type' => 'delivery', 'is_active' => true, 'sort_order' => 1,
+    ]);
+    CarrierZone::create(['carrier_id' => $carrier->id, 'delivery_zone_id' => $zone->id, 'is_active' => true]);
+    CarrierRate::create([
+        'carrier_id' => $carrier->id, 'delivery_zone_id' => $zone->id,
+        'shipping_method_id' => $method->id, 'rate_type' => 'free',
+        'base_rate_cents' => 0, 'is_active' => true, 'sort_order' => 1,
+    ]);
 
     $user = User::factory()->create();
     Address::factory()->create(['user_id' => $user->id, 'is_default' => true, 'latitude' => -1.2921, 'longitude' => 36.8219]);

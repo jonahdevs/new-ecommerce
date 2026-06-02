@@ -5,29 +5,17 @@ namespace App\Models;
 use App\Enums\QuoteStatus;
 use App\Settings\QuotationSettings;
 use Database\Factories\QuoteFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[Fillable(['user_id', 'contact_name', 'contact_email', 'contact_phone', 'contact_company', 'quote_number', 'title', 'status', 'total_cents', 'notes', 'expires_at'])]
 class Quote extends Model
 {
     /** @use HasFactory<QuoteFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'contact_name',
-        'contact_email',
-        'contact_phone',
-        'contact_company',
-        'quote_number',
-        'title',
-        'status',
-        'total_cents',
-        'notes',
-        'expires_at',
-    ];
 
     protected function casts(): array
     {

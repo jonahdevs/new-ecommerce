@@ -4,32 +4,9 @@
 // Shared across every map scope via window.__leafletReady so it loads once and
 // we never touch `L` before the script has finished executing.
 window.ensureLeaflet = window.ensureLeaflet || function () {
-    if (window.L) return Promise.resolve();
-    if (window.__leafletReady) return window.__leafletReady;
-
-    window.__leafletReady = new Promise((resolve, reject) => {
-        // Official Leaflet 1.9.4 CDN URLs + SRI hashes (leafletjs.com/download.html).
-        if (! document.querySelector('link[data-leaflet]')) {
-            const css = document.createElement('link');
-            css.rel = 'stylesheet';
-            css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-            css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
-            css.crossOrigin = '';
-            css.setAttribute('data-leaflet', '');
-            document.head.appendChild(css);
-        }
-
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
-        script.crossOrigin = '';
-        script.setAttribute('data-leaflet', '');
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Failed to load Leaflet'));
-        document.head.appendChild(script);
-    });
-
-    return window.__leafletReady;
+    return window.L
+        ? Promise.resolve()
+        : Promise.reject(new Error('Leaflet is not loaded. Run npm run build.'));
 };
 
 Alpine.data('addressMap', () => {
@@ -65,7 +42,8 @@ Alpine.data('addressMap', () => {
         },
 
         async initMap() {
-            if (! this.$refs.mapContainer) return;
+            const container = document.getElementById('address-map-container');
+            if (! container) return;
 
             try {
                 await window.ensureLeaflet();
@@ -74,14 +52,14 @@ Alpine.data('addressMap', () => {
                 return;
             }
 
-            if (! active || ! this.$refs.mapContainer) return;
+            if (! active) return;
             if (this.map) this.destroyMap();
 
             const lat = this.$wire.latitude ?? -1.2921;
             const lng = this.$wire.longitude ?? 36.8219;
             const hasPin = this.$wire.latitude !== null;
 
-            this.map = L.map(this.$refs.mapContainer, { zoomControl: true }).setView([lat, lng], hasPin ? 15 : 13);
+            this.map = L.map(container, { zoomControl: true }).setView([lat, lng], hasPin ? 15 : 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',

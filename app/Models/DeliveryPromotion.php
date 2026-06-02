@@ -5,28 +5,16 @@ namespace App\Models;
 use App\Enums\DeliveryPromotionEffect;
 use App\Enums\DeliveryPromotionScope;
 use Database\Factories\DeliveryPromotionFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable(['name', 'is_active', 'priority', 'scope', 'zone_id', 'effect', 'value_cents', 'percent', 'min_subtotal_cents', 'starts_at', 'ends_at'])]
 class DeliveryPromotion extends Model
 {
     /** @use HasFactory<DeliveryPromotionFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'name',
-        'is_active',
-        'priority',
-        'scope',
-        'zone_id',
-        'effect',
-        'value_cents',
-        'percent',
-        'min_subtotal_cents',
-        'starts_at',
-        'ends_at',
-    ];
 
     protected function casts(): array
     {

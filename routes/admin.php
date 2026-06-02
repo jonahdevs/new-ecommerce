@@ -13,6 +13,16 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
     ->group(function () {
         Route::view('/', 'pages.admin.dashboard')->name('dashboard');
         Route::livewire('/delivery-zones', 'pages::admin.delivery-zones')->name('delivery-zones');
+        Route::livewire('/delivery-promotions', 'pages::admin.delivery-promotions')->name('delivery-promotions');
+        Route::livewire('/shipping/methods', 'pages::admin.shipping.methods.index')->name('shipping.methods.index');
+        Route::livewire('/shipping/methods/create', 'pages::admin.shipping.methods.create')->name('shipping.methods.create');
+        Route::livewire('/shipping/methods/{shippingMethod}/edit', 'pages::admin.shipping.methods.edit')->name('shipping.methods.edit');
+        Route::livewire('/shipping/carriers', 'pages::admin.shipping.carriers.index')->name('shipping.carriers.index');
+        Route::livewire('/shipping/carriers/create', 'pages::admin.shipping.carriers.create')->name('shipping.carriers.create');
+        Route::livewire('/shipping/carriers/{shippingCarrier}/edit', 'pages::admin.shipping.carriers.edit')->name('shipping.carriers.edit');
+        Route::livewire('/shipping/warehouses', 'pages::admin.shipping.warehouses.index')->name('shipping.warehouses.index');
+        Route::livewire('/shipping/warehouses/create', 'pages::admin.shipping.warehouses.create')->name('shipping.warehouses.create');
+        Route::livewire('/shipping/warehouses/{warehouse}/edit', 'pages::admin.shipping.warehouses.edit')->name('shipping.warehouses.edit');
         Route::livewire('/showrooms', 'pages::admin.showrooms')->name('showrooms.index');
         Route::livewire('/pages', 'pages::admin.pages.index')->name('pages.index');
         Route::livewire('/pages/create', 'pages::admin.pages.form')->name('pages.create');
@@ -23,6 +33,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/categories', 'pages::admin.categories.index')->name('categories.index');
         Route::livewire('/brands', 'pages::admin.brands.index')->name('brands.index');
         Route::livewire('/attributes', 'pages::admin.attributes.index')->name('attributes.index');
+        Route::livewire('/attributes/create', 'pages::admin.attributes.create')->name('attributes.create');
         Route::livewire('/attributes/{attribute}/edit', 'pages::admin.attributes.edit')->name('attributes.edit');
         Route::livewire('/tags', 'pages::admin.tags.index')->name('tags.index');
         Route::livewire('/tax-classes', 'pages::admin.tax-classes.index')->name('tax-classes.index');

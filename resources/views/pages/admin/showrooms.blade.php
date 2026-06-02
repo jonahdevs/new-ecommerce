@@ -6,10 +6,19 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Component
 {
+    #[Url(as: 'q')]
+    public string $search = '';
+
+    /** @var array<int, string> */
+    public array $selected = [];
+
+    public bool $selectAll = false;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -35,9 +44,31 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
     public function showrooms(): Collection
     {
         return Showroom::query()
+            ->when($this->search, fn ($q) => $q->where(function ($q) {
+                $q->where('city', 'like', '%'.$this->search.'%')
+                    ->orWhere('address', 'like', '%'.$this->search.'%');
+            }))
             ->orderBy('sort_order')
             ->orderBy('city')
             ->get();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->clearSelection();
+    }
+
+    public function updatedSelectAll(bool $value): void
+    {
+        $this->selected = $value
+            ? $this->showrooms->pluck('id')->map(fn ($id) => (string) $id)->all()
+            : [];
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+        $this->selectAll = false;
     }
 
     /** @return array<string, array<int, string>> */
@@ -124,6 +155,19 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
         unset($this->showrooms);
         Flux::toast(heading: 'Showroom removed', text: 'The location has been deleted.', variant: 'warning');
     }
+
+    public function bulkDelete(): void
+    {
+        if ($this->selected === []) {
+            return;
+        }
+
+        $count = Showroom::whereIn('id', $this->selected)->delete();
+        $this->selected = [];
+        $this->selectAll = false;
+        unset($this->showrooms);
+        Flux::toast(heading: 'Showrooms removed', text: $count.' location(s) have been deleted.', variant: 'warning');
+    }
 }; ?>
 
 <div class="space-y-6">
@@ -143,53 +187,85 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
         <flux:button variant="primary" icon="plus" wire:click="openCreate">Add showroom</flux:button>
     </div>
 
-    <div class="overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
-        <table class="w-full text-sm">
-            <thead class="bg-zinc-50 text-left text-[11px] font-bold tracking-wide text-zinc-500 uppercase dark:bg-zinc-900">
-                <tr>
-                    <th class="px-4 py-3">City</th>
-                    <th class="px-4 py-3">Address</th>
-                    <th class="px-4 py-3">Phones</th>
-                    <th class="px-4 py-3">Order</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+    <flux:card class="mt-6 p-0 overflow-hidden">
+
+        {{-- Toolbar --}}
+        <div class="flex items-center border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search city or address…"
+                icon="magnifying-glass" clearable class="max-w-xs" />
+        </div>
+
+        {{-- Bulk action bar --}}
+        @if (count($selected) > 0)
+            <div class="flex flex-wrap items-center gap-3 border-b border-zinc-200 bg-brand-50 px-6 py-2.5 dark:border-zinc-700 dark:bg-brand-500/10">
+                <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
+                <flux:button size="sm" variant="ghost" icon="trash"
+                    wire:click="bulkDelete"
+                    wire:confirm="Delete {{ count($selected) }} showroom(s)? This cannot be undone."
+                    class="text-red-500! hover:text-red-600!">Delete</flux:button>
+                <flux:spacer />
+                <flux:button size="sm" variant="ghost" wire:click="clearSelection">Clear</flux:button>
+            </div>
+        @endif
+
+        <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
+            <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
+                <flux:table.column class="w-10">
+                    <flux:checkbox wire:model.live="selectAll" />
+                </flux:table.column>
+                <flux:table.column>City</flux:table.column>
+                <flux:table.column>Address</flux:table.column>
+                <flux:table.column>Phones</flux:table.column>
+                <flux:table.column>Order</flux:table.column>
+                <flux:table.column align="end">Actions</flux:table.column>
+            </flux:table.columns>
+
+            <flux:table.rows>
                 @forelse ($this->showrooms as $showroom)
-                    <tr wire:key="showroom-{{ $showroom->id }}">
-                        <td class="px-4 py-3 font-medium">
+                    <flux:table.row :key="$showroom->id" wire:key="showroom-{{ $showroom->id }}">
+                        <flux:table.cell>
+                            <flux:checkbox wire:model.live="selected" value="{{ $showroom->id }}" />
+                        </flux:table.cell>
+                        <flux:table.cell variant="strong">
                             {{ $showroom->city }}
                             @if ($showroom->is_hq)
                                 <flux:badge color="blue" size="sm" inset="top bottom" class="ml-1">HQ</flux:badge>
                             @endif
-                            <span class="block text-[11px] text-zinc-400">{{ $showroom->country }}</span>
-                        </td>
-                        <td class="px-4 py-3 text-zinc-500">
+                            <span class="block text-xs text-zinc-400">{{ $showroom->country }}</span>
+                        </flux:table.cell>
+                        <flux:table.cell class="text-zinc-500">
                             {{ $showroom->address }}
                             @if ($showroom->pobox)
-                                <span class="block text-[11px] text-zinc-400">{{ $showroom->pobox }}</span>
+                                <span class="block text-xs text-zinc-400">{{ $showroom->pobox }}</span>
                             @endif
-                        </td>
-                        <td class="px-4 py-3 text-[12px] text-zinc-500">{{ implode(' / ', $showroom->phones ?? []) }}</td>
-                        <td class="px-4 py-3 tabular-nums text-zinc-500">{{ $showroom->sort_order }}</td>
-                        <td class="px-4 py-3">
+                        </flux:table.cell>
+                        <flux:table.cell class="text-sm text-zinc-500">{{ implode(' / ', $showroom->phones ?? []) }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums text-zinc-500">{{ $showroom->sort_order }}</flux:table.cell>
+                        <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
-                                <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="openEdit({{ $showroom->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash"
-                                             wire:click="delete({{ $showroom->id }})"
-                                             wire:confirm="Delete the {{ $showroom->city }} showroom?"
-                                             class="text-red-500! hover:text-red-600!" />
+                                <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
+                                    wire:click="openEdit({{ $showroom->id }})" />
+                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                    wire:click="delete({{ $showroom->id }})"
+                                    wire:confirm="Delete the {{ $showroom->city }} showroom?"
+                                    class="text-red-500! hover:text-red-600!" />
                             </div>
-                        </td>
-                    </tr>
+                        </flux:table.cell>
+                    </flux:table.row>
                 @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-10 text-center text-zinc-400">No showrooms yet. Add your first location.</td>
-                    </tr>
+                    <flux:table.row>
+                        <flux:table.cell colspan="6" class="py-12 text-center text-zinc-400">
+                            @if ($search)
+                                No showrooms match your search.
+                            @else
+                                No showrooms yet. Add your first location.
+                            @endif
+                        </flux:table.cell>
+                    </flux:table.row>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
+            </flux:table.rows>
+        </flux:table>
+    </flux:card>
 
     {{-- ── Showroom modal ── --}}
     <flux:modal wire:model.self="showModal" class="md:w-[560px]" :dismissible="false">

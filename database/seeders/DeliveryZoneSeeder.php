@@ -12,49 +12,74 @@ class DeliveryZoneSeeder extends Seeder
 {
     public function run(): void
     {
-        // Circular zones covering Nairobi County and nearby towns. Coordinates
-        // are approximate area centres; radii are sized to overlap so a slightly
-        // inaccurate pin still resolves. base_fee_cents is the REAL fee that goes
-        // live once the launch promotion below ends.
-        $zones = [
-            // [name, county, lat, lng, radius_m, base_fee_kes, eta, priority]
-            ['Nairobi CBD', 'Nairobi', -1.2864, 36.8172, 4000, 300, 'Same day', 2],
-            ['Westlands & Parklands', 'Nairobi', -1.2649, 36.8025, 4500, 350, 'Same day', 1],
-            ['Kilimani & Kileleshwa', 'Nairobi', -1.2906, 36.7869, 4000, 350, 'Same day', 1],
-            ['Karen & Langata', 'Nairobi', -1.3290, 36.7060, 6500, 500, '1–2 days', 0],
-            ['Eastlands', 'Nairobi', -1.2833, 36.8833, 5500, 400, 'Same day', 0],
-            ['Embakasi & JKIA', 'Nairobi', -1.3216, 36.9006, 7000, 450, '1–2 days', 0],
-            ['Kasarani & Roysambu', 'Nairobi', -1.2200, 36.8960, 6500, 450, '1–2 days', 0],
-            ['Ruiru', 'Kiambu', -1.1455, 36.9580, 6000, 700, '1–2 days', 0],
-            ['Kiambu Town', 'Kiambu', -1.1714, 36.8356, 5500, 700, '1–2 days', 0],
-            ['Kikuyu', 'Kiambu', -1.2467, 36.6636, 5500, 700, '1–2 days', 0],
-            ['Thika', 'Kiambu', -1.0333, 37.0693, 7500, 1200, '2–3 days', 0],
-            ['Ngong', 'Kajiado', -1.3526, 36.6557, 5500, 700, '1–2 days', 0],
-            ['Rongai', 'Kajiado', -1.3833, 36.7500, 5500, 700, '1–2 days', 0],
-            ['Kitengela', 'Kajiado', -1.4667, 36.9667, 6500, 900, '2–3 days', 0],
-            ['Athi River & Mavoko', 'Machakos', -1.4564, 36.9785, 6500, 900, '2–3 days', 0],
-        ];
-
-        foreach ($zones as $index => [$name, $county, $lat, $lng, $radius, $feeKes, $eta, $priority]) {
-            DeliveryZone::updateOrCreate(
-                ['name' => $name],
-                [
-                    'county' => $county,
-                    'is_active' => true,
-                    'sort_order' => $index,
-                    'priority' => $priority,
-                    'center_lat' => $lat,
-                    'center_lng' => $lng,
-                    'radius_meters' => $radius,
-                    'base_fee_cents' => $feeKes * 100,
-                    'free_over_cents' => null,
-                    'eta_label' => $eta,
+        // ── Nairobi & Surroundings ─────────────────────────────────────────────
+        // One polygon covering:
+        //   Nairobi County (all areas)
+        //   Kiambu:   Ruiru, Tatu City, Kamakis, Ngoigwa, Two Rivers/Ruaka, Jomoko, Kikuyu
+        //   Kajiando: Kitengela, Rongai, Ngong
+        //   Machakos: Mlolongo, Syokimau, Arthi River
+        //
+        // Points are listed clockwise starting from the north-west corner.
+        // Adjust any coordinate in the admin map editor to fine-tune the boundary.
+        DeliveryZone::updateOrCreate(
+            ['name' => 'Nairobi & Surroundings'],
+            [
+                'county' => 'Nairobi',
+                'is_active' => true,
+                'sort_order' => 0,
+                'priority' => 10,
+                'polygon' => [
+                    // NW — Kikuyu / Limuru Road boundary
+                    ['lat' => -1.250, 'lng' => 36.580],
+                    // N — Ruaka / Two Rivers (Limuru Rd corridor)
+                    ['lat' => -1.165, 'lng' => 36.760],
+                    // N — Ruiru / Kiambu corridor
+                    ['lat' => -1.000, 'lng' => 36.930],
+                    // NE — Tatu City / Jomoko / Ngoigwa (northern limit ~lat -1.00)
+                    ['lat' => -1.000, 'lng' => 37.070],
+                    // E — Kamakis / Eastern Bypass junction
+                    ['lat' => -1.200, 'lng' => 37.050],
+                    // SE — Mlolongo / Syokimau
+                    ['lat' => -1.380, 'lng' => 37.030],
+                    // SE — Athi River / Mavoko
+                    ['lat' => -1.510, 'lng' => 37.030],
+                    // S — Kitengela south boundary
+                    ['lat' => -1.555, 'lng' => 36.960],
+                    // SW — Kitengela west boundary
+                    ['lat' => -1.510, 'lng' => 36.820],
+                    // W — Rongai
+                    ['lat' => -1.430, 'lng' => 36.695],
+                    // W — Ngong
+                    ['lat' => -1.380, 'lng' => 36.615],
+                    // NW — Ngong Hills / closing back
+                    ['lat' => -1.310, 'lng' => 36.580],
                 ],
-            );
-        }
+            ],
+        );
 
-        // Launch promotion: free delivery everywhere. Flip is_active off (or set
-        // ends_at) when the promo ends and the per-zone base fees take over.
+        // ── Upcountry ──────────────────────────────────────────────────────────
+        // Covers all of Kenya outside the Nairobi metro area.
+        // Priority 0 means the Nairobi zone (priority 10) always wins on overlap —
+        // only addresses that fall outside the Nairobi polygon reach this zone.
+        DeliveryZone::updateOrCreate(
+            ['name' => 'Upcountry'],
+            [
+                'county' => 'Kenya',
+                'is_active' => true,
+                'sort_order' => 1,
+                'priority' => 0,
+                'polygon' => [
+                    ['lat' => 5.10, 'lng' => 33.90], // NW — Kenya border
+                    ['lat' => 5.10, 'lng' => 41.90], // NE — Kenya border
+                    ['lat' => -4.70, 'lng' => 41.90], // SE — Kenya border
+                    ['lat' => -4.70, 'lng' => 33.90], // SW — Kenya border
+                ],
+            ],
+        );
+
+        // ── Launch promotion ───────────────────────────────────────────────────
+        // Free delivery everywhere until turned off.
+        // Disable (is_active = false) or set ends_at when the promo ends.
         DeliveryPromotion::updateOrCreate(
             ['name' => 'Launch free delivery'],
             [

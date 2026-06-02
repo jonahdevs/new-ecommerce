@@ -8,12 +8,16 @@ use App\Models\Address;
 use App\Models\Attribute;
 use App\Models\AttributeValue;
 use App\Models\Brand;
+use App\Models\CarrierRate;
+use App\Models\CarrierZone;
 use App\Models\Category;
 use App\Models\DeliveryPromotion;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\ShippingCarrier;
+use App\Models\ShippingMethod;
 use App\Models\TaxClass;
 use App\Models\User;
 use App\Settings\TaxSettings;
@@ -24,10 +28,29 @@ beforeEach(function () {
     $this->brand = Brand::create(['name' => 'TestBrand', 'slug' => 'test-brand', 'is_active' => true, 'sort_order' => 1]);
     $this->cat = Category::create(['name' => 'TestCat', 'slug' => 'test-cat', 'status' => CategoryStatus::ACTIVE, 'sort_order' => 1]);
 
-    // A zone wide enough to cover all factory-generated Nairobi addresses.
-    $this->zone = DeliveryZone::factory()->centeredAt(-1.29, 36.81, 12000)->create([
-        'name' => 'Nairobi Metro',
-        'base_fee_cents' => 50000,
+    // A zone + carrier + rate covering all factory-generated Nairobi addresses.
+    $this->zone = DeliveryZone::factory()->centeredAt(-1.29, 36.81, 12000)->create(['name' => 'Nairobi Metro']);
+
+    $carrier = ShippingCarrier::create([
+        'name' => 'Sheffield', 'slug' => 'sheffield-test', 'driver' => 'self_managed',
+        'priority' => 10, 'is_active' => true, 'sort_order' => 1,
+    ]);
+
+    $this->standardMethod = ShippingMethod::create([
+        'name' => 'Standard Delivery', 'slug' => 'standard-test', 'type' => 'delivery', 'is_active' => true, 'sort_order' => 1,
+    ]);
+
+    CarrierZone::create(['carrier_id' => $carrier->id, 'delivery_zone_id' => $this->zone->id, 'is_active' => true]);
+
+    CarrierRate::create([
+        'carrier_id' => $carrier->id,
+        'delivery_zone_id' => $this->zone->id,
+        'shipping_method_id' => $this->standardMethod->id,
+        'rate_type' => 'fixed',
+        'base_rate_cents' => 50000,
+        'eta_label' => '1–2 days',
+        'is_active' => true,
+        'sort_order' => 1,
     ]);
 
     Product::create([

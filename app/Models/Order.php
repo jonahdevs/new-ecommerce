@@ -6,31 +6,18 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Settings\CheckoutSettings;
 use Database\Factories\OrderFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+#[Fillable(['user_id', 'address_id', 'delivery_zone_id', 'shipping_method_id', 'warehouse_id', 'order_number', 'status', 'subtotal_cents', 'vat_cents', 'delivery_cents', 'installation_cents', 'total_cents', 'payment_method', 'notes'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'address_id',
-        'delivery_zone_id',
-        'order_number',
-        'status',
-        'subtotal_cents',
-        'vat_cents',
-        'delivery_cents',
-        'installation_cents',
-        'total_cents',
-        'payment_method',
-        'notes',
-    ];
 
     protected function casts(): array
     {
@@ -52,6 +39,21 @@ class Order extends Model
     public function deliveryZone(): BelongsTo
     {
         return $this->belongsTo(DeliveryZone::class);
+    }
+
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function shipment(): HasOne
+    {
+        return $this->hasOne(Shipment::class);
     }
 
     public function items(): HasMany

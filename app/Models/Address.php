@@ -3,32 +3,17 @@
 namespace App\Models;
 
 use Database\Factories\AddressFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[Fillable(['user_id', 'delivery_zone_id', 'label', 'first_name', 'last_name', 'phone', 'line1', 'line2', 'city', 'postal_code', 'country', 'is_default', 'latitude', 'longitude'])]
 class Address extends Model
 {
     /** @use HasFactory<AddressFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'delivery_zone_id',
-        'label',
-        'first_name',
-        'last_name',
-        'phone',
-        'line1',
-        'line2',
-        'city',
-        'postal_code',
-        'country',
-        'is_default',
-        'latitude',
-        'longitude',
-    ];
 
     protected function casts(): array
     {

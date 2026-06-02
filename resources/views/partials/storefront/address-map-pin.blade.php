@@ -16,7 +16,7 @@
     </div>
 </div>
 
-<div x-ref="mapContainer"
+<div id="address-map-container"
      class="h-72 w-full overflow-hidden rounded-md border border-zinc-200 bg-surface-sunken">
 </div>
 

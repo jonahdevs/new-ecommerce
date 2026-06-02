@@ -108,7 +108,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
         $address = $this->selectedAddress;
         $subtotalCents = (int) $this->lines->sum('line_total_cents');
 
-        return app(DeliveryResolver::class)->quoteForPin(
+        return app(DeliveryResolver::class)->quoteDefault(
             $address?->latitude,
             $address?->longitude,
             $subtotalCents,
@@ -254,7 +254,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout — Sheffield')] class ex
                 return;
             }
 
-            $quote = app(DeliveryResolver::class)->quoteForPin(
+            $quote = app(DeliveryResolver::class)->quoteDefault(
                 $address->latitude,
                 $address->longitude,
                 $subtotalCents,

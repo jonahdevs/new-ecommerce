@@ -93,9 +93,25 @@
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Logistics')" class="grid">
-                <flux:sidebar.item icon="truck" :href="route('admin.delivery-zones')"
+                <flux:sidebar.item icon="map-pin" :href="route('admin.delivery-zones')"
                     :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
                     {{ __('Delivery zones') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="tag" :href="route('admin.delivery-promotions')"
+                    :current="request()->routeIs('admin.delivery-promotions')" wire:navigate>
+                    {{ __('Delivery promotions') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="truck" :href="route('admin.shipping.methods.index')"
+                    :current="request()->routeIs('admin.shipping.methods.*')" wire:navigate>
+                    {{ __('Shipping methods') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="link" :href="route('admin.shipping.carriers.index')"
+                    :current="request()->routeIs('admin.shipping.carriers.*')" wire:navigate>
+                    {{ __('Carriers') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="building-office" :href="route('admin.shipping.warehouses.index')"
+                    :current="request()->routeIs('admin.shipping.warehouses.*')" wire:navigate>
+                    {{ __('Warehouses') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="building-storefront" :href="route('admin.showrooms.index')"
                     :current="request()->routeIs('admin.showrooms.*')" wire:navigate>
