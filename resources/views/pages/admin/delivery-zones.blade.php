@@ -304,62 +304,78 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
     </flux:card>
 
     {{-- ── Zone modal ── --}}
-    <flux:modal wire:model.self="showZoneModal" class="md:w-[640px]" :dismissible="false">
-        <flux:heading>{{ $editingZoneId ? 'Edit zone' : 'New delivery zone' }}</flux:heading>
-        <flux:subheading>Click the map to draw the zone boundary. Drag a point to adjust it, double-click to remove it.</flux:subheading>
+    <flux:modal wire:model.self="showZoneModal" class="md:w-[900px]" :dismissible="false">
+        <div>
+            <flux:heading>{{ $editingZoneId ? 'Edit zone' : 'New delivery zone' }}</flux:heading>
+            <flux:subheading x-show="currentStep === 1">Click the map to draw the zone boundary. Drag a point to adjust it, double-click to remove it.</flux:subheading>
+            <flux:subheading x-show="currentStep === 2" x-cloak>Fill in the details for this delivery zone.</flux:subheading>
+        </div>
 
-        <form wire:submit="saveZone" class="mt-6 space-y-4">
+        <form wire:submit="saveZone" class="mt-6">
 
-            {{-- Polygon map --}}
-            <div id="zone-map-container" class="h-72 w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-700"></div>
+            {{-- Step 1: Map --}}
+            <div x-show="currentStep === 1" class="space-y-3">
+                <div id="zone-map-container" class="h-[480px] w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-700"></div>
 
-            <div class="flex items-center justify-between">
-                <flux:text size="sm" class="text-zinc-500">
-                    <span x-text="$wire.polygon.length"></span> point(s) — click map to add, double-click a point to remove
-                </flux:text>
-                <div class="flex items-center gap-2">
-                    <flux:button size="xs" variant="ghost" x-on:click="undoLast" x-bind:disabled="!$wire.polygon.length">
-                        Undo
-                    </flux:button>
-                    <flux:button size="xs" variant="ghost" x-on:click="clearAll" x-bind:disabled="!$wire.polygon.length">
-                        Clear
-                    </flux:button>
+                <div class="flex items-center justify-between">
+                    <flux:text size="sm" class="text-zinc-500">
+                        <span x-text="$wire.polygon.length"></span> point(s) — click map to add, double-click a point to remove
+                    </flux:text>
+                    <div class="flex items-center gap-2">
+                        <flux:button size="xs" variant="ghost" x-on:click="undoLast" x-bind:disabled="!$wire.polygon.length">Undo</flux:button>
+                        <flux:button size="xs" variant="ghost" x-on:click="clearAll" x-bind:disabled="!$wire.polygon.length">Clear</flux:button>
+                    </div>
+                </div>
+
+                <div x-show="polygonError">
+                    <flux:error>Draw at least 3 points on the map to define the zone boundary.</flux:error>
+                </div>
+                @error('polygon') <flux:error>Draw at least 3 points on the map to define the zone boundary.</flux:error> @enderror
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
+                    <flux:button type="button" variant="primary" icon-trailing="chevron-right" x-on:click="goToStep2">Next</flux:button>
                 </div>
             </div>
-            @error('polygon') <flux:error>Draw at least 3 points on the map to define the zone boundary.</flux:error> @enderror
 
-            <div class="grid grid-cols-2 gap-4">
-                <flux:field>
-                    <flux:label>Name</flux:label>
-                    <flux:input wire:model="name" placeholder="Nairobi & Surroundings" />
-                    <flux:error name="name" />
-                </flux:field>
-                <flux:field>
-                    <flux:label>County</flux:label>
-                    <flux:input wire:model="county" placeholder="Nairobi" />
-                    <flux:error name="county" />
-                </flux:field>
-            </div>
+            {{-- Step 2: Details --}}
+            <div x-show="currentStep === 2" x-cloak class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:field>
+                        <flux:label>Name</flux:label>
+                        <flux:input wire:model="name" placeholder="Nairobi & Surroundings" />
+                        <flux:error name="name" />
+                    </flux:field>
+                    <flux:field>
+                        <flux:label>County</flux:label>
+                        <flux:input wire:model="county" placeholder="Nairobi" />
+                        <flux:error name="county" />
+                    </flux:field>
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <flux:field>
-                    <flux:label>Priority</flux:label>
-                    <flux:input type="number" wire:model="priority" min="0" />
-                    <flux:description>Higher wins when zones overlap.</flux:description>
-                    <flux:error name="priority" />
-                </flux:field>
-                <flux:field>
-                    <flux:label>Sort order</flux:label>
-                    <flux:input type="number" wire:model="sort_order" min="0" />
-                    <flux:error name="sort_order" />
-                </flux:field>
-            </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:field>
+                        <flux:label>Priority</flux:label>
+                        <flux:input type="number" wire:model="priority" min="0" />
+                        <flux:description>Higher wins when zones overlap.</flux:description>
+                        <flux:error name="priority" />
+                    </flux:field>
+                    <flux:field>
+                        <flux:label>Sort order</flux:label>
+                        <flux:input type="number" wire:model="sort_order" min="0" />
+                        <flux:error name="sort_order" />
+                    </flux:field>
+                </div>
 
-            <flux:checkbox wire:model="is_active" label="Active (available at checkout)" />
+                <flux:checkbox wire:model="is_active" label="Active (available at checkout)" />
 
-            <div class="flex justify-end gap-3 pt-2">
-                <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
-                <flux:button type="submit" variant="primary">{{ $editingZoneId ? 'Save zone' : 'Create zone' }}</flux:button>
+                <div class="flex justify-between gap-3 pt-2">
+                    <flux:button type="button" variant="ghost" icon="chevron-left" x-on:click="goToStep1">Back</flux:button>
+                    <div class="flex gap-3">
+                        <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
+                        <flux:button type="submit" variant="primary">{{ $editingZoneId ? 'Save zone' : 'Create zone' }}</flux:button>
+                    </div>
+                </div>
             </div>
         </form>
     </flux:modal>

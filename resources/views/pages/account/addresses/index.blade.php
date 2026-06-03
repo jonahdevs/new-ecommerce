@@ -9,7 +9,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::account')] #[Title('Addresses — Sheffield')] class extends Component
+new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
 {
     public bool $showModal = false;
 

@@ -7,7 +7,7 @@ return new class extends SettingsMigration
     public function up(): void
     {
         // ── SEO ────────────────────────────────────────────────────────────
-        $this->migrator->add('seo.meta_title_pattern', '{page} — {site}');
+        $this->migrator->add('seo.meta_title_pattern', '{page} | {site}');
         $this->migrator->add('seo.default_meta_description', '');
         $this->migrator->add('seo.index_site', true);
         $this->migrator->add('seo.generate_sitemap', true);

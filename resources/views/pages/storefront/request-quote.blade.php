@@ -15,8 +15,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component {
     /** @var array<string, int> */
     public array $items = [];
 
@@ -47,7 +46,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
         // Allow deep-linking a single product into the request, e.g. from the product page.
         if ($slug = (string) request()->query('product')) {
             $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
-            if ($exists && ! isset($this->items[$slug])) {
+            if ($exists && !isset($this->items[$slug])) {
                 $this->items[$slug] = 1;
             }
         }
@@ -69,10 +68,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
             return collect();
         }
 
-        $keys = collect($this->items)->keys()->map(fn ($key) => StorefrontSession::splitKey($key));
+        $keys = collect($this->items)->keys()->map(fn($key) => StorefrontSession::splitKey($key));
 
         $products = Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('slug', $keys->pluck('slug')->unique()->all())
             ->where('visibility', 'visible')
             ->get()
@@ -89,22 +88,18 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                 ['slug' => $slug, 'variantId' => $variantId] = StorefrontSession::splitKey($key);
 
                 $product = $products->get($slug);
-                if (! $product) {
+                if (!$product) {
                     return null;
                 }
 
                 $variant = $variantId ? $variants->get($variantId) : null;
-                if ($variantId && ! $variant) {
+                if ($variantId && !$variant) {
                     return null;
                 }
 
-                $unit = $variant
-                    ? (int) ($variant->compare_at_price ?? $variant->price ?? 0)
-                    : (int) ($product->sale_price ?? $product->price ?? 0);
+                $unit = $variant ? (int) ($variant->compare_at_price ?? ($variant->price ?? 0)) : (int) ($product->sale_price ?? ($product->price ?? 0));
 
-                $label = $variant
-                    ? $variant->attributeValues->map(fn ($v) => $v->label ?: $v->value)->filter()->implode(' / ')
-                    : null;
+                $label = $variant ? $variant->attributeValues->map(fn($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
 
                 return [
                     'key' => $key,
@@ -128,7 +123,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
     public function searchResults(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->whereNotIn('slug', array_keys($this->items));
 
@@ -137,11 +132,14 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                 $q->where('name', 'like', "%{$this->itemSearch}%")
                     ->orWhere('sku', 'like', "%{$this->itemSearch}%")
                     ->orWhere('model_number', 'like', "%{$this->itemSearch}%")
-                    ->orWhereHas('brand', fn ($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
+                    ->orWhereHas('brand', fn($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
             });
         }
 
-        return $query->orderBy('sort_order')->orderByDesc('id')->paginate($this->itemsPerPage, ['*'], 'page', 1);
+        return $query
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->paginate($this->itemsPerPage, ['*'], 'page', 1);
     }
 
     public function openItemModal(): void
@@ -168,7 +166,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
     {
         $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
 
-        if (! $exists) {
+        if (!$exists) {
             return;
         }
 
@@ -231,7 +229,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'product_id' => $line['product']->id,
-                    'product_name' => $line['product']->name.($line['label'] ? ' — '.$line['label'] : ''),
+                    'product_name' => $line['product']->name . ($line['label'] ? ' — ' . $line['label'] : ''),
                     'product_sku' => $line['variant']?->sku ?? $line['product']->sku,
                     'unit_price_cents' => $line['unit_price_cents'],
                     'quantity' => $line['qty'],
@@ -240,11 +238,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
             }
         });
 
-        Flux::toast(
-            heading: 'Quote request sent',
-            text: 'Our team will review your request and respond shortly.',
-            variant: 'success',
-        );
+        Flux::toast(heading: 'Quote request sent', text: 'Our team will review your request and respond shortly.', variant: 'success');
 
         if ($isGuest) {
             $this->redirectRoute('home', navigate: true);
@@ -259,7 +253,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
 
         return $who !== '' ? "Quote request — {$who}" : 'Quote request';
     }
-
 }; ?>
 
 @php
@@ -294,7 +287,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                     @guest
                         <p class="mb-5 text-[12.5px] text-ink-3">
                             Already have an account?
-                            <a href="{{ route('login') }}" wire:navigate class="font-semibold text-brand-500 hover:text-brand-600">Log in</a>
+                            <a href="{{ route('login') }}" wire:navigate
+                                class="font-semibold text-brand-500 hover:text-brand-600">Log in</a>
                             to track this quote in your account.
                         </p>
                     @endguest
@@ -327,7 +321,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                         <flux:field>
                             <flux:label>Notes &amp; requirements</flux:label>
                             <flux:textarea wire:model="notes" rows="5"
-                                           placeholder="Timelines, site details, power/water specs, anything else we should know…" />
+                                placeholder="Timelines, site details, power/water specs, anything else we should know…" />
                             <flux:error name="notes" />
                         </flux:field>
                     </div>
@@ -341,87 +335,99 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                         <h2 class="text-[11px] font-bold tracking-[0.14em] text-ink uppercase">
                             Items <span class="ml-0.5 text-ink-4">({{ $this->lines->count() }})</span>
                         </h2>
-                        <flux:button type="button" variant="customer-outline" size="customer" icon="plus" wire:click="openItemModal">
+                        <flux:button type="button" variant="customer-outline" size="customer" icon="plus"
+                            wire:click="openItemModal">
                             Add item
                         </flux:button>
                     </div>
 
                     <div class="p-6">
-                    {{-- Added items --}}
-                    @if ($this->lines->isEmpty())
-                        <div class="rounded-md border border-dashed border-zinc-300 p-6 text-center">
-                            <flux:icon.cube variant="outline" class="mx-auto size-7 text-ink-4" />
-                            <p class="mt-2 text-[12.5px] text-ink-3">No items yet. Add products, or just describe what you need in the notes.</p>
-                            <flux:button type="button" variant="customer-outline" size="customer" icon="plus" wire:click="openItemModal" class="mt-3">
-                                Add item
-                            </flux:button>
-                        </div>
-                    @else
-                        <div class="divide-y divide-zinc-100">
-                            @foreach ($this->lines as $line)
-                                <div wire:key="item-{{ $line['key'] }}" class="flex gap-3 py-3.5">
-                                    <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
-                                        @if ($line['product']->cover_url)
-                                            <img src="{{ $line['product']->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
-                                        @endif
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="truncate text-[12.5px] font-semibold leading-snug text-ink">{{ $line['product']->name }}</div>
-                                        @if ($line['label'])
-                                            <div class="truncate text-[11px] text-ink-3">{{ $line['label'] }}</div>
-                                        @endif
-                                        <div class="mt-1 flex items-center justify-between gap-2">
-                                            <div class="inline-flex items-center rounded border border-zinc-200">
-                                                <button type="button" wire:click="decrementItem('{{ $line['key'] }}')"
-                                                        class="flex size-7 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
-                                                    <span class="text-sm leading-none">−</span>
-                                                </button>
-                                                <span class="min-w-7 text-center text-[12.5px] font-semibold tabular-nums">{{ $line['qty'] }}</span>
-                                                <button type="button" wire:click="incrementItem('{{ $line['key'] }}')"
-                                                        class="flex size-7 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
-                                                    <span class="text-sm leading-none">+</span>
-                                                </button>
-                                            </div>
-                                            <span class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                                {!! $line['unit_price_cents'] > 0 ? money($line['line_total_cents']) : 'POA' !!}
-                                            </span>
+                        {{-- Added items --}}
+                        @if ($this->lines->isEmpty())
+                            <div class="rounded-md border border-dashed border-zinc-300 p-6 text-center">
+                                <flux:icon.cube variant="outline" class="mx-auto size-7 text-ink-4" />
+                                <p class="mt-2 text-[12.5px] text-ink-3">No items yet. Add products, or just describe
+                                    what you need in the notes.</p>
+                                <flux:button type="button" variant="customer-outline" size="customer" icon="plus"
+                                    wire:click="openItemModal" class="mt-3">
+                                    Add item
+                                </flux:button>
+                            </div>
+                        @else
+                            <div class="divide-y divide-zinc-100">
+                                @foreach ($this->lines as $line)
+                                    <div wire:key="item-{{ $line['key'] }}" class="flex gap-3 py-3.5">
+                                        <div
+                                            class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
+                                            @if ($line['product']->cover_url)
+                                                <img src="{{ $line['product']->cover_url }}" alt=""
+                                                    class="size-full object-contain" loading="lazy" />
+                                            @endif
                                         </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="truncate text-[12.5px] font-semibold leading-snug text-ink">
+                                                {{ $line['product']->name }}</div>
+                                            @if ($line['label'])
+                                                <div class="truncate text-[11px] text-ink-3">{{ $line['label'] }}</div>
+                                            @endif
+                                            <div class="mt-1 flex items-center justify-between gap-2">
+                                                <div class="inline-flex items-center rounded border border-zinc-200">
+                                                    <button type="button"
+                                                        wire:click="decrementItem('{{ $line['key'] }}')"
+                                                        class="flex size-7 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
+                                                        <span class="text-sm leading-none">−</span>
+                                                    </button>
+                                                    <span
+                                                        class="min-w-7 text-center text-[12.5px] font-semibold tabular-nums">{{ $line['qty'] }}</span>
+                                                    <button type="button"
+                                                        wire:click="incrementItem('{{ $line['key'] }}')"
+                                                        class="flex size-7 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
+                                                        <span class="text-sm leading-none">+</span>
+                                                    </button>
+                                                </div>
+                                                <span
+                                                    class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">
+                                                    {!! $line['unit_price_cents'] > 0 ? money($line['line_total_cents']) : 'POA' !!}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button type="button" wire:click="removeItem('{{ $line['key'] }}')"
+                                            class="shrink-0 cursor-pointer self-start text-ink-4 transition hover:text-brand-500"
+                                            title="Remove">
+                                            <flux:icon.x-mark variant="micro" class="size-4" />
+                                        </button>
                                     </div>
-                                    <button type="button" wire:click="removeItem('{{ $line['key'] }}')"
-                                            class="shrink-0 cursor-pointer self-start text-ink-4 transition hover:text-brand-500" title="Remove">
-                                        <flux:icon.x-mark variant="micro" class="size-4" />
-                                    </button>
-                                </div>
-                            @endforeach
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="my-4 h-px bg-zinc-100"></div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-[13px] font-bold tracking-wide uppercase">Indicative total</span>
+                            <span class="text-xl font-bold text-brand-500 tabular-nums">{!! $totalCents > 0 ? money($totalCents) : '—' !!}</span>
                         </div>
-                    @endif
 
-                    <div class="my-4 h-px bg-zinc-100"></div>
+                        <p class="mt-3 text-[11.5px] leading-relaxed text-ink-4">
+                            Prices are indicative and exclude VAT, delivery and installation. Your formal quotation will
+                            confirm final pricing and lead times.
+                        </p>
 
-                    <div class="flex items-center justify-between">
-                        <span class="text-[13px] font-bold tracking-wide uppercase">Indicative total</span>
-                        <span class="text-xl font-bold text-brand-500 tabular-nums">{!! $totalCents > 0 ? money($totalCents) : '—' !!}</span>
-                    </div>
+                        <flux:button type="submit" variant="customer-primary" size="customer-lg"
+                            icon:trailing="arrow-right" class="mt-5! w-full!">
+                            Submit request
+                        </flux:button>
 
-                    <p class="mt-3 text-[11.5px] leading-relaxed text-ink-4">
-                        Prices are indicative and exclude VAT, delivery and installation. Your formal quotation will
-                        confirm final pricing and lead times.
-                    </p>
-
-                    <flux:button type="submit" variant="customer-primary" size="customer-lg" icon:trailing="arrow-right" class="mt-5! w-full!">
-                        Submit request
-                    </flux:button>
-
-                    <div class="mt-4 flex flex-col gap-2 text-[12px] text-ink-3">
-                        <span class="flex items-center gap-2">
-                            <flux:icon.clock variant="micro" class="size-3.5 text-brand-500" />
-                            Typical response within 1 business day
-                        </span>
-                        <span class="flex items-center gap-2">
-                            <flux:icon.document-text variant="micro" class="size-3.5 text-brand-500" />
-                            No obligation — review before you commit
-                        </span>
-                    </div>
+                        <div class="mt-4 flex flex-col gap-2 text-[12px] text-ink-3">
+                            <span class="flex items-center gap-2">
+                                <flux:icon.clock variant="micro" class="size-3.5 text-brand-500" />
+                                Typical response within 1 business day
+                            </span>
+                            <span class="flex items-center gap-2">
+                                <flux:icon.document-text variant="micro" class="size-3.5 text-brand-500" />
+                                No obligation — review before you commit
+                            </span>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -429,7 +435,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
     </div>
 
     {{-- Add-item modal (search only) --}}
-    <flux:modal wire:model.self="showItemModal" class="md:w-[760px]">
+    <flux:modal wire:model.self="showItemModal" class="md:w-225">
         <flux:heading>Add items to your quote</flux:heading>
         <flux:subheading>Search the catalog and add as many products as you need.</flux:subheading>
 
@@ -438,13 +444,12 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                 <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4">
                     <flux:icon.magnifying-glass variant="micro" class="size-4" />
                 </span>
-                <input wire:model.live.debounce.250ms="itemSearch"
-                       type="search" autocomplete="off" spellcheck="false" autofocus
-                       placeholder="Search products by name, brand or SKU…"
-                       class="h-11 w-full rounded-md border border-zinc-200 bg-white pl-10 pr-4 text-[13.5px] text-ink placeholder:text-ink-4 transition-[border-color,box-shadow] duration-100 focus:border-brand-500 focus:ring-0 focus:outline-none focus:shadow-[0_0_0_3px_hsl(354_68%_45%/0.12)]" />
+                <input wire:model.live.debounce.250ms="itemSearch" type="search" autocomplete="off"
+                    spellcheck="false" autofocus placeholder="Search products by name, brand or SKU…"
+                    class="h-11 w-full rounded-md border border-zinc-200 bg-white pl-10 pr-4 text-[13.5px] text-ink placeholder:text-ink-4 transition-[border-color,box-shadow] duration-100 focus:border-brand-500 focus:ring-0 focus:outline-none focus:shadow-[0_0_0_3px_hsl(354_68%_45%/0.12)]" />
             </div>
 
-            <div class="mt-4 mb-1 text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">
+            <div class="mt-4 mb-1 text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">
                 {{ strlen(trim($itemSearch)) >= 2 ? 'Results' : 'Browse the catalog' }}
             </div>
 
@@ -453,7 +458,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                     <div class="py-12 text-center">
                         @if (strlen(trim($itemSearch)) >= 2)
                             <p class="text-[13.5px] font-medium text-ink-2">No matches for "{{ $itemSearch }}"</p>
-                            <p class="mt-1 text-[12px] text-ink-4">Try a brand, category or SKU. Already-added items are hidden.</p>
+                            <p class="mt-1 text-[12px] text-ink-4">Try a brand, category or SKU. Already-added items
+                                are hidden.</p>
                         @else
                             <flux:icon.cube variant="outline" class="mx-auto size-7 text-ink-4" />
                             <p class="mt-2 text-[13px] text-ink-3">No more products to add.</p>
@@ -464,10 +470,11 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                         @foreach ($this->searchResults as $product)
                             @php $price = $product->sale_price ?? $product->price; @endphp
                             <div wire:key="res-{{ $product->slug }}"
-                                 class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">
+                                class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">
                                 <div class="relative aspect-square overflow-hidden bg-surface-sunken p-2">
                                     @if ($product->cover_url)
-                                        <img src="{{ $product->cover_url }}" alt="{{ $product->name }}" class="size-full object-contain" loading="lazy" />
+                                        <img src="{{ $product->cover_url }}" alt="{{ $product->name }}"
+                                            class="size-full object-contain" loading="lazy" />
                                     @else
                                         <div class="flex size-full items-center justify-center text-ink-4">
                                             <flux:icon.photo class="size-8" />
@@ -475,18 +482,23 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
                                     @endif
                                     <flux:tooltip content="Add to quote">
                                         <button type="button" wire:click="addItem('{{ $product->slug }}')"
-                                                aria-label="Add {{ $product->name }} to quote"
-                                                class="absolute right-2 bottom-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-brand-500 text-white shadow-md transition hover:bg-brand-600">
+                                            aria-label="Add {{ $product->name }} to quote"
+                                            class="absolute right-2 bottom-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-brand-500 text-white shadow-md transition hover:bg-brand-600">
                                             <flux:icon.plus variant="micro" class="size-4" />
                                         </button>
                                     </flux:tooltip>
                                 </div>
                                 <div class="flex flex-1 flex-col border-t border-zinc-100 px-3 py-2.5">
                                     @if ($product->brand)
-                                        <div class="truncate text-[9.5px] font-bold tracking-[0.08em] text-brand-blue-600 uppercase">{{ $product->brand->name }}</div>
+                                        <div
+                                            class="truncate text-[9.5px] font-bold tracking-[0.08em] text-brand-blue-600 uppercase">
+                                            {{ $product->brand->name }}</div>
                                     @endif
-                                    <div class="mt-0.5 line-clamp-2 min-h-8 text-[12px] font-medium leading-snug text-ink">{{ $product->name }}</div>
-                                    <div class="mt-1.5 text-[12.5px] font-bold text-ink tabular-nums whitespace-nowrap">
+                                    <div
+                                        class="mt-0.5 line-clamp-2 min-h-8 text-[12px] font-medium leading-snug text-ink">
+                                        {{ $product->name }}</div>
+                                    <div
+                                        class="mt-1.5 text-[12.5px] font-bold text-ink tabular-nums whitespace-nowrap">
                                         {!! $price ? money($price) : 'POA' !!}
                                     </div>
                                 </div>
@@ -503,8 +515,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote — Sheffield')] c
             </div>
 
             <div class="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
-                <span class="text-[12.5px] text-ink-3">{{ $this->lines->count() }} item{{ $this->lines->count() === 1 ? '' : 's' }} in quote</span>
-                <flux:button type="button" variant="customer-primary" size="customer" x-on:click="$flux.modals().close()">Done</flux:button>
+                <span class="text-[12.5px] text-ink-3">{{ $this->lines->count() }}
+                    item{{ $this->lines->count() === 1 ? '' : 's' }} in quote</span>
+                <flux:button type="button" variant="customer-primary" size="customer"
+                    x-on:click="$flux.modals().close()">Done</flux:button>
             </div>
         </div>
     </flux:modal>

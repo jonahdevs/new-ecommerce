@@ -9,7 +9,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::account')] #[Title('Quotes — Sheffield')] class extends Component
+new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component
 {
     use WithPagination;
 

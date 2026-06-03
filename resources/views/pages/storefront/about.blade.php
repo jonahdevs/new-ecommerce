@@ -7,7 +7,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('About Sheffield')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('About')] class extends Component
 {
     public function mount(): void
     {

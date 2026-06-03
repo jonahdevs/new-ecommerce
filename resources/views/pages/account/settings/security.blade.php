@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Concerns\PasswordValidationRules;
 use Flux\Flux;
@@ -18,7 +18,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 /* @end-chisel-2fa */
 
-new #[Layout('layouts::settings')] #[Title('Security — Sheffield')] class extends Component {
+new #[Layout('layouts::settings')] #[Title('Security')] class extends Component {
     use PasswordValidationRules;
 
     public string $current_password = '';

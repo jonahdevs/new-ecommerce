@@ -8,9 +8,9 @@ class IntegrationSettings extends Settings
 {
     public bool $google_login_enabled;
 
-    public bool $facebook_login_enabled;
-
     public string $google_maps_api_key;
+
+    public string $map_provider; // 'leaflet' or 'google'
 
     public string $recaptcha_site_key;
 

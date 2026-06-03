@@ -8,10 +8,10 @@ return [
 
     'meta' => [
         'defaults' => [
-            'title' => 'Sheffield — Commercial Kitchen Equipment for East Africa',
+            'title' => 'Commercial Kitchen Equipment for East Africa',
             'titleBefore' => false,
             'description' => 'Sheffield supplies commercial kitchen equipment to restaurants, hotels and catering operations across Kenya, Uganda, Tanzania and Rwanda. Authorised distributor for Rational, Hobart, True, Electrolux Professional and more.',
-            'separator' => ' · ',
+            'separator' => ' | ',
             'keywords' => [
                 'commercial kitchen equipment',
                 'restaurant equipment Kenya',
@@ -39,7 +39,7 @@ return [
 
     'opengraph' => [
         'defaults' => [
-            'title' => 'Sheffield — Commercial Kitchen Equipment for East Africa',
+            'title' => 'Commercial Kitchen Equipment for East Africa',
             'description' => 'Authorised distributor for restaurant, hotel and catering equipment. Showrooms in Nairobi, Mombasa, Kampala and Kigali.',
             'url' => false, // set per-request in partials/head.blade.php so it's always the current absolute URL
             'type' => 'website',
@@ -58,7 +58,7 @@ return [
 
     'json-ld' => [
         'defaults' => [
-            'title' => 'Sheffield — Commercial Kitchen Equipment for East Africa',
+            'title' => 'Commercial Kitchen Equipment for East Africa',
             'description' => 'Authorised distributor for restaurant, hotel and catering equipment.',
             'url' => false, // set per-request in partials/head.blade.php
             'type' => 'WebPage',

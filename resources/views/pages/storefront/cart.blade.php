@@ -10,7 +10,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Cart — Sheffield')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
 {
     use \App\Livewire\Concerns\InteractsWithStorefront;
 

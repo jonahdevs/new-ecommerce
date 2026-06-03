@@ -1,3 +1,5 @@
+@php $integrations = app(\App\Settings\IntegrationSettings::class); @endphp
+
 <x-layouts::auth :title="__('Register')">
     <div class="flex flex-col gap-6">
         <x-auth-header :title="__('Create an account')" :description="__('Enter your details below to create your account')" />
@@ -5,8 +7,26 @@
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
-        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
+        <x-passkey-verify :passkey="false" :separator="__('Or register with email')">
+            @if ($integrations->google_login_enabled)
+                <x-slot:social>
+                    <a href="{{ route('auth.google.redirect') }}"
+                       class="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-xs transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+                        <svg class="size-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        {{ __('Sign up with Google') }}
+                    </a>
+                </x-slot:social>
+            @endif
+        </x-passkey-verify>
+
+        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6" id="register-form">
             @csrf
+            <x-recaptcha-v3 action="register" form="#register-form" />
             <!-- Name -->
             <flux:input
                 name="name"
@@ -53,6 +73,30 @@
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
                 viewable
             />
+
+            <!-- Terms & Conditions -->
+            <div class="space-y-1">
+                <div class="flex items-start gap-3">
+                    <input
+                        id="terms"
+                        name="terms"
+                        type="checkbox"
+                        value="1"
+                        class="mt-0.5 size-4 shrink-0 rounded border-zinc-300 text-brand-600 focus:ring-brand-500"
+                        {{ old('terms') ? 'checked' : '' }}
+                        required
+                    />
+                    <label for="terms" class="text-sm text-zinc-600 dark:text-zinc-400">
+                        {{ __('I agree to the') }}
+                        <flux:link href="{{ route('page.show', 'terms-and-conditions') }}" target="_blank">{{ __('Terms & Conditions') }}</flux:link>
+                        {{ __('and') }}
+                        <flux:link href="{{ route('page.show', 'privacy-policy') }}" target="_blank">{{ __('Privacy Policy') }}</flux:link>
+                    </label>
+                </div>
+                @error('terms')
+                    <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
 
             <div class="flex items-center justify-end">
                 <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">

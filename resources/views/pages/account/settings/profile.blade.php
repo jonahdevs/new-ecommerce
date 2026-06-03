@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Concerns\ProfileValidationRules;
 /* @chisel-email-verification */
@@ -12,7 +12,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::settings')] #[Title('Profile — Sheffield')] class extends Component {
+new #[Layout('layouts::settings')] #[Title('Profile')] class extends Component {
     use ProfileValidationRules;
 
     public string $name = '';

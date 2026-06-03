@@ -5,8 +5,9 @@
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
-        <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-6">
+        <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-6" id="forgot-password-form">
             @csrf
+            <x-recaptcha-v3 action="forgot_password" form="#forgot-password-form" />
 
             <!-- Email Address -->
             <flux:input

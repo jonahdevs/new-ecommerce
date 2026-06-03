@@ -13,7 +13,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Payment — Sheffield')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 {
     public Order $order;
 

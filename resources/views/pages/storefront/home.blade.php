@@ -17,7 +17,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Sheffield — Commercial Kitchen Equipment for East Africa')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for East Africa')] class extends Component {
     use InteractsWithStorefront;
 
     /** @var array<int, int> Locked so random order is fixed for the lifetime of the component. */

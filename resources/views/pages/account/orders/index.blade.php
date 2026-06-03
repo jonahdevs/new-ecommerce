@@ -9,7 +9,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::account')] #[Title('Orders — Sheffield')] class extends Component
+new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
 {
     use WithPagination;
 

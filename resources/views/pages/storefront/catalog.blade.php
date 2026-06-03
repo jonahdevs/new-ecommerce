@@ -16,7 +16,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Shop — Sheffield')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     use InteractsWithStorefront;
 
     public int $perPage = 24;

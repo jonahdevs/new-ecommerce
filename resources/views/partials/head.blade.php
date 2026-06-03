@@ -13,12 +13,14 @@
     $branding = app(\App\Settings\BrandingSettings::class);
 
     if (filled($title ?? null)) {
-        // Second arg `false` stops SEOMeta from appending the config default
-        // title — pages already include the " — Sheffield" suffix themselves.
-        \Artesaos\SEOTools\Facades\SEOMeta::setTitle($title, false);
-        \Artesaos\SEOTools\Facades\OpenGraph::setTitle($title);
-        \Artesaos\SEOTools\Facades\TwitterCard::setTitle($title);
-        \Artesaos\SEOTools\Facades\JsonLdMulti::setTitle($title);
+        $__isAdminPage = request()->is('admin/*') || request()->is('admin');
+        $__formattedTitle = (! $__isAdminPage && filled($seo->meta_title_pattern))
+            ? str_replace(['{page}', '{site}'], [$title, $branding->store_name], $seo->meta_title_pattern)
+            : $title;
+        \Artesaos\SEOTools\Facades\SEOMeta::setTitle($__formattedTitle, false);
+        \Artesaos\SEOTools\Facades\OpenGraph::setTitle($__formattedTitle);
+        \Artesaos\SEOTools\Facades\TwitterCard::setTitle($__formattedTitle);
+        \Artesaos\SEOTools\Facades\JsonLdMulti::setTitle($__formattedTitle);
     }
 
     $__seoCurrentUrl = url()->current();

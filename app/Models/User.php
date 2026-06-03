@@ -16,7 +16,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'notification_preferences', 'staff_preferences'])]
+#[Fillable(['name', 'email', 'password', 'google_id', 'email_verified_at', 'notification_preferences', 'staff_preferences'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {

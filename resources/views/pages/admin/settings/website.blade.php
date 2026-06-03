@@ -221,6 +221,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         Flux::toast(heading: 'Saved', text: 'Localization updated.', variant: 'success');
     }
 
+    public function regenerateSitemap(): void
+    {
+        \Illuminate\Support\Facades\Artisan::call('sitemap:generate');
+        Flux::toast(heading: 'Sitemap regenerated', text: 'public/sitemap.xml has been updated.', variant: 'success');
+    }
+
     public function saveSeo(SeoSettings $settings): void
     {
         $this->validate([
@@ -444,8 +450,23 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                     <flux:switch wire:model="index_site" />
                 </div>
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                    <flux:label>Generate XML sitemap</flux:label>
-                    <flux:switch wire:model="generate_sitemap" />
+                    <div>
+                        <flux:label>Generate XML sitemap</flux:label>
+                        @if (file_exists(public_path('sitemap.xml')))
+                            <flux:text size="sm" class="text-xs text-zinc-400">
+                                Last generated {{ \Illuminate\Support\Carbon::createFromTimestamp(filemtime(public_path('sitemap.xml')))->diffForHumans() }}
+                            </flux:text>
+                        @endif
+                    </div>
+                    <div class="flex items-center gap-3">
+                        @if ($generate_sitemap)
+                            <flux:button size="sm" variant="ghost" icon="arrow-path"
+                                wire:click="regenerateSitemap" wire:loading.attr="disabled">
+                                Regenerate
+                            </flux:button>
+                        @endif
+                        <flux:switch wire:model.live="generate_sitemap" />
+                    </div>
                 </div>
 
                 <div class="flex justify-end pt-2">

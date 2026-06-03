@@ -1,15 +1,11 @@
 <?php
 
-use App\Enums\CategoryStatus;
 use App\Http\Controllers\Payments\MpesaCallbackController;
 use App\Http\Controllers\Payments\StripeWebhookController;
-use App\Models\Category;
-use App\Models\Page;
-use App\Models\Product;
+use App\Http\Controllers\SocialAuthController;
 use App\Settings\SeoSettings;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use Spatie\Sitemap\Sitemap;
-use Spatie\Sitemap\Tags\Url;
 
 // ---------------------------------------------------------------------------
 // Payment provider callbacks (server-to-server, no auth, CSRF-exempt)
@@ -38,27 +34,16 @@ Route::livewire('/product/{product:slug}', 'pages::storefront.product')->name('p
 Route::get('/sitemap.xml', function () {
     abort_unless(app(SeoSettings::class)->generate_sitemap, 404);
 
-    $sitemap = Sitemap::create()
-        ->add(Url::create(route('home')))
-        ->add(Url::create(route('catalog')))
-        ->add(Url::create(route('contact')));
+    $path = public_path('sitemap.xml');
 
-    Category::query()
-        ->where('status', CategoryStatus::ACTIVE)
-        ->get()
-        ->each(fn ($category) => $sitemap->add(Url::create(route('category.show', $category))));
+    // Generate on-the-fly if the file does not exist yet (e.g. fresh deploy).
+    if (! file_exists($path)) {
+        Artisan::call('sitemap:generate');
+    }
 
-    Product::query()
-        ->published()
-        ->get()
-        ->each(fn ($product) => $sitemap->add(Url::create(route('product.show', $product))));
+    abort_unless(file_exists($path), 404);
 
-    Page::query()
-        ->published()
-        ->get()
-        ->each(fn ($page) => $sitemap->add(Url::create(route('page.show', $page->slug))));
-
-    return $sitemap->toResponse(request());
+    return response()->file($path, ['Content-Type' => 'application/xml']);
 })->name('sitemap');
 
 Route::get('/robots.txt', function () {
@@ -74,6 +59,14 @@ Route::get('/robots.txt', function () {
 
     return response(implode("\n", $lines)."\n")->header('Content-Type', 'text/plain');
 })->name('robots');
+
+// ---------------------------------------------------------------------------
+// Social auth — Google
+// ---------------------------------------------------------------------------
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+});
 
 // ---------------------------------------------------------------------------
 // Post-login landing — branches by role.

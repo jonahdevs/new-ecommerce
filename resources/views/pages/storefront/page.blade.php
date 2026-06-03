@@ -16,7 +16,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
         $this->page = $page;
 
-        SEOMeta::setTitle($page->title.' — Sheffield');
+        SEOMeta::setTitle($page->title.'');
 
         if (filled($page->meta_description)) {
             SEOMeta::setDescription($page->meta_description);

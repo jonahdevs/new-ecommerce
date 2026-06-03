@@ -39,7 +39,7 @@ new #[Layout('layouts::storefront')] class extends Component {
     {
         $this->category = $category;
 
-        $title = $category->meta_title ?: $category->name . ' — Sheffield';
+        $title = $category->meta_title ?: $category->name . '';
         $description = $category->meta_description ?: ($category->description ? \Illuminate\Support\Str::limit(strip_tags($category->description), 160) : null) ?: 'Browse ' . $category->name . ' from authorised distributors. Stock in Nairobi, install & service across East Africa.';
 
         SEOMeta::setTitle($title)->setDescription($description);
@@ -60,7 +60,7 @@ new #[Layout('layouts::storefront')] class extends Component {
     public function rendering($view): void
     {
         // Title was set in mount() via SEOMeta; mirror for layouts that read $title.
-        $view->title($this->category->meta_title ?: $this->category->name . ' — Sheffield');
+        $view->title($this->category->meta_title ?: $this->category->name . '');
     }
 
     public function updating(string $prop): void

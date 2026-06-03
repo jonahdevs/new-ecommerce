@@ -6,7 +6,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Search — Sheffield')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Search')] class extends Component
 {
     #[Url(as: 'q')]
     public string $query = '';

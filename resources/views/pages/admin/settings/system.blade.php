@@ -29,9 +29,9 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     // ─── Integrations ──────────────────────────────────────────────────────────
     public bool $google_login_enabled = false;
 
-    public bool $facebook_login_enabled = false;
-
     public string $google_maps_api_key = '';
+
+    public string $map_provider = 'leaflet';
 
     public string $recaptcha_site_key = '';
 
@@ -56,8 +56,8 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         $this->sms_sender_id = $email->sms_sender_id;
 
         $this->google_login_enabled = $integrations->google_login_enabled;
-        $this->facebook_login_enabled = $integrations->facebook_login_enabled;
         $this->google_maps_api_key = $integrations->google_maps_api_key;
+        $this->map_provider = $integrations->map_provider;
         $this->recaptcha_site_key = $integrations->recaptcha_site_key;
 
         $this->min_password_length = $security->min_password_length;
@@ -93,13 +93,14 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     {
         $this->validate([
             'google_maps_api_key' => ['nullable', 'string', 'max:255'],
+            'map_provider' => ['required', 'in:leaflet,google'],
             'recaptcha_site_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $settings->fill([
             'google_login_enabled' => $this->google_login_enabled,
-            'facebook_login_enabled' => $this->facebook_login_enabled,
             'google_maps_api_key' => $this->google_maps_api_key,
+            'map_provider' => $this->map_provider,
             'recaptcha_site_key' => $this->recaptcha_site_key,
         ])->save();
 
@@ -192,13 +193,38 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                     <flux:label>Sign in with Google</flux:label>
                     <flux:switch wire:model="google_login_enabled" />
                 </div>
-                <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                    <flux:label>Sign in with Facebook</flux:label>
-                    <flux:switch wire:model="facebook_login_enabled" />
-                </div>
+                <flux:separator />
+
+                <flux:text size="sm" class="font-medium text-zinc-500">Maps</flux:text>
+                <flux:input wire:model.live="google_maps_api_key" label="Google Maps API key" placeholder="AIza…" />
+                <flux:field>
+                    <flux:label>Address map provider</flux:label>
+                    <flux:description>Used on the storefront checkout and saved addresses. Google requires an API key above.</flux:description>
+                    <div class="mt-2 flex gap-3">
+                        <label class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition
+                            {{ $map_provider === 'leaflet' ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-zinc-200 dark:border-zinc-700' }}">
+                            <flux:radio wire:model.live="map_provider" value="leaflet" />
+                            <div>
+                                <div class="text-sm font-medium">OpenStreetMap (Leaflet)</div>
+                                <div class="text-xs text-zinc-400">Free, no key needed</div>
+                            </div>
+                        </label>
+                        <label class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition
+                            {{ $map_provider === 'google' ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-zinc-200 dark:border-zinc-700' }}
+                            {{ !$google_maps_api_key ? 'opacity-50 cursor-not-allowed' : '' }}">
+                            <flux:radio wire:model.live="map_provider" value="google" :disabled="!$google_maps_api_key" />
+                            <div>
+                                <div class="text-sm font-medium">Google Maps</div>
+                                <div class="text-xs text-zinc-400">Better local data, requires API key</div>
+                            </div>
+                        </label>
+                    </div>
+                    @if ($map_provider === 'google' && !$google_maps_api_key)
+                        <flux:error>Add a Google Maps API key to use Google Maps.</flux:error>
+                    @endif
+                </flux:field>
 
                 <flux:separator />
-                <flux:input wire:model="google_maps_api_key" label="Google Maps API key" placeholder="AIza…" />
                 <flux:input wire:model="recaptcha_site_key" label="reCAPTCHA site key" />
 
                 <div class="flex justify-end pt-2">

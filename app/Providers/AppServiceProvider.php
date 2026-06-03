@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\ValidateRecaptcha;
 use App\Services\Mpesa\DarajaClient;
 use App\Settings\SecuritySettings;
 use App\Support\Money;
@@ -9,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureSuperAdmin();
+        $this->configureRecaptcha();
     }
 
     /**
@@ -72,6 +75,17 @@ class AppServiceProvider extends ServiceProvider
      * Apply the admin-configurable session lifetime. Guarded so early boot and
      * fresh migrations (settings table not yet present) never error.
      */
+    protected function configureRecaptcha(): void
+    {
+        // Attach reCAPTCHA validation to the forgot-password route after all routes are registered.
+        $this->app->booted(function () {
+            $route = Route::getRoutes()->getByName('password.email');
+            if ($route) {
+                $route->middleware(ValidateRecaptcha::class.':forgot_password');
+            }
+        });
+    }
+
     protected function configureSessionLifetime(): void
     {
         try {

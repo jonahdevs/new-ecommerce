@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ProductLinkType;
+use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
@@ -138,6 +139,7 @@ class ProductSeeder extends Seeder
             'quotation_notes' => $data['quotation_notes'] ?? null,
             'min_order_quantity' => $data['min_order_quantity'] ?? null,
             'visibility' => ProductVisibility::VISIBLE,
+            'status' => ProductStatus::from($data['status'] ?? ProductStatus::PUBLISHED->value),
         ]);
 
         $this->productIdBySku[$sku] = $product->id;

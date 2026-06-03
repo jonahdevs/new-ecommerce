@@ -141,7 +141,7 @@ new #[Layout('layouts::storefront')] class extends Component
         $brand = $product->brand?->name;
 
         $title = $product->meta_title
-            ?: trim(($brand ? $brand.' ' : '').$product->name).' — Sheffield';
+            ?: trim(($brand ? $brand.' ' : '').$product->name).'';
 
         $description = $product->meta_description
             ?: ($product->short_description ?: Str::limit(strip_tags((string) $product->description), 160))
@@ -202,7 +202,7 @@ new #[Layout('layouts::storefront')] class extends Component
     public function rendering($view): void
     {
         // Mirror for layouts that read $title (and keeps the SEO bridge in head.blade.php in sync).
-        $view->title($this->product->meta_title ?: $this->product->name.' — Sheffield');
+        $view->title($this->product->meta_title ?: $this->product->name.'');
     }
 
     public function incQty(): void

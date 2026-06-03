@@ -13,10 +13,14 @@ Alpine.data('zoneMap', () => {
         map: null,
         markers: [],
         poly: null,
+        currentStep: 1,
+        polygonError: false,
 
         open() {
             if (active) return;
             active = true;
+            this.currentStep = 1;
+            this.polygonError = false;
             this.$nextTick(() => this.initMap());
         },
 
@@ -24,6 +28,20 @@ Alpine.data('zoneMap', () => {
             if (! active) return;
             active = false;
             this.destroyMap();
+        },
+
+        goToStep2() {
+            if (this.$wire.polygon.length < 3) {
+                this.polygonError = true;
+                return;
+            }
+            this.polygonError = false;
+            this.currentStep = 2;
+        },
+
+        goToStep1() {
+            this.currentStep = 1;
+            this.$nextTick(() => { if (this.map) this.map.invalidateSize(); });
         },
 
         async initMap() {

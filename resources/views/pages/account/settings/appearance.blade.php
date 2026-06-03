@@ -1,10 +1,10 @@
-﻿<?php
+<?php
 
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::settings')] #[Title('Appearance — Sheffield')] class extends Component {
+new #[Layout('layouts::settings')] #[Title('Appearance')] class extends Component {
     public bool $embedded = false;
 
     public function mount(bool $embedded = false): void

@@ -8,7 +8,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::settings')] #[Title('Notifications — Sheffield')] class extends Component
+new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Component
 {
     /** @var array<string, array<string, bool>> */
     public array $preferences = [];

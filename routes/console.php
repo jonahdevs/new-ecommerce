@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Flip scheduled products live once their publish time has passed.
 Schedule::command('products:publish-scheduled')->everyFiveMinutes();
+
+// Regenerate the static sitemap.xml daily.
+Schedule::command('sitemap:generate')->daily();

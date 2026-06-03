@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Settings\LocalizationSettings;
 
@@ -19,6 +20,25 @@ class ProductObserver
 
         $product->weight_unit ??= $settings->weight_unit;
         $product->dimension_unit ??= $settings->dimension_unit;
+
+        $this->resolvePublishedAt($product);
+    }
+
+    public function updating(Product $product): void
+    {
+        if ($product->isDirty('status')) {
+            $this->resolvePublishedAt($product);
+        }
+    }
+
+    private function resolvePublishedAt(Product $product): void
+    {
+        match ($product->status) {
+            ProductStatus::PUBLISHED => $product->published_at ??= now(),
+            ProductStatus::DRAFT,
+            ProductStatus::ARCHIVED => $product->published_at = null,
+            default => null, // SCHEDULED: leave published_at as set by the user
+        };
     }
 
     public function saved(Product $product): void

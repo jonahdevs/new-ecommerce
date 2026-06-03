@@ -12,7 +12,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Wishlist — Sheffield')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Component
 {
     use InteractsWithStorefront;
 

@@ -15,8 +15,8 @@ return new class extends SettingsMigration
 
         // ── Integrations ───────────────────────────────────────────────────
         $this->migrator->add('integrations.google_login_enabled', false);
-        $this->migrator->add('integrations.facebook_login_enabled', false);
         $this->migrator->add('integrations.google_maps_api_key', '');
+        $this->migrator->add('integrations.map_provider', 'leaflet');
         $this->migrator->add('integrations.recaptcha_site_key', '');
 
         // ── Security ───────────────────────────────────────────────────────
