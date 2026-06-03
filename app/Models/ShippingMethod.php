@@ -8,12 +8,23 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['name', 'slug', 'description', 'type', 'is_active', 'sort_order'])]
 class ShippingMethod extends Model
 {
     /** @use HasFactory<ShippingMethodFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'type', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('shipping_method');
+    }
 
     protected function casts(): array
     {

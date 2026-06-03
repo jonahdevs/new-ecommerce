@@ -8,12 +8,23 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['name', 'county', 'is_active', 'sort_order', 'priority', 'polygon'])]
 class DeliveryZone extends Model
 {
     /** @use HasFactory<DeliveryZoneFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'county', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('delivery_zone');
+    }
 
     protected function casts(): array
     {

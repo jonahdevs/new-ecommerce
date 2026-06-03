@@ -44,6 +44,8 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public int $galleryIdx = 0;
 
+    public string $addonTab = 'accessories';
+
     public int $reviewRating = 5;
 
     public string $reviewTitle = '';
@@ -59,6 +61,8 @@ new #[Layout('layouts::storefront')] class extends Component
             'productAttributes' => fn ($q) => $q->where('is_visible', true)->orderBy('sort_order'),
             'productAttributes.attribute',
             'downloadableFiles',
+            'accessories' => fn ($q) => $q->with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])->orderBy('sort_order'),
+            'spareParts'  => fn ($q) => $q->with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])->orderBy('sort_order'),
         ]);
 
         if ($this->product->type === ProductType::BUNDLE) {
@@ -490,6 +494,11 @@ new #[Layout('layouts::storefront')] class extends Component
         );
     }
 
+    public function setAddonTab(string $tab): void
+    {
+        $this->addonTab = $tab;
+    }
+
     /** Whether the signed-in user has an order containing this product. */
     private function hasPurchasedProduct(): bool
     {
@@ -526,8 +535,14 @@ new #[Layout('layouts::storefront')] class extends Component
     $displayCompareAt = $compareAt !== null ? $tax->displayPriceCents($product, (int) $compareAt) : null;
     $isOnSale = $compareAt !== null;
 
-    $isWished = StorefrontSession::isWishlisted($product->slug);
+    $isWished   = StorefrontSession::isWishlisted($product->slug);
     $isCompared = StorefrontSession::isCompared($product->slug);
+
+    // Explicit stock states used for CTA and chips
+    $isBackorder  = $variant
+        ? $variant->stock_status === \App\Enums\StockStatus::BACKORDER
+        : $product->stock_status === \App\Enums\StockStatus::BACKORDER;
+    $isOutOfStock = ! $inStock && ! $isBackorder;
 
     $gallery = $product->images->take(6); // cap thumbnails
 
@@ -563,72 +578,248 @@ new #[Layout('layouts::storefront')] class extends Component
     {{-- Main: gallery + info panel --}}
     <div class="grid grid-cols-1 gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         {{-- Gallery --}}
-        <div>
-            <div class="relative aspect-square overflow-hidden rounded-md border border-zinc-200 bg-white p-10">
-                @if ($isOnSale)
-                    <span class="absolute top-5 left-5 text-[11px] font-bold tracking-[0.08em] text-brand-500 uppercase">
-                        ● Sale
+        <div
+            x-data="{
+                lens: null,
+                lbOpen: false,
+                lbIdx: {{ $galleryIdx }},
+                gallery: @js($gallery->values()->map(fn ($img) => ['url' => $img->url, 'alt' => $img->alt ?? $product->name, 'label' => $img->alt ?? ''])),
+                lbScale: 1, lbPan: { x:0, y:0 }, lbPanStart: null, lbPinchDist: 0,
+                openLb(i) { this.lbIdx = i; this.lbOpen = true; this.lbReset(); document.body.style.overflow = 'hidden'; },
+                closeLb() { this.lbOpen = false; document.body.style.overflow = ''; },
+                prevLb() { this.lbIdx = (this.lbIdx - 1 + this.gallery.length) % this.gallery.length; this.lbReset(); },
+                nextLb() { this.lbIdx = (this.lbIdx + 1) % this.gallery.length; this.lbReset(); },
+                lbReset() { this.lbScale = 1; this.lbPan = { x:0, y:0 }; },
+                lbClampPan(p, sc) {
+                    const s = this.$refs.lbStage;
+                    if (!s) return p;
+                    const r = s.getBoundingClientRect();
+                    const mx = (r.width  * (sc - 1)) / 2;
+                    const my = (r.height * (sc - 1)) / 2;
+                    return { x: Math.max(-mx, Math.min(mx, p.x)), y: Math.max(-my, Math.min(my, p.y)) };
+                },
+                lbZoomTo(next, cx, cy) {
+                    const sc = Math.max(1, Math.min(4.5, next));
+                    const s = this.$refs.lbStage;
+                    if (s && cx != null) {
+                        const r = s.getBoundingClientRect();
+                        const ox = cx - r.left - r.width  / 2;
+                        const oy = cy - r.top  - r.height / 2;
+                        const prev = this.lbScale;
+                        this.lbPan = this.lbClampPan({ x: this.lbPan.x - ox * (sc / prev - 1), y: this.lbPan.y - oy * (sc / prev - 1) }, sc);
+                    } else {
+                        this.lbPan = this.lbClampPan(this.lbPan, sc);
+                    }
+                    if (sc === 1) this.lbPan = { x:0, y:0 };
+                    this.lbScale = sc;
+                },
+                lbWheel(e) { e.preventDefault(); this.lbZoomTo(this.lbScale * (e.deltaY < 0 ? 1.18 : 0.85), e.clientX, e.clientY); },
+                lbDblClick(e) { this.lbScale > 1.02 ? this.lbReset() : this.lbZoomTo(2.6, e.clientX, e.clientY); },
+                lbPointerDown(e) { if (this.lbScale > 1) { this.lbPanStart = { x: e.clientX, y: e.clientY, px: this.lbPan.x, py: this.lbPan.y }; } },
+                lbPointerMove(e) { if (this.lbPanStart && this.lbScale > 1) { this.lbPan = this.lbClampPan({ x: this.lbPanStart.px + (e.clientX - this.lbPanStart.x), y: this.lbPanStart.py + (e.clientY - this.lbPanStart.y) }, this.lbScale); } },
+                lbPointerUp() { this.lbPanStart = null; },
+                lbTouchStart(e) { if (e.touches.length === 2) { this.lbPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } },
+                lbTouchMove(e) {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        if (this.lbPinchDist) this.lbZoomTo(this.lbScale * (d / this.lbPinchDist));
+                        this.lbPinchDist = d;
+                    }
+                },
+            }"
+            @keydown.escape.window="if (lbOpen) closeLb()"
+            @keydown.arrow-left.window="if (lbOpen) { prevLb(); }"
+            @keydown.arrow-right.window="if (lbOpen) { nextLb(); }"
+            @keydown.plus.window="if (lbOpen) lbZoomTo(lbScale * 1.3)"
+            @keydown.minus.window="if (lbOpen) lbZoomTo(lbScale / 1.3)"
+        >
+            {{-- Gallery: vertical thumbs (left) + main image (right) --}}
+            <div class="flex gap-2.5">
+
+                {{-- Vertical thumbnail strip --}}
+                @if ($gallery->count() > 0)
+                    <div class="flex flex-col gap-2 overflow-y-auto" style="height: 520px; scrollbar-width: none;">
+                        @foreach ($gallery as $i => $img)
+                            <button type="button"
+                                wire:click="$set('galleryIdx', {{ $i }})"
+                                x-on:click="lbIdx = {{ $i }}"
+                                @class([
+                                    'w-[72px] cursor-pointer overflow-hidden rounded border bg-white p-1.5 transition',
+                                    'flex-1 min-h-[56px]' => $gallery->count() > 1,
+                                    'aspect-square' => $gallery->count() === 1,
+                                    'border-brand-500 ring-1 ring-brand-500' => $i === $galleryIdx,
+                                    'border-zinc-200 hover:border-zinc-400' => $i !== $galleryIdx,
+                                ])>
+                                <img src="{{ $img->url }}" alt="{{ $img->alt ?? '' }}"
+                                    class="size-full object-contain" loading="lazy" />
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Main image --}}
+                <div
+                    class="group relative min-w-0 flex-1 cursor-zoom-in overflow-hidden rounded-md border border-zinc-200 bg-white"
+                    style="aspect-ratio: 1; max-height: 520px;"
+                    @mousemove="const r = $el.getBoundingClientRect(); lens = { x: Math.max(0,Math.min(100,(($event.clientX-r.left)/r.width)*100)), y: Math.max(0,Math.min(100,(($event.clientY-r.top)/r.height)*100)) }"
+                    @mouseleave="lens = null"
+                    @click="openLb(lbIdx)"
+                >
+                    @if ($isOnSale)
+                        <span class="absolute top-4 left-4 z-10 text-[11px] font-bold tracking-[0.08em] text-brand-500 uppercase">● Sale</span>
+                    @endif
+
+                    <div class="absolute top-4 right-4 z-10 flex gap-1.5" @click.stop>
+                        <flux:tooltip :content="$isWished ? 'Remove from wishlist' : 'Save to wishlist'">
+                            <button type="button" wire:click="toggleWishlist('{{ $product->slug }}')"
+                                aria-label="{{ $isWished ? 'Remove from wishlist' : 'Save to wishlist' }}"
+                                @class([
+                                    'inline-flex size-9 cursor-pointer items-center justify-center rounded-full border bg-white text-ink transition',
+                                    'bg-brand-500! border-brand-500! text-white!' => $isWished,
+                                    'border-zinc-200 hover:bg-surface-sunken' => ! $isWished,
+                                ])>
+                                <flux:icon.heart variant="micro" class="size-4" />
+                            </button>
+                        </flux:tooltip>
+                        <flux:tooltip :content="$isCompared ? 'Remove from compare' : 'Add to compare'">
+                            <button type="button" wire:click="toggleCompare('{{ $product->slug }}')"
+                                aria-label="{{ $isCompared ? 'Remove from compare' : 'Add to compare'}}"
+                                @class([
+                                    'inline-flex size-9 cursor-pointer items-center justify-center rounded-full border bg-white text-ink transition',
+                                    'bg-ink! border-ink! text-white!' => $isCompared,
+                                    'border-zinc-200 hover:bg-surface-sunken' => ! $isCompared,
+                                ])>
+                                <flux:icon.scale variant="micro" class="size-4" />
+                            </button>
+                        </flux:tooltip>
+                    </div>
+
+                    @php $shown = $gallery->values()->get($galleryIdx); @endphp
+                    @if ($shown)
+                        <img src="{{ $shown->url }}"
+                            alt="{{ $shown->alt ?? $product->name }}"
+                            class="size-full object-contain p-6 transition-transform duration-75 will-change-transform"
+                            :style="lens ? `transform:scale(2.3);transform-origin:${lens.x}% ${lens.y}%` : ''"
+                            draggable="false" />
+                    @else
+                        <div class="grid size-full place-items-center text-ink-4">
+                            <flux:icon.photo variant="outline" class="size-12" />
+                        </div>
+                    @endif
+
+                    {{-- Hover hint --}}
+                    @if ($gallery->isNotEmpty())
+                        <div class="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-[rgba(12,20,33,0.62)] px-3 py-1.5 text-[10.5px] tracking-[0.02em] text-white opacity-0 backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100">
+                            <flux:icon.magnifying-glass variant="micro" class="size-3.5" />
+                            Hover to zoom · click to expand
+                        </div>
+                    @endif
+
+                    {{-- Counter --}}
+                    @if ($gallery->count() > 1)
+                        <div class="absolute right-3 bottom-3 font-mono text-[11px] text-ink-4 tabular-nums">
+                            {{ $galleryIdx + 1 }} / {{ $gallery->count() }}
+                        </div>
+                    @endif
+                </div>
+
+            </div>{{-- end gallery flex row --}}
+
+            {{-- Lightbox overlay — teleported to <body> so page-fade's animation stacking context can't clip it --}}
+            <template x-teleport="body">
+            <div
+                x-show="lbOpen"
+                x-cloak
+                x-transition:enter="transition-opacity duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition-opacity duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 z-[200] flex flex-col bg-zinc-900/40 backdrop-blur-xl"
+                @click.self="closeLb()"
+            >
+                {{-- Top bar --}}
+                <div class="flex shrink-0 items-center justify-between px-5 py-4">
+                    <span class="font-mono text-[12px] tracking-[0.03em] text-white/70">
+                        <span x-text="gallery[lbIdx]?.label || '{{ $product->name }}'"></span>
+                        <template x-if="gallery.length > 1">
+                            <span x-text="' · ' + (lbIdx + 1) + '/' + gallery.length"></span>
+                        </template>
                     </span>
-                @endif
-
-                <div class="absolute top-5 right-5 flex gap-1.5">
-                    <flux:tooltip :content="$isWished ? 'Remove from wishlist' : 'Save to wishlist'">
-                        <button type="button" wire:click="toggleWishlist('{{ $product->slug }}')"
-                            aria-label="{{ $isWished ? 'Remove from wishlist' : 'Save to wishlist' }}"
-                            @class([
-                                'inline-flex size-9 cursor-pointer items-center justify-center rounded-full border bg-white text-ink transition',
-                                'bg-brand-500! border-brand-500! text-white!' => $isWished,
-                                'border-zinc-200 hover:bg-surface-sunken' => ! $isWished,
-                            ])>
-                            <flux:icon.heart variant="micro" class="size-4" />
+                    <div class="flex items-center gap-1.5">
+                        <span x-text="Math.round(lbScale * 100) + '%'" class="min-w-10 text-right font-mono text-[12.5px] text-white/70"></span>
+                        <button @click="lbZoomTo(lbScale / 1.4)" title="Zoom out"
+                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-white/25">
+                            <flux:icon.minus variant="micro" class="size-4" />
                         </button>
-                    </flux:tooltip>
-                    <flux:tooltip :content="$isCompared ? 'Remove from compare' : 'Add to compare'">
-                        <button type="button" wire:click="toggleCompare('{{ $product->slug }}')"
-                            aria-label="{{ $isCompared ? 'Remove from compare' : 'Add to compare'}}"
-                            @class([
-                                'inline-flex size-9 cursor-pointer items-center justify-center rounded-full border bg-white text-ink transition',
-                                'bg-ink! border-ink! text-white!' => $isCompared,
-                                'border-zinc-200 hover:bg-surface-sunken' => ! $isCompared,
-                            ])>
-                            <flux:icon.scale variant="micro" class="size-4" />
+                        <button @click="lbZoomTo(lbScale * 1.4)" title="Zoom in"
+                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-white/25">
+                            <flux:icon.plus variant="micro" class="size-4" />
                         </button>
-                    </flux:tooltip>
+                        <button @click="lbReset()" title="Reset zoom"
+                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-white/25">
+                            <flux:icon.arrow-path variant="micro" class="size-4" />
+                        </button>
+                        <button @click="closeLb()" title="Close (Esc)"
+                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-brand-500 hover:border-brand-500">
+                            <flux:icon.x-mark variant="micro" class="size-4" />
+                        </button>
+                    </div>
                 </div>
 
-                @php $shown = $gallery->values()->get($galleryIdx); @endphp
-                @if ($shown)
-                    <img src="{{ $shown->url }}"
-                        alt="{{ $shown->alt ?? $product->name }}"
-                        class="size-full object-contain" />
-                @else
-                    <div class="grid size-full place-items-center text-ink-4">
-                        <flux:icon.photo variant="outline" class="size-12" />
-                    </div>
-                @endif
+                {{-- Image area with zoom / pan / pinch --}}
+                <div
+                    x-ref="lbStage"
+                    class="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden touch-none"
+                    :style="lbScale > 1 ? (lbPanStart ? 'cursor:grabbing' : 'cursor:grab') : 'cursor:zoom-in'"
+                    x-init="$nextTick(() => { $el.addEventListener('wheel', e => lbWheel(e), { passive: false }); })"
+                    @dblclick="lbDblClick($event)"
+                    @pointerdown="lbPointerDown($event)"
+                    @pointermove="lbPointerMove($event)"
+                    @pointerup="lbPointerUp()"
+                    @pointercancel="lbPointerUp()"
+                    @touchstart.prevent="lbTouchStart($event)"
+                    @touchmove.prevent="lbTouchMove($event)"
+                >
+                    <template x-if="gallery.length > 1">
+                        <button @click.stop="prevLb()"
+                            class="absolute left-4 z-10 inline-flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/25">
+                            <flux:icon.chevron-left class="size-5" />
+                        </button>
+                    </template>
 
-                @if ($gallery->count() > 1)
-                    <div class="absolute right-5 bottom-5 left-5 flex justify-between text-[12px] text-ink-3">
-                        <span class="tabular-nums">{{ $galleryIdx + 1 }} / {{ $gallery->count() }}</span>
-                    </div>
-                @endif
+                    <img :src="gallery[lbIdx]?.url" :alt="gallery[lbIdx]?.alt"
+                        :style="`transform: translate(${lbPan.x}px, ${lbPan.y}px) scale(${lbScale}); transition: transform 0.08s ease`"
+                        class="max-h-full max-w-[88%] select-none object-contain"
+                        draggable="false" />
+
+                    <template x-if="gallery.length > 1">
+                        <button @click.stop="nextLb()"
+                            class="absolute right-4 z-10 inline-flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/25">
+                            <flux:icon.chevron-right class="size-5" />
+                        </button>
+                    </template>
+                </div>
+
+                {{-- Hint --}}
+                <div class="shrink-0 py-1 text-center font-mono text-[10.5px] tracking-[0.03em] text-white/50">
+                    Scroll or pinch to zoom · drag to pan · double-click to toggle · ← → navigate · Esc close
+                </div>
+
+                {{-- Thumbnail strip --}}
+                <div class="flex shrink-0 flex-wrap justify-center gap-2.5 px-4 pb-5">
+                    <template x-for="(img, i) in gallery" :key="i">
+                        <button @click="lbIdx = i"
+                            class="size-[60px] overflow-hidden rounded-lg border-2 opacity-55 transition"
+                            :class="i === lbIdx ? 'opacity-100 border-white' : 'border-transparent hover:opacity-85'">
+                            <img :src="img.url" :alt="img.alt" class="size-full object-cover" />
+                        </button>
+                    </template>
+                </div>
             </div>
-
-            @if ($gallery->count() > 1)
-                <div class="mt-3 grid gap-2.5" style="grid-template-columns: repeat({{ $gallery->count() }}, 1fr)">
-                    @foreach ($gallery as $i => $img)
-                        <button type="button" wire:click="$set('galleryIdx', {{ $i }})"
-                            @class([
-                                'aspect-square cursor-pointer overflow-hidden rounded border bg-white p-2 transition',
-                                'border-brand-500 ring-1 ring-brand-500' => $i === $galleryIdx,
-                                'border-zinc-200 hover:border-zinc-400' => $i !== $galleryIdx,
-                            ])>
-                            <img src="{{ $img->url }}" alt=""
-                                class="size-full object-contain" loading="lazy" />
-                        </button>
-                    @endforeach
-                </div>
-            @endif
+            </template>{{-- end x-teleport --}}
         </div>
 
         {{-- Info panel --}}
@@ -640,7 +831,7 @@ new #[Layout('layouts::storefront')] class extends Component
             @endif
             <h1 class="mt-2 font-serif text-3xl leading-tight font-normal lg:text-4xl">{{ $product->name }}</h1>
             @if ($product->short_description)
-                <p class="mt-3 text-[15px] leading-relaxed text-ink-2">{{ $product->short_description }}</p>
+                <div class="pdp-rich-text mt-3 text-[15px] leading-relaxed text-ink-2">{!! $product->short_description !!}</div>
             @endif
 
             <div class="mt-5 flex items-center gap-4 text-[13px] text-ink-3">
@@ -673,16 +864,72 @@ new #[Layout('layouts::storefront')] class extends Component
                     @endif
                 </div>
 
+                @php
+                    $isGroupedType  = $product->type === \App\Enums\ProductType::GROUPED;
+                    $isBundledType  = $product->type === \App\Enums\ProductType::BUNDLE;
+                    $stockLineText  = match(true) {
+                        $isGroupedType                       => 'Configure your set below',
+                        $inStock && $stockQty !== null       => $stockQty.' in stock'.($this->stockLocation ? ' — '.$this->stockLocation : ''),
+                        $inStock                             => 'In stock'.($this->stockLocation ? ' — '.$this->stockLocation : ''),
+                        $isBackorder                         => 'Available on backorder',
+                        default                              => 'Out of stock at present',
+                    };
+                @endphp
                 <div class="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-ink-2">
                     <span class="inline-flex items-center gap-1.5">
                         <span @class([
                             'size-2 rounded-full',
-                            'bg-emerald-600' => $inStock && $stockQty,
-                            'bg-amber-500' => ! $inStock || ! $stockQty,
+                            'bg-emerald-600' => $inStock,
+                            'bg-amber-500'   => ! $inStock && $isBackorder,
+                            'bg-zinc-400'    => ! $inStock && ! $isBackorder,
                         ])></span>
-                        {{ $inStock && $stockQty ? $stockQty.' in stock'.($this->stockLocation ? ' — '.$this->stockLocation : '') : 'Made to order' }}
+                        {{ $stockLineText }}
                     </span>
                 </div>
+
+                {{-- Status chips --}}
+                @php
+                    $chips = collect();
+                    if ($isOnSale && $displayCompareAt && $displayPrice && $displayCompareAt > $displayPrice) {
+                        $discPct  = (int) round((1 - $displayPrice / $displayCompareAt) * 100);
+                        $saved    = $displayCompareAt - $displayPrice;
+                        $chips->push(['tone' => 'sale', 'icon' => 'tag', 'label' => 'Save '.$discPct.'% · '.money($saved)]);
+                    }
+                    if ($inStock) {
+                        $chips->push(['tone' => 'good', 'icon' => 'check-circle', 'label' => 'In stock']);
+                    } elseif ($isBackorder) {
+                        $chips->push(['tone' => 'warn', 'icon' => 'clock', 'label' => 'Available on backorder']);
+                    } elseif ($isOutOfStock) {
+                        $chips->push(['tone' => 'bad', 'icon' => 'x-circle', 'label' => 'Out of stock']);
+                    }
+                    if ($product->is_virtual) {
+                        $chips->push(['tone' => 'info', 'icon' => 'bolt', 'label' => 'Digital — no shipping']);
+                    }
+                    if ($product->is_downloadable) {
+                        $chips->push(['tone' => 'info', 'icon' => 'arrow-down-tray', 'label' => 'Downloadable files']);
+                    }
+                    if ($product->min_order_quantity > 1) {
+                        $chips->push(['tone' => '', 'icon' => 'cube', 'label' => 'Min order '.$product->min_order_quantity]);
+                    }
+                @endphp
+                @if ($chips->isNotEmpty())
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @foreach ($chips as $chip)
+                            <span @class([
+                                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold',
+                                'border-brand-300 bg-brand-50 text-brand-600' => $chip['tone'] === 'sale',
+                                'border-emerald-200 bg-emerald-50 text-emerald-700' => $chip['tone'] === 'good',
+                                'border-amber-200 bg-amber-50 text-amber-700' => $chip['tone'] === 'warn',
+                                'border-red-200 bg-red-50 text-red-700' => $chip['tone'] === 'bad',
+                                'border-blue-200 bg-blue-50 text-blue-700' => $chip['tone'] === 'info',
+                                'border-zinc-200 bg-white text-ink-2' => $chip['tone'] === '',
+                            ])>
+                                <flux:icon :name="$chip['icon']" variant="micro" class="size-3.5" />
+                                {{ $chip['label'] }}
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Variation selector --}}
@@ -734,11 +981,47 @@ new #[Layout('layouts::storefront')] class extends Component
                         </div>
                     @endforeach
                     <flux:error name="variant" />
+
+                    {{-- Variant summary bar — shown once a full combination is selected --}}
+                    @if ($variant)
+                        @php
+                            $vPrice   = $variant->compare_at_price ?? $variant->price;
+                            $vDisplay = $vPrice ? $tax->displayPriceCents($product, (int) $vPrice) : null;
+                            $vInStock = $variant->stock_status === \App\Enums\StockStatus::IN_STOCK;
+                            $vBack    = $variant->stock_status === \App\Enums\StockStatus::BACKORDER;
+                        @endphp
+                        <div class="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-lg bg-surface-sunken px-3 py-2.5 text-[12.5px] text-ink-3">
+                            <flux:icon.cube variant="micro" class="size-3.5 shrink-0 text-ink-4" />
+                            <span>Selected: <b class="font-mono text-ink">{{ $variant->sku }}</b></span>
+                            @if ($vDisplay)
+                                <span>·</span>
+                                <span class="font-semibold text-ink">{{ money($vDisplay) }}</span>
+                            @endif
+                            <span>·</span>
+                            <span class="inline-flex items-center gap-1.5">
+                                <span @class(['size-2 rounded-full', 'bg-emerald-500' => $vInStock, 'bg-amber-500' => $vBack, 'bg-red-500' => ! $vInStock && ! $vBack])></span>
+                                {{ $vInStock ? 'In stock' : ($vBack ? 'On backorder' : 'Out of stock') }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             @endif
 
             {{-- Qty + CTAs --}}
-            @php $isGrouped = $product->type === \App\Enums\ProductType::GROUPED; @endphp
+            @php
+                $isGrouped  = $product->type === \App\Enums\ProductType::GROUPED;
+                $isVariable = $product->type === \App\Enums\ProductType::VARIABLE;
+                // For variable: treat selected-variant stock as OOS/backorder; unselected = can still try
+                $ctaOutOfStock = $isOutOfStock && ! $isGrouped && ! $product->requires_quotation
+                    && (! $isVariable || $variant !== null);
+                $ctaBackorder  = $isBackorder && ! $isGrouped && ! $product->requires_quotation;
+                $addToCartLabel = $isGrouped
+                    ? 'Choose your items'
+                    : ($ctaBackorder
+                        ? 'Pre-order'
+                        : 'Add to cart'.($displayPrice && ! $isGrouped && ! $isVariable ? ' · '.money($displayPrice * $qty) : ''));
+            @endphp
+
             @if ($product->requires_quotation)
                 <div class="mt-6 flex flex-wrap items-center gap-3">
                     @if ($this->quotesEnabled)
@@ -752,11 +1035,25 @@ new #[Layout('layouts::storefront')] class extends Component
                             Contact for pricing
                         </flux:button>
                     @endif
+                    <flux:button class="h-12! px-5!" :href="route('contact')" wire:navigate>
+                        Talk to sales
+                    </flux:button>
                 </div>
+
+            @elseif ($ctaOutOfStock)
+                {{-- Out of stock — no stepper, two action buttons --}}
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                    <flux:button variant="primary" disabled class="h-12! flex-1! px-6!" icon="shopping-cart">
+                        Out of stock
+                    </flux:button>
+                    <flux:button class="h-12! px-5!" :href="route('contact')" wire:navigate icon="bell">
+                        Notify me
+                    </flux:button>
+                </div>
+
             @else
                 <div class="mt-6 flex flex-wrap items-center gap-3">
-                    {{-- Grouped products pick a quantity per child inside the modal, so no single counter here. --}}
-                    @unless ($isGrouped)
+                    @unless ($isGrouped || $isVariable)
                         <div class="inline-flex h-12 items-stretch overflow-hidden rounded border border-zinc-200">
                             <button type="button" wire:click="decQty" aria-label="Decrease quantity"
                                 class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
@@ -773,16 +1070,24 @@ new #[Layout('layouts::storefront')] class extends Component
                     @endunless
 
                     <flux:button variant="primary" wire:click="addThisToCart" class="h-12! flex-1! px-6!"
-                        icon="shopping-cart">
-                        Add to cart{{ ! $isGrouped && $displayPrice ? ' · '.money($displayPrice * $qty) : '' }}
+                        icon="{{ $isGrouped ? 'squares-2x2' : 'shopping-cart' }}">
+                        {{ $addToCartLabel }}
                     </flux:button>
 
-                    @if ($this->quotesEnabled)
+                    @if ($this->quotesEnabled && ! $isGrouped)
                         <flux:button class="h-12! px-5!" :href="route('quote.request', ['product' => $product->slug])" wire:navigate>
                             Request a quote
                         </flux:button>
                     @endif
                 </div>
+
+                {{-- Min order quantity note --}}
+                @if (($product->min_order_quantity ?? 1) > 1)
+                    <div class="mt-3 flex items-center gap-2 text-[12.5px] text-ink-3">
+                        <flux:icon.information-circle variant="micro" class="size-4 shrink-0 text-ink-4" />
+                        Minimum order quantity is {{ $product->min_order_quantity }} units.
+                    </div>
+                @endif
             @endif
 
             {{-- Trust grid — real signals only --}}
@@ -821,27 +1126,193 @@ new #[Layout('layouts::storefront')] class extends Component
         </div>
     </div>
 
+    {{-- Accessories / spare parts add-on carousel --}}
+    @php
+        $hasAccessories = $product->accessories->isNotEmpty();
+        $hasSpareParts  = $product->spareParts->isNotEmpty();
+        // Auto-correct stale tab: if 'accessories' is selected but none exist, switch to 'spares'
+        if ($addonTab === 'accessories' && ! $hasAccessories && $hasSpareParts) {
+            $addonTab = 'spares';
+        }
+        if ($addonTab === 'spares' && ! $hasSpareParts && $hasAccessories) {
+            $addonTab = 'accessories';
+        }
+    @endphp
+    @if ($hasAccessories || $hasSpareParts)
+        <div class="mt-16">
+            {{-- Tab bar --}}
+            <div class="flex border-b border-zinc-200">
+                @if ($hasAccessories)
+                    <button type="button" wire:click="setAddonTab('accessories')"
+                        @class([
+                            '-mb-px border-b-2 px-5 py-3.5 text-[14px] transition',
+                            'border-brand-500 font-semibold text-ink' => $addonTab === 'accessories',
+                            'border-transparent text-ink-3 hover:text-ink' => $addonTab !== 'accessories',
+                        ])>
+                        Accessories
+                        <span class="ml-1 text-[11px] text-ink-4">{{ $product->accessories->count() }}</span>
+                    </button>
+                @endif
+                @if ($hasSpareParts)
+                    <button type="button" wire:click="setAddonTab('spares')"
+                        @class([
+                            '-mb-px border-b-2 px-5 py-3.5 text-[14px] transition',
+                            'border-brand-500 font-semibold text-ink' => $addonTab === 'spares',
+                            'border-transparent text-ink-3 hover:text-ink' => $addonTab !== 'spares',
+                        ])>
+                        Spare parts
+                        <span class="ml-1 text-[11px] text-ink-4">{{ $product->spareParts->count() }}</span>
+                    </button>
+                @endif
+            </div>
+
+            {{-- Carousel --}}
+            @php $addonItems = $addonTab === 'spares' ? $product->spareParts : $product->accessories; @endphp
+            <div class="relative mt-5" data-addon-carousel>
+                <button type="button"
+                    class="addon-prev absolute -left-4 top-[40%] z-10 -translate-y-1/2 hidden size-9 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm text-ink-2 transition hover:bg-surface-sunken sm:inline-flex disabled:opacity-30">
+                    <flux:icon.chevron-left variant="micro" class="size-4" />
+                </button>
+
+                <div class="swiper overflow-hidden">
+                    <div class="swiper-wrapper items-stretch">
+                        @foreach ($addonItems as $addon)
+                            @php
+                                $addonPrice   = $addon->sale_price ?? $addon->price;
+                                $addonTax     = app(\App\Support\TaxCalculator::class);
+                                $addonDisplay = $addonPrice ? $addonTax->displayPriceCents($addon, (int) $addonPrice) : null;
+                                $addonInStock = $addon->stock_status === \App\Enums\StockStatus::IN_STOCK;
+                                $addonCover   = $addon->images->first()?->url ?? $addon->cover_url;
+                            @endphp
+                            <div class="swiper-slide !h-auto overflow-hidden rounded-lg border border-zinc-200 bg-white transition hover:shadow-md"
+                                 wire:key="addon-{{ $addon->id }}">
+                                <a href="{{ route('product.show', $addon) }}" wire:navigate class="block">
+                                    <div class="relative h-[132px] overflow-hidden bg-surface-sunken">
+                                        @if ($addonCover)
+                                            <img src="{{ $addonCover }}" alt="{{ $addon->name }}"
+                                                class="absolute inset-0 size-full object-cover" loading="lazy" />
+                                        @else
+                                            <div class="grid size-full place-items-center text-ink-4">
+                                                <flux:icon.photo class="size-8" />
+                                            </div>
+                                        @endif
+                                    </div>
+                                </a>
+                                <div class="flex flex-col border-t border-zinc-200 p-3">
+                                    <a href="{{ route('product.show', $addon) }}" wire:navigate
+                                        class="min-h-[34px] text-[13px] font-medium leading-snug text-ink line-clamp-2">
+                                        {{ $addon->name }}
+                                    </a>
+                                    @if ($addon->sku)
+                                        <div class="mt-1 font-mono text-[10.5px] text-ink-4">{{ $addon->sku }}</div>
+                                    @endif
+                                    <div class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] {{ $addonInStock ? 'text-emerald-600' : 'text-ink-3' }}">
+                                        <span class="size-1.5 rounded-full {{ $addonInStock ? 'bg-emerald-500' : 'bg-zinc-300' }}"></span>
+                                        {{ $addonInStock ? 'In stock' : 'Made to order' }}
+                                    </div>
+                                    <div class="mt-3 flex items-center justify-between gap-2">
+                                        <span class="text-[14px] font-bold tabular-nums text-ink">
+                                            {!! $addonDisplay ? money($addonDisplay) : 'POA' !!}
+                                        </span>
+                                        @if ($addonInStock)
+                                            <button type="button" wire:click="addToCart('{{ $addon->slug }}')"
+                                                class="inline-flex h-[34px] items-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 text-[12.5px] font-semibold text-ink transition hover:bg-brand-500 hover:border-brand-500 hover:text-white">
+                                                <flux:icon.plus variant="micro" class="size-3.5" />
+                                                Add
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <button type="button"
+                    class="addon-next absolute -right-4 top-[40%] z-10 -translate-y-1/2 hidden size-9 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm text-ink-2 transition hover:bg-surface-sunken sm:inline-flex disabled:opacity-30">
+                    <flux:icon.chevron-right variant="micro" class="size-4" />
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @assets
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+    @endassets
+
+    @script
+    <script>
+        let addonSwiper = null;
+
+        const initAddonSwiper = () => {
+            const wrap = $wire.$el.querySelector('[data-addon-carousel]');
+            if (!wrap) return;
+            if (addonSwiper) { addonSwiper.destroy(true, true); addonSwiper = null; }
+            addonSwiper = new Swiper(wrap.querySelector('.swiper'), {
+                slidesPerView: 2.5,
+                spaceBetween: 14,
+                freeMode: true,
+                grabCursor: true,
+                navigation: {
+                    nextEl: wrap.querySelector('.addon-next'),
+                    prevEl: wrap.querySelector('.addon-prev'),
+                },
+                breakpoints: {
+                    640:  { slidesPerView: 3.5 },
+                    1024: { slidesPerView: 5.5 },
+                },
+            });
+        };
+
+        initAddonSwiper();
+
+        const cleanupHook = Livewire.hook('commit', ({ component, succeed }) => {
+            if (component.el === $wire.$el) {
+                succeed(() => initAddonSwiper());
+            }
+        });
+
+        document.addEventListener('livewire:navigating', () => {
+            cleanupHook();
+            addonSwiper?.destroy(true, true);
+        }, { once: true });
+    </script>
+    @endscript
+
     {{-- Tabs --}}
     <div class="mt-20">
-        <div class="flex border-b border-zinc-200">
-            @php
-                $productTabs = [
-                    'specs' => 'Specifications',
-                    'overview' => 'Overview',
-                    'documents' => 'Documents',
+        @php
+            $productTabs = [['id' => 'specs',    'label' => 'Specifications', 'count' => null]];
+            $productTabs[] =  ['id' => 'overview', 'label' => 'Overview',        'count' => null];
+            if ($product->downloadableFiles->isNotEmpty()) {
+                $productTabs[] = [
+                    'id'    => $product->is_downloadable ? 'downloads' : 'documents',
+                    'label' => $product->is_downloadable ? 'Downloads' : 'Documents',
+                    'count' => $product->downloadableFiles->count(),
                 ];
-                if ($this->reviewsEnabled) {
-                    $productTabs['reviews'] = 'Reviews';
-                }
-            @endphp
-            @foreach ($productTabs as $id => $label)
-                <button type="button" wire:click="$set('activeTab', '{{ $id }}')"
+            }
+            if ($this->reviewsEnabled) {
+                $productTabs[] = ['id' => 'reviews', 'label' => 'Reviews', 'count' => $this->approvedReviews->count() ?: null];
+            }
+            // Guard activeTab against tabs that no longer exist
+            $validTabIds = array_column($productTabs, 'id');
+            if (! in_array($activeTab, $validTabIds, true)) {
+                $activeTab = 'specs';
+            }
+        @endphp
+        <div class="flex border-b border-zinc-200">
+            @foreach ($productTabs as $tab)
+                <button type="button" wire:click="$set('activeTab', '{{ $tab['id'] }}')"
                     @class([
-                        '-mb-px cursor-pointer border-b-2 px-5 py-3.5 text-[14px] transition',
-                        'border-brand-500 font-semibold text-ink' => $activeTab === $id,
-                        'border-transparent text-ink-3 hover:text-ink' => $activeTab !== $id,
+                        '-mb-px cursor-pointer border-b-2 px-5 py-3.5 text-[14px] transition whitespace-nowrap',
+                        'border-brand-500 font-semibold text-ink' => $activeTab === $tab['id'],
+                        'border-transparent text-ink-3 hover:text-ink' => $activeTab !== $tab['id'],
                     ])>
-                    {{ $label }}
+                    {{ $tab['label'] }}
+                    @if ($tab['count'])
+                        <span class="ml-1 text-[11px] {{ $activeTab === $tab['id'] ? 'text-ink-4' : 'text-ink-4' }}">{{ $tab['count'] }}</span>
+                    @endif
                 </button>
             @endforeach
         </div>
@@ -849,47 +1320,11 @@ new #[Layout('layouts::storefront')] class extends Component
         <div class="pt-8">
             {{-- Specs --}}
             @if ($activeTab === 'specs')
-                <div class="grid max-w-5xl grid-cols-1 gap-x-14 md:grid-cols-2">
-                    @php
-                        $rows = collect();
-                        if ($product->sku) {
-                            $rows->push(['SKU', $product->sku]);
-                        }
-                        if ($product->model_number) {
-                            $rows->push(['Model number', $product->model_number]);
-                        }
-                        if ($product->brand) {
-                            $rows->push(['Brand', $product->brand->name]);
-                        }
-                        if ($product->weight) {
-                            $rows->push(['Weight', rtrim(rtrim((string) $product->weight, '0'), '.').' '.($product->weight_unit ?? 'kg')]);
-                        }
-                        if ($dimensionStr) {
-                            $rows->push(['Dimensions (W × L × H)', $dimensionStr]);
-                        }
-                        foreach ($product->productAttributes as $pa) {
-                            $values = is_array($pa->values) ? implode(', ', $pa->values) : (string) ($pa->values ?? '');
-                            if ($pa->attribute && $values !== '') {
-                                $rows->push([$pa->attribute->name, $values]);
-                            }
-                        }
-                    @endphp
-                    @foreach ($rows as [$label, $value])
-                        <div class="grid grid-cols-[1fr_1.3fr] gap-4 border-b border-zinc-200 py-3.5 text-[14px]">
-                            <span class="text-ink-3">{{ $label }}</span>
-                            <span class="text-ink">{{ $value }}</span>
-                        </div>
-                    @endforeach
-                </div>
-
                 @if (filled($product->technical_specification))
-                    <div class="mt-8 max-w-5xl">
-                        <h3 class="font-serif text-xl">Technical specification</h3>
-                        <div class="mt-3 text-[14px] leading-relaxed text-ink-2">{!! nl2br(e($product->technical_specification)) !!}</div>
+                    <div class="max-w-5xl pdp-rich-text text-[14px] leading-relaxed text-ink-2">
+                        {!! $product->technical_specification !!}
                     </div>
-                @endif
-
-                @if ($rows->isEmpty() && blank($product->technical_specification))
+                @else
                     <div class="max-w-5xl text-[14px] text-ink-3">No specifications listed for this product yet.</div>
                 @endif
             @endif
@@ -902,7 +1337,7 @@ new #[Layout('layouts::storefront')] class extends Component
                         @if (filled($product->description))
                             <div>
                                 <h3 class="font-serif text-2xl">About this product</h3>
-                                <div class="mt-4 text-[14.5px] leading-relaxed text-ink-2">{!! nl2br(e($product->description)) !!}</div>
+                                <div class="pdp-rich-text mt-4 text-[14.5px] leading-relaxed text-ink-2">{!! $product->description !!}</div>
                             </div>
                         @endif
                         @if (filled($brandBlurb))
@@ -917,8 +1352,8 @@ new #[Layout('layouts::storefront')] class extends Component
                 @endif
             @endif
 
-            {{-- Documents --}}
-            @if ($activeTab === 'documents')
+            {{-- Documents / Downloads --}}
+            @if (in_array($activeTab, ['documents', 'downloads']))
                 <div class="flex max-w-2xl flex-col gap-2">
                     @forelse ($product->downloadableFiles as $file)
                         <a href="{{ \Illuminate\Support\Facades\Storage::url($file->file_path) }}" target="_blank"
@@ -1029,7 +1464,7 @@ new #[Layout('layouts::storefront')] class extends Component
     {{-- Related --}}
     @if ($this->related->isNotEmpty())
         <div class="mt-20">
-            <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
+            <div class="mb-4 flex items-baseline justify-between">
                 <h2 class="text-[22px] font-semibold tracking-tight">Related equipment</h2>
                 @if ($product->primaryCategory)
                     <a href="{{ route('category.show', $product->primaryCategory) }}" wire:navigate

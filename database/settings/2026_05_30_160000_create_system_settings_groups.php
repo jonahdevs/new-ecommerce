@@ -18,6 +18,10 @@ return new class extends SettingsMigration
         $this->migrator->add('integrations.google_maps_api_key', '');
         $this->migrator->add('integrations.map_provider', 'leaflet');
         $this->migrator->add('integrations.recaptcha_site_key', '');
+        $this->migrator->add('integrations.sap_enabled', false);
+        $this->migrator->add('integrations.sap_sync_price', true);
+        $this->migrator->add('integrations.sap_sync_quantity', true);
+        $this->migrator->add('integrations.sap_webhook_secret', '');
 
         // ── Security ───────────────────────────────────────────────────────
         $this->migrator->add('security.min_password_length', 8);

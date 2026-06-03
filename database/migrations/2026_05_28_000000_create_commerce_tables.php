@@ -62,18 +62,40 @@ return new class extends Migration
 
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            // Nullable + nullOnDelete so deleting a user account preserves order history.
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('address_id')->nullable()->constrained()->nullOnDelete();
+            // Snapshot: copy address fields at placement so edits/deletes never alter
+            // a placed order's shipping destination.
+            $table->string('shipping_name')->nullable();
+            $table->string('shipping_email')->nullable();
+            $table->string('shipping_phone')->nullable();
+            $table->string('shipping_line1')->nullable();
+            $table->string('shipping_line2')->nullable();
+            $table->string('shipping_city')->nullable();
+            $table->string('shipping_state')->nullable();
+            $table->string('shipping_postcode')->nullable();
+            $table->char('shipping_country', 2)->nullable();
             $table->foreignId('delivery_zone_id')->nullable()->constrained('delivery_zones')->nullOnDelete();
+            // Snapshot: preserve zone name even if the zone record is later renamed/deleted.
+            $table->string('delivery_zone_name')->nullable();
             $table->string('order_number')->unique();
             $table->string('status')->default('pending');
-            $table->integer('subtotal_cents')->default(0);
-            $table->integer('vat_cents')->default(0);
-            $table->integer('delivery_cents')->default(0);
-            $table->integer('installation_cents')->default(0);
-            $table->integer('total_cents')->default(0);
+            // bigInteger avoids the 2,147,483,647-cent (~KES 21 M) ceiling on int.
+            $table->bigInteger('subtotal_cents')->default(0);
+            $table->bigInteger('vat_cents')->default(0);
+            $table->bigInteger('delivery_cents')->default(0);
+            $table->bigInteger('installation_cents')->default(0);
+            $table->bigInteger('total_cents')->default(0);
+            $table->char('currency', 3)->default('KES');
             $table->string('payment_method')->nullable();
             $table->text('notes')->nullable();
+            // Lifecycle timestamps — one per stage so queries like "orders shipped
+            // today" are instant rather than relying on a status-change audit log.
+            $table->timestamp('confirmed_at')->nullable();
+            $table->timestamp('shipped_at')->nullable();
+            $table->timestamp('delivered_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
             $table->timestamps();
         });
 
@@ -84,29 +106,35 @@ return new class extends Migration
             $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
             $table->string('product_name');
             $table->string('product_sku')->nullable();
-            $table->integer('unit_price_cents');
+            $table->bigInteger('unit_price_cents');
             $table->integer('quantity');
-            $table->integer('line_total_cents');
+            $table->bigInteger('line_total_cents');
             // Tax snapshot: the rate (%) applied and the tax portion in cents at
             // the time of ordering, so later changes to a tax class never alter
             // historical orders or their invoices.
             $table->decimal('tax_rate', 5, 2)->default(0);
-            $table->integer('tax_cents')->default(0);
+            $table->bigInteger('tax_cents')->default(0);
             $table->timestamps();
         });
 
         Schema::create('quotes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            // FK to the order created when a quote is accepted, so conversion rate
+            // and the quote↔order chain can be traced.
+            $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
             $table->string('contact_name')->nullable();
             $table->string('contact_email')->nullable();
             $table->string('contact_phone')->nullable();
             $table->string('contact_company')->nullable();
             $table->string('quote_number')->unique();
             $table->string('title');
-            $table->string('status')->default('sent');
-            $table->integer('total_cents')->default(0);
+            // 'draft' is the correct starting state — not 'sent'.
+            $table->string('status')->default('draft');
+            $table->bigInteger('total_cents')->default(0);
+            $table->char('currency', 3)->default('KES');
             $table->text('notes')->nullable();
+            $table->timestamp('sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
@@ -117,9 +145,12 @@ return new class extends Migration
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->string('product_name');
             $table->string('product_sku')->nullable();
-            $table->integer('unit_price_cents');
+            $table->bigInteger('unit_price_cents');
             $table->integer('quantity');
-            $table->integer('line_total_cents');
+            $table->bigInteger('line_total_cents');
+            // Mirror order_items so tax context is preserved when a quote converts.
+            $table->decimal('tax_rate', 5, 2)->default(0);
+            $table->bigInteger('tax_cents')->default(0);
             $table->timestamps();
         });
     }

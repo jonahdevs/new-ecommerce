@@ -10,12 +10,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['user_id', 'contact_name', 'contact_email', 'contact_phone', 'contact_company', 'quote_number', 'title', 'status', 'total_cents', 'notes', 'expires_at'])]
 class Quote extends Model
 {
     /** @use HasFactory<QuoteFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'title', 'total_cents', 'expires_at', 'notes'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('quote');
+    }
 
     protected function casts(): array
     {

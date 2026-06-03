@@ -232,7 +232,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
             <div>
                 {{-- Toolbar --}}
                 <div
-                    class="mb-5 flex flex-col gap-3 border-b border-zinc-200 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                    class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="text-[13.5px] text-ink-3">
                         Showing <span class="font-semibold text-ink">{{ $this->products->total() }}</span>
                         {{ \Illuminate\Support\Str::plural('product', $this->products->total()) }}

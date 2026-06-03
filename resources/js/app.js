@@ -7,3 +7,5 @@
 import './echo';
 import L from 'leaflet';
 window.L = L;
+
+document.dispatchEvent(new CustomEvent('app:ready'));

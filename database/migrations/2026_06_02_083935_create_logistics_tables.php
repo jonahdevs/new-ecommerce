@@ -169,17 +169,21 @@ return new class extends Migration
         // ── 7. Wire orders to shipping ────────────────────────────────────────
         // shipping_method_id: what the customer chose (Standard, Express, Pickup)
         // warehouse_id:       which warehouse, set when method type = pickup
+        // *_name snapshots:   preserve human-readable labels even if the method
+        //                     or warehouse record is later renamed or deleted.
         Schema::table('orders', function (Blueprint $table) {
             $table->foreignId('shipping_method_id')
                 ->nullable()
-                ->after('delivery_zone_id')
+                ->after('delivery_zone_name')
                 ->constrained('shipping_methods')
                 ->nullOnDelete();
+            $table->string('shipping_method_name')->nullable()->after('shipping_method_id');
             $table->foreignId('warehouse_id')
                 ->nullable()
-                ->after('shipping_method_id')
+                ->after('shipping_method_name')
                 ->constrained('warehouses')
                 ->nullOnDelete();
+            $table->string('warehouse_name')->nullable()->after('warehouse_id');
         });
     }
 
@@ -187,9 +191,9 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropForeign(['warehouse_id']);
-            $table->dropColumn('warehouse_id');
+            $table->dropColumn(['warehouse_id', 'warehouse_name']);
             $table->dropForeign(['shipping_method_id']);
-            $table->dropColumn('shipping_method_id');
+            $table->dropColumn(['shipping_method_id', 'shipping_method_name']);
         });
 
         Schema::dropIfExists('shipments');

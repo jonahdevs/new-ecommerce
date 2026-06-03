@@ -9,12 +9,23 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['name', 'is_active', 'priority', 'scope', 'zone_id', 'effect', 'value_cents', 'percent', 'min_subtotal_cents', 'starts_at', 'ends_at'])]
 class DeliveryPromotion extends Model
 {
     /** @use HasFactory<DeliveryPromotionFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'is_active', 'effect', 'value_cents', 'percent', 'starts_at', 'ends_at'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('delivery_promotion');
+    }
 
     protected function casts(): array
     {

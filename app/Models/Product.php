@@ -20,14 +20,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Tags\HasTags;
 
-#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'status', 'published_at', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'is_virtual', 'is_downloadable', 'weight', 'length', 'width', 'height', 'weight_unit', 'dimension_unit', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order', 'default_variant_id'])]
+#[Fillable(['name', 'slug', 'sku', 'brand_id', 'primary_category_id', 'model_number', 'type', 'status', 'published_at', 'short_description', 'description', 'technical_specification', 'price', 'sale_price', 'cost_price', 'is_taxable', 'tax_class_id', 'requires_shipping', 'is_virtual', 'is_downloadable', 'weight', 'length', 'width', 'height', 'weight_unit', 'dimension_unit', 'stock_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'requires_quotation', 'quotation_notes', 'min_order_quantity', 'visibility', 'meta_title', 'meta_description', 'canonical_url', 'sort_order', 'default_variant_id', 'sap_last_synced_at'])]
 #[ObservedBy(ProductObserver::class)]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, HasTags, SoftDeletes;
+    use HasFactory, HasTags, LogsActivity, SoftDeletes;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'slug', 'sku', 'status', 'visibility', 'price', 'sale_price', 'stock_quantity', 'stock_status'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('product');
+    }
 
     protected function casts(): array
     {
@@ -45,6 +56,7 @@ class Product extends Model
             'requires_quotation' => 'boolean',
             'min_order_quantity' => 'integer',
             'sort_order' => 'integer',
+            'sap_last_synced_at' => 'datetime',
         ];
     }
 

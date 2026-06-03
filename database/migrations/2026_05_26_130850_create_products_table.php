@@ -102,6 +102,7 @@ return new class extends Migration
 
             // Sorting
             $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamp('sap_last_synced_at')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
@@ -204,6 +205,7 @@ return new class extends Migration
 
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamp('sap_last_synced_at')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
