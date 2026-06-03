@@ -59,7 +59,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     }
 
     /**
-     * @return Collection<int, array{key: string, slug: string, qty: int, product: Product, variant: ?\App\Models\ProductVariant, label: ?string, unit_price_cents: int, line_total_cents: int}>
+     * Quote requests carry no pricing — only products and quantities. Pricing is
+     * set by staff on the formal quotation, so no catalog price is read or shown.
+     *
+     * @return Collection<int, array{key: string, slug: string, qty: int, product: Product, variant: ?\App\Models\ProductVariant, label: ?string}>
      */
     #[Computed]
     public function lines(): Collection
@@ -97,8 +100,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                     return null;
                 }
 
-                $unit = $variant ? (int) ($variant->compare_at_price ?? ($variant->price ?? 0)) : (int) ($product->sale_price ?? ($product->price ?? 0));
-
                 $label = $variant ? $variant->attributeValues->map(fn($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
 
                 return [
@@ -108,8 +109,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                     'product' => $product,
                     'variant' => $variant,
                     'label' => $label ?: null,
-                    'unit_price_cents' => $unit,
-                    'line_total_cents' => $unit * (int) $qty,
                 ];
             })
             ->filter()
@@ -210,7 +209,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         $isGuest = auth()->guest();
         $title = $this->generateTitle();
 
-        DB::transaction(function () use ($lines, $title) {
+        $quote = DB::transaction(function () use ($lines, $title) {
+            // A customer request carries no pricing: it lands as a draft with zero
+            // totals for staff to price. Only the staff-set quotation is valid.
             $quote = Quote::create([
                 'user_id' => auth()->id(),
                 'contact_name' => $this->contact_name,
@@ -219,8 +220,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 'contact_company' => $this->contact_company ?: null,
                 'quote_number' => Quote::generateNumber(),
                 'title' => $title,
-                'status' => QuoteStatus::SENT,
-                'total_cents' => (int) $lines->sum('line_total_cents'),
+                'status' => QuoteStatus::DRAFT,
+                'total_cents' => 0,
                 'notes' => $this->notes ?: null,
                 'expires_at' => now()->addDays(app(\App\Settings\QuotationSettings::class)->default_validity_days),
             ]);
@@ -231,12 +232,21 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                     'product_id' => $line['product']->id,
                     'product_name' => $line['product']->name . ($line['label'] ? ' — ' . $line['label'] : ''),
                     'product_sku' => $line['variant']?->sku ?? $line['product']->sku,
-                    'unit_price_cents' => $line['unit_price_cents'],
+                    'unit_price_cents' => 0,
                     'quantity' => $line['qty'],
-                    'line_total_cents' => $line['line_total_cents'],
+                    'line_total_cents' => 0,
                 ]);
             }
+
+            return $quote;
         });
+
+        // Acknowledge the customer/guest and alert staff that pricing is needed.
+        $quote->notifyContact(new \App\Notifications\Quotes\QuoteRequestReceived($quote));
+        \Illuminate\Support\Facades\Notification::send(
+            \App\Support\StaffRecipients::for('quotes.manage'),
+            new \App\Notifications\Quotes\NewQuoteRequested($quote),
+        );
 
         Flux::toast(heading: 'Quote request sent', text: 'Our team will review your request and respond shortly.', variant: 'success');
 
@@ -254,10 +264,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         return $who !== '' ? "Quote request — {$who}" : 'Quote request';
     }
 }; ?>
-
-@php
-    $totalCents = $this->lines->sum('line_total_cents');
-@endphp
 
 <div class="page-fade">
     <div class="shell pt-4 pb-20">
@@ -385,10 +391,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                                         <span class="text-sm leading-none">+</span>
                                                     </button>
                                                 </div>
-                                                <span
-                                                    class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                                    {!! $line['unit_price_cents'] > 0 ? money($line['line_total_cents']) : 'POA' !!}
-                                                </span>
                                             </div>
                                         </div>
                                         <button type="button" wire:click="removeItem('{{ $line['key'] }}')"
@@ -403,14 +405,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
                         <div class="my-4 h-px bg-zinc-100"></div>
 
-                        <div class="flex items-center justify-between">
-                            <span class="text-[13px] font-bold tracking-wide uppercase">Indicative total</span>
-                            <span class="text-xl font-bold text-brand-500 tabular-nums">{!! $totalCents > 0 ? money($totalCents) : '—' !!}</span>
-                        </div>
-
-                        <p class="mt-3 text-[11.5px] leading-relaxed text-ink-4">
-                            Prices are indicative and exclude VAT, delivery and installation. Your formal quotation will
-                            confirm final pricing and lead times.
+                        <p class="text-[11.5px] leading-relaxed text-ink-4">
+                            No pricing yet — this is a request. Our team will prepare a formal quotation confirming
+                            final pricing, VAT, delivery, installation and lead times.
                         </p>
 
                         <flux:button type="submit" variant="customer-primary" size="customer-lg"
@@ -468,7 +465,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 @else
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                         @foreach ($this->searchResults as $product)
-                            @php $price = $product->sale_price ?? $product->price; @endphp
                             <div wire:key="res-{{ $product->slug }}"
                                 class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">
                                 <div class="relative aspect-square overflow-hidden bg-surface-sunken p-2">
@@ -497,10 +493,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                     <div
                                         class="mt-0.5 line-clamp-2 min-h-8 text-[12px] font-medium leading-snug text-ink">
                                         {{ $product->name }}</div>
-                                    <div
-                                        class="mt-1.5 text-[12.5px] font-bold text-ink tabular-nums whitespace-nowrap">
-                                        {!! $price ? money($price) : 'POA' !!}
-                                    </div>
+                                    @if ($product->sku)
+                                        <div class="mt-1.5 font-mono text-[10.5px] text-ink-4">{{ $product->sku }}</div>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach

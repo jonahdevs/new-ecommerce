@@ -87,8 +87,7 @@ it('payment page creates a stripe payment intent on mount', function () {
             return Payment::factory()->stripe()->create([
                 'order_id' => $o->id,
                 'status' => PaymentStatus::PENDING,
-                'stripe_client_secret' => 'pi_test_abc_secret_xyz',
-            ]);
+            ])->withStripeClientSecret('pi_test_abc_secret_xyz');
         });
 
     $component = Livewire::actingAs($order->user)
@@ -121,7 +120,6 @@ it('confirms card payment and advances order when stripe reports success', funct
         'order_id' => $order->id,
         'status' => PaymentStatus::PENDING,
         'stripe_payment_intent_id' => 'pi_test_111',
-        'stripe_client_secret' => 'pi_test_111_secret',
     ]);
 
     $this->mock(StripePaymentService::class)
@@ -153,7 +151,7 @@ it('initiates mpesa stk push from the payment page', function () {
 
     $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
     $stripePayment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id, 'status' => PaymentStatus::PENDING, 'stripe_client_secret' => 'pi_secret',
+        'order_id' => $order->id, 'status' => PaymentStatus::PENDING,
     ]);
 
     Http::fake([

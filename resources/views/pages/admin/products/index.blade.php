@@ -185,9 +185,14 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
             <flux:heading size="xl">Products</flux:heading>
             <flux:subheading>Manage your catalog — pricing, stock and visibility.</flux:subheading>
         </div>
-        <flux:button variant="primary" icon="plus" :href="route('admin.products.create')" wire:navigate>
-            Add product
-        </flux:button>
+        <div class="flex items-center gap-2">
+            <flux:button variant="ghost" icon="clock" :href="route('admin.activity.show', 'product')" wire:navigate>
+                Activity log
+            </flux:button>
+            <flux:button variant="primary" icon="plus" :href="route('admin.products.create')" wire:navigate>
+                Add product
+            </flux:button>
+        </div>
     </div>
 
     {{-- KPIs --}}
@@ -389,6 +394,10 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
 
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['product', $product->id])" wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     :href="route('admin.products.edit', $product)" wire:navigate />
                                 <flux:button size="xs" variant="ghost" icon="trash"

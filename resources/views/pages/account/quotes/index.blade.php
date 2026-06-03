@@ -30,6 +30,12 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component
     {
         $quote = auth()->user()->quotes()->findOrFail($id);
         $quote->update(['status' => QuoteStatus::APPROVED]);
+
+        \Illuminate\Support\Facades\Notification::send(
+            \App\Support\StaffRecipients::for('quotes.manage'),
+            new \App\Notifications\Quotes\QuoteDecisionReceived($quote),
+        );
+
         unset($this->quotes);
         Flux::toast(heading: 'Quote approved', text: 'Your quote has been approved and our team will be in touch.', variant: 'success');
     }
@@ -77,7 +83,12 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component
                         </div>
 
                         <div class="flex shrink-0 items-center gap-4">
-                            <span class="font-serif text-xl tabular-nums text-ink">{!! money($quote->total_cents) !!}</span>
+                            {{-- Only a staff-prepared quotation has a valid price; a fresh request shows none. --}}
+                            @if ($quote->isPriced())
+                                <span class="font-serif text-xl tabular-nums text-ink">{!! money($quote->total_cents) !!}</span>
+                            @else
+                                <span class="text-[13px] font-medium text-ink-3">Awaiting quote</span>
+                            @endif
                             <div class="flex gap-2">
                                 @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
                                     <flux:button variant="customer-primary" size="customer"
@@ -86,7 +97,8 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component
                                         Approve
                                     </flux:button>
                                 @endif
-                                <flux:button variant="customer-outline" size="customer">View</flux:button>
+                                <flux:button variant="customer-outline" size="customer"
+                                             :href="route('account.quotes.show', $quote)" wire:navigate>View</flux:button>
                             </div>
                         </div>
                     </div>

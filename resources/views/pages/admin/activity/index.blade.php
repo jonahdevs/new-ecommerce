@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\ActivityLog;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -22,29 +23,9 @@ new #[Layout('layouts::app')] class extends Component {
     #[Url]
     public int $perPage = 25;
 
-    private const LOGS = [
-        // Tier 1
-        'product'            => ['label' => 'Products',             'icon' => 'cube',              'subjectKey' => 'name'],
-        'product_variant'    => ['label' => 'Product Variants',     'icon' => 'squares-2x2',       'subjectKey' => 'sku'],
-        'order'              => ['label' => 'Orders',               'icon' => 'shopping-bag',      'subjectKey' => 'order_number'],
-        'payment'            => ['label' => 'Payments',             'icon' => 'credit-card',       'subjectKey' => null],
-        'quote'              => ['label' => 'Quotes',               'icon' => 'document-text',     'subjectKey' => 'quote_number'],
-        // Tier 2
-        'tax_class'          => ['label' => 'Tax Classes',          'icon' => 'calculator',        'subjectKey' => 'name'],
-        'delivery_promotion' => ['label' => 'Delivery Promotions',  'icon' => 'tag',               'subjectKey' => 'name'],
-        'shipping_method'    => ['label' => 'Shipping Methods',     'icon' => 'truck',             'subjectKey' => 'name'],
-        'delivery_zone'      => ['label' => 'Delivery Zones',       'icon' => 'map-pin',           'subjectKey' => 'name'],
-        // Tier 3
-        'user'               => ['label' => 'Users',                'icon' => 'user',              'subjectKey' => 'name'],
-        'category'           => ['label' => 'Categories',           'icon' => 'folder',            'subjectKey' => 'name'],
-        'brand'              => ['label' => 'Brands',               'icon' => 'bookmark',          'subjectKey' => 'name'],
-        'review'             => ['label' => 'Reviews',              'icon' => 'star',              'subjectKey' => null],
-        'page'               => ['label' => 'Pages',                'icon' => 'document',          'subjectKey' => 'title'],
-    ];
-
     public function mount(string $logName): void
     {
-        abort_unless(array_key_exists($logName, self::LOGS), 404);
+        abort_unless(ActivityLog::exists($logName), 404);
         $this->logName = $logName;
     }
 
@@ -54,7 +35,7 @@ new #[Layout('layouts::app')] class extends Component {
 
     public function config(): array
     {
-        return self::LOGS[$this->logName];
+        return ActivityLog::metaFor($this->logName);
     }
 
     #[Computed]
@@ -73,34 +54,17 @@ new #[Layout('layouts::app')] class extends Component {
     #[Computed]
     public function allLogs(): array
     {
-        return self::LOGS;
+        return ActivityLog::logs();
     }
 
     public function subjectLabel(Activity $activity): string
     {
-        $key = self::LOGS[$this->logName]['subjectKey'] ?? null;
-
-        if ($key && $activity->subject) {
-            return (string) ($activity->subject->{$key} ?? "#{$activity->subject_id}");
-        }
-
-        return "#{$activity->subject_id}";
+        return ActivityLog::subjectLabel($this->logName, $activity->subject, $activity->subject_id);
     }
 
     public function subjectRoute(Activity $activity): ?string
     {
-        if (! $activity->subject) {
-            return null;
-        }
-
-        return match ($this->logName) {
-            'product'         => route('admin.products.edit', $activity->subject),
-            'product_variant' => $activity->subject->product_id ? route('admin.products.edit', $activity->subject->product_id) : null,
-            'order'           => route('admin.orders.show', $activity->subject),
-            'payment'         => route('admin.payments.show', $activity->subject),
-            'quote'           => route('admin.quotes.show', $activity->subject),
-            default           => null,
-        };
+        return ActivityLog::subjectRoute($this->logName, $activity->subject);
     }
 
     public function rendering($view): void
@@ -119,20 +83,15 @@ new #[Layout('layouts::app')] class extends Component {
                     <flux:breadcrumbs.item>{{ $this->config()['label'] }}</flux:breadcrumbs.item>
                 </flux:breadcrumbs>
             @endpush
-            <div class="flex items-center gap-3">
-                <flux:icon :name="$this->config()['icon']" variant="outline" class="size-7 text-ink-3" />
-                <div>
-                    <flux:heading size="xl">{{ $this->config()['label'] }} Activity</flux:heading>
-                    <flux:subheading>Full audit trail of changes to {{ strtolower($this->config()['label']) }}.</flux:subheading>
-                </div>
-            </div>
+            <flux:heading size="xl">{{ $this->config()['label'] }} Activity</flux:heading>
+            <flux:subheading>Full audit trail of changes to {{ strtolower($this->config()['label']) }}.</flux:subheading>
         </div>
 
         {{-- Jump to another log --}}
         <flux:select wire:model.live="logName" class="w-52"
             x-on:change="window.location.href = '{{ url('/admin/activity') }}/' + $el.value">
             @foreach ($this->allLogs as $key => $meta)
-                <flux:select.option value="{{ $key }}" @selected($key === $logName)>
+                <flux:select.option value="{{ $key }}" :selected="$key === $logName">
                     {{ $meta['label'] }}
                 </flux:select.option>
             @endforeach
@@ -179,8 +138,6 @@ new #[Layout('layouts::app')] class extends Component {
                     @php
                         $subjectLabel = $this->subjectLabel($activity);
                         $subjectRoute = $this->subjectRoute($activity);
-                        $newVals = $activity->attribute_changes?->get('attributes') ?? [];
-                        $oldVals = $activity->attribute_changes?->get('old') ?? [];
                     @endphp
                     <flux:table.row wire:key="activity-{{ $activity->id }}">
 
@@ -220,38 +177,13 @@ new #[Layout('layouts::app')] class extends Component {
 
                         {{-- Changes --}}
                         <flux:table.cell>
-                            @if ($activity->event === 'created')
-                                <span class="text-[12.5px] text-ink-3 italic">Record created</span>
-                            @elseif ($activity->event === 'deleted')
-                                <span class="text-[12.5px] text-ink-3 italic">Record deleted</span>
-                            @elseif (!empty($newVals))
-                                <div class="space-y-0.5">
-                                    @foreach ($newVals as $field => $newVal)
-                                        @php $oldVal = $oldVals[$field] ?? null; @endphp
-                                        <div class="flex flex-wrap items-center gap-1 text-[12px]">
-                                            <span class="font-mono text-ink-3">{{ str_replace('_', ' ', $field) }}</span>
-                                            <span class="text-ink-4">·</span>
-                                            @if ($oldVal !== null)
-                                                <span class="rounded bg-red-50 px-1 text-red-600 line-through">
-                                                    {{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}
-                                                </span>
-                                                <flux:icon.arrow-right variant="micro" class="size-3 text-ink-4" />
-                                            @endif
-                                            <span class="rounded bg-emerald-50 px-1 text-emerald-700">
-                                                {{ is_array($newVal) ? json_encode($newVal) : $newVal }}
-                                            </span>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <span class="text-[12.5px] text-ink-4">—</span>
-                            @endif
+                            <x-admin.activity-changes :activity="$activity" :log-name="$logName" />
                         </flux:table.cell>
 
                         {{-- By --}}
                         <flux:table.cell align="end" class="whitespace-nowrap">
                             <span class="text-[13px] text-ink-2">
-                                {{ $activity->causer?->name ?? 'System' }}
+                                {{ $activity->causer?->name ?? $activity->getProperty('source') ?? 'System' }}
                             </span>
                         </flux:table.cell>
 

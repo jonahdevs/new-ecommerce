@@ -149,6 +149,20 @@ it('uses only two queries to look up any size batch', function () {
     expect($queryCount)->toBeLessThanOrEqual(count($skus) + 2);
 });
 
+it('attributes synced changes to the SAP source in the activity log', function () {
+    $product = Product::factory()->create(['sku' => 'PROD-008', 'sale_price' => 1000, 'stock_quantity' => 5]);
+
+    (new ProcessSapProductSync([
+        ['sku' => 'PROD-008', 'price' => 2000, 'stock_quantity' => 50],
+    ]))->handle(app(IntegrationSettings::class));
+
+    $activity = $product->activitiesAsSubject()->where('event', 'updated')->latest('id')->first();
+
+    expect($activity)->not->toBeNull()
+        ->and($activity->causer_id)->toBeNull()
+        ->and($activity->getProperty('source'))->toBe('SAP sync');
+});
+
 it('logs a warning for unknown skus without failing the job', function () {
     Log::shouldReceive('warning')
         ->once()

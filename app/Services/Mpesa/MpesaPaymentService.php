@@ -2,7 +2,6 @@
 
 namespace App\Services\Mpesa;
 
-use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
@@ -163,8 +162,8 @@ class MpesaPaymentService
             'paid_at' => $status === PaymentStatus::SUCCESS ? now() : null,
         ]);
 
-        if ($status === PaymentStatus::SUCCESS && $payment->order->status === OrderStatus::PENDING) {
-            $payment->order->update(['status' => OrderStatus::PROCESSING]);
+        if ($status === PaymentStatus::SUCCESS) {
+            $payment->order->markConfirmed();
         }
     }
 

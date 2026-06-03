@@ -19,6 +19,9 @@
     // Variable + grouped products need a choice made on the product page, so they
     // link there instead of quick-adding the parent from the card.
     $needsOptions = in_array($product->type, [\App\Enums\ProductType::VARIABLE, \App\Enums\ProductType::GROUPED], true);
+    // Quote-only and unpriced products can't be quick-added (there's no price to
+    // charge); they route to the product page where the quote flow lives.
+    $isQuoteOnly = $product->requires_quotation || ($product->sale_price ?? $product->price) === null;
 @endphp
 
 <article class="group flex flex-col overflow-hidden rounded border border-zinc-200 bg-white transition hover:shadow-md">
@@ -78,6 +81,13 @@
                class="absolute right-2.5 bottom-2.5 z-10 inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-500 px-3.5 text-[12px] font-semibold text-white shadow-md transition hover:bg-brand-600">
                 <flux:icon.adjustments-horizontal variant="micro" class="size-3.5" />
                 Options
+            </a>
+        {{-- Quote-only / unpriced: no quick-add — route to the product page --}}
+        @elseif ($isQuoteOnly)
+            <a href="{{ route('product.show', $product) }}" wire:navigate aria-label="Request a quote"
+               class="absolute right-2.5 bottom-2.5 z-10 inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-500 px-3.5 text-[12px] font-semibold text-white shadow-md transition hover:bg-brand-600">
+                <flux:icon.document-text variant="micro" class="size-3.5" />
+                Quote
             </a>
         @else
         {{-- Add to cart stepper — single expanding pill, no element swapping --}}

@@ -126,7 +126,7 @@ it('drives the M-Pesa payment flow from STK push to confirmation on the payment 
     ]);
 
     $stripePayment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id, 'status' => PaymentStatus::PENDING, 'stripe_client_secret' => 'pi_secret',
+        'order_id' => $order->id, 'status' => PaymentStatus::PENDING,
     ]);
 
     $this->mock(StripePaymentService::class)
@@ -159,7 +159,7 @@ it('drives the M-Pesa payment flow from STK push to confirmation on the payment 
 it('rejects an invalid M-Pesa number on the payment page', function () {
     $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
     $stripePayment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id, 'status' => PaymentStatus::PENDING, 'stripe_client_secret' => 'pi_secret',
+        'order_id' => $order->id, 'status' => PaymentStatus::PENDING,
     ]);
 
     $this->mock(StripePaymentService::class)

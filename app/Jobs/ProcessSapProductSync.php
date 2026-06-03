@@ -6,6 +6,7 @@ use App\Enums\StockStatus;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Settings\IntegrationSettings;
+use App\Support\ActivitySource;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,11 @@ class ProcessSapProductSync implements ShouldQueue
     public function __construct(public readonly array $products) {}
 
     public function handle(IntegrationSettings $settings): void
+    {
+        ActivitySource::for('SAP sync', fn () => $this->sync($settings));
+    }
+
+    private function sync(IntegrationSettings $settings): void
     {
         $skus = collect($this->products)->pluck('sku');
 

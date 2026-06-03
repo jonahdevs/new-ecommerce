@@ -374,7 +374,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                                 </span>
                             </div>
                             <div class="flex items-center justify-between text-sm text-ink-2">
-                                <span>VAT (16%)</span>
+                                <span>{{ $order->vatLabel() }}</span>
                                 <span class="font-medium tabular-nums">{!! money($order->vat_cents) !!}</span>
                             </div>
                         </div>

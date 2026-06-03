@@ -2,7 +2,6 @@
 
 namespace App\Services\Stripe;
 
-use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
@@ -24,20 +23,24 @@ class StripePaymentService
     }
 
     /**
-     * Create a Stripe PaymentIntent for the order and persist the client secret.
-     * Reuses an existing pending intent so refreshing the page doesn't create duplicates.
+     * Create a Stripe PaymentIntent for the order. Reuses an existing pending
+     * intent so refreshing the page doesn't create duplicates. The client
+     * secret is never persisted (see the payments migration); it's re-fetched
+     * from Stripe and carried transiently on the returned model.
      */
     public function createPaymentIntent(Order $order): Payment
     {
         $existing = $order->payments()
             ->where('provider', 'stripe')
             ->where('status', PaymentStatus::PENDING->value)
-            ->whereNotNull('stripe_client_secret')
+            ->whereNotNull('stripe_payment_intent_id')
             ->latest()
             ->first();
 
         if ($existing) {
-            return $existing;
+            $intent = PaymentIntent::retrieve($existing->stripe_payment_intent_id);
+
+            return $existing->withStripeClientSecret($intent->client_secret);
         }
 
         $intent = PaymentIntent::create([
@@ -56,8 +59,7 @@ class StripePaymentService
             'amount_cents' => $order->total_cents,
             'account_reference' => $order->order_number,
             'stripe_payment_intent_id' => $intent->id,
-            'stripe_client_secret' => $intent->client_secret,
-        ]);
+        ])->withStripeClientSecret($intent->client_secret);
     }
 
     /**
@@ -122,8 +124,6 @@ class StripePaymentService
             'paid_at' => now(),
         ]);
 
-        if ($payment->order->status === OrderStatus::PENDING) {
-            $payment->order->update(['status' => OrderStatus::PROCESSING]);
-        }
+        $payment->order->markConfirmed();
     }
 }

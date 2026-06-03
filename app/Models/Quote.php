@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notification as NotificationInstance;
+use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -44,6 +46,33 @@ class Quote extends Model
     public function items(): HasMany
     {
         return $this->hasMany(QuoteItem::class);
+    }
+
+    /**
+     * Whether this quote has a valid, customer-facing price. A fresh request is
+     * a draft with a zero total until staff prepare the formal quotation, so no
+     * price should be shown or trusted until then.
+     */
+    public function isPriced(): bool
+    {
+        return $this->status !== QuoteStatus::DRAFT && $this->total_cents > 0;
+    }
+
+    /**
+     * Send a customer-facing notification to whoever owns the quote: the
+     * registered user when present, otherwise the guest contact email.
+     */
+    public function notifyContact(NotificationInstance $notification): void
+    {
+        if ($this->user) {
+            $this->user->notify($notification);
+
+            return;
+        }
+
+        if ($this->contact_email) {
+            Notification::route('mail', $this->contact_email)->notify($notification);
+        }
     }
 
     /**

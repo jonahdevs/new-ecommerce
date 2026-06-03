@@ -126,7 +126,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                         </div>
                     @endif
                     <div class="flex justify-between">
-                        <flux:text size="sm">VAT (16%)</flux:text>
+                        <flux:text size="sm">{{ $order->vatLabel() }}</flux:text>
                         <flux:text size="sm" class="font-medium tabular-nums">{!! money($order->vat_cents) !!}</flux:text>
                     </div>
                 </div>

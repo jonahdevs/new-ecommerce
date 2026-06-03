@@ -197,3 +197,78 @@ it('keeps two variants of the same product as separate cart lines', function () 
         ->and($lines->firstWhere('label', 'Blue')['unit_price_cents'])->toBe(129900)
         ->and($lines->firstWhere('label', 'Blue')['qty'])->toBe(2);
 });
+
+it('clamps the quantity stepper between 1 and 99', function () {
+    $product = makeProduct(['slug' => 'qty-product']);
+
+    Livewire::test('pages::storefront.product', ['product' => $product])
+        ->set('qty', 1)->call('decQty')->assertSet('qty', 1)
+        ->set('qty', 99)->call('incQty')->assertSet('qty', 99)
+        ->set('qty', 5)->call('incQty')->assertSet('qty', 6)->call('decQty')->assertSet('qty', 5);
+});
+
+it('picks related products once and keeps them stable across round-trips', function () {
+    foreach (range(1, 4) as $i) {
+        makeProduct(['name' => "Related {$i}", 'slug' => "related-{$i}"]);
+    }
+    $product = makeProduct(['slug' => 'main-product']);
+
+    $component = Livewire::test('pages::storefront.product', ['product' => $product]);
+    $firstPick = $component->get('relatedIds');
+
+    expect($firstPick)->not->toBeEmpty();
+
+    // A round-trip (qty change) must not reshuffle or re-query the selection.
+    $component->call('incQty')->call('decQty');
+
+    expect($component->get('relatedIds'))->toBe($firstPick);
+});
+
+it('excludes self, out-of-stock, price-less and hidden products from related', function () {
+    $product = makeProduct(['slug' => 'main']);
+    $visible = makeProduct(['slug' => 'rel-visible']);
+    $outOfStock = makeProduct(['slug' => 'rel-oos', 'stock_status' => StockStatus::OUT_OF_STOCK->value]);
+    $priceless = makeProduct(['slug' => 'rel-noprice', 'price' => null]);
+    $hidden = makeProduct(['slug' => 'rel-hidden', 'visibility' => ProductVisibility::HIDDEN->value]);
+
+    $ids = Livewire::test('pages::storefront.product', ['product' => $product])->get('relatedIds');
+
+    expect($ids)->toContain($visible->id)
+        ->not->toContain($product->id)
+        ->not->toContain($outOfStock->id)
+        ->not->toContain($priceless->id)
+        ->not->toContain($hidden->id);
+});
+
+it('uses the parent bundle price when one is set', function () {
+    $component = makeProduct(['slug' => 'bundle-comp', 'price' => 40000]);
+    $bundle = makeProduct(['slug' => 'bundle-priced', 'type' => 'bundled', 'price' => 200000]);
+    BundleItem::create([
+        'bundle_product_id' => $bundle->id, 'product_id' => $component->id,
+        'quantity' => 2, 'is_optional' => false, 'sort_order' => 0,
+    ]);
+
+    $instance = Livewire::test('pages::storefront.product', ['product' => $bundle])->instance();
+
+    expect($instance->bundlePriceCents)->toBe(200000);
+});
+
+it('sums required components for a bundle with no parent price and ignores optional items', function () {
+    $required = makeProduct(['slug' => 'bundle-req', 'price' => 40000]);
+    $optional = makeProduct(['slug' => 'bundle-opt', 'price' => 99900]);
+    $bundle = makeProduct(['slug' => 'bundle-summed', 'type' => 'bundled', 'price' => null]);
+
+    BundleItem::create([
+        'bundle_product_id' => $bundle->id, 'product_id' => $required->id,
+        'quantity' => 2, 'is_optional' => false, 'sort_order' => 0,
+    ]);
+    BundleItem::create([
+        'bundle_product_id' => $bundle->id, 'product_id' => $optional->id,
+        'quantity' => 1, 'is_optional' => true, 'sort_order' => 1,
+    ]);
+
+    $instance = Livewire::test('pages::storefront.product', ['product' => $bundle])->instance();
+
+    // 40000 × 2 required; the optional 99900 line is excluded.
+    expect($instance->bundlePriceCents)->toBe(80000);
+});

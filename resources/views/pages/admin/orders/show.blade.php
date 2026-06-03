@@ -27,8 +27,16 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             'status' => ['required', Rule::enum(OrderStatus::class)],
         ]);
 
+        $changed = $this->order->status->value !== $this->status;
+
         $this->order->update(['status' => $this->status]);
         $this->order->refresh();
+
+        // The notification self-gates to fulfilment milestones (shipped/
+        // delivered/cancelled) and the customer's preferences.
+        if ($changed) {
+            $this->order->user?->notify(new \App\Notifications\Orders\OrderStatusChanged($this->order));
+        }
 
         Flux::toast(heading: 'Status updated', text: 'Order is now '.$this->order->status->label().'.', variant: 'success');
     }
@@ -206,7 +214,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                         </div>
                     @endif
                     <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-300">
-                        <span>VAT (16%)</span>
+                        <span>{{ $order->vatLabel() }}</span>
                         <span class="font-medium tabular-nums">{!! money($order->vat_cents) !!}</span>
                     </div>
                 </div>

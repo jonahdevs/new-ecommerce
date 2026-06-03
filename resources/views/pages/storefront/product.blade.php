@@ -52,6 +52,9 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public string $reviewBody = '';
 
+    /** @var list<int> Related-product IDs, picked once at mount so they stay stable across round-trips. */
+    public array $relatedIds = [];
+
     public function mount(Product $product): void
     {
         $this->product = $product->load([
@@ -84,7 +87,32 @@ new #[Layout('layouts::storefront')] class extends Component
             $this->preselectDefaultVariant();
         }
 
+        $this->relatedIds = $this->pickRelatedIds();
+
         $this->applySeo();
+    }
+
+    /**
+     * Pick the related-product IDs once. Randomised here (not in the render-time
+     * computed) so the selection doesn't reshuffle on every Livewire round-trip.
+     *
+     * @return list<int>
+     */
+    private function pickRelatedIds(): array
+    {
+        $categoryId = $this->product->primary_category_id;
+
+        return Product::query()
+            ->where('visibility', 'visible')
+            ->where('stock_status', StockStatus::IN_STOCK)
+            ->whereNotNull('price')
+            ->where('price', '>', 0)
+            ->where('id', '!=', $this->product->id)
+            ->when($categoryId, fn ($q) => $q->where('primary_category_id', $categoryId))
+            ->inRandomOrder()
+            ->take(6)
+            ->pluck('id')
+            ->all();
     }
 
     /**
@@ -306,19 +334,16 @@ new #[Layout('layouts::storefront')] class extends Component
     #[Computed]
     public function related(): Collection
     {
-        $categoryId = $this->product->primary_category_id;
+        if ($this->relatedIds === []) {
+            return new Collection();
+        }
 
         return Product::query()
             ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
-            ->where('stock_status', StockStatus::IN_STOCK)
-            ->whereNotNull('price')
-            ->where('price', '>', 0)
-            ->where('id', '!=', $this->product->id)
-            ->when($categoryId, fn ($q) => $q->where('primary_category_id', $categoryId))
-            ->inRandomOrder()
-            ->take(6)
-            ->get();
+            ->whereIn('id', $this->relatedIds)
+            ->get()
+            ->sortBy(fn (Product $product) => array_search($product->id, $this->relatedIds, true))
+            ->values();
     }
 
     #[Computed]

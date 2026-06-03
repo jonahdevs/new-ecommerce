@@ -57,6 +57,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/settings/system', 'pages::admin.settings.system')->name('settings.system');
         Route::livewire('/settings/other', 'pages::admin.settings.other')->name('settings.other');
         Route::livewire('/activity/{logName}', 'pages::admin.activity.index')->name('activity.show');
+        Route::livewire('/activity/{logName}/{id}', 'pages::admin.activity.item')->name('activity.item');
 
         Route::livewire('/staff', 'pages::admin.staff.index')->name('staff.index');
         Route::livewire('/staff/create', 'pages::admin.staff.create')->name('staff.create');

@@ -10,6 +10,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('account/orders', 'pages::account.orders.index')->name('account.orders.index');
     Route::livewire('account/orders/{order}', 'pages::account.orders.show')->name('account.orders.show');
     Route::livewire('account/quotes', 'pages::account.quotes.index')->name('account.quotes.index');
+    Route::livewire('account/quotes/{quote}', 'pages::account.quotes.show')->name('account.quotes.show');
     Route::livewire('account/addresses', 'pages::account.addresses.index')->name('account.addresses.index');
 });
 

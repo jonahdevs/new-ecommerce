@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Middleware\ValidateRecaptcha;
 use App\Services\Mpesa\DarajaClient;
 use App\Settings\SecuritySettings;
+use App\Support\ActivitySource;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,21 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureSuperAdmin();
         $this->configureRecaptcha();
+        $this->configureActivitySource();
+    }
+
+    /**
+     * Stamp the originating source (e.g. "SAP sync") onto activity-log entries
+     * that are created without an authenticated causer.
+     */
+    protected function configureActivitySource(): void
+    {
+        Activity::creating(function (Activity $activity): void {
+            if ($activity->causer_id === null && ($source = ActivitySource::current()) !== null) {
+                $properties = $activity->properties ?? collect();
+                $activity->properties = $properties->put('source', $source);
+            }
+        });
     }
 
     /**

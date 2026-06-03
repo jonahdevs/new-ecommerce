@@ -58,9 +58,34 @@ it('lets a guest submit a quote request', function () {
     expect($quote)->not->toBeNull()
         ->and($quote->user_id)->toBeNull()
         ->and($quote->contact_email)->toBe('jane@example.com')
-        ->and($quote->status)->toBe(QuoteStatus::SENT)
-        ->and($quote->total_cents)->toBe(300000)
+        ->and($quote->status)->toBe(QuoteStatus::DRAFT)
+        ->and($quote->total_cents)->toBe(0)
         ->and($quote->items)->toHaveCount(1);
+});
+
+it('stores no pricing on a request — staff price it later', function () {
+    StorefrontSession::addToCart('wok-range', 2);
+
+    Livewire::test('pages::storefront.request-quote')
+        ->set('contact_name', 'Jane Guest')
+        ->set('contact_email', 'jane@example.com')
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $item = Quote::first()->items->first();
+
+    expect($item->unit_price_cents)->toBe(0)
+        ->and($item->line_total_cents)->toBe(0);
+});
+
+it('does not display any prices on the request page', function () {
+    StorefrontSession::addToCart('wok-range', 2);
+
+    Livewire::test('pages::storefront.request-quote')
+        ->assertSee('Wok Range')
+        ->assertDontSee('Indicative total')
+        ->assertSee('No pricing yet')
+        ->assertDontSee('3,000'); // catalog total (2 × 1,500) must never surface
 });
 
 it('auto-populates contact details for authenticated users', function () {

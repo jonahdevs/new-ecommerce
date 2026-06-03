@@ -5,8 +5,10 @@ use App\Enums\QuoteStatus;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quote;
+use App\Support\TaxCalculator;
 use Flux\Flux;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -189,11 +191,15 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             return;
         }
 
-        $this->quote->update(['status' => QuoteStatus::SENT]);
+        // Sent quotes await the customer's approval, which lights up the approve
+        // action in their account and fires the "ready for review" email.
+        $this->quote->update(['status' => QuoteStatus::AWAITING_APPROVAL]);
         $this->quote->refresh()->load('items');
         $this->syncFromQuote();
 
-        Flux::toast(heading: 'Quote sent', text: $this->quote->quote_number.' has been marked as sent to the customer.', variant: 'success');
+        $this->quote->notifyContact(new \App\Notifications\Quotes\QuoteReadyForReview($this->quote));
+
+        Flux::toast(heading: 'Quote sent', text: $this->quote->quote_number.' has been sent to the customer for approval.', variant: 'success');
     }
 
     public function approve(): void
@@ -216,31 +222,57 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function convertToOrder(): void
     {
-        $sequence = Order::whereYear('created_at', now()->year)->count() + 1;
-        $orderNumber = 'SHF-'.now()->year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
+        $tax = app(TaxCalculator::class);
 
-        $order = Order::create([
-            'user_id' => $this->quote->user_id,
-            'order_number' => $orderNumber,
-            'status' => OrderStatus::PENDING,
-            'subtotal_cents' => $this->quote->total_cents,
-            'vat_cents' => 0,
-            'delivery_cents' => 0,
-            'installation_cents' => 0,
-            'total_cents' => $this->quote->total_cents,
-            'notes' => 'Converted from quote '.$this->quote->quote_number,
-        ]);
+        $order = DB::transaction(function () use ($tax) {
+            // Snapshot each line's tax from the quoted price, mirroring checkout:
+            // lines with a product use its rate, manual lines fall back to the
+            // store default rate.
+            $lines = $this->quote->items()->with('product.taxClass')->get()->map(function ($item) use ($tax) {
+                $rate = $item->product
+                    ? $tax->rateForProduct($item->product)
+                    : ($tax->enabled() ? $tax->defaultRate() : 0.0);
 
-        foreach ($this->quote->items as $item) {
-            $order->items()->create([
-                'product_id' => $item->product_id,
-                'product_name' => $item->product_name,
-                'product_sku' => $item->product_sku,
-                'unit_price_cents' => $item->unit_price_cents,
-                'quantity' => $item->quantity,
-                'line_total_cents' => $item->line_total_cents,
+                return [
+                    'item' => $item,
+                    'rate' => $rate,
+                    'tax_cents' => $tax->taxForLine((int) $item->line_total_cents, $rate),
+                ];
+            });
+
+            $subtotalCents = (int) $lines->sum(fn ($line) => $line['item']->line_total_cents);
+            $vatCents = (int) $lines->sum('tax_cents');
+            // When prices include tax the VAT is embedded in the subtotal already.
+            $totalCents = $tax->pricesIncludeTax() ? $subtotalCents : $subtotalCents + $vatCents;
+
+            $order = Order::create([
+                'user_id' => $this->quote->user_id,
+                'order_number' => Order::generateNumber(),
+                'status' => OrderStatus::PENDING,
+                'subtotal_cents' => $subtotalCents,
+                'vat_cents' => $vatCents,
+                'delivery_cents' => 0,
+                'installation_cents' => 0,
+                'total_cents' => $totalCents,
+                'notes' => 'Converted from quote '.$this->quote->quote_number,
             ]);
-        }
+
+            foreach ($lines as $line) {
+                $item = $line['item'];
+                $order->items()->create([
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product_name,
+                    'product_sku' => $item->product_sku,
+                    'unit_price_cents' => $item->unit_price_cents,
+                    'quantity' => $item->quantity,
+                    'line_total_cents' => $item->line_total_cents,
+                    'tax_rate' => $line['rate'],
+                    'tax_cents' => $line['tax_cents'],
+                ]);
+            }
+
+            return $order;
+        });
 
         $this->redirectRoute('admin.orders.show', $order, navigate: true);
     }
