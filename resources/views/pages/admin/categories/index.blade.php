@@ -229,6 +229,11 @@ new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Com
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['category', $category->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     wire:click="openEdit({{ $category->id }})" />
                                 <flux:button size="xs" variant="ghost" icon="trash"

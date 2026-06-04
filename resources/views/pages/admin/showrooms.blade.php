@@ -267,7 +267,9 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
         </flux:table>
     </flux:card>
 
-    {{-- ── Showroom modal ── --}}
+    {{-- ================================================== --}}
+    {{-- SHOWROOM MODAL --}}
+    {{-- ================================================== --}}
     <flux:modal wire:model.self="showModal" class="md:w-[560px]" :dismissible="false">
         <flux:heading>{{ $editingId ? 'Edit showroom' : 'New showroom' }}</flux:heading>
         <flux:subheading>A branch location with its address and contact numbers.</flux:subheading>

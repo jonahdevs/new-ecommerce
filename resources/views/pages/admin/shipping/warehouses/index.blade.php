@@ -10,14 +10,18 @@ use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('Warehouses — Admin')] class extends Component
 {
-    // ─── Search & filter ─────────────────────────────────────────────────────
+    // ==================================================
+    // SEARCH & FILTER
+    // ==================================================
     #[Url(as: 'q')]
     public string $search = '';
 
     #[Url]
     public string $filterStatus = '';
 
-    // ─── Bulk selection ───────────────────────────────────────────────────────
+    // ==================================================
+    // BULK SELECTION
+    // ==================================================
     /** @var array<int, string> */
     public array $selected = [];
 
@@ -87,7 +91,9 @@ new #[Layout('layouts::app')] #[Title('Warehouses — Admin')] class extends Com
         Flux::toast(heading: 'Warehouse removed', text: $warehouse->name.' has been deleted.', variant: 'success');
     }
 
-    // ─── Bulk actions ─────────────────────────────────────────────────────────
+    // ==================================================
+    // BULK ACTIONS
+    // ==================================================
     public function bulkActivate(): void
     {
         if ($this->selected === []) {

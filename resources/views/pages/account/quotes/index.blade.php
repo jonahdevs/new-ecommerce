@@ -75,7 +75,9 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
                 </flux:table.columns>
                 <flux:table.rows>
                     @foreach ($this->quotes as $quote)
-                        <flux:table.row wire:key="quote-{{ $quote->id }}">
+                        <flux:table.row wire:key="quote-{{ $quote->id }}"
+                            :href="route('account.quotes.show', $quote)" wire:navigate
+                            class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                             <flux:table.cell>
                                 <flux:text class="font-semibold text-ink">{{ $quote->quote_number }}</flux:text>
                                 <flux:text size="sm" class="mt-0.5 text-ink-4 line-clamp-1">{{ $quote->title }}
@@ -100,21 +102,22 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
                                 </flux:badge>
                             </flux:table.cell>
                             <flux:table.cell class="hidden md:table-cell" align="end">
-                                <flux:text size="sm" class="font-semibold tabular-nums">
-                                    {!! money($quote->total_cents) !!}
-                                </flux:text>
+                                @if ($quote->isPriced())
+                                    <flux:text size="sm" class="font-semibold tabular-nums">
+                                        {!! money($quote->total_cents) !!}
+                                    </flux:text>
+                                @else
+                                    <flux:text size="sm" class="text-zinc-400 italic">Awaiting quote</flux:text>
+                                @endif
                             </flux:table.cell>
                             <flux:table.cell align="end">
-                                <div class="flex items-center justify-end gap-2">
-                                    @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
-                                        <flux:button size="sm" variant="primary"
-                                            wire:click="approve({{ $quote->id }})"
-                                            wire:confirm="Approve this quote?">
-                                            Approve
-                                        </flux:button>
-                                    @endif
-                                    <flux:button size="sm" variant="ghost">View</flux:button>
-                                </div>
+                                @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
+                                    <flux:button size="sm" variant="customer-primary"
+                                        :href="route('account.quotes.show', $quote)" wire:navigate
+                                        onclick="event.stopPropagation()">
+                                        Review &amp; approve
+                                    </flux:button>
+                                @endif
                             </flux:table.cell>
                         </flux:table.row>
                     @endforeach

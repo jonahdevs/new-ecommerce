@@ -21,29 +21,27 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
     {
         abort_unless($quote->user_id === auth()->id(), 403);
         SEOMeta::setRobots('noindex,follow');
-        $this->quote = $quote->load('items.product');
+        $this->quote = $quote->load('items');
     }
 
     public function approve(): void
     {
-        if ($this->quote->status !== QuoteStatus::AWAITING_APPROVAL) {
-            return;
-        }
+        abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
 
         $this->quote->update(['status' => QuoteStatus::APPROVED]);
+        $this->quote->refresh();
 
         Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
 
-        Flux::toast(heading: 'Quote approved', text: 'Our team will be in touch to arrange next steps.', variant: 'success');
+        Flux::toast(heading: 'Quote accepted', text: 'Our team will be in touch to confirm your order.', variant: 'success');
     }
 
     public function decline(): void
     {
-        if ($this->quote->status !== QuoteStatus::AWAITING_APPROVAL) {
-            return;
-        }
+        abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
 
         $this->quote->update(['status' => QuoteStatus::DECLINED]);
+        $this->quote->refresh();
 
         Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
 
@@ -51,125 +49,150 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
     }
 }; ?>
 
-<div class="page-fade space-y-6">
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #quote-print-area, #quote-print-area * { visibility: visible; }
+        #quote-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+</style>
 
-    {{-- Back --}}
-    <flux:button variant="ghost" size="sm" icon="arrow-left" :href="route('account.quotes.index')" wire:navigate inset="left">
-        Back to quotes
-    </flux:button>
+<div class="page-fade">
 
-    {{-- Header --}}
-    <div class="flex flex-wrap items-start justify-between gap-4">
+    @push('breadcrumbs')
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item :href="route('account.quotes.index')" wire:navigate>Quotes</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>{{ $quote->quote_number }}</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    @endpush
+
+    {{-- Page header --}}
+    <div class="print:hidden mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ $quote->quote_number }}</flux:heading>
-            <flux:text class="mt-1">{{ $quote->title }}</flux:text>
-            <flux:text size="sm" class="mt-1 text-ink-3">Requested {{ $quote->created_at->format('d F Y') }}</flux:text>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-semibold tracking-tight text-ink font-mono">{{ $quote->quote_number }}</h1>
+                <flux:badge :color="$quote->status->badgeColor()" size="sm">{{ $quote->status->label() }}</flux:badge>
+            </div>
+            <p class="mt-1 text-sm text-ink-3">
+                Submitted {{ $quote->created_at->format('d F Y') }}
+                @if ($quote->expires_at)
+                    &middot;
+                    <span @class(['text-red-500' => $quote->expires_at->isPast()])>
+                        {{ $quote->expires_at->isPast() ? 'Expired' : 'Valid until' }}
+                        {{ $quote->expires_at->format('d F Y') }}
+                    </span>
+                @endif
+            </p>
         </div>
-        <flux:badge :color="$quote->status->badgeColor()">{{ $quote->status->label() }}</flux:badge>
+
+        @if ($quote->isPriced())
+            <div class="flex items-center gap-2">
+                @if ($quote->document_path)
+                    <flux:button variant="customer-outline" size="customer" icon="arrow-down-tray"
+                        :href="route('account.quotes.download', $quote)">
+                        Download PDF
+                    </flux:button>
+                @endif
+                <flux:button variant="customer-outline" size="customer" icon="printer"
+                    onclick="window.print()">
+                    Print
+                </flux:button>
+            </div>
+        @endif
     </div>
 
-    <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
-
-        {{-- Items + notes --}}
-        <div class="min-w-0 flex-1 space-y-4">
-
-            <flux:card class="p-0">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Items</flux:heading>
-                </div>
-                <flux:table container:class="px-5">
-                    <flux:table.columns>
-                        <flux:table.column>Product</flux:table.column>
-                        <flux:table.column align="end">Qty</flux:table.column>
-                        @if ($quote->isPriced())
-                            <flux:table.column align="end">Unit</flux:table.column>
-                            <flux:table.column align="end">Line total</flux:table.column>
-                        @endif
-                    </flux:table.columns>
-                    <flux:table.rows>
-                        @forelse ($quote->items as $item)
-                            <flux:table.row wire:key="item-{{ $item->id }}">
-                                <flux:table.cell variant="strong">
-                                    {{ $item->product_name }}
-                                    @if ($item->product_sku)
-                                        <span class="block font-mono text-xs font-normal text-ink-4">{{ $item->product_sku }}</span>
-                                    @endif
-                                </flux:table.cell>
-                                <flux:table.cell align="end" class="tabular-nums text-ink-3">{{ $item->quantity }}</flux:table.cell>
-                                @if ($quote->isPriced())
-                                    <flux:table.cell align="end" class="tabular-nums text-ink-3">{!! money($item->unit_price_cents) !!}</flux:table.cell>
-                                    <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($item->line_total_cents) !!}</flux:table.cell>
-                                @endif
-                            </flux:table.row>
-                        @empty
-                            <flux:table.row>
-                                <flux:table.cell colspan="{{ $quote->isPriced() ? 4 : 2 }}" class="py-8 text-center text-ink-4">
-                                    No items on this quote.
-                                </flux:table.cell>
-                            </flux:table.row>
-                        @endforelse
-                    </flux:table.rows>
-                </flux:table>
-            </flux:card>
-
-            @if ($quote->notes)
-                <flux:card>
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Notes</flux:heading>
-                    <flux:text class="mt-3 whitespace-pre-line leading-relaxed">{{ $quote->notes }}</flux:text>
-                </flux:card>
-            @endif
-        </div>
-
-        {{-- Summary sidebar --}}
-        <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-80">
-            <flux:card class="p-0">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Summary</flux:heading>
-                </div>
-
-                <div class="space-y-3 px-5 py-4">
-                    @if ($quote->expires_at)
-                        <div class="flex justify-between text-sm">
-                            <flux:text size="sm">Valid until</flux:text>
-                            <flux:text size="sm" class="{{ $quote->expires_at->isPast() ? 'font-medium text-red-500' : 'text-ink-2' }}">
-                                {{ $quote->expires_at->format('d M Y') }}
-                            </flux:text>
+    {{-- Status timeline --}}
+    <div class="print:hidden mb-6">
+        @php
+            $steps = [
+                ['label' => 'Request submitted', 'done' => true],
+                ['label' => 'Under review',       'done' => $quote->status !== QuoteStatus::DRAFT],
+                ['label' => 'Quotation ready',    'done' => in_array($quote->status, [QuoteStatus::AWAITING_APPROVAL, QuoteStatus::SENT, QuoteStatus::APPROVED, QuoteStatus::DECLINED])],
+                ['label' => $quote->status === QuoteStatus::DECLINED ? 'Declined' : 'Accepted', 'done' => in_array($quote->status, [QuoteStatus::APPROVED, QuoteStatus::DECLINED])],
+            ];
+        @endphp
+        <div class="flex items-center gap-0">
+            @foreach ($steps as $i => $step)
+                <div class="flex items-center {{ $loop->last ? '' : 'flex-1' }}">
+                    <div class="flex flex-col items-center">
+                        <div @class([
+                            'flex size-7 items-center justify-center rounded-full text-[11px] font-bold',
+                            'bg-brand-500 text-white' => $step['done'],
+                            'bg-zinc-100 text-zinc-400 border border-zinc-200' => ! $step['done'],
+                        ])>
+                            @if ($step['done'])
+                                <flux:icon.check variant="micro" class="size-3.5" />
+                            @else
+                                {{ $i + 1 }}
+                            @endif
                         </div>
+                        <span @class([
+                            'mt-1.5 text-[11px] whitespace-nowrap',
+                            'font-semibold text-brand-500' => $step['done'],
+                            'text-zinc-400' => ! $step['done'],
+                        ])>{{ $step['label'] }}</span>
+                    </div>
+                    @if (! $loop->last)
+                        <div @class([
+                            'mb-5 h-px flex-1 mx-2',
+                            'bg-brand-500' => $step['done'],
+                            'bg-zinc-200' => ! $step['done'],
+                        ])></div>
                     @endif
-
-                    <div class="flex items-baseline justify-between">
-                        <flux:text class="text-[12px] font-bold uppercase tracking-wide">Total</flux:text>
-                        @if ($quote->isPriced())
-                            <span class="font-serif text-2xl text-brand-500 tabular-nums">{!! money($quote->total_cents) !!}</span>
-                        @else
-                            <flux:text size="sm" class="font-medium text-ink-3">Awaiting quote</flux:text>
-                        @endif
-                    </div>
                 </div>
-
-                @if (! $quote->isPriced())
-                    <div class="border-t border-zinc-200 px-5 py-4">
-                        <flux:text size="sm" class="text-ink-3">
-                            Our team is preparing your formal quotation. We'll confirm pricing, VAT, delivery and lead times shortly.
-                        </flux:text>
-                    </div>
-                @endif
-
-                @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
-                    <div class="space-y-2 border-t border-zinc-200 px-5 py-4">
-                        <flux:button variant="customer-primary" size="customer" class="w-full!"
-                                     wire:click="approve" wire:confirm="Approve this quote?">
-                            Approve quote
-                        </flux:button>
-                        <flux:button variant="ghost" size="customer" class="w-full!"
-                                     wire:click="decline" wire:confirm="Decline this quote?">
-                            Decline
-                        </flux:button>
-                    </div>
-                @endif
-            </flux:card>
-        </aside>
-
+            @endforeach
+        </div>
     </div>
+
+    {{-- Approve / Decline action bar (only when awaiting customer decision) --}}
+    @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
+        <div class="print:hidden mb-6 rounded-md border border-brand-200 bg-brand-50 px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="text-[14px] font-semibold text-brand-800">Your quotation is ready for review</p>
+                <p class="text-[13px] text-brand-600 mt-0.5">Review the document below and approve or decline.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <flux:button variant="ghost" size="sm" wire:click="decline">Decline</flux:button>
+                <flux:button variant="customer-primary" size="customer" icon="check" wire:click="approve">
+                    Approve quote
+                </flux:button>
+            </div>
+        </div>
+    @endif
+
+    {{-- Quote document (priced) or holding state (draft) --}}
+    @if ($quote->isPriced())
+        <div id="quote-print-area">
+            <x-quote-document :quote="$quote" :show-actions="false" />
+        </div>
+    @else
+        {{-- Not yet priced — show items submitted and a holding notice --}}
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-100 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <flux:heading size="sm">Items requested</flux:heading>
+                    <flux:badge color="yellow">Awaiting quote</flux:badge>
+                </div>
+                <flux:text size="sm" class="mt-1 text-zinc-400">Our team is preparing your formal quotation. Prices will appear once ready.</flux:text>
+            </div>
+            <div class="divide-y divide-zinc-100">
+                @foreach ($quote->items as $item)
+                    <div class="flex items-center justify-between px-6 py-3">
+                        <div>
+                            <p class="text-[13.5px] font-medium text-ink">{{ $item->product_name }}</p>
+                            @if ($item->product_sku)
+                                <p class="text-[11.5px] font-mono text-ink-4">{{ $item->product_sku }}</p>
+                            @endif
+                        </div>
+                        <span class="text-[13px] text-ink-3">× {{ $item->quantity }}</span>
+                    </div>
+                @endforeach
+            </div>
+            <div class="border-t border-zinc-100 bg-zinc-50 px-6 py-4 text-center text-[12.5px] text-ink-3">
+                You'll receive an email once your quotation is ready. Typical response within 1 business day.
+            </div>
+        </flux:card>
+    @endif
 
 </div>

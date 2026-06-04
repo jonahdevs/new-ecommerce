@@ -10,7 +10,9 @@ use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('Shipping Methods — Admin')] class extends Component
 {
-    // ─── Search & filter ─────────────────────────────────────────────────────
+    // ==================================================
+    // SEARCH & FILTER
+    // ==================================================
     #[Url(as: 'q')]
     public string $search = '';
 
@@ -20,7 +22,9 @@ new #[Layout('layouts::app')] #[Title('Shipping Methods — Admin')] class exten
     #[Url]
     public string $filterStatus = '';
 
-    // ─── Bulk selection ───────────────────────────────────────────────────────
+    // ==================================================
+    // BULK SELECTION
+    // ==================================================
     /** @var array<int, string> */
     public array $selected = [];
 
@@ -80,7 +84,9 @@ new #[Layout('layouts::app')] #[Title('Shipping Methods — Admin')] class exten
         Flux::toast(heading: 'Method removed', text: 'The shipping method has been deleted.', variant: 'success');
     }
 
-    // ─── Bulk actions ─────────────────────────────────────────────────────────
+    // ==================================================
+    // BULK ACTIONS
+    // ==================================================
     public function bulkActivate(): void
     {
         if ($this->selected === []) {
@@ -210,6 +216,11 @@ new #[Layout('layouts::app')] #[Title('Shipping Methods — Admin')] class exten
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['shipping_method', $method->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     :href="route('admin.shipping.methods.edit', $method)" wire:navigate />
                                 <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"

@@ -22,7 +22,9 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
     #[Url]
     public string $section = 'business';
 
-    // ─── Business info ───────────────────────────────────────────────────────────
+    // ==================================================
+    // BUSINESS INFO
+    // ==================================================
     public string $legal_name = '';
 
     public string $registration_number = '';
@@ -49,14 +51,18 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public $pendingFavicon = null;
 
-    // ─── Localization ──────────────────────────────────────────────────────────
+    // ==================================================
+    // LOCALIZATION
+    // ==================================================
     public string $currency = 'KES';
 
     public string $weight_unit = 'g';
 
     public string $dimension_unit = 'mm';
 
-    // ─── SEO ───────────────────────────────────────────────────────────────────
+    // ==================================================
+    // SEO
+    // ==================================================
     public string $meta_title_pattern = '';
 
     public string $default_meta_description = '';
@@ -65,7 +71,9 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public bool $generate_sitemap = true;
 
-    // ─── Social ────────────────────────────────────────────────────────────────
+    // ==================================================
+    // SOCIAL
+    // ==================================================
     public ?string $og_image_path = null;
 
     public $pendingOgImage = null;
@@ -84,14 +92,18 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public string $whatsapp_number = '';
 
-    // ─── Analytics ─────────────────────────────────────────────────────────────
+    // ==================================================
+    // ANALYTICS
+    // ==================================================
     public string $ga4_id = '';
 
     public string $gtm_id = '';
 
     public string $meta_pixel_id = '';
 
-    // ─── Legal ─────────────────────────────────────────────────────────────────
+    // ==================================================
+    // LEGAL
+    // ==================================================
     public bool $cookie_consent_enabled = false;
 
     public function mount(

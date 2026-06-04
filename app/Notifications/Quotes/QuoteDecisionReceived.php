@@ -4,27 +4,27 @@ namespace App\Notifications\Quotes;
 
 use App\Enums\QuoteStatus;
 use App\Models\Quote;
+use App\Notifications\Concerns\RespectsStaffPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-/**
- * Staff alert that a customer has approved or declined a quotation, so the
- * team can act (convert to order, or follow up).
- */
 class QuoteDecisionReceived extends Notification implements ShouldQueue
 {
     use Queueable;
+    use RespectsStaffPreferences;
 
     public function __construct(public Quote $quote) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    protected function staffGlobalKey(): ?string
     {
-        return ['mail'];
+        return 'staff_quote_decision';
+    }
+
+    protected function staffPreferenceKey(): ?string
+    {
+        return 'quote_decision';
     }
 
     public function toMail(object $notifiable): MailMessage

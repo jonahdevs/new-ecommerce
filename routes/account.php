@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Quote;
+use App\Services\QuotePdfService;
 use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------------------------------
@@ -11,6 +13,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('account/orders/{order}', 'pages::account.orders.show')->name('account.orders.show');
     Route::livewire('account/quotes', 'pages::account.quotes.index')->name('account.quotes.index');
     Route::livewire('account/quotes/{quote}', 'pages::account.quotes.show')->name('account.quotes.show');
+    Route::get('account/quotes/{quote}/download', function (Quote $quote) {
+        abort_unless($quote->user_id === auth()->id(), 403);
+
+        return app(QuotePdfService::class)->download($quote)
+            ?? abort(404, 'Quote document not yet available.');
+    })->name('account.quotes.download');
     Route::livewire('account/addresses', 'pages::account.addresses.index')->name('account.addresses.index');
 });
 

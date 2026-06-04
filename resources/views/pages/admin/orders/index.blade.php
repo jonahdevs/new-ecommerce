@@ -191,7 +191,14 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                             {{ $order->created_at->format('M j, Y') }}
                         </flux:table.cell>
                         <flux:table.cell align="end">
-                            <flux:button size="xs" variant="ghost" icon="eye" tooltip="View order" :href="route('admin.orders.show', $order)" wire:navigate />
+                            <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['order', $order->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
+                                <flux:button size="xs" variant="ghost" icon="eye" tooltip="View order" :href="route('admin.orders.show', $order)" wire:navigate />
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

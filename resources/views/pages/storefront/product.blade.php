@@ -181,7 +181,9 @@ new #[Layout('layouts::storefront')] class extends Component
 
         $imageUrl = $product->cover_url;
 
-        // ── Meta + OG + Twitter ─────────────────────────────────────────
+        // ==================================================
+        // META + OG + TWITTER
+        // ==================================================
         SEOMeta::setTitle($title)->setDescription($description);
         OpenGraph::setTitle($title)
             ->setDescription($description)
@@ -197,7 +199,9 @@ new #[Layout('layouts::storefront')] class extends Component
             SEOMeta::setCanonical($product->canonical_url);
         }
 
-        // ── JSON-LD Product schema ──────────────────────────────────────
+        // ==================================================
+        // JSON-LD PRODUCT SCHEMA
+        // ==================================================
         $price = $product->sale_price ?? $product->price;
         if ($price !== null) {
             $price = app(\App\Support\TaxCalculator::class)->displayPriceCents($product, (int) $price);

@@ -33,6 +33,7 @@ class AdminSettingsNav
                 'checkout' => ['label' => 'Checkout & cart', 'icon' => 'shopping-cart'],
                 'quotations' => ['label' => 'Quotations', 'icon' => 'document-text'],
                 'shipping' => ['label' => 'Shipping & delivery', 'icon' => 'truck'],
+                'notifications' => ['label' => 'Notifications', 'icon' => 'bell'],
             ]],
             'financial' => ['label' => 'Financial', 'icon' => 'banknotes', 'sections' => [
                 'payments' => ['label' => 'Payments', 'icon' => 'credit-card'],

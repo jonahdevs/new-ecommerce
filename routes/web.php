@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\Payments\MpesaCallbackController;
 use App\Http\Controllers\Payments\StripeWebhookController;
 use App\Http\Controllers\SocialAuthController;
@@ -59,6 +60,12 @@ Route::get('/robots.txt', function () {
 
     return response(implode("\n", $lines)."\n")->header('Content-Type', 'text/plain');
 })->name('robots');
+
+// ---------------------------------------------------------------------------
+// Newsletter — confirm & unsubscribe (public, no auth)
+// ---------------------------------------------------------------------------
+Route::get('/newsletter/confirm/{token}', [NewsletterController::class, 'confirm'])->name('newsletter.confirm');
+Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
 // ---------------------------------------------------------------------------
 // Social auth — Google

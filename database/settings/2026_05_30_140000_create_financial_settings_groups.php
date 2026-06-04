@@ -6,7 +6,7 @@ return new class extends SettingsMigration
 {
     public function up(): void
     {
-        // ── Payments ───────────────────────────────────────────────────────
+        // Payments
         $this->migrator->add('payments.mpesa_enabled', true);
         $this->migrator->add('payments.mpesa_shortcode', '');
         $this->migrator->add('payments.mpesa_type', 'paybill');
@@ -16,15 +16,16 @@ return new class extends SettingsMigration
         $this->migrator->add('payments.bank_details', '');
         $this->migrator->add('payments.cash_on_delivery_enabled', false);
 
-        // ── Tax ────────────────────────────────────────────────────────────
+        // Tax
         $this->migrator->add('tax.tax_enabled', true);
         // The fallback tax class for products without one of their own. Populated
         // with the seeded "Standard rated" class by TaxClassSeeder.
         $this->migrator->add('tax.default_tax_class_id', null);
         $this->migrator->add('tax.prices_include_tax', true);
-        $this->migrator->add('tax.price_display', 'including');
 
-        // ── Currency & pricing ─────────────────────────────────────────────
+        // ==================================================
+        // CURRENCY & PRICING
+        // ==================================================
         $this->migrator->add('currency.symbol', 'KES');
         $this->migrator->add('currency.symbol_position', 'before');
         $this->migrator->add('currency.decimals', 0);

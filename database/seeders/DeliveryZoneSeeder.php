@@ -12,7 +12,9 @@ class DeliveryZoneSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Nairobi & Surroundings ─────────────────────────────────────────────
+        // ==================================================
+        // NAIROBI & SURROUNDINGS
+        // ==================================================
         // One polygon covering:
         //   Nairobi County (all areas)
         //   Kiambu:   Ruiru, Tatu City, Kamakis, Ngoigwa, Two Rivers/Ruaka, Jomoko, Kikuyu
@@ -57,7 +59,9 @@ class DeliveryZoneSeeder extends Seeder
             ],
         );
 
-        // ── Upcountry ──────────────────────────────────────────────────────────
+        // ==================================================
+        // UPCOUNTRY
+        // ==================================================
         // Covers all of Kenya outside the Nairobi metro area.
         // Priority 0 means the Nairobi zone (priority 10) always wins on overlap —
         // only addresses that fall outside the Nairobi polygon reach this zone.
@@ -110,7 +114,9 @@ class DeliveryZoneSeeder extends Seeder
             ],
         );
 
-        // ── Launch promotion ───────────────────────────────────────────────────
+        // ==================================================
+        // LAUNCH PROMOTION
+        // ==================================================
         // Free delivery everywhere until turned off.
         // Disable (is_active = false) or set ends_at when the promo ends.
         DeliveryPromotion::updateOrCreate(

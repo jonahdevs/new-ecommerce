@@ -25,7 +25,9 @@ beforeEach(function () {
     $this->admin->assignRole('admin');
 });
 
-// ── Settings shell & General tab ─────────────────────────────────────────────
+// ==================================================
+// SETTINGS SHELL & GENERAL TAB
+// ==================================================
 
 test('admin can view each settings tab', function (string $route) {
     $this->actingAs($this->admin)
@@ -113,7 +115,9 @@ test('the standalone personal component still shows the settings chrome for admi
         ->assertSee('Manage your profile and account settings');
 });
 
-// ── Website tab ──────────────────────────────────────────────────────────────
+// ==================================================
+// WEBSITE TAB
+// ==================================================
 
 test('admin can save seo settings', function () {
     $this->actingAs($this->admin);
@@ -150,7 +154,9 @@ test('social links reject an invalid url', function () {
         ->assertHasErrors(['facebook_url']);
 });
 
-// ── Financial tab ────────────────────────────────────────────────────────────
+// ==================================================
+// FINANCIAL TAB
+// ==================================================
 
 test('the tax section offers existing classes as the default', function () {
     TaxClass::create(['name' => 'Standard rated', 'slug' => 'standard-rated', 'rate' => 16, 'is_active' => true]);
@@ -200,7 +206,9 @@ test('the default tax class must reference an existing class', function () {
         ->assertHasErrors(['default_tax_class_id']);
 });
 
-// ── App tab ──────────────────────────────────────────────────────────────────
+// ==================================================
+// APP TAB
+// ==================================================
 
 test('admin can save inventory settings', function () {
     $this->actingAs($this->admin);
@@ -237,7 +245,9 @@ test('inventory rejects an invalid out-of-stock behavior', function () {
         ->assertHasErrors(['out_of_stock_behavior']);
 });
 
-// ── System tab ───────────────────────────────────────────────────────────────
+// ==================================================
+// SYSTEM TAB
+// ==================================================
 
 test('admin can save security settings', function () {
     $this->actingAs($this->admin);
@@ -273,7 +283,9 @@ test('security rejects too short a minimum password length', function () {
         ->assertHasErrors(['min_password_length']);
 });
 
-// ── General tab: personal notifications ──────────────────────────────────────
+// ==================================================
+// GENERAL TAB: PERSONAL NOTIFICATIONS
+// ==================================================
 
 test('admin can save personal notification preferences', function () {
     $this->actingAs($this->admin);
@@ -290,7 +302,9 @@ test('admin can save personal notification preferences', function () {
         ->and($prefs['notifications']['low_stock']['app'])->toBeTrue();
 });
 
-// ── Other tab: maintenance (backup & cache) ──────────────────────────────────
+// ==================================================
+// OTHER TAB: MAINTENANCE (BACKUP & CACHE)
+// ==================================================
 
 test('admin can clear all caches', function () {
     $this->actingAs($this->admin);
@@ -314,7 +328,9 @@ test('admin can trigger a database backup', function () {
         ->assertHasNoErrors();
 });
 
-// ── Staff Management ─────────────────────────────────────────────────────────
+// ==================================================
+// STAFF MANAGEMENT
+// ==================================================
 
 test('admin can view staff page', function () {
     $this->actingAs($this->admin)

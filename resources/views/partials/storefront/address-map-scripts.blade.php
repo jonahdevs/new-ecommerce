@@ -65,7 +65,9 @@ Alpine.data('addressMap', () => {
             isGoogle ? await this.initGoogleMap() : await this.initLeafletMap();
         },
 
-        // ── Leaflet ───────────────────────────────────────────────────────
+        // ==================================================
+        // LEAFLET
+        // ==================================================
 
         async initLeafletMap() {
             const container = document.getElementById('address-map-container');
@@ -113,7 +115,9 @@ Alpine.data('addressMap', () => {
             if (this.map) { this.map.remove(); this.map = null; this.marker = null; }
         },
 
-        // ── Google Maps ───────────────────────────────────────────────────
+        // ==================================================
+        // GOOGLE MAPS
+        // ==================================================
 
         async initGoogleMap() {
             const container = document.getElementById('address-map-container');
@@ -169,7 +173,9 @@ Alpine.data('addressMap', () => {
             if (container) container.innerHTML = '';
         },
 
-        // ── Shared ────────────────────────────────────────────────────────
+        // ==================================================
+        // SHARED
+        // ==================================================
 
         placeMarker(lat, lng) {
             isGoogle ? this.placeMarkerGoogle(lat, lng) : this.placeMarkerLeaflet(lat, lng);

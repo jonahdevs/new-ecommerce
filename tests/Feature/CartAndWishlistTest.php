@@ -27,7 +27,9 @@ beforeEach(function () {
     ]);
 });
 
-// ─── Cart page ─────────────────────────────────────────────────────────────
+// ==================================================
+// CART PAGE
+// ==================================================
 
 it('renders the cart page in its empty state', function () {
     $response = $this->get(route('cart'));
@@ -73,7 +75,9 @@ it('removes an item from the cart', function () {
         ->and(StorefrontSession::cart())->not->toHaveKey('wok-range');
 });
 
-// ─── Wishlist page ─────────────────────────────────────────────────────────
+// ==================================================
+// WISHLIST PAGE
+// ==================================================
 
 it('renders the wishlist page in its empty state', function () {
     $response = $this->get(route('wishlist'));

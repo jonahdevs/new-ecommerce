@@ -215,6 +215,11 @@ new #[Layout('layouts::app')] #[Title('Reviews — Admin')] class extends Compon
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['review', $review->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 @if ($review->status !== \App\Enums\ReviewStatus::APPROVED)
                                     <flux:button size="xs" variant="ghost" icon="check" wire:click="approve({{ $review->id }})"
                                         class="text-emerald-600! hover:text-emerald-700!" />

@@ -26,7 +26,9 @@ function sapHeaders(): array
     return ['X-SAP-Secret' => 'test-secret-123'];
 }
 
-// ── Controller ────────────────────────────────────────────────────────────────
+// ==================================================
+// CONTROLLER
+// ==================================================
 
 it('rejects requests with a missing or wrong secret', function () {
     postJson('/api/products/sync', [])->assertUnauthorized();
@@ -73,7 +75,9 @@ it('accepts a valid batch and returns 202 with the queued job', function () {
     });
 });
 
-// ── Job ───────────────────────────────────────────────────────────────────────
+// ==================================================
+// JOB
+// ==================================================
 
 it('syncs price and quantity to a product by sku', function () {
     $product = Product::factory()->create(['sku' => 'PROD-001', 'sale_price' => 1000, 'stock_quantity' => 5]);

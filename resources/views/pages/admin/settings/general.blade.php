@@ -1,7 +1,9 @@
 <?php
 
+use App\Settings\NotificationSettings;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -17,18 +19,11 @@ new #[Layout('layouts::app')] #[Title('General settings — Admin')] class exten
 
     /** @var array<string, array<string, bool>> */
     protected static array $notificationDefaults = [
-        'new_order' => ['email' => true, 'app' => true],
-        'low_stock' => ['email' => true, 'app' => true],
-        'new_review' => ['email' => false, 'app' => true],
-        'new_quote' => ['email' => true, 'app' => true],
-    ];
-
-    /** @var array<string, string> */
-    protected static array $notificationLabels = [
-        'new_order' => 'New order placed',
-        'low_stock' => 'Product low on stock',
-        'new_review' => 'New product review',
-        'new_quote' => 'New quotation request',
+        'new_order'      => ['email' => true,  'inapp' => true,  'whatsapp' => false],
+        'new_review'     => ['email' => false, 'inapp' => true,  'whatsapp' => false],
+        'low_stock'      => ['email' => true,  'inapp' => true,  'whatsapp' => false],
+        'new_quote'      => ['email' => true,  'inapp' => true,  'whatsapp' => false],
+        'quote_decision' => ['email' => true,  'inapp' => true,  'whatsapp' => false],
     ];
 
     public function mount(): void
@@ -41,10 +36,10 @@ new #[Layout('layouts::app')] #[Title('General settings — Admin')] class exten
         );
     }
 
-    /** @return array<string, string> */
-    public function getNotificationLabels(): array
+    #[Computed]
+    public function whatsappEnabled(): bool
     {
-        return static::$notificationLabels;
+        return app(NotificationSettings::class)->whatsapp_channel_enabled;
     }
 
     public function saveNotifications(): void
@@ -76,35 +71,99 @@ new #[Layout('layouts::app')] #[Title('General settings — Admin')] class exten
 
     {{-- My notifications (personal staff alerts) --}}
     @if ($section === 'notifications')
-        <flux:card>
-            <flux:heading>My notifications</flux:heading>
-            <flux:subheading>Choose which alerts you personally receive, and how.</flux:subheading>
+        <form wire:submit="saveNotifications">
+            <flux:card class="p-0">
 
-            <form wire:submit="saveNotifications" class="mt-6">
-                <div class="overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
-                    <div class="grid grid-cols-[1fr_auto_auto] items-center gap-x-6 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">
-                        <span>Event</span>
-                        <span class="w-12 text-center">Email</span>
-                        <span class="w-12 text-center">In-app</span>
+                {{-- Title --}}
+                <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
+                    <flux:icon.bell class="size-4 text-zinc-500" />
+                    <flux:heading>My notifications</flux:heading>
+                </div>
+
+                <p class="border-b border-zinc-200 px-5 py-3 text-sm text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                    Choose which alerts you personally receive. These override nothing — the global master switches in
+                    <a href="{{ route('admin.settings.app', ['section' => 'notifications']) }}" wire:navigate
+                        class="text-brand-500 hover:underline">App → Notifications</a> take priority.
+                </p>
+
+                {{-- Channel headers --}}
+                <div class="flex items-center justify-end border-b border-zinc-200 bg-zinc-50 px-5 py-2.5 dark:border-zinc-600 dark:bg-zinc-800/40">
+                    <span class="w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest text-zinc-500">Email</span>
+                    <span class="w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest text-zinc-500">In-app</span>
+                    <span @class([
+                        'w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest',
+                        'text-zinc-500' => $this->whatsappEnabled,
+                        'text-zinc-300 dark:text-zinc-600' => ! $this->whatsappEnabled,
+                    ])>WhatsApp</span>
+                </div>
+
+                @php
+                    $groups = [
+                        [
+                            'label' => 'Orders & Payments',
+                            'icon'  => 'shopping-bag',
+                            'rows'  => [
+                                ['key' => 'new_order', 'label' => 'New order placed', 'desc' => 'Alert when a customer places an order.'],
+                            ],
+                        ],
+                        [
+                            'label' => 'Customers & Reviews',
+                            'icon'  => 'users',
+                            'rows'  => [
+                                ['key' => 'new_review', 'label' => 'New review submitted', 'desc' => 'Alert when a customer review is pending moderation.'],
+                            ],
+                        ],
+                        [
+                            'label' => 'Inventory',
+                            'icon'  => 'archive-box',
+                            'rows'  => [
+                                ['key' => 'low_stock', 'label' => 'Low stock alert', 'desc' => 'Alert when a product hits the low stock threshold.'],
+                            ],
+                        ],
+                        [
+                            'label' => 'Quotations',
+                            'icon'  => 'document-text',
+                            'rows'  => [
+                                ['key' => 'new_quote',      'label' => 'New quote request',         'desc' => 'Alert when a customer submits a quote request.'],
+                                ['key' => 'quote_decision', 'label' => 'Quote accepted / declined', 'desc' => 'Alert when a customer responds to a prepared quotation.'],
+                            ],
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($groups as $group)
+                    <div class="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50/60 px-5 py-3 dark:border-zinc-600 dark:bg-zinc-800/20">
+                        <flux:icon :icon="$group['icon']" class="size-3.5 shrink-0 text-brand-500" />
+                        <span class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">{{ $group['label'] }}</span>
                     </div>
-                    @foreach ($this->getNotificationLabels() as $event => $label)
-                        <div class="grid grid-cols-[1fr_auto_auto] items-center gap-x-6 px-4 py-3 @if (! $loop->last) border-b border-zinc-100 dark:border-zinc-800 @endif">
-                            <span class="text-sm dark:text-white">{{ $label }}</span>
-                            <div class="flex w-12 justify-center">
-                                <flux:checkbox wire:model="notifications.{{ $event }}.email" />
+                    @foreach ($group['rows'] as $row)
+                        <div class="flex items-center justify-between gap-4 px-5 py-3.5
+                            @if (! $loop->last || ! $loop->parent->last) border-b border-zinc-200 dark:border-zinc-700 @endif">
+                            <div class="flex-1">
+                                <div class="mb-0.5 text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">{{ $row['label'] }}</div>
+                                <div class="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">{{ $row['desc'] }}</div>
                             </div>
-                            <div class="flex w-12 justify-center">
-                                <flux:checkbox wire:model="notifications.{{ $event }}.app" />
+                            <div class="flex shrink-0 items-center">
+                                <div class="flex w-16 justify-center">
+                                    <flux:switch wire:model="notifications.{{ $row['key'] }}.email" />
+                                </div>
+                                <div class="flex w-16 justify-center">
+                                    <flux:switch wire:model="notifications.{{ $row['key'] }}.inapp" />
+                                </div>
+                                <div @class(['flex w-16 justify-center', 'opacity-40' => ! $this->whatsappEnabled])>
+                                    <flux:switch wire:model="notifications.{{ $row['key'] }}.whatsapp" :disabled="! $this->whatsappEnabled" />
+                                </div>
                             </div>
                         </div>
                     @endforeach
-                </div>
+                @endforeach
 
-                <div class="mt-6 flex justify-end">
-                    <flux:button type="submit" variant="primary">Save changes</flux:button>
-                </div>
-            </form>
-        </flux:card>
+            </flux:card>
+
+            <div class="mt-6 flex justify-end">
+                <flux:button type="submit" variant="primary">Save changes</flux:button>
+            </div>
+        </form>
     @endif
 
 </x-admin.settings-shell>

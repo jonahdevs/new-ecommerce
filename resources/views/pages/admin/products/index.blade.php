@@ -18,7 +18,9 @@ use Maatwebsite\Excel\Facades\Excel;
 new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Component {
     use WithFileUploads, WithPagination;
 
-    // ── Import ────────────────────────────────────────────────────────────────
+    // ==================================================
+    // IMPORT
+    // ==================================================
     public bool $showImportModal = false;
 
     public mixed $importFile = null;
@@ -493,12 +495,16 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
         @endif
     </flux:card>
 
-    {{-- ── Import modal ── --}}
+    {{-- ================================================== --}}
+    {{-- IMPORT MODAL --}}
+    {{-- ================================================== --}}
     <flux:modal wire:model.self="showImportModal" class="md:w-[560px]" :dismissible="false">
         <div class="space-y-6">
 
             @if ($importResults !== null)
-                {{-- ── Results state ── --}}
+                {{-- ================================================== --}}
+                {{-- RESULTS STATE --}}
+                {{-- ================================================== --}}
                 <div>
                     <flux:heading>Import complete</flux:heading>
                     <flux:subheading>Here's a summary of what was processed.</flux:subheading>
@@ -536,7 +542,9 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                     <flux:button variant="primary" wire:click="closeImportModal">Done</flux:button>
                 </div>
             @else
-                {{-- ── Upload state ── --}}
+                {{-- ================================================== --}}
+                {{-- UPLOAD STATE --}}
+                {{-- ================================================== --}}
                 <div>
                     <flux:heading>Import Products</flux:heading>
                     <flux:subheading>Upload a spreadsheet to bulk-create or update products. Products are matched by SKU

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ProductExportController;
+use App\Http\Controllers\Admin\SubscriberExportController;
 use App\Http\Middleware\EnsureTwoFactorWhenRequired;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/quotes', 'pages::admin.quotes.index')->name('quotes.index');
         Route::livewire('/quotes/create', 'pages::admin.quotes.create')->name('quotes.create');
         Route::livewire('/quotes/{quote}', 'pages::admin.quotes.show')->name('quotes.show');
+        Route::livewire('/quotes/{quote}/preview', 'pages::admin.quotes.preview')->name('quotes.preview');
         Route::livewire('/payments', 'pages::admin.payments.index')->name('payments.index');
         Route::livewire('/payments/{payment}', 'pages::admin.payments.show')->name('payments.show');
         Route::livewire('/customers', 'pages::admin.customers.index')->name('customers.index');
@@ -69,4 +71,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/roles/create', 'pages::admin.roles.form')->name('roles.create');
         Route::livewire('/roles/{role}/edit', 'pages::admin.roles.form')->name('roles.edit');
         Route::livewire('/permissions', 'pages::admin.permissions.index')->name('permissions.index');
+
+        Route::livewire('/subscribers', 'pages::admin.subscribers.index')->name('subscribers.index');
+        Route::get('/subscribers/export', SubscriberExportController::class)->name('subscribers.export');
     });

@@ -87,10 +87,13 @@ class TaxCalculator
         return (int) round($lineTotalCents * $rate);
     }
 
-    /** Whether the storefront should show prices with tax included. */
+    /**
+     * Whether the storefront should show prices with tax included.
+     * Always mirrors prices_include_tax — one source of truth.
+     */
     public function displayIncludesTax(): bool
     {
-        return $this->settings->price_display === 'including';
+        return $this->pricesIncludeTax();
     }
 
     /** Short label for how displayed prices are presented, e.g. "incl. VAT". */
@@ -104,31 +107,12 @@ class TaxCalculator
     }
 
     /**
-     * Convert a stored product price into the amount to display on the
-     * storefront, honouring how prices are stored (`prices_include_tax`)
-     * versus how they should be shown (`price_display`). Only adjusts when
-     * the two differ; otherwise the stored price is returned unchanged.
+     * Display price for a product. Storage always matches display now, so the
+     * stored price is returned as-is.
      */
     public function displayPriceCents(Product $product, int $priceCents): int
     {
-        // Short-circuit before touching the product's tax class so listing pages
-        // never trigger an N+1 in the common case where display matches storage.
-        if ($priceCents <= 0 || $this->pricesIncludeTax() === $this->displayIncludesTax()) {
-            return $priceCents;
-        }
-
-        $rate = $this->rateForProduct($product);
-
-        if ($rate <= 0) {
-            return $priceCents;
-        }
-
-        $multiplier = 1 + ($rate / 100);
-
-        // Stored excl. tax but shown incl. → add tax; stored incl. but shown excl. → strip it.
-        return $this->displayIncludesTax()
-            ? (int) round($priceCents * $multiplier)
-            : (int) round($priceCents / $multiplier);
+        return $priceCents;
     }
 
     /**

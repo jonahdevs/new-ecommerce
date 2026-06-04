@@ -23,7 +23,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
     public string $deliveryMethod = 'delivery';
 
-    // ─── Address form modals ──────────────────────────────────────────────────
+    // ==================================================
+    // ADDRESS FORM MODALS
+    // ==================================================
     public bool $showAddressModal = false;
 
     public string $addressModalMode = 'select';
@@ -345,7 +347,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
         <div class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
 
-            {{-- ── Left: forms ── --}}
+            {{-- ================================================== --}}
+            {{-- LEFT: FORMS --}}
+            {{-- ================================================== --}}
             <div class="flex-1 min-w-0 space-y-6">
 
                 {{-- Delivery address --}}
@@ -428,7 +432,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                 </section>
             </div>
 
-            {{-- ── Right: order summary ── --}}
+            {{-- ================================================== --}}
+            {{-- RIGHT: ORDER SUMMARY --}}
+            {{-- ================================================== --}}
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
                 <div class="rounded-md border border-zinc-200 bg-white">
                     <div class="border-b border-zinc-200 px-6 py-4">

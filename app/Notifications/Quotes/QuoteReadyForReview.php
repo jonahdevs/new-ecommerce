@@ -4,6 +4,7 @@ namespace App\Notifications\Quotes;
 
 use App\Models\Quote;
 use App\Notifications\Concerns\RespectsPreferences;
+use App\Services\QuotePdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -22,7 +23,7 @@ class QuoteReadyForReview extends Notification implements ShouldQueue
 
     protected function preferenceKey(): ?array
     {
-        return ['quotes', 'ready'];
+        return ['quotes', 'updates'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -32,6 +33,12 @@ class QuoteReadyForReview extends Notification implements ShouldQueue
             ->greeting('Your quotation is ready')
             ->line('We\'ve prepared quotation '.$this->quote->quote_number.' ('.$this->quote->title.').')
             ->line('Total: '.money($this->quote->total_cents));
+
+        $pdfBytes = app(QuotePdfService::class)->bytes($this->quote);
+
+        if ($pdfBytes) {
+            $mail->attachData($pdfBytes, $this->quote->quote_number.'.pdf', ['mime' => 'application/pdf']);
+        }
 
         if ($this->quote->user_id) {
             return $mail

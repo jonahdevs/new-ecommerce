@@ -38,6 +38,9 @@ class StripePaymentService
             ->first();
 
         if ($existing) {
+            $intent = PaymentIntent::retrieve($existing->stripe_payment_intent_id);
+            $existing->stripe_client_secret = $intent->client_secret;
+
             return $existing;
         }
 
@@ -57,8 +60,11 @@ class StripePaymentService
             'amount_cents' => $order->total_cents,
             'account_reference' => $order->order_number,
             'stripe_payment_intent_id' => $intent->id,
-            'stripe_client_secret' => $intent->client_secret,
         ]);
+
+        $payment->stripe_client_secret = $intent->client_secret;
+
+        return $payment;
     }
 
     /**

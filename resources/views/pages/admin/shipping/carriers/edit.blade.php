@@ -20,7 +20,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
     #[Locked]
     public ShippingCarrier $shippingCarrier;
 
-    // ─── Carrier details ──────────────────────────────────────────────────────
+    // ==================================================
+    // CARRIER DETAILS
+    // ==================================================
     public string $name = '';
     public string $slug = '';
     public string $driver = '';
@@ -29,7 +31,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
     public bool $is_active = true;
     public int $sort_order = 0;
 
-    // ─── Credentials (driver-specific) ────────────────────────────────────────
+    // ==================================================
+    // CREDENTIALS (DRIVER-SPECIFIC)
+    // ==================================================
     public string $cred_api_key = '';
     public string $cred_api_secret = '';
     public string $cred_pickup_lat = '';
@@ -37,10 +41,14 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
     public string $cred_pickup_phone = '';
     public string $cred_account_number = '';
 
-    // ─── Zone coverage ────────────────────────────────────────────────────────
+    // ==================================================
+    // ZONE COVERAGE
+    // ==================================================
     public ?int $addingZoneId = null;
 
-    // ─── Rate editing ─────────────────────────────────────────────────────────
+    // ==================================================
+    // RATE EDITING
+    // ==================================================
     // Keyed by "{zone_id}_{method_id}" — loaded on demand when editing a zone's rates.
     /** @var array<string, array{rate_type: string, base_rate: ?float, free_over: ?float, eta_label: string, eta_min_days: ?int, eta_max_days: ?int, is_active: bool}> */
     public array $rateForm = [];
@@ -84,7 +92,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
         $this->slug = Str::slug($this->slug);
     }
 
-    // ─── Save carrier details ─────────────────────────────────────────────────
+    // ==================================================
+    // SAVE CARRIER DETAILS
+    // ==================================================
 
     public function saveDetails(): void
     {
@@ -121,7 +131,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
         Flux::toast(heading: 'Carrier saved', text: $this->name.' has been updated.', variant: 'success');
     }
 
-    // ─── Zone coverage ────────────────────────────────────────────────────────
+    // ==================================================
+    // ZONE COVERAGE
+    // ==================================================
 
     #[Computed]
     public function coveredZones()
@@ -200,7 +212,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
         unset($this->coveredZones);
     }
 
-    // ─── Rate editor ──────────────────────────────────────────────────────────
+    // ==================================================
+    // RATE EDITOR
+    // ==================================================
 
     public function openRateEditor(int $zoneId): void
     {
@@ -288,7 +302,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
 
     <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-        {{-- ── Zone coverage & rates (main column) ────────────────────────── --}}
+        {{-- ================================================== --}}
+        {{-- ZONE COVERAGE & RATES (MAIN COLUMN) --}}
+        {{-- ================================================== --}}
         <div class="space-y-6 lg:col-span-2">
 
             <flux:card class="p-0 overflow-hidden">
@@ -418,7 +434,9 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
 
         </div>
 
-        {{-- ── Carrier details (sidebar) ──────────────────────────────────── --}}
+        {{-- ================================================== --}}
+        {{-- CARRIER DETAILS (SIDEBAR) --}}
+        {{-- ================================================== --}}
         <div class="space-y-6">
 
             {{-- Details form --}}

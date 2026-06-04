@@ -201,7 +201,14 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                             @endif
                         </flux:table.cell>
                         <flux:table.cell align="end">
-                            <flux:button size="xs" variant="ghost" icon="eye" tooltip="View quote" :href="route('admin.quotes.show', $quote)" wire:navigate />
+                            <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['quote', $quote->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
+                                <flux:button size="xs" variant="ghost" icon="eye" tooltip="View quote" :href="route('admin.quotes.show', $quote)" wire:navigate />
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

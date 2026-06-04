@@ -124,6 +124,11 @@ new #[Layout('layouts::app')] #[Title('Pages — Admin')] class extends Componen
                         <flux:table.cell class="text-zinc-500">{{ $page->updated_at->format('d M Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['page', $page->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="arrow-top-right-on-square"
                                     :href="route('page.show', $page->slug)" target="_blank" />
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"

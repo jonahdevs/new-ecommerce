@@ -24,9 +24,9 @@ class OrderStatusChanged extends Notification implements ShouldQueue
     protected function preferenceKey(): ?array
     {
         return match ($this->order->status) {
-            OrderStatus::OUT_FOR_DELIVERY => ['orders', 'shipped'],
-            OrderStatus::DELIVERED => ['orders', 'delivered'],
-            OrderStatus::CANCELLED => ['orders', 'cancelled'],
+            OrderStatus::OUT_FOR_DELIVERY,
+            OrderStatus::DELIVERED,
+            OrderStatus::CANCELLED => ['orders', 'updates'],
             default => null,
         };
     }

@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // ── 1. Shipping carriers ──────────────────────────────────────────────
+        // ==================================================
+        // 1. SHIPPING CARRIERS
+        // ==================================================
         // The logistics companies that fulfil deliveries. Could be the business's
         // own fleet (Sheffield Africa Logistics → driver: self_managed) or a 3PL
         // integration (Cossim, Fargo, Glovo, DHL, Aramex …).
@@ -32,7 +34,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // ── 2. Shipping methods ───────────────────────────────────────────────
+        // ==================================================
+        // 2. SHIPPING METHODS
+        // ==================================================
         // Customer-facing method templates ONLY — no pricing, no zone/carrier
         // links here. These are the labels the customer sees and picks from.
         //
@@ -51,7 +55,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // ── 3. Carrier zones ─────────────────────────────────────────────────
+        // ==================================================
+        // 3. CARRIER ZONES
+        // ==================================================
         // Declares which geographic zones a carrier covers. Sheffield covers
         // "Nairobi & Surroundings". Cossim (when added) covers upcountry zones.
         // The checkout reads this to determine which carriers can deliver to a
@@ -70,7 +76,9 @@ return new class extends Migration
             $table->unique(['carrier_id', 'delivery_zone_id']);
         });
 
-        // ── 4. Carrier rates ─────────────────────────────────────────────────
+        // ==================================================
+        // 4. CARRIER RATES
+        // ==================================================
         // The actual price for a specific carrier + zone + method combination.
         // Sheffield charges KES 300 for Standard in Nairobi.
         // Cossim charges KES 800 for Standard in their upcountry zones.
@@ -107,7 +115,9 @@ return new class extends Migration
             $table->unique(['carrier_id', 'delivery_zone_id', 'shipping_method_id'], 'carrier_zone_method_unique');
         });
 
-        // ── 5. Warehouses ────────────────────────────────────────────────────
+        // ==================================================
+        // 5. WAREHOUSES
+        // ==================================================
         // Physical stock locations where customers can collect orders.
         // Separate from showrooms (sales/display offices).
         // Currently one: Sheffield Africa Logistics, Nairobi.
@@ -129,7 +139,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // ── 6. Shipments ─────────────────────────────────────────────────────
+        // ==================================================
+        // 6. SHIPMENTS
+        // ==================================================
         // One row per order. Tracks the full lifecycle:
         //   pending → booked → picked_up → in_transit → delivered | failed | returned
         // For pickup orders: warehouse_id is set, carrier_id is null.
@@ -166,7 +178,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // ── 7. Wire orders to shipping ────────────────────────────────────────
+        // ==================================================
+        // 7. WIRE ORDERS TO SHIPPING
+        // ==================================================
         // shipping_method_id: what the customer chose (Standard, Express, Pickup)
         // warehouse_id:       which warehouse, set when method type = pickup
         // *_name snapshots:   preserve human-readable labels even if the method

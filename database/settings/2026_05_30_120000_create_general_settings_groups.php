@@ -6,7 +6,9 @@ return new class extends SettingsMigration
 {
     public function up(): void
     {
-        // ── Business info ──────────────────────────────────────────────────
+        // ==================================================
+        // BUSINESS INFO
+        // ==================================================
         $this->migrator->add('business.legal_name', config('app.name', 'My Store'));
         $this->migrator->add('business.registration_number', '');
         $this->migrator->add('business.tax_pin', '');
@@ -15,13 +17,17 @@ return new class extends SettingsMigration
         $this->migrator->add('business.address', '');
         $this->migrator->add('business.business_hours', '');
 
-        // ── Branding ───────────────────────────────────────────────────────
+        // ==================================================
+        // BRANDING
+        // ==================================================
         $this->migrator->add('branding.store_name', config('app.name', 'My Store'));
         $this->migrator->add('branding.tagline', '');
         $this->migrator->add('branding.logo_path', null);
         $this->migrator->add('branding.favicon_path', null);
 
-        // ── Localization ───────────────────────────────────────────────────
+        // ==================================================
+        // LOCALIZATION
+        // ==================================================
         $this->migrator->add('localization.currency', 'KES');
         $this->migrator->add('localization.weight_unit', 'g');
         $this->migrator->add('localization.dimension_unit', 'mm');

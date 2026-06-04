@@ -23,7 +23,7 @@ use Illuminate\Database\Seeder;
  *
  *  WAREHOUSE               →  where customers collect (always available, regardless of zone)
  *
- * ─── Checkout logic ────────────────────────────────────────────────────────
+ * Checkout logic
  *  1. Customer address → point-in-polygon check → resolves a DeliveryZone (or null)
  *  2. Zone found?
  *     YES → find carriers covering that zone → show their methods (Standard, Express)
@@ -42,7 +42,9 @@ class LogisticsSeeder extends Seeder
         $this->seedCoverage();
     }
 
-    // ── 1. Shipping methods (customer-facing labels) ──────────────────────────
+    // ==================================================
+    // 1. SHIPPING METHODS (CUSTOMER-FACING LABELS)
+    // ==================================================
 
     private function seedMethods(): void
     {
@@ -75,7 +77,9 @@ class LogisticsSeeder extends Seeder
         }
     }
 
-    // ── 2. Carriers ───────────────────────────────────────────────────────────
+    // ==================================================
+    // 2. CARRIERS
+    // ==================================================
 
     private function seedCarriers(): void
     {
@@ -126,7 +130,9 @@ class LogisticsSeeder extends Seeder
 
     }
 
-    // ── 3. Warehouse ──────────────────────────────────────────────────────────
+    // ==================================================
+    // 3. WAREHOUSE
+    // ==================================================
 
     private function seedWarehouse(): void
     {
@@ -151,7 +157,9 @@ class LogisticsSeeder extends Seeder
         );
     }
 
-    // ── 4. Zone coverage + rates ──────────────────────────────────────────────
+    // ==================================================
+    // 4. ZONE COVERAGE + RATES
+    // ==================================================
 
     private function seedCoverage(): void
     {
@@ -213,7 +221,9 @@ class LogisticsSeeder extends Seeder
             ],
         );
 
-        // ── When Cossim is integrated ──────────────────────────────────────────
+        // ==================================================
+        // WHEN COSSIM IS INTEGRATED
+        // ==================================================
         // Add their upcountry zones to delivery_zones, then uncomment:
         //
         // $cossim = ShippingCarrier::where('slug', 'cossim')->first();

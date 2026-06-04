@@ -23,12 +23,16 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
     public bool $mpesaEnabled = true;
 
-    // ─── Stripe card ─────────────────────────────────────────────────────────
+    // ==================================================
+    // STRIPE CARD
+    // ==================================================
     public ?string $stripeClientSecret = null;
 
     public ?int $stripePaymentId = null;
 
-    // ─── M-Pesa ────────────────────────────────────────────────────────────
+    // ==================================================
+    // M-PESA
+    // ==================================================
     public string $mpesaPhone = '';
 
     public bool $awaitingPayment = false;
@@ -76,7 +80,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
         }
     }
 
-    // ─── Stripe card ─────────────────────────────────────────────────────────
+    // ==================================================
+    // STRIPE CARD
+    // ==================================================
 
     /**
      * Called from Alpine via $wire after Stripe.js reports payment_intent.succeeded.
@@ -102,7 +108,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
         $this->redirectRoute('account.orders.show', $this->order, navigate: true);
     }
 
-    // ─── M-Pesa ────────────────────────────────────────────────────────────
+    // ==================================================
+    // M-PESA
+    // ==================================================
 
     public function payWithMpesa(): void
     {
@@ -202,7 +210,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
         <div class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
 
-            {{-- ── Left: payment methods ── --}}
+            {{-- ================================================== --}}
+            {{-- LEFT: PAYMENT METHODS --}}
+            {{-- ================================================== --}}
             <div class="flex-1 min-w-0 space-y-3"
                  @if ($cardEnabled)
                  x-data="stripeCardForm(@js($stripeKey), @js($this->stripeClientSecret))"
@@ -214,7 +224,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                 @enderror
 
                 @if ($cardEnabled)
-                {{-- ── Card Payment ── --}}
+                {{-- ================================================== --}}
+                {{-- CARD PAYMENT --}}
+                {{-- ================================================== --}}
                 <div class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'card' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
                     {{-- Header row --}}
                     <button type="button" wire:click="selectMethod('card')"
@@ -291,7 +303,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                 @endif
 
                 @if ($mpesaEnabled)
-                {{-- ── M-Pesa ── --}}
+                {{-- ================================================== --}}
+                {{-- M-PESA --}}
+                {{-- ================================================== --}}
                 <div class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
                     {{-- Header row --}}
                     <button type="button" wire:click="selectMethod('mpesa')"
@@ -332,7 +346,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
             </div>
 
-            {{-- ── Right: order summary ── --}}
+            {{-- ================================================== --}}
+            {{-- RIGHT: ORDER SUMMARY --}}
+            {{-- ================================================== --}}
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
                 <div class="rounded-md border border-zinc-200 bg-white">
                     <div class="border-b border-zinc-200 px-6 py-4">

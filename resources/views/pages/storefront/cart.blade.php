@@ -101,7 +101,9 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
         @else
             <div class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
 
-                {{-- ── Items table ── --}}
+                {{-- ================================================== --}}
+                {{-- ITEMS TABLE --}}
+                {{-- ================================================== --}}
                 <div class="flex-1 min-w-0">
                     <div class="overflow-hidden rounded-md border border-zinc-200">
                     <table class="w-full bg-white">
@@ -199,7 +201,9 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                     </div>
                 </div>
 
-                {{-- ── Cart summary sidebar ── --}}
+                {{-- ================================================== --}}
+                {{-- CART SUMMARY SIDEBAR --}}
+                {{-- ================================================== --}}
                 <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
                     <div class="rounded-md border border-zinc-200 bg-white">
                         <div class="border-b border-zinc-200 px-6 py-4">

@@ -206,6 +206,11 @@ new #[Layout('layouts::app')] #[Title('Tax classes — Admin')] class extends Co
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['tax_class', $taxClass->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     wire:click="openEdit({{ $taxClass->id }})" />
                                 <flux:button size="xs" variant="ghost" icon="trash"

@@ -36,7 +36,9 @@ new #[Layout('layouts::app')] class extends Component
 {
     use WithFileUploads;
 
-    // ─── Identity ──────────────────────────────────────────────────────────────
+    // ==================================================
+    // IDENTITY
+    // ==================================================
     public ?int $productId = null;
 
     public string $name = '';
@@ -47,19 +49,25 @@ new #[Layout('layouts::app')] class extends Component
 
     public string $type = 'simple';
 
-    // ─── Content ───────────────────────────────────────────────────────────────
+    // ==================================================
+    // CONTENT
+    // ==================================================
     public string $short_description = '';
 
     public string $description = '';
 
     public string $technical_specification = '';
 
-    // ─── Organisation (sidebar) ────────────────────────────────────────────────
+    // ==================================================
+    // ORGANISATION (SIDEBAR)
+    // ==================================================
     public ?int $brand_id = null;
 
     public ?int $primary_category_id = null;
 
-    // ─── Pricing ───────────────────────────────────────────────────────────────
+    // ==================================================
+    // PRICING
+    // ==================================================
     public ?float $price = null;
 
     public ?float $sale_price = null;
@@ -70,7 +78,9 @@ new #[Layout('layouts::app')] class extends Component
 
     public ?int $tax_class_id = null;
 
-    // ─── Inventory ─────────────────────────────────────────────────────────────
+    // ==================================================
+    // INVENTORY
+    // ==================================================
     public string $sku = '';
 
     public string $stock_status = 'in_stock';
@@ -83,12 +93,16 @@ new #[Layout('layouts::app')] class extends Component
 
     public ?int $min_order_quantity = null;
 
-    // ─── Fulfilment flags ──────────────────────────────────────────────────────
+    // ==================================================
+    // FULFILMENT FLAGS
+    // ==================================================
     public bool $is_virtual = false;
 
     public bool $is_downloadable = false;
 
-    // ─── Shipping ──────────────────────────────────────────────────────────────
+    // ==================================================
+    // SHIPPING
+    // ==================================================
     public bool $requires_shipping = true;
 
     public ?float $weight = null;
@@ -104,7 +118,9 @@ new #[Layout('layouts::app')] class extends Component
 
     public string $dimension_unit = 'mm';
 
-    // ─── Status & Visibility (sidebar) ────────────────────────────────────────
+    // ==================================================
+    // STATUS & VISIBILITY (SIDEBAR)
+    // ==================================================
     public string $status = 'draft';
 
     public string $published_at = '';
@@ -113,25 +129,33 @@ new #[Layout('layouts::app')] class extends Component
 
     public int $sort_order = 0;
 
-    // ─── Advanced / B2B ────────────────────────────────────────────────────────
+    // ==================================================
+    // ADVANCED / B2B
+    // ==================================================
     public bool $requires_quotation = false;
 
     public string $quotation_notes = '';
 
-    // ─── SEO ───────────────────────────────────────────────────────────────────
+    // ==================================================
+    // SEO
+    // ==================================================
     public string $meta_title = '';
 
     public string $meta_description = '';
 
     public string $canonical_url = '';
 
-    // ─── Attributes (edit mode) ────────────────────────────────────────────────
+    // ==================================================
+    // ATTRIBUTES (EDIT MODE)
+    // ==================================================
     /**
      * @var array<int, array{attribute_id: ?int, name: string, values_string: string, is_visible: bool, is_variation_attribute: bool, collapsed: bool}>
      */
     public array $selectedAttributes = [];
 
-    // ─── Variants (edit mode) ──────────────────────────────────────────────────
+    // ==================================================
+    // VARIANTS (EDIT MODE)
+    // ==================================================
     /**
      * @var array<int, array{id: ?int, sku: string, price: ?float, compare_at_price: ?float, cost_price: ?float, stock_status: string, stock_quantity: ?int, allow_backorder: bool, manage_stock: bool, weight: ?float, length: ?float, width: ?float, height: ?float, description: string, image_path: ?string, image_url: ?string, is_active: bool, is_default: bool, label: string, collapsed: bool}>
      */
@@ -150,26 +174,34 @@ new #[Layout('layouts::app')] class extends Component
      */
     public array $defaultVariantFormValues = [];
 
-    // ─── Bulk edit modal state ─────────────────────────────────────────────────
+    // ==================================================
+    // BULK EDIT MODAL STATE
+    // ==================================================
     public string $bulkEditField = '';
 
     public ?float $bulkEditNumericValue = null;
 
     public string $bulkEditSelectValue = '';
 
-    // ─── Downloadable Files (edit mode) ────────────────────────────────────────
+    // ==================================================
+    // DOWNLOADABLE FILES (EDIT MODE)
+    // ==================================================
     /**
      * @var array<int, array{id: ?int, name: string, download_limit: ?int, download_expiry_days: ?int, version: string, collapsed: bool}>
      */
     public array $downloadableFiles = [];
 
-    // ─── Linked Products (edit mode) ───────────────────────────────────────────
+    // ==================================================
+    // LINKED PRODUCTS (EDIT MODE)
+    // ==================================================
     /**
      * @var array<int, array{product_id: int, name: string, sku: ?string, quantity: int, is_optional: bool, price_override: ?float}>
      */
     public array $linkedProducts = [];
 
-    // ─── Product links: upsells / cross-sells / accessories / spare parts ──────
+    // ==================================================
+    // PRODUCT LINKS: UPSELLS / CROSS-SELLS / ACCESSORIES / SPARE PARTS
+    // ==================================================
     /**
      * @var array<string, array<int, array{product_id: int, name: string, sku: ?string}>>
      */
@@ -180,7 +212,9 @@ new #[Layout('layouts::app')] class extends Component
         'spare_part' => [],
     ];
 
-    // ─── Product picker modal (shared by components + links) ───────────────────
+    // ==================================================
+    // PRODUCT PICKER MODAL (SHARED BY COMPONENTS + LINKS)
+    // ==================================================
     public bool $showLinkPicker = false;
 
     /** Target list the picker adds to: 'component' or a ProductLinkType value. */
@@ -190,7 +224,9 @@ new #[Layout('layouts::app')] class extends Component
 
     public int $linkPickerPerPage = 18;
 
-    // ─── Tags (sidebar) ────────────────────────────────────────────────────────
+    // ==================================================
+    // TAGS (SIDEBAR)
+    // ==================================================
     /**
      * @var array<int, array{id: int, name: string}>
      */
@@ -198,7 +234,9 @@ new #[Layout('layouts::app')] class extends Component
 
     public string $tagSearch = '';
 
-    // ─── Images (sidebar) ──────────────────────────────────────────────────────
+    // ==================================================
+    // IMAGES (SIDEBAR)
+    // ==================================================
     /** Pending cover image upload (Livewire temp file). */
     public $pendingCoverImage = null;
 
@@ -277,7 +315,9 @@ new #[Layout('layouts::app')] class extends Component
         $this->canonical_url = (string) $product->canonical_url;
         $this->slugManuallyEdited = true;
 
-        // Attributes
+        // ==================================================
+        // ATTRIBUTES
+        // ==================================================
         $this->selectedAttributes = $product->productAttributes
             ->map(function ($pa) {
                 $storedValues = $pa->values ?? [];
@@ -303,7 +343,9 @@ new #[Layout('layouts::app')] class extends Component
                 ];
             })->all();
 
-        // Variants
+        // ==================================================
+        // VARIANTS
+        // ==================================================
         $this->variants = $product->variants
             ->map(fn ($v) => [
                 'id' => $v->id,
@@ -334,7 +376,9 @@ new #[Layout('layouts::app')] class extends Component
             ->mapWithKeys(fn ($a) => [$a['name'] => ''])
             ->all();
 
-        // Downloadable files
+        // ==================================================
+        // DOWNLOADABLE FILES
+        // ==================================================
         $this->downloadableFiles = $product->downloadableFiles
             ->map(fn ($f) => [
                 'id' => $f->id,
@@ -345,7 +389,9 @@ new #[Layout('layouts::app')] class extends Component
                 'collapsed' => true,
             ])->all();
 
-        // Linked products
+        // ==================================================
+        // LINKED PRODUCTS
+        // ==================================================
         if ($product->type === ProductType::GROUPED) {
             $this->linkedProducts = GroupedProductItem::where('group_product_id', $product->id)
                 ->with('child')
@@ -381,7 +427,9 @@ new #[Layout('layouts::app')] class extends Component
             ];
         }
 
-        // Tags
+        // ==================================================
+        // TAGS
+        // ==================================================
         $this->selectedTags = $product->tags
             ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])
             ->all();
@@ -432,7 +480,9 @@ new #[Layout('layouts::app')] class extends Component
     }
 
     // ==================================================
+    // ==================================================
     // ATTRIBUTES
+    // ==================================================
     // ==================================================
 
     public function addNewAttribute(): void
@@ -492,7 +542,9 @@ new #[Layout('layouts::app')] class extends Component
     }
 
     // ==================================================
+    // ==================================================
     // VARIANTS
+    // ==================================================
     // ==================================================
 
     public function generateVariants(): void
@@ -760,7 +812,9 @@ new #[Layout('layouts::app')] class extends Component
     }
 
     // ==================================================
+    // ==================================================
     // DOWNLOADABLE FILES
+    // ==================================================
     // ==================================================
 
     public function addFile(): void
@@ -886,7 +940,9 @@ new #[Layout('layouts::app')] class extends Component
     }
 
     // ==================================================
+    // ==================================================
     // TAGS
+    // ==================================================
     // ==================================================
 
     public function addTag(int $tagId, string $name): void
@@ -1056,7 +1112,9 @@ new #[Layout('layouts::app')] class extends Component
 
     private function saveRelationships(Product $product): void
     {
-        // ─── Attributes ────────────────────────────────────────────────────────
+        // ==================================================
+        // ATTRIBUTES
+        // ==================================================
         $product->productAttributes()->delete();
         foreach ($this->selectedAttributes as $i => $attr) {
             $values = array_values(array_filter(array_map('trim', explode('|', $attr['values_string']))));
@@ -1070,7 +1128,9 @@ new #[Layout('layouts::app')] class extends Component
             ]);
         }
 
-        // ─── Variants ──────────────────────────────────────────────────────────
+        // ==================================================
+        // VARIANTS
+        // ==================================================
         $keptIds = collect($this->variants)->pluck('id')->filter()->all();
         $product->variants()->whereNotIn('id', $keptIds)->delete();
 
@@ -1119,7 +1179,9 @@ new #[Layout('layouts::app')] class extends Component
             'default_variant_id' => $defaultIndex !== false ? ($savedVariantIds[$defaultIndex] ?? null) : null,
         ]);
 
-        // ─── Downloadable Files ────────────────────────────────────────────────
+        // ==================================================
+        // DOWNLOADABLE FILES
+        // ==================================================
         $keptFileIds = collect($this->downloadableFiles)->pluck('id')->filter()->all();
         $product->downloadableFiles()->whereNotIn('id', $keptFileIds)->delete();
 
@@ -1141,7 +1203,9 @@ new #[Layout('layouts::app')] class extends Component
             }
         }
 
-        // ─── Linked Products ───────────────────────────────────────────────────
+        // ==================================================
+        // LINKED PRODUCTS
+        // ==================================================
         if ($product->type === ProductType::GROUPED) {
             GroupedProductItem::where('group_product_id', $product->id)->delete();
             foreach ($this->linkedProducts as $i => $lp) {
@@ -1165,7 +1229,9 @@ new #[Layout('layouts::app')] class extends Component
             }
         }
 
-        // ─── Product Links ─────────────────────────────────────────────────────
+        // ==================================================
+        // PRODUCT LINKS
+        // ==================================================
         $product->links()->delete();
         foreach ($this->productLinks as $type => $items) {
             foreach ($items as $i => $item) {
@@ -1178,10 +1244,14 @@ new #[Layout('layouts::app')] class extends Component
             }
         }
 
-        // ─── Tags ──────────────────────────────────────────────────────────────
+        // ==================================================
+        // TAGS
+        // ==================================================
         $product->syncTags(collect($this->selectedTags)->pluck('name')->all());
 
-        // ─── Cover Image ───────────────────────────────────────────────────────
+        // ==================================================
+        // COVER IMAGE
+        // ==================================================
         if ($this->pendingCoverImage) {
             $product->images()->where('is_cover', true)->delete();
             $path = $this->pendingCoverImage->store('products', 'public');
@@ -1191,7 +1261,9 @@ new #[Layout('layouts::app')] class extends Component
             $this->coverImage = $cover ? ['id' => $cover->id, 'url' => $cover->url, 'alt' => ''] : null;
         }
 
-        // ─── Gallery Images ────────────────────────────────────────────────────
+        // ==================================================
+        // GALLERY IMAGES
+        // ==================================================
         if (! empty($this->pendingGalleryImages)) {
             $sortStart = $product->images()->where('is_cover', false)->max('sort_order') + 1;
             foreach ($this->pendingGalleryImages as $i => $file) {

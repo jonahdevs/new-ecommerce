@@ -207,7 +207,14 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                             {{ ($payment->paid_at ?? $payment->created_at)->format('M j, Y g:i A') }}
                         </flux:table.cell>
                         <flux:table.cell align="end">
-                            <flux:button size="xs" variant="ghost" icon="eye" tooltip="View payment" :href="route('admin.payments.show', $payment)" wire:navigate />
+                            <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['payment', $payment->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
+                                <flux:button size="xs" variant="ghost" icon="eye" tooltip="View payment" :href="route('admin.payments.show', $payment)" wire:navigate />
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

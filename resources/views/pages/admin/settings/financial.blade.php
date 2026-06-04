@@ -17,7 +17,7 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
     #[Url]
     public string $section = 'payments';
 
-    // ─── Payments ──────────────────────────────────────────────────────────────
+    // Payments
     public bool $mpesa_enabled = true;
 
     public string $mpesa_shortcode = '';
@@ -34,16 +34,16 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public bool $cash_on_delivery_enabled = false;
 
-    // ─── Tax ───────────────────────────────────────────────────────────────────
+    // Tax
     public bool $tax_enabled = true;
 
     public ?int $default_tax_class_id = null;
 
     public bool $prices_include_tax = true;
 
-    public string $price_display = 'including';
+    public bool $savedPricesIncludeTax = true;
 
-    // ─── Currency ──────────────────────────────────────────────────────────────
+    // Currency
     public string $symbol = 'KSh';
 
     public string $symbol_position = 'before';
@@ -68,7 +68,7 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         $this->tax_enabled = $tax->tax_enabled;
         $this->default_tax_class_id = $tax->default_tax_class_id;
         $this->prices_include_tax = $tax->prices_include_tax;
-        $this->price_display = $tax->price_display;
+        $this->savedPricesIncludeTax = $tax->prices_include_tax;
 
         $this->symbol = $currency->symbol;
         $this->symbol_position = $currency->symbol_position;
@@ -100,19 +100,38 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         Flux::toast(heading: 'Saved', text: 'Payment settings updated.', variant: 'success');
     }
 
-    public function saveTax(TaxSettings $settings): void
+    public function saveTax(): void
     {
         $this->validate([
             'default_tax_class_id' => ['nullable', 'exists:tax_classes,id'],
-            'price_display' => ['required', 'in:including,excluding'],
         ]);
+
+        if ($this->prices_include_tax !== $this->savedPricesIncludeTax) {
+            Flux::modal('tax-inclusive-warning')->show();
+
+            return;
+        }
+
+        $this->persistTax();
+    }
+
+    public function confirmSaveTax(): void
+    {
+        $this->persistTax();
+        Flux::modal('tax-inclusive-warning')->close();
+    }
+
+    private function persistTax(): void
+    {
+        $settings = app(TaxSettings::class);
 
         $settings->fill([
             'tax_enabled' => $this->tax_enabled,
             'default_tax_class_id' => $this->default_tax_class_id ?: null,
             'prices_include_tax' => $this->prices_include_tax,
-            'price_display' => $this->price_display,
         ])->save();
+
+        $this->savedPricesIncludeTax = $this->prices_include_tax;
 
         Flux::toast(heading: 'Saved', text: 'Tax settings updated.', variant: 'success');
     }
@@ -252,20 +271,51 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
                     </flux:select>
 
                     <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                        <flux:label>Product prices are entered tax-inclusive</flux:label>
+                        <div>
+                            <flux:label>Prices include tax</flux:label>
+                            <flux:text size="sm" class="text-xs text-zinc-400">Applies to both how prices are stored and how they are shown to customers.</flux:text>
+                        </div>
                         <flux:switch wire:model="prices_include_tax" />
                     </div>
-
-                    <flux:select wire:model="price_display" label="Display prices in the store">
-                        <flux:select.option value="including">Including tax</flux:select.option>
-                        <flux:select.option value="excluding">Excluding tax</flux:select.option>
-                    </flux:select>
                 @endif
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
                 </div>
             </form>
+
+            {{-- Confirmation modal shown when prices_include_tax is flipped --}}
+            <flux:modal name="tax-inclusive-warning" class="max-w-md" :dismissible="false">
+                <div class="flex items-start gap-4">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                        <flux:icon.exclamation-triangle class="size-5 text-amber-600" />
+                    </div>
+                    <div>
+                        <flux:heading size="lg">Review all product prices</flux:heading>
+                        <flux:text class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            You are changing whether product prices are stored inclusive or exclusive of tax.
+                            <strong class="text-zinc-900 dark:text-white">This setting does not automatically recalculate any prices.</strong>
+                        </flux:text>
+                        <flux:text class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+                            After saving, every product price in your catalogue will carry a different tax meaning.
+                            You must manually update all product prices to reflect the new setting, otherwise customers
+                            will be charged the wrong amount.
+                        </flux:text>
+                        <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                            Only proceed if you are prepared to update all product prices immediately.
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button variant="danger" wire:click="confirmSaveTax">
+                        I understand, save anyway
+                    </flux:button>
+                </div>
+            </flux:modal>
+
         </flux:card>
     @endif
 

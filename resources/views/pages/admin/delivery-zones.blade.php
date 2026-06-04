@@ -11,20 +11,26 @@ use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends Component
 {
-    // ─── Search & filter ─────────────────────────────────────────────────────
+    // ==================================================
+    // SEARCH & FILTER
+    // ==================================================
     #[Url(as: 'q')]
     public string $search = '';
 
     #[Url]
     public string $filterStatus = '';
 
-    // ─── Bulk selection ───────────────────────────────────────────────────────
+    // ==================================================
+    // BULK SELECTION
+    // ==================================================
     /** @var array<int, string> */
     public array $selected = [];
 
     public bool $selectAll = false;
 
-    // ─── Zone form ─────────────────────────────────────────────────────────
+    // ==================================================
+    // ZONE FORM
+    // ==================================================
     public bool $showZoneModal = false;
 
     public ?int $editingZoneId = null;
@@ -80,7 +86,9 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
         $this->selectAll = false;
     }
 
-    // ─── Zone CRUD ─────────────────────────────────────────────────────────
+    // ==================================================
+    // ZONE CRUD
+    // ==================================================
     public function zoneRules(): array
     {
         return [
@@ -157,7 +165,9 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
         Flux::toast(heading: 'Zone removed', text: 'The delivery area has been deleted.', variant: 'warning');
     }
 
-    // ─── Bulk actions ─────────────────────────────────────────────────────────
+    // ==================================================
+    // BULK ACTIONS
+    // ==================================================
     public function bulkActivate(): void
     {
         if ($this->selected === []) {
@@ -279,6 +289,11 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['delivery_zone', $zone->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     wire:click="openEditZone({{ $zone->id }})" />
                                 <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
@@ -303,7 +318,9 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
         </flux:table>
     </flux:card>
 
-    {{-- ── Zone modal ── --}}
+    {{-- ================================================== --}}
+    {{-- ZONE MODAL --}}
+    {{-- ================================================== --}}
     <flux:modal wire:model.self="showZoneModal" class="md:w-[900px]" :dismissible="false">
         <div>
             <flux:heading>{{ $editingZoneId ? 'Edit zone' : 'New delivery zone' }}</flux:heading>

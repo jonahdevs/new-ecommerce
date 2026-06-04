@@ -9,7 +9,7 @@ beforeEach(function () {
     $this->actingAs(User::factory()->create());
 });
 
-// ─── Model scope & helper ────────────────────────────────────────────────────
+// Model scope & helper
 
 it('scopes to products that are live now', function () {
     $published = Product::factory()->create(['status' => ProductStatus::PUBLISHED]);
@@ -32,7 +32,7 @@ it('reports isPublished correctly', function () {
         ->and(Product::factory()->create(['status' => ProductStatus::DRAFT])->isPublished())->toBeFalse();
 });
 
-// ─── Scheduled publishing command ────────────────────────────────────────────
+// Scheduled publishing command
 
 it('publishes scheduled products whose time has passed', function () {
     $due = Product::factory()->create(['status' => ProductStatus::SCHEDULED, 'published_at' => now()->subMinute()]);
@@ -44,7 +44,7 @@ it('publishes scheduled products whose time has passed', function () {
         ->and($future->fresh()->status)->toBe(ProductStatus::SCHEDULED);
 });
 
-// ─── Form: status handling ───────────────────────────────────────────────────
+// Form: status handling
 
 it('rejects a scheduled product with a past publish date', function () {
     Livewire::test('pages::admin.products.form')

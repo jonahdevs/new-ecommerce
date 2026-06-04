@@ -22,7 +22,7 @@ class OrderConfirmed extends Notification implements ShouldQueue
 
     protected function preferenceKey(): ?array
     {
-        return ['orders', 'confirmed'];
+        return ['orders', 'confirmation'];
     }
 
     public function toMail(object $notifiable): MailMessage

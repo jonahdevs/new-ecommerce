@@ -12,7 +12,9 @@ use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class extends Component
 {
-    // ─── Search & filter ─────────────────────────────────────────────────────
+    // ==================================================
+    // SEARCH & FILTER
+    // ==================================================
     #[Url(as: 'q')]
     public string $search = '';
 
@@ -25,13 +27,17 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
     #[Url]
     public string $filterStatus = '';
 
-    // ─── Bulk selection ───────────────────────────────────────────────────────
+    // ==================================================
+    // BULK SELECTION
+    // ==================================================
     /** @var array<int, string> */
     public array $selected = [];
 
     public bool $selectAll = false;
 
-    // ─── Promotion form ───────────────────────────────────────────────────────
+    // ==================================================
+    // PROMOTION FORM
+    // ==================================================
     public bool $showPromoModal = false;
 
     public ?int $editingPromoId = null;
@@ -114,7 +120,9 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
         $this->selectAll = false;
     }
 
-    // ─── Promotion CRUD ───────────────────────────────────────────────────────
+    // ==================================================
+    // PROMOTION CRUD
+    // ==================================================
     public function promoRules(): array
     {
         return [
@@ -205,7 +213,9 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
         Flux::toast(heading: 'Promotion removed', text: 'The promotion has been deleted.', variant: 'warning');
     }
 
-    // ─── Bulk actions ─────────────────────────────────────────────────────────
+    // ==================================================
+    // BULK ACTIONS
+    // ==================================================
     public function bulkActivate(): void
     {
         if ($this->selected === []) {
@@ -341,6 +351,11 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['delivery_promotion', $promo->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     wire:click="openEditPromo({{ $promo->id }})" />
                                 <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
@@ -365,7 +380,9 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
         </flux:table>
     </flux:card>
 
-    {{-- ── Promotion modal ── --}}
+    {{-- ================================================== --}}
+    {{-- PROMOTION MODAL --}}
+    {{-- ================================================== --}}
     <flux:modal wire:model.self="showPromoModal" class="md:w-[560px]" :dismissible="false">
         <flux:heading>{{ $editingPromoId ? 'Edit promotion' : 'New promotion' }}</flux:heading>
         <flux:subheading>Layer a discount or free delivery on top of zone fees.</flux:subheading>

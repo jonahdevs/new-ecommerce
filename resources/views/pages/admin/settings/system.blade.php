@@ -14,7 +14,9 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     #[Url]
     public string $section = 'email';
 
-    // ─── Email & SMS ───────────────────────────────────────────────────────────
+    // ==================================================
+    // EMAIL & SMS
+    // ==================================================
     public string $from_name = '';
 
     public string $from_address = '';
@@ -25,7 +27,9 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
     public string $sms_sender_id = '';
 
-    // ─── Integrations ──────────────────────────────────────────────────────────
+    // ==================================================
+    // INTEGRATIONS
+    // ==================================================
     public bool $google_login_enabled = false;
 
     public string $google_maps_api_key = '';
@@ -34,14 +38,18 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
     public string $recaptcha_site_key = '';
 
-    // ─── Security ──────────────────────────────────────────────────────────────
+    // ==================================================
+    // SECURITY
+    // ==================================================
     public int $min_password_length = 8;
 
     public bool $require_two_factor = false;
 
     public int $session_lifetime = 120;
 
-    // ─── Maintenance ───────────────────────────────────────────────────────────
+    // ==================================================
+    // MAINTENANCE
+    // ==================================================
     public bool $maintenance_mode = false;
 
     public string $maintenance_message = '';

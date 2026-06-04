@@ -1,5 +1,9 @@
 <?php
 
+use App\Mail\NewsletterConfirmation;
+use App\Models\Subscriber;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -25,7 +29,32 @@ new class extends Component
     public function subscribe(): void
     {
         $this->validate();
-        // TODO: persist once the newsletter_subscriptions table is added.
+
+        $existing = Subscriber::where('email', $this->email)->first();
+
+        if ($existing && $existing->isConfirmed()) {
+            // Already active — silently update interests and show success
+            $existing->update(['interests' => $this->interests]);
+            $this->submitted = true;
+
+            return;
+        }
+
+        // New, pending, or re-subscribing after unsubscribe
+        $subscriber = Subscriber::updateOrCreate(
+            ['email' => $this->email],
+            [
+                'interests'       => $this->interests,
+                'token'           => Str::random(64),
+                'source'          => request()->path(),
+                'ip_address'      => request()->ip(),
+                'subscribed_at'   => null,
+                'unsubscribed_at' => null,
+            ]
+        );
+
+        Mail::to($subscriber->email)->queue(new NewsletterConfirmation($subscriber));
+
         $this->submitted = true;
     }
 }; ?>
@@ -86,8 +115,10 @@ new class extends Component
                                     <p class="mt-1 text-[12px] text-[#d8c79d]">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <flux:button type="submit" variant="primary" class="shrink-0 self-start">
-                                Subscribe
+                            <flux:button type="submit" variant="primary" class="shrink-0 self-start"
+                                wire:loading.attr="disabled" wire:target="subscribe">
+                                <span wire:loading.remove wire:target="subscribe">Subscribe</span>
+                                <span wire:loading wire:target="subscribe">Sending…</span>
                             </flux:button>
                         </div>
 

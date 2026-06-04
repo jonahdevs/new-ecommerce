@@ -36,7 +36,7 @@
         {{-- Two-column layout --}}
         <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            {{-- ── Main column (2 cols) ── --}}
+            {{-- Main column (2 cols) --}}
             <div class="space-y-6 lg:col-span-2">
 
                 {{-- Basic Information --}}
@@ -899,7 +899,7 @@
 
             </div>
 
-            {{-- ── Sidebar (1 col) ── --}}
+            {{-- Sidebar (1 col) --}}
             <div class="space-y-6">
 
                 {{-- Status & Visibility --}}

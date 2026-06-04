@@ -10,7 +10,9 @@ beforeEach(function () {
     $this->actingAs(User::factory()->create());
 });
 
-// ─── Index ────────────────────────────────────────────────────────────────────
+// ==================================================
+// INDEX
+// ==================================================
 
 it('loads the attributes index', function () {
     $this->get(route('admin.attributes.index'))->assertOk();
@@ -35,7 +37,9 @@ it('deletes an attribute from the index', function () {
     expect(Attribute::find($attribute->id))->toBeNull();
 });
 
-// ─── Create ───────────────────────────────────────────────────────────────────
+// ==================================================
+// CREATE
+// ==================================================
 
 it('loads the create attribute page', function () {
     $this->get(route('admin.attributes.create'))->assertOk();
@@ -78,7 +82,9 @@ it('enforces unique slug on create', function () {
         ->assertHasErrors(['slug']);
 });
 
-// ─── Edit ─────────────────────────────────────────────────────────────────────
+// ==================================================
+// EDIT
+// ==================================================
 
 it('loads the edit attribute page', function () {
     $attribute = Attribute::factory()->create(['name' => 'Colour']);
@@ -108,7 +114,9 @@ it('enforces unique slug on edit ignoring self', function () {
         ->assertHasNoErrors();
 });
 
-// ─── Values ───────────────────────────────────────────────────────────────────
+// ==================================================
+// VALUES
+// ==================================================
 
 it('shows existing values on the edit page', function () {
     $attribute = Attribute::factory()->create(['name' => 'Material']);

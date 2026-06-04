@@ -26,7 +26,9 @@ final class StorefrontSession
 
     private const COMPARE_KEY = 'compare';
 
-    // ─── Cart ────────────────────────────────────────────────────────────────
+    // ==================================================
+    // CART
+    // ==================================================
 
     /** @return array<string, int> */
     public static function cart(): array
@@ -168,7 +170,9 @@ final class StorefrontSession
         Session::forget(self::CART_KEY);
     }
 
-    // ─── Wishlist ────────────────────────────────────────────────────────────
+    // ==================================================
+    // WISHLIST
+    // ==================================================
 
     /** @return array<int, string> */
     public static function wishlist(): array
@@ -239,7 +243,9 @@ final class StorefrontSession
         Session::forget(self::WISHLIST_KEY);
     }
 
-    // ─── Compare ─────────────────────────────────────────────────────────────
+    // ==================================================
+    // COMPARE
+    // ==================================================
 
     private const COMPARE_MAX = 4;
 

@@ -230,6 +230,11 @@ new #[Layout('layouts::app')] #[Title('Brands — Admin')] class extends Compone
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['brand', $brand->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     wire:click="openEdit({{ $brand->id }})" />
                                 <flux:button size="xs" variant="ghost" icon="trash"

@@ -160,6 +160,11 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                         <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $customer->created_at->format('M j, Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
+                                <flux:tooltip content="Activity log">
+                                    <flux:button size="xs" variant="ghost" icon="clock"
+                                        :href="route('admin.activity.item', ['user', $customer->id])"
+                                        wire:navigate />
+                                </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="eye" tooltip="View customer" :href="route('admin.customers.show', $customer)" wire:navigate />
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit customer" :href="route('admin.customers.edit', $customer)" wire:navigate />
                                 <flux:dropdown position="bottom" align="end">

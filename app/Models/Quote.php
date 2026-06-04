@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['user_id', 'contact_name', 'contact_email', 'contact_phone', 'contact_company', 'quote_number', 'title', 'status', 'total_cents', 'notes', 'delivery_required', 'delivery_address', 'expires_at'])]
+#[Fillable(['user_id', 'contact_name', 'contact_email', 'contact_phone', 'contact_company', 'quote_number', 'title', 'status', 'subtotal_cents', 'vat_cents', 'vat_rate', 'tax_inclusive', 'shipping_cents', 'discount_type', 'discount_value', 'discount_cents', 'total_cents', 'notes', 'internal_notes', 'terms', 'document_path', 'delivery_required', 'delivery_address', 'expires_at'])]
 class Quote extends Model
 {
     /** @use HasFactory<QuoteFactory> */
@@ -24,7 +24,7 @@ class Quote extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'title', 'total_cents', 'expires_at', 'notes'])
+            ->logOnly(['status', 'title', 'total_cents', 'expires_at', 'notes', 'terms'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
             ->useLogName('quote');
@@ -35,6 +35,8 @@ class Quote extends Model
         return [
             'status' => QuoteStatus::class,
             'expires_at' => 'datetime',
+            'vat_rate' => 'float',
+            'tax_inclusive' => 'boolean',
         ];
     }
 

@@ -49,7 +49,9 @@ it('does not show a price for a draft even if a total somehow leaked in', functi
         ->assertDontSee('9,999');
 });
 
-// ─── Detail page ───────────────────────────────────────────────────────────
+// ==================================================
+// DETAIL PAGE
+// ==================================================
 
 /** Build an owned quote with one priced line. */
 function ownedQuote(QuoteStatus $status, int $lineCents = 0): Quote

@@ -128,11 +128,22 @@ return new class extends Migration
             $table->string('title');
             // 'draft' is the correct starting state — not 'sent'.
             $table->string('status')->default('draft');
+            $table->bigInteger('subtotal_cents')->default(0);
+            $table->bigInteger('vat_cents')->default(0);
+            $table->decimal('vat_rate', 5, 2)->default(0);
+            $table->boolean('tax_inclusive')->default(true);
+            $table->bigInteger('shipping_cents')->default(0);
+            $table->bigInteger('discount_cents')->default(0);
+            $table->string('discount_type', 10)->nullable();
+            $table->decimal('discount_value', 10, 2)->default(0);
             $table->bigInteger('total_cents')->default(0);
             $table->char('currency', 3)->default('KES');
             $table->text('notes')->nullable();
+            $table->text('internal_notes')->nullable();
+            $table->text('terms')->nullable();
             $table->boolean('delivery_required')->default(false);
             $table->text('delivery_address')->nullable();
+            $table->string('document_path')->nullable();
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();

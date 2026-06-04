@@ -1,17 +1,18 @@
 <?php
 
 use App\Enums\QuoteStatus;
+use App\Events\QuoteRequestSubmitted;
 use App\Models\Address;
 use App\Models\DeliveryZone;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Quote;
 use App\Models\QuoteItem;
-use App\Notifications\NewQuoteRequest;
-use App\Notifications\QuoteRequestReceived;
+use App\Notifications\Quotes\NewQuoteRequested;
+use App\Notifications\Quotes\QuoteRequestReceived;
 use App\Services\DeliveryResolver;
-use App\Settings\BusinessSettings;
 use App\Settings\QuotationSettings;
+use App\Support\StaffRecipients;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
@@ -24,7 +25,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component
+{
     /** @var array<string, int> */
     public array $items = [];
 
@@ -40,7 +42,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
     public string $delivery_address = '';
 
-    // ─── Address (authenticated users, delivery only) ─────────────────────────
+    // ==================================================
+    // ADDRESS (AUTHENTICATED USERS, DELIVERY ONLY)
+    // ==================================================
     public ?int $selectedAddressId = null;
 
     public bool $showAddressModal = false;
@@ -84,7 +88,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         // Allow deep-linking a single product into the request, e.g. from the product page.
         if ($slug = (string) request()->query('product')) {
             $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
-            if ($exists && !isset($this->items[$slug])) {
+            if ($exists && ! isset($this->items[$slug])) {
                 $this->items[$slug] = 1;
             }
         }
@@ -99,7 +103,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     }
 
     /**
-     * @return Collection<int, array{key: string, slug: string, qty: int, product: Product, variant: ?ProductVariant, label: ?string, unit_price_cents: int, line_total_cents: int}>
+     * @return Collection<int, array{key: string, slug: string, qty: int, product: Product, variant: ?ProductVariant, label: ?string}>
      */
     #[Computed]
     public function lines(): Collection
@@ -108,10 +112,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             return collect();
         }
 
-        $keys = collect($this->items)->keys()->map(fn($key) => StorefrontSession::splitKey($key));
+        $keys = collect($this->items)->keys()->map(fn ($key) => StorefrontSession::splitKey($key));
 
         $products = Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('slug', $keys->pluck('slug')->unique()->all())
             ->where('visibility', 'visible')
             ->get()
@@ -128,16 +132,16 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 ['slug' => $slug, 'variantId' => $variantId] = StorefrontSession::splitKey($key);
 
                 $product = $products->get($slug);
-                if (!$product) {
+                if (! $product) {
                     return null;
                 }
 
                 $variant = $variantId ? $variants->get($variantId) : null;
-                if ($variantId && !$variant) {
+                if ($variantId && ! $variant) {
                     return null;
                 }
 
-                $label = $variant ? $variant->attributeValues->map(fn($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
+                $label = $variant ? $variant->attributeValues->map(fn ($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
 
                 return [
                     'key' => $key,
@@ -159,7 +163,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     public function searchResults(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->whereNotIn('slug', array_keys($this->items));
 
@@ -168,7 +172,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 $q->where('name', 'like', "%{$this->itemSearch}%")
                     ->orWhere('sku', 'like', "%{$this->itemSearch}%")
                     ->orWhere('model_number', 'like', "%{$this->itemSearch}%")
-                    ->orWhereHas('brand', fn($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
+                    ->orWhereHas('brand', fn ($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
             });
         }
 
@@ -202,7 +206,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     {
         $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             return;
         }
 
@@ -245,7 +249,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     #[Computed]
     public function selectedAddress(): ?Address
     {
-        if (!$this->selectedAddressId) {
+        if (! $this->selectedAddressId) {
             return null;
         }
 
@@ -354,7 +358,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             return;
         }
 
-        if ($this->needs_delivery && auth()->check() && !$this->selectedAddress) {
+        if ($this->needs_delivery && auth()->check() && ! $this->selectedAddress) {
             $this->addError('selectedAddressId', 'Please select a delivery address.');
 
             return;
@@ -363,7 +367,11 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         $lines = $this->lines;
         $title = $this->generateTitle();
 
-        DB::transaction(function () use ($lines, $title) {
+        $quote = DB::transaction(function () use ($lines, $title) {
+            $quotationSettings = app(QuotationSettings::class);
+
+            $tax = app(\App\Support\TaxCalculator::class);
+
             $quote = Quote::create([
                 'user_id' => auth()->id(),
                 'contact_name' => $this->contact_name,
@@ -374,24 +382,39 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 'title' => $title,
                 'status' => QuoteStatus::DRAFT,
                 'total_cents' => 0,
+                'vat_rate' => $tax->enabled() ? $tax->defaultRate() : 0,
+                'tax_inclusive' => $tax->enabled() && $tax->pricesIncludeTax(),
                 'notes' => $this->notes ?: null,
+                'terms' => $quotationSettings->quote_terms ?: null,
                 'delivery_required' => $this->needs_delivery,
                 'delivery_address' => $this->needs_delivery ? (auth()->check() && $this->selectedAddress ? $this->selectedAddress->oneLiner() : ($this->delivery_address ?: null)) : null,
-                'expires_at' => now()->addDays(app(QuotationSettings::class)->default_validity_days),
+                'expires_at' => now()->addDays($quotationSettings->default_validity_days),
             ]);
 
             foreach ($lines as $line) {
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'product_id' => $line['product']->id,
-                    'product_name' => $line['product']->name . ($line['label'] ? ' — ' . $line['label'] : ''),
+                    'product_name' => $line['product']->name.($line['label'] ? ' — '.$line['label'] : ''),
                     'product_sku' => $line['variant']?->sku ?? $line['product']->sku,
                     'unit_price_cents' => 0,
                     'quantity' => $line['qty'],
-                    'line_total_cents' => $line['line_total_cents'],
+                    'line_total_cents' => 0,
                 ]);
             }
+
+            return $quote;
         });
+
+        // Confirm receipt to the customer (auth user or guest email)
+        $quote->notifyContact(new QuoteRequestReceived($quote));
+
+        // Notify staff + real-time bell
+        Notification::send(StaffRecipients::for('quotes.manage'), new NewQuoteRequested($quote));
+        QuoteRequestSubmitted::dispatch($quote);
+
+        $this->reset(['items', 'notes', 'needs_delivery', 'delivery_address', 'selectedAddressId']);
+        unset($this->lines);
 
         Flux::toast(heading: 'Quote request sent', text: 'Our team will review your request and respond shortly.', variant: 'success');
     }
@@ -404,9 +427,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     }
 }; ?>
 
-@php
-    $totalCents = $this->lines->sum('line_total_cents');
-@endphp
 
 <div class="page-fade">
     <div class="shell pt-4 pb-20">
@@ -427,7 +447,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
         <form wire:submit="submit" class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
 
-            {{-- ── Left: your details ── --}}
+            {{-- ================================================== --}}
+            {{-- LEFT: YOUR DETAILS --}}
+            {{-- ================================================== --}}
             <div class="flex-1 min-w-0">
                 <section>
                     @guest
@@ -574,7 +596,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 </section>
             </div>
 
-            {{-- ── Right: items panel ── --}}
+            {{-- ================================================== --}}
+            {{-- RIGHT: ITEMS PANEL --}}
+            {{-- ================================================== --}}
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
                 <div class="rounded-md border border-zinc-200 bg-white">
                     <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
@@ -645,16 +669,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         @endif
 
                         <div class="my-4 h-px bg-zinc-100"></div>
-
-                        <div class="flex items-center justify-between">
-                            <span class="text-[13px] font-bold tracking-wide uppercase">Indicative total</span>
-                            <span class="text-xl font-bold text-brand-500 tabular-nums">{!! $totalCents > 0 ? money($totalCents) : '—' !!}</span>
-                        </div>
-
-                        <p class="mt-3 text-[11.5px] leading-relaxed text-ink-4">
-                            Prices are indicative and exclude VAT, delivery and installation. Your formal quotation will
-                            confirm final pricing and lead times.
-                        </p>
 
                         <flux:button type="submit" variant="customer-primary" size="customer-lg"
                             icon:trailing="arrow-right" class="mt-5! w-full!" :disabled="$this->lines->isEmpty()">

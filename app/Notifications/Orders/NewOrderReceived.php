@@ -3,27 +3,27 @@
 namespace App\Notifications\Orders;
 
 use App\Models\Order;
+use App\Notifications\Concerns\RespectsStaffPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-/**
- * Staff alert that a paid order needs fulfilment. Not gated by customer
- * preferences — it always reaches the operations team.
- */
 class NewOrderReceived extends Notification implements ShouldQueue
 {
     use Queueable;
+    use RespectsStaffPreferences;
 
     public function __construct(public Order $order) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    protected function staffGlobalKey(): ?string
     {
-        return ['mail'];
+        return 'staff_new_order';
+    }
+
+    protected function staffPreferenceKey(): ?string
+    {
+        return 'new_order';
     }
 
     public function toMail(object $notifiable): MailMessage

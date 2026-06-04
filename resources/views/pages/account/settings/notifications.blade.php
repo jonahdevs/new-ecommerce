@@ -1,5 +1,6 @@
 <?php
 
+use App\Settings\NotificationSettings;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -11,43 +12,42 @@ use Livewire\Component;
 new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Component
 {
     /** @var array<string, array<string, bool>> */
-    public array $preferences = [];
+    public array $prefs = [];
 
-    protected static array $defaults = [
-        'orders' => [
-            'confirmed' => true,
-            'shipped' => true,
-            'delivered' => true,
-            'cancelled' => true,
-        ],
-        'quotes' => [
-            'received' => true,
-            'ready' => true,
-            'expiring' => true,
-        ],
-        'marketing' => [
-            'product_news' => false,
-            'catalogs' => false,
-            'offers' => false,
-        ],
-        'account' => [
-            'security_alerts' => true,
-            'login_alerts' => true,
-        ],
-    ];
+    /** @return array<string, array<string, bool>> */
+    public static function defaults(): array
+    {
+        return [
+            'orders' => [
+                'confirmation' => true,
+                'updates'      => true,
+            ],
+            'quotes' => [
+                'received' => true,
+                'updates'  => true,
+            ],
+            'marketing' => false,
+            'account'   => true,
+        ];
+    }
 
     public function mount(): void
     {
         SEOMeta::setRobots('noindex,follow');
 
-        $saved = Auth::user()->notification_preferences ?? [];
+        $stored = Auth::user()->notification_preferences ?? [];
+        $this->prefs = array_replace_recursive(static::defaults(), $stored);
+    }
 
-        $this->preferences = array_replace_recursive(static::$defaults, $saved);
+    #[Computed]
+    public function whatsappEnabled(): bool
+    {
+        return app(NotificationSettings::class)->whatsapp_channel_enabled;
     }
 
     public function save(): void
     {
-        Auth::user()->update(['notification_preferences' => $this->preferences]);
+        Auth::user()->update(['notification_preferences' => $this->prefs]);
 
         Flux::toast(variant: 'success', text: __('Notification preferences saved.'));
     }
@@ -65,87 +65,84 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
     @include('partials.settings-heading')
 
     <x-pages::account.settings.layout
-        :heading="__('Notifications')"
-        :subheading="__('Choose which emails Sheffield sends you.')">
+        :heading="__('Notification Preferences')"
+        :subheading="__('Choose which updates you receive from us.')">
 
-        <form wire:submit="save" class="mt-6 space-y-8">
+        <form wire:submit="save">
 
-            {{-- Orders --}}
-            <flux:card class="space-y-5">
-                <div>
-                    <flux:heading size="sm">Order updates</flux:heading>
-                    <flux:text size="sm" class="mt-0.5 text-ink-3">Emails about your active orders and deliveries.</flux:text>
+            <flux:card class="p-0">
+
+                {{-- Channel headers --}}
+                <div class="flex items-center justify-end border-b border-zinc-200 bg-zinc-50 px-5 py-2.5 dark:border-zinc-600 dark:bg-zinc-800/40">
+                    <span class="w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest text-zinc-500">Email</span>
+                    <span @class([
+                        'w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest',
+                        'text-zinc-500' => $this->whatsappEnabled,
+                        'text-zinc-300 dark:text-zinc-600' => ! $this->whatsappEnabled,
+                    ])>WhatsApp</span>
                 </div>
-                <flux:separator />
-                <flux:switch wire:model="preferences.orders.confirmed"
-                             label="Order confirmed"
-                             description="When we receive and confirm your order." />
-                <flux:switch wire:model="preferences.orders.shipped"
-                             label="Order shipped"
-                             description="When your order leaves our warehouse." />
-                <flux:switch wire:model="preferences.orders.delivered"
-                             label="Order delivered"
-                             description="When your order has been delivered." />
-                <flux:switch wire:model="preferences.orders.cancelled"
-                             label="Order cancelled"
-                             description="When an order is cancelled for any reason." />
+
+                @php
+                    $groups = [
+                        [
+                            'label' => 'Orders & Shipping',
+                            'icon'  => 'shopping-bag',
+                            'rows'  => [
+                                ['key' => 'orders.confirmation', 'label' => 'Order Confirmation', 'desc' => 'Sent when your order is placed and payment is received.'],
+                                ['key' => 'orders.updates',      'label' => 'Order Updates',      'desc' => 'Covers when your order is shipped, delivered or cancelled.'],
+                            ],
+                        ],
+                        [
+                            'label' => 'Quotations',
+                            'icon'  => 'document-text',
+                            'rows'  => [
+                                ['key' => 'quotes.received', 'label' => 'Quote Received',      'desc' => 'Acknowledgement when your quote request is received by our team.'],
+                                ['key' => 'quotes.updates',  'label' => 'Quote Updates',       'desc' => 'Sent when your quotation is priced, ready for review, or about to expire.'],
+                            ],
+                        ],
+                        [
+                            'label' => 'Marketing & Account',
+                            'icon'  => 'megaphone',
+                            'rows'  => [
+                                ['key' => 'marketing', 'label' => 'Marketing Emails',  'desc' => 'Product news, catalogs, special offers and promotions.'],
+                                ['key' => 'account',   'label' => 'Account & Security','desc' => 'Password changes, 2FA updates and security alerts.'],
+                            ],
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($groups as $group)
+                    <div class="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50/60 px-5 py-3 dark:border-zinc-600 dark:bg-zinc-800/20">
+                        <flux:icon :icon="$group['icon']" class="size-3.5 shrink-0 text-brand-500" />
+                        <span class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">{{ $group['label'] }}</span>
+                    </div>
+                    @foreach ($group['rows'] as $row)
+                        @php
+                            // Convert dot-notation key to wire:model path, e.g. orders.confirmation → prefs.orders.confirmation
+                            $modelPath = 'prefs.' . $row['key'];
+                        @endphp
+                        <div class="flex items-center justify-between gap-4 px-5 py-3.5
+                            @if (! $loop->last || ! $loop->parent->last) border-b border-zinc-200 dark:border-zinc-700 @endif">
+                            <div class="flex-1">
+                                <div class="mb-0.5 text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">{{ $row['label'] }}</div>
+                                <div class="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">{{ $row['desc'] }}</div>
+                            </div>
+                            <div class="flex shrink-0 items-center">
+                                <div class="flex w-16 justify-center">
+                                    <flux:switch wire:model="{{ $modelPath }}" />
+                                </div>
+                                <div @class(['flex w-16 justify-center', 'opacity-40' => ! $this->whatsappEnabled])>
+                                    <flux:switch :disabled="true" />
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @endforeach
+
             </flux:card>
 
-            {{-- Quotes --}}
-            <flux:card class="space-y-5">
-                <div>
-                    <flux:heading size="sm">Quotes</flux:heading>
-                    <flux:text size="sm" class="mt-0.5 text-ink-3">Updates on your quotation requests.</flux:text>
-                </div>
-                <flux:separator />
-                <flux:switch wire:model="preferences.quotes.received"
-                             label="Quote received"
-                             description="When our team receives your request for quotation." />
-                <flux:switch wire:model="preferences.quotes.ready"
-                             label="Quote ready for review"
-                             description="When a quote is prepared and awaiting your approval." />
-                <flux:switch wire:model="preferences.quotes.expiring"
-                             label="Quote expiring soon"
-                             description="A reminder 3 days before a quote expires." />
-            </flux:card>
-
-            {{-- Marketing --}}
-            <flux:card class="space-y-5">
-                <div>
-                    <flux:heading size="sm">Marketing</flux:heading>
-                    <flux:text size="sm" class="mt-0.5 text-ink-3">Product news and promotional content from Sheffield.</flux:text>
-                </div>
-                <flux:separator />
-                <flux:switch wire:model="preferences.marketing.product_news"
-                             label="Product news"
-                             description="New arrivals, launches and featured equipment." />
-                <flux:switch wire:model="preferences.marketing.catalogs"
-                             label="Seasonal catalogs"
-                             description="Our curated PDF catalogs sent twice a year." />
-                <flux:switch wire:model="preferences.marketing.offers"
-                             label="Special offers"
-                             description="Clearance deals and limited-time promotions." />
-            </flux:card>
-
-            {{-- Account --}}
-            <flux:card class="space-y-5">
-                <div>
-                    <flux:heading size="sm">Account & security</flux:heading>
-                    <flux:text size="sm" class="mt-0.5 text-ink-3">Important alerts about your account activity.</flux:text>
-                </div>
-                <flux:separator />
-                <flux:switch wire:model="preferences.account.security_alerts"
-                             label="Security alerts"
-                             description="Password changes, 2FA updates and suspicious activity." />
-                <flux:switch wire:model="preferences.account.login_alerts"
-                             label="New device sign-in"
-                             description="When your account is accessed from a new device." />
-            </flux:card>
-
-            <div class="flex items-center gap-4">
-                <flux:button variant="customer-primary" size="customer" type="submit">
-                    Save preferences
-                </flux:button>
+            <div class="mt-6 flex justify-end">
+                <flux:button variant="customer-primary" size="customer" type="submit">Save preferences</flux:button>
             </div>
 
         </form>
