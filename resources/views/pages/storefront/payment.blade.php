@@ -193,7 +193,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
 @if ($cardEnabled)
     @assets
-    <script src="https://js.stripe.com/v3/"></script>
+        <script src="https://js.stripe.com/v3/"></script>
     @endassets
 @endif
 
@@ -287,7 +287,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                             {{-- Pay button --}}
                             <flux:button type="button" variant="customer-primary" size="customer-lg"
                                          @click="pay()"
-                                         :disabled="processing || !isComplete"
+                                         x-bind:disabled="processing || !isComplete"
                                          class="mt-1! w-full!">
                                 <flux:icon.arrow-path x-show="processing" x-cloak variant="micro" class="size-4 animate-spin" />
                                 <span x-text="processing ? 'Processing…' : 'Pay {{ money($order->total_cents) }}'"></span>

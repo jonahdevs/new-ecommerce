@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\URL;
 
 /**
  * Tells the customer (or guest) their formal quotation is ready and awaiting
@@ -31,7 +32,7 @@ class QuoteReadyForReview extends Notification implements ShouldQueue
         $mail = (new MailMessage)
             ->subject('Your quotation is ready — '.$this->quote->quote_number)
             ->greeting('Your quotation is ready')
-            ->line('We\'ve prepared quotation '.$this->quote->quote_number.' ('.$this->quote->title.').')
+            ->line('We\'ve prepared quotation '.$this->quote->quote_number.'.')
             ->line('Total: '.money($this->quote->total_cents));
 
         $pdfBytes = app(QuotePdfService::class)->bytes($this->quote);
@@ -40,12 +41,20 @@ class QuoteReadyForReview extends Notification implements ShouldQueue
             $mail->attachData($pdfBytes, $this->quote->quote_number.'.pdf', ['mime' => 'application/pdf']);
         }
 
+        $validUntil = $this->quote->expires_at?->format('d M Y') ?? 'further notice';
+
         if ($this->quote->user_id) {
             return $mail
                 ->action('Review and approve', route('account.quotes.show', $this->quote))
-                ->line('The quote is valid until '.($this->quote->expires_at?->format('d M Y') ?? 'further notice').'.');
+                ->line('The quote is valid until '.$validUntil.'.');
         }
 
-        return $mail->line('Reply to this email or contact us to approve and proceed with your order.');
+        $expiry = $this->quote->expires_at ?? now()->addDays(60);
+        $reviewUrl = URL::temporarySignedRoute('quotes.guest-review', $expiry, ['quote' => $this->quote]);
+
+        return $mail
+            ->action('Review and approve online', $reviewUrl)
+            ->line('The quote is valid until '.$validUntil.'.')
+            ->line('Approving will ask you to create a free account so you can pay and track your order online.');
     }
 }

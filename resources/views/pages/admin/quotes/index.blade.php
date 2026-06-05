@@ -43,7 +43,6 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
     {
         $quote = Quote::create([
             'quote_number' => Quote::generateNumber(),
-            'title' => 'Untitled quote',
             'status' => QuoteStatus::DRAFT,
         ]);
 
@@ -60,7 +59,6 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                 $term = '%'.$this->search.'%';
                 $query->where(function ($q) use ($term) {
                     $q->where('quote_number', 'like', $term)
-                        ->orWhere('title', 'like', $term)
                         ->orWhere('contact_name', 'like', $term)
                         ->orWhere('contact_email', 'like', $term)
                         ->orWhere('contact_company', 'like', $term)
@@ -136,7 +134,7 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
         <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
             <flux:input
                 wire:model.live.debounce.300ms="search"
-                placeholder="Search quote #, title or customer…"
+                placeholder="Search quote # or customer…"
                 icon="magnifying-glass"
                 clearable
                 class="max-w-xs" />
@@ -164,10 +162,10 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Quote</flux:table.column>
                 <flux:table.column>Customer</flux:table.column>
-                <flux:table.column align="end">Items</flux:table.column>
-                <flux:table.column align="end">Total</flux:table.column>
+                <flux:table.column>Items</flux:table.column>
+                <flux:table.column>Total</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
-                <flux:table.column align="end">Expires</flux:table.column>
+                <flux:table.column>Expires</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
 
@@ -176,22 +174,18 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                     <flux:table.row :key="$quote->id">
                         <flux:table.cell variant="strong">
                             <span class="font-mono">{{ $quote->quote_number }}</span>
-                            <span class="block text-xs font-normal text-zinc-400">{{ Str::limit($quote->title, 40) }}</span>
                         </flux:table.cell>
-                        <flux:table.cell>
-                            <div class="font-medium text-sm dark:text-white">
-                                {{ $quote->user?->name ?? $quote->contact_name ?? '—' }}
-                            </div>
-                            <div class="text-xs text-zinc-500">{{ $quote->user?->email ?? $quote->contact_email }}</div>
+                        <flux:table.cell class="text-sm text-zinc-500">
+                            {{ $quote->user?->email ?? $quote->contact_email ?? '—' }}
                         </flux:table.cell>
-                        <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $quote->items_count }}</flux:table.cell>
-                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($quote->total_cents) !!}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums text-zinc-500">{{ $quote->items_count }}</flux:table.cell>
+                        <flux:table.cell class="font-medium tabular-nums">{!! money($quote->total_cents) !!}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" inset="top bottom" :color="$quote->status->badgeColor()">
                                 {{ $quote->status->label() }}
                             </flux:badge>
                         </flux:table.cell>
-                        <flux:table.cell align="end" class="text-sm">
+                        <flux:table.cell class="text-sm">
                             @if ($quote->expires_at)
                                 <span class="{{ $quote->expires_at->isPast() ? 'text-red-500' : 'text-zinc-500' }}">
                                     {{ $quote->expires_at->format('M j, Y') }}

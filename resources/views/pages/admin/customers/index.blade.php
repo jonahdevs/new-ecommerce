@@ -18,6 +18,9 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
     #[Url]
     public int $perPage = 10;
 
+    #[Url]
+    public string $filterStatus = '';
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -28,10 +31,16 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
         $this->resetPage();
     }
 
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
     public function customers()
     {
         return User::query()
+            ->withBanned()
             ->whereDoesntHave('roles')
             ->withCount('orders')
             ->withSum('orders', 'total_cents')
@@ -39,6 +48,8 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                 $term = '%'.$this->search.'%';
                 $query->where(fn ($q) => $q->where('name', 'like', $term)->orWhere('email', 'like', $term));
             })
+            ->when($this->filterStatus === 'active', fn ($q) => $q->whereNull('banned_at'))
+            ->when($this->filterStatus === 'banned', fn ($q) => $q->whereNotNull('banned_at'))
             ->latest()
             ->paginate($this->perPage);
     }
@@ -47,12 +58,12 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
     #[Computed]
     public function stats(): array
     {
-        $base = User::whereDoesntHave('roles');
+        $base = User::withBanned()->whereDoesntHave('roles');
 
         return [
-            'total' => (clone $base)->count(),
+            'total'         => (clone $base)->count(),
             'new_this_month' => (clone $base)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
-            'unverified' => (clone $base)->whereNull('email_verified_at')->count(),
+            'banned'        => (clone $base)->whereNotNull('banned_at')->count(),
         ];
     }
 
@@ -105,10 +116,10 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
-            <flux:icon.exclamation-circle class="size-9 text-amber-400" />
+            <flux:icon.no-symbol class="size-9 text-red-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['unverified'] }}</div>
-                <flux:text size="sm">Unverified</flux:text>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['banned'] }}</div>
+                <flux:text size="sm">Banned</flux:text>
             </div>
         </flux:card>
     </div>
@@ -124,19 +135,27 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                 clearable
                 class="max-w-xs" />
 
-            <flux:select wire:model.live="perPage" class="w-28">
+            <div class="flex items-center gap-2">
+                <flux:select wire:model.live="filterStatus" class="w-32">
+                    <flux:select.option value="">All status</flux:select.option>
+                    <flux:select.option value="active">Active</flux:select.option>
+                    <flux:select.option value="banned">Banned</flux:select.option>
+                </flux:select>
+                <flux:select wire:model.live="perPage" class="w-28">
                     <flux:select.option value="10">10 / page</flux:select.option>
                     <flux:select.option value="25">25 / page</flux:select.option>
                     <flux:select.option value="50">50 / page</flux:select.option>
                     <flux:select.option value="100">100 / page</flux:select.option>
                     <flux:select.option value="250">250 / page</flux:select.option>
                 </flux:select>
+            </div>
         </div>
 
         <flux:table
             container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Customer</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end">Orders</flux:table.column>
                 <flux:table.column align="end">Total spent</flux:table.column>
                 <flux:table.column align="end">Joined</flux:table.column>
@@ -155,34 +174,36 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                                 </div>
                             </div>
                         </flux:table.cell>
+                        <flux:table.cell>
+                            @if ($customer->isBanned())
+                                <flux:badge size="sm" inset="top bottom" color="red">Banned</flux:badge>
+                            @else
+                                <flux:badge size="sm" inset="top bottom" color="green">Active</flux:badge>
+                            @endif
+                        </flux:table.cell>
                         <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $customer->orders_count }}</flux:table.cell>
                         <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($customer->orders_sum_total_cents) !!}</flux:table.cell>
                         <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $customer->created_at->format('M j, Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
-                            <div class="flex items-center justify-end gap-1">
-                                <flux:tooltip content="Activity log">
-                                    <flux:button size="xs" variant="ghost" icon="clock"
-                                        :href="route('admin.activity.item', ['user', $customer->id])"
-                                        wire:navigate />
-                                </flux:tooltip>
-                                <flux:button size="xs" variant="ghost" icon="eye" tooltip="View customer" :href="route('admin.customers.show', $customer)" wire:navigate />
-                                <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit customer" :href="route('admin.customers.edit', $customer)" wire:navigate />
-                                <flux:dropdown position="bottom" align="end">
-                                    <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" tooltip="More actions" />
-                                    <flux:menu>
-                                        <flux:menu.item icon="trash" variant="danger"
-                                            wire:click="delete({{ $customer->id }})"
-                                            wire:confirm="Delete {{ addslashes($customer->name) }}? This cannot be undone.">
-                                            Delete
-                                        </flux:menu.item>
-                                    </flux:menu>
-                                </flux:dropdown>
-                            </div>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
+                                <flux:menu>
+                                    <flux:menu.item icon="eye" icon-variant="micro" :href="route('admin.customers.show', $customer)" wire:navigate>View</flux:menu.item>
+                                    <flux:menu.item icon="pencil-square" icon-variant="micro" :href="route('admin.customers.edit', $customer)" wire:navigate>Edit</flux:menu.item>
+                                    <flux:menu.item icon="clock" icon-variant="micro" :href="route('admin.activity.item', ['user', $customer->id])" wire:navigate>Activity log</flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" icon-variant="micro" variant="danger"
+                                        wire:click="delete({{ $customer->id }})"
+                                        wire:confirm="Delete {{ addslashes($customer->name) }}? This cannot be undone.">
+                                        Delete
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="5" class="py-12 text-center text-zinc-400">
+                        <flux:table.cell colspan="6" class="py-12 text-center text-zinc-400">
                             No customers found.
                         </flux:table.cell>
                     </flux:table.row>

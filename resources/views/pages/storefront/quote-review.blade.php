@@ -13,15 +13,15 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends Component
 {
     #[Locked]
     public Quote $quote;
 
     public function mount(Quote $quote): void
     {
-        abort_unless($quote->user_id === auth()->id(), 403);
-        SEOMeta::setRobots('noindex,follow');
+        abort_if($quote->user_id !== null, 403);
+        SEOMeta::setRobots('noindex,nofollow');
         $this->quote = $quote->load('items');
     }
 
@@ -29,15 +29,27 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
     {
         abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
 
-        $this->quote->update(['status' => QuoteStatus::APPROVED]);
+        // Already authenticated — link the quote and go straight to payment.
+        if (auth()->check()) {
+            $this->quote->update([
+                'user_id' => auth()->id(),
+                'status' => QuoteStatus::APPROVED,
+            ]);
+            $this->quote->refresh();
 
-        $order = app(QuoteConversionService::class)->convert($this->quote);
+            $order = app(QuoteConversionService::class)->convert($this->quote);
 
-        $this->quote->refresh();
+            Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
 
-        Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
+            $this->redirectRoute('payment.page', $order, navigate: true);
 
-        $this->redirectRoute('payment.page', $order, navigate: true);
+            return;
+        }
+
+        // Guest — store pending quote and prompt to create an account.
+        session(['quote_approval_pending' => $this->quote->id]);
+
+        $this->redirect('/register', navigate: true);
     }
 
     public function decline(): void
@@ -49,19 +61,12 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
         Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
 
-        Flux::toast(heading: 'Quote declined', text: 'You can request a new quote any time.', variant: 'warning');
+        Flux::toast(heading: 'Quote declined', text: 'Contact us if you\'d like a new quote.', variant: 'warning');
     }
 }; ?>
 
 <div class="page-fade">
-
-    @push('breadcrumbs')
-        <flux:breadcrumbs>
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item :href="route('account.quotes.index')" wire:navigate>Quotes</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>{{ $quote->quote_number }}</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
-    @endpush
+    <div class="shell pt-4 pb-20">
 
     {{-- Page header --}}
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -71,7 +76,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                 <flux:badge :color="$quote->status->badgeColor()" size="sm">{{ $quote->status->label() }}</flux:badge>
             </div>
             <p class="mt-1 text-sm text-ink-3">
-                Submitted {{ $quote->created_at->format('d F Y') }}
+                {{ $quote->title }}
                 @if ($quote->expires_at)
                     &middot;
                     <span @class(['text-red-500' => $quote->expires_at->isPast()])>
@@ -90,55 +95,12 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
         @endif
     </div>
 
-    {{-- Status timeline --}}
-    <div class="mb-6">
-        @php
-            $steps = [
-                ['label' => 'Request submitted', 'done' => true],
-                ['label' => 'Under review',       'done' => $quote->status !== QuoteStatus::DRAFT],
-                ['label' => 'Quotation ready',    'done' => in_array($quote->status, [QuoteStatus::AWAITING_APPROVAL, QuoteStatus::SENT, QuoteStatus::APPROVED, QuoteStatus::DECLINED])],
-                ['label' => $quote->status === QuoteStatus::DECLINED ? 'Declined' : 'Accepted', 'done' => in_array($quote->status, [QuoteStatus::APPROVED, QuoteStatus::DECLINED])],
-            ];
-        @endphp
-        <div class="flex items-center gap-0">
-            @foreach ($steps as $i => $step)
-                <div class="flex items-center {{ $loop->last ? '' : 'flex-1' }}">
-                    <div class="flex flex-col items-center">
-                        <div @class([
-                            'flex size-7 items-center justify-center rounded-full text-[11px] font-bold',
-                            'bg-brand-500 text-white' => $step['done'],
-                            'bg-zinc-100 text-zinc-400 border border-zinc-200' => ! $step['done'],
-                        ])>
-                            @if ($step['done'])
-                                <flux:icon.check variant="micro" class="size-3.5" />
-                            @else
-                                {{ $i + 1 }}
-                            @endif
-                        </div>
-                        <span @class([
-                            'mt-1.5 text-[11px] whitespace-nowrap',
-                            'font-semibold text-brand-500' => $step['done'],
-                            'text-zinc-400' => ! $step['done'],
-                        ])>{{ $step['label'] }}</span>
-                    </div>
-                    @if (! $loop->last)
-                        <div @class([
-                            'mb-5 h-px flex-1 mx-2',
-                            'bg-brand-500' => $step['done'],
-                            'bg-zinc-200' => ! $step['done'],
-                        ])></div>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    </div>
-
     {{-- Approve / Decline action bar --}}
     @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
         <div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-200 bg-brand-50 px-5 py-4">
             <div>
                 <p class="text-[14px] font-semibold text-brand-800">Your quotation is ready for review</p>
-                <p class="mt-0.5 text-[13px] text-brand-600">Review the details below, then approve to proceed to payment.</p>
+                <p class="mt-0.5 text-[13px] text-brand-600">Review the details below. Approving will ask you to create an account so you can pay online and track your order.</p>
             </div>
             <div class="flex items-center gap-3">
                 <flux:button variant="ghost" size="sm" wire:click="decline">Decline</flux:button>
@@ -149,21 +111,25 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
         </div>
     @endif
 
-    {{-- Approved — order created, awaiting payment --}}
-    @if ($quote->status === QuoteStatus::APPROVED && $quote->order_id)
-        <div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-md border border-emerald-200 bg-emerald-50 px-5 py-4">
-            <div>
-                <p class="text-[14px] font-semibold text-emerald-800">Quote approved — payment pending</p>
-                <p class="mt-0.5 text-[13px] text-emerald-600">Your order has been created. Complete payment to confirm it.</p>
-            </div>
-            <flux:button variant="customer-primary" size="customer" icon="credit-card"
-                :href="route('payment.page', $quote->order_id)" wire:navigate>
-                Complete payment
-            </flux:button>
+    {{-- Post-decision banners --}}
+    @if ($quote->status === QuoteStatus::APPROVED)
+        <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-5 py-4">
+            <p class="text-[14px] font-semibold text-emerald-800">Quote approved — thank you</p>
+            <p class="mt-0.5 text-[13px] text-emerald-600">Our team will be in touch shortly to arrange payment and next steps.</p>
+        </div>
+    @elseif ($quote->status === QuoteStatus::DECLINED)
+        <div class="mb-6 rounded-md border border-zinc-200 bg-zinc-50 px-5 py-4">
+            <p class="text-[14px] font-semibold text-ink">Quote declined</p>
+            <p class="mt-0.5 text-[13px] text-ink-3">Contact us if you'd like to discuss a revised quote.</p>
+        </div>
+    @elseif ($quote->status === QuoteStatus::EXPIRED || ($quote->expires_at && $quote->expires_at->isPast()))
+        <div class="mb-6 rounded-md border border-red-200 bg-red-50 px-5 py-4">
+            <p class="text-[14px] font-semibold text-red-800">This quote has expired</p>
+            <p class="mt-0.5 text-[13px] text-red-600">Please contact us to request an updated quotation.</p>
         </div>
     @endif
 
-    {{-- Main content --}}
+    {{-- Quote content --}}
     @if ($quote->isPriced())
         <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
 
@@ -207,7 +173,6 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                     </flux:table>
                 </flux:card>
 
-                {{-- Terms & conditions --}}
                 @if ($quote->terms)
                     <flux:card>
                         <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Terms & conditions</flux:heading>
@@ -259,14 +224,13 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
     @else
 
-        {{-- Not yet priced — show items submitted and a holding notice --}}
+        {{-- Not yet priced --}}
         <flux:card class="overflow-hidden p-0">
             <div class="border-b border-zinc-100 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <flux:heading size="sm">Items requested</flux:heading>
                     <flux:badge color="yellow">Awaiting quote</flux:badge>
                 </div>
-                <flux:text size="sm" class="mt-1 text-zinc-400">Our team is preparing your formal quotation. Prices will appear once ready.</flux:text>
             </div>
             <div class="divide-y divide-zinc-100">
                 @foreach ($quote->items as $item)
@@ -281,11 +245,9 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                     </div>
                 @endforeach
             </div>
-            <div class="border-t border-zinc-100 bg-zinc-50 px-6 py-4 text-center text-[12.5px] text-ink-3">
-                You'll receive an email once your quotation is ready. Typical response within 1 business day.
-            </div>
         </flux:card>
 
     @endif
 
+    </div>
 </div>

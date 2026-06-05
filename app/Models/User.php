@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Cog\Laravel\Ban\Traits\Bannable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -23,7 +24,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, LogsActivity, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use Bannable, HasFactory, HasRoles, LogsActivity, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -42,6 +43,7 @@ class User extends Authenticatable implements PasskeyUser
     protected function casts(): array
     {
         return [
+            'banned_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'notification_preferences' => 'array',

@@ -11,7 +11,6 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Component {
-    public string $title = '';
     public string $notes = '';
     public string $expires_at = '';
     public string $contact_name = '';
@@ -123,7 +122,6 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
     public function create(): void
     {
         $this->validate([
-            'title' => ['required', 'string', 'max:255'],
             'contact_name' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
@@ -139,7 +137,6 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
         $quote = Quote::create([
             'user_id' => $this->selectedUserId,
             'quote_number' => Quote::generateNumber(),
-            'title' => $this->title,
             'status' => QuoteStatus::DRAFT,
             'contact_name' => $this->contact_name ?: null,
             'contact_email' => $this->contact_email ?: null,
@@ -199,7 +196,6 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                         <flux:heading size="sm">Details</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
-                        <flux:input wire:model="title" label="Title" placeholder="e.g. Office furniture supply" required />
                         <flux:textarea wire:model="notes" label="Notes" rows="3" placeholder="Internal notes or terms shown to the customer." />
                     </div>
                 </flux:card>

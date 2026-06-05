@@ -25,6 +25,7 @@ Route::livewire('/wishlist', 'pages::storefront.wishlist')->name('wishlist');
 Route::livewire('/compare', 'pages::storefront.compare')->name('compare');
 Route::livewire('/contact', 'pages::storefront.contact')->name('contact');
 Route::livewire('/request-quote', 'pages::storefront.request-quote')->name('quote.request');
+Route::livewire('/quotes/{quote}/review', 'pages::storefront.quote-review')->name('quotes.guest-review')->middleware('signed');
 Route::livewire('/checkout', 'pages::storefront.checkout')->name('checkout')->middleware('auth');
 Route::livewire('/pay/{order}', 'pages::storefront.payment')->name('payment.page')->middleware('auth');
 Route::livewire('/product/{product:slug}', 'pages::storefront.product')->name('product.show');

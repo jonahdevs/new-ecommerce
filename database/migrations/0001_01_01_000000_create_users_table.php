@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('two_factor_recovery_codes')->nullable();
             $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->rememberToken();
+            $table->timestamp('banned_at')->nullable();
             $table->json('notification_preferences')->nullable();
             // Personal preferences for admin/staff users — operational alert
             // opt-ins and UI preferences. Kept separate from the customer-facing

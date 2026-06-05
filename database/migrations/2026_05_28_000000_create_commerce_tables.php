@@ -125,7 +125,6 @@ return new class extends Migration
             $table->string('contact_phone')->nullable();
             $table->string('contact_company')->nullable();
             $table->string('quote_number')->unique();
-            $table->string('title');
             // 'draft' is the correct starting state — not 'sent'.
             $table->string('status')->default('draft');
             $table->bigInteger('subtotal_cents')->default(0);

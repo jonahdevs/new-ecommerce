@@ -25,8 +25,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component {
     /** @var array<string, int> */
     public array $items = [];
 
@@ -88,15 +87,15 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         // Allow deep-linking a single product into the request, e.g. from the product page.
         if ($slug = (string) request()->query('product')) {
             $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
-            if ($exists && ! isset($this->items[$slug])) {
+            if ($exists && !isset($this->items[$slug])) {
                 $this->items[$slug] = 1;
             }
         }
 
         if ($user = auth()->user()) {
+            $default = $user->addresses()->orderByDesc('is_default')->first();
             $this->contact_name = $user->name;
             $this->contact_email = $user->email;
-            $default = $user->addresses()->orderByDesc('is_default')->first();
             $this->contact_phone = (string) ($default?->phone ?? '');
             $this->selectedAddressId = $default?->id;
         }
@@ -112,10 +111,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             return collect();
         }
 
-        $keys = collect($this->items)->keys()->map(fn ($key) => StorefrontSession::splitKey($key));
+        $keys = collect($this->items)->keys()->map(fn($key) => StorefrontSession::splitKey($key));
 
         $products = Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('slug', $keys->pluck('slug')->unique()->all())
             ->where('visibility', 'visible')
             ->get()
@@ -132,16 +131,16 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 ['slug' => $slug, 'variantId' => $variantId] = StorefrontSession::splitKey($key);
 
                 $product = $products->get($slug);
-                if (! $product) {
+                if (!$product) {
                     return null;
                 }
 
                 $variant = $variantId ? $variants->get($variantId) : null;
-                if ($variantId && ! $variant) {
+                if ($variantId && !$variant) {
                     return null;
                 }
 
-                $label = $variant ? $variant->attributeValues->map(fn ($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
+                $label = $variant ? $variant->attributeValues->map(fn($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
 
                 return [
                     'key' => $key,
@@ -163,7 +162,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     public function searchResults(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->where('visibility', 'visible')
             ->whereNotIn('slug', array_keys($this->items));
 
@@ -172,7 +171,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 $q->where('name', 'like', "%{$this->itemSearch}%")
                     ->orWhere('sku', 'like', "%{$this->itemSearch}%")
                     ->orWhere('model_number', 'like', "%{$this->itemSearch}%")
-                    ->orWhereHas('brand', fn ($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
+                    ->orWhereHas('brand', fn($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
             });
         }
 
@@ -206,7 +205,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     {
         $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
 
-        if (! $exists) {
+        if (!$exists) {
             return;
         }
 
@@ -249,7 +248,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     #[Computed]
     public function selectedAddress(): ?Address
     {
-        if (! $this->selectedAddressId) {
+        if (!$this->selectedAddressId) {
             return null;
         }
 
@@ -347,7 +346,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             'needs_delivery' => ['boolean'],
             'delivery_address' => [auth()->guest() && $this->needs_delivery ? 'required' : 'nullable', 'string', 'max:500'],
             'contact_name' => ['required', 'string', 'max:100'],
-            'contact_email' => ['required', 'email', 'max:150'],
+            'contact_email' => [auth()->guest() ? 'required' : 'nullable', 'email', 'max:150'],
             'contact_phone' => ['nullable', 'string', 'max:30'],
             'contact_company' => ['nullable', 'string', 'max:150'],
         ]);
@@ -358,7 +357,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             return;
         }
 
-        if ($this->needs_delivery && auth()->check() && ! $this->selectedAddress) {
+        if ($this->needs_delivery && auth()->check() && !$this->selectedAddress) {
             $this->addError('selectedAddressId', 'Please select a delivery address.');
 
             return;
@@ -375,7 +374,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             $quote = Quote::create([
                 'user_id' => auth()->id(),
                 'contact_name' => $this->contact_name,
-                'contact_email' => $this->contact_email,
+                'contact_email' => auth()->check() ? auth()->user()->email : $this->contact_email,
                 'contact_phone' => $this->contact_phone ?: null,
                 'contact_company' => $this->contact_company ?: null,
                 'quote_number' => Quote::generateNumber(),
@@ -387,7 +386,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 'notes' => $this->notes ?: null,
                 'terms' => $quotationSettings->quote_terms ?: null,
                 'delivery_required' => $this->needs_delivery,
-                'delivery_address' => $this->needs_delivery ? (auth()->check() && $this->selectedAddress ? $this->selectedAddress->oneLiner() : ($this->delivery_address ?: null)) : null,
+                'delivery_address' => $this->needs_delivery ? (auth()->check() ? $this->selectedAddress?->oneLiner() : ($this->delivery_address ?: null)) : null,
                 'expires_at' => now()->addDays($quotationSettings->default_validity_days),
             ]);
 
@@ -395,7 +394,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'product_id' => $line['product']->id,
-                    'product_name' => $line['product']->name.($line['label'] ? ' — '.$line['label'] : ''),
+                    'product_name' => $line['product']->name . ($line['label'] ? ' — ' . $line['label'] : ''),
                     'product_sku' => $line['variant']?->sku ?? $line['product']->sku,
                     'unit_price_cents' => 0,
                     'quantity' => $line['qty'],
@@ -413,10 +412,10 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         Notification::send(StaffRecipients::for('quotes.manage'), new NewQuoteRequested($quote));
         QuoteRequestSubmitted::dispatch($quote);
 
-        $this->reset(['items', 'notes', 'needs_delivery', 'delivery_address', 'selectedAddressId']);
+        $this->reset(['items', 'notes', 'needs_delivery', 'delivery_address', 'contact_name', 'contact_email', 'contact_phone', 'contact_company', 'selectedAddressId']);
         unset($this->lines);
 
-        Flux::toast(heading: 'Quote request sent', text: 'Our team will review your request and respond shortly.', variant: 'success');
+        Flux::toast(heading: 'Quote request submitted', text: 'We\'ve received your request and will get back to you shortly.', variant: 'success');
     }
 
     private function generateTitle(): string
@@ -448,7 +447,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         <form wire:submit="submit" class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
 
             {{-- ================================================== --}}
-            {{-- LEFT: YOUR DETAILS --}}
+            {{-- LEFT: DETAILS --}}
             {{-- ================================================== --}}
             <div class="flex-1 min-w-0">
                 <section>
@@ -465,14 +464,18 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         <div class="grid gap-4 sm:grid-cols-2">
                             <flux:field>
                                 <flux:label>Full name <span class="ms-0.5 text-red-500">*</span></flux:label>
-                                <flux:input wire:model.blur="contact_name" placeholder="Anita Wanjiru" />
+                                <flux:input wire:model.blur="contact_name" placeholder="Your name" />
                                 <flux:error name="contact_name" />
                             </flux:field>
                             <flux:field>
                                 <flux:label>Email <span class="ms-0.5 text-red-500">*</span></flux:label>
-                                <flux:input wire:model.blur="contact_email" type="email"
-                                    placeholder="you@company.co.ke" />
-                                <flux:error name="contact_email" />
+                                @auth
+                                    <flux:input type="email" :value="auth()->user()->email" disabled />
+                                @else
+                                    <flux:input wire:model.blur="contact_email" type="email"
+                                        placeholder="you@company.co.ke" />
+                                    <flux:error name="contact_email" />
+                                @endauth
                             </flux:field>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2">
@@ -483,8 +486,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                 <flux:error name="contact_phone" />
                             </flux:field>
                             <flux:field>
-                                <flux:label>Company</flux:label>
-                                <flux:input wire:model.blur="contact_company" placeholder="Company / organisation" />
+                                <flux:label>Company / organisation</flux:label>
+                                <flux:input wire:model.blur="contact_company" placeholder="Optional" />
                                 <flux:error name="contact_company" />
                             </flux:field>
                         </div>
@@ -618,10 +621,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                 <flux:icon.document-text variant="outline" class="mx-auto size-7 text-ink-4" />
                                 <p class="mt-2 text-[12.5px] text-ink-3">No items yet. Add products, or just describe
                                     what you need in the notes.</p>
-                                <flux:button type="button" variant="customer-outline" size="customer"
-                                    icon="plus" wire:click="openItemModal" class="mt-3">
-                                    Add item
-                                </flux:button>
                             </div>
                         @else
                             <div class="divide-y divide-zinc-100">
@@ -692,12 +691,12 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     </div>
 
     {{-- Add-item modal (search only) --}}
-    <flux:modal wire:model.self="showItemModal" class="md:w-280">
+    <flux:modal wire:model.self="showItemModal" class="md:w-180 lg:w-215 md:max-w-none">
         <flux:heading>Add items to your quote</flux:heading>
         <flux:subheading>Search the catalog and add as many products as you need.</flux:subheading>
 
-        <div class="mt-5">
-            <flux:input wire:model.live.debounce.250ms="itemSearch" type="search" autocomplete="off"
+        <div class="@container mt-5">
+            <flux:input wire:model.live.debounce.250ms="itemSearch" type="search" autocomplete="off" size="sm"
                 spellcheck="false" autofocus icon="magnifying-glass" clearable
                 placeholder="Search products by name, brand or SKU…" />
 
@@ -718,7 +717,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         @endif
                     </div>
                 @else
-                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-3 @xs:grid-cols-2 @lg:grid-cols-3 @2xl:grid-cols-4">
                         @foreach ($this->searchResults as $product)
                             <div wire:key="res-{{ $product->slug }}"
                                 class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">

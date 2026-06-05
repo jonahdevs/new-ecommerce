@@ -70,6 +70,8 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/roles', 'pages::admin.roles.index')->name('roles.index');
         Route::livewire('/roles/create', 'pages::admin.roles.form')->name('roles.create');
         Route::livewire('/roles/{role}/edit', 'pages::admin.roles.form')->name('roles.edit');
+        Route::livewire('/users/create', 'pages::admin.users.create')->name('users.create');
+        Route::livewire('/users/{user}/edit', 'pages::admin.users.edit')->name('users.edit');
         Route::livewire('/permissions', 'pages::admin.permissions.index')->name('permissions.index');
 
         Route::livewire('/subscribers', 'pages::admin.subscribers.index')->name('subscribers.index');

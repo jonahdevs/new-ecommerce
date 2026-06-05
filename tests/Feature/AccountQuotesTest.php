@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\QuoteStatus;
+use App\Models\Order;
 use App\Models\Quote;
 use App\Models\User;
 use Livewire\Livewire;
@@ -98,14 +99,19 @@ it('shows line pricing and total on the detail page once quoted', function () {
         ->assertDontSee('Awaiting quote');
 });
 
-it('lets the customer approve a quote awaiting approval', function () {
+it('lets the customer approve a quote, creates an order and redirects to payment', function () {
     $quote = ownedQuote(QuoteStatus::AWAITING_APPROVAL, 4500000);
 
     Livewire::test('pages::account.quotes.show', ['quote' => $quote])
         ->assertSee('Approve quote')
-        ->call('approve');
+        ->call('approve')
+        ->assertRedirect(route('payment.page', Order::first()));
 
-    expect($quote->refresh()->status)->toBe(QuoteStatus::APPROVED);
+    $quote->refresh();
+
+    expect($quote->status)->toBe(QuoteStatus::APPROVED)
+        ->and($quote->order_id)->not->toBeNull()
+        ->and(Order::count())->toBe(1);
 });
 
 it('lets the customer decline a quote awaiting approval', function () {

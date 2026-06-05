@@ -22,14 +22,12 @@ class QuoteSeeder extends Seeder
 
         Quote::factory()->awaitingApproval()->create([
             'user_id' => $user->id,
-            'title' => 'Westlands kitchen build — 24 line items',
             'total_cents' => 642000000,
         ]);
 
         Quote::factory()->create([
             'user_id' => $user->id,
             'status' => QuoteStatus::SENT,
-            'title' => 'Combi oven + installation — 1 line item',
             'total_cents' => 164450000,
         ]);
 

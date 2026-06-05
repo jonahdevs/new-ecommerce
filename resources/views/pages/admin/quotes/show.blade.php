@@ -1,16 +1,15 @@
 <?php
 
-use App\Enums\OrderStatus;
 use App\Enums\QuoteStatus;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quote;
 use App\Notifications\Quotes\QuoteReadyForReview;
+use App\Services\QuoteConversionService;
 use App\Settings\QuotationSettings;
 use App\Support\TaxCalculator;
 use Flux\Flux;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -22,8 +21,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 {
     #[Locked]
     public Quote $quote;
-
-    public string $title = '';
 
     public string $status = '';
 
@@ -54,7 +51,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     private function syncFromQuote(): void
     {
-        $this->title = $this->quote->title;
         $this->status = $this->quote->status->value;
         $this->notes = (string) $this->quote->notes;
         $this->internalNotes = (string) $this->quote->internal_notes;
@@ -172,7 +168,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
     public function save(): void
     {
         $this->validate([
-            'title' => ['required', 'string', 'max:255'],
             'status' => ['required', Rule::enum(QuoteStatus::class)],
             'notes' => ['nullable', 'string'],
             'internalNotes' => ['nullable', 'string'],
@@ -185,7 +180,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         ]);
 
         $this->quote->update([
-            'title' => $this->title,
             'status' => $this->status,
             'notes' => $this->notes ?: null,
             'internal_notes' => $this->internalNotes ?: null,
@@ -292,55 +286,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function convertToOrder(): void
     {
-        $tax = app(TaxCalculator::class);
-
-        $order = DB::transaction(function () use ($tax) {
-            $lines = $this->quote
-                ->items()
-                ->with('product.taxClass')
-                ->get()
-                ->map(function ($item) use ($tax) {
-                    $rate = $item->product ? $tax->rateForProduct($item->product) : ($tax->enabled() ? $tax->defaultRate() : 0.0);
-
-                    return [
-                        'item' => $item,
-                        'rate' => $rate,
-                        'tax_cents' => $tax->taxForLine((int) $item->line_total_cents, $rate),
-                    ];
-                });
-
-            $subtotalCents = (int) $lines->sum(fn ($line) => $line['item']->line_total_cents);
-            $vatCents = (int) $lines->sum('tax_cents');
-            $totalCents = $tax->pricesIncludeTax() ? $subtotalCents : $subtotalCents + $vatCents;
-
-            $order = Order::create([
-                'user_id' => $this->quote->user_id,
-                'order_number' => Order::generateNumber(),
-                'status' => OrderStatus::PENDING,
-                'subtotal_cents' => $subtotalCents,
-                'vat_cents' => $vatCents,
-                'delivery_cents' => 0,
-                'installation_cents' => 0,
-                'total_cents' => $totalCents,
-                'notes' => 'Converted from quote '.$this->quote->quote_number,
-            ]);
-
-            foreach ($lines as $line) {
-                $item = $line['item'];
-                $order->items()->create([
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'product_sku' => $item->product_sku,
-                    'unit_price_cents' => $item->unit_price_cents,
-                    'quantity' => $item->quantity,
-                    'line_total_cents' => $item->line_total_cents,
-                    'tax_rate' => $line['rate'],
-                    'tax_cents' => $line['tax_cents'],
-                ]);
-            }
-
-            return $order;
-        });
+        $order = app(QuoteConversionService::class)->convert($this->quote);
 
         $this->redirectRoute('admin.orders.show', $order, navigate: true);
     }
@@ -386,8 +332,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             </div>
 
             <div class="flex items-center gap-2">
-                <flux:button size="sm" variant="ghost" icon="eye" tooltip="Preview document"
-                    :href="route('admin.quotes.preview', $quote)" wire:navigate type="button" />
+                <flux:button size="sm" variant="ghost" icon="eye"
+                    :href="route('admin.quotes.preview', $quote)" wire:navigate type="button">Preview</flux:button>
 
                 @if ($quote->status === App\Enums\QuoteStatus::DRAFT)
                     <flux:button variant="primary" icon="paper-airplane" wire:click="sendToCustomer" type="button">
@@ -397,8 +343,14 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                     <flux:button variant="ghost" icon="x-mark" wire:click="decline" type="button">Decline</flux:button>
                     <flux:button variant="primary" icon="check" wire:click="approve" type="button">Approve</flux:button>
                 @elseif ($quote->status === App\Enums\QuoteStatus::APPROVED)
-                    <flux:button variant="primary" icon="shopping-cart" wire:click="convertToOrder" type="button">
-                        Convert to order</flux:button>
+                    @if ($quote->order_id)
+                        <flux:button variant="ghost" icon="shopping-cart" type="button"
+                            :href="route('admin.orders.show', $quote->order_id)" wire:navigate>
+                            View order</flux:button>
+                    @else
+                        <flux:button variant="primary" icon="shopping-cart" wire:click="convertToOrder" type="button">
+                            Convert to order</flux:button>
+                    @endif
                 @endif
 
                 <flux:button type="submit" variant="primary" icon="check">Save</flux:button>
@@ -406,10 +358,10 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         </div>
 
         {{-- Main layout --}}
-        <div class="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
             {{-- Left column --}}
-            <div class="min-w-0 flex-1 space-y-6">
+            <div class="space-y-6 lg:col-span-2">
 
                 {{-- Line items --}}
                 <flux:card class="overflow-hidden p-0">
@@ -462,7 +414,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                                     </flux:table.cell>
                                     <flux:table.cell align="end">
                                         <flux:input size="sm"
-                                            wire:model.live.debounce.500ms="lineItems.{{ $index }}.unit_price"
+                                            wire:model.blur="lineItems.{{ $index }}.unit_price"
                                             type="number" min="0" step="0.01" class="text-right" />
                                     </flux:table.cell>
                                     <flux:table.cell align="end">
@@ -500,13 +452,13 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                             <div class="flex items-center gap-2">
                                 <span class="shrink-0 text-zinc-500 dark:text-zinc-400">Discount</span>
                                 <div class="ml-auto flex items-center gap-1.5">
-                                    <flux:select wire:model.live="discountType" class="w-28!" size="sm">
+                                    <flux:select wire:model.blur="discountType" class="w-28!" size="sm">
                                         <flux:select.option value="">None</flux:select.option>
                                         <flux:select.option value="percentage">%</flux:select.option>
                                         <flux:select.option value="fixed">Fixed</flux:select.option>
                                     </flux:select>
                                     @if ($discountType)
-                                        <flux:input size="sm" wire:model.live.debounce.500ms="discountValue"
+                                        <flux:input size="sm" wire:model.blur="discountValue"
                                             type="number" min="0"
                                             :placeholder="$discountType === 'percentage' ? '0' : '0.00'"
                                             class="w-20! text-right" />
@@ -520,7 +472,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                             @if ($quote->delivery_required)
                                 <div class="flex items-center justify-between">
                                     <span class="text-zinc-500 dark:text-zinc-400">Shipping</span>
-                                    <flux:input size="sm" wire:model.live.debounce.500ms="shippingCents"
+                                    <flux:input size="sm" wire:model.blur="shippingCents"
                                         type="number" min="0" step="1" class="w-fit! text-right" />
                                 </div>
                             @endif
@@ -599,7 +551,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             </div>
 
             {{-- Right sidebar --}}
-            <aside class="w-full shrink-0 space-y-6 lg:w-72">
+            <aside class="space-y-6">
 
                 {{-- Status & expiry --}}
                 <flux:card class="overflow-hidden p-0">
@@ -607,7 +559,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                         <flux:heading size="sm">Quote details</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
-                        <flux:input wire:model="title" label="Title" required />
                         <flux:select wire:model="status" label="Status">
                             @foreach ($this->statuses() as $s)
                                 <flux:select.option value="{{ $s->value }}">{{ $s->label() }}</flux:select.option>

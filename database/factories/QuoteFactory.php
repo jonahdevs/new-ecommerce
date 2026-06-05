@@ -25,12 +25,9 @@ class QuoteFactory extends Factory
 
     public function definition(): array
     {
-        $lineCount = fake()->numberBetween(1, 24);
-
         return [
             'user_id' => User::factory(),
             'quote_number' => 'RFQ-'.now()->year.'-'.str_pad((string) fake()->numberBetween(1000, 99999), 5, '0', STR_PAD_LEFT),
-            'title' => fake()->randomElement(self::$kitchens).' — '.$lineCount.' line item'.($lineCount > 1 ? 's' : ''),
             'status' => fake()->randomElement(QuoteStatus::cases()),
             'total_cents' => fake()->numberBetween(100000, 10000000) * 100,
             'notes' => fake()->optional()->paragraph(),

@@ -4,7 +4,6 @@ use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Flux\Flux;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -17,14 +16,6 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
     use WithPagination;
 
     private const PROTECTED_ROLES = PermissionSeeder::PROTECTED_ROLES;
-
-    // --- Edit user modal state ---
-    public bool $showUserModal = false;
-    public ?int $editingUserId = null;
-    public string $userName = '';
-    public string $userEmail = '';
-    public string $userPassword = '';
-    public string $userRole = '';
 
     // --- User table filters ---
     #[Url(as: 'uq')]
@@ -99,6 +90,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
     public function users()
     {
         return User::query()
+            ->withBanned()
             ->has('roles')
             ->with(['roles', 'addresses'])
             ->when($this->userSearch, fn ($q) => $q->where(function ($q) {
@@ -106,61 +98,11 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                 $q->where('name', 'like', $term)->orWhere('email', 'like', $term);
             }))
             ->when($this->filterRole, fn ($q) => $q->whereHas('roles', fn ($r) => $r->where('name', $this->filterRole)))
-            ->when($this->filterStatus === 'active', fn ($q) => $q->whereNotNull('email_verified_at'))
+            ->when($this->filterStatus === 'active', fn ($q) => $q->whereNotNull('email_verified_at')->whereNull('banned_at'))
             ->when($this->filterStatus === 'pending', fn ($q) => $q->whereNull('email_verified_at'))
+            ->when($this->filterStatus === 'banned', fn ($q) => $q->whereNotNull('banned_at'))
             ->latest()
             ->paginate(10);
-    }
-
-    public function openCreateUser(): void
-    {
-        $this->reset(['editingUserId', 'userName', 'userEmail', 'userPassword', 'userRole']);
-        $this->resetValidation();
-        $this->showUserModal = true;
-    }
-
-    public function openEditUser(int $id): void
-    {
-        $user = User::with('roles')->findOrFail($id);
-        $this->editingUserId = $id;
-        $this->userName = $user->name;
-        $this->userEmail = $user->email;
-        $this->userPassword = '';
-        $this->userRole = $user->roles->first()?->name ?? '';
-        $this->resetValidation();
-        $this->showUserModal = true;
-    }
-
-    public function saveUser(): void
-    {
-        $isCreating = $this->editingUserId === null;
-
-        $this->validate([
-            'userName' => ['required', 'string', 'max:255'],
-            'userEmail' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingUserId)],
-            'userRole' => ['required', Rule::exists('roles', 'name')],
-            ...($isCreating || $this->userPassword !== '' ? ['userPassword' => ['required', 'string', 'min:8']] : []),
-        ]);
-
-        $user = $isCreating ? new User : User::findOrFail($this->editingUserId);
-        $user->name = $this->userName;
-        $user->email = $this->userEmail;
-
-        if ($this->userPassword !== '') {
-            $user->password = $this->userPassword;
-        }
-
-        $user->save();
-        $user->syncRoles([$this->userRole]);
-
-        $this->showUserModal = false;
-        unset($this->users, $this->roles);
-
-        Flux::toast(
-            heading: $isCreating ? 'User created' : 'User updated',
-            text: $user->name.' has been saved.',
-            variant: 'success',
-        );
     }
 
     public function removeUser(int $id): void
@@ -176,6 +118,24 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
 
         unset($this->users, $this->roles);
         Flux::toast(heading: 'Access revoked', text: $user->name."'s access has been revoked.", variant: 'success');
+    }
+
+    public function ban(int $id): void
+    {
+        $user = User::withBanned()->findOrFail($id);
+        $user->ban();
+
+        unset($this->users);
+        Flux::toast(heading: 'User banned', text: $user->name.' has been banned.', variant: 'warning');
+    }
+
+    public function unban(int $id): void
+    {
+        $user = User::withBanned()->findOrFail($id);
+        $user->unban();
+
+        unset($this->users);
+        Flux::toast(heading: 'Ban lifted', text: $user->name.' can now access the system.', variant: 'success');
     }
 }; ?>
 
@@ -209,7 +169,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                     <div class="flex items-start justify-between">
                         <flux:heading size="lg" class="capitalize">{{ str_replace('-', ' ', $role->name) }}</flux:heading>
                         @if ($first = $role->users->first())
-                            <flux:avatar :name="$first->name" :initials="$first->initials()" size="sm" />
+                            <flux:avatar :name="$first->name" :initials="$first->initials()" size="sm" circle />
                         @endif
                     </div>
                     <div class="mt-4 space-y-1.5 text-sm text-zinc-500">
@@ -244,7 +204,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
     <flux:card class="mt-6 p-0 overflow-hidden">
         <div class="flex items-center justify-between gap-4 px-6 py-4">
             <flux:heading size="lg">Users</flux:heading>
-            <flux:button size="sm" variant="ghost" icon="user-plus" wire:click="openCreateUser">Add user</flux:button>
+            <flux:button size="sm" icon="user-plus" :href="route('admin.users.create')" wire:navigate>Add user</flux:button>
         </div>
 
         {{-- Toolbar --}}
@@ -257,6 +217,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                     <flux:select.option value="">All status</flux:select.option>
                     <flux:select.option value="active">Active</flux:select.option>
                     <flux:select.option value="pending">Pending</flux:select.option>
+                    <flux:select.option value="banned">Banned</flux:select.option>
                 </flux:select>
 
                 <flux:select wire:model.live="filterRole" class="w-40">
@@ -309,20 +270,34 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm" inset="top bottom" :color="$user->email_verified_at ? 'green' : 'amber'">
-                                {{ $user->email_verified_at ? 'Active' : 'Pending' }}
-                            </flux:badge>
+                            @if ($user->isBanned())
+                                <flux:badge size="sm" inset="top bottom" color="red">Banned</flux:badge>
+                            @else
+                                <flux:badge size="sm" inset="top bottom" :color="$user->email_verified_at ? 'green' : 'amber'">
+                                    {{ $user->email_verified_at ? 'Active' : 'Pending' }}
+                                </flux:badge>
+                            @endif
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             @if ($user->id === auth()->id())
                                 {{-- Only one action available: edit. No dropdown needed. --}}
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
-                                    wire:click="openEditUser({{ $user->id }})" />
+                                    :href="route('admin.users.edit', $user->id)" wire:navigate />
                             @else
                                 <flux:dropdown position="bottom" align="end">
                                     <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item icon="pencil-square" wire:click="openEditUser({{ $user->id }})">Edit</flux:menu.item>
+                                        <flux:menu.item icon="pencil-square" :href="route('admin.users.edit', $user->id)" wire:navigate>Edit</flux:menu.item>
+                                        @if ($user->isBanned())
+                                            <flux:menu.item icon="lock-open"
+                                                wire:click="unban({{ $user->id }})"
+                                                wire:confirm="Lift the ban for '{{ addslashes($user->name) }}'?">Lift ban</flux:menu.item>
+                                        @else
+                                            <flux:menu.item icon="no-symbol" variant="danger"
+                                                wire:click="ban({{ $user->id }})"
+                                                wire:confirm="Ban '{{ addslashes($user->name) }}'? They will lose access immediately.">Ban</flux:menu.item>
+                                        @endif
+                                        <flux:menu.separator />
                                         <flux:menu.item icon="user-minus" variant="danger"
                                             wire:click="removeUser({{ $user->id }})"
                                             wire:confirm="Revoke access for '{{ addslashes($user->name) }}'?">Revoke access</flux:menu.item>
@@ -348,32 +323,4 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
         </div>
     </flux:card>
 
-    {{-- Create / edit user modal --}}
-    <flux:modal wire:model.self="showUserModal" class="md:w-[480px]" :dismissible="false">
-        <flux:heading>{{ $editingUserId ? 'Edit user' : 'Add user' }}</flux:heading>
-        <flux:subheading>{{ $editingUserId ? "Update this user's details and role." : 'Create a user and assign a role.' }}</flux:subheading>
-
-        <form wire:submit="saveUser" class="mt-5 space-y-4">
-            <flux:input wire:model="userName" label="Name" placeholder="Jane Doe" required autofocus />
-            <flux:input wire:model="userEmail" label="Email" type="email" placeholder="jane@example.com" required />
-
-            <flux:field>
-                <flux:label>Role</flux:label>
-                <flux:select wire:model="userRole" placeholder="Select a role…">
-                    @foreach ($this->roles as $role)
-                        <flux:select.option value="{{ $role->name }}">{{ Str::headline($role->name) }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            </flux:field>
-
-            <flux:input wire:model="userPassword" label="{{ $editingUserId ? 'New password' : 'Password' }}" type="password" :placeholder="$editingUserId ? 'Leave blank to keep current' : 'Minimum 8 characters'" :required="! $editingUserId" />
-
-            <div class="flex justify-end gap-3 pt-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">Cancel</flux:button>
-                </flux:modal.close>
-                <flux:button type="submit" variant="primary">Save changes</flux:button>
-            </div>
-        </form>
-    </flux:modal>
 </div>
