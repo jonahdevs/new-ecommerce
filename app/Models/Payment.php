@@ -11,7 +11,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['order_id', 'provider', 'status', 'amount_cents', 'phone', 'account_reference', 'merchant_request_id', 'checkout_request_id', 'stripe_session_id', 'stripe_payment_intent_id', 'mpesa_receipt', 'result_code', 'result_desc', 'payload', 'paid_at'])]
+#[Fillable([
+    'order_id',
+    'provider',
+    'status',
+    'amount_cents',
+    'currency',
+    'phone',
+    'account_reference',
+    'merchant_request_id',
+    'checkout_request_id',
+    'mpesa_receipt',
+    'result_code',
+    'result_desc',
+    'stripe_payment_intent_id',
+    'stripe_charge_id',
+    'card_brand',
+    'card_last4',
+    'refund_cents',
+    'refunded_at',
+    'payload',
+    'paid_at',
+])]
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
@@ -42,7 +63,7 @@ class Payment extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'amount_cents', 'provider', 'paid_at'])
+            ->logOnly(['status', 'amount_cents', 'provider', 'paid_at', 'refunded_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
             ->useLogName('payment');
@@ -53,24 +74,16 @@ class Payment extends Model
         return [
             'status' => PaymentStatus::class,
             'amount_cents' => 'integer',
+            'refund_cents' => 'integer',
             'result_code' => 'integer',
             'payload' => 'array',
             'paid_at' => 'datetime',
+            'refunded_at' => 'datetime',
         ];
     }
 
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
-    }
-
-    public function isPending(): bool
-    {
-        return $this->status === PaymentStatus::PENDING;
-    }
-
-    public function isSuccessful(): bool
-    {
-        return $this->status === PaymentStatus::SUCCESS;
     }
 }

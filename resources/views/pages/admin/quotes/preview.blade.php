@@ -25,18 +25,6 @@ new #[Layout('layouts::app')] #[Title('Preview Quote')] class extends Component
         </flux:breadcrumbs>
     @endpush
 
-    <div class="print:hidden mb-6 flex items-center justify-between">
-        <div>
-            <flux:heading size="xl">Quote preview</flux:heading>
-            <flux:subheading>This is how the customer will see the quote.</flux:subheading>
-        </div>
-        <div class="flex items-center gap-2">
-            <flux:button variant="primary" icon="paper-airplane" wire:click="$parent.sendToCustomer()" type="button">
-                Send to customer
-            </flux:button>
-        </div>
-    </div>
-
     <div id="quote-print-area">
         <x-quote-document :quote="$quote" :show-actions="false" />
     </div>

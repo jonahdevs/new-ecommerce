@@ -10,7 +10,6 @@ use App\Settings\QuotationSettings;
 use App\Support\TaxCalculator;
 use Flux\Flux;
 use Illuminate\Support\Collection;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -21,8 +20,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 {
     #[Locked]
     public Quote $quote;
-
-    public string $status = '';
 
     public string $notes = '';
 
@@ -43,6 +40,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public string $productSearch = '';
 
+    public bool $showSendConfirmation = false;
+
     public function mount(Quote $quote): void
     {
         $this->quote = $quote->load('items', 'user');
@@ -51,7 +50,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     private function syncFromQuote(): void
     {
-        $this->status = $this->quote->status->value;
         $this->notes = (string) $this->quote->notes;
         $this->internalNotes = (string) $this->quote->internal_notes;
         $this->terms = (string) $this->quote->terms;
@@ -64,8 +62,9 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             ->map(
                 fn ($item) => [
                     'id' => $item->id,
-                    'product_name' => $item->product_name,
+                    'product_name' => (string) $item->product_name,
                     'product_sku' => (string) $item->product_sku,
+                    'product_model_number' => (string) $item->product_model_number,
                     'unit_price' => $item->unit_price_cents / 100,
                     'quantity' => $item->quantity,
                 ],
@@ -130,6 +129,21 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         return max(0, $afterDiscount + $vatAddition + $this->shippingCents);
     }
 
+    /** @return array<int, string> */
+    #[Computed]
+    public function sendWarnings(): array
+    {
+        $warnings = [];
+
+        if ($this->totalCents === 0) {
+            $warnings[] = 'No pricing has been added — the quote total is zero.';
+        } elseif (collect($this->lineItems)->some(fn ($item) => (float) $item['unit_price'] == 0)) {
+            $warnings[] = 'One or more line items have no unit price set.';
+        }
+
+        return $warnings;
+    }
+
     /** @return Collection<int, Product> */
     #[Computed]
     public function productResults(): Collection
@@ -151,12 +165,18 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             'id' => null,
             'product_name' => $product->name,
             'product_sku' => (string) $product->sku,
+            'product_model_number' => (string) $product->model_number,
             'unit_price' => ($product->sale_price ?? ($product->price ?? 0)) / 100,
             'quantity' => 1,
         ];
 
         $this->productSearch = '';
         unset($this->productResults);
+    }
+
+    public function addBlankLine(): void
+    {
+        $this->lineItems[] = ['id' => null, 'product_name' => '', 'product_sku' => '', 'product_model_number' => '', 'unit_price' => 0, 'quantity' => 1];
     }
 
     public function removeLine(int $index): void
@@ -168,7 +188,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
     public function save(): void
     {
         $this->validate([
-            'status' => ['required', Rule::enum(QuoteStatus::class)],
             'notes' => ['nullable', 'string'],
             'internalNotes' => ['nullable', 'string'],
             'terms' => ['nullable', 'string'],
@@ -180,7 +199,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         ]);
 
         $this->quote->update([
-            'status' => $this->status,
             'notes' => $this->notes ?: null,
             'internal_notes' => $this->internalNotes ?: null,
             'terms' => $this->terms ?: null,
@@ -202,8 +220,11 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             $quantity = max(1, (int) $item['quantity']);
 
             $this->quote->items()->create([
-                'product_name' => $item['product_name'],
-                'product_sku' => $item['product_sku'] ?: null,
+                'product_snapshot' => [
+                    'name' => $item['product_name'],
+                    'sku' => $item['product_sku'] ?: null,
+                    'model_number' => $item['product_model_number'] ?: null,
+                ],
                 'unit_price_cents' => $unitCents,
                 'quantity' => $quantity,
                 'line_total_cents' => $unitCents * $quantity,
@@ -231,6 +252,23 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             return;
         }
 
+        if (! empty($this->sendWarnings)) {
+            $this->showSendConfirmation = true;
+
+            return;
+        }
+
+        $this->dispatchSend();
+    }
+
+    public function confirmSend(): void
+    {
+        $this->showSendConfirmation = false;
+        $this->dispatchSend();
+    }
+
+    private function dispatchSend(): void
+    {
         $this->quote->update([
             'status' => QuoteStatus::AWAITING_APPROVAL,
             'subtotal_cents' => $this->subtotalCents,
@@ -296,11 +334,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         $this->terms = (string) app(QuotationSettings::class)->quote_terms;
     }
 
-    /** @return array<int, QuoteStatus> */
-    public function statuses(): array
-    {
-        return QuoteStatus::cases();
-    }
 }; ?>
 
 <div>
@@ -534,20 +567,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                     </div>
                 </flux:card>
 
-                {{-- Delivery (if requested) --}}
-                @if ($quote->delivery_required)
-                    <flux:card class="overflow-hidden p-0">
-                        <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                            <flux:heading size="sm">Delivery</flux:heading>
-                        </div>
-                        <div class="p-6">
-                            <div class="flex items-start gap-3">
-                                <flux:icon.map-pin variant="micro" class="mt-0.5 size-4 shrink-0 text-zinc-400" />
-                                <flux:text size="sm">{{ $quote->delivery_address }}</flux:text>
-                            </div>
-                        </div>
-                    </flux:card>
-                @endif
             </div>
 
             {{-- Right sidebar --}}
@@ -559,11 +578,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                         <flux:heading size="sm">Quote details</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
-                        <flux:select wire:model="status" label="Status">
-                            @foreach ($this->statuses() as $s)
-                                <flux:select.option value="{{ $s->value }}">{{ $s->label() }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
                         <flux:input wire:model="expires_at" type="date" label="Valid until" />
                     </div>
                 </flux:card>
@@ -617,7 +631,56 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                     </div>
                 </flux:card>
 
+                {{-- Delivery preference (read-only) --}}
+                <flux:card class="overflow-hidden p-0">
+                    <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                        <flux:heading size="sm">Delivery preference</flux:heading>
+                    </div>
+                    <div class="p-6">
+                        @if ($quote->delivery_required)
+                            <div class="flex items-start gap-2.5">
+                                <flux:icon.truck variant="micro" class="mt-0.5 size-4 shrink-0 text-zinc-400" />
+                                <div class="space-y-1">
+                                    <flux:text size="sm" class="font-medium dark:text-white">Delivery requested</flux:text>
+                                    @if ($quote->delivery_address)
+                                        <flux:text size="sm" class="text-zinc-500 whitespace-pre-line">{{ $quote->delivery_address }}</flux:text>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-2.5">
+                                <flux:icon.building-storefront variant="micro" class="size-4 shrink-0 text-zinc-400" />
+                                <flux:text size="sm" class="text-zinc-500">No delivery — collection only</flux:text>
+                            </div>
+                        @endif
+                    </div>
+                </flux:card>
+
             </aside>
         </div>
     </form>
+
+    {{-- Incomplete quote confirmation modal --}}
+    <flux:modal wire:model.self="showSendConfirmation" class="md:w-[480px]">
+        <flux:heading>Send incomplete quote?</flux:heading>
+        <flux:subheading>This quote has the following issues. Are you sure you want to send it to the customer now?</flux:subheading>
+
+        <ul class="mt-4 space-y-2">
+            @foreach ($this->sendWarnings as $warning)
+                <li class="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                    <flux:icon.exclamation-triangle variant="micro" class="mt-0.5 size-4 shrink-0" />
+                    {{ $warning }}
+                </li>
+            @endforeach
+        </ul>
+
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" icon="paper-airplane" wire:click="confirmSend">
+                Send anyway
+            </flux:button>
+        </div>
+    </flux:modal>
 </div>

@@ -64,18 +64,12 @@ it('saves details and recomputes the total from line items', function () {
         ->set('lineItems.0.product_name', 'Combi oven')
         ->set('lineItems.0.unit_price', 2000)
         ->set('lineItems.0.quantity', 3)
-        ->set('title', 'Hotel fit-out')
-        ->set('status', QuoteStatus::SENT->value)
-        ->set('contact_email', 'buyer@example.com')
         ->call('save')
         ->assertHasNoErrors();
 
     $quote->refresh();
 
-    expect($quote->title)->toBe('Hotel fit-out')
-        ->and($quote->status)->toBe(QuoteStatus::SENT)
-        ->and($quote->contact_email)->toBe('buyer@example.com')
-        ->and($quote->total_cents)->toBe(600000)
+    expect($quote->total_cents)->toBe(600000)
         ->and($quote->items)->toHaveCount(1)
         ->and($quote->items->first()->line_total_cents)->toBe(600000);
 });
@@ -107,13 +101,4 @@ it('adds a catalog product as a line item', function () {
         ->assertCount('lineItems', 1)
         ->assertSet('lineItems.0.product_name', 'Wok Range')
         ->assertSet('lineItems.0.unit_price', 1500.0);
-});
-
-it('requires a title to save', function () {
-    $quote = Quote::factory()->create();
-
-    Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
-        ->set('title', '')
-        ->call('save')
-        ->assertHasErrors('title');
 });

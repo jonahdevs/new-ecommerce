@@ -31,8 +31,11 @@ function quoteWithLine(int $lineCents, ?Product $product): Quote
 
     $quote->items()->create([
         'product_id' => $product?->id,
-        'product_name' => $product?->name ?? 'Custom fabrication',
-        'product_sku' => $product?->sku,
+        'product_snapshot' => [
+            'name' => $product?->name ?? 'Custom fabrication',
+            'sku' => $product?->sku,
+            'model_number' => $product?->model_number,
+        ],
         'unit_price_cents' => $lineCents,
         'quantity' => 1,
         'line_total_cents' => $lineCents,

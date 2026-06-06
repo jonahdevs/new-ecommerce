@@ -41,8 +41,11 @@ class QuoteSeeder extends Seeder
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_sku' => $product->sku,
+                    'product_snapshot' => [
+                        'name' => $product->name,
+                        'sku' => $product->sku,
+                        'model_number' => $product->model_number,
+                    ],
                     'unit_price_cents' => $price,
                     'quantity' => $qty,
                     'line_total_cents' => $price * $qty,

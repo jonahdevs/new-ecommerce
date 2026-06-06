@@ -291,8 +291,11 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'product_variant_id' => $variant?->id,
-                    'product_name' => $product->name.($line['label'] ? ' — '.$line['label'] : ''),
-                    'product_sku' => $variant?->sku ?? $product->sku,
+                    'product_snapshot' => [
+                        'name' => $product->name.($line['label'] ? ' — '.$line['label'] : ''),
+                        'sku' => $variant?->sku ?? $product->sku,
+                        'model_number' => $product->model_number,
+                    ],
                     'unit_price_cents' => $line['unit_price_cents'],
                     'quantity' => $line['qty'],
                     'line_total_cents' => $line['line_total_cents'],

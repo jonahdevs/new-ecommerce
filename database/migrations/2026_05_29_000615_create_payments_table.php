@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('payments', function (Blueprint $table) {
@@ -22,6 +19,7 @@ return new class extends Migration
             $table->char('currency', 3)->default('KES');
             $table->string('phone')->nullable();
             $table->string('account_reference');
+
             // M-Pesa fields
             $table->string('merchant_request_id')->nullable()->index();
             // Unique: provider-issued IDs are used for idempotency on callbacks —
@@ -30,13 +28,19 @@ return new class extends Migration
             $table->string('mpesa_receipt')->nullable();
             $table->integer('result_code')->nullable();
             $table->string('result_desc')->nullable();
+
             // Stripe fields
-            // Note: stripe_session_id and stripe_payment_intent_id are unique per
-            // payment attempt. stripe_client_secret is intentionally omitted —
-            // it is a short-lived credential that must be held in session/cache
-            // only, never persisted to the database.
-            $table->string('stripe_session_id')->nullable()->unique();
-            $table->string('stripe_payment_intent_id')->nullable();
+            // Note: stripe_client_secret is intentionally omitted — it is a
+            // short-lived credential that must be held in memory only, never persisted.
+            $table->string('stripe_payment_intent_id')->nullable()->unique();
+            $table->string('stripe_charge_id')->nullable();
+            $table->string('card_brand')->nullable();
+            $table->char('card_last4', 4)->nullable();
+
+            // Refund tracking
+            $table->bigInteger('refund_cents')->nullable();
+            $table->timestamp('refunded_at')->nullable();
+
             // Raw webhook/callback body for audit and replay purposes.
             $table->json('payload')->nullable();
             $table->timestamp('paid_at')->nullable();
@@ -44,9 +48,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('payments');

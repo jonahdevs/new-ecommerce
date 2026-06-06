@@ -33,8 +33,7 @@ function pricedDraft(array $attrs = []): Quote
     ], $attrs));
 
     $quote->items()->create([
-        'product_name' => 'Combi oven',
-        'product_sku' => 'OVN-1',
+        'product_snapshot' => ['name' => 'Combi oven', 'sku' => 'OVN-1', 'model_number' => null],
         'unit_price_cents' => 0,
         'quantity' => 1,
         'line_total_cents' => 0,
@@ -73,9 +72,10 @@ it('acknowledges a registered customer on their account', function () {
 
 it('emails the customer when staff send the quote for approval', function () {
     $customer = User::factory()->create();
-    $quote = pricedDraft(['user_id' => $customer->id, 'total_cents' => 500000]);
+    $quote = pricedDraft(['user_id' => $customer->id]);
 
     Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
+        ->set('lineItems.0.unit_price', 5000.00)
         ->call('sendToCustomer');
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::AWAITING_APPROVAL);
@@ -83,9 +83,10 @@ it('emails the customer when staff send the quote for approval', function () {
 });
 
 it('routes the ready-for-review email to a guest contact', function () {
-    $quote = pricedDraft(['user_id' => null, 'contact_email' => 'guest@example.com', 'total_cents' => 500000]);
+    $quote = pricedDraft(['user_id' => null, 'contact_email' => 'guest@example.com']);
 
     Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
+        ->set('lineItems.0.unit_price', 5000.00)
         ->call('sendToCustomer');
 
     Notification::assertSentOnDemand(QuoteReadyForReview::class);
@@ -102,6 +103,30 @@ it('alerts staff when a customer approves a quote', function () {
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::APPROVED);
     Notification::assertSentTo($this->staff, QuoteDecisionReceived::class);
+});
+
+it('shows a confirmation when staff try to send an unpriced quote', function () {
+    $customer = User::factory()->create();
+    $quote = pricedDraft(['user_id' => $customer->id, 'total_cents' => 0]);
+
+    Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
+        ->call('sendToCustomer')
+        ->assertSet('showSendConfirmation', true);
+
+    expect($quote->fresh()->status)->toBe(QuoteStatus::DRAFT);
+    Notification::assertNothingSentTo($customer);
+});
+
+it('sends the quote after staff confirm on incomplete quote', function () {
+    $customer = User::factory()->create();
+    $quote = pricedDraft(['user_id' => $customer->id, 'total_cents' => 0]);
+
+    Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
+        ->set('showSendConfirmation', true)
+        ->call('confirmSend');
+
+    expect($quote->fresh()->status)->toBe(QuoteStatus::AWAITING_APPROVAL);
+    Notification::assertSentTo($customer, QuoteReadyForReview::class);
 });
 
 it('mutes a quote notification when the customer disabled it but always sends to guests', function () {

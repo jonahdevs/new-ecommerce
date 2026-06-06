@@ -11,8 +11,7 @@ function orderItemFor(Order $order, float $taxRate): OrderItem
     return OrderItem::create([
         'order_id' => $order->id,
         'product_id' => $product->id,
-        'product_name' => $product->name,
-        'product_sku' => $product->sku,
+        'product_snapshot' => ['name' => $product->name, 'sku' => $product->sku, 'model_number' => null],
         'unit_price_cents' => 100000,
         'quantity' => 1,
         'line_total_cents' => 100000,

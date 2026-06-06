@@ -25,8 +25,11 @@ class QuoteItemFactory extends Factory
         return [
             'quote_id' => Quote::factory(),
             'product_id' => null,
-            'product_name' => fake()->words(3, true),
-            'product_sku' => 'SKU-'.fake()->unique()->numberBetween(1000, 99999),
+            'product_snapshot' => [
+                'name' => fake()->words(3, true),
+                'sku' => 'SKU-'.fake()->unique()->numberBetween(1000, 99999),
+                'model_number' => null,
+            ],
             'unit_price_cents' => $unitPrice,
             'quantity' => $quantity,
             'line_total_cents' => $unitPrice * $quantity,
@@ -40,8 +43,11 @@ class QuoteItemFactory extends Factory
     {
         return $this->state(fn () => [
             'product_id' => $product->id,
-            'product_name' => $product->name,
-            'product_sku' => $product->sku,
+            'product_snapshot' => [
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'model_number' => $product->model_number,
+            ],
         ]);
     }
 }

@@ -16,7 +16,7 @@ it('loads the orders admin index', function () {
 
 it('lists orders and filters by status', function () {
     Order::factory()->create(['status' => OrderStatus::PENDING, 'order_number' => 'SHF-AAA']);
-    Order::factory()->create(['status' => OrderStatus::DELIVERED, 'order_number' => 'SHF-BBB']);
+    Order::factory()->create(['status' => OrderStatus::COMPLETED, 'order_number' => 'SHF-BBB']);
 
     Livewire::test('pages::admin.orders.index')
         ->assertSee('SHF-AAA')
@@ -41,9 +41,9 @@ it('updates an order status from the show page', function () {
     OrderItem::factory()->create(['order_id' => $order->id]);
 
     Livewire::test('pages::admin.orders.show', ['order' => $order])
-        ->set('status', OrderStatus::DELIVERED->value)
+        ->set('status', OrderStatus::COMPLETED->value)
         ->call('updateStatus')
         ->assertHasNoErrors();
 
-    expect($order->fresh()->status)->toBe(OrderStatus::DELIVERED);
+    expect($order->fresh()->status)->toBe(OrderStatus::COMPLETED);
 });

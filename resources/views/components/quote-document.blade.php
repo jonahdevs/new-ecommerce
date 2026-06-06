@@ -129,9 +129,14 @@
                         <td class="border border-zinc-300 px-2 py-2 align-top text-zinc-500">{{ $index + 1 }}.</td>
                         <td class="border border-zinc-300 px-2 py-2 align-top">
                             <div class="font-bold uppercase text-zinc-900 underline">{{ $item->product_name }}</div>
-                            @if ($item->product_sku)
+                            @if ($item->product_sku || $item->product_model_number)
                                 <ul class="mt-1 ml-4 list-disc text-[11px] text-zinc-600 space-y-0.5">
-                                    <li>SKU: {{ $item->product_sku }}</li>
+                                    @if ($item->product_sku)
+                                        <li>SKU: {{ $item->product_sku }}</li>
+                                    @endif
+                                    @if ($item->product_model_number)
+                                        <li>Model: {{ $item->product_model_number }}</li>
+                                    @endif
                                 </ul>
                             @endif
                         </td>

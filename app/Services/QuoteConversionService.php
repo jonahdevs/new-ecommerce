@@ -55,8 +55,7 @@ class QuoteConversionService
                 $item = $line['item'];
                 $order->items()->create([
                     'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'product_sku' => $item->product_sku,
+                    'product_snapshot' => $item->product_snapshot,
                     'unit_price_cents' => $item->unit_price_cents,
                     'quantity' => $item->quantity,
                     'line_total_cents' => $item->line_total_cents,

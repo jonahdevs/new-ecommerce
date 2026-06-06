@@ -43,6 +43,7 @@ class AdminSettingsNav
             'system' => ['label' => 'System', 'icon' => 'cog-6-tooth', 'sections' => [
                 'email' => ['label' => 'Email & SMS', 'icon' => 'envelope'],
                 'integrations' => ['label' => 'Integrations', 'icon' => 'puzzle-piece'],
+                'sap' => ['label' => 'SAP / KRA', 'icon' => 'document-check'],
                 'security' => ['label' => 'Security', 'icon' => 'shield-check'],
                 'maintenance' => ['label' => 'Maintenance', 'icon' => 'wrench-screwdriver'],
             ]],

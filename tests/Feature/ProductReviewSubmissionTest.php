@@ -104,8 +104,7 @@ it('lets a verified purchaser submit, and auto-approves when configured', functi
     OrderItem::create([
         'order_id' => $order->id,
         'product_id' => $this->product->id,
-        'product_name' => $this->product->name,
-        'product_sku' => $this->product->sku,
+        'product_snapshot' => ['name' => $this->product->name, 'sku' => $this->product->sku, 'model_number' => null],
         'unit_price_cents' => 150000,
         'quantity' => 1,
         'line_total_cents' => 150000,

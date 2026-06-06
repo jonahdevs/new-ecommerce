@@ -364,9 +364,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         }
 
         $lines = $this->lines;
-        $title = $this->generateTitle();
 
-        $quote = DB::transaction(function () use ($lines, $title) {
+        $quote = DB::transaction(function () use ($lines) {
             $quotationSettings = app(QuotationSettings::class);
 
             $tax = app(\App\Support\TaxCalculator::class);
@@ -378,7 +377,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 'contact_phone' => $this->contact_phone ?: null,
                 'contact_company' => $this->contact_company ?: null,
                 'quote_number' => Quote::generateNumber(),
-                'title' => $title,
                 'status' => QuoteStatus::DRAFT,
                 'total_cents' => 0,
                 'vat_rate' => $tax->enabled() ? $tax->defaultRate() : 0,
@@ -394,8 +392,11 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 QuoteItem::create([
                     'quote_id' => $quote->id,
                     'product_id' => $line['product']->id,
-                    'product_name' => $line['product']->name . ($line['label'] ? ' — ' . $line['label'] : ''),
-                    'product_sku' => $line['variant']?->sku ?? $line['product']->sku,
+                    'product_snapshot' => [
+                        'name' => $line['product']->name.($line['label'] ? ' — '.$line['label'] : ''),
+                        'sku' => $line['variant']?->sku ?? $line['product']->sku,
+                        'model_number' => $line['product']->model_number,
+                    ],
                     'unit_price_cents' => 0,
                     'quantity' => $line['qty'],
                     'line_total_cents' => 0,
@@ -418,12 +419,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         Flux::toast(heading: 'Quote request submitted', text: 'We\'ve received your request and will get back to you shortly.', variant: 'success');
     }
 
-    private function generateTitle(): string
-    {
-        $who = trim($this->contact_company) ?: trim($this->contact_name);
 
-        return $who !== '' ? "Quote request — {$who}" : 'Quote request';
-    }
 }; ?>
 
 

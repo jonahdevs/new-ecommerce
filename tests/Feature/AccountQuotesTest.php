@@ -16,11 +16,9 @@ it('hides pricing for a draft request that has not been quoted yet', function ()
         'user_id' => $this->user->id,
         'status' => QuoteStatus::DRAFT,
         'total_cents' => 0,
-        'title' => 'Pending request',
     ]);
 
     Livewire::test('pages::account.quotes.index')
-        ->assertSee('Pending request')
         ->assertSee('Awaiting quote');
 });
 
@@ -29,7 +27,6 @@ it('shows the staff-set price once the quote has been sent', function () {
         'user_id' => $this->user->id,
         'status' => QuoteStatus::SENT,
         'total_cents' => 4500000,
-        'title' => 'Priced quote',
     ]);
 
     Livewire::test('pages::account.quotes.index')
@@ -42,7 +39,6 @@ it('does not show a price for a draft even if a total somehow leaked in', functi
         'user_id' => $this->user->id,
         'status' => QuoteStatus::DRAFT,
         'total_cents' => 999900,
-        'title' => 'Draft with stray total',
     ]);
 
     Livewire::test('pages::account.quotes.index')
@@ -61,12 +57,10 @@ function ownedQuote(QuoteStatus $status, int $lineCents = 0): Quote
         'user_id' => test()->user->id,
         'status' => $status,
         'total_cents' => $lineCents,
-        'title' => 'Project quote',
     ]);
 
     $quote->items()->create([
-        'product_name' => 'Combi oven',
-        'product_sku' => 'OVN-1',
+        'product_snapshot' => ['name' => 'Combi oven', 'sku' => 'OVN-1', 'model_number' => null],
         'unit_price_cents' => $lineCents,
         'quantity' => 1,
         'line_total_cents' => $lineCents,

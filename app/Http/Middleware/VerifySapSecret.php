@@ -2,20 +2,22 @@
 
 namespace App\Http\Middleware;
 
-use App\Settings\IntegrationSettings;
+use App\Services\Sap\SapConfig;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifySapSecret
 {
-    public function __construct(private IntegrationSettings $settings) {}
+    public function __construct(private readonly SapConfig $config) {}
 
     public function handle(Request $request, Closure $next): Response
     {
-        $secret = $this->settings->sap_webhook_secret;
+        $secret = $this->config->webhookSecret();
 
-        if (empty($secret) || $request->header('X-SAP-Secret') !== $secret) {
+        $provided = (string) $request->header('X-SAP-Secret', '');
+
+        if (empty($secret) || ! hash_equals($secret, $provided)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
         }
 

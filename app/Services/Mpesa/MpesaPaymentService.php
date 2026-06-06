@@ -52,6 +52,7 @@ class MpesaPaymentService
             'provider' => 'mpesa',
             'status' => PaymentStatus::PENDING,
             'amount_cents' => $order->total_cents,
+            'currency' => 'KES',
             'phone' => self::normalizePhone($phone),
             'account_reference' => $order->order_number,
         ]);

@@ -77,8 +77,7 @@ it('submits a quote tied to the authenticated user', function () {
 
     Livewire::test('pages::storefront.request-quote')
         ->call('submit')
-        ->assertHasNoErrors()
-        ->assertRedirect(route('account.quotes.show', Quote::first()));
+        ->assertHasNoErrors();
 
     $quote = Quote::first();
 
@@ -110,29 +109,6 @@ it('does not display any prices on the request page', function () {
     Livewire::test('pages::storefront.request-quote')
         ->assertSee('Wok Range')
         ->assertDontSee('3,000');
-});
-
-it('auto-generates a title from the company field', function () {
-    $this->actingAs($this->user);
-    StorefrontSession::addToCart('wok-range', 1);
-
-    Livewire::test('pages::storefront.request-quote')
-        ->set('contact_company', 'Acme Catering')
-        ->call('submit')
-        ->assertHasNoErrors();
-
-    expect(Quote::first()->title)->toBe('Quote request — Acme Catering');
-});
-
-it('auto-generates a title from the user name when no company is set', function () {
-    $this->actingAs($this->user);
-    StorefrontSession::addToCart('wok-range', 1);
-
-    Livewire::test('pages::storefront.request-quote')
-        ->call('submit')
-        ->assertHasNoErrors();
-
-    expect(Quote::first()->title)->toBe('Quote request — Anita Wanjiru');
 });
 
 it('requires name and email for guest submission', function () {

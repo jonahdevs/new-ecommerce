@@ -13,11 +13,12 @@ use function Pest\Laravel\postJson;
 beforeEach(function () {
     Queue::fake();
 
+    config(['sap.webhook_secret' => 'test-secret-123']);
+
     app(IntegrationSettings::class)->fill([
         'sap_enabled' => true,
         'sap_sync_price' => true,
         'sap_sync_quantity' => true,
-        'sap_webhook_secret' => 'test-secret-123',
     ])->save();
 });
 

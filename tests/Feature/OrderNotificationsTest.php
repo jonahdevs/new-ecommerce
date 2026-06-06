@@ -60,10 +60,10 @@ it('emails the customer when the admin marks an order out for delivery', functio
 
 it('does not notify when the status is saved unchanged', function () {
     $customer = User::factory()->create();
-    $order = Order::factory()->create(['user_id' => $customer->id, 'status' => OrderStatus::DELIVERED]);
+    $order = Order::factory()->create(['user_id' => $customer->id, 'status' => OrderStatus::COMPLETED]);
 
     Livewire::test('pages::admin.orders.show', ['order' => $order])
-        ->set('status', OrderStatus::DELIVERED->value)
+        ->set('status', OrderStatus::COMPLETED->value)
         ->call('updateStatus');
 
     Notification::assertNotSentTo($customer, OrderStatusChanged::class);
@@ -75,13 +75,13 @@ it('sends order status emails only for fulfilment milestones', function () {
     // Processing is not a customer-facing milestone.
     expect((new OrderStatusChanged($order))->via($order->user ?? new User))->toBe([]);
 
-    $order->status = OrderStatus::DELIVERED;
+    $order->status = OrderStatus::COMPLETED;
     expect((new OrderStatusChanged($order))->via(new User))->toBe(['mail']);
 });
 
 it('respects a muted order preference', function () {
-    $user = User::factory()->create(['notification_preferences' => ['orders' => ['delivered' => false]]]);
-    $order = Order::factory()->make(['user_id' => $user->id, 'status' => OrderStatus::DELIVERED]);
+    $user = User::factory()->create(['notification_preferences' => ['orders' => ['updates' => false]]]);
+    $order = Order::factory()->make(['user_id' => $user->id, 'status' => OrderStatus::COMPLETED]);
 
     expect((new OrderStatusChanged($order))->via($user))->toBe([]);
 });

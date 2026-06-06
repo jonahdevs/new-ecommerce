@@ -4,8 +4,11 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\SapSyncStatus;
+use App\Jobs\SyncOrderToSapJob;
 use App\Notifications\Orders\NewOrderReceived;
 use App\Notifications\Orders\OrderConfirmed;
+use App\Services\Sap\SapConfig;
 use App\Settings\CheckoutSettings;
 use App\Support\StaffRecipients;
 use Database\Factories\OrderFactory;
@@ -19,7 +22,8 @@ use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['user_id', 'address_id', 'delivery_zone_id', 'shipping_method_id', 'warehouse_id', 'order_number', 'status', 'subtotal_cents', 'vat_cents', 'delivery_cents', 'installation_cents', 'total_cents', 'payment_method', 'notes'])]
+#[Fillable(['user_id', 'address_id', 'delivery_zone_id', 'shipping_method_id', 'warehouse_id', 'order_number', 'status', 'subtotal_cents', 'vat_cents', 'delivery_cents', 'installation_cents', 'total_cents', 'payment_method', 'notes', 'staff_notes', 'confirmed_at', 'shipped_at', 'delivered_at', 'cancelled_at', 'sap_doc_entry', 'sap_doc_number', 'sap_sync_status', 'sap_synced_at', 'sap_sync_attempts', 'sap_sync_error', 'kra_cu_number', 'kra_validated_at', 'kra_receipt_path',
+    'packing_list_path', 'delivery_note_path'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -38,6 +42,13 @@ class Order extends Model
     {
         return [
             'status' => OrderStatus::class,
+            'sap_sync_status' => SapSyncStatus::class,
+            'confirmed_at' => 'datetime',
+            'shipped_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'sap_synced_at' => 'datetime',
+            'kra_validated_at' => 'datetime',
         ];
     }
 
@@ -81,6 +92,11 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function sapSyncLogs(): HasMany
+    {
+        return $this->hasMany(SapSyncLog::class);
+    }
+
     public function latestPayment(): HasOne
     {
         return $this->hasOne(Payment::class)->latestOfMany();
@@ -106,6 +122,11 @@ class Order extends Model
 
         $this->user?->notify(new OrderConfirmed($this));
         Notification::send(StaffRecipients::for('orders.manage'), new NewOrderReceived($this));
+
+        $sapConfig = app(SapConfig::class);
+        if ($sapConfig->isEnabled() && $sapConfig->autoSyncOrders()) {
+            SyncOrderToSapJob::dispatch($this);
+        }
     }
 
     /**

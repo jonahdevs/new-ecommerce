@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Settings\BrandingSettings;
 use App\Settings\BusinessSettings;
 use App\Settings\CheckoutSettings;
+use App\Settings\IntegrationSettings;
 use App\Settings\InventorySettings;
 use App\Settings\LocalizationSettings;
 use App\Settings\MaintenanceSettings;
@@ -281,6 +282,22 @@ test('security rejects too short a minimum password length', function () {
         ->set('min_password_length', 3)
         ->call('saveSecurity')
         ->assertHasErrors(['min_password_length']);
+});
+
+test('admin can toggle SAP sync and permissions', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test('pages::admin.settings.system')
+        ->set('sap_enabled', true)
+        ->set('sap_sync_price', false)
+        ->set('sap_sync_quantity', true)
+        ->call('saveSap')
+        ->assertHasNoErrors();
+
+    $settings = app(IntegrationSettings::class);
+    expect($settings->sap_enabled)->toBeTrue()
+        ->and($settings->sap_sync_price)->toBeFalse()
+        ->and($settings->sap_sync_quantity)->toBeTrue();
 });
 
 // ==================================================

@@ -13,8 +13,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component {
     public Order $order;
 
     public string $selectedMethod = 'card';
@@ -93,7 +92,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
     {
         $payment = app(StripePaymentService::class)->confirmPaymentIntent($paymentIntentId);
 
-        if (! $payment) {
+        if (!$payment) {
             $this->addError('card', 'Payment could not be confirmed. If you were charged, please contact support.');
 
             return;
@@ -103,7 +102,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
         StorefrontSession::clearCart();
         $this->dispatch('cart-updated');
 
-        Flux::toast(heading: 'Payment confirmed', text: 'Order '.$this->order->order_number.' is being processed.', variant: 'success');
+        Flux::toast(heading: 'Payment confirmed', text: 'Order ' . $this->order->order_number . ' is being processed.', variant: 'success');
 
         $this->redirectRoute('account.orders.show', $this->order, navigate: true);
     }
@@ -114,7 +113,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
     public function payWithMpesa(): void
     {
-        if (! MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
+        if (!MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
             $this->addError('mpesaPhone', 'Enter a valid M-Pesa number, e.g. 0712 345 678.');
 
             return;
@@ -140,13 +139,13 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
      */
     public function pollPayment(): void
     {
-        if (! $this->awaitingPayment || ! $this->pendingPaymentId) {
+        if (!$this->awaitingPayment || !$this->pendingPaymentId) {
             return;
         }
 
         $payment = Payment::find($this->pendingPaymentId);
 
-        if (! $payment) {
+        if (!$payment) {
             $this->awaitingPayment = false;
 
             return;
@@ -159,7 +158,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             $this->awaitingPayment = false;
             StorefrontSession::clearCart();
             $this->dispatch('cart-updated');
-            Flux::toast(heading: 'Payment received', text: 'Order '.$payment->account_reference.' is confirmed.', variant: 'success');
+            Flux::toast(heading: 'Payment received', text: 'Order ' . $payment->account_reference . ' is confirmed.', variant: 'success');
             $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
 
             return;
@@ -167,9 +166,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
         if (in_array($status, [PaymentStatus::FAILED, PaymentStatus::CANCELLED], true)) {
             $this->awaitingPayment = false;
-            $this->addError('mpesaPhone', $status === PaymentStatus::CANCELLED
-                ? 'Payment was cancelled on your phone. You can try again.'
-                : ($payment->result_desc ?: 'Payment failed. Please try again.'));
+            $this->addError('mpesaPhone', $status === PaymentStatus::CANCELLED ? 'Payment was cancelled on your phone. You can try again.' : ($payment->result_desc ?: 'Payment failed. Please try again.'));
 
             return;
         }
@@ -214,128 +211,148 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             {{-- LEFT: PAYMENT METHODS --}}
             {{-- ================================================== --}}
             <div class="flex-1 min-w-0 space-y-3"
-                 @if ($cardEnabled)
-                 x-data="stripeCardForm(@js($stripeKey), @js($this->stripeClientSecret))"
-                 @stripe-payment-confirmed.window="$wire.stripePaymentConfirmed($event.detail.paymentIntentId)"
-                 @endif>
+                @if ($cardEnabled) x-data="stripeCardForm(@js($stripeKey), @js($this->stripeClientSecret))"
+                 @stripe-payment-confirmed.window="$wire.stripePaymentConfirmed($event.detail.paymentIntentId)" @endif>
 
                 @error('card')
-                    <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">{{ $message }}</div>
+                    <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">
+                        {{ $message }}</div>
                 @enderror
 
                 @if ($cardEnabled)
-                {{-- ================================================== --}}
-                {{-- CARD PAYMENT --}}
-                {{-- ================================================== --}}
-                <div class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'card' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
-                    {{-- Header row --}}
-                    <button type="button" wire:click="selectMethod('card')"
+                    {{-- ================================================== --}}
+                    {{-- CARD PAYMENT --}}
+                    {{-- ================================================== --}}
+                    <div
+                        class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'card' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
+                        {{-- Header row --}}
+                        <button type="button" wire:click="selectMethod('card')"
                             class="flex w-full items-center gap-3 px-5 py-4 text-left">
-                        <span class="flex size-4 shrink-0 items-center justify-center rounded-full border-2 {{ $this->selectedMethod === 'card' ? 'border-brand-500' : 'border-zinc-300' }}">
-                            @if ($this->selectedMethod === 'card')
-                                <span class="size-2 rounded-full bg-brand-500"></span>
-                            @endif
-                        </span>
-                        <flux:icon.credit-card variant="micro" class="size-4 text-ink-3" />
-                        <span class="flex-1 text-[14px] font-semibold text-ink">Card Payment</span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">Visa</span>
-                            <span class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">MC</span>
-                            <span class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">Amex</span>
-                        </div>
-                    </button>
+                            <span
+                                class="flex size-4 shrink-0 items-center justify-center rounded-full border-2 {{ $this->selectedMethod === 'card' ? 'border-brand-500' : 'border-zinc-300' }}">
+                                @if ($this->selectedMethod === 'card')
+                                    <span class="size-2 rounded-full bg-brand-500"></span>
+                                @endif
+                            </span>
+                            <flux:icon.credit-card variant="micro" class="size-4 text-ink-3" />
+                            <span class="flex-1 text-[14px] font-semibold text-ink">Card Payment</span>
+                            <div class="flex items-center gap-1.5">
+                                <span
+                                    class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">Visa</span>
+                                <span
+                                    class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">MC</span>
+                                <span
+                                    class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">Amex</span>
+                            </div>
+                        </button>
 
-                    {{-- Card form body.
+                        {{-- Card form body.
                          wire:ignore keeps Livewire's DOM morphing away from this subtree so
                          Stripe's iframe-based Elements are never destroyed on re-renders.
                          x-show + $wire handles visibility without touching the DOM. --}}
-                    <div wire:ignore>
-                        <div x-show="$wire.selectedMethod === 'card'"
-                             class="border-t border-zinc-100 px-5 pb-5 pt-4 space-y-4">
+                        <div wire:ignore>
+                            <div x-show="$wire.selectedMethod === 'card'"
+                                class="border-t border-zinc-100 px-5 pb-5 pt-4 space-y-4">
 
-                            {{-- Cardholder name --}}
-                            <div>
-                                <label class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Cardholder name</label>
-                                <input type="text" x-model="cardholderName" placeholder="Name on card"
-                                       class="w-full rounded-md border border-zinc-200 bg-white px-3 py-2.5 text-[13.5px] text-ink placeholder-zinc-400 outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
-                            </div>
-
-                            {{-- Card number --}}
-                            <div>
-                                <label class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Card number</label>
-                                <div x-ref="cardNumber"
-                                     class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"></div>
-                            </div>
-
-                            {{-- Expiry + CVC --}}
-                            <div class="grid grid-cols-2 gap-4">
+                                {{-- Cardholder name --}}
                                 <div>
-                                    <label class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Expiry date</label>
-                                    <div x-ref="cardExpiry"
-                                         class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"></div>
+                                    <label
+                                        class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Cardholder
+                                        name</label>
+                                    <input type="text" x-model="cardholderName" placeholder="Name on card"
+                                        class="w-full rounded-md border border-zinc-200 bg-white px-3 py-2.5 text-[13.5px] text-ink placeholder-zinc-400 outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
                                 </div>
+
+                                {{-- Card number --}}
                                 <div>
-                                    <label class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">CVC</label>
-                                    <div x-ref="cardCvc"
-                                         class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"></div>
+                                    <label
+                                        class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Card
+                                        number</label>
+                                    <div x-ref="cardNumber"
+                                        class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+                                    </div>
                                 </div>
+
+                                {{-- Expiry + CVC --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label
+                                            class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Expiry
+                                            date</label>
+                                        <div x-ref="cardExpiry"
+                                            class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">CVC</label>
+                                        <div x-ref="cardCvc"
+                                            class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Stripe error message --}}
+                                <p x-show="error" x-text="error" class="text-[12.5px] text-red-500"></p>
+
+                                {{-- Pay button --}}
+                                <flux:button type="button" variant="customer-primary" size="customer-lg" @click="pay()"
+                                    x-bind:disabled="processing || !isComplete" class="mt-1! w-full!">
+                                    <span
+                                        x-text="processing ? 'Processing' : 'Pay {{ money($order->total_cents) }}'"></span>
+                                    <flux:icon.loading x-show="processing" x-cloak variant="micro" class="size-4" />
+                                </flux:button>
+
+                                <p class="flex items-center justify-center gap-1.5 text-[11px] text-ink-4">
+                                    <flux:icon.lock-closed variant="micro" class="size-3" />
+                                    Secured by Stripe. We never store your card details.
+                                </p>
                             </div>
-
-                            {{-- Stripe error message --}}
-                            <p x-show="error" x-text="error" class="text-[12.5px] text-red-500"></p>
-
-                            {{-- Pay button --}}
-                            <flux:button type="button" variant="customer-primary" size="customer-lg"
-                                         @click="pay()"
-                                         x-bind:disabled="processing || !isComplete"
-                                         class="mt-1! w-full!">
-                                <flux:icon.arrow-path x-show="processing" x-cloak variant="micro" class="size-4 animate-spin" />
-                                <span x-text="processing ? 'Processing…' : 'Pay {{ money($order->total_cents) }}'"></span>
-                            </flux:button>
-
-                            <p class="flex items-center justify-center gap-1.5 text-[11px] text-ink-4">
-                                <flux:icon.lock-closed variant="micro" class="size-3" />
-                                Secured by Stripe. We never store your card details.
-                            </p>
                         </div>
                     </div>
-                </div>
                 @endif
 
                 @if ($mpesaEnabled)
-                {{-- ================================================== --}}
-                {{-- M-PESA --}}
-                {{-- ================================================== --}}
-                <div class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
-                    {{-- Header row --}}
-                    <button type="button" wire:click="selectMethod('mpesa')"
+                    {{-- ================================================== --}}
+                    {{-- M-PESA --}}
+                    {{-- ================================================== --}}
+                    <div
+                        class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
+                        {{-- Header row --}}
+                        <button type="button" wire:click="selectMethod('mpesa')"
                             class="flex w-full items-center gap-3 px-5 py-4 text-left">
-                        <span class="flex size-4 shrink-0 items-center justify-center rounded-full border-2 {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500' : 'border-zinc-300' }}">
-                            @if ($this->selectedMethod === 'mpesa')
-                                <span class="size-2 rounded-full bg-brand-500"></span>
-                            @endif
-                        </span>
-                        <flux:icon.device-phone-mobile variant="micro" class="size-4 text-ink-3" />
-                        <span class="flex-1 text-[14px] font-semibold text-ink">M-Pesa</span>
-                        <span class="text-[10px] font-bold tracking-widest text-emerald-600 uppercase">Safaricom</span>
-                    </button>
+                            <span
+                                class="flex size-4 shrink-0 items-center justify-center rounded-full border-2 {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500' : 'border-zinc-300' }}">
+                                @if ($this->selectedMethod === 'mpesa')
+                                    <span class="size-2 rounded-full bg-brand-500"></span>
+                                @endif
+                            </span>
+                            <flux:icon.device-phone-mobile variant="micro" class="size-4 text-ink-3" />
+                            <span class="flex-1 text-[14px] font-semibold text-ink">M-Pesa</span>
+                            <span
+                                class="text-[10px] font-bold tracking-widest text-emerald-600 uppercase">Safaricom</span>
+                        </button>
 
-                    {{-- M-Pesa form (shown when selected) --}}
-                    @if ($this->selectedMethod === 'mpesa')
-                        <div class="border-t border-zinc-100 px-5 pb-5 pt-4 space-y-4">
-                            <flux:field>
-                                <flux:label class="text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">M-Pesa phone number</flux:label>
-                                <flux:input wire:model="mpesaPhone" type="tel" inputmode="tel" placeholder="0712 345 678" />
-                                <flux:description>You'll receive an STK push — enter your PIN to confirm.</flux:description>
-                                <flux:error name="mpesaPhone" />
-                            </flux:field>
+                        {{-- M-Pesa form (shown when selected) --}}
+                        @if ($this->selectedMethod === 'mpesa')
+                            <div class="border-t border-zinc-100 px-5 pb-5 pt-4 space-y-4">
+                                <flux:field>
+                                    <flux:label class="text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">
+                                        M-Pesa phone number</flux:label>
+                                    <flux:input wire:model="mpesaPhone" type="tel" inputmode="tel"
+                                        placeholder="0712 345 678" />
+                                    <flux:description>You'll receive an STK push — enter your PIN to confirm.
+                                    </flux:description>
+                                    <flux:error name="mpesaPhone" />
+                                </flux:field>
 
-                            <flux:button variant="customer-primary" size="customer-lg" wire:click="payWithMpesa" wire:loading.attr="disabled" wire:target="payWithMpesa" class="w-full!">
-                                Pay {!! money($order->total_cents) !!} via M-Pesa
-                            </flux:button>
-                        </div>
-                    @endif
-                </div>
+                                <flux:button variant="customer-primary" size="customer-lg" wire:click="payWithMpesa"
+                                    wire:loading.attr="disabled" wire:target="payWithMpesa" class="w-full!">
+                                    Pay {!! money($order->total_cents) !!} via M-Pesa
+                                </flux:button>
+                            </div>
+                        @endif
+                    </div>
                 @endif
 
                 @unless ($cardEnabled || $mpesaEnabled)
@@ -360,16 +377,20 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                         <div class="space-y-3">
                             @foreach ($order->items as $item)
                                 <div class="flex items-center gap-3">
-                                    <div class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
+                                    <div
+                                        class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
                                         @if ($item->product?->cover_url)
-                                            <img src="{{ $item->product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
+                                            <img src="{{ $item->product->cover_url }}" alt=""
+                                                class="size-full object-contain" loading="lazy" />
                                         @endif
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <div class="truncate text-[12.5px] font-semibold text-ink">{{ $item->product_name }}</div>
+                                        <div class="truncate text-[12.5px] font-semibold text-ink">
+                                            {{ $item->product_name }}</div>
                                         <div class="text-[11.5px] text-ink-4">Qty {{ $item->quantity }}</div>
                                     </div>
-                                    <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">{!! money($item->line_total_cents) !!}</div>
+                                    <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">
+                                        {!! money($item->line_total_cents) !!}</div>
                                 </div>
                             @endforeach
                         </div>
@@ -383,7 +404,8 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                             </div>
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Shipping</span>
-                                <span class="{{ $order->delivery_cents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
+                                <span
+                                    class="{{ $order->delivery_cents === 0 ? 'font-medium text-emerald-600' : 'font-medium tabular-nums' }}">
                                     {!! $order->delivery_cents === 0 ? 'Free' : money($order->delivery_cents) !!}
                                 </span>
                             </div>
@@ -407,7 +429,8 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
                         <div class="mt-4 border-t border-zinc-100 pt-4 text-center text-[12px] text-ink-3">
                             Need a formal quote for a tender?
-                            <a href="{{ route('quote.request') }}" wire:navigate class="font-semibold text-brand-500 hover:text-brand-600">Request a quote</a>
+                            <a href="{{ route('quote.request') }}" wire:navigate
+                                class="font-semibold text-brand-500 hover:text-brand-600">Request a quote</a>
                         </div>
                     </div>
                 </div>
@@ -433,88 +456,112 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                 Waiting for confirmation…
             </div>
 
-            <flux:button type="button" variant="ghost" size="sm" wire:click="cancelPayment" class="mt-5">Cancel</flux:button>
+            <flux:button type="button" variant="ghost" size="sm" wire:click="cancelPayment" class="mt-5">
+                Cancel</flux:button>
         </div>
     </flux:modal>
 </div>
 
 @script
-<script>
-    Alpine.data('stripeCardForm', (publishableKey, clientSecret) => ({
-        stripe: null,
-        cardNumber: null,
-        cardExpiry: null,
-        cardCvc: null,
-        cardholderName: '',
-        error: null,
-        processing: false,
-        complete: { number: false, expiry: false, cvc: false },
+    <script>
+        Alpine.data('stripeCardForm', (publishableKey, clientSecret) => ({
+            stripe: null,
+            cardNumber: null,
+            cardExpiry: null,
+            cardCvc: null,
+            cardholderName: '',
+            error: null,
+            processing: false,
+            complete: {
+                number: false,
+                expiry: false,
+                cvc: false
+            },
 
-        get isComplete() {
-            return this.complete.number && this.complete.expiry && this.complete.cvc && this.cardholderName.trim().length > 0;
-        },
+            get isComplete() {
+                return this.complete.number && this.complete.expiry && this.complete.cvc && this
+                    .cardholderName.trim().length > 0;
+            },
 
-        init() {
-            if (!publishableKey || !clientSecret) return;
+            init() {
+                if (!publishableKey || !clientSecret) return;
 
-            this.stripe = Stripe(publishableKey);
-            const elements = this.stripe.elements();
+                this.stripe = Stripe(publishableKey);
+                const elements = this.stripe.elements();
 
-            const style = {
-                base: {
-                    fontSize: '13.5px',
-                    fontFamily: 'inherit',
-                    color: '#1a1a1a',
-                    '::placeholder': { color: '#9ca3af' },
-                },
-                invalid: { color: '#ef4444' },
-            };
+                const style = {
+                    base: {
+                        fontSize: '13.5px',
+                        fontFamily: 'inherit',
+                        color: '#1a1a1a',
+                        '::placeholder': {
+                            color: '#9ca3af'
+                        },
+                    },
+                    invalid: {
+                        color: '#ef4444'
+                    },
+                };
 
-            this.cardNumber = elements.create('cardNumber', { style, showIcon: true });
-            this.cardNumber.mount(this.$refs.cardNumber);
-            this.cardNumber.on('change', e => {
-                this.complete.number = e.complete;
-                if (e.error) this.error = e.error.message;
-                else if (this.complete.number) this.error = null;
-            });
+                this.cardNumber = elements.create('cardNumber', {
+                    style,
+                    showIcon: true
+                });
+                this.cardNumber.mount(this.$refs.cardNumber);
+                this.cardNumber.on('change', e => {
+                    this.complete.number = e.complete;
+                    if (e.error) this.error = e.error.message;
+                    else if (this.complete.number) this.error = null;
+                });
 
-            this.cardExpiry = elements.create('cardExpiry', { style });
-            this.cardExpiry.mount(this.$refs.cardExpiry);
-            this.cardExpiry.on('change', e => {
-                this.complete.expiry = e.complete;
-                if (e.error) this.error = e.error.message;
-            });
+                this.cardExpiry = elements.create('cardExpiry', {
+                    style
+                });
+                this.cardExpiry.mount(this.$refs.cardExpiry);
+                this.cardExpiry.on('change', e => {
+                    this.complete.expiry = e.complete;
+                    if (e.error) this.error = e.error.message;
+                });
 
-            this.cardCvc = elements.create('cardCvc', { style });
-            this.cardCvc.mount(this.$refs.cardCvc);
-            this.cardCvc.on('change', e => {
-                this.complete.cvc = e.complete;
-                if (e.error) this.error = e.error.message;
-            });
-        },
+                this.cardCvc = elements.create('cardCvc', {
+                    style
+                });
+                this.cardCvc.mount(this.$refs.cardCvc);
+                this.cardCvc.on('change', e => {
+                    this.complete.cvc = e.complete;
+                    if (e.error) this.error = e.error.message;
+                });
+            },
 
-        async pay() {
-            if (this.processing || !this.isComplete) return;
+            async pay() {
+                if (this.processing || !this.isComplete) return;
 
-            this.processing = true;
-            this.error = null;
+                this.processing = true;
+                this.error = null;
 
-            const { error, paymentIntent } = await this.stripe.confirmCardPayment(clientSecret, {
-                payment_method: {
-                    card: this.cardNumber,
-                    billing_details: { name: this.cardholderName },
-                },
-            });
+                const {
+                    error,
+                    paymentIntent
+                } = await this.stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: this.cardNumber,
+                        billing_details: {
+                            name: this.cardholderName
+                        },
+                    },
+                });
 
-            if (error) {
-                this.error = error.message;
-                this.processing = false;
-            } else if (paymentIntent.status === 'succeeded') {
-                window.dispatchEvent(new CustomEvent('stripe-payment-confirmed', {
-                    detail: { paymentIntentId: paymentIntent.id },
-                }));
-            }
-        },
-    }));
-</script>
+                if (error) {
+                    this.error = error.message;
+                    this.processing = false;
+                } else if (paymentIntent.status === 'succeeded') {
+                    window.dispatchEvent(new CustomEvent('stripe-payment-confirmed', {
+                        detail: {
+                            paymentIntentId: paymentIntent.id
+                        },
+                    }));
+                }
+            },
+        }));
+    </script>
 @endscript

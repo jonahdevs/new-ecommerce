@@ -39,9 +39,8 @@ class StripePaymentService
 
         if ($existing) {
             $intent = PaymentIntent::retrieve($existing->stripe_payment_intent_id);
-            $existing->stripe_client_secret = $intent->client_secret;
 
-            return $existing;
+            return $existing->withStripeClientSecret($intent->client_secret);
         }
 
         $intent = PaymentIntent::create([
@@ -58,13 +57,12 @@ class StripePaymentService
             'provider' => 'stripe',
             'status' => PaymentStatus::PENDING,
             'amount_cents' => $order->total_cents,
+            'currency' => 'KES',
             'account_reference' => $order->order_number,
             'stripe_payment_intent_id' => $intent->id,
         ]);
 
-        $payment->stripe_client_secret = $intent->client_secret;
-
-        return $payment;
+        return $payment->withStripeClientSecret($intent->client_secret);
     }
 
     /**
@@ -73,7 +71,9 @@ class StripePaymentService
      */
     public function confirmPaymentIntent(string $paymentIntentId): ?Payment
     {
-        $intent = PaymentIntent::retrieve($paymentIntentId);
+        $intent = PaymentIntent::retrieve($paymentIntentId, [
+            'expand' => ['latest_charge'],
+        ]);
 
         if ($intent->status !== 'succeeded') {
             return null;
@@ -86,7 +86,7 @@ class StripePaymentService
         }
 
         if (! $payment->status->isFinal()) {
-            $this->finalize($payment, $paymentIntentId);
+            $this->finalize($payment, $intent);
         }
 
         return $payment->fresh();
@@ -118,14 +118,24 @@ class StripePaymentService
             return;
         }
 
-        $this->finalize($payment, $intent->id);
+        // Re-fetch with charge expansion — webhook payloads don't expand nested objects.
+        $expanded = PaymentIntent::retrieve($intent->id, [
+            'expand' => ['latest_charge'],
+        ]);
+
+        $this->finalize($payment, $expanded);
     }
 
-    private function finalize(Payment $payment, string $paymentIntentId): void
+    private function finalize(Payment $payment, PaymentIntent $intent): void
     {
+        $charge = $intent->latest_charge;
+        $card = $charge?->payment_method_details?->card;
+
         $payment->update([
             'status' => PaymentStatus::SUCCESS,
-            'stripe_payment_intent_id' => $paymentIntentId,
+            'stripe_charge_id' => $charge?->id,
+            'card_brand' => $card?->brand,
+            'card_last4' => $card?->last4,
             'paid_at' => now(),
         ]);
 

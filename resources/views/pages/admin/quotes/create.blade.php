@@ -21,7 +21,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
     public string $customerSearch = '';
     public ?int $selectedUserId = null;
 
-    /** @var array<int, array{product_name: string, product_sku: string, unit_price: float|string, quantity: int}> */
+    /** @var array<int, array{product_name: string, product_sku: string, product_model_number: string, unit_price: float|string, quantity: int}> */
     public array $lineItems = [];
 
     public function mount(): void
@@ -100,6 +100,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
         $this->lineItems[] = [
             'product_name' => $product->name,
             'product_sku' => (string) $product->sku,
+            'product_model_number' => (string) $product->model_number,
             'unit_price' => ($product->sale_price ?? $product->price ?? 0) / 100,
             'quantity' => 1,
         ];
@@ -110,7 +111,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
 
     public function addBlankLine(): void
     {
-        $this->lineItems[] = ['product_name' => '', 'product_sku' => '', 'unit_price' => 0, 'quantity' => 1];
+        $this->lineItems[] = ['product_name' => '', 'product_sku' => '', 'product_model_number' => '', 'unit_price' => 0, 'quantity' => 1];
     }
 
     public function removeLine(int $index): void
@@ -152,8 +153,11 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
             $quantity = max(1, (int) $item['quantity']);
 
             $quote->items()->create([
-                'product_name' => $item['product_name'],
-                'product_sku' => $item['product_sku'] ?: null,
+                'product_snapshot' => [
+                    'name' => $item['product_name'],
+                    'sku' => $item['product_sku'] ?: null,
+                    'model_number' => $item['product_model_number'] ?: null,
+                ],
                 'unit_price_cents' => $unitCents,
                 'quantity' => $quantity,
                 'line_total_cents' => $unitCents * $quantity,

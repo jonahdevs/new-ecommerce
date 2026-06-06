@@ -19,6 +19,7 @@ class PaymentFactory extends Factory
             'provider' => 'mpesa',
             'status' => PaymentStatus::PENDING,
             'amount_cents' => fake()->numberBetween(1000, 5000000),
+            'currency' => 'KES',
             'phone' => '2547'.fake()->numerify('########'),
             'account_reference' => 'SHF-'.now()->year.'-'.fake()->numerify('#####'),
             'merchant_request_id' => fake()->uuid(),
@@ -33,19 +34,28 @@ class PaymentFactory extends Factory
             'phone' => null,
             'merchant_request_id' => null,
             'checkout_request_id' => null,
-            'stripe_session_id' => 'cs_test_'.fake()->bothify('??????????'),
+            'stripe_payment_intent_id' => 'pi_test_'.fake()->bothify('??????????'),
         ]);
     }
 
     public function successful(): static
     {
-        return $this->state([
-            'status' => PaymentStatus::SUCCESS,
-            'mpesa_receipt' => strtoupper(fake()->bothify('???#####??')),
-            'result_code' => 0,
-            'result_desc' => 'The service request is processed successfully.',
-            'paid_at' => now(),
-        ]);
+        return $this->state(function (array $attributes) {
+            $isStripe = ($attributes['provider'] ?? 'mpesa') === 'stripe';
+
+            return array_filter([
+                'status' => PaymentStatus::SUCCESS,
+                'paid_at' => now(),
+                // M-Pesa success fields
+                'mpesa_receipt' => $isStripe ? null : strtoupper(fake()->bothify('???#####??')),
+                'result_code' => $isStripe ? null : 0,
+                'result_desc' => $isStripe ? null : 'The service request is processed successfully.',
+                // Stripe success fields
+                'stripe_charge_id' => $isStripe ? 'ch_test_'.fake()->bothify('??????????') : null,
+                'card_brand' => $isStripe ? 'visa' : null,
+                'card_last4' => $isStripe ? '4242' : null,
+            ], fn ($v) => $v !== null);
+        });
     }
 
     public function failed(): static

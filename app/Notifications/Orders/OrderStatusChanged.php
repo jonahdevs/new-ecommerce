@@ -25,7 +25,7 @@ class OrderStatusChanged extends Notification implements ShouldQueue
     {
         return match ($this->order->status) {
             OrderStatus::OUT_FOR_DELIVERY,
-            OrderStatus::DELIVERED,
+            OrderStatus::COMPLETED,
             OrderStatus::CANCELLED => ['orders', 'updates'],
             default => null,
         };
@@ -42,10 +42,10 @@ class OrderStatusChanged extends Notification implements ShouldQueue
                 ->subject('Your order is on its way — '.$number)
                 ->greeting('Your order is out for delivery')
                 ->line('Order '.$number.' has left our warehouse and is on its way to you.'),
-            OrderStatus::DELIVERED => $mail
-                ->subject('Order delivered — '.$number)
-                ->greeting('Your order has been delivered')
-                ->line('Order '.$number.' has been delivered. We hope everything arrived in great shape.'),
+            OrderStatus::COMPLETED => $mail
+                ->subject('Order completed — '.$number)
+                ->greeting('Your order is complete')
+                ->line('Order '.$number.' has been fulfilled. We hope everything arrived in great shape.'),
             OrderStatus::CANCELLED => $mail
                 ->subject('Order cancelled — '.$number)
                 ->greeting('Your order has been cancelled')

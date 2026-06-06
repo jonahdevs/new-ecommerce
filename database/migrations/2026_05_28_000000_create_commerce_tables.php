@@ -87,13 +87,47 @@ return new class extends Migration
             $table->char('currency', 3)->default('KES');
             $table->string('payment_method')->nullable();
             $table->text('notes')->nullable();
+            $table->text('staff_notes')->nullable();
             // Lifecycle timestamps — one per stage so queries like "orders shipped
             // today" are instant rather than relying on a status-change audit log.
             $table->timestamp('confirmed_at')->nullable();
             $table->timestamp('shipped_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
+            // SAP / KRA — document references and sync lifecycle
+            $table->string('sap_doc_entry')->nullable();
+            $table->string('sap_doc_number')->nullable();
+            $table->string('sap_sync_status')->default('pending');
+            $table->timestamp('sap_synced_at')->nullable();
+            $table->unsignedTinyInteger('sap_sync_attempts')->default(0);
+            $table->text('sap_sync_error')->nullable();
+            $table->string('kra_cu_number')->nullable();
+            $table->timestamp('kra_validated_at')->nullable();
+            $table->string('kra_receipt_path')->nullable();
+            // Dispatch documents — generated when order moves to out_for_delivery
+            $table->string('packing_list_path')->nullable();
+            $table->string('delivery_note_path')->nullable();
+            $table->index('sap_sync_status');
+            $table->index('sap_doc_entry');
             $table->timestamps();
+        });
+
+        Schema::create('sap_sync_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->string('operation'); // create_invoice | validate_invoice | cu_webhook | return_webhook
+            $table->string('status');    // pending | success | failed
+            $table->string('endpoint')->nullable();
+            $table->string('http_method')->nullable();
+            $table->json('request_payload')->nullable();
+            $table->json('response_payload')->nullable();
+            $table->unsignedSmallInteger('http_status_code')->nullable();
+            $table->text('error_message')->nullable();
+            $table->string('sap_document_number')->nullable();
+            $table->unsignedInteger('duration_ms')->nullable();
+            $table->timestamps();
+            $table->index(['order_id', 'operation']);
+            $table->index('created_at');
         });
 
         Schema::create('order_items', function (Blueprint $table) {
@@ -101,8 +135,7 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('product_name');
-            $table->string('product_sku')->nullable();
+            $table->json('product_snapshot');
             $table->bigInteger('unit_price_cents');
             $table->integer('quantity');
             $table->bigInteger('line_total_cents');
@@ -152,8 +185,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('quote_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('product_name');
-            $table->string('product_sku')->nullable();
+            $table->json('product_snapshot');
             $table->bigInteger('unit_price_cents');
             $table->integer('quantity');
             $table->bigInteger('line_total_cents');
@@ -166,6 +198,7 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::dropIfExists('sap_sync_logs');
         Schema::dropIfExists('quote_items');
         Schema::dropIfExists('quotes');
         Schema::dropIfExists('order_items');

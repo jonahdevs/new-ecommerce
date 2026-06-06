@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\OrderDocumentController;
 use App\Http\Controllers\Admin\ProductExportController;
 use App\Http\Controllers\Admin\SubscriberExportController;
 use App\Http\Middleware\EnsureTwoFactorWhenRequired;
@@ -44,6 +45,8 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/tax-classes', 'pages::admin.tax-classes.index')->name('tax-classes.index');
         Route::livewire('/orders', 'pages::admin.orders.index')->name('orders.index');
         Route::livewire('/orders/{order}', 'pages::admin.orders.show')->name('orders.show');
+        Route::get('/orders/{order}/packing-list', [OrderDocumentController::class, 'packingList'])->name('orders.packing-list');
+        Route::get('/orders/{order}/delivery-note', [OrderDocumentController::class, 'deliveryNote'])->name('orders.delivery-note');
         Route::livewire('/quotes', 'pages::admin.quotes.index')->name('quotes.index');
         Route::livewire('/quotes/create', 'pages::admin.quotes.create')->name('quotes.create');
         Route::livewire('/quotes/{quote}', 'pages::admin.quotes.show')->name('quotes.show');

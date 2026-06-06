@@ -16,12 +16,10 @@ function guestQuote(QuoteStatus $status, int $totalCents = 0): Quote
         'status' => $status,
         'total_cents' => $totalCents,
         'subtotal_cents' => $totalCents,
-        'title' => 'Test guest quote',
     ]);
 
     $quote->items()->create([
-        'product_name' => 'Industrial Oven',
-        'product_sku' => 'OVN-2',
+        'product_snapshot' => ['name' => 'Industrial Oven', 'sku' => 'OVN-2', 'model_number' => null],
         'unit_price_cents' => $totalCents,
         'quantity' => 1,
         'line_total_cents' => $totalCents,

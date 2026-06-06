@@ -20,7 +20,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
     }
 }; ?>
 
-<div class="page-fade space-y-6">
+<div class="page-fade">
 
     @push('breadcrumbs')
         <flux:breadcrumbs>
@@ -29,39 +29,38 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
             <flux:breadcrumbs.item>{{ $order->order_number }}</flux:breadcrumbs.item>
         </flux:breadcrumbs>
     @endpush
-    <div class="flex flex-wrap items-start justify-between gap-4">
+
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ $order->order_number }}</flux:heading>
-            <flux:text class="mt-1">Placed {{ $order->created_at->format('d F Y') }}</flux:text>
+            <div class="flex items-center gap-3">
+                <h1 class="font-mono text-2xl font-semibold tracking-tight text-ink">{{ $order->order_number }}</h1>
+                <flux:badge :color="$order->status->badgeColor()" size="sm">{{ $order->status->label() }}</flux:badge>
+            </div>
+            <p class="mt-1 text-sm text-ink-3">Placed {{ $order->created_at->format('d F Y') }}</p>
         </div>
-        <flux:badge :color="$order->status->badgeColor()">
-            {{ $order->status->label() }}
-        </flux:badge>
     </div>
 
-    <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-        {{-- Items + address --}}
-        <div class="min-w-0 flex-1 space-y-4">
+        {{-- Left column --}}
+        <div class="space-y-6 lg:col-span-2">
 
             {{-- Items --}}
-            <flux:card class="p-0">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Items ordered</flux:heading>
+            <flux:card class="overflow-hidden p-0">
+                <div class="border-b border-zinc-100 px-6 py-4">
+                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Items</flux:heading>
                 </div>
-                <flux:table container:class="px-5">
+                <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
+                    <flux:table.columns class="bg-zinc-50">
+                        <flux:table.column>Product</flux:table.column>
+                        <flux:table.column class="w-32">SKU</flux:table.column>
+                        <flux:table.column class="w-36" align="end">Unit price</flux:table.column>
+                        <flux:table.column class="w-16" align="end">Qty</flux:table.column>
+                        <flux:table.column class="w-36" align="end">Total</flux:table.column>
+                    </flux:table.columns>
                     <flux:table.rows>
                         @foreach ($order->items as $item)
                             <flux:table.row wire:key="item-{{ $item->id }}">
-                                <flux:table.cell class="w-14">
-                                    <div class="size-14 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1.5">
-                                        @if ($item->product?->cover_url)
-                                            <img src="{{ $item->product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
-                                        @else
-                                            <flux:icon.shopping-bag variant="outline" class="size-full p-1 text-ink-4" />
-                                        @endif
-                                    </div>
-                                </flux:table.cell>
                                 <flux:table.cell>
                                     @if ($item->product)
                                         <a href="{{ route('product.show', $item->product) }}" wire:navigate
@@ -69,15 +68,20 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                                             {{ $item->product_name }}
                                         </a>
                                     @else
-                                        <flux:text class="font-semibold">{{ $item->product_name }}</flux:text>
-                                    @endif
-                                    @if ($item->product_sku)
-                                        <flux:text size="sm" class="mt-0.5 text-ink-4">SKU: {{ $item->product_sku }}</flux:text>
+                                        <span class="text-[13.5px] font-semibold leading-snug text-ink">{{ $item->product_name }}</span>
                                     @endif
                                 </flux:table.cell>
+                                <flux:table.cell>
+                                    <span class="font-mono text-xs text-ink-4">{{ $item->product_sku ?: '—' }}</span>
+                                </flux:table.cell>
                                 <flux:table.cell align="end">
-                                    <flux:text class="font-semibold tabular-nums">{!! money($item->line_total_cents) !!}</flux:text>
-                                    <flux:text size="sm" class="mt-0.5 text-ink-4">Qty {{ $item->quantity }}</flux:text>
+                                    <span class="tabular-nums text-sm text-ink-2">{!! money($item->unit_price_cents) !!}</span>
+                                </flux:table.cell>
+                                <flux:table.cell align="end">
+                                    <span class="tabular-nums text-sm text-ink-3">{{ $item->quantity }}</span>
+                                </flux:table.cell>
+                                <flux:table.cell align="end">
+                                    <span class="font-semibold tabular-nums text-ink">{!! money($item->line_total_cents) !!}</span>
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforeach
@@ -85,30 +89,18 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                 </flux:table>
             </flux:card>
 
-            {{-- Delivery address --}}
-            @if ($order->address)
-                <flux:card>
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Delivery address</flux:heading>
-                    <div class="mt-3 space-y-0.5 text-[13.5px] leading-relaxed text-ink-2">
-                        <div class="font-semibold">{{ $order->address->fullName() }}</div>
-                        <div>{{ $order->address->line1 }}{{ $order->address->line2 ? ', ' . $order->address->line2 : '' }}</div>
-                        <div>{{ $order->address->city }}{{ $order->address->postal_code ? ', ' . $order->address->postal_code : '' }}</div>
-                        @if ($order->address->phone)
-                            <flux:text size="sm" class="mt-1 text-ink-3">{{ $order->address->phone }}</flux:text>
-                        @endif
-                    </div>
-                </flux:card>
-            @endif
         </div>
 
-        {{-- Summary sidebar --}}
-        <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-80">
-            <flux:card class="p-0">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Order summary</flux:heading>
+        {{-- Sidebar --}}
+        <aside class="space-y-6">
+
+            {{-- Summary --}}
+            <flux:card class="overflow-hidden p-0">
+                <div class="border-b border-zinc-100 px-6 py-4">
+                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Summary</flux:heading>
                 </div>
                 <div class="space-y-3 px-5 py-4">
-                    <div class="flex justify-between text-sm text-ink-2">
+                    <div class="flex justify-between">
                         <flux:text size="sm">Subtotal</flux:text>
                         <flux:text size="sm" class="font-medium tabular-nums">{!! money($order->subtotal_cents) !!}</flux:text>
                     </div>
@@ -137,14 +129,31 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                     <span class="font-serif text-2xl text-brand-500 tabular-nums">{!! money($order->total_cents) !!}</span>
                 </div>
                 @if ($order->payment_method)
-                    <flux:separator />
-                    <div class="px-5 py-3">
+                    <div class="border-t border-zinc-100 px-5 py-3">
                         <flux:text size="sm" class="text-ink-3">
                             Paid via <span class="font-semibold capitalize">{{ str_replace('_', ' ', $order->payment_method) }}</span>
                         </flux:text>
                     </div>
                 @endif
             </flux:card>
+
+            {{-- Delivery address --}}
+            @if ($order->address)
+                <flux:card class="overflow-hidden p-0">
+                    <div class="border-b border-zinc-100 px-6 py-4">
+                        <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Delivery address</flux:heading>
+                    </div>
+                    <div class="space-y-0.5 px-5 py-4 text-[13.5px] leading-relaxed text-ink-2">
+                        <div class="font-semibold">{{ $order->address->fullName() }}</div>
+                        <div>{{ $order->address->line1 }}{{ $order->address->line2 ? ', '.$order->address->line2 : '' }}</div>
+                        <div>{{ $order->address->city }}{{ $order->address->postal_code ? ', '.$order->address->postal_code : '' }}</div>
+                        @if ($order->address->phone)
+                            <flux:text size="sm" class="mt-1 text-ink-3">{{ $order->address->phone }}</flux:text>
+                        @endif
+                    </div>
+                </flux:card>
+            @endif
+
         </aside>
 
     </div>

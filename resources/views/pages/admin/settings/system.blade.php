@@ -39,6 +39,25 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public string $recaptcha_site_key = '';
 
     // ==================================================
+    // SAP / KRA
+    // ==================================================
+    public bool $sap_enabled = false;
+
+    public bool $sap_auto_sync_orders = true;
+
+    public bool $sap_sync_price = true;
+
+    public bool $sap_sync_quantity = true;
+
+    public string $sap_base_url = '';
+
+    public string $sap_api_key = '';
+
+    public string $sap_webhook_secret = '';
+
+    public string $kra_business_pin = '';
+
+    // ==================================================
     // SECURITY
     // ==================================================
     public int $min_password_length = 8;
@@ -66,6 +85,15 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         $this->google_maps_api_key = $integrations->google_maps_api_key;
         $this->map_provider = $integrations->map_provider;
         $this->recaptcha_site_key = $integrations->recaptcha_site_key;
+
+        $this->sap_enabled = $integrations->sap_enabled;
+        $this->sap_auto_sync_orders = $integrations->sap_auto_sync_orders;
+        $this->sap_sync_price = $integrations->sap_sync_price;
+        $this->sap_sync_quantity = $integrations->sap_sync_quantity;
+        $this->sap_base_url = $integrations->sap_base_url ?? '';
+        $this->sap_api_key = $integrations->sap_api_key ?? '';
+        $this->sap_webhook_secret = $integrations->sap_webhook_secret ?? '';
+        $this->kra_business_pin = $integrations->kra_business_pin ?? '';
 
         $this->min_password_length = $security->min_password_length;
         $this->require_two_factor = $security->require_two_factor;
@@ -116,6 +144,31 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
             ->save();
 
         Flux::toast(heading: 'Saved', text: 'Integration settings updated.', variant: 'success');
+    }
+
+    public function saveSap(IntegrationSettings $settings): void
+    {
+        $this->validate([
+            'sap_base_url' => ['nullable', 'url', 'max:255'],
+            'sap_api_key' => ['nullable', 'string', 'max:255'],
+            'sap_webhook_secret' => ['nullable', 'string', 'max:255'],
+            'kra_business_pin' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $settings
+            ->fill([
+                'sap_enabled' => $this->sap_enabled,
+                'sap_auto_sync_orders' => $this->sap_auto_sync_orders,
+                'sap_sync_price' => $this->sap_sync_price,
+                'sap_sync_quantity' => $this->sap_sync_quantity,
+                'sap_base_url' => $this->sap_base_url ?: null,
+                'sap_api_key' => $this->sap_api_key ?: null,
+                'sap_webhook_secret' => $this->sap_webhook_secret ?: null,
+                'kra_business_pin' => $this->kra_business_pin ?: null,
+            ])
+            ->save();
+
+        Flux::toast(heading: 'Saved', text: 'SAP / KRA settings updated.', variant: 'success');
     }
 
     public function saveSecurity(SecuritySettings $settings): void
@@ -225,6 +278,101 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
                 <flux:separator />
                 <flux:input wire:model="recaptcha_site_key" label="reCAPTCHA site key" />
+
+                <div class="flex justify-end pt-2">
+                    <flux:button type="submit" variant="primary">Save changes</flux:button>
+                </div>
+            </form>
+        </flux:card>
+    @endif
+
+    {{-- SAP / KRA --}}
+    @if ($section === 'sap')
+        <flux:card>
+            <flux:heading>SAP / KRA integration</flux:heading>
+            <flux:subheading>Controls what the SAP middleware is allowed to do. Connection credentials (base URL, API key, webhook secret) are set in your <code class="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">.env</code> file.</flux:subheading>
+
+            <form wire:submit="saveSap" class="mt-6 space-y-4">
+
+                <div class="flex items-center justify-between rounded-md border border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                    <div>
+                        <flux:label>Enable SAP sync</flux:label>
+                        <flux:text size="sm" class="text-xs">When off, no orders are sent to SAP and the product sync endpoint returns 503.</flux:text>
+                        @if ($sap_enabled)
+                            <flux:badge color="green" size="sm" class="mt-2">SAP sync is active</flux:badge>
+                        @else
+                            <flux:badge color="zinc" size="sm" class="mt-2">SAP sync is disabled</flux:badge>
+                        @endif
+                    </div>
+                    <flux:switch wire:model.live="sap_enabled" />
+                </div>
+
+                @if ($sap_enabled)
+                    <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
+                        <div>
+                            <flux:label>Auto-sync orders on payment confirmation</flux:label>
+                            <flux:text size="sm" class="text-xs">Disable to pause order sync without turning off the integration entirely. Use <code class="font-mono">php artisan sap:resync --failed</code> to sync manually.</flux:text>
+                        </div>
+                        <flux:switch wire:model="sap_auto_sync_orders" />
+                    </div>
+
+                    <flux:separator />
+                    <flux:text size="sm" class="font-medium text-zinc-500">Product sync permissions</flux:text>
+
+                    <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
+                        <div>
+                            <flux:label>Allow SAP to update prices</flux:label>
+                            <flux:text size="sm" class="text-xs">SAP can overwrite product sale prices via the sync endpoint.</flux:text>
+                        </div>
+                        <flux:switch wire:model="sap_sync_price" />
+                    </div>
+
+                    <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
+                        <div>
+                            <flux:label>Allow SAP to update stock quantities</flux:label>
+                            <flux:text size="sm" class="text-xs">SAP can overwrite stock levels and status via the sync endpoint.</flux:text>
+                        </div>
+                        <flux:switch wire:model="sap_sync_quantity" />
+                    </div>
+
+                    <flux:separator />
+                    <flux:text size="sm" class="font-medium text-zinc-500">Connection credentials</flux:text>
+                    <flux:callout icon="information-circle" color="blue">
+                        Leave a field blank to use the value from your <code class="font-mono text-xs">.env</code> file. Values set here take priority.
+                    </flux:callout>
+
+                    <flux:input
+                        wire:model="sap_base_url"
+                        label="SAP base URL"
+                        placeholder="{{ config('sap.base_url') ?: 'http://your-sap-server:85' }}"
+                        description="Override SAP_BASE_URL from .env"
+                    />
+
+                    <flux:input
+                        wire:model="sap_api_key"
+                        type="password"
+                        label="API key"
+                        placeholder="{{ config('sap.api_key') ? '••••••••  (set in .env)' : 'Not set in .env' }}"
+                        description="Override SAP_API_KEY from .env"
+                        viewable
+                    />
+
+                    <flux:input
+                        wire:model="sap_webhook_secret"
+                        type="password"
+                        label="Webhook secret"
+                        placeholder="{{ config('sap.webhook_secret') ? '••••••••  (set in .env)' : 'Not set in .env' }}"
+                        description="Override SAP_WEBHOOK_SECRET from .env"
+                        viewable
+                    />
+
+                    <flux:input
+                        wire:model="kra_business_pin"
+                        label="KRA business PIN"
+                        placeholder="{{ config('sap.business_pin') ?: 'e.g. P051234567X' }}"
+                        description="Override KRA_BUSINESS_PIN from .env"
+                    />
+                @endif
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>
