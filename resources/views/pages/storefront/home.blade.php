@@ -17,7 +17,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for East Africa')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for East Africa')] class extends Component
+{
     use InteractsWithStorefront;
 
     /** @var array<int, int> Locked so random order is fixed for the lifetime of the component. */
@@ -33,7 +34,8 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
         JsonLdMulti::setDescription($description)->setType('Organization');
 
         $this->featuredProductIds = Product::query()
-            ->where('visibility', 'visible')
+            ->visibleInCatalog()
+            ->published()
             ->where('stock_status', StockStatus::IN_STOCK)
             ->whereNotNull('price')
             ->where('price', '>', 0)
@@ -48,7 +50,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
     public function featuredCategories(): Collection
     {
         return CategoryPlacement::query()
-            ->with(['category' => fn($q) => $q->withCount('products')])
+            ->with(['category' => fn ($q) => $q->withCount('products')])
             ->where('location', CategorySection::HOME_PAGE_FEATURED)
             ->where('status', CategoryStatus::ACTIVE)
             ->orderBy('sort_order')
@@ -62,10 +64,10 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
     public function featuredProducts(): Collection
     {
         return Product::query()
-            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('id', $this->featuredProductIds)
             ->get()
-            ->sortBy(fn($p) => array_search($p->id, $this->featuredProductIds))
+            ->sortBy(fn ($p) => array_search($p->id, $this->featuredProductIds))
             ->values();
     }
 
@@ -73,13 +75,14 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
     public function newArrivals(): Collection
     {
         return Product::query()
-            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->visibleInCatalog()
+            ->published()
             ->where('stock_status', StockStatus::IN_STOCK)
             ->whereNotNull('price')
             ->where('price', '>', 0)
             ->latest('id')
-            ->take(6)
+            ->take(12)
             ->get();
     }
 
@@ -126,10 +129,11 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
     ];
 
     $usps = [
-        ['icon' => 'truck', 'title' => 'Regional delivery', 'sub' => 'KE · UG · TZ · RW'],
-        ['icon' => 'wrench-screwdriver', 'title' => 'Install & commission', 'sub' => 'Factory-trained'],
-        ['icon' => 'shield-check', 'title' => 'Spares in stock', 'sub' => 'Next-day for 98%'],
-        ['icon' => 'check-badge', 'title' => 'Net 30 terms', 'sub' => 'Verified businesses'],
+        ['icon' => 'building-office-2', 'title' => 'Africa No. 1', 'sub' => 'In Kitchen Equipment'],
+        ['icon' => 'check-circle', 'title' => 'Guaranteed', 'sub' => 'Quality Assurance'],
+        ['icon' => 'arrows-pointing-out', 'title' => 'Customized', 'sub' => 'Bespoke Solutions'],
+        ['icon' => 'truck', 'title' => 'Fast Delivery', 'sub' => 'Countrywide Shipping'],
+        ['icon' => 'code-bracket', 'title' => 'Installation', 'sub' => 'Professional Setup'],
     ];
 @endphp
 
@@ -209,14 +213,14 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
     </section>
 
     {{-- USPs strip --}}
-    <section class="border-b border-zinc-200 bg-surface-sunken">
-        <div class="shell grid grid-cols-2 py-5 sm:grid-cols-4">
-            @foreach ($usps as $i => $u)
-                <div class="flex items-center gap-3 {{ $i > 0 ? 'border-l border-zinc-200 pl-5' : '' }}">
-                    <flux:icon name="{{ $u['icon'] }}" variant="outline" class="size-5 shrink-0 text-brand-500" />
+    <section class="border-b border-zinc-200 bg-white">
+        <div class="shell grid grid-cols-2 sm:grid-cols-5 sm:divide-x sm:divide-zinc-200">
+            @foreach ($usps as $u)
+                <div class="flex flex-col items-center gap-3 px-5 py-6 text-center">
+                    <flux:icon name="{{ $u['icon'] }}" variant="outline" class="size-9 text-brand-500" />
                     <div>
-                        <div class="text-[13.5px] font-semibold">{{ $u['title'] }}</div>
-                        <div class="text-xs text-ink-3">{{ $u['sub'] }}</div>
+                        <div class="text-[11px] font-bold tracking-widest text-ink uppercase">{{ $u['title'] }}</div>
+                        <div class="mt-0.5 text-[11px] text-ink-3">{{ $u['sub'] }}</div>
                     </div>
                 </div>
             @endforeach
@@ -225,11 +229,11 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
 
     {{-- Categories — dense Workshop grid (12 chips, square aspect, ink underline) --}}
     <section class="shell pt-14">
-        <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
+        <div class="mb-4 flex items-baseline justify-between">
             <h2 class="text-[22px] font-semibold tracking-tight">Shop by category</h2>
-            <a href="{{ route('catalog') }}"
-                class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900" wire:navigate>
-                All <flux:icon.arrow-right variant="micro" class="size-3.5" />
+            <a href="{{ route('catalog') }}" wire:navigate
+                class="inline-flex items-center gap-1.5 text-[13px] text-ink-3 transition-colors hover:text-ink">
+                View all <flux:icon.arrow-right variant="micro" class="size-3.5" />
             </a>
         </div>
 
@@ -239,7 +243,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
             class="grid grid-cols-2 grid-rows-2 gap-x-5 gap-y-7 overflow-hidden sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7 auto-rows-[0]">
             @foreach ($this->featuredCategories as $category)
                 <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
-                    <div class="relative aspect-square overflow-hidden border-b-2 border-ink bg-surface-sunken">
+                    <div class="relative aspect-square overflow-hidden bg-surface-sunken">
                         @if ($category->image)
                             <img src="{{ $category->image_url }}" alt=""
                                 loading="lazy"
@@ -265,16 +269,8 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
         <div class="relative overflow-hidden rounded-md border border-zinc-200 bg-white">
             <div class="grid grid-cols-[auto_1fr] items-stretch">
                 <div
-                    class="relative z-10 flex min-w-60 flex-col justify-center border-r border-zinc-200 bg-surface-sunken px-8 py-8">
-                    <div class="text-[11.5px] font-bold tracking-[0.12em] text-brand-500 uppercase">
-                        Authorised distributor
-                    </div>
-                    <h2 class="mt-2 font-serif text-[22px] leading-tight font-normal">Brands we carry.</h2>
-                    <a href="#"
-                        class="mt-3 inline-flex items-center gap-1 text-[12.5px] text-zinc-600 hover:text-zinc-900"
-                        wire:navigate>
-                        All brands <flux:icon.arrow-right variant="micro" class="size-3.5" />
-                    </a>
+                    class="relative z-10 flex min-w-60 flex-col justify-center border-r border-zinc-200 bg-white px-8 py-8">
+                    <h2 class="font-serif text-[22px] leading-tight font-semibold uppercase">The brands<br>professionals trust.</h2>
                 </div>
 
                 <div class="brand-marquee relative flex items-stretch overflow-hidden">
@@ -302,13 +298,75 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
         </div>
     </section>
 
+    {{-- New Arrivals --}}
+    <section class="shell pt-14">
+        <div class="overflow-hidden rounded-md bg-brand-500">
+            <div class="grid grid-cols-1 lg:grid-cols-6">
+                {{-- Left editorial panel --}}
+                <div class="flex flex-col justify-center border-b border-white/10 px-6 py-8 lg:col-span-1 lg:border-b-0 lg:border-r lg:border-white/10">
+                    <div class="text-[11px] font-semibold uppercase tracking-widest text-white/60">Just In</div>
+                    <div class="mt-2 font-serif text-4xl leading-none text-white">New</div>
+                    <div class="mt-3 text-[13px] leading-relaxed text-white/75">Discover what's just dropped</div>
+                    <a href="{{ route('catalog') }}?sort=newest" wire:navigate
+                        class="group mt-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-white/30 px-4 py-2 text-xs font-semibold text-white transition-all hover:border-white hover:bg-white/10">
+                        View All
+                        <flux:icon.arrow-right class="size-3 transition-transform duration-200 group-hover:translate-x-1" />
+                    </a>
+                </div>
+
+                {{-- Products carousel --}}
+                <div class="relative px-4 py-5 lg:col-span-5"
+                    x-data="{
+                        swiper: null,
+                        init() {
+                            this.swiper = new Swiper($refs.carousel, {
+                                spaceBetween: 12,
+                                loop: true,
+                                speed: 400,
+                                preventClicks: false,
+                                preventClicksPropagation: false,
+                                touchStartPreventDefault: false,
+                                breakpoints: {
+                                    375: { slidesPerView: 2 },
+                                    640: { slidesPerView: 3 },
+                                    768: { slidesPerView: 4 },
+                                    1024: { slidesPerView: 5 },
+                                },
+                            });
+                        }
+                    }">
+                    <div class="swiper" x-ref="carousel">
+                        <div class="swiper-wrapper pb-1">
+                            @foreach ($this->newArrivals as $product)
+                                <div class="swiper-slide h-auto!">
+                                    <div class="h-full flex flex-col">
+                                        <x-storefront.product-card :product="$product" class="h-full" />
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <button type="button" @click="swiper?.slidePrev()"
+                        class="absolute top-1/2 left-1 z-10 -translate-y-1/2 flex size-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/20 text-white backdrop-blur-sm transition hover:border-white/40 hover:bg-black/40">
+                        <flux:icon.chevron-left class="size-3.5" />
+                    </button>
+                    <button type="button" @click="swiper?.slideNext()"
+                        class="absolute top-1/2 right-1 z-10 -translate-y-1/2 flex size-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/20 text-white backdrop-blur-sm transition hover:border-white/40 hover:bg-black/40">
+                        <flux:icon.chevron-right class="size-3.5" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
     {{-- Featured products --}}
     <section class="shell pt-14">
-        <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
+        <div class="mb-4 flex items-baseline justify-between">
             <h2 class="text-[22px] font-semibold tracking-tight">Featured equipment</h2>
-            <a href="{{ route('catalog') }}"
-                class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900" wire:navigate>
-                See all featured <flux:icon.arrow-right variant="micro" class="size-3.5" />
+            <a href="{{ route('catalog') }}" wire:navigate
+                class="inline-flex items-center gap-1.5 text-[13px] text-ink-3 transition-colors hover:text-ink">
+                View all <flux:icon.arrow-right variant="micro" class="size-3.5" />
             </a>
         </div>
         <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
@@ -318,25 +376,9 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
         </div>
     </section>
 
-    {{-- New arrivals --}}
-    <section class="shell pt-14">
-        <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
-            <h2 class="text-[22px] font-semibold tracking-tight">New arrivals</h2>
-            <a href="{{ route('catalog') }}?sort=newest"
-                class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900" wire:navigate>
-                See all new <flux:icon.arrow-right variant="micro" class="size-3.5" />
-            </a>
-        </div>
-        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
-            @foreach ($this->newArrivals as $product)
-                <x-storefront.product-card :product="$product" />
-            @endforeach
-        </div>
-    </section>
-
 
     {{-- RFQ banner --}}
-    <section class="shell pt-14">
+    {{-- <section class="shell pt-14">
         <div class="grid grid-cols-1 items-center gap-6 rounded-md bg-ink p-9 text-white lg:grid-cols-[1fr_auto]"
             style="background: #0c1421">
             <div>
@@ -354,6 +396,6 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
                 </flux:button>
             </div>
         </div>
-    </section>
+    </section> --}}
 
 </div>

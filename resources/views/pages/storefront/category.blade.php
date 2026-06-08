@@ -10,12 +10,15 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] class extends Component {
+new #[Layout('layouts::storefront')] class extends Component
+{
     use InteractsWithStorefront;
 
     public Category $category;
@@ -39,15 +42,15 @@ new #[Layout('layouts::storefront')] class extends Component {
     {
         $this->category = $category;
 
-        $title = $category->meta_title ?: $category->name . '';
-        $description = $category->meta_description ?: ($category->description ? \Illuminate\Support\Str::limit(strip_tags($category->description), 160) : null) ?: 'Browse ' . $category->name . ' from authorised distributors. Stock in Nairobi, install & service across East Africa.';
+        $title = $category->meta_title ?: $category->name.'';
+        $description = $category->meta_description ?: ($category->description ? Str::limit(strip_tags($category->description), 160) : null) ?: 'Browse '.$category->name.' from authorised distributors. Stock in Nairobi, install & service across East Africa.';
 
         SEOMeta::setTitle($title)->setDescription($description);
         OpenGraph::setTitle($title)->setDescription($description)->setType('website');
         TwitterCard::setTitle($title)->setDescription($description);
 
         if ($category->image) {
-            $url = \Illuminate\Support\Facades\Storage::url($category->image);
+            $url = Storage::url($category->image);
             OpenGraph::addImage($url);
             TwitterCard::setImage($url);
         }
@@ -60,7 +63,7 @@ new #[Layout('layouts::storefront')] class extends Component {
     public function rendering($view): void
     {
         // Title was set in mount() via SEOMeta; mirror for layouts that read $title.
-        $view->title($this->category->meta_title ?: $this->category->name . '');
+        $view->title($this->category->meta_title ?: $this->category->name.'');
     }
 
     public function updating(string $prop): void
@@ -85,18 +88,19 @@ new #[Layout('layouts::storefront')] class extends Component {
 
     public function removeBrand(int $id): void
     {
-        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn($b) => $b !== $id));
+        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn ($b) => $b !== $id));
     }
 
     #[Computed]
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->visibleInCatalog()
+            ->published()
             ->honorStockVisibility()
             ->where(function ($q) {
-                $q->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn($q2) => $q2->where('categories.id', $this->category->id));
+                $q->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn ($q2) => $q2->where('categories.id', $this->category->id));
             });
 
         if ($this->selectedBrands) {
@@ -130,7 +134,7 @@ new #[Layout('layouts::storefront')] class extends Component {
             ->where('is_active', true)
             ->whereHas('products', function ($q) {
                 $q->where('visibility', 'visible')->where(function ($q2) {
-                    $q2->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn($q3) => $q3->where('categories.id', $this->category->id));
+                    $q2->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn ($q3) => $q3->where('categories.id', $this->category->id));
                 });
             })
             ->orderBy('name')
@@ -139,7 +143,7 @@ new #[Layout('layouts::storefront')] class extends Component {
 
     public function hasActiveFilters(): bool
     {
-        return !empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
+        return ! empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
     }
 }; ?>
 

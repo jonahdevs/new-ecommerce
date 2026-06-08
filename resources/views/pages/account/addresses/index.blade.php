@@ -47,7 +47,7 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
     public function rules(): array
     {
         return [
-            'label' => ['required', 'string', 'max:50'],
+            'label' => ['required', 'string', \Illuminate\Validation\Rule::in(['Home', 'Work', 'Other'])],
             'name' => ['required', 'string', 'max:150'],
             'phone' => ['nullable', 'string', 'max:30'],
             'alternative_phone' => ['nullable', 'string', 'max:30'],

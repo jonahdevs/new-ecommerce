@@ -23,7 +23,7 @@ $isWished   = \App\Support\StorefrontSession::isWishlisted($product->slug);
     $isQuoteOnly = $product->requires_quotation || ($product->sale_price ?? $product->price) === null;
 @endphp
 
-<article class="group flex flex-col overflow-hidden rounded border border-zinc-200 bg-white transition hover:shadow-md">
+<article {{ $attributes->merge(['class' => 'group flex flex-col overflow-hidden rounded border border-zinc-200 bg-white transition hover:shadow-md']) }}>
 
     {{-- Image area --}}
     <div class="relative h-56 overflow-hidden bg-surface-sunken">

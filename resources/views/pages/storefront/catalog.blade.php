@@ -16,7 +16,8 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
+{
     use InteractsWithStorefront;
 
     public int $perPage = 24;
@@ -70,26 +71,27 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 
     public function removeCategory(string $slug): void
     {
-        $this->selectedCategories = array_values(array_filter($this->selectedCategories, fn($s) => $s !== $slug));
+        $this->selectedCategories = array_values(array_filter($this->selectedCategories, fn ($s) => $s !== $slug));
     }
 
     public function removeBrand(int $id): void
     {
-        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn($b) => $b !== $id));
+        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn ($b) => $b !== $id));
     }
 
     #[Computed]
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->visibleInCatalog()
+            ->published()
             ->honorStockVisibility();
 
         if ($this->selectedCategories) {
             $catIds = Category::whereIn('slug', $this->selectedCategories)->pluck('id');
             $query->where(function ($q) use ($catIds) {
-                $q->whereIn('primary_category_id', $catIds)->orWhereHas('categories', fn($q2) => $q2->whereIn('categories.id', $catIds));
+                $q->whereIn('primary_category_id', $catIds)->orWhereHas('categories', fn ($q2) => $q2->whereIn('categories.id', $catIds));
             });
         }
 
@@ -131,7 +133,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 
     public function hasActiveFilters(): bool
     {
-        return !empty($this->selectedCategories) || !empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
+        return ! empty($this->selectedCategories) || ! empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
     }
 }; ?>
 

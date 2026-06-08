@@ -7,7 +7,8 @@
       "PowerShell($r = Invoke-WebRequest -Uri \"https://new-ecommerce.test\" -SkipCertificateCheck -ErrorAction SilentlyContinue; \"Status: $\\($r.StatusCode\\)\"; \"Length: $\\($r.Content.Length\\)\")",
       "PowerShell(php artisan test --compact --filter='HomePage|home page' 2>&1 | Select-Object -Last 25)",
       "PowerShell(vendor\\\\bin\\\\pint --dirty --format agent)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(vendor/bin/pint *)"
     ]
   },
   "enableAllProjectMcpServers": true,

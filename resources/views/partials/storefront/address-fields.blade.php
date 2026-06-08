@@ -33,7 +33,7 @@
 <flux:field>
     <flux:label>Label <span class="ms-0.5 text-red-500">*</span></flux:label>
     <flux:radio.group wire:model="label" class="flex flex-wrap gap-x-4 gap-y-2">
-        @foreach (['Home', 'Office', 'Warehouse', 'Site', 'Other'] as $opt)
+        @foreach (['Home', 'Work', 'Other'] as $opt)
             <flux:radio value="{{ $opt }}" label="{{ $opt }}" />
         @endforeach
     </flux:radio.group>

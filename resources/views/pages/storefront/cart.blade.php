@@ -88,13 +88,17 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
         </div>
 
         @if ($this->lines->isEmpty())
-            <div class="mt-10 rounded-md border border-zinc-200 bg-white p-16 text-center">
-                <flux:icon.shopping-cart variant="outline" class="mx-auto size-12 text-ink-4" />
-                <h2 class="mt-5 text-xl font-semibold">Your cart is empty.</h2>
-                <p class="mx-auto mt-2 max-w-md text-ink-3">Browse the catalog and add equipment, or request a formal quote for tendered projects.</p>
-                <div class="mt-6 flex justify-center gap-2.5">
-                    <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate>Shop the catalog</flux:button>
-                    <flux:button variant="customer-outline" size="customer" :href="route('quote.request')" wire:navigate>Request a quote</flux:button>
+            <div class="mt-10 flex flex-col items-center justify-center px-6 py-16 text-center">
+                <img src="{{ asset('images/empty-states/empty-cart.svg') }}" alt="Your cart is empty"
+                    class="mx-auto h-72 w-72" />
+                <h2 class="mt-6 text-xl font-semibold sm:text-2xl">Your cart is empty.</h2>
+                <p class="mx-auto mt-2 max-w-md text-sm text-ink-3">Browse the catalog and add equipment, or request a formal quote for tendered projects.</p>
+                <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate>
+                        <flux:icon.shopping-bag variant="micro" class="size-3.5" />
+                        Start shopping
+                    </flux:button>
+                    <flux:button variant="customer-outline" size="customer" :href="route('home')" wire:navigate>Back to home</flux:button>
                 </div>
             </div>
 

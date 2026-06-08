@@ -115,14 +115,18 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
     </div>
 
     @if ($this->products->isEmpty())
-        {{-- Empty state --}}
-        <div class="mt-10 rounded-md bg-surface-sunken p-14 text-center">
-            <flux:icon.scale variant="outline" class="mx-auto size-10 text-ink-4" />
-            <h2 class="mt-4 font-serif text-2xl font-normal">Nothing to compare yet.</h2>
-            <p class="mt-2 text-ink-3">Add up to 4 products to compare specs side-by-side.</p>
-            <flux:button variant="primary" :href="route('catalog')" wire:navigate class="mt-5">
-                Browse the catalog
-            </flux:button>
+        <div class="mt-10 flex flex-col items-center justify-center px-6 py-16 text-center">
+            <img src="{{ asset('images/empty-states/product-comparison.svg') }}" alt="Nothing to compare"
+                class="mx-auto h-72 w-72" />
+            <h2 class="mt-6 text-xl font-semibold sm:text-2xl">Nothing to compare yet.</h2>
+            <p class="mx-auto mt-2 max-w-md text-sm text-ink-3">Add up to 4 products to compare specs side-by-side.</p>
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate>
+                    <flux:icon.magnifying-glass variant="micro" class="size-3.5" />
+                    Browse products
+                </flux:button>
+                <flux:button variant="customer-outline" size="customer" :href="route('home')" wire:navigate>Back to home</flux:button>
+            </div>
         </div>
     @else
         {{-- Comparison table --}}
@@ -146,13 +150,15 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                                     <flux:icon.x-mark variant="micro" class="size-4" />
                                 </button>
 
-                                {{-- Product card --}}
+                                {{-- Product image --}}
                                 <a href="{{ route('product.show', $product) }}" wire:navigate
-                                    class="block aspect-square overflow-hidden rounded bg-surface-sunken p-3">
+                                    class="mx-auto flex h-44 w-44 items-center justify-center overflow-hidden rounded bg-surface-sunken p-3">
                                     @if ($product->cover_url)
                                         <img src="{{ $product->cover_url }}"
                                             alt="{{ $product->name }}"
                                             class="size-full object-contain" loading="lazy" />
+                                    @else
+                                        <flux:icon.photo class="size-12 text-ink-4" />
                                     @endif
                                 </a>
 
@@ -179,7 +185,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                         @if ($emptySlots > 0)
                             <th class="min-w-55 border-b border-zinc-200 bg-white p-4 align-top">
                                 <a href="{{ route('catalog') }}" wire:navigate
-                                    class="flex aspect-square flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-zinc-300 text-ink-3 transition hover:border-ink-3 hover:text-ink">
+                                    class="mx-auto flex h-44 w-44 flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-zinc-300 text-ink-3 transition hover:border-ink-3 hover:text-ink">
                                     <flux:icon.plus variant="micro" class="size-5" />
                                     <span class="text-[12.5px]">Add product</span>
                                 </a>

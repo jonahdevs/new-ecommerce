@@ -8,4 +8,7 @@ import './echo';
 import L from 'leaflet';
 window.L = L;
 
+import Swiper from 'swiper';
+window.Swiper = Swiper;
+
 document.dispatchEvent(new CustomEvent('app:ready'));

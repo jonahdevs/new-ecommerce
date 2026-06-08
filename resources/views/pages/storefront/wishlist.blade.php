@@ -109,18 +109,20 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
         </div>
 
         @if ($this->products->isEmpty())
-            {{-- Empty state --}}
-            <div class="mt-10 rounded-md bg-surface-sunken p-16 text-center">
-                <flux:icon.heart variant="outline" class="mx-auto size-12 text-ink-4" />
-                <h2 class="mt-5 font-serif text-2xl">No saved items yet.</h2>
-                <p class="mx-auto mt-2 max-w-md text-ink-3">
-                    Tap the heart on any product to save it here. Wishlists keep across devices once you're signed in,
-                    and can be converted into a formal quote with one click.
+            <div class="mt-10 flex flex-col items-center justify-center px-6 py-16 text-center">
+                <img src="{{ asset('images/empty-states/wishlist.svg') }}" alt="Your wishlist is empty"
+                    class="mx-auto h-72 w-72" />
+                <h2 class="mt-6 text-xl font-semibold sm:text-2xl">Your wishlist is empty.</h2>
+                <p class="mx-auto mt-2 max-w-md text-sm text-ink-3">
+                    Save your favourite products here to keep track of items you love. Start browsing and add products to your wishlist!
                 </p>
-                <div class="mt-6 flex justify-center gap-2.5">
-                    <flux:button variant="primary" :href="route('catalog')" wire:navigate>Browse the catalog</flux:button>
+                <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate>
+                        <flux:icon.magnifying-glass variant="micro" class="size-3.5" />
+                        Browse products
+                    </flux:button>
                     @guest
-                        <flux:button :href="route('login')" wire:navigate>Sign in to sync</flux:button>
+                        <flux:button variant="customer-outline" size="customer" :href="route('login')" wire:navigate>Sign in to sync</flux:button>
                     @endguest
                 </div>
             </div>

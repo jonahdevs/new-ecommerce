@@ -20,7 +20,8 @@ new class extends Component
 
         return Product::query()
             ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
+            ->visibleInSearch()
+            ->published()
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->query}%")
                     ->orWhere('sku', 'like', "%{$this->query}%")

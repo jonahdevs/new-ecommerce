@@ -79,6 +79,18 @@ class Product extends Model
         });
     }
 
+    /** Products that appear in catalog/category listings (VISIBLE or CATALOG). */
+    public function scopeVisibleInCatalog(Builder $query): void
+    {
+        $query->whereIn('visibility', [ProductVisibility::VISIBLE, ProductVisibility::CATALOG]);
+    }
+
+    /** Products that appear in search results (VISIBLE or SEARCH). */
+    public function scopeVisibleInSearch(Builder $query): void
+    {
+        $query->whereIn('visibility', [ProductVisibility::VISIBLE, ProductVisibility::SEARCH]);
+    }
+
     /**
      * Apply the store-wide out-of-stock display rule from {@see InventorySettings}.
      * When set to "hide", out-of-stock products are excluded from storefront
