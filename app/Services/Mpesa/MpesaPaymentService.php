@@ -5,6 +5,7 @@ namespace App\Services\Mpesa;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\PaymentCredentials;
 use Illuminate\Support\Arr;
 
 /**
@@ -14,7 +15,10 @@ use Illuminate\Support\Arr;
  */
 class MpesaPaymentService
 {
-    public function __construct(private DarajaClient $daraja) {}
+    public function __construct(
+        private DarajaClient $daraja,
+        private PaymentCredentials $credentials,
+    ) {}
 
     /**
      * Normalize a Kenyan mobile number to the 2547……/2541…… MSISDN format.
@@ -170,6 +174,6 @@ class MpesaPaymentService
 
     private function callbackUrl(): string
     {
-        return config('services.mpesa.callback_url') ?: route('payments.mpesa.callback');
+        return $this->credentials->mpesaCallbackUrl() ?: route('payments.mpesa.callback');
     }
 }

@@ -42,7 +42,7 @@ if ($flyout) {
         })
         ->add(match ($variant) {
             default => 'bg-white dark:bg-zinc-800 border-transparent dark:border-zinc-700',
-            'floating' => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-xl',
+            'floating' => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-md',
             'bare' => 'bg-transparent',
         });
 } elseif ($overflow) {
@@ -51,21 +51,21 @@ if ($flyout) {
     $contentClasses = Flux::classes()
         ->add('relative')
         ->add(match ($variant) {
-            default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',
+            default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-md',
             'bare' => '',
         })
         ->add(match ($variant) {
-            default => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-xl',
+            default => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-md',
             'bare' => 'bg-transparent',
         });
 } else {
     $classes = Flux::classes()
         ->add(match ($variant) {
-            default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',
+            default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-md',
             'bare' => '',
         })
         ->add(match ($variant) {
-            default => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-xl',
+            default => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-md',
             'bare' => 'bg-transparent',
         });
 }

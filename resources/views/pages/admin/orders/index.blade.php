@@ -152,6 +152,28 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
 
     <flux:card class="mt-6 overflow-hidden p-0">
 
+        {{-- Export --}}
+        <div class="flex flex-wrap items-center justify-end gap-2 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <flux:dropdown>
+                <flux:button size="sm" icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
+                <flux:menu>
+                    <flux:menu.item icon="table-cells"
+                        href="{{ route('admin.orders.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus, 'date' => $filterDate])) }}">
+                        Excel (.xlsx)
+                    </flux:menu.item>
+                    <flux:menu.item icon="document-text"
+                        href="{{ route('admin.orders.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus, 'date' => $filterDate])) }}">
+                        CSV (.csv)
+                    </flux:menu.item>
+                    <flux:menu.separator />
+                    <flux:menu.item icon="document-chart-bar"
+                        href="{{ route('admin.orders.pdf', array_filter(['q' => $search, 'status' => $filterStatus, 'date' => $filterDate])) }}">
+                        PDF report
+                    </flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        </div>
+
         {{-- Toolbar --}}
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
             <flux:input
@@ -217,13 +239,8 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                         <flux:table.cell variant="strong">
                             <span class="font-mono">{{ $order->order_number }}</span>
                         </flux:table.cell>
-                        <flux:table.cell>
-                            @if ($order->user)
-                                <div class="text-sm font-medium dark:text-white">{{ $order->user->name }}</div>
-                                <div class="text-xs text-zinc-500">{{ $order->user->email }}</div>
-                            @else
-                                <span class="text-zinc-400">Guest</span>
-                            @endif
+                        <flux:table.cell class="text-sm text-zinc-500">
+                            {{ $order->user?->email ?? '—' }}
                         </flux:table.cell>
                         <flux:table.cell class="tabular-nums text-zinc-500">{{ $order->items_count }}</flux:table.cell>
                         <flux:table.cell class="font-medium tabular-nums">{!! money($order->total_cents) !!}</flux:table.cell>

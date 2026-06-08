@@ -193,6 +193,7 @@ new #[Layout('layouts::app')] #[Title('Brands — Admin')] class extends Compone
             container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Brand</flux:table.column>
+                <flux:table.column>Slug</flux:table.column>
                 <flux:table.column>Website</flux:table.column>
                 <flux:table.column>Products</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
@@ -202,10 +203,8 @@ new #[Layout('layouts::app')] #[Title('Brands — Admin')] class extends Compone
             <flux:table.rows>
                 @forelse ($this->brands as $brand)
                     <flux:table.row :key="$brand->id">
-                        <flux:table.cell variant="strong">
-                            {{ $brand->name }}
-                            <span class="block font-mono text-xs font-normal text-zinc-400">{{ $brand->slug }}</span>
-                        </flux:table.cell>
+                        <flux:table.cell variant="strong">{{ $brand->name }}</flux:table.cell>
+                        <flux:table.cell class="font-mono text-xs text-zinc-400">{{ $brand->slug }}</flux:table.cell>
                         <flux:table.cell class="text-zinc-500">
                             @if ($brand->website_url)
                                 <a href="{{ $brand->website_url }}" target="_blank"
@@ -246,7 +245,7 @@ new #[Layout('layouts::app')] #[Title('Brands — Admin')] class extends Compone
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="5" class="py-12 text-center text-zinc-400">
+                        <flux:table.cell colspan="6" class="py-12 text-center text-zinc-400">
                             No brands found.
                         </flux:table.cell>
                     </flux:table.row>

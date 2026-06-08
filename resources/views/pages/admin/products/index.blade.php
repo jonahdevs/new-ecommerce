@@ -15,13 +15,21 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
-new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Component
+{
     use WithFileUploads, WithPagination;
 
     // ==================================================
     // IMPORT
     // ==================================================
     public bool $showImportModal = false;
+
+    // Schedule modal
+    public bool $showScheduleModal = false;
+
+    public ?int $scheduleProductId = null;
+
+    public string $scheduleDate = '';
 
     public mixed $importFile = null;
 
@@ -59,16 +67,19 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
         $this->resetPage();
         $this->clearSelection();
     }
+
     public function updatedFilterVisibility(): void
     {
         $this->resetPage();
         $this->clearSelection();
     }
+
     public function updatedFilterStock(): void
     {
         $this->resetPage();
         $this->clearSelection();
     }
+
     public function updatedPerPage(): void
     {
         $this->resetPage();
@@ -77,7 +88,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
 
     public function updatedSelectAll(bool $value): void
     {
-        $this->selected = $value ? $this->products->pluck('id')->map(fn($id) => (string) $id)->all() : [];
+        $this->selected = $value ? $this->products->pluck('id')->map(fn ($id) => (string) $id)->all() : [];
     }
 
     public function clearSelection(): void
@@ -115,18 +126,73 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
     public function products()
     {
         return Product::query()
-            ->with(['brand', 'primaryCategory', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'primaryCategory', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->when(
                 $this->search,
-                fn($q) => $q->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%');
+                fn ($q) => $q->where(function ($q) {
+                    $q->where('name', 'like', '%'.$this->search.'%')->orWhere('sku', 'like', '%'.$this->search.'%');
                 }),
             )
-            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterVisibility, fn($q) => $q->where('visibility', $this->filterVisibility))
-            ->when($this->filterStock, fn($q) => $q->where('stock_status', $this->filterStock))
+            ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterVisibility, fn ($q) => $q->where('visibility', $this->filterVisibility))
+            ->when($this->filterStock, fn ($q) => $q->where('stock_status', $this->filterStock))
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate($this->perPage);
+    }
+
+    public function duplicateProduct(int $id): void
+    {
+        $original = Product::findOrFail($id);
+        $copy = $original->replicate(['sku', 'slug', 'default_variant_id', 'published_at']);
+
+        $copy->name = 'Copy of '.$original->name;
+        $copy->status = ProductStatus::DRAFT;
+        $copy->visibility = ProductVisibility::HIDDEN;
+        $copy->save();
+
+        unset($this->products, $this->stats);
+
+        $this->redirect(route('admin.products.edit', $copy), navigate: true);
+    }
+
+    public function quickSetStatus(int $id, string $status): void
+    {
+        if ($status === ProductStatus::SCHEDULED->value) {
+            $this->scheduleProductId = $id;
+            $this->scheduleDate = '';
+            $this->showScheduleModal = true;
+
+            return;
+        }
+
+        $product = Product::findOrFail($id);
+        $product->update(['status' => ProductStatus::from($status)]);
+        unset($this->products, $this->stats);
+
+        Flux::toast(heading: 'Status updated', text: $product->name.' is now '.ProductStatus::from($status)->label().'.', variant: 'success');
+    }
+
+    public function applySchedule(): void
+    {
+        $this->validate([
+            'scheduleDate' => ['required', 'date', 'after:now'],
+        ]);
+
+        $product = Product::findOrFail($this->scheduleProductId);
+        $product->update([
+            'status' => ProductStatus::SCHEDULED,
+            'published_at' => $this->scheduleDate,
+        ]);
+
+        $goLive = $product->fresh()->published_at->format('d M Y, H:i');
+
+        unset($this->products, $this->stats);
+
+        $this->showScheduleModal = false;
+        $this->scheduleProductId = null;
+        $this->scheduleDate = '';
+
+        Flux::toast(heading: 'Scheduled', text: $product->name.' will go live on '.$goLive.'.', variant: 'success');
     }
 
     public function deleteProduct(int $id): void
@@ -135,31 +201,31 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
         $product->delete();
         unset($this->products, $this->stats);
 
-        Flux::toast(heading: 'Product deleted', text: $product->name . ' has been removed.', variant: 'success');
+        Flux::toast(heading: 'Product deleted', text: $product->name.' has been removed.', variant: 'success');
     }
 
     public function bulkSetVisibility(string $visibility): void
     {
-        if ($this->selected === [] || !in_array($visibility, array_column(ProductVisibility::cases(), 'value'), true)) {
+        if ($this->selected === [] || ! in_array($visibility, array_column(ProductVisibility::cases(), 'value'), true)) {
             return;
         }
 
         $count = Product::whereIn('id', $this->selected)->update(['visibility' => $visibility]);
         $this->afterBulk();
 
-        Flux::toast(heading: 'Visibility updated', text: $count . ' product(s) set to ' . ProductVisibility::from($visibility)->label() . '.', variant: 'success');
+        Flux::toast(heading: 'Visibility updated', text: $count.' product(s) set to '.ProductVisibility::from($visibility)->label().'.', variant: 'success');
     }
 
     public function bulkSetStock(string $status): void
     {
-        if ($this->selected === [] || !in_array($status, array_column(StockStatus::cases(), 'value'), true)) {
+        if ($this->selected === [] || ! in_array($status, array_column(StockStatus::cases(), 'value'), true)) {
             return;
         }
 
         $count = Product::whereIn('id', $this->selected)->update(['stock_status' => $status]);
         $this->afterBulk();
 
-        Flux::toast(heading: 'Stock updated', text: $count . ' product(s) marked ' . StockStatus::from($status)->label() . '.', variant: 'success');
+        Flux::toast(heading: 'Stock updated', text: $count.' product(s) marked '.StockStatus::from($status)->label().'.', variant: 'success');
     }
 
     public function bulkDelete(): void
@@ -171,7 +237,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
         $count = Product::whereIn('id', $this->selected)->delete();
         $this->afterBulk();
 
-        Flux::toast(heading: 'Products deleted', text: $count . ' product(s) have been removed.', variant: 'success');
+        Flux::toast(heading: 'Products deleted', text: $count.' product(s) have been removed.', variant: 'success');
     }
 
     public function openImportModal(): void
@@ -185,7 +251,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
     {
         $this->validate(['importFile' => ['required', 'file', 'mimes:csv,xlsx,xls', 'max:10240']]);
 
-        $import = new ProductsImport();
+        $import = new ProductsImport;
         Excel::import($import, $this->importFile->getRealPath());
 
         $this->importResults = [
@@ -225,31 +291,9 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
             <flux:heading size="xl">Products</flux:heading>
             <flux:subheading>Manage your catalog — pricing, stock and visibility.</flux:subheading>
         </div>
-        <div class="flex items-center gap-2">
-            <flux:button icon="arrow-up-tray" wire:click="openImportModal">Import</flux:button>
-
-            <flux:dropdown>
-                <flux:button icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
-                <flux:menu>
-                    <flux:menu.item icon="table-cells"
-                        href="{{ route('admin.products.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
-                        Excel (.xlsx)
-                    </flux:menu.item>
-                    <flux:menu.item icon="document-text"
-                        href="{{ route('admin.products.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
-                        CSV (.csv)
-                    </flux:menu.item>
-                    <flux:menu.item icon="document-chart-bar"
-                        href="{{ route('admin.products.pdf', array_filter(['q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
-                        PDF catalog
-                    </flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
-
-            <flux:button variant="primary" icon="plus" :href="route('admin.products.create')" wire:navigate>
-                Add product
-            </flux:button>
-        </div>
+        <flux:button variant="primary" icon="plus" :href="route('admin.products.create')" wire:navigate>
+            Add product
+        </flux:button>
     </div>
 
     {{-- KPIs --}}
@@ -291,7 +335,33 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
     {{-- Card: toolbar + table --}}
     <flux:card class="mt-6 p-0 overflow-hidden">
 
+        {{-- Import / Export --}}
+        <div class="flex flex-wrap items-center justify-end gap-3 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <div class="flex items-center gap-2">
+                <flux:button size="sm" icon="arrow-up-tray" wire:click="openImportModal">Import</flux:button>
+
+                <flux:dropdown>
+                    <flux:button size="sm" icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
+                    <flux:menu>
+                        <flux:menu.item icon="table-cells"
+                            href="{{ route('admin.products.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
+                            Excel (.xlsx)
+                        </flux:menu.item>
+                        <flux:menu.item icon="document-text"
+                            href="{{ route('admin.products.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
+                            CSV (.csv)
+                        </flux:menu.item>
+                        <flux:menu.item icon="document-chart-bar"
+                            href="{{ route('admin.products.pdf', array_filter(['q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
+                            PDF catalog
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
+        </div>
+
         {{-- Toolbar --}}
+
         <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search name or SKU…"
                 icon="magnifying-glass" clearable class="max-w-xs" />
@@ -378,7 +448,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                 <flux:table.column sortable :sorted="$sortBy === 'price'" :direction="$sortDirection"
                     wire:click="sort('price')">Price</flux:table.column>
                 <flux:table.column>Stock</flux:table.column>
-                <flux:table.column>Visibility</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
                 <flux:table.column align="end">Actions</flux:table.column>
             </flux:table.columns>
 
@@ -444,32 +514,48 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            @php
-                                $visColor = match ($product->visibility) {
-                                    ProductVisibility::VISIBLE => 'green',
-                                    ProductVisibility::HIDDEN => 'zinc',
-                                    default => 'yellow',
-                                };
-                            @endphp
-                            <flux:badge size="sm" :color="$visColor" inset="top bottom">
-                                {{ $product->visibility->label() }}
+                            <flux:badge size="sm" :color="$product->status->badgeColor()" inset="top bottom">
+                                {{ $product->status->label() }}
                             </flux:badge>
                         </flux:table.cell>
 
                         <flux:table.cell align="end">
-                            <div class="flex items-center justify-end gap-1">
-                                <flux:tooltip content="Activity log">
-                                    <flux:button size="xs" variant="ghost" icon="clock"
-                                        :href="route('admin.activity.item', ['product', $product->id])"
-                                        wire:navigate />
-                                </flux:tooltip>
-                                <flux:button size="xs" variant="ghost" icon="pencil-square"
-                                    :href="route('admin.products.edit', $product)" wire:navigate />
-                                <flux:button size="xs" variant="ghost" icon="trash"
-                                    wire:click="deleteProduct({{ $product->id }})"
-                                    wire:confirm="Delete '{{ addslashes($product->name) }}'? This cannot be undone."
-                                    class="text-red-500! hover:text-red-600!" />
-                            </div>
+                            <flux:dropdown align="end">
+                                <flux:button size="sm" icon-trailing="chevron-down">Actions</flux:button>
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil-square"
+                                        :href="route('admin.products.edit', $product)" wire:navigate>
+                                        Edit
+                                    </flux:menu.item>
+                                    <flux:menu.item icon="arrow-top-right-on-square"
+                                        :href="route('product.show', $product)" target="_blank">
+                                        View on store
+                                    </flux:menu.item>
+                                    <flux:menu.item icon="document-duplicate"
+                                        wire:click="duplicateProduct({{ $product->id }})">
+                                        Duplicate
+                                    </flux:menu.item>
+                                    <flux:menu.submenu heading="Set status" icon="tag">
+                                        @foreach (ProductStatus::cases() as $s)
+                                            <flux:menu.item
+                                                wire:click="quickSetStatus({{ $product->id }}, '{{ $s->value }}')"
+                                                :disabled="$product->status === $s">
+                                                {{ $s->label() }}
+                                            </flux:menu.item>
+                                        @endforeach
+                                    </flux:menu.submenu>
+                                    <flux:menu.item icon="clock"
+                                        :href="route('admin.activity.item', ['product', $product->id])" wire:navigate>
+                                        Activity log
+                                    </flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" variant="danger"
+                                        wire:click="deleteProduct({{ $product->id }})"
+                                        wire:confirm="Delete '{{ addslashes($product->name) }}'? This cannot be undone.">
+                                        Delete
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
@@ -494,6 +580,32 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
             </div>
         @endif
     </flux:card>
+
+    {{-- ================================================== --}}
+    {{-- SCHEDULE MODAL --}}
+    {{-- ================================================== --}}
+    <flux:modal wire:model.self="showScheduleModal" class="w-full max-w-sm" :dismissible="true">
+        <form wire:submit="applySchedule" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Schedule product</flux:heading>
+                <flux:subheading>Set the date and time this product will go live.</flux:subheading>
+            </div>
+
+            <flux:field>
+                <flux:label>Publish date & time</flux:label>
+                <flux:input type="datetime-local" wire:model="scheduleDate"
+                    :min="now()->addMinutes(5)->format('Y-m-d\TH:i')" />
+                <flux:error name="scheduleDate" />
+            </flux:field>
+
+            <div class="flex gap-2">
+                <flux:button type="submit" variant="primary" class="flex-1">Schedule</flux:button>
+                <flux:modal.close>
+                    <flux:button type="button" variant="ghost">Cancel</flux:button>
+                </flux:modal.close>
+            </div>
+        </form>
+    </flux:modal>
 
     {{-- ================================================== --}}
     {{-- IMPORT MODAL --}}

@@ -6,11 +6,15 @@ return new class extends SettingsMigration
 {
     public function up(): void
     {
+        // Staff email routing
+        $this->migrator->add('notifications.staff_email_routing', 'individual');
+        $this->migrator->add('notifications.staff_central_email', 'notifications@sheffieldsteelsystems.com');
+
         // Channels
         $this->migrator->add('notifications.email_channel_enabled', true);
         $this->migrator->add('notifications.inapp_channel_enabled', true);
         $this->migrator->add('notifications.whatsapp_channel_enabled', false);
-        $this->migrator->add('notifications.whatsapp_api_token', null);
+        $this->migrator->addEncrypted('notifications.whatsapp_api_token', null);
         $this->migrator->add('notifications.whatsapp_phone_number_id', null);
         $this->migrator->add('notifications.whatsapp_business_account_id', null);
 

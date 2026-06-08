@@ -280,12 +280,10 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             @if ($user->id === auth()->id())
-                                {{-- Only one action available: edit. No dropdown needed. --}}
-                                <flux:button size="xs" variant="ghost" icon="pencil-square"
-                                    :href="route('admin.users.edit', $user->id)" wire:navigate />
+                                <flux:button size="sm" icon-trailing="chevron-down" disabled>Actions</flux:button>
                             @else
-                                <flux:dropdown position="bottom" align="end">
-                                    <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
+                                <flux:dropdown align="end">
+                                    <flux:button size="sm" icon-trailing="chevron-down">Actions</flux:button>
                                     <flux:menu>
                                         <flux:menu.item icon="pencil-square" :href="route('admin.users.edit', $user->id)" wire:navigate>Edit</flux:menu.item>
                                         @if ($user->isBanned())

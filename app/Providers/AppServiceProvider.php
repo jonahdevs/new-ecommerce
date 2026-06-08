@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Middleware\ValidateRecaptcha;
 use App\Services\Mpesa\DarajaClient;
+use App\Services\PaymentCredentials;
 use App\Settings\SecuritySettings;
 use App\Support\ActivitySource;
 use App\Support\Money;
@@ -24,7 +25,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(DarajaClient::class, fn (): DarajaClient => DarajaClient::fromConfig());
+        $this->app->bind(DarajaClient::class, fn ($app): DarajaClient => new DarajaClient(
+            $app->make(PaymentCredentials::class)->mpesaConfig()
+        ));
         $this->app->singleton(Money::class);
     }
 

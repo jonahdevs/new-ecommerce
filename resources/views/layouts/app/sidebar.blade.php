@@ -143,12 +143,13 @@
         {{-- Notification bell --}}
         <livewire:admin.notification-bell />
 
-        {{-- Appearance toggle --}}
-        <flux:tooltip content="Toggle appearance" position="bottom">
+        {{-- Appearance toggle: light → dark → system → light --}}
+        <flux:tooltip content="Appearance" position="bottom">
             <flux:button variant="ghost" square x-data aria-label="Toggle color scheme"
-                x-on:click="$flux.appearance = $flux.dark ? 'light' : 'dark'">
-                <flux:icon.sun x-show="$flux.dark" variant="mini" />
-                <flux:icon.moon x-show="! $flux.dark" variant="mini" />
+                x-on:click="$flux.appearance = $flux.appearance === 'light' ? 'dark' : ($flux.appearance === 'dark' ? 'system' : 'light')">
+                <flux:icon.sun x-show="$flux.appearance === 'light'" variant="mini" />
+                <flux:icon.moon x-show="$flux.appearance === 'dark'" variant="mini" />
+                <flux:icon.computer-desktop x-show="$flux.appearance === 'system'" variant="mini" />
             </flux:button>
         </flux:tooltip>
 

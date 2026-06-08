@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             OrderSeeder::class,
             QuoteSeeder::class,
             ReviewSeeder::class,
+            BannedIpSeeder::class,
         ]);
     }
 }

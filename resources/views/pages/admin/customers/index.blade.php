@@ -126,6 +126,28 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
 
     <flux:card class="mt-6 p-0 overflow-hidden">
 
+        {{-- Export --}}
+        <div class="flex flex-wrap items-center justify-end gap-2 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <flux:dropdown>
+                <flux:button size="sm" icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
+                <flux:menu>
+                    <flux:menu.item icon="table-cells"
+                        href="{{ route('admin.customers.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus])) }}">
+                        Excel (.xlsx)
+                    </flux:menu.item>
+                    <flux:menu.item icon="document-text"
+                        href="{{ route('admin.customers.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus])) }}">
+                        CSV (.csv)
+                    </flux:menu.item>
+                    <flux:menu.separator />
+                    <flux:menu.item icon="document-chart-bar"
+                        href="{{ route('admin.customers.pdf', array_filter(['q' => $search, 'status' => $filterStatus])) }}">
+                        PDF report
+                    </flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        </div>
+
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
             <flux:input
@@ -185,8 +207,8 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                         <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($customer->orders_sum_total_cents) !!}</flux:table.cell>
                         <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $customer->created_at->format('M j, Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
+                            <flux:dropdown align="end">
+                                <flux:button size="sm" icon-trailing="chevron-down">Actions</flux:button>
                                 <flux:menu>
                                     <flux:menu.item icon="eye" icon-variant="micro" :href="route('admin.customers.show', $customer)" wire:navigate>View</flux:menu.item>
                                     <flux:menu.item icon="pencil-square" icon-variant="micro" :href="route('admin.customers.edit', $customer)" wire:navigate>Edit</flux:menu.item>

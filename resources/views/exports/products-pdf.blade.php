@@ -2,98 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <base href="{{ url('/') }}">
+    @vite('resources/css/app.css')
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #333; }
-        .header { padding: 20px 20px 12px; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; }
-        .header h1 { font-size: 18px; font-weight: 700; color: #111; }
-        .header p { color: #6b7280; font-size: 10px; margin-top: 4px; }
-        table { width: 100%; border-collapse: collapse; }
-        thead tr { background: #f3f4f6; }
-        th { padding: 8px 10px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #d1d5db; white-space: nowrap; }
-        td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
-        tr:nth-child(even) td { background: #fafafa; }
-        .sku { font-family: monospace; color: #6b7280; font-size: 9px; }
-        .muted { color: #6b7280; font-size: 9px; }
-        .price { font-weight: 600; text-align: right; white-space: nowrap; }
-        .sale { color: #059669; font-size: 9px; }
-        .badge { display: inline-block; padding: 2px 6px; border-radius: 9999px; font-size: 9px; font-weight: 500; }
-        .badge-green { background: #d1fae5; color: #065f46; }
-        .badge-red { background: #fee2e2; color: #991b1b; }
-        .badge-yellow { background: #fef3c7; color: #92400e; }
-        .badge-blue { background: #dbeafe; color: #1e40af; }
-        .badge-zinc { background: #f4f4f5; color: #3f3f46; }
-        .footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #e5e7eb; text-align: right; color: #9ca3af; font-size: 9px; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        @page { size: A4 landscape; margin: 12mm 14mm 14mm 14mm; }
+        @media print { tr { page-break-inside: avoid; } }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>Product Catalog</h1>
-        <p>Generated {{ now()->format('d M Y, H:i') }} &bull; {{ $products->count() }} product(s)</p>
+<body class="bg-white">
+
+@php
+    $branding  = app(\App\Settings\BrandingSettings::class);
+    $business  = app(\App\Settings\BusinessSettings::class);
+    $storeName = $branding->store_name ?: config('app.name');
+    $logoUrl   = $branding->logo_path
+                   ? \Illuminate\Support\Facades\Storage::disk('public')->url($branding->logo_path)
+                   : '/logo.png';
+@endphp
+
+<div class="mx-auto bg-white font-sans text-[12px] text-zinc-800">
+
+    {{-- HEADER --}}
+    <div class="flex items-start justify-between gap-6 pb-4">
+        <div>
+            <img src="{{ $logoUrl }}" alt="{{ $storeName }}" class="h-10 w-auto" />
+            <div class="mt-2 space-y-0.5 text-[10.5px] leading-snug text-zinc-500">
+                @if ($business->address)<div>{{ $business->address }}</div>@endif
+                @if ($business->contact_phone)<div>Tel: {{ $business->contact_phone }}</div>@endif
+                @if ($business->contact_email)<div>Email: {{ $business->contact_email }}</div>@endif
+                @if ($business->tax_pin)<div>PIN: {{ $business->tax_pin }}</div>@endif
+            </div>
+        </div>
+        <div class="text-right">
+            <div class="text-2xl font-bold uppercase tracking-widest text-zinc-900">Product Catalog</div>
+            <div class="mt-1.5 text-[11px] text-zinc-500">Generated {{ now()->format('d F Y, H:i') }}</div>
+            <div class="mt-0.5 text-[11px] text-zinc-500">{{ $products->count() }} product(s)</div>
+        </div>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Brand / Category</th>
-                <th style="text-align:right">Price (KES)</th>
-                <th>Stock</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($products as $product)
-                <tr>
-                    <td>
-                        <strong>{{ $product->name }}</strong>
-                        @if ($product->sku)
-                            <br><span class="sku">{{ $product->sku }}</span>
-                        @endif
-                    </td>
-                    <td>
-                        @if ($product->brand)
-                            <span>{{ $product->brand->name }}</span>
-                        @endif
-                        @if ($product->primaryCategory)
-                            <br><span class="muted">{{ $product->primaryCategory->name }}</span>
-                        @endif
-                    </td>
-                    <td class="price">
-                        @if ($product->price !== null)
-                            {{ number_format($product->price / 100, 2) }}
-                            @if ($product->sale_price !== null)
-                                <br><span class="sale">Sale: {{ number_format($product->sale_price / 100, 2) }}</span>
-                            @endif
-                        @else
-                            <span class="muted">—</span>
-                        @endif
-                    </td>
-                    <td>
-                        @php
-                            $stockColor = match ($product->stock_status->value) {
-                                'in_stock' => 'green',
-                                'out_of_stock' => 'red',
-                                default => 'yellow',
-                            };
-                        @endphp
-                        <span class="badge badge-{{ $stockColor }}">{{ $product->stock_status->label() }}</span>
-                        @if ($product->stock_quantity !== null)
-                            <br><span class="muted">{{ number_format($product->stock_quantity) }} units</span>
-                        @endif
-                    </td>
-                    <td>
-                        <span class="badge badge-{{ $product->status->badgeColor() }}">{{ $product->status->label() }}</span>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" style="text-align:center; padding:20px; color:#9ca3af">No products found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+    {{-- Double-rule separator --}}
+    <div class="border-t-2 border-zinc-900"></div>
+    <div class="mt-px border-t border-zinc-900"></div>
 
-    <div class="footer">Exported from {{ config('app.name') }}</div>
+    {{-- PRODUCTS TABLE --}}
+    <div class="mt-5">
+        <table class="w-full text-[11.5px]" style="border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-left w-6">#</th>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-left">Product</th>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-left">Brand</th>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-left">Category</th>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-right">Price (KES)</th>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-center">Stock Status</th>
+                    <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($products as $index => $product)
+                    <tr>
+                        <td class="border border-zinc-300 px-2 py-2 align-top text-zinc-500 text-center">{{ $loop->iteration }}</td>
+                        <td class="border border-zinc-300 px-2 py-2 align-top">
+                            <div class="font-bold text-zinc-900">{{ $product->name }}</div>
+                            @if ($product->sku)
+                                <div class="font-mono text-[10px] text-zinc-400 mt-0.5">{{ $product->sku }}</div>
+                            @endif
+                        </td>
+                        <td class="border border-zinc-300 px-2 py-2 align-top text-zinc-600">
+                            {{ $product->brand?->name ?? '—' }}
+                        </td>
+                        <td class="border border-zinc-300 px-2 py-2 align-top text-zinc-600">
+                            {{ $product->primaryCategory?->name ?? '—' }}
+                        </td>
+                        <td class="border border-zinc-300 px-2 py-2 align-top text-right tabular-nums">
+                            @if ($product->price !== null)
+                                <div class="font-semibold text-zinc-900">{{ number_format($product->price / 100, 2) }}</div>
+                                @if ($product->sale_price !== null)
+                                    <div class="text-[10px] text-zinc-500 mt-0.5">Sale: {{ number_format($product->sale_price / 100, 2) }}</div>
+                                @endif
+                            @else
+                                <span class="text-zinc-400">—</span>
+                            @endif
+                        </td>
+                        <td class="border border-zinc-300 px-2 py-2 align-top text-center text-zinc-700">
+                            {{ $product->stock_status->label() }}
+                            @if ($product->stock_quantity !== null)
+                                <div class="text-[10px] text-zinc-400 mt-0.5">{{ number_format($product->stock_quantity) }} units</div>
+                            @endif
+                        </td>
+                        <td class="border border-zinc-300 px-2 py-2 align-top text-center text-zinc-700">
+                            {{ $product->status->label() }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="border border-zinc-300 px-4 py-8 text-center text-zinc-400">
+                            No products found.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- FOOTER --}}
+    <div class="mt-6 border-t border-zinc-300 pt-3 flex items-center justify-between text-[10px] text-zinc-400">
+        <span>{{ $storeName }}</span>
+        <span>Exported {{ now()->format('d M Y, H:i') }}</span>
+    </div>
+
+</div>
 </body>
 </html>

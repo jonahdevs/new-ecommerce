@@ -13,7 +13,7 @@ return new class extends SettingsMigration
         $this->migrator->add('payments.card_enabled', true);
         $this->migrator->add('payments.card_provider', 'stripe');
         $this->migrator->add('payments.bank_transfer_enabled', false);
-        $this->migrator->add('payments.bank_details', '');
+        $this->migrator->addEncrypted('payments.bank_details', '');
         $this->migrator->add('payments.cash_on_delivery_enabled', false);
 
         // Tax

@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\CustomerExportController;
 use App\Http\Controllers\Admin\OrderDocumentController;
+use App\Http\Controllers\Admin\OrderExportController;
 use App\Http\Controllers\Admin\ProductExportController;
+use App\Http\Controllers\Admin\QuoteExportController;
 use App\Http\Controllers\Admin\SubscriberExportController;
 use App\Http\Middleware\EnsureTwoFactorWhenRequired;
 use Illuminate\Support\Facades\Route;
@@ -36,7 +39,15 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::get('/products/export', [ProductExportController::class, 'download'])->name('products.export');
         Route::get('/products/pdf', [ProductExportController::class, 'pdf'])->name('products.pdf');
         Route::get('/products/import-template', [ProductExportController::class, 'template'])->name('products.import-template');
+        Route::get('/customers/export', [CustomerExportController::class, 'download'])->name('customers.export');
+        Route::get('/customers/pdf', [CustomerExportController::class, 'pdf'])->name('customers.pdf');
+        Route::get('/orders/export', [OrderExportController::class, 'download'])->name('orders.export');
+        Route::get('/orders/pdf', [OrderExportController::class, 'pdf'])->name('orders.pdf');
+        Route::get('/quotes/export', [QuoteExportController::class, 'download'])->name('quotes.export');
+        Route::get('/quotes/pdf', [QuoteExportController::class, 'pdf'])->name('quotes.pdf');
         Route::livewire('/categories', 'pages::admin.categories.index')->name('categories.index');
+        Route::livewire('/categories/create', 'pages::admin.categories.create')->name('categories.create');
+        Route::livewire('/categories/{category}/edit', 'pages::admin.categories.edit')->name('categories.edit');
         Route::livewire('/brands', 'pages::admin.brands.index')->name('brands.index');
         Route::livewire('/attributes', 'pages::admin.attributes.index')->name('attributes.index');
         Route::livewire('/attributes/create', 'pages::admin.attributes.create')->name('attributes.create');
@@ -47,6 +58,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class])
         Route::livewire('/orders/{order}', 'pages::admin.orders.show')->name('orders.show');
         Route::get('/orders/{order}/packing-list', [OrderDocumentController::class, 'packingList'])->name('orders.packing-list');
         Route::get('/orders/{order}/delivery-note', [OrderDocumentController::class, 'deliveryNote'])->name('orders.delivery-note');
+        Route::get('/orders/{order}/kra-receipt', [OrderDocumentController::class, 'kraReceipt'])->name('orders.kra-receipt');
         Route::livewire('/quotes', 'pages::admin.quotes.index')->name('quotes.index');
         Route::livewire('/quotes/create', 'pages::admin.quotes.create')->name('quotes.create');
         Route::livewire('/quotes/{quote}', 'pages::admin.quotes.show')->name('quotes.show');

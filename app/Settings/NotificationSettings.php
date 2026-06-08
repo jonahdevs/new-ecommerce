@@ -2,10 +2,20 @@
 
 namespace App\Settings;
 
+use Spatie\LaravelSettings\Attributes\ShouldBeEncrypted;
 use Spatie\LaravelSettings\Settings;
 
 class NotificationSettings extends Settings
 {
+    // ==================================================
+    // EMAIL ROUTING FOR STAFF NOTIFICATIONS
+    // ==================================================
+
+    /** 'individual' sends to each qualifying staff member; 'central' sends to one shared inbox. */
+    public string $staff_email_routing = 'individual';
+
+    public ?string $staff_central_email = null;
+
     // ==================================================
     // CHANNELS
     // ==================================================
@@ -15,6 +25,7 @@ class NotificationSettings extends Settings
 
     public bool $whatsapp_channel_enabled = false;
 
+    #[ShouldBeEncrypted]
     public ?string $whatsapp_api_token = null;
 
     public ?string $whatsapp_phone_number_id = null;

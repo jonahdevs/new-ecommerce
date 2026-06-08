@@ -2,6 +2,7 @@
 
 use App\Models\TaxClass;
 use App\Settings\CurrencySettings;
+use App\Settings\PaymentApiSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\TaxSettings;
 use Flux\Flux;
@@ -34,6 +35,27 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public bool $cash_on_delivery_enabled = false;
 
+    public ?string $configuringPayment = null;
+
+    public bool $showPaymentModal = false;
+
+    // API credentials — null means "use .env value"
+    public ?string $mpesa_env = null;
+
+    public ?string $mpesa_consumer_key = null;
+
+    public ?string $mpesa_consumer_secret = null;
+
+    public ?string $mpesa_passkey = null;
+
+    public ?string $mpesa_callback_url = null;
+
+    public ?string $stripe_key = null;
+
+    public ?string $stripe_secret = null;
+
+    public ?string $stripe_webhook_secret = null;
+
     // Tax
     public bool $tax_enabled = true;
 
@@ -54,7 +76,7 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public string $decimal_separator = '.';
 
-    public function mount(PaymentSettings $payments, TaxSettings $tax, CurrencySettings $currency): void
+    public function mount(PaymentSettings $payments, PaymentApiSettings $api, TaxSettings $tax, CurrencySettings $currency): void
     {
         $this->mpesa_enabled = $payments->mpesa_enabled;
         $this->mpesa_shortcode = $payments->mpesa_shortcode;
@@ -64,6 +86,15 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         $this->bank_transfer_enabled = $payments->bank_transfer_enabled;
         $this->bank_details = $payments->bank_details;
         $this->cash_on_delivery_enabled = $payments->cash_on_delivery_enabled;
+
+        $this->mpesa_env = $api->mpesa_env;
+        $this->mpesa_consumer_key = $api->mpesa_consumer_key;
+        $this->mpesa_consumer_secret = $api->mpesa_consumer_secret;
+        $this->mpesa_passkey = $api->mpesa_passkey;
+        $this->mpesa_callback_url = $api->mpesa_callback_url;
+        $this->stripe_key = $api->stripe_key;
+        $this->stripe_secret = $api->stripe_secret;
+        $this->stripe_webhook_secret = $api->stripe_webhook_secret;
 
         $this->tax_enabled = $tax->tax_enabled;
         $this->default_tax_class_id = $tax->default_tax_class_id;
@@ -77,27 +108,65 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         $this->decimal_separator = $currency->decimal_separator;
     }
 
-    public function savePayments(PaymentSettings $settings): void
+    public function savePayments(PaymentSettings $settings, PaymentApiSettings $api): void
     {
         $this->validate([
-            'mpesa_shortcode' => ['nullable', 'string', 'max:20'],
-            'mpesa_type' => ['required', 'in:paybill,till'],
-            'card_provider' => ['required', 'in:flutterwave,paystack,stripe'],
-            'bank_details' => ['nullable', 'string', 'max:1000'],
+            'mpesa_shortcode'      => ['nullable', 'string', 'max:20'],
+            'mpesa_type'           => ['required', 'in:paybill,till'],
+            'mpesa_callback_url'   => ['nullable', 'url', 'max:500'],
+            'card_provider'        => ['required', 'in:flutterwave,paystack,stripe'],
+            'bank_details'         => ['nullable', 'string', 'max:1000'],
+            'stripe_key'           => ['nullable', 'string', 'max:500'],
+            'stripe_secret'        => ['nullable', 'string', 'max:500'],
+            'stripe_webhook_secret' => ['nullable', 'string', 'max:500'],
+            'mpesa_consumer_key'   => ['nullable', 'string', 'max:500'],
+            'mpesa_consumer_secret' => ['nullable', 'string', 'max:500'],
+            'mpesa_passkey'        => ['nullable', 'string', 'max:500'],
         ]);
 
         $settings->fill([
-            'mpesa_enabled' => $this->mpesa_enabled,
-            'mpesa_shortcode' => $this->mpesa_shortcode,
-            'mpesa_type' => $this->mpesa_type,
-            'card_enabled' => $this->card_enabled,
-            'card_provider' => $this->card_provider,
-            'bank_transfer_enabled' => $this->bank_transfer_enabled,
-            'bank_details' => $this->bank_details,
+            'mpesa_enabled'            => $this->mpesa_enabled,
+            'mpesa_shortcode'          => $this->mpesa_shortcode,
+            'mpesa_type'               => $this->mpesa_type,
+            'card_enabled'             => $this->card_enabled,
+            'card_provider'            => $this->card_provider,
+            'bank_transfer_enabled'    => $this->bank_transfer_enabled,
+            'bank_details'             => $this->bank_details,
             'cash_on_delivery_enabled' => $this->cash_on_delivery_enabled,
         ])->save();
 
+        $api->fill([
+            'mpesa_env'             => $this->mpesa_env ?: null,
+            'mpesa_consumer_key'    => $this->mpesa_consumer_key ?: null,
+            'mpesa_consumer_secret' => $this->mpesa_consumer_secret ?: null,
+            'mpesa_passkey'         => $this->mpesa_passkey ?: null,
+            'mpesa_callback_url'    => $this->mpesa_callback_url ?: null,
+            'stripe_key'            => $this->stripe_key ?: null,
+            'stripe_secret'         => $this->stripe_secret ?: null,
+            'stripe_webhook_secret' => $this->stripe_webhook_secret ?: null,
+        ])->save();
+
         Flux::toast(heading: 'Saved', text: 'Payment settings updated.', variant: 'success');
+        $this->showPaymentModal = false;
+    }
+
+    public function updated(string $name): void
+    {
+        $toggles = ['mpesa_enabled', 'card_enabled', 'bank_transfer_enabled', 'cash_on_delivery_enabled'];
+        if (in_array($name, $toggles)) {
+            app(PaymentSettings::class)->fill([
+                'mpesa_enabled'          => $this->mpesa_enabled,
+                'card_enabled'           => $this->card_enabled,
+                'bank_transfer_enabled'  => $this->bank_transfer_enabled,
+                'cash_on_delivery_enabled' => $this->cash_on_delivery_enabled,
+            ])->save();
+        }
+    }
+
+    public function configurePayment(string $key): void
+    {
+        $this->configuringPayment = $key;
+        $this->showPaymentModal = true;
     }
 
     public function saveTax(): void
@@ -179,74 +248,155 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     {{-- Payments --}}
     @if ($section === 'payments')
-        <flux:card>
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <flux:heading>Payments</flux:heading>
-                    <flux:subheading>Enable the methods customers can pay with.</flux:subheading>
-                </div>
-                <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square" :href="route('admin.payments.index')" wire:navigate>
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                <flux:heading>Payment Gateways</flux:heading>
+                <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
+                    :href="route('admin.payments.index')" wire:navigate>
                     View transactions
                 </flux:button>
             </div>
 
-            <form wire:submit="savePayments" class="mt-6 space-y-5">
-                {{-- M-Pesa --}}
-                <div class="rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                    <div class="flex items-center justify-between">
-                        <flux:heading size="sm">M-Pesa</flux:heading>
-                        <flux:switch wire:model.live="mpesa_enabled" />
-                    </div>
-                    @if ($mpesa_enabled)
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <flux:input wire:model="mpesa_shortcode" label="Shortcode" placeholder="e.g. 174379" />
-                            <flux:select wire:model="mpesa_type" label="Type">
-                                <flux:select.option value="paybill">Paybill</flux:select.option>
-                                <flux:select.option value="till">Till (Buy Goods)</flux:select.option>
-                            </flux:select>
+            @php
+                $creds = app(\App\Services\PaymentCredentials::class);
+                $gateways = [
+                    [
+                        'key'          => 'mpesa',
+                        'name'         => 'M-Pesa',
+                        'logo'         => 'mpesa',
+                        'description'  => 'Accept mobile money payments from M-Pesa customers via STK push.',
+                        'enabled'      => $mpesa_enabled,
+                        'configurable' => true,
+                        'connected'    => (bool) ($creds->mpesaConsumerKey() && $creds->mpesaConsumerSecret() && $creds->mpesaPasskey()),
+                    ],
+                    [
+                        'key'          => 'card',
+                        'name'         => 'Stripe',
+                        'logo'         => 'stripe',
+                        'description'  => 'Accept card payments online. Supports Visa, Mastercard, and more.',
+                        'enabled'      => $card_enabled,
+                        'configurable' => true,
+                        'connected'    => (bool) ($creds->stripeKey() && $creds->stripeSecret()),
+                    ],
+                    [
+                        'key'          => 'bank_transfer',
+                        'name'         => 'Bank Transfer',
+                        'logo'         => 'bank',
+                        'description'  => 'Allow customers to pay directly into your bank account.',
+                        'enabled'      => $bank_transfer_enabled,
+                        'configurable' => true,
+                        'connected'    => (bool) $bank_details,
+                    ],
+                    [
+                        'key'          => 'cash_on_delivery',
+                        'name'         => 'Cash on Delivery',
+                        'logo'         => 'cash',
+                        'description'  => 'Allow customers to pay in cash when their order is delivered.',
+                        'enabled'      => $cash_on_delivery_enabled,
+                        'configurable' => false,
+                        'connected'    => true,
+                    ],
+                ];
+            @endphp
+
+            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
+                @foreach ($gateways as $gateway)
+                    <div class="flex flex-col rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div class="p-5">
+                            {{-- Top: logo + toggle --}}
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-2.5">
+                                    @if ($gateway['logo'] === 'mpesa')
+                                        <img src="{{ asset('images/payment/mpesa logo.png') }}" alt="M-Pesa" class="h-7 w-auto object-contain" />
+                                    @elseif ($gateway['logo'] === 'stripe')
+                                        <img src="{{ asset('images/payment/stripe logo.png') }}" alt="Stripe" class="h-7 w-auto object-contain" />
+                                    @elseif ($gateway['logo'] === 'bank')
+                                        <flux:icon.building-library class="size-6 text-zinc-500" />
+                                        <span class="text-sm font-semibold dark:text-white">{{ $gateway['name'] }}</span>
+                                    @else
+                                        <flux:icon.banknotes class="size-6 text-zinc-500" />
+                                        <span class="text-sm font-semibold dark:text-white">{{ $gateway['name'] }}</span>
+                                    @endif
+                                </div>
+                                <flux:switch wire:model.live="{{ $gateway['key'] }}_enabled" />
+                            </div>
+
+                            {{-- Description --}}
+                            <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $gateway['description'] }}</p>
                         </div>
-                        <flux:text size="sm" class="mt-2 text-xs text-zinc-400">API keys & secrets are configured in your environment file.</flux:text>
-                    @endif
-                </div>
 
-                {{-- Card --}}
-                <div class="rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                    <div class="flex items-center justify-between">
-                        <flux:heading size="sm">Card payments</flux:heading>
-                        <flux:switch wire:model.live="card_enabled" />
+                        {{-- Footer: badge + gear --}}
+                        <div class="flex items-center justify-between border-t border-zinc-200 px-5 py-2 dark:border-zinc-700">
+                            <flux:badge
+                                :color="$gateway['connected'] ? 'green' : 'zinc'"
+                                size="sm"
+                                :icon="$gateway['connected'] ? 'check' : 'x-mark'">
+                                {{ $gateway['connected'] ? 'Connected' : 'Not connected' }}
+                            </flux:badge>
+                            <flux:button size="sm" variant="ghost" icon="cog-6-tooth"
+                                wire:click="configurePayment('{{ $gateway['key'] }}')"
+                                :disabled="! $gateway['configurable']"
+                                tooltip="{{ $gateway['configurable'] ? 'Configure' : 'No configuration needed' }}" />
+                        </div>
                     </div>
-                    @if ($card_enabled)
-                        <flux:select wire:model="card_provider" label="Provider" class="mt-4">
-                            <flux:select.option value="flutterwave">Flutterwave</flux:select.option>
-                            <flux:select.option value="paystack">Paystack</flux:select.option>
-                            <flux:select.option value="stripe">Stripe</flux:select.option>
+                @endforeach
+            </div>
+        </flux:card>
+
+        {{-- Settings modal --}}
+        <flux:modal wire:model.self="showPaymentModal" class="w-full max-w-lg" :dismissible="true">
+            <form wire:submit="savePayments" class="space-y-5">
+                @if ($configuringPayment === 'mpesa')
+                    <div>
+                        <flux:heading size="lg">M-Pesa Settings</flux:heading>
+                        <flux:subheading>Configure your M-Pesa integration.</flux:subheading>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:input wire:model="mpesa_shortcode" label="Shortcode" placeholder="e.g. 174379" />
+                        <flux:select wire:model="mpesa_type" label="Type">
+                            <flux:select.option value="paybill">Paybill</flux:select.option>
+                            <flux:select.option value="till">Till (Buy Goods)</flux:select.option>
                         </flux:select>
-                    @endif
-                </div>
-
-                {{-- Bank transfer --}}
-                <div class="rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                    <div class="flex items-center justify-between">
-                        <flux:heading size="sm">Bank transfer</flux:heading>
-                        <flux:switch wire:model.live="bank_transfer_enabled" />
                     </div>
-                    @if ($bank_transfer_enabled)
-                        <flux:textarea wire:model="bank_details" label="Bank details" rows="3" class="mt-4"
-                            placeholder="Account name, bank, account number, branch…" />
-                    @endif
-                </div>
+                    <flux:select wire:model="mpesa_env" label="Environment">
+                        <flux:select.option value="">Use .env ({{ config('services.mpesa.env', 'sandbox') }})</flux:select.option>
+                        <flux:select.option value="sandbox">Sandbox</flux:select.option>
+                        <flux:select.option value="production">Production</flux:select.option>
+                    </flux:select>
 
-                {{-- COD --}}
-                <div class="flex items-center justify-between rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Cash on delivery</flux:heading>
-                    <flux:switch wire:model="cash_on_delivery_enabled" />
-                </div>
+                    <flux:separator text="API Credentials" />
+                    <flux:input wire:model="mpesa_consumer_key" label="Consumer Key" />
+                    <flux:input wire:model="mpesa_consumer_secret" label="Consumer Secret" type="password" viewable />
+                    <flux:input wire:model="mpesa_passkey" label="Passkey" type="password" viewable />
+                    <flux:input wire:model="mpesa_callback_url" label="Callback URL" type="url" />
 
-                <div class="flex justify-end pt-2">
-                    <flux:button type="submit" variant="primary">Save changes</flux:button>
+                @elseif ($configuringPayment === 'card')
+                    <div>
+                        <flux:heading size="lg">Stripe Settings</flux:heading>
+                        <flux:subheading>Configure your Stripe integration.</flux:subheading>
+                    </div>
+                    <flux:input wire:model="stripe_key" label="Publishable Key" />
+                    <flux:input wire:model="stripe_secret" label="Secret Key" type="password" viewable />
+                    <flux:input wire:model="stripe_webhook_secret" label="Webhook Secret" type="password" viewable />
+
+                @elseif ($configuringPayment === 'bank_transfer')
+                    <div>
+                        <flux:heading size="lg">Bank Transfer Settings</flux:heading>
+                        <flux:subheading>Customers will see these details on the checkout page.</flux:subheading>
+                    </div>
+                    <flux:textarea wire:model="bank_details" label="Bank details" rows="4"
+                        placeholder="Account name, bank, account number, branch…" />
+
+                @endif
+
+                <div class="flex gap-2 pt-1">
+                    <flux:button type="submit" variant="primary" class="flex-1">Save changes</flux:button>
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
                 </div>
             </form>
-        </flux:card>
+        </flux:modal>
     @endif
 
     {{-- Tax --}}

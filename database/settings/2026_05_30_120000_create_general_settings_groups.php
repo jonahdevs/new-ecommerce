@@ -11,7 +11,7 @@ return new class extends SettingsMigration
         // ==================================================
         $this->migrator->add('business.legal_name', config('app.name', 'My Store'));
         $this->migrator->add('business.registration_number', '');
-        $this->migrator->add('business.tax_pin', '');
+        $this->migrator->addEncrypted('business.tax_pin', '');
         $this->migrator->add('business.contact_email', '');
         $this->migrator->add('business.contact_phone', '');
         $this->migrator->add('business.address', '');

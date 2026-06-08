@@ -2,18 +2,23 @@
 
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Services\Mpesa\MpesaPaymentService;
 use App\Services\Stripe\StripePaymentService;
+use App\Settings\PaymentSettings;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
+{
     public Order $order;
 
     public string $selectedMethod = 'card';
@@ -52,22 +57,50 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             return;
         }
 
-        $order->load('items.product');
+        $order->load([
+            'items.product',
+            'items.product.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
+        ]);
         $this->order = $order;
 
-        $payments = app(\App\Settings\PaymentSettings::class);
+        $payments = app(PaymentSettings::class);
         $this->cardEnabled = $payments->card_enabled;
         $this->mpesaEnabled = $payments->mpesa_enabled;
         $this->selectedMethod = $this->cardEnabled ? 'card' : 'mpesa';
 
         if ($this->cardEnabled) {
             $stripePayment = app(StripePaymentService::class)->createPaymentIntent($order);
+
+            // If a previously-crashed finalization was recovered, the order is
+            // now paid — redirect straight to the confirmation page.
+            if ($order->fresh()->isPaid()) {
+                $this->redirectRoute('account.orders.show', $order, navigate: true);
+
+                return;
+            }
+
             $this->stripeClientSecret = $stripePayment->stripe_client_secret;
             $this->stripePaymentId = $stripePayment->id;
         }
 
         $defaultPhone = auth()->user()->addresses()->orderByDesc('is_default')->value('phone');
         $this->mpesaPhone = (string) ($defaultPhone ?? '');
+    }
+
+    /**
+     * Always re-queries items with images so product thumbnails survive
+     * Livewire hydration cycles and work even when product_id is null
+     * (quote items added by admin without a product link).
+     *
+     * @return Collection<int, OrderItem>
+     */
+    #[Computed]
+    public function orderItems(): Collection
+    {
+        return $this->order->items()->with([
+            'product',
+            'product.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
+        ])->get();
     }
 
     public function selectMethod(string $method): void
@@ -92,7 +125,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
     {
         $payment = app(StripePaymentService::class)->confirmPaymentIntent($paymentIntentId);
 
-        if (!$payment) {
+        if (! $payment) {
             $this->addError('card', 'Payment could not be confirmed. If you were charged, please contact support.');
 
             return;
@@ -102,7 +135,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
         StorefrontSession::clearCart();
         $this->dispatch('cart-updated');
 
-        Flux::toast(heading: 'Payment confirmed', text: 'Order ' . $this->order->order_number . ' is being processed.', variant: 'success');
+        Flux::toast(heading: 'Payment confirmed', text: 'Order '.$this->order->order_number.' is being processed.', variant: 'success');
 
         $this->redirectRoute('account.orders.show', $this->order, navigate: true);
     }
@@ -113,7 +146,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
     public function payWithMpesa(): void
     {
-        if (!MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
+        if (! MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
             $this->addError('mpesaPhone', 'Enter a valid M-Pesa number, e.g. 0712 345 678.');
 
             return;
@@ -139,13 +172,13 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
      */
     public function pollPayment(): void
     {
-        if (!$this->awaitingPayment || !$this->pendingPaymentId) {
+        if (! $this->awaitingPayment || ! $this->pendingPaymentId) {
             return;
         }
 
         $payment = Payment::find($this->pendingPaymentId);
 
-        if (!$payment) {
+        if (! $payment) {
             $this->awaitingPayment = false;
 
             return;
@@ -158,7 +191,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             $this->awaitingPayment = false;
             StorefrontSession::clearCart();
             $this->dispatch('cart-updated');
-            Flux::toast(heading: 'Payment received', text: 'Order ' . $payment->account_reference . ' is confirmed.', variant: 'success');
+            Flux::toast(heading: 'Payment received', text: 'Order '.$payment->account_reference.' is confirmed.', variant: 'success');
             $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
 
             return;
@@ -185,7 +218,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 }; ?>
 
 @php
-    $stripeKey = config('services.stripe.key');
+    $stripeKey = app(\App\Services\PaymentCredentials::class)->stripeKey();
 @endphp
 
 @if ($cardEnabled)
@@ -375,12 +408,13 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                     <div class="p-6">
                         {{-- Items --}}
                         <div class="space-y-3">
-                            @foreach ($order->items as $item)
+                            @foreach ($this->orderItems as $item)
+                                @php $coverUrl = $item->product?->cover_url ?? $item->product_snapshot['cover_url'] ?? null; @endphp
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
-                                        @if ($item->product?->cover_url)
-                                            <img src="{{ $item->product->cover_url }}" alt=""
+                                        @if ($coverUrl)
+                                            <img src="{{ $coverUrl }}" alt=""
                                                 class="size-full object-contain" loading="lazy" />
                                         @endif
                                     </div>

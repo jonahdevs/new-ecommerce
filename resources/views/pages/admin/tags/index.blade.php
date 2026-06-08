@@ -170,6 +170,7 @@ new #[Layout('layouts::app')] #[Title('Tags — Admin')] class extends Component
             container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Tag</flux:table.column>
+                <flux:table.column>Slug</flux:table.column>
                 <flux:table.column>Type</flux:table.column>
                 <flux:table.column align="end">Tagged items</flux:table.column>
                 <flux:table.column align="end">Actions</flux:table.column>
@@ -178,10 +179,8 @@ new #[Layout('layouts::app')] #[Title('Tags — Admin')] class extends Component
             <flux:table.rows>
                 @forelse ($this->tags as $tag)
                     <flux:table.row :key="$tag->id">
-                        <flux:table.cell variant="strong">
-                            {{ $tag->name }}
-                            <span class="block font-mono text-xs font-normal text-zinc-400">{{ $tag->slug }}</span>
-                        </flux:table.cell>
+                        <flux:table.cell variant="strong">{{ $tag->name }}</flux:table.cell>
+                        <flux:table.cell class="font-mono text-xs text-zinc-400">{{ $tag->slug }}</flux:table.cell>
                         <flux:table.cell>
                             @if ($tag->type)
                                 <flux:badge size="sm" inset="top bottom" color="zinc">{{ ucfirst($tag->type) }}</flux:badge>
@@ -202,7 +201,7 @@ new #[Layout('layouts::app')] #[Title('Tags — Admin')] class extends Component
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="4" class="py-12 text-center text-zinc-400">No tags found.</flux:table.cell>
+                        <flux:table.cell colspan="5" class="py-12 text-center text-zinc-400">No tags found.</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>

@@ -100,6 +100,7 @@ new #[Layout('layouts::app')] #[Title('Pages — Admin')] class extends Componen
             container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Title</flux:table.column>
+                <flux:table.column>Slug</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column>Updated</flux:table.column>
                 <flux:table.column align="end">Actions</flux:table.column>
@@ -112,8 +113,8 @@ new #[Layout('layouts::app')] #[Title('Pages — Admin')] class extends Componen
                             <a href="{{ route('admin.pages.edit', $page) }}" wire:navigate class="hover:text-brand-500">
                                 {{ $page->title }}
                             </a>
-                            <span class="block font-mono text-xs font-normal text-zinc-400">/{{ $page->slug }}</span>
                         </flux:table.cell>
+                        <flux:table.cell class="font-mono text-xs text-zinc-400">/{{ $page->slug }}</flux:table.cell>
                         <flux:table.cell>
                             <button wire:click="togglePublished({{ $page->id }})">
                                 <flux:badge size="sm" inset="top bottom" :color="$page->is_published ? 'green' : 'zinc'">
@@ -123,26 +124,35 @@ new #[Layout('layouts::app')] #[Title('Pages — Admin')] class extends Componen
                         </flux:table.cell>
                         <flux:table.cell class="text-zinc-500">{{ $page->updated_at->format('d M Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
-                            <div class="flex items-center justify-end gap-1">
-                                <flux:tooltip content="Activity log">
-                                    <flux:button size="xs" variant="ghost" icon="clock"
+                            <flux:dropdown align="end">
+                                <flux:button size="sm" icon-trailing="chevron-down">Actions</flux:button>
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil-square"
+                                        :href="route('admin.pages.edit', $page)" wire:navigate>
+                                        Edit
+                                    </flux:menu.item>
+                                    <flux:menu.item icon="arrow-top-right-on-square"
+                                        :href="route('page.show', $page->slug)" target="_blank">
+                                        View page
+                                    </flux:menu.item>
+                                    <flux:menu.item icon="clock"
                                         :href="route('admin.activity.item', ['page', $page->id])"
-                                        wire:navigate />
-                                </flux:tooltip>
-                                <flux:button size="xs" variant="ghost" icon="arrow-top-right-on-square"
-                                    :href="route('page.show', $page->slug)" target="_blank" />
-                                <flux:button size="xs" variant="ghost" icon="pencil-square"
-                                    :href="route('admin.pages.edit', $page)" wire:navigate />
-                                <flux:button size="xs" variant="ghost" icon="trash"
-                                    wire:click="delete({{ $page->id }})"
-                                    wire:confirm="Delete '{{ addslashes($page->title) }}'?"
-                                    class="text-red-500! hover:text-red-600!" />
-                            </div>
+                                        wire:navigate>
+                                        Activity log
+                                    </flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" variant="danger"
+                                        wire:click="delete({{ $page->id }})"
+                                        wire:confirm="Delete '{{ addslashes($page->title) }}'? This cannot be undone.">
+                                        Delete
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="4" class="py-12 text-center text-zinc-400">
+                        <flux:table.cell colspan="5" class="py-12 text-center text-zinc-400">
                             No pages found.
                         </flux:table.cell>
                     </flux:table.row>

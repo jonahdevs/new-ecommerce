@@ -135,7 +135,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
     {
         return match ($this->order->status) {
             OrderStatus::PENDING          => [OrderStatus::PROCESSING, OrderStatus::CANCELLED],
-            OrderStatus::PROCESSING       => [OrderStatus::OUT_FOR_DELIVERY, OrderStatus::CANCELLED],
+            OrderStatus::PROCESSING       => [OrderStatus::CANCELLED],
             OrderStatus::OUT_FOR_DELIVERY => [OrderStatus::COMPLETED, OrderStatus::CANCELLED],
             default                       => [],
         };
@@ -160,8 +160,8 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
     public function createShipment(): void
     {
-        if ($this->order->status !== OrderStatus::OUT_FOR_DELIVERY) {
-            Flux::toast(heading: 'Cannot create shipment', text: 'A shipment can only be created once the order is out for delivery.', variant: 'danger');
+        if (! in_array($this->order->status, [OrderStatus::PROCESSING, OrderStatus::OUT_FOR_DELIVERY])) {
+            Flux::toast(heading: 'Cannot create shipment', text: 'A shipment can only be created for orders that are processing or out for delivery.', variant: 'danger');
 
             return;
         }
@@ -190,11 +190,17 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             'notes' => $this->shipmentNotes ?: null,
         ]);
 
+        // Creating a shipment is the trigger for "out for delivery" — advance the status automatically.
+        if ($this->order->status === OrderStatus::PROCESSING) {
+            $this->order->update(['status' => OrderStatus::OUT_FOR_DELIVERY]);
+            $this->order->user?->notify(new OrderStatusChanged($this->order->fresh()));
+        }
+
         $this->order->refresh()->load(['shipment.carrier', 'shipment.warehouse']);
         $this->shipmentStatus = $shipment->status->value;
         $this->showShipmentModal = false;
 
-        Flux::toast(heading: 'Shipment created', text: 'Shipment record has been created.', variant: 'success');
+        Flux::toast(heading: 'Shipment created', text: 'Shipment created and order marked as out for delivery.', variant: 'success');
     }
 
     public function updateShipmentStatus(): void
@@ -357,7 +363,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             @endif
 
             {{-- Shipment actions --}}
-            @if (! $order->shipment && $order->status === OrderStatus::OUT_FOR_DELIVERY)
+            @if (! $order->shipment && in_array($order->status, [OrderStatus::PROCESSING, OrderStatus::OUT_FOR_DELIVERY]))
                 <flux:button wire:click="$set('showShipmentModal', true)" size="sm" icon="truck">
                     Create shipment
                 </flux:button>
@@ -544,50 +550,50 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
                     <ol>
                         @foreach ($steps as $step)
-                            <li class="relative flex items-start gap-4 pb-6 last:pb-0">
+                            <li class="relative flex items-start gap-4 pb-8 last:pb-0">
                                 {{-- Connector line to next step --}}
                                 @if (! $loop->last)
                                     <div @class([
                                         'absolute left-4 top-8 bottom-0 w-0.5 -translate-x-1/2',
-                                        'bg-red-200 dark:bg-red-800'         => $step['cancelled'],
-                                        'bg-emerald-200 dark:bg-emerald-700' => $step['done'] && ! $step['cancelled'],
+                                        'bg-red-300 dark:bg-red-700'         => $step['cancelled'],
+                                        'bg-emerald-400 dark:bg-emerald-500' => $step['done'] && ! $step['cancelled'],
                                         'bg-zinc-200 dark:bg-zinc-700'       => ! $step['done'],
                                     ])></div>
                                 @endif
 
                                 {{-- Icon --}}
                                 @if ($step['cancelled'])
-                                    <div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60">
-                                        <flux:icon.x-mark class="size-4 text-red-500" />
+                                    <div class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-red-500 ring-4 ring-white dark:ring-zinc-900">
+                                        <flux:icon.x-mark class="size-4 text-white" />
                                     </div>
                                 @elseif ($step['done'])
-                                    <div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60">
-                                        <flux:icon.check class="size-4 text-emerald-600 dark:text-emerald-400" />
+                                    <div class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-white dark:ring-zinc-900">
+                                        <flux:icon.check class="size-4 text-white" />
                                     </div>
                                 @else
-                                    <div class="size-8 shrink-0 rounded-full border-2 border-dashed border-zinc-200 dark:border-zinc-700"></div>
+                                    <div class="relative z-10 size-8 shrink-0 rounded-full border-2 border-dashed border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-900"></div>
                                 @endif
 
-                                {{-- Label + note  /  timestamp + by --}}
-                                <div class="flex flex-1 items-start justify-between gap-4 pt-1">
-                                    <div>
-                                        <span @class([
-                                            'text-sm',
-                                            'font-medium text-red-600 dark:text-red-400' => $step['cancelled'],
-                                            'font-medium dark:text-white' => $step['done'] && ! $step['cancelled'],
-                                            'text-zinc-400' => ! $step['done'],
-                                        ])>{{ $step['label'] }}</span>
+                                {{-- Label + note / timestamp + by --}}
+                                <div class="flex flex-1 flex-wrap items-start justify-between gap-x-4 pt-1">
+                                    <div class="min-w-0">
+                                        <p @class([
+                                            'text-sm font-semibold',
+                                            'text-red-600 dark:text-red-400'   => $step['cancelled'],
+                                            'text-zinc-900 dark:text-white'    => $step['done'] && ! $step['cancelled'],
+                                            'text-zinc-400 dark:text-zinc-500' => ! $step['done'],
+                                        ])>{{ $step['label'] }}</p>
+                                        @if (! empty($step['by']) && $step['done'])
+                                            <p class="mt-0.5 text-xs text-zinc-400">by {{ $step['by'] }}</p>
+                                        @endif
                                         @if (! empty($step['note']))
-                                            <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{{ $step['note'] }}</p>
+                                            <p class="mt-1 text-xs italic text-zinc-500 dark:text-zinc-400">{{ $step['note'] }}</p>
                                         @endif
                                     </div>
                                     @if (! empty($step['at']))
-                                        <div class="shrink-0 text-right">
-                                            <div class="text-xs text-zinc-400">{{ $step['at']->format('d M Y, H:i') }}</div>
-                                            @if (! empty($step['by']))
-                                                <div class="mt-0.5 text-xs text-zinc-400">by {{ $step['by'] }}</div>
-                                            @endif
-                                        </div>
+                                        <time class="shrink-0 pt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                                            {{ $step['at']->format('d M Y, H:i') }}
+                                        </time>
                                     @endif
                                 </div>
                             </li>
@@ -658,9 +664,9 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                                         </div>
                                     </div>
                                 </div>
-                                <flux:button size="xs" variant="ghost" icon="arrow-down-tray"
-                                    wire:click="downloadReceipt">
-                                    Download
+                                <flux:button size="xs" variant="ghost" icon="eye"
+                                    :href="route('admin.orders.kra-receipt', $order)" target="_blank">
+                                    View
                                 </flux:button>
                             </div>
                         @endif
@@ -930,8 +936,9 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                             </div>
 
                             @if ($order->kra_receipt_path)
-                                <flux:button wire:click="downloadReceipt" size="sm" variant="ghost" icon="arrow-down-tray" class="w-full">
-                                    Download KRA receipt
+                                <flux:button size="sm" variant="ghost" icon="eye" class="w-full"
+                                    :href="route('admin.orders.kra-receipt', $order)" target="_blank">
+                                    View KRA receipt
                                 </flux:button>
                             @endif
                         @endif
@@ -1015,13 +1022,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                 placeholder="Reason for the status change…"
                 rows="3" />
 
-            @if ($status === OrderStatus::OUT_FOR_DELIVERY->value && ! $order->shipment)
-                <flux:callout color="amber" icon="exclamation-triangle">
-                    <flux:callout.text>No shipment record exists. Create a shipment first to maintain a full tracking and logistics history.</flux:callout.text>
-                </flux:callout>
-            @endif
-
-            @if ($status === OrderStatus::CANCELLED->value)
+@if ($status === OrderStatus::CANCELLED->value)
                 <flux:callout color="red" icon="exclamation-triangle">
                     <flux:callout.text>Cancelling this order cannot be undone and will notify the customer.</flux:callout.text>
                 </flux:callout>

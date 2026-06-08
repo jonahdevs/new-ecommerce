@@ -12,26 +12,41 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends Component
+{
     #[Locked]
     public Attribute $attribute;
 
     public string $name = '';
+
     public string $slug = '';
+
     public string $type = 'select';
+
     public bool $is_active = true;
+
     public int $sort_order = 0;
 
     public string $valueLabel = '';
+
     public string $valueValue = '';
+
     public string $valueColorCode = '';
+
     public int $valueSortOrder = 0;
 
+    public bool $showAddValueModal = false;
+
     public bool $showEditValueModal = false;
+
     public ?int $editingValueId = null;
+
     public string $editValueLabel = '';
+
     public string $editValueValue = '';
+
     public string $editValueColorCode = '';
+
     public int $editValueSortOrder = 0;
 
     private bool $slugManuallyEdited = false;
@@ -108,6 +123,7 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
         $this->reset(['valueLabel', 'valueValue', 'valueColorCode']);
         $this->valueSortOrder = 0;
         $this->resetValidation(['valueLabel', 'valueValue', 'valueColorCode', 'valueSortOrder']);
+        $this->showAddValueModal = false;
         unset($this->values);
         Flux::toast(heading: 'Value added', text: $this->valueLabel.' has been added.', variant: 'success');
     }
@@ -182,7 +198,7 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
             <flux:card class="p-0 overflow-hidden">
                 <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
                     <flux:heading size="base">Values</flux:heading>
-                    <flux:badge color="zinc" size="sm">{{ $this->values->count() }}</flux:badge>
+                    <flux:button size="sm" icon="plus" wire:click="$set('showAddValueModal', true)">New value</flux:button>
                 </div>
 
                 {{-- Existing values --}}
@@ -239,34 +255,14 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
                             @endforeach
                         </flux:table.rows>
                     </flux:table>
-                    <div class="border-t border-zinc-200 dark:border-zinc-700"></div>
                 @endif
 
-                {{-- Add value form --}}
-                <form wire:submit="addValue" class="p-6">
-                    <flux:heading size="sm" class="mb-4">Add value</flux:heading>
-                    <div class="flex flex-wrap items-end gap-3">
-                        <flux:input wire:model="valueLabel" label="Label"
-                            placeholder="e.g. Stainless Steel" class="w-44" />
-                        <flux:input wire:model="valueValue" label="Value"
-                            placeholder="e.g. stainless-steel" class="w-44" />
-                        @if ($type === 'color')
-                            <flux:field>
-                                <flux:label>Hex colour</flux:label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" wire:model="valueColorCode"
-                                        class="h-9 w-10 cursor-pointer rounded border border-zinc-200 p-0.5 dark:border-zinc-700" />
-                                    <flux:input wire:model="valueColorCode" placeholder="#000000" class="w-28" />
-                                </div>
-                                <flux:error name="valueColorCode" />
-                            </flux:field>
-                        @endif
-                        <flux:input wire:model="valueSortOrder" label="Sort" type="number" min="0" class="w-20" />
-                        <flux:button type="submit" variant="primary" size="sm" icon="plus">Add</flux:button>
+                @if ($this->values->isEmpty())
+                    <div class="py-12 text-center text-zinc-400">
+                        <flux:icon.tag class="mx-auto mb-3 size-8 opacity-40" />
+                        <flux:text size="sm">No values yet. Click <strong>New value</strong> to add one.</flux:text>
                     </div>
-                    @error('valueLabel') <p class="mt-2 text-xs text-red-500">{{ $message }}</p> @enderror
-                    @error('valueValue') <p class="mt-2 text-xs text-red-500">{{ $message }}</p> @enderror
-                </form>
+                @endif
             </flux:card>
         </div>
 
@@ -300,6 +296,39 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
         </div>
 
     </div>
+
+    {{-- Add value modal --}}
+    <flux:modal wire:model.self="showAddValueModal" class="md:w-[480px]" :dismissible="false">
+        <flux:heading>New value</flux:heading>
+
+        <form wire:submit="addValue" class="mt-5 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <flux:input wire:model="valueLabel" label="Label" placeholder="e.g. Stainless Steel" required />
+                <flux:input wire:model="valueValue" label="Value" placeholder="e.g. stainless-steel" required />
+            </div>
+
+            @if ($type === 'color')
+                <flux:field>
+                    <flux:label>Hex colour</flux:label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" wire:model="valueColorCode"
+                            class="h-9 w-10 cursor-pointer rounded border border-zinc-200 p-0.5 dark:border-zinc-700" />
+                        <flux:input wire:model="valueColorCode" placeholder="#000000" class="w-36" />
+                    </div>
+                    <flux:error name="valueColorCode" />
+                </flux:field>
+            @endif
+
+            <flux:input wire:model="valueSortOrder" label="Sort order" type="number" min="0" />
+
+            <div class="flex justify-end gap-3 pt-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost" type="button">Cancel</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" icon="plus">Add value</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
     {{-- Edit value modal --}}
     <flux:modal wire:model.self="showEditValueModal" class="md:w-[480px]" :dismissible="false">

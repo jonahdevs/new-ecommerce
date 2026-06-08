@@ -15,17 +15,21 @@ return new class extends SettingsMigration
 
         // Integrations
         $this->migrator->add('integrations.google_login_enabled', false);
-        $this->migrator->add('integrations.google_maps_api_key', '');
+        $this->migrator->add('integrations.google_client_id', null);
+        $this->migrator->addEncrypted('integrations.google_client_secret', null);
+        $this->migrator->add('integrations.google_redirect_url', null);
+        $this->migrator->addEncrypted('integrations.google_maps_api_key', '');
         $this->migrator->add('integrations.map_provider', 'leaflet');
+        $this->migrator->add('integrations.recaptcha_enabled', false);
         $this->migrator->add('integrations.recaptcha_site_key', '');
         $this->migrator->add('integrations.sap_enabled', false);
         $this->migrator->add('integrations.sap_auto_sync_orders', true);
         $this->migrator->add('integrations.sap_sync_price', true);
         $this->migrator->add('integrations.sap_sync_quantity', true);
         $this->migrator->add('integrations.sap_base_url', null);
-        $this->migrator->add('integrations.sap_api_key', null);
-        $this->migrator->add('integrations.sap_webhook_secret', null);
-        $this->migrator->add('integrations.kra_business_pin', null);
+        $this->migrator->addEncrypted('integrations.sap_api_key', null);
+        $this->migrator->addEncrypted('integrations.sap_webhook_secret', null);
+        $this->migrator->addEncrypted('integrations.kra_business_pin', null);
 
         // Security
         $this->migrator->add('security.min_password_length', 8);

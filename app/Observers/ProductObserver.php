@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Settings\LocalizationSettings;
+use Illuminate\Support\Str;
 
 class ProductObserver
 {
@@ -21,6 +22,10 @@ class ProductObserver
         $product->weight_unit ??= $settings->weight_unit;
         $product->dimension_unit ??= $settings->dimension_unit;
 
+        if (empty($product->slug)) {
+            $product->slug = $this->uniqueSlug($product->name);
+        }
+
         $this->resolvePublishedAt($product);
     }
 
@@ -29,6 +34,19 @@ class ProductObserver
         if ($product->isDirty('status')) {
             $this->resolvePublishedAt($product);
         }
+    }
+
+    private function uniqueSlug(string $name, ?int $excludeId = null): string
+    {
+        $base = Str::slug($name);
+        $slug = $base;
+        $i = 2;
+
+        while (Product::where('slug', $slug)->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))->exists()) {
+            $slug = $base.'-'.$i++;
+        }
+
+        return $slug;
     }
 
     private function resolvePublishedAt(Product $product): void

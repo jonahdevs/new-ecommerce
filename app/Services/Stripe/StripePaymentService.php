@@ -5,6 +5,8 @@ namespace App\Services\Stripe;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\PaymentCredentials;
+use Stripe\Charge;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
@@ -17,9 +19,9 @@ use Stripe\Webhook;
  */
 class StripePaymentService
 {
-    public function __construct()
+    public function __construct(private PaymentCredentials $credentials)
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        Stripe::setApiKey($this->credentials->stripeSecret());
     }
 
     /**
@@ -38,7 +40,18 @@ class StripePaymentService
             ->first();
 
         if ($existing) {
-            $intent = PaymentIntent::retrieve($existing->stripe_payment_intent_id);
+            $intent = PaymentIntent::retrieve($existing->stripe_payment_intent_id, [
+                'expand' => ['latest_charge'],
+            ]);
+
+            // The intent may have succeeded server-side but finalization crashed
+            // (e.g. the charge-expansion bug). Recover silently so the next page
+            // load redirects to the order rather than showing a broken form.
+            if ($intent->status === 'succeeded') {
+                $this->finalize($existing, $intent);
+
+                return $existing->fresh();
+            }
 
             return $existing->withStripeClientSecret($intent->client_secret);
         }
@@ -102,7 +115,7 @@ class StripePaymentService
         $event = Webhook::constructEvent(
             $rawPayload,
             $signature,
-            config('services.stripe.webhook_secret'),
+            $this->credentials->stripeWebhookSecret(),
         );
 
         if ($event->type === 'payment_intent.succeeded') {
@@ -129,6 +142,13 @@ class StripePaymentService
     private function finalize(Payment $payment, PaymentIntent $intent): void
     {
         $charge = $intent->latest_charge;
+
+        // Stripe returns the charge ID as a plain string when the expand didn't
+        // reach it (e.g. webhook payloads, or SDK version differences). Fetch it.
+        if (is_string($charge) && $charge !== '') {
+            $charge = Charge::retrieve($charge);
+        }
+
         $card = $charge?->payment_method_details?->card;
 
         $payment->update([

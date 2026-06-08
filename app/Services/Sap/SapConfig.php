@@ -2,6 +2,7 @@
 
 namespace App\Services\Sap;
 
+use App\Settings\BusinessSettings;
 use App\Settings\IntegrationSettings;
 
 /**
@@ -12,7 +13,10 @@ use App\Settings\IntegrationSettings;
  */
 class SapConfig
 {
-    public function __construct(private readonly IntegrationSettings $settings) {}
+    public function __construct(
+        private readonly IntegrationSettings $settings,
+        private readonly BusinessSettings $business,
+    ) {}
 
     public function baseUrl(): string
     {
@@ -31,7 +35,7 @@ class SapConfig
 
     public function businessPin(): string
     {
-        return $this->settings->kra_business_pin ?: (string) config('sap.business_pin', '');
+        return $this->business->tax_pin ?: (string) config('sap.business_pin', '');
     }
 
     public function verifySsl(): bool

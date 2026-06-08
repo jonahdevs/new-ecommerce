@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->text('body');
             $table->string('status')->default('pending')->index();
+            $table->boolean('verified_purchase')->default(false);
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 

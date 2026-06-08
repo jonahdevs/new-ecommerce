@@ -1,11 +1,12 @@
 <?php
 
 use App\Enums\QuoteStatus;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quote;
+use App\Notifications\Quotes\QuoteDecisionReceived;
 use App\Notifications\Quotes\QuoteReadyForReview;
 use App\Services\QuoteConversionService;
+use App\Services\QuotePdfService;
 use App\Settings\QuotationSettings;
 use App\Support\TaxCalculator;
 use Flux\Flux;
@@ -53,7 +54,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         $this->notes = (string) $this->quote->notes;
         $this->internalNotes = (string) $this->quote->internal_notes;
         $this->terms = (string) $this->quote->terms;
-        $this->expires_at = $this->quote->expires_at?->format('Y-m-d') ?? '';
+        $this->expires_at = $this->quote->expires_at?->format('Y-m-d')
+            ?? now()->addDays(app(QuotationSettings::class)->default_validity_days)->format('Y-m-d');
         $this->shippingCents = (int) $this->quote->shipping_cents;
         $this->discountType = (string) $this->quote->discount_type;
         $this->discountValue = $this->quote->discount_value ? (string) $this->quote->discount_value : '';
@@ -284,7 +286,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         $this->quote->refresh()->load('items');
         $this->syncFromQuote();
 
-        app(\App\Services\QuotePdfService::class)->generate($this->quote);
+        app(QuotePdfService::class)->generate($this->quote);
 
         $this->quote->notifyContact(new QuoteReadyForReview($this->quote));
 
@@ -319,7 +321,9 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         $this->quote->refresh()->load('items');
         $this->syncFromQuote();
 
-        Flux::toast(heading: 'Quote declined', text: $this->quote->quote_number.' has been declined.', variant: 'success');
+        $this->quote->notifyContact(new QuoteDecisionReceived($this->quote));
+
+        Flux::toast(heading: 'Quote declined', text: $this->quote->quote_number.' has been declined and the customer notified.', variant: 'success');
     }
 
     public function convertToOrder(): void
@@ -333,7 +337,6 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
     {
         $this->terms = (string) app(QuotationSettings::class)->quote_terms;
     }
-
 }; ?>
 
 <div>
@@ -373,7 +376,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                         Send to customer</flux:button>
                 @elseif (in_array($quote->status, [App\Enums\QuoteStatus::SENT, App\Enums\QuoteStatus::AWAITING_APPROVAL]))
                     <flux:button variant="ghost" icon="arrow-path" wire:click="resend" type="button">Resend</flux:button>
-                    <flux:button variant="ghost" icon="x-mark" wire:click="decline" type="button">Decline</flux:button>
+                    <flux:button variant="ghost" icon="x-mark" wire:click="decline" type="button"
+                        wire:confirm="Decline this quote? The customer will not be able to accept it after this.">Decline</flux:button>
                     <flux:button variant="primary" icon="check" wire:click="approve" type="button">Approve</flux:button>
                 @elseif ($quote->status === App\Enums\QuoteStatus::APPROVED)
                     @if ($quote->order_id)
@@ -459,6 +463,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                                     <flux:table.cell align="end">
                                         <flux:button size="xs" variant="ghost" icon="trash" tooltip="Remove line"
                                             wire:click="removeLine({{ $index }})" type="button"
+                                            wire:confirm="Remove this line item from the quote?"
                                             class="text-red-500! hover:text-red-600!" />
                                     </flux:table.cell>
                                 </flux:table.row>
@@ -485,7 +490,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                             <div class="flex items-center gap-2">
                                 <span class="shrink-0 text-zinc-500 dark:text-zinc-400">Discount</span>
                                 <div class="ml-auto flex items-center gap-1.5">
-                                    <flux:select wire:model.blur="discountType" class="w-28!" size="sm">
+                                    <flux:select wire:model.live="discountType" class="w-28!" size="sm">
                                         <flux:select.option value="">None</flux:select.option>
                                         <flux:select.option value="percentage">%</flux:select.option>
                                         <flux:select.option value="fixed">Fixed</flux:select.option>

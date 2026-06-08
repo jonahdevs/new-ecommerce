@@ -35,8 +35,9 @@ trait RespectsStaffPreferences
             }
         }
 
-        // Database (in-app) channel — only for notifications that opt in.
-        if ($this->supportsInApp() && ($baseKey === null || ($settings->{$baseKey.'_inapp'} ?? true))) {
+        // Database (in-app) channel — only for User notifiables; anonymous central-email
+        // recipients have no notifications() relationship to write to.
+        if ($notifiable instanceof User && $this->supportsInApp() && ($baseKey === null || ($settings->{$baseKey.'_inapp'} ?? true))) {
             if (($prefs['inapp'] ?? true) !== false) {
                 $channels[] = 'database';
             }

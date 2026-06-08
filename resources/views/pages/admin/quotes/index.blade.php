@@ -78,6 +78,7 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
             'sent' => Quote::where('status', QuoteStatus::SENT)->count(),
             'awaiting' => Quote::where('status', QuoteStatus::AWAITING_APPROVAL)->count(),
             'approved' => Quote::where('status', QuoteStatus::APPROVED)->count(),
+            'declined' => Quote::where('status', QuoteStatus::DECLINED)->count(),
         ];
     }
 
@@ -104,7 +105,7 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
     </div>
 
     {{-- Stat tiles --}}
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <flux:card class="flex items-center gap-4">
             <flux:icon.paper-airplane class="size-9 text-blue-400" />
             <div>
@@ -126,9 +127,38 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
                 <flux:text size="sm">Approved</flux:text>
             </div>
         </flux:card>
+        <flux:card class="flex items-center gap-4">
+            <flux:icon.x-circle class="size-9 text-red-400" />
+            <div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['declined'] }}</div>
+                <flux:text size="sm">Declined</flux:text>
+            </div>
+        </flux:card>
     </div>
 
     <flux:card class="mt-6 p-0 overflow-hidden">
+
+        {{-- Export --}}
+        <div class="flex flex-wrap items-center justify-end gap-2 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <flux:dropdown>
+                <flux:button size="sm" icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
+                <flux:menu>
+                    <flux:menu.item icon="table-cells"
+                        href="{{ route('admin.quotes.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus])) }}">
+                        Excel (.xlsx)
+                    </flux:menu.item>
+                    <flux:menu.item icon="document-text"
+                        href="{{ route('admin.quotes.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus])) }}">
+                        CSV (.csv)
+                    </flux:menu.item>
+                    <flux:menu.separator />
+                    <flux:menu.item icon="document-chart-bar"
+                        href="{{ route('admin.quotes.pdf', array_filter(['q' => $search, 'status' => $filterStatus])) }}">
+                        PDF report
+                    </flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        </div>
 
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">

@@ -19,7 +19,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'google_id', 'email_verified_at', 'notification_preferences', 'staff_preferences'])]
+#[Fillable(['name', 'email', 'phone', 'avatar', 'password', 'google_id', 'email_verified_at', 'notification_preferences', 'staff_preferences'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {

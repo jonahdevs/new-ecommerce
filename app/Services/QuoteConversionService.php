@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\Quote;
 use App\Support\TaxCalculator;
 use Illuminate\Support\Facades\DB;
@@ -21,19 +22,43 @@ class QuoteConversionService
     {
         return DB::transaction(function () use ($quote) {
             $lines = $quote->items()
-                ->with('product.taxClass')
-                ->get()
-                ->map(function ($item) {
-                    $rate = $item->product
-                        ? $this->tax->rateForProduct($item->product)
-                        : ($this->tax->enabled() ? $this->tax->defaultRate() : 0.0);
+                ->with(['product.taxClass', 'product.images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+                ->get();
 
-                    return [
-                        'item' => $item,
-                        'rate' => $rate,
-                        'tax_cents' => $this->tax->taxForLine((int) $item->line_total_cents, $rate),
-                    ];
-                });
+            // For items where the admin didn't link a product, resolve by SKU.
+            $unresolvedSkus = $lines
+                ->whereNull('product_id')
+                ->pluck('product_snapshot.sku')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $resolvedBySku = $unresolvedSkus->isNotEmpty()
+                ? Product::with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+                    ->whereIn('sku', $unresolvedSkus)
+                    ->get()
+                    ->keyBy('sku')
+                : collect();
+
+            $lines = $lines->map(function ($item) use ($resolvedBySku) {
+                if (! $item->product_id && isset($item->product_snapshot['sku'])) {
+                    $resolved = $resolvedBySku->get($item->product_snapshot['sku']);
+                    if ($resolved) {
+                        $item->product_id = $resolved->id;
+                        $item->setRelation('product', $resolved);
+                    }
+                }
+
+                $rate = $item->product
+                    ? $this->tax->rateForProduct($item->product)
+                    : ($this->tax->enabled() ? $this->tax->defaultRate() : 0.0);
+
+                return [
+                    'item' => $item,
+                    'rate' => $rate,
+                    'tax_cents' => $this->tax->taxForLine((int) $item->line_total_cents, $rate),
+                ];
+            });
 
             $subtotalCents = (int) $lines->sum(fn ($line) => $line['item']->line_total_cents);
             $vatCents = (int) $lines->sum('tax_cents');
@@ -53,9 +78,14 @@ class QuoteConversionService
 
             foreach ($lines as $line) {
                 $item = $line['item'];
+                $snapshot = $item->product_snapshot ?? [];
+                if ($item->product?->cover_url) {
+                    $snapshot['cover_url'] = $item->product->cover_url;
+                }
+
                 $order->items()->create([
                     'product_id' => $item->product_id,
-                    'product_snapshot' => $item->product_snapshot,
+                    'product_snapshot' => $snapshot,
                     'unit_price_cents' => $item->unit_price_cents,
                     'quantity' => $item->quantity,
                     'line_total_cents' => $item->line_total_cents,

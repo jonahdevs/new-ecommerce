@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Flux\Flux;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -45,7 +46,7 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
         $this->banComment = '';
         $this->showBanModal = false;
 
-        Flux::toast(heading: 'Customer banned', text: $this->customer->name.' has been banned.', variant: 'warning');
+        Flux::toast(heading: 'Customer banned', text: $this->customer->name . ' has been banned.', variant: 'warning');
     }
 
     public function unban(): void
@@ -53,7 +54,20 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
         $this->customer->unban();
         $this->customer->refresh();
 
-        Flux::toast(heading: 'Ban lifted', text: $this->customer->name.' can now access the store.', variant: 'success');
+        Flux::toast(heading: 'Ban lifted', text: $this->customer->name . ' can now access the store.', variant: 'success');
+    }
+
+    public function delete(): void
+    {
+        $name = $this->customer->name;
+        $this->customer->delete();
+        Flux::toast(heading: 'Customer deleted', text: $name . ' has been removed.', variant: 'success');
+        $this->redirectRoute('admin.customers.index', navigate: true);
+    }
+
+    public function getAvatarUrl(): ?string
+    {
+        return $this->customer->avatar ? Storage::disk('public')->url($this->customer->avatar) : null;
     }
 }; ?>
 
@@ -71,108 +85,134 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
         <flux:subheading>Account information, addresses and order history.</flux:subheading>
     </div>
 
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="mt-6 grid grid-cols-4 items-start gap-5">
 
         {{-- Left: profile --}}
-        <aside class="space-y-6">
+        <div class="col-span-1">
 
-            @php $phone = $customer->addresses->firstWhere('is_default', true)?->phone ?? $customer->addresses->first()?->phone; @endphp
+            @php $default = $customer->addresses->firstWhere('is_default', true) ?? $customer->addresses->first(); @endphp
 
-            {{-- User card --}}
-            <flux:card class="p-0 overflow-hidden">
-                <div class="px-6 py-6 space-y-4">
-                    <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="lg" />
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-base font-semibold dark:text-white">{{ $customer->name }}</span>
-                            @if ($customer->isBanned())
-                                <flux:badge color="red" size="sm" inset="top bottom">Banned</flux:badge>
-                            @endif
-                        </div>
-                        <p class="mt-0.5 text-xs text-zinc-500">Joined {{ $customer->created_at->format('d F Y') }}</p>
+            <flux:card class="overflow-hidden p-0">
+
+                {{-- Body --}}
+                <div class="space-y-5 px-8 pb-6 pt-5">
+
+                    {{-- Status badge --}}
+                    <div class="flex justify-end">
+                        @if ($customer->isBanned())
+                            <flux:badge size="sm" color="red" variant="soft">Banned</flux:badge>
+                        @else
+                            <flux:badge size="sm" color="green" variant="soft">Active</flux:badge>
+                        @endif
                     </div>
-                    <div class="space-y-1.5 text-sm">
+
+                    {{-- Avatar + name --}}
+                    <div class="flex flex-col items-center gap-3">
+                        @if ($this->getAvatarUrl())
+                            <img src="{{ $this->getAvatarUrl() }}"
+                                class="size-24 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-700"
+                                alt="{{ $customer->name }}" />
+                        @else
+                            <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="xl" />
+                        @endif
+                        <div class="text-center">
+                            <div class="text-base font-semibold dark:text-white">{{ $customer->name }}</div>
+                            <div class="mt-0.5 text-xs text-zinc-500">Joined
+                                {{ $customer->created_at->format('d F Y') }}</div>
+                        </div>
+                    </div>
+
+                    {{-- Contact details --}}
+                    <div class="space-y-2 text-sm">
                         <div class="flex items-center gap-2">
                             <flux:icon.envelope variant="micro" class="size-4 shrink-0 text-zinc-400" />
                             <span class="truncate text-zinc-700 dark:text-zinc-300">{{ $customer->email }}</span>
                         </div>
-                        @if ($phone)
+                        @if ($customer->phone)
                             <div class="flex items-center gap-2">
                                 <flux:icon.phone variant="micro" class="size-4 shrink-0 text-zinc-400" />
-                                <span class="text-zinc-700 dark:text-zinc-300">{{ $phone }}</span>
+                                <span class="text-zinc-700 dark:text-zinc-300">{{ $customer->phone }}</span>
                             </div>
                         @endif
                     </div>
-                </div>
-                <flux:separator />
-                @if ($customer->isBanned())
-                    <div class="px-6 py-3">
+
+                    {{-- Ban info --}}
+                    @if ($customer->isBanned())
                         @if ($activeBan = $customer->bans()->latest()->first())
-                            <div class="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-xs dark:border-red-800 dark:bg-red-950/30">
-                                <flux:icon.no-symbol variant="micro" class="mt-0.5 size-3.5 shrink-0 text-red-500" />
-                                <div>
-                                    @if ($activeBan->comment)
-                                        <p class="font-medium text-red-700 dark:text-red-400">{{ $activeBan->comment }}</p>
-                                    @endif
-                                    <p class="text-red-500 dark:text-red-600">{{ $customer->banned_at->diffForHumans() }}</p>
+                            <div
+                                class="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-xs dark:border-red-800 dark:bg-red-950/30">
+                                <div class="flex items-start gap-2">
+                                    <flux:icon.no-symbol variant="micro"
+                                        class="mt-0.5 size-3.5 shrink-0 text-red-500" />
+                                    <div>
+                                        @if ($activeBan->comment)
+                                            <p class="font-medium text-red-700 dark:text-red-400">
+                                                {{ $activeBan->comment }}</p>
+                                        @endif
+                                        <p class="mt-0.5 text-red-500 dark:text-red-600">Since
+                                            {{ $customer->banned_at->diffForHumans() }}</p>
+                                    </div>
                                 </div>
                             </div>
                         @endif
-                    </div>
-                @endif
-                <div class="flex items-center gap-2 px-6 py-4">
-                    <flux:button size="sm" variant="ghost" icon="pencil-square"
-                        :href="route('admin.customers.edit', $customer)" wire:navigate>Edit</flux:button>
+                    @endif
+
+                    {{-- Default address --}}
+                    @if ($default)
+                        <div class="space-y-1.5 border-t border-zinc-100 pt-4 dark:border-zinc-700">
+                            <flux:text class="text-xs font-medium uppercase tracking-wide text-zinc-400">Default address
+                            </flux:text>
+                            <div class="space-y-0.5 text-sm">
+                                <div class="font-medium dark:text-white">{{ $default->label ?: $default->name }}</div>
+                                @if ($default->line1)
+                                    <div class="text-zinc-500">{{ $default->line1 }}</div>
+                                @endif
+                                @if ($default->phone)
+                                    <div class="text-zinc-500">{{ $default->phone }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                </div>
+
+                {{-- Footer actions --}}
+                <div class="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:button size="sm" icon="pencil-square" class="flex-1"
+                        :href="route('admin.customers.edit', $customer)" wire:navigate>
+                        Edit
+                    </flux:button>
                     @if ($customer->isBanned())
-                        <flux:button size="sm" variant="ghost" icon="lock-open" wire:click="unban"
+                        <flux:button size="sm" icon="lock-open" class="flex-1" wire:click="unban"
                             wire:confirm="Lift the ban for '{{ addslashes($customer->name) }}'?">
                             Lift ban
                         </flux:button>
                     @else
-                        <flux:button size="sm" variant="danger" icon="no-symbol"
+                        <flux:button size="sm" icon="no-symbol" class="flex-1"
                             wire:click="$set('showBanModal', true)">
-                            Ban customer
+                            Ban
                         </flux:button>
                     @endif
+                    <flux:button size="sm" variant="danger" icon="trash" class="flex-1" wire:click="delete"
+                        wire:confirm="Permanently delete {{ $customer->name }}? This cannot be undone.">
+                        Delete
+                    </flux:button>
                 </div>
+
             </flux:card>
 
-            {{-- Addresses --}}
-            <flux:card class="p-0 overflow-hidden">
-                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Addresses</flux:heading>
-                </div>
-                <div class="space-y-3 p-6">
-                    @forelse ($customer->addresses as $address)
-                        <div class="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-700">
-                            <div class="flex items-center justify-between">
-                                <span class="font-medium dark:text-white">{{ $address->label ?: $address->fullName() }}</span>
-                                @if ($address->is_default)
-                                    <flux:badge size="sm" inset="top bottom" color="green">Default</flux:badge>
-                                @endif
-                            </div>
-                            <div class="mt-1 text-zinc-500">{{ $address->oneLiner() }}</div>
-                            @if ($address->phone)
-                                <div class="text-zinc-500">{{ $address->phone }}</div>
-                            @endif
-                        </div>
-                    @empty
-                        <flux:text size="sm">No saved addresses.</flux:text>
-                    @endforelse
-                </div>
-            </flux:card>
-
-        </aside>
+        </div>
 
         {{-- Right: KPIs + orders --}}
-        <div class="space-y-6 lg:col-span-2">
+        <div class="col-span-3 space-y-5">
 
             {{-- KPIs --}}
             <div class="grid grid-cols-3 gap-4">
                 <flux:card class="flex items-center gap-4">
                     <flux:icon.shopping-bag class="size-8 shrink-0 text-zinc-400" />
                     <div>
-                        <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->orders->count() }}</div>
+                        <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->orders->count() }}
+                        </div>
                         <flux:text size="sm">Total orders</flux:text>
                     </div>
                 </flux:card>
@@ -212,15 +252,19 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                     <flux:table.rows>
                         @forelse ($this->orders as $order)
                             <flux:table.row :key="$order->id">
-                                <flux:table.cell variant="strong"><span class="font-mono">{{ $order->order_number }}</span></flux:table.cell>
-                                <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $order->items_count }}</flux:table.cell>
-                                <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($order->total_cents) !!}</flux:table.cell>
+                                <flux:table.cell variant="strong"><span
+                                        class="font-mono">{{ $order->order_number }}</span></flux:table.cell>
+                                <flux:table.cell align="end" class="tabular-nums text-zinc-500">
+                                    {{ $order->items_count }}</flux:table.cell>
+                                <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($order->total_cents) !!}
+                                </flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge size="sm" inset="top bottom" :color="$order->status->badgeColor()">
                                         {{ $order->status->label() }}
                                     </flux:badge>
                                 </flux:table.cell>
-                                <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $order->created_at->format('M j, Y') }}</flux:table.cell>
+                                <flux:table.cell align="end" class="text-sm text-zinc-500">
+                                    {{ $order->created_at->format('M j, Y') }}</flux:table.cell>
                                 <flux:table.cell align="end">
                                     <flux:button size="xs" variant="ghost" icon="eye" tooltip="View order"
                                         :href="route('admin.orders.show', $order)" wire:navigate />

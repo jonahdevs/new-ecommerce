@@ -63,6 +63,13 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
     public string $pickup_address = '';
 
     // ==================================================
+    // NOTIFICATION EMAIL ROUTING
+    // ==================================================
+    public string $staff_email_routing = 'individual';
+
+    public string $staff_central_email = '';
+
+    // ==================================================
     // NOTIFICATION CHANNELS
     // ==================================================
     public bool $email_channel_enabled = true;
@@ -134,6 +141,9 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
         $this->local_pickup_enabled = $shipping->local_pickup_enabled;
         $this->pickup_address = $shipping->pickup_address;
+
+        $this->staff_email_routing = $notifications->staff_email_routing;
+        $this->staff_central_email = $notifications->staff_central_email ?? '';
 
         $this->email_channel_enabled = $notifications->email_channel_enabled;
         $this->inapp_channel_enabled = $notifications->inapp_channel_enabled;
@@ -248,8 +258,17 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     public function saveNotifications(NotificationSettings $settings): void
     {
+        $this->validate([
+            'staff_email_routing'  => ['required', 'in:individual,central'],
+            'staff_central_email'  => $this->staff_email_routing === 'central'
+                ? ['required', 'email', 'max:255']
+                : ['nullable', 'email', 'max:255'],
+        ]);
+
         $settings
             ->fill([
+                'staff_email_routing'                 => $this->staff_email_routing,
+                'staff_central_email'                 => filled($this->staff_central_email) ? $this->staff_central_email : null,
                 'email_channel_enabled'               => $this->email_channel_enabled,
                 'inapp_channel_enabled'               => $this->inapp_channel_enabled,
                 'whatsapp_channel_enabled'            => $this->whatsapp_channel_enabled,
@@ -542,19 +561,16 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 <div class="mt-6 space-y-4">
                     <flux:input wire:model="whatsapp_business_account_id"
                         label="Business Account ID"
-                        placeholder="123456789012345"
-                        description="Found in Meta Business Manager under your WhatsApp account." />
+                        placeholder="123456789012345" />
 
                     <flux:input wire:model="whatsapp_phone_number_id"
                         label="Phone Number ID"
-                        placeholder="123456789012345"
-                        description="The ID of the phone number you want to send from." />
+                        placeholder="123456789012345" />
 
                     <flux:input wire:model="whatsapp_api_token"
                         label="API Token"
                         type="password"
-                        placeholder="••••••••••••••••"
-                        description="Permanent access token from your Meta App." />
+                        placeholder="••••••••••••••••" />
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
@@ -640,6 +656,35 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
                     <flux:icon.bell class="size-4 text-zinc-500" />
                     <flux:heading>Admin & Staff notifications</flux:heading>
+                </div>
+
+                {{-- Email routing row --}}
+                <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-3.5 dark:border-zinc-700">
+                    <div class="flex-1">
+                        <div class="mb-0.5 text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">Email routing</div>
+                        <div class="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+                            @if ($staff_email_routing === 'central' && filled($staff_central_email))
+                                Sending to central inbox: <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $staff_central_email }}</span>
+                            @elseif ($staff_email_routing === 'central')
+                                Central inbox selected — configure an email address.
+                            @else
+                                Each qualifying staff member receives their own copy.
+                            @endif
+                        </div>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <flux:select wire:model.live="staff_email_routing" size="sm" class="w-36!">
+                            <flux:select.option value="individual">Individual</flux:select.option>
+                            <flux:select.option value="central">Central inbox</flux:select.option>
+                        </flux:select>
+                        @if ($staff_email_routing === 'central')
+                            <flux:modal.trigger name="central-email-config">
+                                <flux:button size="xs" variant="ghost" icon="cog-6-tooth"
+                                    tooltip="Configure central inbox"
+                                    :class="!filled($staff_central_email) ? 'text-amber-500!' : ''" />
+                            </flux:modal.trigger>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- Channel headers --}}
@@ -729,6 +774,29 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 </div>
 
             </flux:card>
+
+            {{-- Central inbox config modal --}}
+            <flux:modal name="central-email-config" class="w-full max-w-md">
+                <flux:heading>Central inbox</flux:heading>
+                <flux:subheading class="mt-1">All staff notification emails will be sent to this address instead of individual staff members.</flux:subheading>
+
+                <div class="mt-6">
+                    <flux:input wire:model="staff_central_email" type="email"
+                        label="Email address"
+                        placeholder="notifications@yourcompany.com"
+                        description="New orders, quote requests, low-stock alerts and more will all arrive here." />
+                    @error('staff_central_email') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <flux:modal.close>
+                        <flux:button variant="ghost" type="button">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:modal.close>
+                        <flux:button variant="primary" type="button">Done</flux:button>
+                    </flux:modal.close>
+                </div>
+            </flux:modal>
 
             <div class="flex justify-end pt-2">
                 <flux:button type="submit" variant="primary">Save changes</flux:button>

@@ -198,7 +198,12 @@ new #[Layout('layouts::app')] #[Title('Reviews — Admin')] class extends Compon
                                     <span class="font-medium dark:text-white">{{ $review->title }}</span>
                                 @endif
                                 <span class="block truncate text-xs text-zinc-500">{{ Str::limit($review->body, 60) }}</span>
-                                <span class="block text-xs text-zinc-400">{{ $review->author_name }}</span>
+                                <span class="flex items-center gap-1.5 text-xs text-zinc-400">
+                                    {{ $review->author_name }}
+                                    @if ($review->verified_purchase)
+                                        <flux:badge size="sm" color="green" inset="top bottom">Verified</flux:badge>
+                                    @endif
+                                </span>
                             </button>
                         </flux:table.cell>
                         <flux:table.cell>
@@ -262,8 +267,11 @@ new #[Layout('layouts::app')] #[Title('Reviews — Admin')] class extends Compon
 
             <p class="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $this->viewing->body }}</p>
 
-            <div class="mt-4 text-xs text-zinc-400">
-                {{ $this->viewing->author_name }} · {{ $this->viewing->created_at->format('d M Y') }}
+            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                <span>{{ $this->viewing->author_name }} · {{ $this->viewing->created_at->format('d M Y') }}</span>
+                @if ($this->viewing->verified_purchase)
+                    <flux:badge size="sm" color="green" inset="top bottom">Verified Purchase</flux:badge>
+                @endif
             </div>
 
             <div class="mt-6 flex justify-end gap-2">

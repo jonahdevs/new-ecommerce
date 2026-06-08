@@ -14,6 +14,7 @@ use App\Services\DeliveryResolver;
 use App\Settings\QuotationSettings;
 use App\Support\StaffRecipients;
 use App\Support\StorefrontSession;
+use App\Support\TaxCalculator;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -25,7 +26,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component {
+new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component
+{
     /** @var array<string, int> */
     public array $items = [];
 
@@ -86,8 +88,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
         // Allow deep-linking a single product into the request, e.g. from the product page.
         if ($slug = (string) request()->query('product')) {
-            $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
-            if ($exists && !isset($this->items[$slug])) {
+            $exists = Product::where('slug', $slug)->published()->visibleInCatalog()->exists();
+            if ($exists && ! isset($this->items[$slug])) {
                 $this->items[$slug] = 1;
             }
         }
@@ -111,12 +113,13 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             return collect();
         }
 
-        $keys = collect($this->items)->keys()->map(fn($key) => StorefrontSession::splitKey($key));
+        $keys = collect($this->items)->keys()->map(fn ($key) => StorefrontSession::splitKey($key));
 
         $products = Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('slug', $keys->pluck('slug')->unique()->all())
-            ->where('visibility', 'visible')
+            ->published()
+            ->visibleInCatalog()
             ->get()
             ->keyBy('slug');
 
@@ -131,16 +134,16 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 ['slug' => $slug, 'variantId' => $variantId] = StorefrontSession::splitKey($key);
 
                 $product = $products->get($slug);
-                if (!$product) {
+                if (! $product) {
                     return null;
                 }
 
                 $variant = $variantId ? $variants->get($variantId) : null;
-                if ($variantId && !$variant) {
+                if ($variantId && ! $variant) {
                     return null;
                 }
 
-                $label = $variant ? $variant->attributeValues->map(fn($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
+                $label = $variant ? $variant->attributeValues->map(fn ($v) => $v->label ?: $v->value)->filter()->implode(' / ') : null;
 
                 return [
                     'key' => $key,
@@ -162,8 +165,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     public function searchResults(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
+            ->with(['brand', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->published()
+            ->visibleInCatalog()
             ->whereNotIn('slug', array_keys($this->items));
 
         if (strlen(trim($this->itemSearch)) >= 2) {
@@ -171,7 +175,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                 $q->where('name', 'like', "%{$this->itemSearch}%")
                     ->orWhere('sku', 'like', "%{$this->itemSearch}%")
                     ->orWhere('model_number', 'like', "%{$this->itemSearch}%")
-                    ->orWhereHas('brand', fn($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
+                    ->orWhereHas('brand', fn ($q2) => $q2->where('name', 'like', "%{$this->itemSearch}%"));
             });
         }
 
@@ -203,9 +207,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
     public function addItem(string $slug): void
     {
-        $exists = Product::where('slug', $slug)->where('visibility', 'visible')->exists();
+        $exists = Product::where('slug', $slug)->published()->visibleInCatalog()->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             return;
         }
 
@@ -248,7 +252,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     #[Computed]
     public function selectedAddress(): ?Address
     {
-        if (!$this->selectedAddressId) {
+        if (! $this->selectedAddressId) {
             return null;
         }
 
@@ -357,7 +361,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
             return;
         }
 
-        if ($this->needs_delivery && auth()->check() && !$this->selectedAddress) {
+        if ($this->needs_delivery && auth()->check() && ! $this->selectedAddress) {
             $this->addError('selectedAddressId', 'Please select a delivery address.');
 
             return;
@@ -368,7 +372,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         $quote = DB::transaction(function () use ($lines) {
             $quotationSettings = app(QuotationSettings::class);
 
-            $tax = app(\App\Support\TaxCalculator::class);
+            $tax = app(TaxCalculator::class);
 
             $quote = Quote::create([
                 'user_id' => auth()->id(),
@@ -418,8 +422,6 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
         Flux::toast(heading: 'Quote request submitted', text: 'We\'ve received your request and will get back to you shortly.', variant: 'success');
     }
-
-
 }; ?>
 
 

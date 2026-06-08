@@ -35,19 +35,19 @@ class AdminSettingsNav
                 'shipping' => ['label' => 'Shipping & delivery', 'icon' => 'truck'],
                 'notifications' => ['label' => 'Notifications', 'icon' => 'bell'],
             ]],
+            'system' => ['label' => 'System', 'icon' => 'server', 'sections' => [
+                'email' => ['label' => 'Email & SMS', 'icon' => 'envelope'],
+                'integrations' => ['label' => 'Integrations', 'icon' => 'puzzle-piece'],
+                'security' => ['label' => 'Security', 'icon' => 'shield-check'],
+                'maintenance' => ['label' => 'Maintenance', 'icon' => 'wrench-screwdriver'],
+            ]],
             'financial' => ['label' => 'Financial', 'icon' => 'banknotes', 'sections' => [
                 'payments' => ['label' => 'Payments', 'icon' => 'credit-card'],
                 'tax' => ['label' => 'Tax', 'icon' => 'receipt-percent'],
                 'currency' => ['label' => 'Currency & pricing', 'icon' => 'currency-dollar'],
             ]],
-            'system' => ['label' => 'System', 'icon' => 'cog-6-tooth', 'sections' => [
-                'email' => ['label' => 'Email & SMS', 'icon' => 'envelope'],
-                'integrations' => ['label' => 'Integrations', 'icon' => 'puzzle-piece'],
-                'sap' => ['label' => 'SAP / KRA', 'icon' => 'document-check'],
-                'security' => ['label' => 'Security', 'icon' => 'shield-check'],
-                'maintenance' => ['label' => 'Maintenance', 'icon' => 'wrench-screwdriver'],
-            ]],
-            'other' => ['label' => 'Other', 'icon' => 'ellipsis-horizontal', 'sections' => [
+            'other' => ['label' => 'Other', 'icon' => 'settings', 'sections' => [
+                'banned-ips' => ['label' => 'Banned IPs', 'icon' => 'no-symbol'],
                 'backup' => ['label' => 'Backup', 'icon' => 'circle-stack'],
                 'cache' => ['label' => 'Cache', 'icon' => 'bolt'],
             ]],

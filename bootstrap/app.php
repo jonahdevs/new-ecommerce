@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\BlockBannedIp;
 use App\Http\Middleware\ConfigureSeo;
 use App\Http\Middleware\EnsureStoreNotInMaintenance;
 use Cog\Laravel\Ban\Http\Middleware\ForbidBannedUser;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Apply store-wide SEO defaults before controllers/Livewire run.
         $middleware->web(append: [
+            BlockBannedIp::class,
             ConfigureSeo::class,
             EnsureStoreNotInMaintenance::class,
             ForbidBannedUser::class,

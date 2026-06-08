@@ -101,7 +101,7 @@ class OrderDocumentService
         }
     }
 
-    public function downloadPackingList(Order $order): ?StreamedResponse
+    public function streamPackingList(Order $order): ?StreamedResponse
     {
         $path = $this->ensurePackingList($order);
 
@@ -109,10 +109,12 @@ class OrderDocumentService
             return null;
         }
 
-        return Storage::disk(self::DISK)->download($path, $order->order_number.'-packing-list.pdf');
+        return Storage::disk(self::DISK)->response($path, $order->order_number.'-packing-list.pdf', [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
-    public function downloadDeliveryNote(Order $order): ?StreamedResponse
+    public function streamDeliveryNote(Order $order): ?StreamedResponse
     {
         $path = $this->ensureDeliveryNote($order);
 
@@ -120,7 +122,9 @@ class OrderDocumentService
             return null;
         }
 
-        return Storage::disk(self::DISK)->download($path, $order->order_number.'-delivery-note.pdf');
+        return Storage::disk(self::DISK)->response($path, $order->order_number.'-delivery-note.pdf', [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     private function ensurePackingList(Order $order): ?string

@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Showroom;
 use App\Settings\QuotationSettings;
+use App\Settings\ReviewSettings;
 use App\Settings\ShippingSettings;
 use Flux\Flux;
 use App\Support\StorefrontSession;
@@ -365,7 +366,19 @@ new #[Layout('layouts::storefront')] class extends Component
     #[Computed]
     public function reviewsEnabled(): bool
     {
-        return app(\App\Settings\ReviewSettings::class)->reviews_enabled;
+        return app(ReviewSettings::class)->reviews_enabled;
+    }
+
+    #[Computed]
+    public function requiresVerifiedPurchase(): bool
+    {
+        return app(ReviewSettings::class)->require_verified_purchase;
+    }
+
+    #[Computed]
+    public function userHasPurchased(): bool
+    {
+        return auth()->check() && $this->hasPurchasedProduct();
     }
 
     #[Computed]
@@ -472,7 +485,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public function submitReview(): void
     {
-        $settings = app(\App\Settings\ReviewSettings::class);
+        $settings = app(ReviewSettings::class);
 
         if (! $settings->reviews_enabled) {
             return;
@@ -490,7 +503,9 @@ new #[Layout('layouts::storefront')] class extends Component
             'reviewBody' => ['required', 'string', 'min:10', 'max:2000'],
         ]);
 
-        if ($settings->require_verified_purchase && ! $this->hasPurchasedProduct()) {
+        $hasPurchased = $this->hasPurchasedProduct();
+
+        if ($settings->require_verified_purchase && ! $hasPurchased) {
             $this->addError('reviewBody', 'Only customers who have purchased this product can review it.');
 
             return;
@@ -505,6 +520,7 @@ new #[Layout('layouts::storefront')] class extends Component
             'title' => $this->reviewTitle ?: null,
             'body' => $this->reviewBody,
             'status' => $approved ? ReviewStatus::APPROVED : ReviewStatus::PENDING,
+            'verified_purchase' => $hasPurchased,
         ]);
 
         $this->reset(['reviewTitle', 'reviewBody']);
@@ -1442,8 +1458,14 @@ new #[Layout('layouts::storefront')] class extends Component
                                             <div class="mt-2 font-semibold text-ink">{{ $review->title }}</div>
                                         @endif
                                         <p class="mt-1.5 text-[14px] leading-relaxed text-ink-2">{{ $review->body }}</p>
-                                        <div class="mt-2 text-[12.5px] text-ink-3">
-                                            {{ $review->author_name }} · {{ $review->created_at->format('d M Y') }}
+                                        <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-3">
+                                            <span>{{ $review->author_name }} · {{ $review->created_at->format('d M Y') }}</span>
+                                            @if ($review->verified_purchase)
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                                    <svg class="size-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>
+                                                    Verified Purchase
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 @endforeach
@@ -1462,21 +1484,34 @@ new #[Layout('layouts::storefront')] class extends Component
                         <div class="rounded-md bg-surface-sunken p-6">
                             <h3 class="font-serif text-xl">Write a review</h3>
                             @auth
-                                <form wire:submit="submitReview" class="mt-4 space-y-4">
-                                    <flux:field>
-                                        <flux:label>Rating</flux:label>
-                                        <flux:select wire:model="reviewRating">
-                                            @foreach ([5 => 'Excellent', 4 => 'Good', 3 => 'Average', 2 => 'Poor', 1 => 'Terrible'] as $value => $label)
-                                                <flux:select.option value="{{ $value }}">{{ $value }} — {{ $label }}</flux:select.option>
-                                            @endforeach
-                                        </flux:select>
-                                    </flux:field>
-                                    <flux:input wire:model="reviewTitle" label="Title" placeholder="Sum it up (optional)" />
-                                    <flux:textarea wire:model="reviewBody" label="Your review" rows="4"
-                                        placeholder="How has this unit performed in your kitchen?" />
-                                    <flux:button type="submit" variant="primary" class="w-full">Submit review</flux:button>
-                                    <p class="text-[12px] text-ink-3">Reviews are published once approved by our team.</p>
-                                </form>
+                                @if ($this->requiresVerifiedPurchase && ! $this->userHasPurchased)
+                                    <div class="mt-4 flex items-start gap-3">
+                                        <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                                            <svg class="size-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-[13.5px] font-medium text-ink">Verified buyers only</p>
+                                            <p class="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">Only customers who have purchased this product can leave a review.</p>
+                                        </div>
+                                    </div>
+                                @else
+                                    <form wire:submit="submitReview" class="mt-4 space-y-4">
+                                        <flux:field>
+                                            <flux:label>Rating</flux:label>
+                                            <flux:select wire:model="reviewRating">
+                                                @foreach ([5 => 'Excellent', 4 => 'Good', 3 => 'Average', 2 => 'Poor', 1 => 'Terrible'] as $value => $label)
+                                                    <flux:select.option value="{{ $value }}">{{ $value }} — {{ $label }}</flux:select.option>
+                                                @endforeach
+                                            </flux:select>
+                                        </flux:field>
+                                        <flux:input wire:model="reviewTitle" label="Title" placeholder="Sum it up (optional)" />
+                                        <flux:textarea wire:model="reviewBody" label="Your review" rows="4"
+                                            placeholder="How has this unit performed in your kitchen?" />
+                                        <flux:error name="reviewBody" />
+                                        <flux:button type="submit" variant="primary" class="w-full">Submit review</flux:button>
+                                        <p class="text-[12px] text-ink-3">Reviews are published once approved by our team.</p>
+                                    </form>
+                                @endif
                             @else
                                 <p class="mt-2 text-[13.5px] leading-relaxed text-ink-3">
                                     Sign in to share your experience with this product.

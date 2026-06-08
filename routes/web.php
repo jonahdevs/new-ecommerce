@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 // ---------------------------------------------------------------------------
 // Payment provider callbacks (server-to-server, no auth, CSRF-exempt)
 // ---------------------------------------------------------------------------
-Route::post('/payments/mpesa/callback', MpesaCallbackController::class)->name('payments.mpesa.callback');
-Route::post('/payments/stripe/webhook', StripeWebhookController::class)->name('payments.stripe.webhook');
+Route::post('/api/webhooks/mpesa', MpesaCallbackController::class)->name('payments.mpesa.callback');
+Route::post('/api/webhooks/stripe', StripeWebhookController::class)->name('payments.stripe.webhook');
 
 // ---------------------------------------------------------------------------
 // Storefront (guests + logged-in browsing)

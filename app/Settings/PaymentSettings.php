@@ -2,6 +2,7 @@
 
 namespace App\Settings;
 
+use Spatie\LaravelSettings\Attributes\ShouldBeEncrypted;
 use Spatie\LaravelSettings\Settings;
 
 class PaymentSettings extends Settings
@@ -18,6 +19,7 @@ class PaymentSettings extends Settings
 
     public bool $bank_transfer_enabled;
 
+    #[ShouldBeEncrypted]
     public string $bank_details;
 
     public bool $cash_on_delivery_enabled;
