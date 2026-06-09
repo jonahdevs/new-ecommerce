@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\SapSyncStatus;
+use App\Events\OrderPlaced;
 use App\Jobs\SyncOrderToSapJob;
+use App\Models\Concerns\HasStatusHistory;
 use App\Notifications\Orders\NewOrderReceived;
 use App\Notifications\Orders\OrderConfirmed;
 use App\Services\Sap\SapConfig;
@@ -27,7 +29,7 @@ use Spatie\Activitylog\Support\LogOptions;
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory, HasStatusHistory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -97,6 +99,13 @@ class Order extends Model
         return $this->hasMany(SapSyncLog::class);
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (Order $order): void {
+            $order->recordStatusChange(null, OrderStatus::PENDING);
+        });
+    }
+
     public function latestPayment(): HasOne
     {
         return $this->hasOne(Payment::class)->latestOfMany();
@@ -119,9 +128,11 @@ class Order extends Model
         }
 
         $this->update(['status' => OrderStatus::PROCESSING]);
+        $this->recordStatusChange(OrderStatus::PENDING, OrderStatus::PROCESSING);
 
         $this->user?->notify(new OrderConfirmed($this));
         Notification::send(StaffRecipients::for('orders.manage'), new NewOrderReceived($this));
+        OrderPlaced::dispatch($this);
 
         $sapConfig = app(SapConfig::class);
         if ($sapConfig->isEnabled() && $sapConfig->autoSyncOrders()) {

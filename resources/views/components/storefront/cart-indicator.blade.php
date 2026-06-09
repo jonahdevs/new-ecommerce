@@ -39,7 +39,7 @@ new class extends Component
             </div>
         @else
             {{-- Line items --}}
-            <div class="max-h-72 overflow-y-auto divide-y divide-zinc-100 pt-2">
+            <div class="scrollbar-thin max-h-72 overflow-y-auto divide-y divide-zinc-100 pt-2">
                 @foreach ($lines as $line)
                     @php $product = $line['product']; @endphp
                     <div wire:key="dd-{{ $line['slug'] }}" class="flex items-center gap-3 px-4 py-3.5">

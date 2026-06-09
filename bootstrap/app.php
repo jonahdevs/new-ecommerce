@@ -7,6 +7,7 @@ use Cog\Laravel\Ban\Http\Middleware\ForbidBannedUser;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\Middleware\AuthenticateSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Apply store-wide SEO defaults before controllers/Livewire run.
         $middleware->web(append: [
+            AuthenticateSession::class,
             BlockBannedIp::class,
             ConfigureSeo::class,
             EnsureStoreNotInMaintenance::class,

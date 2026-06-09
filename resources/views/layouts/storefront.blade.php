@@ -35,12 +35,20 @@
                 <livewire:storefront.search-dropdown />
 
                 <nav class="hidden items-center gap-6 text-sm font-semibold text-zinc-900 lg:flex">
-                    <a href="{{ route('catalog') }}" class="flex items-center gap-1 hover:text-brand-500 transition-colors" wire:navigate>
-                        Shop
-                        <flux:icon.chevron-down variant="micro" class="size-3.5" />
-                    </a>
-                    <a href="{{ route('quote.request') }}" class="hover:text-brand-500 transition-colors" wire:navigate>Request quote</a>
-                    <a href="{{ route('contact') }}" class="hover:text-brand-500 transition-colors" wire:navigate>Contact</a>
+                    @foreach ([
+                        ['label' => 'Shop',          'route' => 'catalog',        'match' => 'catalog*'],
+                        ['label' => 'Request quote', 'route' => 'quote.request',  'match' => 'quote.*'],
+                        ['label' => 'Contact',       'route' => 'contact',        'match' => 'contact*'],
+                    ] as $link)
+                        <a href="{{ route($link['route']) }}" wire:navigate
+                           @class([
+                               'transition-colors',
+                               'text-brand-500'                    => request()->routeIs($link['match']),
+                               'text-zinc-900 hover:text-brand-500' => ! request()->routeIs($link['match']),
+                           ])>
+                            {{ $link['label'] }}
+                        </a>
+                    @endforeach
                 </nav>
 
                 <div class="ml-auto flex items-center gap-1">

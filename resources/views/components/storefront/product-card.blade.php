@@ -153,7 +153,7 @@ $isWished   = \App\Support\StorefrontSession::isWishlisted($product->slug);
 
     {{-- Info — purely informational, no buttons --}}
     <a href="{{ route('product.show', $product) }}" wire:navigate
-        class="flex flex-1 flex-col border-t border-zinc-200 px-4 py-3.5">
+        class="flex flex-1 flex-col px-4 py-3.5">
         @if ($brandName)
             <div class="text-[11px] font-bold tracking-[0.08em] text-brand-blue-600 uppercase">{{ $brandName }}</div>
         @endif

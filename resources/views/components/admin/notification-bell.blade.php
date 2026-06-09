@@ -35,6 +35,12 @@ new class extends Component
     {
         unset($this->unreadCount, $this->notifications);
     }
+
+    #[On('echo-private:admin.notifications,OrderPlaced')]
+    public function onNewOrder(): void
+    {
+        unset($this->unreadCount, $this->notifications);
+    }
 }; ?>
 
 <div x-data="{ open: false }" x-on:keydown.escape.window="open = false" class="relative">
@@ -74,19 +80,33 @@ new class extends Component
         <div class="max-h-96 overflow-y-auto scrollbar-thin">
             @forelse ($this->notifications as $notification)
                 @php $data = $notification->data; $isUnread = $notification->read_at === null; @endphp
-                <a href="{{ $data['url'] ?? route('admin.quotes.index') }}" wire:navigate
+                @php
+                    $isOrder = ($data['type'] ?? '') === 'new_order';
+                    $fallbackUrl = $isOrder ? route('admin.orders.index') : route('admin.quotes.index');
+                    $title = $isOrder
+                        ? 'New order — ' . ($data['order_number'] ?? '')
+                        : 'New quote — ' . ($data['quote_number'] ?? '');
+                    $subtitle = $isOrder
+                        ? ($data['customer_name'] ?? 'Guest') . ' · ' . (isset($data['total']) ? money($data['total']) : '')
+                        : ($data['contact_name'] ?? '') . (isset($data['contact_company']) && $data['contact_company'] ? ' · ' . $data['contact_company'] : '');
+                @endphp
+                <a href="{{ $data['url'] ?? $fallbackUrl }}" wire:navigate
                    wire:click="markRead('{{ $notification->id }}')"
                    x-on:click="open = false"
                    class="group flex items-start gap-3 border-b border-zinc-100 px-4 py-3.5 last:border-0 dark:border-zinc-800">
                     <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <flux:icon.document-text variant="micro" class="size-4 text-zinc-400 transition group-hover:text-brand-500" />
+                        @if ($isOrder)
+                            <flux:icon.shopping-bag variant="micro" class="size-4 text-zinc-400 transition group-hover:text-brand-500" />
+                        @else
+                            <flux:icon.document-text variant="micro" class="size-4 text-zinc-400 transition group-hover:text-brand-500" />
+                        @endif
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="text-[13px] font-{{ $isUnread ? 'semibold' : 'medium' }} text-ink transition group-hover:text-brand-500 dark:text-white leading-snug">
-                            New quote — {{ $data['quote_number'] ?? '' }}
+                            {{ $title }}
                         </div>
                         <div class="mt-0.5 text-[11.5px] text-ink-3 truncate">
-                            {{ $data['contact_name'] ?? '' }}{{ isset($data['contact_company']) && $data['contact_company'] ? ' · ' . $data['contact_company'] : '' }}
+                            {{ $subtitle }}
                         </div>
                         <div class="mt-0.5 text-[11px] text-ink-4">
                             {{ $notification->created_at->diffForHumans() }}

@@ -17,7 +17,7 @@
                             <flux:navlist.item icon="bell" :href="route('notifications.edit')" :current="request()->routeIs('notifications.edit')" wire:navigate>
                                 Notifications
                             </flux:navlist.item>
-                            <flux:navlist.item icon="lock-closed" href="#" :current="false">
+                            <flux:navlist.item icon="lock-closed" :href="route('privacy.edit')" :current="request()->routeIs('privacy.edit')" wire:navigate>
                                 Privacy & Data
                             </flux:navlist.item>
                         </flux:navlist.group>

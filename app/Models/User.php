@@ -69,6 +69,16 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(Quote::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function recentlyViewed(): HasMany
+    {
+        return $this->hasMany(RecentlyViewed::class)->orderByDesc('viewed_at');
+    }
+
     public function initials(): string
     {
         return Str::of($this->name)

@@ -74,12 +74,6 @@ new #[Layout('layouts::settings')] #[Title('Profile')] class extends Component {
         return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
     }
 
-    #[Computed]
-    public function showDeleteUser(): bool
-    {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
-    }
     /* @end-chisel-email-verification */
 }; ?>
 
@@ -98,50 +92,52 @@ new #[Layout('layouts::settings')] #[Title('Profile')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::account.settings.layout :embedded="$embedded" :heading="__('Profile')" :subheading="__('Update your name and email address')">
-        <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+    <x-pages::account.settings.layout :embedded="$embedded">
 
-            <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+        <form wire:submit="updateProfileInformation">
 
-                {{-- @chisel-email-verification --}}
-                @if ($this->hasUnverifiedEmail)
-                    <div>
-                        <flux:text class="mt-4">
-                            {{ __('Your email address is unverified.') }}
-
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
-                                {{ __('Click here to re-send the verification email.') }}
-                            </flux:link>
-                        </flux:text>
-
-                        @if (session('status') === 'verification-link-sent')
-                            <flux:text class="mt-2 font-medium dark:text-green-400! text-green-600!">
-                                {{ __('A new verification link has been sent to your email address.') }}
-                            </flux:text>
-                        @endif
-                    </div>
-                @endif
-                {{-- @end-chisel-email-verification --}}
-            </div>
-
-            <div class="flex items-center gap-4">
-                <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
-                        {{ __('Save') }}
-                    </flux:button>
+            <flux:card class="p-0">
+                <div class="flex items-center gap-3 border-b border-zinc-200 px-5 py-3">
+                    <flux:icon.user variant="outline" class="size-4 text-zinc-600" />
+                    <flux:heading size="sm" class="uppercase tracking-wide">Profile Information</flux:heading>
                 </div>
 
+                <div class="space-y-5 p-5">
+                    <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+
+                    <div>
+                        <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+
+                        {{-- @chisel-email-verification --}}
+                        @if ($this->hasUnverifiedEmail)
+                            <div>
+                                <flux:text class="mt-4">
+                                    {{ __('Your email address is unverified.') }}
+
+                                    <flux:link class="cursor-pointer text-sm" wire:click.prevent="resendVerificationNotification">
+                                        {{ __('Click here to re-send the verification email.') }}
+                                    </flux:link>
+                                </flux:text>
+
+                                @if (session('status') === 'verification-link-sent')
+                                    <flux:text class="mt-2 font-medium text-green-600! dark:text-green-400!">
+                                        {{ __('A new verification link has been sent to your email address.') }}
+                                    </flux:text>
+                                @endif
+                            </div>
+                        @endif
+                        {{-- @end-chisel-email-verification --}}
+                    </div>
+                </div>
+            </flux:card>
+
+            <div class="mt-4 flex justify-end">
+                <flux:button variant="primary" type="submit" data-test="update-profile-button">
+                    {{ __('Save') }}
+                </flux:button>
             </div>
+
         </form>
 
-        {{-- @chisel-email-verification --}}
-        @if ($this->showDeleteUser)
-        {{-- @end-chisel-email-verification --}}
-            <livewire:pages::account.settings.delete-user-form />
-        {{-- @chisel-email-verification --}}
-        @endif
-        {{-- @end-chisel-email-verification --}}
     </x-pages::account.settings.layout>
 </section>

@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\OrderStatus;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -14,7 +13,7 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
     use WithPagination;
 
     #[Url]
-    public string $status = '';
+    public string $status = 'active';
 
     public function mount(): void
     {
@@ -26,7 +25,8 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
     {
         return auth()->user()->orders()
             ->with('items')
-            ->when($this->status, fn ($q) => $q->where('status', $this->status))
+            ->when($this->status === 'active', fn ($q) => $q->whereIn('status', ['pending', 'processing', 'out_for_delivery', 'completed']))
+            ->when($this->status === 'cancelled', fn ($q) => $q->where('status', 'cancelled'))
             ->latest()
             ->paginate(10);
     }
@@ -54,7 +54,7 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
 
     {{-- Status filter --}}
     <div class="flex flex-wrap gap-2">
-        @foreach (['' => 'All', ...collect(OrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all()] as $value => $label)
+        @foreach (['active' => 'Ongoing / Delivered', 'cancelled' => 'Cancelled / Returned'] as $value => $label)
             <button type="button" wire:click="$set('status', '{{ $value }}')"
                     class="rounded-full border px-3.5 py-1 text-[12px] font-semibold transition
                         {{ $status === $value
@@ -81,7 +81,7 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
         </flux:card>
     @else
         <flux:card class="p-0 overflow-hidden">
-            <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
+            <flux:table container:class="scrollbar-thin [&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
                 <flux:table.columns>
                     <flux:table.column>Order</flux:table.column>
                     <flux:table.column class="hidden sm:table-cell">Date</flux:table.column>

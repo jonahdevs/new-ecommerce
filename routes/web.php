@@ -4,8 +4,6 @@ use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\Payments\MpesaCallbackController;
 use App\Http\Controllers\Payments\StripeWebhookController;
 use App\Http\Controllers\SocialAuthController;
-use App\Settings\SeoSettings;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------------------------------
@@ -29,38 +27,6 @@ Route::livewire('/quotes/{quote}/review', 'pages::storefront.quote-review')->nam
 Route::livewire('/checkout', 'pages::storefront.checkout')->name('checkout')->middleware('auth');
 Route::livewire('/pay/{order}', 'pages::storefront.payment')->name('payment.page')->middleware('auth');
 Route::livewire('/product/{product:slug}', 'pages::storefront.product')->name('product.show');
-
-// ---------------------------------------------------------------------------
-// SEO — sitemap + robots, both driven by SeoSettings.
-// ---------------------------------------------------------------------------
-Route::get('/sitemap.xml', function () {
-    abort_unless(app(SeoSettings::class)->generate_sitemap, 404);
-
-    $path = public_path('sitemap.xml');
-
-    // Generate on-the-fly if the file does not exist yet (e.g. fresh deploy).
-    if (! file_exists($path)) {
-        Artisan::call('sitemap:generate');
-    }
-
-    abort_unless(file_exists($path), 404);
-
-    return response()->file($path, ['Content-Type' => 'application/xml']);
-})->name('sitemap');
-
-Route::get('/robots.txt', function () {
-    $seo = app(SeoSettings::class);
-
-    $lines = $seo->index_site
-        ? ['User-agent: *', 'Allow: /']
-        : ['User-agent: *', 'Disallow: /'];
-
-    if ($seo->index_site && $seo->generate_sitemap) {
-        $lines[] = 'Sitemap: '.route('sitemap');
-    }
-
-    return response(implode("\n", $lines)."\n")->header('Content-Type', 'text/plain');
-})->name('robots');
 
 // ---------------------------------------------------------------------------
 // Newsletter — confirm & unsubscribe (public, no auth)

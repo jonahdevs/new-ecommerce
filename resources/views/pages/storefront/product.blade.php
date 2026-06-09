@@ -47,12 +47,6 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public string $addonTab = 'accessories';
 
-    public int $reviewRating = 5;
-
-    public string $reviewTitle = '';
-
-    public string $reviewBody = '';
-
     /** @var list<int> Related-product IDs, picked once at mount so they stay stable across round-trips. */
     public array $relatedIds = [];
 
@@ -91,6 +85,14 @@ new #[Layout('layouts::storefront')] class extends Component
         $this->relatedIds = $this->pickRelatedIds();
 
         $this->applySeo();
+
+        if (auth()->check()) {
+            \App\Models\RecentlyViewed::upsert(
+                [['user_id' => auth()->id(), 'product_id' => $product->id, 'viewed_at' => now()]],
+                uniqueBy: ['user_id', 'product_id'],
+                update: ['viewed_at'],
+            );
+        }
     }
 
     /**
@@ -234,6 +236,18 @@ new #[Layout('layouts::storefront')] class extends Component
                 'seller' => ['@type' => 'Organization', 'name' => 'Sheffield'],
             ]);
         }
+
+        $reviewCount = $product->reviews()->where('status', ReviewStatus::APPROVED)->count();
+        if ($reviewCount > 0) {
+            $avgRating = $product->reviews()->where('status', ReviewStatus::APPROVED)->avg('rating');
+            JsonLdMulti::addValue('aggregateRating', [
+                '@type' => 'AggregateRating',
+                'ratingValue' => round((float) $avgRating, 1),
+                'reviewCount' => $reviewCount,
+                'bestRating' => 5,
+                'worstRating' => 1,
+            ]);
+        }
     }
 
     public function rendering($view): void
@@ -370,18 +384,6 @@ new #[Layout('layouts::storefront')] class extends Component
     }
 
     #[Computed]
-    public function requiresVerifiedPurchase(): bool
-    {
-        return app(ReviewSettings::class)->require_verified_purchase;
-    }
-
-    #[Computed]
-    public function userHasPurchased(): bool
-    {
-        return auth()->check() && $this->hasPurchasedProduct();
-    }
-
-    #[Computed]
     public function quotesEnabled(): bool
     {
         return app(QuotationSettings::class)->quotes_enabled;
@@ -483,75 +485,11 @@ new #[Layout('layouts::storefront')] class extends Component
         });
     }
 
-    public function submitReview(): void
-    {
-        $settings = app(ReviewSettings::class);
-
-        if (! $settings->reviews_enabled) {
-            return;
-        }
-
-        if (! auth()->check()) {
-            $this->redirectRoute('login');
-
-            return;
-        }
-
-        $this->validate([
-            'reviewRating' => ['required', 'integer', 'min:1', 'max:5'],
-            'reviewTitle' => ['nullable', 'string', 'max:120'],
-            'reviewBody' => ['required', 'string', 'min:10', 'max:2000'],
-        ]);
-
-        $hasPurchased = $this->hasPurchasedProduct();
-
-        if ($settings->require_verified_purchase && ! $hasPurchased) {
-            $this->addError('reviewBody', 'Only customers who have purchased this product can review it.');
-
-            return;
-        }
-
-        $approved = $settings->auto_approve;
-
-        $this->product->reviews()->create([
-            'user_id' => auth()->id(),
-            'author_name' => auth()->user()->name,
-            'rating' => $this->reviewRating,
-            'title' => $this->reviewTitle ?: null,
-            'body' => $this->reviewBody,
-            'status' => $approved ? ReviewStatus::APPROVED : ReviewStatus::PENDING,
-            'verified_purchase' => $hasPurchased,
-        ]);
-
-        $this->reset(['reviewTitle', 'reviewBody']);
-        $this->reviewRating = 5;
-
-        if ($approved) {
-            unset($this->approvedReviews);
-        }
-
-        Flux::toast(
-            heading: 'Thank you!',
-            text: $approved
-                ? 'Your review is now live.'
-                : 'Your review has been submitted for moderation.',
-            variant: 'success',
-        );
-    }
-
     public function setAddonTab(string $tab): void
     {
         $this->addonTab = $tab;
     }
 
-    /** Whether the signed-in user has an order containing this product. */
-    private function hasPurchasedProduct(): bool
-    {
-        return auth()->user()
-            ->orders()
-            ->whereHas('items', fn ($query) => $query->where('product_id', $this->product->id))
-            ->exists();
-    }
 }; ?>
 
 @php
@@ -1479,47 +1417,6 @@ new #[Layout('layouts::storefront')] class extends Component
                         @endif
                     </div>
 
-                    {{-- Write a review --}}
-                    <div>
-                        <div class="rounded-md bg-surface-sunken p-6">
-                            <h3 class="font-serif text-xl">Write a review</h3>
-                            @auth
-                                @if ($this->requiresVerifiedPurchase && ! $this->userHasPurchased)
-                                    <div class="mt-4 flex items-start gap-3">
-                                        <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                                            <svg class="size-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-[13.5px] font-medium text-ink">Verified buyers only</p>
-                                            <p class="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">Only customers who have purchased this product can leave a review.</p>
-                                        </div>
-                                    </div>
-                                @else
-                                    <form wire:submit="submitReview" class="mt-4 space-y-4">
-                                        <flux:field>
-                                            <flux:label>Rating</flux:label>
-                                            <flux:select wire:model="reviewRating">
-                                                @foreach ([5 => 'Excellent', 4 => 'Good', 3 => 'Average', 2 => 'Poor', 1 => 'Terrible'] as $value => $label)
-                                                    <flux:select.option value="{{ $value }}">{{ $value }} — {{ $label }}</flux:select.option>
-                                                @endforeach
-                                            </flux:select>
-                                        </flux:field>
-                                        <flux:input wire:model="reviewTitle" label="Title" placeholder="Sum it up (optional)" />
-                                        <flux:textarea wire:model="reviewBody" label="Your review" rows="4"
-                                            placeholder="How has this unit performed in your kitchen?" />
-                                        <flux:error name="reviewBody" />
-                                        <flux:button type="submit" variant="primary" class="w-full">Submit review</flux:button>
-                                        <p class="text-[12px] text-ink-3">Reviews are published once approved by our team.</p>
-                                    </form>
-                                @endif
-                            @else
-                                <p class="mt-2 text-[13.5px] leading-relaxed text-ink-3">
-                                    Sign in to share your experience with this product.
-                                </p>
-                                <flux:button :href="route('login')" variant="primary" class="mt-4 w-full">Sign in to review</flux:button>
-                            @endauth
-                        </div>
-                    </div>
                 </div>
             @endif
         </div>

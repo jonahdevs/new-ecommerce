@@ -130,7 +130,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
         </div>
     @else
         {{-- Comparison table --}}
-        <div class="mt-7 overflow-x-auto rounded-md border border-zinc-200 bg-white">
+        <div class="scrollbar-thin mt-7 overflow-x-auto rounded-md border border-zinc-200 bg-white">
             <table class="w-full border-collapse text-left" style="min-width: {{ 200 + 220 * ($this->products->count() + min(1, $emptySlots)) }}px">
                 <thead>
                     <tr>

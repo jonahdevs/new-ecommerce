@@ -184,9 +184,9 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
 
                         {{-- Label + default badge --}}
                         <div class="flex items-center justify-between gap-2 border-b border-zinc-100 px-5 py-3">
-                            <span class="text-[10.5px] font-bold tracking-[0.12em] text-ink-3 uppercase">{{ $address->label }}</span>
+                            <flux:heading size="sm" class="uppercase tracking-wide">{{ $address->label }}</flux:heading>
                             @if ($address->is_default)
-                                <span class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>
+                                <flux:badge color="lime" size="sm">Default</flux:badge>
                             @endif
                         </div>
 

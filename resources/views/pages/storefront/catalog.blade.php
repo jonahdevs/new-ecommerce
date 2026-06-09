@@ -5,6 +5,7 @@ use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use Artesaos\SEOTools\Facades\JsonLdMulti;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
@@ -16,8 +17,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     use InteractsWithStorefront;
 
     public int $perPage = 24;
@@ -29,6 +29,11 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
         SEOMeta::setDescription($description);
         OpenGraph::setDescription($description)->setType('website');
         TwitterCard::setDescription($description);
+
+        JsonLdMulti::setType('CollectionPage')
+            ->setTitle('Shop — Sheffield Commercial Kitchen Equipment')
+            ->setDescription($description)
+            ->addValue('url', route('catalog'));
     }
 
     /** @var array<int, string> */
@@ -71,19 +76,19 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
 
     public function removeCategory(string $slug): void
     {
-        $this->selectedCategories = array_values(array_filter($this->selectedCategories, fn ($s) => $s !== $slug));
+        $this->selectedCategories = array_values(array_filter($this->selectedCategories, fn($s) => $s !== $slug));
     }
 
     public function removeBrand(int $id): void
     {
-        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn ($b) => $b !== $id));
+        $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn($b) => $b !== $id));
     }
 
     #[Computed]
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->with(['brand', 'taxClass', 'images' => fn($q) => $q->where('is_cover', true)->limit(1)])
             ->visibleInCatalog()
             ->published()
             ->honorStockVisibility();
@@ -91,7 +96,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
         if ($this->selectedCategories) {
             $catIds = Category::whereIn('slug', $this->selectedCategories)->pluck('id');
             $query->where(function ($q) use ($catIds) {
-                $q->whereIn('primary_category_id', $catIds)->orWhereHas('categories', fn ($q2) => $q2->whereIn('categories.id', $catIds));
+                $q->whereIn('primary_category_id', $catIds)->orWhereHas('categories', fn($q2) => $q2->whereIn('categories.id', $catIds));
             });
         }
 
@@ -133,7 +138,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
 
     public function hasActiveFilters(): bool
     {
-        return ! empty($this->selectedCategories) || ! empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
+        return !empty($this->selectedCategories) || !empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
     }
 }; ?>
 
@@ -158,24 +163,20 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
 
         <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
             {{-- Filters sidebar --}}
-            <aside class="lg:sticky lg:top-32 lg:self-start" x-data="{ openBrands: false }">
-                <div class="flex flex-col gap-7 text-sm">
+            <aside class="lg:sticky lg:top-32 lg:self-start lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto scrollbar-thin" x-data="{ openBrands: false }">
+                <div class="divide-y divide-zinc-200 rounded-md border border-zinc-200 bg-white text-sm">
+
                     {{-- Category --}}
-                    <div>
-                        <div
-                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            Category</div>
-                        <div class="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+                    <div class="px-5 py-4">
+                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Category</div>
+                        <div class="scrollbar-thin flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
                             @foreach ($this->categoriesList as $cat)
-                                {{-- Verbose form: flux:label's `trailing` slot pushes the product count
-                                     to `ml-auto`, giving us the same name + count layout we want. --}}
                                 <flux:field variant="inline">
                                     <flux:checkbox wire:model.live="selectedCategories" value="{{ $cat->slug }}" />
                                     <flux:label>
                                         {{ $cat->name }}
                                         <x-slot:trailing>
-                                            <span
-                                                class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
+                                            <span class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
                                         </x-slot:trailing>
                                     </flux:label>
                                 </flux:field>
@@ -184,34 +185,30 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
                     </div>
 
                     {{-- Brand --}}
-                    <div>
-                        <div
-                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            Brand</div>
-                        <div class="flex flex-col gap-2" :class="openBrands ? 'max-h-96 overflow-y-auto pr-1' : ''">
+                    <div class="px-5 py-4">
+                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Brand</div>
+                        <div class="scrollbar-thin flex flex-col gap-2" :class="openBrands ? 'max-h-96 overflow-y-auto pr-1' : ''">
                             @foreach ($this->brandsList as $i => $brand)
                                 <div @if ($i >= 6) x-show="openBrands" x-cloak @endif>
-                                    <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}"
-                                        :label="$brand->name" />
+                                    <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}" :label="$brand->name" />
                                 </div>
                             @endforeach
                         </div>
                         @if ($this->brandsList->count() > 6)
                             <button type="button" @click="openBrands = !openBrands"
                                 class="mt-2 cursor-pointer text-[12.5px] text-brand-500 hover:underline">
-                                <span x-show="!openBrands" class="inline-flex items-center gap-1">Show all
-                                    {{ $this->brandsList->count() }} brands <flux:icon.arrow-right variant="micro"
-                                        class="size-3.5" /></span>
+                                <span x-show="!openBrands" class="inline-flex items-center gap-1">
+                                    Show all {{ $this->brandsList->count() }} brands
+                                    <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                                </span>
                                 <span x-show="openBrands" x-cloak>Show fewer</span>
                             </button>
                         @endif
                     </div>
 
                     {{-- Price --}}
-                    <div>
-                        <div
-                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            Price</div>
+                    <div class="px-5 py-4">
+                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Price</div>
                         <div class="flex justify-between text-[12.5px] text-ink-3">
                             <span>{{ money(0) }}</span>
                             <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
@@ -221,20 +218,18 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
                     </div>
 
                     {{-- Availability --}}
-                    <div>
-                        <div
-                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            Availability</div>
+                    <div class="px-5 py-4">
+                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Availability</div>
                         <flux:checkbox wire:model.live="inStockOnly" label="In stock — ships now" />
                     </div>
+
                 </div>
             </aside>
 
             {{-- Results --}}
             <div>
                 {{-- Toolbar --}}
-                <div
-                    class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="text-[13.5px] text-ink-3">
                         Showing <span class="font-semibold text-ink">{{ $this->products->total() }}</span>
                         {{ \Illuminate\Support\Str::plural('product', $this->products->total()) }}
@@ -246,7 +241,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component
                         @endif
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <label class="text-[13px] text-ink-3">Sort:</label>
                         <select wire:model.live="sort"
                             class="h-9 rounded border border-zinc-200 bg-white px-2.5 text-[13px] focus:border-brand-500 focus:ring-0 focus:outline-none">
                             <option value="popularity">Most popular</option>

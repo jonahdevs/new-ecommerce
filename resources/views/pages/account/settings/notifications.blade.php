@@ -64,13 +64,17 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <x-pages::account.settings.layout
-        :heading="__('Notification Preferences')"
-        :subheading="__('Choose which updates you receive from us.')">
+    <x-pages::account.settings.layout>
 
         <form wire:submit="save">
 
             <flux:card class="p-0">
+
+                {{-- Card title --}}
+                <div class="flex items-center gap-3 border-b border-zinc-200 px-5 py-3">
+                    <flux:icon.bell variant="outline" class="size-4 text-zinc-600" />
+                    <flux:heading size="sm" class="uppercase tracking-wide">Notification Preferences</flux:heading>
+                </div>
 
                 {{-- Channel headers --}}
                 <div class="flex items-center justify-end border-b border-zinc-200 bg-zinc-50 px-5 py-2.5 dark:border-zinc-600 dark:bg-zinc-800/40">
@@ -142,7 +146,7 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
             </flux:card>
 
             <div class="mt-6 flex justify-end">
-                <flux:button variant="customer-primary" size="customer" type="submit">Save preferences</flux:button>
+                <flux:button variant="primary" type="submit">Save preferences</flux:button>
             </div>
 
         </form>

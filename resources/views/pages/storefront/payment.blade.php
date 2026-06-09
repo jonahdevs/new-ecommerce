@@ -17,8 +17,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component {
     public Order $order;
 
     public string $selectedMethod = 'card';
@@ -57,10 +56,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             return;
         }
 
-        $order->load([
-            'items.product',
-            'items.product.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
-        ]);
+        $order->load(['items.product', 'items.product.images' => fn($q) => $q->where('is_cover', true)->limit(1)]);
         $this->order = $order;
 
         $payments = app(PaymentSettings::class);
@@ -97,10 +93,10 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
     #[Computed]
     public function orderItems(): Collection
     {
-        return $this->order->items()->with([
-            'product',
-            'product.images' => fn ($q) => $q->where('is_cover', true)->limit(1),
-        ])->get();
+        return $this->order
+            ->items()
+            ->with(['product', 'product.images' => fn($q) => $q->where('is_cover', true)->limit(1)])
+            ->get();
     }
 
     public function selectMethod(string $method): void
@@ -125,7 +121,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
     {
         $payment = app(StripePaymentService::class)->confirmPaymentIntent($paymentIntentId);
 
-        if (! $payment) {
+        if (!$payment) {
             $this->addError('card', 'Payment could not be confirmed. If you were charged, please contact support.');
 
             return;
@@ -135,7 +131,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
         StorefrontSession::clearCart();
         $this->dispatch('cart-updated');
 
-        Flux::toast(heading: 'Payment confirmed', text: 'Order '.$this->order->order_number.' is being processed.', variant: 'success');
+        Flux::toast(heading: 'Payment confirmed', text: 'Order ' . $this->order->order_number . ' is being processed.', variant: 'success');
 
         $this->redirectRoute('account.orders.show', $this->order, navigate: true);
     }
@@ -146,7 +142,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
 
     public function payWithMpesa(): void
     {
-        if (! MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
+        if (!MpesaPaymentService::isValidKenyanMobile($this->mpesaPhone)) {
             $this->addError('mpesaPhone', 'Enter a valid M-Pesa number, e.g. 0712 345 678.');
 
             return;
@@ -172,13 +168,13 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
      */
     public function pollPayment(): void
     {
-        if (! $this->awaitingPayment || ! $this->pendingPaymentId) {
+        if (!$this->awaitingPayment || !$this->pendingPaymentId) {
             return;
         }
 
         $payment = Payment::find($this->pendingPaymentId);
 
-        if (! $payment) {
+        if (!$payment) {
             $this->awaitingPayment = false;
 
             return;
@@ -191,7 +187,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             $this->awaitingPayment = false;
             StorefrontSession::clearCart();
             $this->dispatch('cart-updated');
-            Flux::toast(heading: 'Payment received', text: 'Order '.$payment->account_reference.' is confirmed.', variant: 'success');
+            Flux::toast(heading: 'Payment received', text: 'Order ' . $payment->account_reference . ' is confirmed.', variant: 'success');
             $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
 
             return;
@@ -257,10 +253,9 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                     {{-- CARD PAYMENT --}}
                     {{-- ================================================== --}}
                     <div
-                        class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'card' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
+                        class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'card' ? 'border-brand-200 bg-brand-50' : 'border-zinc-200 bg-white' }}">
                         {{-- Header row --}}
-                        <button type="button" wire:click="selectMethod('card')"
-                            class="flex w-full items-center gap-3 px-5 py-4 text-left">
+                        <div wire:click="selectMethod('card')" class="flex cursor-pointer items-center gap-3 px-5 py-3">
                             <span
                                 class="flex size-4 shrink-0 items-center justify-center rounded-full border-2 {{ $this->selectedMethod === 'card' ? 'border-brand-500' : 'border-zinc-300' }}">
                                 @if ($this->selectedMethod === 'card')
@@ -268,7 +263,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                                 @endif
                             </span>
                             <flux:icon.credit-card variant="micro" class="size-4 text-ink-3" />
-                            <span class="flex-1 text-[14px] font-semibold text-ink">Card Payment</span>
+                            <flux:heading size="sm" class="flex-1">Card Payment</flux:heading>
                             <div class="flex items-center gap-1.5">
                                 <span
                                     class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">Visa</span>
@@ -277,7 +272,7 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                                 <span
                                     class="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-ink-4 uppercase">Amex</span>
                             </div>
-                        </button>
+                        </div>
 
                         {{-- Card form body.
                          wire:ignore keeps Livewire's DOM morphing away from this subtree so
@@ -288,41 +283,31 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                                 class="border-t border-zinc-100 px-5 pb-5 pt-4 space-y-4">
 
                                 {{-- Cardholder name --}}
-                                <div>
-                                    <label
-                                        class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Cardholder
-                                        name</label>
-                                    <input type="text" x-model="cardholderName" placeholder="Name on card"
-                                        class="w-full rounded-md border border-zinc-200 bg-white px-3 py-2.5 text-[13.5px] text-ink placeholder-zinc-400 outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
-                                </div>
+                                <flux:input label="Cardholder name" type="text" x-model="cardholderName"
+                                    placeholder="Name on card" />
 
-                                {{-- Card number --}}
-                                <div>
-                                    <label
-                                        class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Card
-                                        number</label>
+                                {{-- Card number — Stripe mounts an iframe here; keep raw div --}}
+                                <flux:field>
+                                    <flux:label>Card number</flux:label>
                                     <div x-ref="cardNumber"
                                         class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                     </div>
-                                </div>
+                                </flux:field>
 
-                                {{-- Expiry + CVC --}}
+                                {{-- Expiry + CVC — Stripe-mounted, keep raw divs --}}
                                 <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label
-                                            class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Expiry
-                                            date</label>
+                                    <flux:field>
+                                        <flux:label>Expiry date</flux:label>
                                         <div x-ref="cardExpiry"
                                             class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="mb-1.5 block text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">CVC</label>
+                                    </flux:field>
+                                    <flux:field>
+                                        <flux:label>CVC</flux:label>
                                         <div x-ref="cardCvc"
                                             class="w-full rounded-md border border-zinc-200 bg-white px-3 py-[11px] transition focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                         </div>
-                                    </div>
+                                    </flux:field>
                                 </div>
 
                                 {{-- Stripe error message --}}
@@ -350,10 +335,10 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                     {{-- M-PESA --}}
                     {{-- ================================================== --}}
                     <div
-                        class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200' }} bg-white">
+                        class="overflow-hidden rounded-md border {{ $this->selectedMethod === 'mpesa' ? 'border-brand-200 bg-brand-50' : 'border-zinc-200 bg-white' }}">
                         {{-- Header row --}}
-                        <button type="button" wire:click="selectMethod('mpesa')"
-                            class="flex w-full items-center gap-3 px-5 py-4 text-left">
+                        <div wire:click="selectMethod('mpesa')"
+                            class="flex cursor-pointer items-center gap-3 px-5 py-3">
                             <span
                                 class="flex size-4 shrink-0 items-center justify-center rounded-full border-2 {{ $this->selectedMethod === 'mpesa' ? 'border-brand-500' : 'border-zinc-300' }}">
                                 @if ($this->selectedMethod === 'mpesa')
@@ -361,23 +346,17 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
                                 @endif
                             </span>
                             <flux:icon.device-phone-mobile variant="micro" class="size-4 text-ink-3" />
-                            <span class="flex-1 text-[14px] font-semibold text-ink">M-Pesa</span>
+                            <flux:heading size="sm" class="flex-1">M-Pesa</flux:heading>
                             <span
                                 class="text-[10px] font-bold tracking-widest text-emerald-600 uppercase">Safaricom</span>
-                        </button>
+                        </div>
 
                         {{-- M-Pesa form (shown when selected) --}}
                         @if ($this->selectedMethod === 'mpesa')
                             <div class="border-t border-zinc-100 px-5 pb-5 pt-4 space-y-4">
-                                <flux:field>
-                                    <flux:label class="text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">
-                                        M-Pesa phone number</flux:label>
-                                    <flux:input wire:model="mpesaPhone" type="tel" inputmode="tel"
-                                        placeholder="0712 345 678" />
-                                    <flux:description>You'll receive an STK push — enter your PIN to confirm.
-                                    </flux:description>
-                                    <flux:error name="mpesaPhone" />
-                                </flux:field>
+                                <flux:input wire:model="mpesaPhone" label="M-Pesa phone number" type="tel"
+                                    inputmode="tel" placeholder="0712 345 678"
+                                    description:trailing="You'll receive an STK push — enter your PIN to confirm." />
 
                                 <flux:button variant="customer-primary" size="customer-lg" wire:click="payWithMpesa"
                                     wire:loading.attr="disabled" wire:target="payWithMpesa" class="w-full!">
@@ -401,8 +380,8 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
             {{-- ================================================== --}}
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
                 <div class="rounded-md border border-zinc-200 bg-white">
-                    <div class="border-b border-zinc-200 px-6 py-4">
-                        <h2 class="text-[11px] font-bold tracking-[0.14em] text-ink uppercase">Order summary</h2>
+                    <div class="border-b border-zinc-200 px-5 py-3">
+                        <flux:heading size="sm" class="uppercase tracking-wide">Order Summary</flux:heading>
                     </div>
 
                     <div class="p-6">

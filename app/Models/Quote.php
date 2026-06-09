@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QuoteStatus;
+use App\Models\Concerns\HasStatusHistory;
 use App\Settings\QuotationSettings;
 use Database\Factories\QuoteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,7 +20,7 @@ use Spatie\Activitylog\Support\LogOptions;
 class Quote extends Model
 {
     /** @use HasFactory<QuoteFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory, HasStatusHistory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {

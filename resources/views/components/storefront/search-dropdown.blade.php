@@ -115,7 +115,7 @@ new class extends Component
          x-transition:leave="transition duration-100 ease-in"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-1"
-         class="absolute top-[calc(100%+8px)] left-0 right-0 z-50 max-h-[calc(100vh-120px)] overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-xl">
+         class="scrollbar-thin absolute top-[calc(100%+8px)] left-0 right-0 z-50 max-h-[calc(100vh-120px)] overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-xl">
 
         @if (strlen(trim($query)) < 2)
             {{-- Empty state: recent + trending --}}

@@ -6,11 +6,15 @@ use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
     use WithPagination;
+
+    #[Url]
+    public string $status = 'active';
 
     public function mount(): void
     {
@@ -20,7 +24,16 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
     #[Computed]
     public function quotes()
     {
-        return auth()->user()->quotes()->latest()->paginate(10);
+        return auth()->user()->quotes()
+            ->when($this->status === 'active', fn ($q) => $q->whereIn('status', ['draft', 'sent', 'awaiting_approval', 'approved']))
+            ->when($this->status === 'rejected', fn ($q) => $q->whereIn('status', ['declined', 'expired']))
+            ->latest()
+            ->paginate(10);
+    }
+
+    public function updatedStatus(): void
+    {
+        $this->resetPage();
     }
 
     public function approve(int $id): void
@@ -47,8 +60,20 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
     {{-- Header --}}
     <div>
         <flux:heading size="xl">Quotes</flux:heading>
-        <flux:text class="mt-1">Pending and historical quotations. Approve a quote to convert it to an order.
-        </flux:text>
+        <flux:text class="mt-1">Pending and historical quotations. Approve a quote to convert it to an order.</flux:text>
+    </div>
+
+    {{-- Status filter --}}
+    <div class="flex flex-wrap gap-2">
+        @foreach (['active' => 'Active', 'rejected' => 'Rejected / Expired'] as $value => $label)
+            <button type="button" wire:click="$set('status', '{{ $value }}')"
+                    class="rounded-full border px-3.5 py-1 text-[12px] font-semibold transition
+                        {{ $status === $value
+                            ? 'border-ink bg-ink text-white'
+                            : 'border-zinc-200 bg-white text-ink-2 hover:border-zinc-300' }}">
+                {{ $label }}
+            </button>
+        @endforeach
     </div>
 
     @if ($this->quotes->isEmpty())

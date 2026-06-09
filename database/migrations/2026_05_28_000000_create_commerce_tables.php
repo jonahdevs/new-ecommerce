@@ -112,6 +112,16 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('status_histories', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('historyable'); // orders, quotes, etc.
+            $table->string('from_status')->nullable(); // null = initial placement
+            $table->string('to_status');
+            $table->text('note')->nullable();
+            $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+
         Schema::create('sap_sync_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
@@ -194,11 +204,24 @@ return new class extends Migration
             $table->bigInteger('tax_cents')->default(0);
             $table->timestamps();
         });
+
+        // One row per user/product pair; viewed_at updated on every revisit so
+        // the list stays sorted by most-recently-viewed without growing unbounded.
+        Schema::create('recently_viewed', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->timestamp('viewed_at')->useCurrent()->useCurrentOnUpdate();
+            $table->unique(['user_id', 'product_id']);
+            $table->index(['user_id', 'viewed_at']);
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('recently_viewed');
         Schema::dropIfExists('sap_sync_logs');
+        Schema::dropIfExists('status_histories');
         Schema::dropIfExists('quote_items');
         Schema::dropIfExists('quotes');
         Schema::dropIfExists('order_items');

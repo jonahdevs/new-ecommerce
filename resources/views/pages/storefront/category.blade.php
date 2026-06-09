@@ -5,6 +5,7 @@ use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use Artesaos\SEOTools\Facades\JsonLdMulti;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
@@ -58,6 +59,21 @@ new #[Layout('layouts::storefront')] class extends Component
         if ($category->canonical_url) {
             SEOMeta::setCanonical($category->canonical_url);
         }
+
+        $categoryUrl = route('category.show', $category->slug);
+
+        JsonLdMulti::setType('CollectionPage')
+            ->setTitle($title)
+            ->setDescription($description)
+            ->addValue('url', $categoryUrl);
+
+        JsonLdMulti::newJsonLd()
+            ->setType('BreadcrumbList')
+            ->addValue('itemListElement', [
+                ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+                ['@type' => 'ListItem', 'position' => 2, 'name' => 'Shop', 'item' => route('catalog')],
+                ['@type' => 'ListItem', 'position' => 3, 'name' => $category->name, 'item' => $categoryUrl],
+            ]);
     }
 
     public function rendering($view): void
@@ -149,71 +165,69 @@ new #[Layout('layouts::storefront')] class extends Component
 
 
 <div class="page-fade">
+    {{-- Breadcrumb --}}
+    <div class="shell py-3">
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item :href="route('catalog')" wire:navigate>Shop</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>{{ $category->name }}</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
+    </div>
+
     {{-- Category hero --}}
-    <div class="border-b border-zinc-200 bg-surface-sunken py-8">
-        <div class="shell grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_200px]">
-            <div class="flex items-center gap-4">
-                @if ($category->icon)
-                    <img src="{{ $category->icon_url }}" alt=""
-                        class="size-12 shrink-0 object-contain" />
-                @endif
-                <div>
-                    <h1 class="text-3xl font-semibold tracking-tight">{{ $category->name }}</h1>
-                    @if ($category->description)
-                        <p class="mt-2 max-w-xl text-[14px] text-ink-3">{{ $category->description }}</p>
-                    @endif
-                </div>
-            </div>
-            @if ($category->image)
-                <div class="hidden h-30 w-50 overflow-hidden rounded md:block">
-                    <img src="{{ $category->image_url }}" alt=""
-                        class="size-full object-cover" />
-                </div>
+    <div class="relative overflow-hidden border-b border-zinc-200 py-16
+        {{ $category->image ? '' : 'bg-surface-sunken' }}"
+        @if ($category->image)
+            style="background-image: url('{{ $category->image_url }}'); background-size: cover; background-position: center;"
+        @endif>
+
+        @if ($category->image)
+            <div class="absolute inset-0 bg-zinc-900/60"></div>
+        @endif
+
+        <div class="shell relative z-10">
+            <h1 class="text-3xl font-semibold tracking-tight {{ $category->image ? 'text-white' : 'text-ink' }}">
+                {{ $category->name }}
+            </h1>
+            @if ($category->description)
+                <p class="mt-2 max-w-xl text-[14px] {{ $category->image ? 'text-white/75' : 'text-ink-3' }}">
+                    {{ $category->description }}
+                </p>
             @endif
         </div>
     </div>
 
     <div class="shell pt-4 pb-20">
-        {{-- Breadcrumb --}}
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item :href="route('catalog')" wire:navigate>Shop</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>{{ $category->name }}</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
-
         <div class="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
             {{-- Filters sidebar (no category filter — already scoped) --}}
-            <aside class="lg:sticky lg:top-32 lg:self-start" x-data="{ openBrands: false }">
-                <div class="flex flex-col gap-7 text-sm">
+            <aside class="scrollbar-thin lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto" x-data="{ openBrands: false }">
+                <div class="divide-y divide-zinc-200 rounded-md border border-zinc-200 bg-white text-sm">
+
                     @if ($this->brandsList->isNotEmpty())
-                        <div>
-                            <div
-                                class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                                Brand</div>
-                            <div class="flex flex-col gap-2">
+                        <div class="px-5 py-4">
+                            <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Brand</div>
+                            <div class="scrollbar-thin flex flex-col gap-2" :class="openBrands ? 'max-h-96 overflow-y-auto pr-1' : ''">
                                 @foreach ($this->brandsList as $i => $brand)
                                     <div @if ($i >= 6) x-show="openBrands" x-cloak @endif>
-                                        <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}"
-                                            :label="$brand->name" />
+                                        <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}" :label="$brand->name" />
                                     </div>
                                 @endforeach
                             </div>
                             @if ($this->brandsList->count() > 6)
                                 <button type="button" @click="openBrands = !openBrands"
                                     class="mt-2 cursor-pointer text-[12.5px] text-brand-500 hover:underline">
-                                    <span x-show="!openBrands" class="inline-flex items-center gap-1">Show all
-                                        {{ $this->brandsList->count() }} brands <flux:icon.arrow-right variant="micro"
-                                            class="size-3.5" /></span>
+                                    <span x-show="!openBrands" class="inline-flex items-center gap-1">
+                                        Show all {{ $this->brandsList->count() }} brands
+                                        <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                                    </span>
                                     <span x-show="openBrands" x-cloak>Show fewer</span>
                                 </button>
                             @endif
                         </div>
                     @endif
 
-                    <div>
-                        <div
-                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            Price</div>
+                    <div class="px-5 py-4">
+                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Price</div>
                         <div class="flex justify-between text-[12.5px] text-ink-3">
                             <span>{{ money(0) }}</span>
                             <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
@@ -222,19 +236,18 @@ new #[Layout('layouts::storefront')] class extends Component
                             wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />
                     </div>
 
-                    <div>
-                        <div
-                            class="mb-3 border-b border-zinc-200 pb-1.5 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            Availability</div>
+                    <div class="px-5 py-4">
+                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Availability</div>
                         <flux:checkbox wire:model.live="inStockOnly" label="In stock — ships now" />
                     </div>
+
                 </div>
             </aside>
 
             {{-- Results --}}
             <div>
                 <div
-                    class="mb-5 flex flex-col gap-3 border-b border-zinc-200 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                    class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="text-[13.5px] text-ink-3">
                         Showing <span class="font-semibold text-ink">{{ $this->products->total() }}</span>
                         {{ \Illuminate\Support\Str::plural('product', $this->products->total()) }}
@@ -246,7 +259,6 @@ new #[Layout('layouts::storefront')] class extends Component
                         @endif
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <label class="text-[13px] text-ink-3">Sort:</label>
                         <select wire:model.live="sort"
                             class="h-9 rounded border border-zinc-200 bg-white px-2.5 text-[13px] focus:border-brand-500 focus:ring-0 focus:outline-none">
                             <option value="popularity">Most popular</option>

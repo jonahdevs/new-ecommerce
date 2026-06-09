@@ -25,6 +25,9 @@
                 <flux:navlist.item :href="route('appearance.edit')" :current="request()->routeIs('appearance.edit')" wire:navigate>
                     {{ __('Appearance') }}
                 </flux:navlist.item>
+                <flux:navlist.item :href="route('privacy.edit')" :current="request()->routeIs('privacy.edit')" wire:navigate>
+                    {{ __('Privacy & Data') }}
+                </flux:navlist.item>
             </flux:navlist>
         </div>
 

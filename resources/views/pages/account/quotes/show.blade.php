@@ -173,7 +173,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                 {{-- Line items --}}
                 <flux:card class="overflow-hidden p-0">
                     <div class="border-b border-zinc-100 px-6 py-4">
-                        <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Items</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Items</flux:heading>
                     </div>
                     <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
                         <flux:table.columns class="bg-zinc-50">
@@ -210,7 +210,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                 {{-- Terms & conditions --}}
                 @if ($quote->terms)
                     <flux:card>
-                        <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Terms & conditions</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Terms & conditions</flux:heading>
                         <p class="mt-3 whitespace-pre-line text-[13px] leading-relaxed text-ink-3">{{ $quote->terms }}</p>
                     </flux:card>
                 @endif
@@ -221,7 +221,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
             <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-80">
                 <flux:card class="p-0">
                     <div class="border-b border-zinc-100 px-5 py-4">
-                        <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Summary</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Summary</flux:heading>
                     </div>
                     <div class="space-y-3 px-5 py-4">
                         <div class="flex justify-between">
@@ -263,7 +263,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
         <flux:card class="overflow-hidden p-0">
             <div class="border-b border-zinc-100 px-6 py-4">
                 <div class="flex items-center justify-between">
-                    <flux:heading size="sm">Items requested</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Items requested</flux:heading>
                     <flux:badge color="yellow">Awaiting quote</flux:badge>
                 </div>
                 <flux:text size="sm" class="mt-1 text-zinc-400">Our team is preparing your formal quotation. Prices will appear once ready.</flux:text>

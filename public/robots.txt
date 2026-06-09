@@ -1,2 +1,14 @@
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /customer/
+Disallow: /login
+Disallow: /register
+Disallow: /password/
+Disallow: /email/
+Disallow: /two-factor-challenge
+Disallow: /livewire/
+Disallow: /api/
+
+Sitemap: https://new-ecommerce.test/sitemap.xml

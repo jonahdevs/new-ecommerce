@@ -48,9 +48,9 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
             {{-- Items --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-100 px-6 py-4">
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Items</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Items</flux:heading>
                 </div>
-                <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
+                <flux:table container:class="scrollbar-thin [&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
                     <flux:table.columns class="bg-zinc-50">
                         <flux:table.column>Product</flux:table.column>
                         <flux:table.column class="w-32">SKU</flux:table.column>
@@ -97,7 +97,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
             {{-- Summary --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-100 px-6 py-4">
-                    <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Summary</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Summary</flux:heading>
                 </div>
                 <div class="space-y-3 px-5 py-4">
                     <div class="flex justify-between">
@@ -141,7 +141,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
             @if ($order->address)
                 <flux:card class="overflow-hidden p-0">
                     <div class="border-b border-zinc-100 px-6 py-4">
-                        <flux:heading size="sm" class="uppercase tracking-widest text-ink-3">Delivery address</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Delivery address</flux:heading>
                     </div>
                     <div class="space-y-0.5 px-5 py-4 text-[13.5px] leading-relaxed text-ink-2">
                         <div class="font-semibold">{{ $order->address->fullName() }}</div>

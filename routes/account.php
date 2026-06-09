@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\DataExportController;
 use App\Models\Quote;
 use App\Services\QuotePdfService;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ?? abort(404, 'Quote document not yet available.');
     })->name('account.quotes.download');
     Route::livewire('account/addresses', 'pages::account.addresses.index')->name('account.addresses.index');
+    Route::livewire('account/reviews', 'pages::account.reviews')->name('account.reviews');
+    Route::livewire('account/reviews/{product:slug}', 'pages::account.review-form')->name('account.reviews.form');
+    Route::livewire('account/recently-viewed', 'pages::account.recently-viewed')->name('account.recently-viewed');
+    Route::get('account/data/export', DataExportController::class)->name('account.data.export');
 });
 
 // ---------------------------------------------------------------------------
@@ -36,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('account/settings/notifications', 'pages::account.settings.notifications')->name('notifications.edit');
     Route::livewire('account/settings/appearance', 'pages::account.settings.appearance')->name('appearance.edit');
+    Route::livewire('account/settings/privacy', 'pages::account.settings.privacy')->name('privacy.edit');
 
     Route::livewire('account/settings/security', 'pages::account.settings.security')
         ->middleware(['password.confirm'])
