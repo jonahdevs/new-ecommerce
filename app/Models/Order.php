@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -111,9 +112,35 @@ class Order extends Model
         return $this->hasOne(Payment::class)->latestOfMany();
     }
 
+    public function quote(): HasOne
+    {
+        return $this->hasOne(Quote::class, 'order_id');
+    }
+
     public function isPaid(): bool
     {
         return $this->payments()->where('status', PaymentStatus::SUCCESS)->exists();
+    }
+
+    public function wasConvertedFromQuote(): bool
+    {
+        return $this->quote()->exists();
+    }
+
+    public function hasKraReceipt(): bool
+    {
+        return $this->kra_receipt_path !== null
+            && Storage::disk('local')->exists($this->kra_receipt_path);
+    }
+
+    public function isAwaitingKraValidation(): bool
+    {
+        return $this->sap_sync_status === SapSyncStatus::AWAITING_CU;
+    }
+
+    public function hasSapSyncFailed(): bool
+    {
+        return $this->sap_sync_status === SapSyncStatus::FAILED;
     }
 
     /**

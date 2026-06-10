@@ -199,7 +199,7 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
         @if (count($selected) > 0)
             <div class="flex flex-wrap items-center gap-3 border-b border-zinc-200 bg-brand-50 px-6 py-2.5 dark:border-zinc-700 dark:bg-brand-500/10">
                 <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
-                <flux:button size="sm" variant="ghost" icon="trash"
+                <flux:button size="sm" variant="ghost" icon="trash-2"
                     wire:click="bulkDelete"
                     wire:confirm="Delete {{ count($selected) }} showroom(s)? This cannot be undone."
                     class="text-red-500! hover:text-red-600!">Delete</flux:button>
@@ -245,7 +245,7 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
                             <div class="flex items-center justify-end gap-1">
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     wire:click="openEdit({{ $showroom->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Delete"
                                     wire:click="delete({{ $showroom->id }})"
                                     wire:confirm="Delete the {{ $showroom->city }} showroom?"
                                     class="text-red-500! hover:text-red-600!" />

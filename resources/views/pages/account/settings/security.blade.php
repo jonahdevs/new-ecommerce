@@ -408,7 +408,7 @@ new #[Layout('layouts::settings')] #[Title('Security')] class extends Component 
                                     </p>
                                 </div>
                             </div>
-                            <flux:button variant="ghost" size="sm" icon="trash" icon:variant="outline"
+                            <flux:button variant="ghost" size="sm" icon="trash-2" icon:variant="outline"
                                          wire:click="confirmDelete({{ $passkey['id'] }})"
                                          class="text-red-500 hover:bg-red-50 hover:text-red-600" />
                         </div>

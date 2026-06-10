@@ -122,6 +122,8 @@ new #[Layout('layouts::app')] #[Title('Subscribers — Admin')] class extends Co
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search email…"
                 icon="magnifying-glass" clearable class="max-w-xs" />
 
+            <flux:spacer />
+
             <flux:select wire:model.live="filterStatus" class="w-40">
                 <flux:select.option value="">All statuses</flux:select.option>
                 <flux:select.option value="confirmed">Confirmed</flux:select.option>
@@ -136,8 +138,6 @@ new #[Layout('layouts::app')] #[Title('Subscribers — Admin')] class extends Co
                 <flux:select.option value="trade-pricing">Trade offers</flux:select.option>
                 <flux:select.option value="projects">Projects</flux:select.option>
             </flux:select>
-
-            <flux:spacer />
 
             <flux:select wire:model.live="perPage" class="w-28">
                 <flux:select.option value="25">25 / page</flux:select.option>

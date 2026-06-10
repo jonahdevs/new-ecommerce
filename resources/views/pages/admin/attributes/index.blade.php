@@ -113,7 +113,7 @@ new #[Layout('layouts::app')] #[Title('Attributes — Admin')] class extends Com
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     :href="route('admin.attributes.edit', $attribute)"
                                     wire:navigate />
-                                <flux:button size="xs" variant="ghost" icon="trash"
+                                <flux:button size="xs" variant="ghost" icon="trash-2"
                                     wire:click="delete({{ $attribute->id }})"
                                     wire:confirm="Delete '{{ addslashes($attribute->name) }}' and all its values?"
                                     class="text-red-500! hover:text-red-600!" />

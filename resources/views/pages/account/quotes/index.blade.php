@@ -63,19 +63,6 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
         <flux:text class="mt-1">Pending and historical quotations. Approve a quote to convert it to an order.</flux:text>
     </div>
 
-    {{-- Status filter --}}
-    <div class="flex flex-wrap gap-2">
-        @foreach (['active' => 'Active', 'rejected' => 'Rejected / Expired'] as $value => $label)
-            <button type="button" wire:click="$set('status', '{{ $value }}')"
-                    class="rounded-full border px-3.5 py-1 text-[12px] font-semibold transition
-                        {{ $status === $value
-                            ? 'border-ink bg-ink text-white'
-                            : 'border-zinc-200 bg-white text-ink-2 hover:border-zinc-300' }}">
-                {{ $label }}
-            </button>
-        @endforeach
-    </div>
-
     @if ($this->quotes->isEmpty())
         <flux:card class="py-14 text-center">
             <flux:icon.document-text variant="outline" class="mx-auto size-9 text-ink-4" />
@@ -88,9 +75,20 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
         </flux:card>
     @else
         <flux:card class="p-0 overflow-hidden">
+            <div class="flex flex-wrap gap-2 border-b border-zinc-200 px-6 py-3">
+                @foreach (['active' => 'Active', 'rejected' => 'Rejected / Expired'] as $value => $label)
+                    <button type="button" wire:click="$set('status', '{{ $value }}')"
+                            class="cursor-pointer rounded-md border px-3.5 py-1 text-[12px] font-semibold transition
+                                {{ $status === $value
+                                    ? 'border-brand-blue-500 bg-brand-blue-500 text-white'
+                                    : 'border-zinc-200 bg-white text-ink-2 hover:border-zinc-300' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
             <flux:table
                 container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
-                <flux:table.columns>
+                <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                     <flux:table.column>Quote</flux:table.column>
                     <flux:table.column class="hidden sm:table-cell">Date</flux:table.column>
                     <flux:table.column class="hidden md:table-cell">Expires</flux:table.column>

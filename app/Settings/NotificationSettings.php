@@ -12,7 +12,7 @@ class NotificationSettings extends Settings
     // ==================================================
 
     /** 'individual' sends to each qualifying staff member; 'central' sends to one shared inbox. */
-    public string $staff_email_routing = 'individual';
+    public string $staff_email_routing = 'central';
 
     public ?string $staff_central_email = null;
 

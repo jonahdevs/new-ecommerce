@@ -28,7 +28,7 @@ class EnsureStoreNotInMaintenance
         }
 
         $user = $request->user();
-        if ($user && method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+        if ($user && method_exists($user, 'roles') && $user->roles->isNotEmpty()) {
             return $next($request);
         }
 

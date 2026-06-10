@@ -171,7 +171,7 @@ new #[Layout('layouts::app')] #[Title('Warehouses — Admin')] class extends Com
                 <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
                 <flux:button size="sm" variant="ghost" wire:click="bulkActivate">Activate</flux:button>
                 <flux:button size="sm" variant="ghost" wire:click="bulkDeactivate">Deactivate</flux:button>
-                <flux:button size="sm" variant="ghost" icon="trash"
+                <flux:button size="sm" variant="ghost" icon="trash-2"
                     wire:click="bulkDelete"
                     wire:confirm="Delete {{ count($selected) }} warehouse(s)? This cannot be undone."
                     class="text-red-500! hover:text-red-600!">Delete</flux:button>
@@ -224,7 +224,7 @@ new #[Layout('layouts::app')] #[Title('Warehouses — Admin')] class extends Com
                             <div class="flex items-center justify-end gap-1">
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     :href="route('admin.shipping.warehouses.edit', $warehouse)" wire:navigate />
-                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Delete"
                                     wire:click="delete({{ $warehouse->id }})"
                                     wire:confirm="Delete {{ $warehouse->name }}?"
                                     class="text-red-500! hover:text-red-600!" />

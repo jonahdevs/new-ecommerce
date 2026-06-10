@@ -26,7 +26,7 @@ $isWished   = \App\Support\StorefrontSession::isWishlisted($product->slug);
 <article {{ $attributes->merge(['class' => 'group flex flex-col overflow-hidden rounded border border-zinc-200 bg-white transition hover:shadow-md']) }}>
 
     {{-- Image area --}}
-    <div class="relative h-56 overflow-hidden bg-surface-sunken">
+    <div class="relative aspect-[4/3] overflow-hidden bg-surface-sunken">
 
         {{-- Clickable image link fills the entire area --}}
         <a href="{{ route('product.show', $product) }}" wire:navigate class="absolute inset-0">
@@ -133,7 +133,7 @@ $isWished   = \App\Support\StorefrontSession::isWishlisted($product->slug);
                     <button type="button" aria-label="Remove one"
                             @click="removeOne()"
                             class="flex size-9 shrink-0 cursor-pointer items-center justify-center transition hover:bg-brand-600">
-                        <flux:icon.trash variant="micro" class="size-3.5" x-show="qty <= 1" />
+                        <flux:icon.trash-2 variant="micro" class="size-3.5" x-show="qty <= 1" />
                         <flux:icon.minus variant="micro" class="size-3.5" x-show="qty > 1" x-cloak />
                     </button>
                     <span x-text="qty" class="flex-1 text-center text-[13px] font-bold tabular-nums"></span>
@@ -153,7 +153,7 @@ $isWished   = \App\Support\StorefrontSession::isWishlisted($product->slug);
 
     {{-- Info — purely informational, no buttons --}}
     <a href="{{ route('product.show', $product) }}" wire:navigate
-        class="flex flex-1 flex-col px-4 py-3.5">
+        class="flex flex-1 flex-col px-3 py-3 sm:px-4 sm:py-3.5">
         @if ($brandName)
             <div class="text-[11px] font-bold tracking-[0.08em] text-brand-blue-600 uppercase">{{ $brandName }}</div>
         @endif

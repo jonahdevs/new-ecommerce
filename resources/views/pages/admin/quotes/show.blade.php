@@ -461,7 +461,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                                         {!! money($lineTotal) !!}
                                     </flux:table.cell>
                                     <flux:table.cell align="end">
-                                        <flux:button size="xs" variant="ghost" icon="trash" tooltip="Remove line"
+                                        <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Remove line"
                                             wire:click="removeLine({{ $index }})" type="button"
                                             wire:confirm="Remove this line item from the quote?"
                                             class="text-red-500! hover:text-red-600!" />

@@ -624,8 +624,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                             <div class="divide-y divide-zinc-100">
                                 @foreach ($this->lines as $line)
                                     <div wire:key="item-{{ $line['key'] }}" class="flex gap-3 py-3.5">
-                                        <div
-                                            class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
+                                        <div class="size-12 shrink-0">
                                             @if ($line['product']->cover_url)
                                                 <img src="{{ $line['product']->cover_url }}" alt=""
                                                     class="size-full object-contain" loading="lazy" />
@@ -719,7 +718,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         @foreach ($this->searchResults as $product)
                             <div wire:key="res-{{ $product->slug }}"
                                 class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">
-                                <div class="relative aspect-square overflow-hidden bg-surface-sunken p-2">
+                                <div class="relative aspect-square overflow-hidden">
                                     @if ($product->cover_url)
                                         <img src="{{ $product->cover_url }}" alt="{{ $product->name }}"
                                             class="size-full object-contain" loading="lazy" />

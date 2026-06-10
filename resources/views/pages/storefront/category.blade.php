@@ -175,7 +175,7 @@ new #[Layout('layouts::storefront')] class extends Component
     </div>
 
     {{-- Category hero --}}
-    <div class="relative overflow-hidden border-b border-zinc-200 py-16
+    <div class="relative overflow-hidden border-b border-zinc-200 py-10
         {{ $category->image ? '' : 'bg-surface-sunken' }}"
         @if ($category->image)
             style="background-image: url('{{ $category->image_url }}'); background-size: cover; background-position: center;"
@@ -186,7 +186,7 @@ new #[Layout('layouts::storefront')] class extends Component
         @endif
 
         <div class="shell relative z-10">
-            <h1 class="text-3xl font-semibold tracking-tight {{ $category->image ? 'text-white' : 'text-ink' }}">
+            <h1 class="text-2xl font-semibold tracking-tight {{ $category->image ? 'text-white' : 'text-ink' }}">
                 {{ $category->name }}
             </h1>
             @if ($category->description)
@@ -245,7 +245,7 @@ new #[Layout('layouts::storefront')] class extends Component
             </aside>
 
             {{-- Results --}}
-            <div>
+            <div class="@container">
                 <div
                     class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="text-[13.5px] text-ink-3">
@@ -283,7 +283,7 @@ new #[Layout('layouts::storefront')] class extends Component
                         </div>
                     </div>
                 @else
-                    <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                    <div class="grid grid-cols-1 gap-3.5 @sm:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 @5xl:grid-cols-5">
                         @foreach ($this->products as $product)
                             <x-storefront.product-card :product="$product" wire:key="prod-{{ $product->id }}" />
                         @endforeach

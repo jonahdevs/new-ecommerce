@@ -304,7 +304,7 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
                 <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
                 <flux:button size="sm" variant="ghost" wire:click="bulkActivate">Activate</flux:button>
                 <flux:button size="sm" variant="ghost" wire:click="bulkDeactivate">Deactivate</flux:button>
-                <flux:button size="sm" variant="ghost" icon="trash"
+                <flux:button size="sm" variant="ghost" icon="trash-2"
                     wire:click="bulkDelete"
                     wire:confirm="Delete {{ count($selected) }} promotion(s)? This cannot be undone."
                     class="text-red-500! hover:text-red-600!">Delete</flux:button>
@@ -358,7 +358,7 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
                                 </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     wire:click="openEditPromo({{ $promo->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Delete"
                                     wire:click="deletePromo({{ $promo->id }})"
                                     wire:confirm="Delete the {{ $promo->name }} promotion?"
                                     class="text-red-500! hover:text-red-600!" />

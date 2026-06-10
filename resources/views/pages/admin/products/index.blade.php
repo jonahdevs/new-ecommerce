@@ -425,7 +425,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                     </flux:menu>
                 </flux:dropdown>
 
-                <flux:button size="sm" variant="ghost" icon="trash" wire:click="bulkDelete"
+                <flux:button size="sm" variant="ghost" icon="trash-2" wire:click="bulkDelete"
                     wire:confirm="Delete {{ count($selected) }} selected product(s)? This cannot be undone."
                     class="text-red-500! hover:text-red-600!">Delete</flux:button>
 
@@ -549,7 +549,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                                         Activity log
                                     </flux:menu.item>
                                     <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger"
+                                    <flux:menu.item icon="trash-2" variant="danger"
                                         wire:click="deleteProduct({{ $product->id }})"
                                         wire:confirm="Delete '{{ addslashes($product->name) }}'? This cannot be undone.">
                                         Delete

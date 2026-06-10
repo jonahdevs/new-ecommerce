@@ -339,7 +339,7 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
                                     :class="$editingRatesForZone === $zone->id ? 'text-brand-500!' : ''">
                                     Rates
                                 </flux:button>
-                                <flux:button size="xs" variant="ghost" icon="trash"
+                                <flux:button size="xs" variant="ghost" icon="trash-2"
                                     wire:click="removeZoneCoverage({{ $zone->id }})"
                                     wire:confirm="Remove {{ $zone->name }} from {{ $name }}? All rates for this zone will be deleted."
                                     class="text-red-500! hover:text-red-600!" />

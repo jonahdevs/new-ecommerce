@@ -234,7 +234,7 @@
                                                         {{ $attr['name'] ?: 'New Attribute' }}
                                                     </span>
                                                     <div class="flex items-center gap-1">
-                                                        <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                        <flux:button size="xs" variant="ghost" icon="trash-2" type="button"
                                                             wire:click="removeAttribute({{ $index }})"
                                                             class="text-red-500! hover:text-red-600!" />
                                                         <button type="button" wire:click="toggleAttributeCollapsed({{ $index }})"
@@ -341,7 +341,7 @@
                                                             <flux:menu.item icon="archive-box" wire:click="openBulkEdit('stock_status')">Set stock status</flux:menu.item>
                                                             <flux:menu.item icon="hashtag" wire:click="openBulkEdit('stock_quantity')">Set stock quantity</flux:menu.item>
                                                             <flux:menu.separator />
-                                                            <flux:menu.item icon="trash" variant="danger" wire:click="bulkDeleteVariants"
+                                                            <flux:menu.item icon="trash-2" variant="danger" wire:click="bulkDeleteVariants"
                                                                 wire:confirm="Delete {{ count($selectedVariantIndexes) }} selected variation(s)?">
                                                                 Delete selected
                                                             </flux:menu.item>
@@ -403,7 +403,7 @@
                                                                 @else
                                                                     <flux:badge size="sm" color="zinc">Inactive</flux:badge>
                                                                 @endif
-                                                                <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                                <flux:button size="xs" variant="ghost" icon="trash-2" type="button"
                                                                     wire:click="removeVariant({{ $i }})"
                                                                     class="text-red-500! hover:text-red-600!" />
                                                                 <button type="button" wire:click="toggleVariantCollapsed({{ $i }})"
@@ -624,7 +624,7 @@
                                                         {{ $file['name'] ?: 'New file' }}
                                                     </span>
                                                     <div class="flex items-center gap-1">
-                                                        <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                        <flux:button size="xs" variant="ghost" icon="trash-2" type="button"
                                                             wire:click="removeFile({{ $index }})"
                                                             class="text-red-500! hover:text-red-600!" />
                                                         <button type="button" wire:click="toggleFileCollapsed({{ $index }})"
@@ -688,7 +688,7 @@
                                                             </label>
                                                             <flux:input wire:model="linkedProducts.{{ $index }}.price_override" type="number" min="0" step="0.01" placeholder="Price override" class="w-32" />
                                                         @endif
-                                                        <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                        <flux:button size="xs" variant="ghost" icon="trash-2" type="button"
                                                             wire:click="removeLinkedProduct({{ $index }})"
                                                             class="text-red-500! hover:text-red-600!" />
                                                     </div>
@@ -724,7 +724,7 @@
                                                                     <div class="font-mono text-xs text-zinc-400">{{ $linked['sku'] }}</div>
                                                                 @endif
                                                             </div>
-                                                            <flux:button size="xs" variant="ghost" icon="trash" type="button"
+                                                            <flux:button size="xs" variant="ghost" icon="trash-2" type="button"
                                                                 wire:click="removeProductLink('{{ $tKey }}', {{ $index }})"
                                                                 class="text-red-500! hover:text-red-600!" />
                                                         </div>
@@ -740,7 +740,7 @@
                                         @endif
 
                                         {{-- Shared product picker modal --}}
-                                        <flux:modal wire:model.self="showLinkPicker" class="md:w-[900px] lg:w-[1040px]">
+                                        <flux:modal wire:model.self="showLinkPicker" class="md:w-180 lg:w-215 md:max-w-none">
                                             @php
                                                 $pickerTitles = [
                                                     'component' => $type === 'grouped' ? 'Add grouped products' : 'Add bundle components',
@@ -761,13 +761,13 @@
                                                     autofocus
                                                     clearable />
 
-                                                <div class="max-h-96 overflow-y-auto">
+                                                <div class="@container max-h-96 overflow-y-auto scrollbar-thin">
                                                     @if ($this->linkPickerResults->isEmpty())
                                                         <div class="py-12 text-center text-sm text-zinc-400">
                                                             {{ strlen(trim($linkPickerSearch)) >= 2 ? 'No matching products.' : 'No products available to add.' }}
                                                         </div>
                                                     @else
-                                                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                                                        <div class="grid grid-cols-1 gap-3 @xs:grid-cols-2 @lg:grid-cols-3 @2xl:grid-cols-4">
                                                             @foreach ($this->linkPickerResults as $result)
                                                                 <div wire:key="pick-{{ $result->id }}"
                                                                     class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">

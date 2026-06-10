@@ -215,7 +215,7 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
                             @if (! $address->is_default)
                                 <flux:button variant="ghost" size="sm" wire:click="setDefault({{ $address->id }})">Set as default</flux:button>
                                 <flux:spacer />
-                                <flux:button variant="ghost" size="sm" icon="trash"
+                                <flux:button variant="ghost" size="sm" icon="trash-2"
                                              wire:click="delete({{ $address->id }})"
                                              wire:confirm="Delete this address?"
                                              class="text-red-500! hover:text-red-600!" />

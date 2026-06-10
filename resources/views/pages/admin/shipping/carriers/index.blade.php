@@ -154,7 +154,7 @@ new #[Layout('layouts::app')] #[Title('Carriers — Admin')] class extends Compo
                             :href="route('admin.shipping.carriers.edit', $carrier)" wire:navigate>
                             Configure
                         </flux:button>
-                        <flux:button size="sm" variant="ghost" icon="trash" tooltip="Delete"
+                        <flux:button size="sm" variant="ghost" icon="trash-2" tooltip="Delete"
                             wire:click="delete({{ $carrier->id }})"
                             wire:confirm="Delete {{ $carrier->name }}?"
                             class="text-red-500! hover:text-red-600!" />

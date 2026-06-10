@@ -172,7 +172,7 @@ new #[Layout('layouts::app')] #[Title('Shipping Methods — Admin')] class exten
                 <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
                 <flux:button size="sm" variant="ghost" wire:click="bulkActivate">Activate</flux:button>
                 <flux:button size="sm" variant="ghost" wire:click="bulkDeactivate">Deactivate</flux:button>
-                <flux:button size="sm" variant="ghost" icon="trash"
+                <flux:button size="sm" variant="ghost" icon="trash-2"
                     wire:click="bulkDelete"
                     wire:confirm="Delete {{ count($selected) }} method(s)? This cannot be undone."
                     class="text-red-500! hover:text-red-600!">Delete</flux:button>
@@ -223,7 +223,7 @@ new #[Layout('layouts::app')] #[Title('Shipping Methods — Admin')] class exten
                                 </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     :href="route('admin.shipping.methods.edit', $method)" wire:navigate />
-                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Delete"
                                     wire:click="delete({{ $method->id }})"
                                     wire:confirm="Delete '{{ addslashes($method->name) }}'?"
                                     class="text-red-500! hover:text-red-600!" />

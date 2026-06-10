@@ -304,7 +304,7 @@ new #[Layout('layouts::app')] #[Title('Maintenance — Admin')] class extends Co
                                         <flux:button size="xs" variant="ghost" icon="arrow-down-tray"
                                             wire:click="downloadBackup('{{ $backup['path'] }}')"
                                             tooltip="Download" />
-                                        <flux:button size="xs" variant="ghost" icon="trash" class="text-red-500!"
+                                        <flux:button size="xs" variant="ghost" icon="trash-2" class="text-red-500!"
                                             wire:click="deleteBackup('{{ $backup['path'] }}')"
                                             wire:confirm="Delete this backup permanently?"
                                             tooltip="Delete" />
@@ -407,7 +407,7 @@ new #[Layout('layouts::app')] #[Title('Maintenance — Admin')] class extends Co
                         <div class="flex shrink-0 items-center gap-1">
                             <flux:button size="xs" variant="ghost" icon="pencil-square"
                                 wire:click="editBan({{ $ban->id }})" />
-                            <flux:button size="xs" variant="ghost" icon="trash" class="text-red-500!"
+                            <flux:button size="xs" variant="ghost" icon="trash-2" class="text-red-500!"
                                 wire:click="unbanIpAddress({{ $ban->id }})"
                                 wire:confirm="Remove ban for {{ $ban->ip_address }}?" />
                         </div>

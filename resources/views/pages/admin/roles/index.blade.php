@@ -190,7 +190,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                     @if ($this->isProtected($role->name))
                         <flux:icon.lock-closed variant="micro" class="size-4 text-zinc-400" />
                     @else
-                        <flux:button size="xs" variant="ghost" icon="trash"
+                        <flux:button size="xs" variant="ghost" icon="trash-2"
                             wire:click="delete({{ $role->id }})"
                             wire:confirm="Delete the '{{ addslashes($role->name) }}' role?"
                             class="text-red-500! hover:text-red-600!" />

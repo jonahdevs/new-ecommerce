@@ -14,13 +14,12 @@ use App\Settings\SecuritySettings;
 use App\Settings\SeoSettings;
 use App\Settings\SocialSettings;
 use App\Settings\TaxSettings;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
+    $this->seed(PermissionSeeder::class);
 
     $this->admin = User::factory()->create();
     $this->admin->assignRole('admin');

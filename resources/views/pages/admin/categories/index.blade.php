@@ -181,7 +181,7 @@ new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Com
                                         Activity log
                                     </flux:menu.item>
                                     <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger"
+                                    <flux:menu.item icon="trash-2" variant="danger"
                                         wire:click="delete({{ $category->id }})"
                                         wire:confirm="Delete '{{ addslashes($category->name) }}'? This cannot be undone.">
                                         Delete

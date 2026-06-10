@@ -233,7 +233,7 @@ new #[Layout('layouts::app')] #[Title('Reviews — Admin')] class extends Compon
                                     <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="reject({{ $review->id }})"
                                         class="text-amber-600! hover:text-amber-700!" />
                                 @endif
-                                <flux:button size="xs" variant="ghost" icon="trash" wire:click="delete({{ $review->id }})"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" wire:click="delete({{ $review->id }})"
                                     wire:confirm="Delete this review permanently?" class="text-red-500! hover:text-red-600!" />
                             </div>
                         </flux:table.cell>

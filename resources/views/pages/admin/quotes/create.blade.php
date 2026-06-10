@@ -265,7 +265,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                                     </flux:table.cell>
                                     <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($lineTotal) !!}</flux:table.cell>
                                     <flux:table.cell align="end">
-                                        <flux:button size="xs" variant="ghost" icon="trash" tooltip="Remove line" wire:click="removeLine({{ $index }})" type="button"
+                                        <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Remove line" wire:click="removeLine({{ $index }})" type="button"
                                             class="text-red-500! hover:text-red-600!" />
                                     </flux:table.cell>
                                 </flux:table.row>

@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\ProductLinkType;
 use App\Enums\StockStatus;
+use App\Models\Product;
 use App\Support\StorefrontSession;
+use Illuminate\Support\Facades\DB;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
 use Illuminate\Support\Collection;
@@ -55,6 +58,36 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
     public function lines(): Collection
     {
         return StorefrontSession::cartLines();
+    }
+
+    #[Computed]
+    public function crossSells(): \Illuminate\Database\Eloquent\Collection
+    {
+        if ($this->lines->isEmpty()) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        $cartProductIds = $this->lines->pluck('product.id')->filter()->unique()->values()->all();
+
+        $crossSellIds = DB::table('product_links')
+            ->whereIn('product_id', $cartProductIds)
+            ->where('type', ProductLinkType::CROSS_SELL->value)
+            ->orderBy('sort_order')
+            ->pluck('linked_product_id')
+            ->unique()
+            ->diff($cartProductIds)
+            ->take(4)
+            ->all();
+
+        if (empty($crossSellIds)) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return Product::query()
+            ->whereIn('id', $crossSellIds)
+            ->where('visibility', 'visible')
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->get();
     }
 }; ?>
 
@@ -112,7 +145,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                     <div class="overflow-hidden rounded-md border border-zinc-200">
                     <table class="w-full bg-white">
                         <thead>
-                            <tr class="bg-surface-sunken text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">
+                            <tr class="bg-zinc-50 text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">
                                 <th class="px-6 py-3 text-left border-b border-zinc-200">Product</th>
                                 <th class="px-6 py-3 text-center border-b border-zinc-200">Price</th>
                                 <th class="px-6 py-3 text-center border-b border-zinc-200">Quantity</th>
@@ -159,7 +192,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                                                 <span class="text-zinc-300">|</span>
                                                 <button type="button" wire:click="remove('{{ $line['key'] }}')"
                                                         class="inline-flex cursor-pointer items-center gap-1 transition hover:text-brand-500">
-                                                    <flux:icon.trash variant="micro" class="size-3.5" />
+                                                    <flux:icon.trash-2 variant="micro" class="size-3.5" />
                                                     Remove
                                                 </button>
                                             </div>
@@ -211,7 +244,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                 <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
                     <div class="rounded-md border border-zinc-200 bg-white">
                         <div class="border-b border-zinc-200 px-6 py-4">
-                            <h2 class="text-[11px] font-bold tracking-[0.14em] text-ink uppercase">Cart summary</h2>
+                            <flux:heading size="sm" class="uppercase tracking-wide">Cart summary</flux:heading>
                         </div>
 
                         <div class="p-6">
@@ -278,6 +311,20 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                 </aside>
 
             </div>
+        @if ($this->crossSells->isNotEmpty())
+            <div class="mt-16">
+                <div class="mb-4">
+                    <h2 class="text-[22px] font-semibold tracking-tight">Customers Also Buy</h2>
+                    <p class="mt-1 text-[13px] text-ink-3">Frequently purchased alongside items in your cart.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+                    @foreach ($this->crossSells as $cs)
+                        <x-storefront.product-card :product="$cs" wire:key="cs-{{ $cs->id }}" />
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @endif
     </div>
 </div>

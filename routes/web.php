@@ -50,7 +50,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
     $user = auth()->user();
 
-    if (method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+    if (method_exists($user, 'roles') && $user->roles->isNotEmpty()) {
         return redirect()->route('admin.dashboard');
     }
 

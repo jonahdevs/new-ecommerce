@@ -1,6 +1,6 @@
-{{-- props: $label, $cells (collection|array of strings), $empty (bool — render trailing empty cell) --}}
+{{-- props: $label, $cells (collection|array of strings), $emptyCount (int — number of trailing empty cells) --}}
 <tr>
-    <td class="sticky left-0 z-10 w-50 border-b border-zinc-200 bg-surface-sunken px-4 py-3 align-top text-[13px] font-semibold text-ink-2">
+    <td class="sticky left-0 z-10 w-50 border-b border-zinc-200 bg-zinc-50 px-4 py-3 align-top text-[13px] font-semibold text-ink-2">
         {{ $label }}
     </td>
     @foreach ($cells as $cell)
@@ -8,7 +8,7 @@
             {{ $cell }}
         </td>
     @endforeach
-    @if (! empty($empty))
+    @for ($i = 0; $i < ($emptyCount ?? 0); $i++)
         <td class="border-b border-zinc-200 px-4 py-3"></td>
-    @endif
+    @endfor
 </tr>

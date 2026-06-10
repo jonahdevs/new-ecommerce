@@ -214,7 +214,7 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                                     <flux:menu.item icon="pencil-square" icon-variant="micro" :href="route('admin.customers.edit', $customer)" wire:navigate>Edit</flux:menu.item>
                                     <flux:menu.item icon="clock" icon-variant="micro" :href="route('admin.activity.item', ['user', $customer->id])" wire:navigate>Activity log</flux:menu.item>
                                     <flux:menu.separator />
-                                    <flux:menu.item icon="trash" icon-variant="micro" variant="danger"
+                                    <flux:menu.item icon="trash-2" icon-variant="micro" variant="danger"
                                         wire:click="delete({{ $customer->id }})"
                                         wire:confirm="Delete {{ addslashes($customer->name) }}? This cannot be undone.">
                                         Delete

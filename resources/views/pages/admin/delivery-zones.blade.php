@@ -246,7 +246,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                 <flux:text class="font-medium">{{ count($selected) }} selected</flux:text>
                 <flux:button size="sm" variant="ghost" wire:click="bulkActivate">Activate</flux:button>
                 <flux:button size="sm" variant="ghost" wire:click="bulkDeactivate">Deactivate</flux:button>
-                <flux:button size="sm" variant="ghost" icon="trash"
+                <flux:button size="sm" variant="ghost" icon="trash-2"
                     wire:click="bulkDelete"
                     wire:confirm="Delete {{ count($selected) }} zone(s)? This cannot be undone."
                     class="text-red-500! hover:text-red-600!">Delete</flux:button>
@@ -296,7 +296,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                                 </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" tooltip="Edit"
                                     wire:click="openEditZone({{ $zone->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash" tooltip="Delete"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Delete"
                                     wire:click="deleteZone({{ $zone->id }})"
                                     wire:confirm="Delete {{ $zone->name }}? Addresses in this zone will lose their assignment."
                                     class="text-red-500! hover:text-red-600!" />

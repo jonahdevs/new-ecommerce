@@ -1,1 +1,1 @@
-<img src="{{ asset('favicon.png') }}" alt="{{ config('app.name', 'Laravel') }}" {{ $attributes }}>
+<img src="{{ asset('favicon.png') }}" alt="{{ config('app.name', 'Sheffield') }}" {{ $attributes }}>

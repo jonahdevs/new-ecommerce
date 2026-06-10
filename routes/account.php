@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Account\DataExportController;
+use App\Models\Order;
 use App\Models\Quote;
 use App\Services\QuotePdfService;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 // ---------------------------------------------------------------------------
 // Customer self-service (authenticated + verified)
@@ -12,6 +14,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('account', 'pages::account.dashboard')->name('account.dashboard');
     Route::livewire('account/orders', 'pages::account.orders.index')->name('account.orders.index');
     Route::livewire('account/orders/{order}', 'pages::account.orders.show')->name('account.orders.show');
+    Route::livewire('account/orders/{order}/tracking', 'pages::account.orders.tracking')->name('account.orders.tracking');
+    Route::get('account/orders/{order}/receipt', function (Order $order) {
+        abort_unless($order->user_id === auth()->id(), 403);
+        abort_unless($order->kra_receipt_path && Storage::disk('local')->exists($order->kra_receipt_path), 404);
+
+        return Storage::disk('local')->response(
+            $order->kra_receipt_path,
+            $order->order_number.'-receipt.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
+    })->name('account.orders.receipt');
     Route::livewire('account/quotes', 'pages::account.quotes.index')->name('account.quotes.index');
     Route::livewire('account/quotes/{quote}', 'pages::account.quotes.show')->name('account.quotes.show');
     Route::get('account/quotes/{quote}/download', function (Quote $quote) {

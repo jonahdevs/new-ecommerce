@@ -52,19 +52,6 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
         <flux:text class="mt-1">All your Sheffield orders, invoices and delivery status.</flux:text>
     </div>
 
-    {{-- Status filter --}}
-    <div class="flex flex-wrap gap-2">
-        @foreach (['active' => 'Ongoing / Delivered', 'cancelled' => 'Cancelled / Returned'] as $value => $label)
-            <button type="button" wire:click="$set('status', '{{ $value }}')"
-                    class="rounded-full border px-3.5 py-1 text-[12px] font-semibold transition
-                        {{ $status === $value
-                            ? 'border-ink bg-ink text-white'
-                            : 'border-zinc-200 bg-white text-ink-2 hover:border-zinc-300' }}">
-                {{ $label }}
-            </button>
-        @endforeach
-    </div>
-
     {{-- Orders table --}}
     @if ($this->orders->isEmpty())
         <flux:card class="py-14 text-center">
@@ -81,8 +68,19 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
         </flux:card>
     @else
         <flux:card class="p-0 overflow-hidden">
+            <div class="flex flex-wrap gap-2 border-b border-zinc-200 px-6 py-3">
+                @foreach (['active' => 'Ongoing / Delivered', 'cancelled' => 'Cancelled / Returned'] as $value => $label)
+                    <button type="button" wire:click="$set('status', '{{ $value }}')"
+                            class="cursor-pointer rounded-md border px-3.5 py-1 text-[12px] font-semibold transition
+                                {{ $status === $value
+                                    ? 'border-brand-blue-500 bg-brand-blue-500 text-white'
+                                    : 'border-zinc-200 bg-white text-ink-2 hover:border-zinc-300' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
             <flux:table container:class="scrollbar-thin [&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
-                <flux:table.columns>
+                <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                     <flux:table.column>Order</flux:table.column>
                     <flux:table.column class="hidden sm:table-cell">Date</flux:table.column>
                     <flux:table.column>Status</flux:table.column>

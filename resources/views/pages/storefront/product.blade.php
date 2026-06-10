@@ -19,6 +19,7 @@ use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -50,6 +51,15 @@ new #[Layout('layouts::storefront')] class extends Component
     /** @var list<int> Related-product IDs, picked once at mount so they stay stable across round-trips. */
     public array $relatedIds = [];
 
+    /** @var list<int> Same-brand product IDs (excluding self), picked once at mount. */
+    public array $brandProductIds = [];
+
+    /** @var list<int> Co-viewed product IDs derived from the recently_viewed table. */
+    public array $alsoViewedIds = [];
+
+    /** @var list<int> The auth user's own recently viewed IDs (excluding this product). */
+    public array $recentlyViewedIds = [];
+
     public function mount(Product $product): void
     {
         $this->product = $product->load([
@@ -59,8 +69,8 @@ new #[Layout('layouts::storefront')] class extends Component
             'productAttributes' => fn ($q) => $q->where('is_visible', true)->orderBy('sort_order'),
             'productAttributes.attribute',
             'downloadableFiles',
-            'accessories' => fn ($q) => $q->with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])->orderBy('sort_order'),
-            'spareParts'  => fn ($q) => $q->with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])->orderBy('sort_order'),
+            'accessories' => fn ($q) => $q->visibleInCatalog()->published()->with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])->orderBy('sort_order'),
+            'spareParts'  => fn ($q) => $q->visibleInCatalog()->published()->with(['images' => fn ($q) => $q->where('is_cover', true)->limit(1)])->orderBy('sort_order'),
         ]);
 
         if ($this->product->type === ProductType::BUNDLE) {
@@ -82,7 +92,10 @@ new #[Layout('layouts::storefront')] class extends Component
             $this->preselectDefaultVariant();
         }
 
-        $this->relatedIds = $this->pickRelatedIds();
+        $this->relatedIds         = $this->pickRelatedIds();
+        $this->brandProductIds    = $this->pickBrandProductIds();
+        $this->alsoViewedIds      = $this->pickAlsoViewedIds();
+        $this->recentlyViewedIds  = $this->pickRecentlyViewedIds();
 
         $this->applySeo();
 
@@ -115,6 +128,54 @@ new #[Layout('layouts::storefront')] class extends Component
             ->inRandomOrder()
             ->take(6)
             ->pluck('id')
+            ->all();
+    }
+
+    private function pickBrandProductIds(): array
+    {
+        if (! $this->product->brand_id) {
+            return [];
+        }
+
+        return Product::query()
+            ->where('visibility', 'visible')
+            ->where('stock_status', StockStatus::IN_STOCK)
+            ->whereNotNull('price')
+            ->where('price', '>', 0)
+            ->where('id', '!=', $this->product->id)
+            ->where('brand_id', $this->product->brand_id)
+            ->inRandomOrder()
+            ->take(6)
+            ->pluck('id')
+            ->all();
+    }
+
+    private function pickAlsoViewedIds(): array
+    {
+        return DB::table('recently_viewed as r1')
+            ->join('recently_viewed as r2', function ($join) {
+                $join->on('r1.user_id', '=', 'r2.user_id')
+                    ->where('r2.product_id', '!=', $this->product->id);
+            })
+            ->where('r1.product_id', $this->product->id)
+            ->groupBy('r2.product_id')
+            ->orderByRaw('COUNT(*) DESC')
+            ->limit(6)
+            ->pluck('r2.product_id')
+            ->all();
+    }
+
+    private function pickRecentlyViewedIds(): array
+    {
+        if (! auth()->check()) {
+            return [];
+        }
+
+        return \App\Models\RecentlyViewed::where('user_id', auth()->id())
+            ->where('product_id', '!=', $this->product->id)
+            ->orderByDesc('viewed_at')
+            ->limit(8)
+            ->pluck('product_id')
             ->all();
     }
 
@@ -362,6 +423,52 @@ new #[Layout('layouts::storefront')] class extends Component
             ->whereIn('id', $this->relatedIds)
             ->get()
             ->sortBy(fn (Product $product) => array_search($product->id, $this->relatedIds, true))
+            ->values();
+    }
+
+    #[Computed]
+    public function brandProducts(): Collection
+    {
+        if ($this->brandProductIds === []) {
+            return new Collection();
+        }
+
+        return Product::query()
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->whereIn('id', $this->brandProductIds)
+            ->get()
+            ->sortBy(fn (Product $p) => array_search($p->id, $this->brandProductIds, true))
+            ->values();
+    }
+
+    #[Computed]
+    public function alsoViewed(): Collection
+    {
+        if ($this->alsoViewedIds === []) {
+            return new Collection();
+        }
+
+        return Product::query()
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->whereIn('id', $this->alsoViewedIds)
+            ->where('visibility', 'visible')
+            ->get()
+            ->sortBy(fn (Product $p) => array_search($p->id, $this->alsoViewedIds, true))
+            ->values();
+    }
+
+    #[Computed]
+    public function recentlyViewedProducts(): Collection
+    {
+        if ($this->recentlyViewedIds === []) {
+            return new Collection();
+        }
+
+        return Product::query()
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->whereIn('id', $this->recentlyViewedIds)
+            ->get()
+            ->sortBy(fn (Product $p) => array_search($p->id, $this->recentlyViewedIds, true))
             ->values();
     }
 
@@ -1422,11 +1529,11 @@ new #[Layout('layouts::storefront')] class extends Component
         </div>
     </div>
 
-    {{-- Related --}}
+    {{-- You May Also Like (same category) --}}
     @if ($this->related->isNotEmpty())
         <div class="mt-20">
             <div class="mb-4 flex items-baseline justify-between">
-                <h2 class="text-[22px] font-semibold tracking-tight">Related equipment</h2>
+                <h2 class="text-[22px] font-semibold tracking-tight">You May Also Like</h2>
                 @if ($product->primaryCategory)
                     <a href="{{ route('category.show', $product->primaryCategory) }}" wire:navigate
                         class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
@@ -1441,6 +1548,60 @@ new #[Layout('layouts::storefront')] class extends Component
             </div>
         </div>
     @endif
+
+    {{-- More from [Brand] --}}
+    @if ($this->brandProducts->isNotEmpty())
+        <div class="mt-20">
+            <div class="mb-4 flex items-baseline justify-between">
+                <h2 class="text-[22px] font-semibold tracking-tight">More from {{ $product->brand->name }}</h2>
+                @if ($product->brand)
+                    <a href="{{ route('catalog', ['brand' => [$product->brand->id]]) }}" wire:navigate
+                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
+                        View all {{ $product->brand->name }} <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                    </a>
+                @endif
+            </div>
+            <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+                @foreach ($this->brandProducts as $bp)
+                    <x-storefront.product-card :product="$bp" wire:key="bp-{{ $bp->id }}" />
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Customers who viewed this also viewed --}}
+    @if ($this->alsoViewed->isNotEmpty())
+        <div class="mt-20">
+            <div class="mb-4">
+                <h2 class="text-[22px] font-semibold tracking-tight">Customers who viewed this also viewed</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+                @foreach ($this->alsoViewed as $av)
+                    <x-storefront.product-card :product="$av" wire:key="av-{{ $av->id }}" />
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Recently Viewed (auth users only) --}}
+    @auth
+        @if ($this->recentlyViewedProducts->isNotEmpty())
+            <div class="mt-20">
+                <div class="mb-4 flex items-baseline justify-between">
+                    <h2 class="text-[22px] font-semibold tracking-tight">Recently Viewed</h2>
+                    <a href="{{ route('account.recently-viewed') }}" wire:navigate
+                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
+                        View all <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                    </a>
+                </div>
+                <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+                    @foreach ($this->recentlyViewedProducts as $rv)
+                        <x-storefront.product-card :product="$rv" wire:key="rv-{{ $rv->id }}" />
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    @endauth
 
     {{-- Bundle / grouped add-to-cart modal --}}
     @if (in_array($product->type, [\App\Enums\ProductType::BUNDLE, \App\Enums\ProductType::GROUPED], true))

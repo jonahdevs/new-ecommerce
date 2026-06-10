@@ -245,7 +245,7 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
                                         <div class="flex items-center justify-end gap-1">
                                             <flux:button size="xs" variant="ghost" icon="pencil-square"
                                                 wire:click="openEditValue({{ $value->id }})" />
-                                            <flux:button size="xs" variant="ghost" icon="trash"
+                                            <flux:button size="xs" variant="ghost" icon="trash-2"
                                                 wire:click="deleteValue({{ $value->id }})"
                                                 wire:confirm="Delete '{{ addslashes($value->label) }}'?"
                                                 class="text-red-500! hover:text-red-600!" />

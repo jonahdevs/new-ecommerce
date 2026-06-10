@@ -192,7 +192,7 @@ new #[Layout('layouts::app')] #[Title('Tags — Admin')] class extends Component
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
                                 <flux:button size="xs" variant="ghost" icon="pencil-square" wire:click="openEdit({{ $tag->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash"
+                                <flux:button size="xs" variant="ghost" icon="trash-2"
                                     wire:click="delete({{ $tag->id }})"
                                     wire:confirm="Delete '{{ addslashes($tag->name) }}'? It will be removed from all tagged items."
                                     class="text-red-500! hover:text-red-600!" />

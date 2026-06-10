@@ -92,7 +92,7 @@
 }
 
 [data-flux-heading] {
-    @apply font-semibold text-ink;
+    @apply font-bold text-ink font-serif;
 }
 
 input:focus[data-flux-control],

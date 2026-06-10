@@ -2,12 +2,16 @@
 
 use App\Http\Middleware\BlockBannedIp;
 use App\Http\Middleware\ConfigureSeo;
+use App\Http\Middleware\EnsureIsStaffMember;
 use App\Http\Middleware\EnsureStoreNotInMaintenance;
 use Cog\Laravel\Ban\Http\Middleware\ForbidBannedUser;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'staff' => EnsureIsStaffMember::class,
+        ]);
+
         // Payment provider webhooks are server-to-server and carry no CSRF token.
         $middleware->validateCsrfTokens(except: [
             'payments/mpesa/callback',

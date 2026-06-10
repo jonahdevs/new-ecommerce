@@ -7,7 +7,7 @@ return new class extends SettingsMigration
     public function up(): void
     {
         // Staff email routing
-        $this->migrator->add('notifications.staff_email_routing', 'individual');
+        $this->migrator->add('notifications.staff_email_routing', 'central');
         $this->migrator->add('notifications.staff_central_email', 'notifications@sheffieldsteelsystems.com');
 
         // Channels

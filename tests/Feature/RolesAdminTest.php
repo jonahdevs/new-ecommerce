@@ -7,7 +7,9 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seed(PermissionSeeder::class);
-    $this->actingAs(User::factory()->create());
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole('super-admin');
+    $this->actingAs($superAdmin);
 });
 
 it('loads the roles admin index', function () {

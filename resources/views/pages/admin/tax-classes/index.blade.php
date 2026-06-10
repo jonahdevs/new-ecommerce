@@ -213,7 +213,7 @@ new #[Layout('layouts::app')] #[Title('Tax classes — Admin')] class extends Co
                                 </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     wire:click="openEdit({{ $taxClass->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash"
+                                <flux:button size="xs" variant="ghost" icon="trash-2"
                                     wire:click="delete({{ $taxClass->id }})"
                                     wire:confirm="Delete '{{ addslashes($taxClass->name) }}'?"
                                     class="text-red-500! hover:text-red-600!" />

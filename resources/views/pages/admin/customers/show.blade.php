@@ -193,7 +193,7 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                             Ban
                         </flux:button>
                     @endif
-                    <flux:button size="sm" variant="danger" icon="trash" class="flex-1" wire:click="delete"
+                    <flux:button size="sm" variant="danger" icon="trash-2" class="flex-1" wire:click="delete"
                         wire:confirm="Permanently delete {{ $customer->name }}? This cannot be undone.">
                         Delete
                     </flux:button>

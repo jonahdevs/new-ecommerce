@@ -64,10 +64,9 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
 
         return Product::query()
             ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
-            ->where('visibility', 'visible')
-            ->where('stock_status', StockStatus::IN_STOCK->value)
-            ->whereNotNull('price')
-            ->where('price', '>', 0)
+            ->visibleInCatalog()
+            ->published()
+            ->honorStockVisibility()
             ->when($wishlistSlugs, fn ($q) => $q->whereNotIn('slug', $wishlistSlugs))
             ->inRandomOrder()
             ->take(6)
@@ -192,14 +191,52 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
         {{-- Recommendations --}}
         @if ($this->recommendations->isNotEmpty())
             <section class="pt-20">
-                <div class="mb-4 flex items-baseline justify-between border-b border-zinc-200 pb-3">
+                <div class="mb-4 flex items-baseline justify-between">
                     <h2 class="text-[22px] font-semibold tracking-tight">You might also want</h2>
-                    <a href="{{ route('catalog') }}" wire:navigate class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">Browse all <flux:icon.arrow-right variant="micro" class="size-3.5" /></a>
+                    <a href="{{ route('catalog') }}" wire:navigate class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
+                        Browse all <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                    </a>
                 </div>
-                <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
-                    @foreach ($this->recommendations as $product)
-                        <x-storefront.product-card :product="$product" wire:key="reco-{{ $product->id }}" />
-                    @endforeach
+
+                <div class="relative"
+                    x-data="{
+                        swiper: null,
+                        init() {
+                            this.swiper = new Swiper($refs.carousel, {
+                                spaceBetween: 12,
+                                speed: 400,
+                                preventClicks: false,
+                                breakpoints: {
+                                    0:   { slidesPerView: 1.2 },
+                                    480: { slidesPerView: 2.2 },
+                                    768: { slidesPerView: 3.2 },
+                                    1024:{ slidesPerView: 4.2 },
+                                    1280:{ slidesPerView: 5.2 },
+                                    1536:{ slidesPerView: 6.5 },
+                                },
+                            });
+                        }
+                    }">
+                    <div class="swiper overflow-hidden" x-ref="carousel">
+                        <div class="swiper-wrapper pb-1">
+                            @foreach ($this->recommendations as $product)
+                                <div class="swiper-slide h-auto!">
+                                    <div class="h-full flex flex-col">
+                                        <x-storefront.product-card :product="$product" wire:key="reco-{{ $product->id }}" class="h-full" />
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <button type="button" @click="swiper?.slidePrev()"
+                        class="absolute top-1/2 -left-3 z-10 -translate-y-1/2 flex size-8 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white text-ink shadow-sm transition hover:bg-zinc-50">
+                        <flux:icon.chevron-left class="size-4" />
+                    </button>
+                    <button type="button" @click="swiper?.slideNext()"
+                        class="absolute top-1/2 -right-3 z-10 -translate-y-1/2 flex size-8 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white text-ink shadow-sm transition hover:bg-zinc-50">
+                        <flux:icon.chevron-right class="size-4" />
+                    </button>
                 </div>
             </section>
         @endif

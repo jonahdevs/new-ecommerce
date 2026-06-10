@@ -41,6 +41,13 @@ class Quote extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (Quote $quote): void {
+            $quote->recordStatusChange(null, QuoteStatus::DRAFT);
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

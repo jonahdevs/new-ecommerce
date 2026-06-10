@@ -131,11 +131,11 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
     @else
         {{-- Comparison table --}}
         <div class="scrollbar-thin mt-7 overflow-x-auto rounded-md border border-zinc-200 bg-white">
-            <table class="w-full border-collapse text-left" style="min-width: {{ 200 + 220 * ($this->products->count() + min(1, $emptySlots)) }}px">
+            <table class="w-full table-fixed border-collapse text-left">
                 <thead>
                     <tr>
                         {{-- Sticky header corner --}}
-                        <th class="sticky left-0 z-10 w-50 border-b border-zinc-200 bg-surface-sunken px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                        <th class="sticky left-0 z-10 w-50 border-b border-zinc-200 bg-zinc-50 px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase">
                             Product
                         </th>
 
@@ -144,7 +144,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                                 $price = $product->sale_price ?? $product->price;
                             @endphp
                             <th wire:key="head-{{ $product->slug }}"
-                                class="relative min-w-55 border-b border-zinc-200 bg-white p-4 align-top">
+                                class="relative border-b border-zinc-200 bg-white p-4 align-top">
                                 <button type="button" wire:click="remove('{{ $product->slug }}')" aria-label="Remove from compare"
                                     class="absolute top-3 right-3 inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
                                     <flux:icon.x-mark variant="micro" class="size-4" />
@@ -152,7 +152,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
 
                                 {{-- Product image --}}
                                 <a href="{{ route('product.show', $product) }}" wire:navigate
-                                    class="mx-auto flex h-44 w-44 items-center justify-center overflow-hidden rounded bg-surface-sunken p-3">
+                                    class="mx-auto block h-44 w-44">
                                     @if ($product->cover_url)
                                         <img src="{{ $product->cover_url }}"
                                             alt="{{ $product->name }}"
@@ -182,72 +182,72 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                             </th>
                         @endforeach
 
-                        @if ($emptySlots > 0)
-                            <th class="min-w-55 border-b border-zinc-200 bg-white p-4 align-top">
+                        @for ($i = 0; $i < $emptySlots; $i++)
+                            <th class="border-b border-zinc-200 bg-white p-4 align-top">
                                 <a href="{{ route('catalog') }}" wire:navigate
                                     class="mx-auto flex h-44 w-44 flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-zinc-300 text-ink-3 transition hover:border-ink-3 hover:text-ink">
                                     <flux:icon.plus variant="micro" class="size-5" />
                                     <span class="text-[12.5px]">Add product</span>
                                 </a>
                             </th>
-                        @endif
+                        @endfor
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody class="[&_tr:last-child>td]:border-b-0">
                     {{-- Section: Key facts --}}
                     @include('partials.storefront.compare-section', [
                         'title' => 'Key facts',
-                        'cols' => $this->products->count() + min(1, $emptySlots) + 1,
+                        'cols' => 5,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'SKU',
                         'cells' => $this->products->map(fn ($p) => $p->sku ?? '—'),
-                        'empty' => $emptySlots > 0,
+                        'emptyCount' => $emptySlots,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Model',
                         'cells' => $this->products->map(fn ($p) => $p->model_number ?? '—'),
-                        'empty' => $emptySlots > 0,
+                        'emptyCount' => $emptySlots,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Category',
                         'cells' => $this->products->map(fn ($p) => $p->primaryCategory?->name ?? '—'),
-                        'empty' => $emptySlots > 0,
+                        'emptyCount' => $emptySlots,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Stock',
                         'cells' => $this->products->map(fn ($p) => $p->stock_quantity ? $p->stock_quantity.' units' : 'Made to order'),
-                        'empty' => $emptySlots > 0,
+                        'emptyCount' => $emptySlots,
                     ])
 
                     {{-- Section: Dimensions & weight --}}
                     @include('partials.storefront.compare-section', [
                         'title' => 'Dimensions & weight',
-                        'cols' => $this->products->count() + min(1, $emptySlots) + 1,
+                        'cols' => 5,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Weight',
                         'cells' => $this->products->map(fn ($p) => $p->weight ? rtrim(rtrim((string) $p->weight, '0'), '.').' '.($p->weight_unit ?? 'kg') : '—'),
-                        'empty' => $emptySlots > 0,
+                        'emptyCount' => $emptySlots,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Dimensions (W × D × H)',
                         'cells' => $this->products->map(fn ($p) => $dimensions($p)),
-                        'empty' => $emptySlots > 0,
+                        'emptyCount' => $emptySlots,
                     ])
 
                     {{-- Section: Detailed specs --}}
                     @if (count($this->specLabels) > 0)
                         @include('partials.storefront.compare-section', [
                             'title' => 'Detailed specs',
-                            'cols' => $this->products->count() + min(1, $emptySlots) + 1,
+                            'cols' => 5,
                         ])
                         @foreach ($this->specLabels as $label)
                             @include('partials.storefront.compare-row', [
                                 'label' => $label,
                                 'cells' => $this->products->map(fn ($p) => $specFor($p, $label)),
-                                'empty' => $emptySlots > 0,
+                                'emptyCount' => $emptySlots,
                             ])
                         @endforeach
                     @endif

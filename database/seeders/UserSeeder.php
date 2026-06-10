@@ -12,6 +12,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Roles & permissions are provisioned by PermissionSeeder.
+        Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
 
@@ -19,6 +20,7 @@ class UserSeeder extends Seeder
         // Named admins & staff
         // -------------------------------------------------------
         $admins = [
+            ['email' => 'jonah@sheffield.test',   'name' => 'Jonah Wakahiu',    'role' => 'super-admin'],
             ['email' => 'admin@sheffield.test',   'name' => 'Sheffield Admin',  'role' => 'admin'],
             ['email' => 'james.mwangi@sheffield.test', 'name' => 'James Mwangi',    'role' => 'admin'],
             ['email' => 'grace.njeri@sheffield.test',  'name' => 'Grace Njeri',     'role' => 'admin'],

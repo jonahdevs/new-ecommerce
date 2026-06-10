@@ -236,7 +236,7 @@ new #[Layout('layouts::app')] #[Title('Brands — Admin')] class extends Compone
                                 </flux:tooltip>
                                 <flux:button size="xs" variant="ghost" icon="pencil-square"
                                     wire:click="openEdit({{ $brand->id }})" />
-                                <flux:button size="xs" variant="ghost" icon="trash"
+                                <flux:button size="xs" variant="ghost" icon="trash-2"
                                     wire:click="delete({{ $brand->id }})"
                                     wire:confirm="Delete '{{ addslashes($brand->name) }}'?"
                                     class="text-red-500! hover:text-red-600!" />

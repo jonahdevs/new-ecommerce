@@ -21,11 +21,15 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            @canany(['products.view', 'catalog.manage', 'tags.manage'])
             <flux:sidebar.group :heading="__('Catalog')" class="grid">
+                @can('products.view')
                 <flux:sidebar.item icon="cube" :href="route('admin.products.index')" :current="request()->routeIs('admin.products.*')"
                     wire:navigate>
                     {{ __('Products') }}
                 </flux:sidebar.item>
+                @endcan
+                @can('catalog.manage')
                 <flux:sidebar.item icon="folder" :href="route('admin.categories.index')" :current="request()->routeIs('admin.categories.*')"
                     wire:navigate>
                     {{ __('Categories') }}
@@ -38,42 +42,65 @@
                     :current="request()->routeIs('admin.attributes.*')" wire:navigate>
                     {{ __('Attributes') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="hashtag" :href="route('admin.tags.index')"
-                    :current="request()->routeIs('admin.tags.*')" wire:navigate>
-                    {{ __('Tags') }}
-                </flux:sidebar.item>
                 <flux:sidebar.item icon="receipt-percent" :href="route('admin.tax-classes.index')"
                     :current="request()->routeIs('admin.tax-classes.*')" wire:navigate>
                     {{ __('Tax classes') }}
                 </flux:sidebar.item>
+                @endcan
+                @can('tags.manage')
+                <flux:sidebar.item icon="hashtag" :href="route('admin.tags.index')"
+                    :current="request()->routeIs('admin.tags.*')" wire:navigate>
+                    {{ __('Tags') }}
+                </flux:sidebar.item>
+                @endcan
             </flux:sidebar.group>
+            @endcanany
 
+            @canany(['quotes.view', 'orders.view', 'payments.view'])
             <flux:sidebar.group :heading="__('Sales')" class="grid">
+                @can('quotes.view')
                 <flux:sidebar.item icon="document-text" :href="route('admin.quotes.index')" :current="request()->routeIs('admin.quotes.*')"
                     wire:navigate>
                     {{ __('Quotations') }}
                 </flux:sidebar.item>
+                @endcan
+                @can('orders.view')
                 <flux:sidebar.item icon="shopping-cart" :href="route('admin.orders.index')" :current="request()->routeIs('admin.orders.*')"
                     wire:navigate>
                     {{ __('Orders') }}
                 </flux:sidebar.item>
+                @endcan
+                @can('payments.view')
                 <flux:sidebar.item icon="credit-card" :href="route('admin.payments.index')" :current="request()->routeIs('admin.payments.*')"
                     wire:navigate>
                     {{ __('Payments') }}
                 </flux:sidebar.item>
+                @endcan
             </flux:sidebar.group>
+            @endcanany
 
+            @canany(['customers.view', 'reviews.manage'])
             <flux:sidebar.group :heading="__('Customers')" class="grid">
+                @can('customers.view')
                 <flux:sidebar.item icon="users" :href="route('admin.customers.index')" :current="request()->routeIs('admin.customers.*')"
                     wire:navigate>
                     {{ __('All customers') }}
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="envelope" :href="route('admin.subscribers.index')" :current="request()->routeIs('admin.subscribers.*')"
+                    wire:navigate>
+                    {{ __('Subscribers') }}
+                </flux:sidebar.item>
+                @endcan
+                @can('reviews.manage')
                 <flux:sidebar.item icon="star" :href="route('admin.reviews.index')" :current="request()->routeIs('admin.reviews.*')"
                     wire:navigate>
                     {{ __('Reviews') }}
                 </flux:sidebar.item>
+                @endcan
             </flux:sidebar.group>
+            @endcanany
 
+            @can('roles.manage')
             <flux:sidebar.group :heading="__('Access')" class="grid">
                 <flux:sidebar.item icon="shield-check" :href="route('admin.roles.index')" :current="request()->routeIs('admin.roles.*')"
                     wire:navigate>
@@ -84,14 +111,18 @@
                     {{ __('Permissions') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
+            @endcan
 
+            @can('settings.manage')
             <flux:sidebar.group :heading="__('Content')" class="grid">
                 <flux:sidebar.item icon="document-text" :href="route('admin.pages.index')"
                     :current="request()->routeIs('admin.pages.*')" wire:navigate>
                     {{ __('Pages') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
+            @endcan
 
+            @can('delivery.manage')
             <flux:sidebar.group :heading="__('Logistics')" class="grid">
                 <flux:sidebar.item icon="map-pin" :href="route('admin.delivery-zones')"
                     :current="request()->routeIs('admin.delivery-zones')" wire:navigate>
@@ -118,13 +149,16 @@
                     {{ __('Showrooms') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
+            @endcan
 
+            @can('settings.manage')
             <flux:sidebar.group :heading="__('System')" class="grid">
                 <flux:sidebar.item icon="cog-6-tooth" :href="route('admin.settings.general')" :current="request()->routeIs('admin.settings.*')"
                     wire:navigate>
                     {{ __('Settings') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
+            @endcan
         </flux:sidebar.nav>
 
     </flux:sidebar>

@@ -39,6 +39,23 @@ class LoginResponse implements LoginResponseContract
             }
         }
 
-        return redirect()->intended(config('fortify.home'));
+        $default = method_exists($user, 'roles') && $user->roles->isNotEmpty()
+            ? route('admin.dashboard')
+            : route('account.dashboard');
+
+        // For staff, only honour the intended URL if it points at an admin page.
+        // Any stored customer-facing URL is discarded so staff always land in
+        // the admin panel rather than a storefront page.
+        if ($user->roles->isNotEmpty()) {
+            $intended = session()->pull('url.intended');
+
+            if ($intended && str_starts_with($intended, url('/admin'))) {
+                return redirect($intended);
+            }
+
+            return redirect($default);
+        }
+
+        return redirect()->intended($default);
     }
 }

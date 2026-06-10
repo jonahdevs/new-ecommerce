@@ -141,7 +141,7 @@ new #[Layout('layouts::app')] #[Title('Pages — Admin')] class extends Componen
                                         Activity log
                                     </flux:menu.item>
                                     <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger"
+                                    <flux:menu.item icon="trash-2" variant="danger"
                                         wire:click="delete({{ $page->id }})"
                                         wire:confirm="Delete '{{ addslashes($page->title) }}'? This cannot be undone.">
                                         Delete
