@@ -102,6 +102,7 @@ function App() {
     case "reset":        page = <ResetPage {...pageProps}/>; break;
     case "verify":       page = <VerifyEmailPage {...pageProps}/>; break;
     case "account":      page = <AccountPage {...pageProps}/>; break;
+    case "contact":      page = <ContactPage {...pageProps}/>; break;
     default:             page = <HomePage {...pageProps}/>;
   }
 
@@ -121,6 +122,7 @@ function App() {
     reset: "Reset password",
     verify: "Verify email",
     account: `Account · ${route.params.tab || "overview"}`,
+    contact: "Contact",
   }[route.name];
 
   const isAuthPage = ["login", "register", "forgot", "reset", "verify"].includes(route.name);
@@ -139,7 +141,7 @@ function App() {
         {page}
       </main>
       {!isAuthPage && <NewsletterBand/>}
-      {!isAuthPage && <Footer/>}
+      {!isAuthPage && <Footer navigate={navigate}/>}
 
       <CompareTray items={compare} setItems={setCompare} navigate={navigate}/>
       <ToastStack toast={toast} navigate={navigate}/>

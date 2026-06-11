@@ -83,7 +83,7 @@ it('renders the wishlist page in its empty state', function () {
     $response = $this->get(route('wishlist'));
 
     $response->assertOk();
-    $response->assertSee('No saved items yet.');
+    $response->assertSee('Your wishlist is empty.');
 });
 
 it('toggles a product into and out of the wishlist', function () {

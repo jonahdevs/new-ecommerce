@@ -33,26 +33,22 @@ class OrderStatusChanged extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $number = $this->order->order_number;
+        $order = $this->order;
+        $number = $order->order_number;
 
-        $mail = (new MailMessage)->action('View your order', route('account.orders.show', $this->order));
-
-        return match ($this->order->status) {
-            OrderStatus::OUT_FOR_DELIVERY => $mail
-                ->subject('Your order is on its way — '.$number)
-                ->greeting('Your order is out for delivery')
-                ->line('Order '.$number.' has left our warehouse and is on its way to you.'),
-            OrderStatus::COMPLETED => $mail
-                ->subject('Order completed — '.$number)
-                ->greeting('Your order is complete')
-                ->line('Order '.$number.' has been fulfilled. We hope everything arrived in great shape.'),
-            OrderStatus::CANCELLED => $mail
-                ->subject('Order cancelled — '.$number)
-                ->greeting('Your order has been cancelled')
-                ->line('Order '.$number.' has been cancelled. If this is unexpected, please get in touch.'),
-            default => $mail
-                ->subject('Order update — '.$number)
-                ->line('There is an update to your order '.$number.'.'),
+        $subject = match ($order->status) {
+            OrderStatus::OUT_FOR_DELIVERY => 'Your order is on its way — '.$number,
+            OrderStatus::COMPLETED => 'Order completed — '.$number,
+            OrderStatus::CANCELLED => 'Order cancelled — '.$number,
+            default => 'Order update — '.$number,
         };
+
+        return (new MailMessage)
+            ->subject($subject)
+            ->view('mails.orders.status-update', [
+                'order' => $order,
+                'customerName' => $order->user?->name ?? 'there',
+                'newStatus' => $order->status,
+            ]);
     }
 }

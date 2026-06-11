@@ -77,7 +77,7 @@ new #[Layout('layouts::app')] #[Title('General settings — Admin')] class exten
                 {{-- Title --}}
                 <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
                     <flux:icon.bell class="size-4 text-zinc-500" />
-                    <flux:heading>My notifications</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">My notifications</flux:heading>
                 </div>
 
                 <p class="border-b border-zinc-200 px-5 py-3 text-sm text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">

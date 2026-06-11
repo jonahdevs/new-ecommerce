@@ -56,29 +56,41 @@ it('uses the default meta description as a fallback', function () {
         ->assertSee('Commercial kitchen equipment across East Africa.', false);
 });
 
-it('serves a sitemap when enabled and 404s when disabled', function () {
-    Page::factory()->create(['slug' => 'privacy-policy', 'is_published' => true]);
+it('writes published page URLs to the sitemap file when enabled', function () {
+    // The sitemap is a static artefact: the sitemap:generate command (scheduled
+    // daily) writes public/sitemap.xml, which the web server serves directly.
+    $path = public_path('sitemap.xml');
+    $original = file_exists($path) ? file_get_contents($path) : null;
 
-    $this->get('/sitemap.xml')
-        ->assertOk()
-        ->assertSee(route('page.show', 'privacy-policy'), false);
+    try {
+        app(SeoSettings::class)->fill(['generate_sitemap' => true])->save();
+        Page::factory()->create(['slug' => 'privacy-policy', 'is_published' => true]);
 
-    $seo = app(SeoSettings::class);
-    $seo->generate_sitemap = false;
-    $seo->save();
+        $this->artisan('sitemap:generate')->assertSuccessful();
 
-    $this->get('/sitemap.xml')->assertNotFound();
+        expect(file_get_contents($path))->toContain(route('page.show', 'privacy-policy'));
+    } finally {
+        if ($original !== null) {
+            file_put_contents($path, $original);
+        } elseif (file_exists($path)) {
+            unlink($path);
+        }
+    }
 });
 
-it('reflects the index setting in robots.txt', function () {
-    $this->get('/robots.txt')
-        ->assertOk()
-        ->assertSee('Allow: /')
-        ->assertSee('Sitemap:');
+it('skips sitemap generation when disabled', function () {
+    app(SeoSettings::class)->fill(['generate_sitemap' => false])->save();
 
-    $seo = app(SeoSettings::class);
-    $seo->index_site = false;
-    $seo->save();
+    $this->artisan('sitemap:generate')
+        ->expectsOutputToContain('disabled')
+        ->assertSuccessful();
+});
 
-    $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /');
+it('adds a site-wide noindex directive when indexing is turned off', function () {
+    // index_site defaults to true → pages advertise as indexable.
+    $this->get(route('home'))->assertOk()->assertSee('content="index,follow"', false);
+
+    app(SeoSettings::class)->fill(['index_site' => false])->save();
+
+    $this->get(route('home'))->assertOk()->assertSee('noindex, nofollow', false);
 });

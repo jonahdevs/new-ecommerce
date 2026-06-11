@@ -102,7 +102,8 @@ const Header = ({ route, navigate, cart, setCart, compare, wishlist, setWishlist
             Shop <IconChevron size={14} sw={1.6}/>
           </a>
           <a onClick={(e) => { e.preventDefault(); navigate("catalog", { quote: true }); }} href="#">Request quote</a>
-          <a onClick={(e) => e.preventDefault()} href="#">Service</a>
+          <a onClick={(e) => { e.preventDefault(); navigate("contact", { inquiry: "Service & spares" }); }} href="#">Service</a>
+          <a onClick={(e) => { e.preventDefault(); navigate("contact"); }} href="#">Contact</a>
         </nav>
 
         <div style={{ flex: "0 0 auto", marginLeft: "auto", display: "flex", gap: 4, alignItems: "center" }}>
@@ -398,7 +399,7 @@ const CategoryNav = ({ route, navigate }) => {
 };
 
 // ───────── Footer ─────────
-const Footer = () => (
+const Footer = ({ navigate }) => (
   <footer style={{
     background: "var(--warm-3)", color: "#e6ddc8",
     marginTop: 80, paddingTop: 72, paddingBottom: 32,
@@ -411,14 +412,28 @@ const Footer = () => (
             Commercial kitchen equipment for restaurants, hotels and catering operations across East Africa. Since 2003.
           </p>
           <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: "#c9bea4" }}>
-            <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><IconMail size={14} sw={1.5}/> sales@sheffield.co.ke</span>
+            <a href="mailto:sales@sheffield.co.ke" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><IconMail size={14} sw={1.5}/> sales@sheffield.co.ke</a>
             <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><IconChat size={14} sw={1.5}/> WhatsApp +254 711 234 567</span>
           </div>
         </div>
         <FooterLocationCol locations={window.SHEFFIELD_LOCATIONS.slice(0, 2)}/>
         <FooterLocationCol locations={window.SHEFFIELD_LOCATIONS.slice(2, 4)}/>
-        <FooterCol title="Business" links={["Request a quote", "Trade accounts", "Installation", "Service contracts", "Spec sheets", "Project consultation"]}/>
-        <FooterCol title="Company" links={["About Sheffield", "Showrooms", "Careers", "News & projects", "Contact", "Press"]}/>
+        <FooterCol title="Business" links={[
+          { label: "Request a quote", onClick: () => navigate && navigate("catalog", { quote: true }) },
+          { label: "Trade accounts", onClick: () => navigate && navigate("register", { trade: true }) },
+          { label: "Installation" },
+          { label: "Service contracts", onClick: () => navigate && navigate("contact", { inquiry: "Service & spares" }) },
+          { label: "Spec sheets" },
+          { label: "Project consultation", onClick: () => navigate && navigate("contact", { inquiry: "Project consultation" }) },
+        ]}/>
+        <FooterCol title="Company" links={[
+          { label: "About Sheffield" },
+          { label: "Showrooms", onClick: () => navigate && navigate("contact") },
+          { label: "Careers" },
+          { label: "News & projects" },
+          { label: "Contact", onClick: () => navigate && navigate("contact") },
+          { label: "Press" },
+        ]}/>
       </div>
 
       <div style={{
@@ -448,7 +463,15 @@ const FooterCol = ({ title, links }) => (
       {title}
     </div>
     <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10, fontSize: 13.5, color: "#c9bea4" }}>
-      {links.map((l, i) => <li key={i}><a href="#" onClick={(e) => e.preventDefault()}>{l}</a></li>)}
+      {links.map((l, i) => {
+        const label = typeof l === "string" ? l : l.label;
+        const onClick = typeof l === "string" ? null : l.onClick;
+        return (
+          <li key={i}>
+            <a href="#" onClick={(e) => { e.preventDefault(); if (onClick) onClick(); }}>{label}</a>
+          </li>
+        );
+      })}
     </ul>
   </div>
 );

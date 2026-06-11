@@ -1,11 +1,10 @@
 <?php
 
-use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Tags\Tag;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the tags admin index', function () {

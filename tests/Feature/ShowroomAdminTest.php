@@ -1,11 +1,10 @@
 <?php
 
 use App\Models\Showroom;
-use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the showrooms admin page', function () {

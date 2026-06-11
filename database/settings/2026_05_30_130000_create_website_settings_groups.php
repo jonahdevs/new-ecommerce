@@ -10,7 +10,7 @@ return new class extends SettingsMigration
         // SEO
         // ==================================================
         $this->migrator->add('seo.meta_title_pattern', '{page} | {site}');
-        $this->migrator->add('seo.default_meta_description', '');
+        $this->migrator->add('seo.default_meta_description', 'Sheffield Africa — East Africa\'s leading supplier of commercial kitchen, cold room, laundry and healthcare equipment since 2003. Sales, installation, service and spares across Kenya, Uganda and Rwanda.');
         $this->migrator->add('seo.index_site', true);
         $this->migrator->add('seo.generate_sitemap', true);
 

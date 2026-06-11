@@ -104,6 +104,10 @@ class ProductSeeder extends Seeder
         $quantity = $data['stock_quantity'] ?? $data['quantity'] ?? null;
         $stockStatus = $this->resolveStockStatus($data, $quantity);
 
+        // Status comes straight from products.json (stamped from the approved
+        // e-commerce price list: listed SKUs are published, the rest are drafts).
+        $status = ProductStatus::from($data['status'] ?? ProductStatus::DRAFT->value);
+
         $brandId = null;
         if (! empty($data['brand'])) {
             $brandId = $this->brandIdByName[trim($data['brand'])] ?? null;
@@ -139,7 +143,7 @@ class ProductSeeder extends Seeder
             'quotation_notes' => $data['quotation_notes'] ?? null,
             'min_order_quantity' => $data['min_order_quantity'] ?? null,
             'visibility' => ProductVisibility::VISIBLE,
-            'status' => $this->resolveStatus($data),
+            'status' => $status,
         ]);
 
         $this->productIdBySku[$sku] = $product->id;
@@ -200,25 +204,6 @@ class ProductSeeder extends Seeder
         }
 
         return StockStatus::IN_STOCK;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function resolveStatus(array $data): ProductStatus
-    {
-        $requested = ProductStatus::from($data['status'] ?? ProductStatus::PUBLISHED->value);
-
-        if ($requested === ProductStatus::PUBLISHED) {
-            $hasImage = ! empty($data['image']);
-            $hasPrice = ! empty($data['price']) || ! empty($data['variants']);
-
-            if (! $hasImage || ! $hasPrice) {
-                return ProductStatus::DRAFT;
-            }
-        }
-
-        return $requested;
     }
 
     private function toMinorUnits(int|float|string|null $amount): ?int

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +46,19 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Authenticate as a super-admin for admin-panel tests. Seeds the roles and
+ * permissions, creates a user, assigns the super-admin role (which bypasses
+ * every permission check via Gate::before), and acts as them. Returns the user.
+ */
+function actingAsAdmin(): User
 {
-    // ..
+    test()->seed(PermissionSeeder::class);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('super-admin');
+
+    test()->actingAs($admin);
+
+    return $admin;
 }

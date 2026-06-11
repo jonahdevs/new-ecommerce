@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Notifications\Orders\NewOrderReceived;
 use App\Notifications\Orders\OrderConfirmed;
 use App\Notifications\Orders\OrderStatusChanged;
+use App\Settings\NotificationSettings;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -13,6 +14,10 @@ use Livewire\Livewire;
 beforeEach(function () {
     Notification::fake();
     $this->seed(PermissionSeeder::class);
+
+    // Fan out to individual staff so per-recipient assertions are meaningful.
+    // (The default seeded routing is 'central', which sends to one shared inbox.)
+    app(NotificationSettings::class)->fill(['staff_email_routing' => 'individual'])->save();
 
     $this->staff = User::factory()->create();
     $this->staff->assignRole('staff');
@@ -37,6 +42,22 @@ it('also alerts a super-admin who has no explicit permissions', function () {
     $order->markConfirmed();
 
     Notification::assertSentTo($superAdmin, NewOrderReceived::class);
+});
+
+it('routes staff order alerts to the central inbox when configured', function () {
+    app(NotificationSettings::class)->fill([
+        'staff_email_routing' => 'central',
+        'staff_central_email' => 'ops@example.com',
+    ])->save();
+
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
+    $order->markConfirmed();
+
+    Notification::assertSentOnDemand(
+        NewOrderReceived::class,
+        fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'ops@example.com',
+    );
+    Notification::assertNotSentTo($this->staff, NewOrderReceived::class);
 });
 
 it('does not re-notify when confirming an order that is no longer pending', function () {

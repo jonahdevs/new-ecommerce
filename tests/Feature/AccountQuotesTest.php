@@ -80,7 +80,7 @@ it('hides pricing on the detail page for an unpriced draft', function () {
 
     Livewire::test('pages::account.quotes.show', ['quote' => $quote])
         ->assertSee('Combi oven')
-        ->assertSee('Awaiting quote')
+        ->assertSee('Pricing pending')
         ->assertDontSee('Approve quote');
 });
 

@@ -249,8 +249,8 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
     {{-- Payments --}}
     @if ($section === 'payments')
         <flux:card class="overflow-hidden p-0">
-            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                <flux:heading>Payment Gateways</flux:heading>
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Payment Gateways</flux:heading>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
                     :href="route('admin.payments.index')" wire:navigate>
                     View transactions
@@ -401,11 +401,12 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     {{-- Tax --}}
     @if ($section === 'tax')
-        <flux:card>
-            <flux:heading>Tax</flux:heading>
-            <flux:subheading>How tax is calculated and displayed.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Tax</flux:heading>
+            </div>
 
-            <form wire:submit="saveTax" class="mt-6 space-y-5">
+            <form wire:submit="saveTax" class="space-y-5 p-6">
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <flux:label>Enable tax</flux:label>
                     <flux:switch wire:model.live="tax_enabled" />
@@ -471,11 +472,12 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     {{-- Currency & pricing --}}
     @if ($section === 'currency')
-        <flux:card>
-            <flux:heading>Currency & pricing</flux:heading>
-            <flux:subheading>How monetary values are formatted. Currency code lives under General → Localization.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Currency & pricing</flux:heading>
+            </div>
 
-            <form wire:submit="saveCurrency" class="mt-6 space-y-5">
+            <form wire:submit="saveCurrency" class="space-y-5 p-6">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:input wire:model.live="symbol" label="Currency symbol" placeholder="KSh" />
                     <flux:select wire:model.live="symbol_position" label="Symbol position">

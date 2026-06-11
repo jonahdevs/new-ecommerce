@@ -182,19 +182,17 @@ test('admin can save payment settings', function () {
         ->and(app(PaymentSettings::class)->cash_on_delivery_enabled)->toBeTrue();
 });
 
-test('admin can choose the default tax class and price display', function () {
+test('admin can choose the default tax class', function () {
     $class = TaxClass::create(['name' => 'Standard rated', 'slug' => 'standard-rated', 'rate' => 16, 'is_active' => true]);
 
     $this->actingAs($this->admin);
 
     Livewire::test('pages::admin.settings.financial')
         ->set('default_tax_class_id', $class->id)
-        ->set('price_display', 'excluding')
         ->call('saveTax')
         ->assertHasNoErrors();
 
-    expect(app(TaxSettings::class)->default_tax_class_id)->toBe($class->id)
-        ->and(app(TaxSettings::class)->price_display)->toBe('excluding');
+    expect(app(TaxSettings::class)->default_tax_class_id)->toBe($class->id);
 });
 
 test('the default tax class must reference an existing class', function () {
@@ -290,7 +288,7 @@ test('admin can toggle SAP sync and permissions', function () {
         ->set('sap_enabled', true)
         ->set('sap_sync_price', false)
         ->set('sap_sync_quantity', true)
-        ->call('saveSap')
+        ->call('saveSapConfig')
         ->assertHasNoErrors();
 
     $settings = app(IntegrationSettings::class);
@@ -306,16 +304,16 @@ test('admin can toggle SAP sync and permissions', function () {
 test('admin can save personal notification preferences', function () {
     $this->actingAs($this->admin);
 
-    Livewire::test('pages::admin.settings.general')
+    Livewire::test('pages::admin.settings.general', ['section' => 'notifications'])
         ->set('notifications.new_order.email', false)
-        ->set('notifications.low_stock.app', true)
+        ->set('notifications.low_stock.inapp', false)
         ->call('saveNotifications')
         ->assertHasNoErrors();
 
     $prefs = $this->admin->fresh()->staff_preferences;
 
     expect($prefs['notifications']['new_order']['email'])->toBeFalse()
-        ->and($prefs['notifications']['low_stock']['app'])->toBeTrue();
+        ->and($prefs['notifications']['low_stock']['inapp'])->toBeFalse();
 });
 
 // ==================================================
@@ -340,7 +338,8 @@ test('admin can trigger a database backup', function () {
     $this->actingAs($this->admin);
 
     Livewire::test('pages::admin.settings.other')
-        ->call('backupDatabase')
+        ->set('backupTab', 'database')
+        ->call('generateBackup')
         ->assertHasNoErrors();
 });
 

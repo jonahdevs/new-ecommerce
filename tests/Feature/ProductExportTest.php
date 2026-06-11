@@ -3,11 +3,10 @@
 use App\Enums\ProductStatus;
 use App\Exports\ProductsExport;
 use App\Models\Product;
-use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('downloads an xlsx export of products', function () {

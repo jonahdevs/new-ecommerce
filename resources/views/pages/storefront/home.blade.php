@@ -17,7 +17,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for East Africa')] class extends Component
+new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Laundry & Healthcare Equipment')] class extends Component
 {
     use InteractsWithStorefront;
 
@@ -26,7 +26,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
 
     public function mount(): void
     {
-        $description = 'Authorised distributor for Rational, Hobart, True, Electrolux Professional and more. Showrooms in Nairobi, Mombasa, Kampala and Kigali — install, service and spares across East Africa.';
+        $description = 'Sheffield Africa — East Africa\'s leading supplier of commercial kitchen, cold room, laundry and healthcare equipment since 2003. Expert consultation, installation, service and spares across Kenya, Uganda and Rwanda.';
 
         SEOMeta::setDescription($description);
         OpenGraph::setDescription($description)->setType('website');
@@ -129,7 +129,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
     ];
 
     $usps = [
-        ['icon' => 'building-office-2', 'title' => 'Africa No. 1', 'sub' => 'In Kitchen Equipment'],
+        ['icon' => 'building-office-2', 'title' => 'Africa No. 1', 'sub' => 'In Commercial Equipment'],
         ['icon' => 'check-circle', 'title' => 'Guaranteed', 'sub' => 'Quality Assurance'],
         ['icon' => 'arrows-pointing-out', 'title' => 'Customized', 'sub' => 'Bespoke Solutions'],
         ['icon' => 'truck', 'title' => 'Fast Delivery', 'sub' => 'Countrywide Shipping'],
@@ -237,10 +237,10 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
             </a>
         </div>
 
-        {{-- grid-rows-2 + auto-rows-[0] caps visible rows to 2 at any breakpoint, so the
-             extra chips needed to fill a 7-col row at 2xl don't dangle below 2 rows of 6 at lg/xl. --}}
+        {{-- All featured categories stay visible at every breakpoint; only the column
+             count changes, so the same chips simply reflow. --}}
         <div
-            class="grid grid-cols-2 grid-rows-2 gap-x-5 gap-y-7 overflow-hidden sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7 auto-rows-[0]">
+            class="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7">
             @foreach ($this->featuredCategories as $category)
                 <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
                     <div class="relative aspect-square overflow-hidden bg-surface-sunken">
@@ -266,10 +266,11 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen Equipment for E
 
     {{-- Brands marquee --}}
     <section class="shell pt-14">
-        <div class="relative overflow-hidden rounded-md border border-zinc-200 bg-white">
-            <div class="grid grid-cols-[auto_1fr] items-stretch">
+        <div class="relative -mx-4 overflow-hidden border-y border-zinc-200 bg-white md:mx-0 md:rounded-md md:border">
+            <div class="grid grid-cols-1 items-stretch md:grid-cols-[auto_1fr]">
+                {{-- Title panel — hidden below md so the marquee runs edge to edge on phones --}}
                 <div
-                    class="relative z-10 flex min-w-60 flex-col justify-center border-r border-zinc-200 bg-white px-8 py-8">
+                    class="relative z-10 hidden min-w-60 flex-col justify-center border-r border-zinc-200 bg-white px-8 py-8 md:flex">
                     <h2 class="font-serif text-[22px] leading-tight font-semibold uppercase">The brands<br>professionals trust.</h2>
                 </div>
 

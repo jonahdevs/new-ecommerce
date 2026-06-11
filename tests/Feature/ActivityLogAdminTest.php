@@ -2,10 +2,9 @@
 
 use App\Enums\ProductStatus;
 use App\Models\Product;
-use App\Models\User;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('renders each activity log page', function (string $logName) {

@@ -27,12 +27,29 @@ class OrderConfirmed extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $order = $this->order;
+
         return (new MailMessage)
-            ->subject('Order confirmed — '.$this->order->order_number)
-            ->greeting('Thank you for your order')
-            ->line('We\'ve received payment for order '.$this->order->order_number.' and it\'s now being processed.')
-            ->line('Order total: '.money($this->order->total_cents))
-            ->action('View your order', route('account.orders.show', $this->order))
-            ->line('We\'ll let you know as soon as it ships.');
+            ->subject('Order confirmed — '.$order->order_number)
+            ->view('mails.orders.confirmation', [
+                'order' => $order,
+                'customerName' => $order->user?->name ?? 'there',
+                'paymentLabel' => $this->resolvePaymentLabel($order->payment_method),
+                'orderUrl' => route('account.orders.show', $order),
+            ]);
+    }
+
+    /**
+     * Map the stored payment method key to a human-friendly label.
+     */
+    private function resolvePaymentLabel(?string $method): string
+    {
+        return match ($method) {
+            'mpesa' => 'M-Pesa',
+            'card' => 'Card',
+            'bank_transfer' => 'Bank Transfer',
+            'net_30' => 'Net 30 Terms',
+            default => 'Payment',
+        };
     }
 }

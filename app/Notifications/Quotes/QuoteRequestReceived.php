@@ -27,10 +27,14 @@ class QuoteRequestReceived extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $quote = $this->quote;
+
         return (new MailMessage)
-            ->subject('We\'ve received your quote request — '.$this->quote->quote_number)
-            ->greeting('Thanks for your request')
-            ->line('We\'ve received your request for quotation ('.$this->quote->quote_number.') and our team is preparing your formal quotation.')
-            ->line('We\'ll be in touch shortly with pricing, delivery and lead times.');
+            ->subject('We\'ve received your quote request — '.$quote->quote_number)
+            ->view('mails.quotes.received', [
+                'quote' => $quote,
+                'customerName' => $quote->user?->name ?? $quote->contact_name ?? 'there',
+                'quotationsUrl' => route('account.quotes.index'),
+            ]);
     }
 }

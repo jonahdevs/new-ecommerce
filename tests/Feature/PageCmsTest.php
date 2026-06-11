@@ -34,7 +34,7 @@ it('404s on an unknown slug', function () {
 });
 
 it('loads the admin pages index', function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 
     $this->get(route('admin.pages.index'))->assertOk();
 });

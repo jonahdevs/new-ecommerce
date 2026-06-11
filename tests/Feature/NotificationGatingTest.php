@@ -84,6 +84,7 @@ it('suppresses QuoteReadyForReview when globally disabled', function () {
 
 it('suppresses NewOrderReceived when globally disabled', function () {
     setGlobal('staff_new_order_email', false);
+    setGlobal('staff_new_order_inapp', false);
 
     $staff = User::factory()->create();
     $order = Order::factory()->create();
@@ -110,7 +111,7 @@ it('suppresses NewOrderReceived when globally enabled but staff opted out person
     setGlobal('staff_new_order_email', true);
 
     $staff = User::factory()->create([
-        'staff_preferences' => ['notifications' => ['new_order' => ['email' => false]]],
+        'staff_preferences' => ['notifications' => ['new_order' => ['email' => false, 'inapp' => false]]],
     ]);
     $order = Order::factory()->create();
 

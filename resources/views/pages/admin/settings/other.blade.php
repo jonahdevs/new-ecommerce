@@ -243,8 +243,8 @@ new #[Layout('layouts::app')] #[Title('Maintenance — Admin')] class extends Co
     {{-- Backup --}}
     @if ($section === 'backup')
         <flux:card class="overflow-hidden p-0">
-            <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                <flux:heading>Backup</flux:heading>
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Backup</flux:heading>
             </div>
 
             {{-- Tabs + Generate button --}}
@@ -349,11 +349,12 @@ new #[Layout('layouts::app')] #[Title('Maintenance — Admin')] class extends Co
 
     {{-- Cache --}}
     @if ($section === 'cache')
-        <flux:card>
-            <flux:heading>Cache</flux:heading>
-            <flux:subheading>Clear cached data after configuration or deployment changes.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Cache</flux:heading>
+            </div>
 
-            <div class="mt-6 space-y-3">
+            <div class="space-y-3 p-6">
                 @php
                     $caches = [
                         'app' => ['Application cache', 'Cached data, query results and other app-level cache entries.'],
@@ -383,8 +384,8 @@ new #[Layout('layouts::app')] #[Title('Maintenance — Admin')] class extends Co
     {{-- Banned IPs --}}
     @if ($section === 'banned-ips')
         <flux:card class="overflow-hidden p-0">
-            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                <flux:heading>Ban IP Address</flux:heading>
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Ban IP Address</flux:heading>
                 <flux:button wire:click="$set('showBanIpModal', true)" variant="primary" icon="no-symbol" size="sm">
                     Add IP Address
                 </flux:button>

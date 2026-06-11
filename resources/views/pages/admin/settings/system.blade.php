@@ -400,11 +400,8 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         @endphp
 
         <flux:card class="overflow-hidden p-0">
-            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                <div>
-                    <flux:heading>Mail Drivers</flux:heading>
-                    <flux:subheading>Select your active driver and configure credentials. Leave fields blank to use .env values.</flux:subheading>
-                </div>
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Mail Drivers</flux:heading>
             </div>
 
             <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
@@ -448,10 +445,11 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         </flux:card>
 
         {{-- SMS --}}
-        <flux:card>
-            <flux:heading>SMS</flux:heading>
-            <flux:subheading>Provider for outbound SMS notifications.</flux:subheading>
-            <form wire:submit="saveSms" class="mt-5 space-y-4">
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">SMS</flux:heading>
+            </div>
+            <form wire:submit="saveSms" class="space-y-4 p-6">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:select wire:model="sms_provider" label="SMS provider">
                         <flux:select.option value="none">None</flux:select.option>
@@ -585,8 +583,8 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     @endphp
 
     <flux:card class="overflow-hidden p-0">
-        <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-            <flux:heading>Integrations</flux:heading>
+        <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+            <flux:heading size="sm" class="uppercase tracking-wide">Integrations</flux:heading>
         </div>
 
         <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
@@ -716,11 +714,12 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
     {{-- Security --}}
     @if ($section === 'security')
-        <flux:card>
-            <flux:heading>Security</flux:heading>
-            <flux:subheading>Authentication and session policy.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Security</flux:heading>
+            </div>
 
-            <form wire:submit="saveSecurity" class="mt-6 space-y-5">
+            <form wire:submit="saveSecurity" class="space-y-5 p-6">
                 <flux:input wire:model="min_password_length" type="number" min="6" max="64"
                     label="Minimum password length" />
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
@@ -742,11 +741,12 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
     {{-- Maintenance --}}
     @if ($section === 'maintenance')
-        <flux:card>
-            <flux:heading>Maintenance</flux:heading>
-            <flux:subheading>Storefront availability.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Maintenance</flux:heading>
+            </div>
 
-            <form wire:submit="saveMaintenance" class="mt-6 space-y-5">
+            <form wire:submit="saveMaintenance" class="space-y-5 p-6">
                 <div
                     class="flex items-center justify-between rounded-md border border-zinc-200 px-4 py-3 dark:border-zinc-700">
                     <div>

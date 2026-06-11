@@ -1,10 +1,12 @@
 <?php
 
+use App\Enums\ReviewStatus;
 use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 use Artesaos\SEOTools\Facades\JsonLdMulti;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -30,11 +32,18 @@ new #[Layout('layouts::storefront')] class extends Component
     #[Url(as: 'brand', history: true)]
     public array $selectedBrands = [];
 
+    #[Url(as: 'pmin', history: true)]
+    public int $priceMin = 0;
+
     #[Url(history: true)]
     public int $priceMax = 6000000;
 
     #[Url(as: 'stock', history: true)]
     public bool $inStockOnly = false;
+
+    /** Minimum average approved-review rating (0 = any). */
+    #[Url(as: 'rating', history: true)]
+    public int $minRating = 0;
 
     #[Url(history: true)]
     public string $sort = 'popularity';
@@ -96,7 +105,8 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public function clearFilters(): void
     {
-        $this->reset(['selectedBrands', 'inStockOnly']);
+        $this->reset(['selectedBrands', 'inStockOnly', 'minRating']);
+        $this->priceMin = 0;
         $this->priceMax = 6000000;
         $this->perPage = 24;
         unset($this->products);
@@ -127,9 +137,21 @@ new #[Layout('layouts::storefront')] class extends Component
             $query->where('stock_status', StockStatus::IN_STOCK->value);
         }
 
+        if ($this->minRating > 0) {
+            $query->whereIn('id', Review::query()
+                ->select('product_id')
+                ->where('status', ReviewStatus::APPROVED->value)
+                ->groupBy('product_id')
+                ->havingRaw('AVG(rating) >= ?', [$this->minRating]));
+        }
+
         $query->where(function ($q) {
             $q->whereNull('price')->orWhere('price', '<=', $this->priceMax * 100);
         });
+
+        if ($this->priceMin > 0) {
+            $query->whereNotNull('price')->where('price', '>=', $this->priceMin * 100);
+        }
 
         match ($this->sort) {
             'price-asc' => $query->orderByRaw('price IS NULL, price ASC'),
@@ -159,7 +181,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public function hasActiveFilters(): bool
     {
-        return ! empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
+        return ! empty($this->selectedBrands) || $this->inStockOnly || $this->minRating > 0 || $this->priceMin > 0 || $this->priceMax < 6000000;
     }
 }; ?>
 
@@ -203,6 +225,12 @@ new #[Layout('layouts::storefront')] class extends Component
             <aside class="scrollbar-thin lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto" x-data="{ openBrands: false }">
                 <div class="divide-y divide-zinc-200 rounded-md border border-zinc-200 bg-white text-sm">
 
+                    {{-- Price --}}
+                    @include('partials.storefront.price-filter')
+
+                    {{-- Rating --}}
+                    @include('partials.storefront.rating-filter')
+
                     @if ($this->brandsList->isNotEmpty())
                         <div class="px-5 py-4">
                             <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Brand</div>
@@ -225,16 +253,6 @@ new #[Layout('layouts::storefront')] class extends Component
                             @endif
                         </div>
                     @endif
-
-                    <div class="px-5 py-4">
-                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Price</div>
-                        <div class="flex justify-between text-[12.5px] text-ink-3">
-                            <span>{{ money(0) }}</span>
-                            <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
-                        </div>
-                        <input type="range" min="50000" max="6000000" step="50000"
-                            wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />
-                    </div>
 
                     <div class="px-5 py-4">
                         <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Availability</div>

@@ -65,3 +65,11 @@ require __DIR__.'/admin.php';
 // slugs only; the component 404s on unpublished/unknown pages.
 // ---------------------------------------------------------------------------
 Route::livewire('/{page:slug}', 'pages::storefront.page')->name('page.show');
+
+// ---------------------------------------------------------------------------
+// Catch-all 404 — runs inside the web middleware group so the session/auth are
+// started before the error view renders. This lets admin error pages show the
+// signed-in user's permitted navigation and account menu (an unmatched route
+// otherwise skips session middleware, leaving auth()->user() null).
+// ---------------------------------------------------------------------------
+Route::fallback(fn () => abort(404));

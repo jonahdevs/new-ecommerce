@@ -1,12 +1,11 @@
 <?php
 
-use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
     $this->seed(PermissionSeeder::class);
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 // Permissions are code-defined and developer-only; the admin UI is read-only.

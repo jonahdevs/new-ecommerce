@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CategoryStatus;
+use App\Enums\ProductStatus;
 use App\Enums\ProductVisibility;
 use App\Enums\QuoteStatus;
 use App\Enums\StockStatus;
@@ -23,6 +24,7 @@ beforeEach(function () {
         'brand_id' => $this->brand->id, 'primary_category_id' => $this->cat->id,
         'type' => 'simple', 'price' => 150000, 'stock_status' => StockStatus::IN_STOCK->value,
         'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
     ]);
 });
 
@@ -155,6 +157,7 @@ it('loads more picker results with infinite scroll', function () {
             'type' => 'simple', 'price' => 1000, 'sort_order' => 0,
             'stock_status' => StockStatus::IN_STOCK->value,
             'visibility' => ProductVisibility::VISIBLE->value,
+            'status' => ProductStatus::PUBLISHED->value,
         ]);
     }
 
@@ -164,6 +167,7 @@ it('loads more picker results with infinite scroll', function () {
         'type' => 'simple', 'price' => 1000, 'sort_order' => 100000,
         'stock_status' => StockStatus::IN_STOCK->value,
         'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
     ]);
 
     Livewire::test('pages::storefront.request-quote')

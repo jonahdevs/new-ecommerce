@@ -3,11 +3,10 @@
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the orders admin index', function () {

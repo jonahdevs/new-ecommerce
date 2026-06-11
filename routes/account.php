@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 // ---------------------------------------------------------------------------
-// Customer self-service (authenticated + verified)
+// Customer self-service (authenticated + verified). The `customer` middleware
+// keeps staff out — they are redirected to the admin dashboard.
 // ---------------------------------------------------------------------------
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'customer'])->group(function () {
     Route::livewire('account', 'pages::account.dashboard')->name('account.dashboard');
     Route::livewire('account/orders', 'pages::account.orders.index')->name('account.orders.index');
     Route::livewire('account/orders/{order}', 'pages::account.orders.show')->name('account.orders.show');
@@ -45,13 +46,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // short (profile.edit / security.edit / appearance.edit) so existing layout
 // and component references don't need to change.
 // ---------------------------------------------------------------------------
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'customer'])->group(function () {
     Route::redirect('account/settings', 'account/settings/profile');
 
     Route::livewire('account/settings/profile', 'pages::account.settings.profile')->name('profile.edit');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'customer'])->group(function () {
     Route::livewire('account/settings/notifications', 'pages::account.settings.notifications')->name('notifications.edit');
     Route::livewire('account/settings/appearance', 'pages::account.settings.appearance')->name('appearance.edit');
     Route::livewire('account/settings/privacy', 'pages::account.settings.privacy')->name('privacy.edit');

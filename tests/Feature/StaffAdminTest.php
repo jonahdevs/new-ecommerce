@@ -6,7 +6,7 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     $this->seed(PermissionSeeder::class);
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the staff admin index', function () {

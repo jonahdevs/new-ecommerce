@@ -29,32 +29,29 @@ class QuoteReadyForReview extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
-            ->subject('Your quotation is ready — '.$this->quote->quote_number)
-            ->greeting('Your quotation is ready')
-            ->line('We\'ve prepared quotation '.$this->quote->quote_number.'.')
-            ->line('Total: '.money($this->quote->total_cents));
+        $quote = $this->quote;
 
-        $pdfBytes = app(QuotePdfService::class)->bytes($this->quote);
+        if ($quote->user_id) {
+            $portalUrl = route('account.quotes.show', $quote);
+        } else {
+            $expiry = $quote->expires_at ?? now()->addDays(60);
+            $portalUrl = URL::temporarySignedRoute('quotes.guest-review', $expiry, ['quote' => $quote]);
+        }
+
+        $mail = (new MailMessage)
+            ->subject('Your quotation is ready — '.$quote->quote_number)
+            ->view('mails.quotes.sent', [
+                'quote' => $quote,
+                'customerName' => $quote->user?->name ?? $quote->contact_name ?? 'there',
+                'portalUrl' => $portalUrl,
+            ]);
+
+        $pdfBytes = app(QuotePdfService::class)->bytes($quote);
 
         if ($pdfBytes) {
-            $mail->attachData($pdfBytes, $this->quote->quote_number.'.pdf', ['mime' => 'application/pdf']);
+            $mail->attachData($pdfBytes, $quote->quote_number.'.pdf', ['mime' => 'application/pdf']);
         }
 
-        $validUntil = $this->quote->expires_at?->format('d M Y') ?? 'further notice';
-
-        if ($this->quote->user_id) {
-            return $mail
-                ->action('Review and approve', route('account.quotes.show', $this->quote))
-                ->line('The quote is valid until '.$validUntil.'.');
-        }
-
-        $expiry = $this->quote->expires_at ?? now()->addDays(60);
-        $reviewUrl = URL::temporarySignedRoute('quotes.guest-review', $expiry, ['quote' => $this->quote]);
-
-        return $mail
-            ->action('Review and approve online', $reviewUrl)
-            ->line('The quote is valid until '.$validUntil.'.')
-            ->line('Approving will ask you to create a free account so you can pay and track your order online.');
+        return $mail;
     }
 }

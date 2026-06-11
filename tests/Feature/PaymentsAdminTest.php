@@ -3,11 +3,10 @@
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the payments admin index', function () {

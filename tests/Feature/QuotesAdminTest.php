@@ -9,13 +9,12 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Quote;
 use App\Models\QuoteItem;
-use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
     $this->seed(PermissionSeeder::class);
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the quotes admin index', function () {

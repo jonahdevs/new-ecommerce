@@ -335,11 +335,12 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     {{-- Inventory --}}
     @if ($section === 'inventory')
-        <flux:card>
-            <flux:heading>Inventory</flux:heading>
-            <flux:subheading>Global defaults for stock tracking.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Inventory</flux:heading>
+            </div>
 
-            <form wire:submit="saveInventory" class="mt-6 space-y-5">
+            <form wire:submit="saveInventory" class="space-y-5 p-6">
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <flux:label>Track stock by default on new products</flux:label>
                     <flux:switch wire:model="track_stock_by_default" />
@@ -364,19 +365,16 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     {{-- Reviews --}}
     @if ($section === 'reviews')
-        <flux:card>
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <flux:heading>Reviews</flux:heading>
-                    <flux:subheading>Customer review behavior and moderation.</flux:subheading>
-                </div>
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Reviews</flux:heading>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
                     :href="route('admin.reviews.index')" wire:navigate>
                     Manage reviews
                 </flux:button>
             </div>
 
-            <form wire:submit="saveReviews" class="mt-6 space-y-5">
+            <form wire:submit="saveReviews" class="space-y-5 p-6">
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <flux:label>Enable product reviews</flux:label>
                     <flux:switch wire:model.live="reviews_enabled" />
@@ -405,11 +403,12 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     {{-- Checkout & cart --}}
     @if ($section === 'checkout')
-        <flux:card>
-            <flux:heading>Checkout & cart</flux:heading>
-            <flux:subheading>How customers complete an order.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Checkout & cart</flux:heading>
+            </div>
 
-            <form wire:submit="saveCheckout" class="mt-6 space-y-5">
+            <form wire:submit="saveCheckout" class="space-y-5 p-6">
                 <flux:input wire:model="min_order_value" type="number" min="0" label="Minimum order value (KES)"
                     description="0 means no minimum." />
                 <flux:separator />
@@ -425,19 +424,16 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     {{-- Quotations --}}
     @if ($section === 'quotations')
-        <flux:card>
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <flux:heading>Quotations</flux:heading>
-                    <flux:subheading>B2B quote requests and validity.</flux:subheading>
-                </div>
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Quotations</flux:heading>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
                     :href="route('admin.quotes.index')" wire:navigate>
                     Manage quotes
                 </flux:button>
             </div>
 
-            <form wire:submit="saveQuotations" class="mt-6 space-y-5">
+            <form wire:submit="saveQuotations" class="space-y-5 p-6">
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <flux:label>Enable quotation requests</flux:label>
                     <flux:switch wire:model.live="quotes_enabled" />
@@ -461,20 +457,16 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
 
     {{-- Shipping & delivery --}}
     @if ($section === 'shipping')
-        <flux:card>
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <flux:heading>Shipping & delivery</flux:heading>
-                    <flux:subheading>Local pickup option. Per-area delivery rates live in Delivery Zones.
-                    </flux:subheading>
-                </div>
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Shipping & delivery</flux:heading>
                 <flux:button size="sm" variant="ghost" icon="arrow-top-right-on-square"
                     :href="route('admin.delivery-zones')" wire:navigate>
                     Delivery zones
                 </flux:button>
             </div>
 
-            <form wire:submit="saveShipping" class="mt-6 space-y-5">
+            <form wire:submit="saveShipping" class="space-y-5 p-6">
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <flux:label>Offer local pickup</flux:label>
                     <flux:switch wire:model.live="local_pickup_enabled" />
@@ -587,7 +579,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 {{-- Title --}}
                 <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
                     <flux:icon.users class="size-4 text-zinc-500" />
-                    <flux:heading>Customer notifications</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Customer notifications</flux:heading>
                 </div>
 
                 {{-- Channel headers --}}
@@ -655,7 +647,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 {{-- Title --}}
                 <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
                     <flux:icon.bell class="size-4 text-zinc-500" />
-                    <flux:heading>Admin & Staff notifications</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Admin & Staff notifications</flux:heading>
                 </div>
 
                 {{-- Email routing row --}}

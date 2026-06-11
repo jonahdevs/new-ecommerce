@@ -1,10 +1,12 @@
 <?php
 
+use App\Enums\ReviewStatus;
 use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 use Artesaos\SEOTools\Facades\JsonLdMulti;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -43,12 +45,19 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     #[Url(as: 'brand', history: true)]
     public array $selectedBrands = [];
 
-    /** Price slider max in KES (whole units). DB stores cents. */
+    /** Price slider bounds in KES (whole units). DB stores cents. */
+    #[Url(as: 'pmin', history: true)]
+    public int $priceMin = 0;
+
     #[Url(history: true)]
     public int $priceMax = 6000000;
 
     #[Url(as: 'stock', history: true)]
     public bool $inStockOnly = false;
+
+    /** Minimum average approved-review rating (0 = any). */
+    #[Url(as: 'rating', history: true)]
+    public int $minRating = 0;
 
     #[Url(history: true)]
     public string $sort = 'popularity';
@@ -67,7 +76,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 
     public function clearFilters(): void
     {
-        $this->reset(['selectedCategories', 'selectedBrands', 'inStockOnly']);
+        $this->reset(['selectedCategories', 'selectedBrands', 'inStockOnly', 'minRating']);
+        $this->priceMin = 0;
         $this->priceMax = 6000000;
         $this->perPage = 24;
         unset($this->products);
@@ -107,10 +117,23 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
             $query->where('stock_status', StockStatus::IN_STOCK->value);
         }
 
-        // priceMax in KES → cents
+        if ($this->minRating > 0) {
+            $query->whereIn('id', Review::query()
+                ->select('product_id')
+                ->where('status', ReviewStatus::APPROVED->value)
+                ->groupBy('product_id')
+                ->havingRaw('AVG(rating) >= ?', [$this->minRating]));
+        }
+
+        // priceMax/priceMin in KES → cents. Null prices count as "unpriced" and
+        // are kept only while the lower bound is untouched.
         $query->where(function ($q) {
             $q->whereNull('price')->orWhere('price', '<=', $this->priceMax * 100);
         });
+
+        if ($this->priceMin > 0) {
+            $query->whereNotNull('price')->where('price', '>=', $this->priceMin * 100);
+        }
 
         match ($this->sort) {
             'price-asc' => $query->orderByRaw('price IS NULL, price ASC'),
@@ -137,7 +160,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 
     public function hasActiveFilters(): bool
     {
-        return !empty($this->selectedCategories) || !empty($this->selectedBrands) || $this->inStockOnly || $this->priceMax < 6000000;
+        return !empty($this->selectedCategories) || !empty($this->selectedBrands) || $this->inStockOnly || $this->minRating > 0 || $this->priceMin > 0 || $this->priceMax < 6000000;
     }
 }; ?>
 
@@ -220,6 +243,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                             </div>
                         </div>
 
+                        @include('partials.storefront.price-filter')
+
+                        @include('partials.storefront.rating-filter')
+
                         <div class="px-5 py-4">
                             <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Brand</div>
                             <div class="scrollbar-thin flex flex-col gap-2"
@@ -241,16 +268,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                                     <span x-show="openBrands" x-cloak>Show fewer</span>
                                 </button>
                             @endif
-                        </div>
-
-                        <div class="px-5 py-4">
-                            <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Price</div>
-                            <div class="flex justify-between text-[12.5px] text-ink-3">
-                                <span>{{ money(0) }}</span>
-                                <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
-                            </div>
-                            <input type="range" min="50000" max="6000000" step="50000"
-                                wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />
                         </div>
 
                         <div class="px-5 py-4">
@@ -298,6 +315,12 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                         </div>
                     </div>
 
+                    {{-- Price --}}
+                    @include('partials.storefront.price-filter')
+
+                    {{-- Rating --}}
+                    @include('partials.storefront.rating-filter')
+
                     {{-- Brand --}}
                     <div class="px-5 py-4">
                         <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Brand</div>
@@ -320,17 +343,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                                 <span x-show="openBrands" x-cloak>Show fewer</span>
                             </button>
                         @endif
-                    </div>
-
-                    {{-- Price --}}
-                    <div class="px-5 py-4">
-                        <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Price</div>
-                        <div class="flex justify-between text-[12.5px] text-ink-3">
-                            <span>{{ money(0) }}</span>
-                            <span class="font-semibold text-ink">up to {{ money($priceMax * 100) }}</span>
-                        </div>
-                        <input type="range" min="50000" max="6000000" step="50000"
-                            wire:model.live.debounce.300ms="priceMax" class="mt-2 w-full accent-brand-500" />
                     </div>
 
                     {{-- Availability --}}
@@ -410,10 +422,24 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                                 <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                             </button>
                         @endif
-                        @if ($priceMax < 6000000)
-                            <button type="button" wire:click="$set('priceMax', 6000000)"
+                        @if ($priceMin > 0 || $priceMax < 6000000)
+                            <button type="button"
+                                wire:click="$set('priceMin', 0); $set('priceMax', 6000000)"
                                 class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
-                                Up to {{ money($priceMax * 100) }}
+                                @if ($priceMin > 0 && $priceMax < 6000000)
+                                    {{ money($priceMin * 100) }} – {{ money($priceMax * 100) }}
+                                @elseif ($priceMin > 0)
+                                    From {{ money($priceMin * 100) }}
+                                @else
+                                    Up to {{ money($priceMax * 100) }}
+                                @endif
+                                <flux:icon.x variant="micro" class="size-3 text-ink-3" />
+                            </button>
+                        @endif
+                        @if ($minRating > 0)
+                            <button type="button" wire:click="$set('minRating', 0)"
+                                class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                {{ $minRating }}★ &amp; up
                                 <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                             </button>
                         @endif

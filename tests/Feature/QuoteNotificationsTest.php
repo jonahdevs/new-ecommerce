@@ -8,6 +8,7 @@ use App\Notifications\Quotes\NewQuoteRequested;
 use App\Notifications\Quotes\QuoteDecisionReceived;
 use App\Notifications\Quotes\QuoteReadyForReview;
 use App\Notifications\Quotes\QuoteRequestReceived;
+use App\Settings\NotificationSettings;
 use App\Settings\QuotationSettings;
 use App\Support\StorefrontSession;
 use Database\Seeders\PermissionSeeder;
@@ -19,6 +20,10 @@ beforeEach(function () {
     Notification::fake();
     $this->seed(PermissionSeeder::class);
     app(QuotationSettings::class)->fill(['quotes_enabled' => true])->save();
+
+    // Fan out to individual staff so per-recipient assertions are meaningful.
+    // (The default seeded routing is 'central', which sends to one shared inbox.)
+    app(NotificationSettings::class)->fill(['staff_email_routing' => 'individual'])->save();
 
     $this->staff = User::factory()->create();
     $this->staff->assignRole('staff');
@@ -43,7 +48,7 @@ function pricedDraft(array $attrs = []): Quote
 }
 
 it('acknowledges a guest request and alerts staff', function () {
-    $product = Product::factory()->create();
+    $product = Product::factory()->published()->create();
     StorefrontSession::addToCart($product->slug, 2);
 
     Livewire::test('pages::storefront.request-quote')
@@ -60,7 +65,7 @@ it('acknowledges a registered customer on their account', function () {
     $customer = User::factory()->create();
     $this->actingAs($customer);
 
-    $product = Product::factory()->create();
+    $product = Product::factory()->published()->create();
     StorefrontSession::addToCart($product->slug, 1);
 
     Livewire::test('pages::storefront.request-quote')

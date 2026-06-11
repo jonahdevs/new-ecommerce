@@ -2,11 +2,10 @@
 
 use App\Models\DeliveryPromotion;
 use App\Models\DeliveryZone;
-use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the delivery zones admin page', function () {

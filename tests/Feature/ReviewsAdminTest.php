@@ -2,11 +2,10 @@
 
 use App\Enums\ReviewStatus;
 use App\Models\Review;
-use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the reviews admin index', function () {

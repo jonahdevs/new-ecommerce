@@ -1,8 +1,12 @@
-@props(['heading' => null, 'subheading' => null, 'embedded' => false])
+@props(['heading' => null, 'subheading' => null, 'embedded' => false, 'card' => true])
 
 @php $isAdmin = auth()->user()?->hasRole(['admin', 'staff']) ?? false; @endphp
 
-@if ($embedded)
+@if ($embedded && ! $card)
+    {{-- The section supplies its own card(s); render the slot bare so we don't
+         nest a card inside a card. --}}
+    {{ $slot }}
+@elseif ($embedded)
     {{-- Rendered as a section inside the admin settings shell: the shell already
          provides tab + section navigation, so render just the section card. --}}
     <flux:card>

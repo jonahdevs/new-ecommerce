@@ -3,11 +3,10 @@
 use App\Enums\AttributeType;
 use App\Models\Attribute;
 use App\Models\AttributeValue;
-use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 // ==================================================

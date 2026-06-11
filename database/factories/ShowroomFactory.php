@@ -21,6 +21,11 @@ class ShowroomFactory extends Factory
             'pobox' => null,
             'phones' => [fake()->phoneNumber()],
             'email' => fake()->companyEmail(),
+            'whatsapp' => fake()->phoneNumber(),
+            'hours' => 'Mon–Fri · 8:00 – 17:30 · Sat · 9:00 – 14:00',
+            'services' => ['Showroom', 'Service & Spares'],
+            'latitude' => fake()->latitude(-5, 5),
+            'longitude' => fake()->longitude(28, 42),
             'is_hq' => false,
             'sort_order' => 0,
         ];

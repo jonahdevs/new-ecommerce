@@ -4,6 +4,7 @@ namespace App\Services\Sap;
 
 use App\Models\Order;
 use App\Models\Showroom;
+use App\Notifications\Orders\KraInvoiceReady;
 use App\Settings\PaymentSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -55,6 +56,8 @@ class KraReceiptService
             Storage::disk(self::DISK)->put($path, $content);
 
             $order->update(['kra_receipt_path' => $path]);
+
+            $order->user?->notify(new KraInvoiceReady($order));
 
             Log::info('KRA receipt generated.', [
                 'order_id' => $order->id,

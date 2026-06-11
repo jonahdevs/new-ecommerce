@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\BlockBannedIp;
 use App\Http\Middleware\ConfigureSeo;
+use App\Http\Middleware\EnsureIsCustomer;
 use App\Http\Middleware\EnsureIsStaffMember;
 use App\Http\Middleware\EnsureStoreNotInMaintenance;
 use Cog\Laravel\Ban\Http\Middleware\ForbidBannedUser;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'staff' => EnsureIsStaffMember::class,
+            'customer' => EnsureIsCustomer::class,
         ]);
 
         // Payment provider webhooks are server-to-server and carry no CSRF token.

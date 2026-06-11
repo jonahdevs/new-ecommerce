@@ -6,10 +6,22 @@ it('renders the storefront home page', function () {
     $response->assertOk();
     $response->assertSee('Shop by category');
     $response->assertSee('Featured equipment');
-    $response->assertSee('New arrivals');
-    $response->assertSee('Start a quote');
-    $response->assertSee('Brands we carry');
+    $response->assertSee('Just In');
+    $response->assertSee('professionals trust');
     $response->assertSee('The Sheffield Quarterly');
+});
+
+it('renders the responsive header chrome', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    // Mobile menu trigger + slide-over drawer
+    $response->assertSee('aria-label="Open menu"', false);
+    $response->assertSee('aria-modal="true"', false);
+    $response->assertSee('drawerOpen', false);
+    // Primary nav links rendered (desktop bar + drawer)
+    $response->assertSee('Request quote');
+    $response->assertSee('Contact');
 });
 
 it('serves the hero banner images from public/images/banners', function () {

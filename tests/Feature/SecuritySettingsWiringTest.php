@@ -22,7 +22,8 @@ it('redirects staff without 2FA to security settings when two-factor is required
 
 it('allows admin access when two-factor is not required', function () {
     // require_two_factor defaults to false.
-    $this->actingAs(User::factory()->create())
-        ->get(route('admin.products.index'))
+    actingAsAdmin();
+
+    $this->get(route('admin.products.index'))
         ->assertOk();
 });

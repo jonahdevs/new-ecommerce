@@ -92,7 +92,7 @@ new #[Layout('layouts::settings')] #[Title('Profile')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::account.settings.layout :embedded="$embedded">
+    <x-pages::account.settings.layout :embedded="$embedded" :card="false">
 
         <form wire:submit="updateProfileInformation">
 

@@ -340,11 +340,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     {{-- Business info (company details + branding) --}}
     @if ($section === 'business')
-        <flux:card>
-            <flux:heading>Business info</flux:heading>
-            <flux:subheading>Legal, contact and brand details for your company.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Business info</flux:heading>
+            </div>
 
-            <form wire:submit="saveBusiness" class="mt-6 space-y-5">
+            <form wire:submit="saveBusiness" class="space-y-5 p-6">
                 <flux:input wire:model="legal_name" label="Legal name" required />
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:input wire:model="registration_number" label="Registration no." placeholder="e.g. PVT-XXXXXX" />
@@ -405,11 +406,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     {{-- Localization --}}
     @if ($section === 'localization')
-        <flux:card>
-            <flux:heading>Localization</flux:heading>
-            <flux:subheading>Regional formats, currency and units.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Localization</flux:heading>
+            </div>
 
-            <form wire:submit="saveLocalization" class="mt-6 space-y-5">
+            <form wire:submit="saveLocalization" class="space-y-5 p-6">
                 <flux:select wire:model="currency" label="Currency">
                     <flux:select.option value="KES">KES — Kenyan Shilling</flux:select.option>
                     <flux:select.option value="USD">USD — US Dollar</flux:select.option>
@@ -442,11 +444,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     {{-- SEO --}}
     @if ($section === 'seo')
-        <flux:card>
-            <flux:heading>SEO</flux:heading>
-            <flux:subheading>Defaults for search engine results.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">SEO</flux:heading>
+            </div>
 
-            <form wire:submit="saveSeo" class="mt-6 space-y-5">
+            <form wire:submit="saveSeo" class="space-y-5 p-6">
                 <flux:input wire:model="meta_title_pattern" label="Meta title pattern"
                     description="Use {page} and {site} as placeholders." required />
                 <flux:textarea wire:model="default_meta_description" label="Default meta description" rows="3"
@@ -490,11 +493,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     {{-- Social & sharing --}}
     @if ($section === 'social')
-        <flux:card>
-            <flux:heading>Social & sharing</flux:heading>
-            <flux:subheading>Share-card image and the profiles shown in your footer.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Social & sharing</flux:heading>
+            </div>
 
-            <form wire:submit="saveSocial" class="mt-6 space-y-5">
+            <form wire:submit="saveSocial" class="space-y-5 p-6">
                 <div>
                     <flux:label>Default share image (Open Graph)</flux:label>
                     <div class="mt-2 flex items-center gap-4">
@@ -533,11 +537,12 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     {{-- Analytics --}}
     @if ($section === 'analytics')
-        <flux:card>
-            <flux:heading>Analytics & tracking</flux:heading>
-            <flux:subheading>Drop in your tracking IDs — scripts load on the storefront.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Analytics & tracking</flux:heading>
+            </div>
 
-            <form wire:submit="saveAnalytics" class="mt-6 space-y-5">
+            <form wire:submit="saveAnalytics" class="space-y-5 p-6">
                 <flux:input wire:model="ga4_id" label="Google Analytics 4 (Measurement ID)" placeholder="G-XXXXXXXXXX" />
                 <flux:input wire:model="gtm_id" label="Google Tag Manager ID" placeholder="GTM-XXXXXXX" />
                 <flux:input wire:model="meta_pixel_id" label="Meta (Facebook) Pixel ID" placeholder="000000000000000" />
@@ -551,16 +556,17 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     {{-- Legal pages --}}
     @if ($section === 'legal')
-        <flux:card>
-            <flux:heading>Legal</flux:heading>
-            <flux:subheading>Policy content lives in content pages; this controls the cookie banner.</flux:subheading>
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Legal</flux:heading>
+            </div>
 
-            <flux:text size="sm" class="mt-4 text-zinc-500">
+            <flux:text size="sm" class="px-6 pt-6 text-zinc-500">
                 Terms, Privacy, Returns and Shipping are managed as
                 <flux:link :href="route('admin.pages.index')" wire:navigate>content pages →</flux:link>
             </flux:text>
 
-            <form wire:submit="saveLegal" class="mt-6 space-y-5">
+            <form wire:submit="saveLegal" class="mt-4 space-y-5 px-6 pb-6">
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <div>
                         <flux:label>Cookie consent banner</flux:label>

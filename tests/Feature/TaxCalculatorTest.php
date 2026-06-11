@@ -95,23 +95,24 @@ it('leaves the display price unchanged when storage and display modes match', fu
     expect(app(TaxCalculator::class)->displayPriceCents($product, 11600))->toBe(11600);
 });
 
-it('strips tax for display when prices are stored inclusive but shown excluding', function () {
-    configureTax(['tax_enabled' => true, 'prices_include_tax' => true, 'price_display' => 'excluding']);
+it('returns the stored price unchanged for a taxable product when prices include tax', function () {
+    // Storage and display are unified now — displayPriceCents never strips or adds
+    // tax, so the stored price is returned as-is regardless of the product's class.
+    configureTax(['tax_enabled' => true, 'prices_include_tax' => true]);
     setDefaultTaxClass(16.0);
 
     $product = Product::factory()->create(['is_taxable' => true, 'tax_class_id' => null]);
 
-    // 11,600 incl → 10,000 net.
-    expect(app(TaxCalculator::class)->displayPriceCents($product, 11600))->toBe(10000);
+    expect(app(TaxCalculator::class)->displayPriceCents($product, 11600))->toBe(11600);
 });
 
-it('adds tax for display when prices are stored excluding but shown including', function () {
-    configureTax(['tax_enabled' => true, 'prices_include_tax' => false, 'price_display' => 'including']);
+it('returns the stored price unchanged for a taxable product when prices exclude tax', function () {
+    configureTax(['tax_enabled' => true, 'prices_include_tax' => false]);
     setDefaultTaxClass(16.0);
 
     $product = Product::factory()->create(['is_taxable' => true, 'tax_class_id' => null]);
 
-    expect(app(TaxCalculator::class)->displayPriceCents($product, 10000))->toBe(11600);
+    expect(app(TaxCalculator::class)->displayPriceCents($product, 10000))->toBe(10000);
 });
 
 it('does not convert the display price of a non-taxable product', function () {

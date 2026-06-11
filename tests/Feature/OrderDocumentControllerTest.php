@@ -1,11 +1,10 @@
 <?php
 
 use App\Models\Order;
-use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
     Storage::fake('local');
 });
 

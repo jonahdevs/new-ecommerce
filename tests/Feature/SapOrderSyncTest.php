@@ -14,6 +14,7 @@ use App\Services\Sap\SapIntegrationService;
 use App\Services\Sap\SapWebhookHandler;
 use App\Services\Sap\ValueObjects\SapSyncResult;
 use App\Settings\IntegrationSettings;
+use App\Settings\NotificationSettings;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -299,6 +300,9 @@ it('skips entirely when order is already COMPLETED', function () {
 it('marks order FAILED and notifies staff when the job permanently fails', function () {
     Notification::fake();
     $this->seed(PermissionSeeder::class);
+
+    // Fan out to individual staff; default seeded routing is 'central' (one inbox).
+    app(NotificationSettings::class)->fill(['staff_email_routing' => 'individual'])->save();
 
     $staff = User::factory()->create();
     $staff->assignRole('staff');

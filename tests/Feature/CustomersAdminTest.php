@@ -8,7 +8,7 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seed(PermissionSeeder::class);
-    $this->actingAs(User::factory()->create());
+    actingAsAdmin();
 });
 
 it('loads the customers admin index', function () {
