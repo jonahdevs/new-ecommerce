@@ -76,10 +76,6 @@
                         <flux:icon.scale variant="micro" class="size-4 text-ink-3" />
                         My quotes
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-2 text-[13.5px] text-ink hover:bg-surface-sunken">
-                        <flux:icon.shield-check variant="micro" class="size-4 text-ink-3" />
-                        Service contracts
-                    </a>
                 </div>
 
                 <div class="border-t border-zinc-200 py-1.5">
@@ -107,7 +103,7 @@
             <div class="px-4 pt-4 pb-3">
                 <div class="font-serif text-lg text-ink">Welcome to Sheffield</div>
                 <p class="mt-1 text-[12.5px] text-ink-3">
-                    Sign in to track orders, save quotes and manage your service contracts.
+                    Sign in to track orders and save quotes.
                 </p>
                 <div class="mt-4 flex flex-col gap-2">
                     <flux:button variant="customer-primary" size="customer" :href="route('login')" wire:navigate
@@ -115,14 +111,6 @@
                     <flux:button variant="customer-outline" size="customer" :href="route('register')" wire:navigate
                         class="w-full!">Create an account</flux:button>
                 </div>
-            </div>
-            <div class="border-t border-zinc-200 px-4 py-3.5">
-                <div class="mb-2 text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase">For businesses</div>
-                <a href="{{ route('register') }}" wire:navigate
-                    class="flex items-center gap-2.5 text-[13px] text-ink hover:text-brand-500">
-                    <flux:icon.shield-check variant="micro" class="size-4 text-brand-500" />
-                    Apply for trade account &amp; Net 30 <flux:icon.arrow-right variant="micro" class="size-3.5" />
-                </a>
             </div>
         @endauth
     </div>

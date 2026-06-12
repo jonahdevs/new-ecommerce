@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Http\Middleware\ValidateRecaptcha;
 use App\Services\Mpesa\DarajaClient;
 use App\Services\PaymentCredentials;
+use App\Settings\EmailApiSettings;
+use App\Settings\EmailSettings;
 use App\Settings\SecuritySettings;
 use App\Support\ActivitySource;
 use App\Support\Money;
@@ -40,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureSuperAdmin();
         $this->configureRecaptcha();
         $this->configureActivitySource();
+        $this->configureMail();
     }
 
     /**
@@ -114,6 +117,53 @@ class AppServiceProvider extends ServiceProvider
             }
         } catch (\Throwable) {
             // Settings unavailable (e.g. mid-migration) — keep the config default.
+        }
+    }
+
+    /**
+     * Apply the admin-configurable mail driver and provider credentials. Only
+     * non-empty settings override config, so anything left blank in the admin
+     * falls back to the .env defaults. Guarded so early boot and fresh
+     * migrations (settings table not yet present) never error.
+     */
+    protected function configureMail(): void
+    {
+        try {
+            if (! Schema::hasTable('settings')) {
+                return;
+            }
+
+            $email = app(EmailSettings::class);
+            $api = app(EmailApiSettings::class);
+
+            $overrides = array_filter([
+                'mail.default' => $email->mail_driver ?: null,
+                'mail.from.address' => $email->from_address ?: null,
+                'mail.from.name' => $email->from_name ?: null,
+
+                'mail.mailers.smtp.host' => $api->smtp_host ?: null,
+                'mail.mailers.smtp.port' => $api->smtp_port ?: null,
+                'mail.mailers.smtp.scheme' => $api->smtp_encryption && $api->smtp_encryption !== 'none' ? $api->smtp_encryption : null,
+                'mail.mailers.smtp.username' => $api->smtp_username ?: null,
+                'mail.mailers.smtp.password' => $api->smtp_password ?: null,
+
+                'services.ses.key' => $api->ses_key ?: null,
+                'services.ses.secret' => $api->ses_secret ?: null,
+                'services.ses.region' => $api->ses_region ?: null,
+
+                'services.mailgun.domain' => $api->mailgun_domain ?: null,
+                'services.mailgun.secret' => $api->mailgun_secret ?: null,
+
+                'services.postmark.key' => $api->postmark_token ?: null,
+
+                'services.resend.key' => $api->resend_key ?: null,
+            ], fn ($value): bool => $value !== null);
+
+            if ($overrides !== []) {
+                config($overrides);
+            }
+        } catch (\Throwable) {
+            // Settings unavailable (e.g. mid-migration) — keep the config defaults.
         }
     }
 }

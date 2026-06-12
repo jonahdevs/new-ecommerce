@@ -113,7 +113,6 @@
                     <li><a href="{{ route('quote.request') }}" class="hover:text-white" wire:navigate>Request a quote</a></li>
                     <li><a href="{{ route('page.show', 'trade-accounts') }}" class="hover:text-white" wire:navigate>Trade accounts</a></li>
                     <li><a href="{{ route('page.show', 'installation') }}" class="hover:text-white" wire:navigate>Installation</a></li>
-                    <li><a href="{{ route('page.show', 'service-contracts') }}" class="hover:text-white" wire:navigate>Service contracts</a></li>
                     <li><a href="{{ route('page.show', 'spec-sheets') }}" class="hover:text-white" wire:navigate>Spec sheets</a></li>
                 </ul>
             </div>

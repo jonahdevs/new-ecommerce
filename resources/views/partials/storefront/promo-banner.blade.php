@@ -18,7 +18,7 @@
             </span>
         </div>
         <div class="flex items-center gap-3 text-[#d8c79d]">
-            <a href="{{ route('login') }}" class="hidden hover:text-white sm:inline" wire:navigate>Trade Login</a>
+            <a href="{{ route('login') }}" class="hidden hover:text-white sm:inline" wire:navigate>Sign in</a>
             <span class="hidden opacity-50 sm:inline">·</span>
             <a href="#" class="hover:text-white">KES</a>
         </div>

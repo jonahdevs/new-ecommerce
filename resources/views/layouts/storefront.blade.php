@@ -168,7 +168,7 @@
                     @guest
                         <a href="{{ route('login') }}" wire:navigate @click="drawerOpen = false"
                             class="flex items-center gap-2 text-[14px] font-semibold text-ink hover:text-brand-500">
-                            <flux:icon.user variant="micro" class="size-4" /> Trade Login
+                            <flux:icon.user variant="micro" class="size-4" /> Sign in
                         </a>
                     @endguest
                     <div class="mt-3 flex items-center gap-2 text-[13px] text-ink-3">
