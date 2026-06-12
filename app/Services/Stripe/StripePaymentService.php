@@ -6,9 +6,11 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\PaymentCredentials;
+use Illuminate\Support\Facades\Log;
 use Stripe\Charge;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
+use Stripe\Refund;
 use Stripe\Stripe;
 use Stripe\Webhook;
 
@@ -79,6 +81,19 @@ class StripePaymentService
     }
 
     /**
+     * Refund (fully or partially) a settled card payment through Stripe. Throws
+     * a Stripe exception on failure so the caller can abort without recording a
+     * refund that never happened.
+     */
+    public function refund(Payment $payment, int $amountCents): void
+    {
+        Refund::create([
+            'payment_intent' => $payment->stripe_payment_intent_id,
+            'amount' => $amountCents,
+        ]);
+    }
+
+    /**
      * Verify and finalize a PaymentIntent after client-side confirmation.
      * Called from the Livewire component once Stripe.js reports success.
      */
@@ -102,7 +117,12 @@ class StripePaymentService
             $this->finalize($payment, $intent);
         }
 
-        return $payment->fresh();
+        $payment = $payment->fresh();
+
+        // Only treat the payment as confirmed when it actually succeeded — a
+        // rejected (amount/currency mismatch) finalize leaves it FAILED, and the
+        // caller must not advance the order in that case.
+        return $payment->status === PaymentStatus::SUCCESS ? $payment : null;
     }
 
     /**
@@ -141,6 +161,28 @@ class StripePaymentService
 
     private function finalize(Payment $payment, PaymentIntent $intent): void
     {
+        // The PaymentIntent is authoritative — confirm it charged the exact amount
+        // and currency we created the intent with before advancing the order. This
+        // guards against a tampered/replayed confirmation or a mismatched intent.
+        if ($intent->amount !== $payment->amount_cents
+            || strtolower((string) $intent->currency) !== strtolower($payment->currency)) {
+            Log::critical('Stripe amount/currency mismatch — payment rejected.', [
+                'payment_id' => $payment->id,
+                'order_id' => $payment->order_id,
+                'expected_cents' => $payment->amount_cents,
+                'expected_currency' => $payment->currency,
+                'intent_amount' => $intent->amount,
+                'intent_currency' => $intent->currency,
+            ]);
+
+            $payment->update([
+                'status' => PaymentStatus::FAILED,
+                'result_desc' => 'Amount or currency mismatch on Stripe confirmation.',
+            ]);
+
+            return;
+        }
+
         $charge = $intent->latest_charge;
 
         // Stripe returns the charge ID as a plain string when the expand didn't

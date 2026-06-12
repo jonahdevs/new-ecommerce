@@ -117,7 +117,7 @@ new #[Layout('layouts::account')] #[Title('My Account')] class extends Component
     </div>
 
     {{-- Account Details + Address Book --}}
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
         {{-- Account Details --}}
         <flux:card class="overflow-hidden p-0">

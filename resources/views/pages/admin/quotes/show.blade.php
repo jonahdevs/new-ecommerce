@@ -49,6 +49,15 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
         $this->syncFromQuote();
     }
 
+    /**
+     * Guard every quote mutation. The route only enforces `quotes.view`, so
+     * read-only staff can open this page; any write requires `quotes.manage`.
+     */
+    protected function authorizeManage(): void
+    {
+        abort_unless(auth()->user()?->can('quotes.manage'), 403);
+    }
+
     private function syncFromQuote(): void
     {
         $this->notes = (string) $this->quote->notes;
@@ -189,6 +198,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function save(): void
     {
+        $this->authorizeManage();
+
         $this->validate([
             'notes' => ['nullable', 'string'],
             'internalNotes' => ['nullable', 'string'],
@@ -242,6 +253,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function sendToCustomer(): void
     {
+        $this->authorizeManage();
+
         if ($this->quote->items->isEmpty()) {
             Flux::toast(heading: 'Cannot send', text: 'Add at least one line item before sending.', variant: 'warning');
 
@@ -265,12 +278,16 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function confirmSend(): void
     {
+        $this->authorizeManage();
+
         $this->showSendConfirmation = false;
         $this->dispatchSend();
     }
 
     private function dispatchSend(): void
     {
+        $from = $this->quote->status;
+
         $this->quote->update([
             'status' => QuoteStatus::AWAITING_APPROVAL,
             'subtotal_cents' => $this->subtotalCents,
@@ -282,6 +299,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
             'total_cents' => $this->totalCents,
             'sent_at' => now(),
         ]);
+
+        $this->quote->recordStatusChange($from, QuoteStatus::AWAITING_APPROVAL, 'Sent to customer for review.', auth()->id());
 
         $this->quote->refresh()->load('items');
         $this->syncFromQuote();
@@ -295,6 +314,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function resend(): void
     {
+        $this->authorizeManage();
+
         if (! ($this->quote->user?->email ?? $this->quote->contact_email)) {
             Flux::toast(heading: 'Cannot resend', text: 'No customer email on file.', variant: 'warning');
 
@@ -308,7 +329,11 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function approve(): void
     {
+        $this->authorizeManage();
+
+        $from = $this->quote->status;
         $this->quote->update(['status' => QuoteStatus::APPROVED]);
+        $this->quote->recordStatusChange($from, QuoteStatus::APPROVED, 'Approved by staff.', auth()->id());
         $this->quote->refresh()->load('items');
         $this->syncFromQuote();
 
@@ -317,7 +342,11 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function decline(): void
     {
+        $this->authorizeManage();
+
+        $from = $this->quote->status;
         $this->quote->update(['status' => QuoteStatus::DECLINED]);
+        $this->quote->recordStatusChange($from, QuoteStatus::DECLINED, 'Declined by staff.', auth()->id());
         $this->quote->refresh()->load('items');
         $this->syncFromQuote();
 
@@ -328,6 +357,8 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
     public function convertToOrder(): void
     {
+        $this->authorizeManage();
+
         $order = app(QuoteConversionService::class)->convert($this->quote);
 
         $this->redirectRoute('admin.orders.show', $order, navigate: true);
@@ -367,7 +398,7 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
                 </flux:subheading>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <flux:button size="sm" variant="ghost" icon="eye"
                     :href="route('admin.quotes.preview', $quote)" wire:navigate type="button">Preview</flux:button>
 

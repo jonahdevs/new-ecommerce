@@ -472,7 +472,7 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                         <flux:heading size="lg">SMTP Settings</flux:heading>
                         <flux:subheading>Leave blank to use .env values.</flux:subheading>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <flux:input wire:model="smtp_host" label="Host" placeholder="{{ config('mail.mailers.smtp.host') }}" />
                         <flux:input wire:model="smtp_port" label="Port" type="number" placeholder="{{ config('mail.mailers.smtp.port') }}" />
                     </div>

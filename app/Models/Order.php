@@ -12,6 +12,7 @@ use App\Notifications\Orders\NewOrderReceived;
 use App\Notifications\Orders\OrderConfirmed;
 use App\Services\Sap\SapConfig;
 use App\Settings\CheckoutSettings;
+use App\Support\NumberSequence;
 use App\Support\StaffRecipients;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -190,8 +191,9 @@ class Order extends Model
     public static function generateNumber(): string
     {
         $prefix = app(CheckoutSettings::class)->order_prefix;
-        $sequence = static::whereYear('created_at', now()->year)->count() + 1;
+        $year = now()->year;
+        $sequence = NumberSequence::next("order:{$year}");
 
-        return $prefix.now()->year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
+        return $prefix.$year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
     }
 }

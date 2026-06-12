@@ -351,7 +351,7 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
                         <flux:heading size="lg">M-Pesa Settings</flux:heading>
                         <flux:subheading>Configure your M-Pesa integration.</flux:subheading>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <flux:input wire:model="mpesa_shortcode" label="Shortcode" placeholder="e.g. 174379" />
                         <flux:select wire:model="mpesa_type" label="Type">
                             <flux:select.option value="paybill">Paybill</flux:select.option>

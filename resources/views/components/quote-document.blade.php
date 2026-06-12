@@ -113,7 +113,8 @@
     {{-- ITEMS TABLE --}}
     {{-- ================================================== --}}
     <div class="px-8 mt-6">
-        <table class="w-full text-[12px]" style="border-collapse: collapse;">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px] text-[12px] sm:min-w-0" style="border-collapse: collapse;">
             <thead>
                 <tr>
                     <th class="border border-zinc-300 bg-zinc-100 px-2 py-2 font-bold text-zinc-900 text-left w-8">#</th>
@@ -207,6 +208,7 @@
                 @endif
             </tbody>
         </table>
+        </div>
     </div>
 
     {{-- ================================================== --}}
@@ -266,7 +268,7 @@
     @endphp
 
     <div id="quote-footer" class="mt-12 border-t border-zinc-300 bg-white">
-        <div class="grid grid-cols-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-4">
 
             {{-- One column per showroom --}}
             @foreach ($showrooms as $showroom)

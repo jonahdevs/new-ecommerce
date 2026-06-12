@@ -90,7 +90,7 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
 }; ?>
 
 <div>
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             @push('breadcrumbs')
 <flux:breadcrumbs>

@@ -22,6 +22,8 @@ class SocialSettings extends Settings
 
     public string $whatsapp_number;
 
+    public bool $whatsapp_order_enabled;
+
     public static function group(): string
     {
         return 'social';

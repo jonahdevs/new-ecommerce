@@ -45,7 +45,7 @@ new #[Layout('layouts::account')] #[Title('Recently Viewed')] class extends Comp
     </div>
 
     @if ($this->products->isEmpty())
-        <div class="rounded-md border border-zinc-200 bg-surface-sunken p-12 text-center">
+        <div class="rounded-md border border-zinc-200 bg-surface-sunken p-8 text-center sm:p-12">
             <flux:icon.eye variant="outline" class="mx-auto size-8 text-zinc-300" />
             <div class="mt-3 font-serif text-xl text-ink">Nothing here yet</div>
             <p class="mt-1 text-sm text-ink-3">Start browsing and products you view will appear here.</p>

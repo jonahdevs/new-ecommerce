@@ -7,6 +7,7 @@ use App\Services\QuoteConversionService;
 use App\Support\StaffRecipients;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -34,7 +35,13 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
     #[Computed]
     public function isAwaitingApproval(): bool
     {
-        return $this->quote->status === QuoteStatus::AWAITING_APPROVAL;
+        return $this->quote->isApprovable();
+    }
+
+    #[Computed]
+    public function hasExpired(): bool
+    {
+        return $this->quote->hasExpired();
     }
 
     #[Computed]
@@ -45,15 +52,29 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
     public function approve(): void
     {
-        abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
+        // Lock the quote and re-check against fresh state so a double-submit or
+        // concurrent accept can't flip an already-decided quote or spawn a
+        // second order. If it's already converted, fall through to its order.
+        $order = DB::transaction(function () {
+            $quote = Quote::lockForUpdate()->findOrFail($this->quote->getKey());
 
-        $this->quote->update(['status' => QuoteStatus::APPROVED]);
+            if ($quote->order_id) {
+                return $quote->order()->firstOrFail();
+            }
 
-        $order = app(QuoteConversionService::class)->convert($this->quote);
+            abort_unless($quote->isApprovable(), 403);
+
+            $quote->update(['status' => QuoteStatus::APPROVED]);
+            $quote->recordStatusChange(QuoteStatus::AWAITING_APPROVAL, QuoteStatus::APPROVED, 'Approved by customer.', auth()->id());
+
+            $order = app(QuoteConversionService::class)->convert($quote);
+
+            Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($quote->refresh()));
+
+            return $order;
+        });
 
         $this->quote->refresh();
-
-        Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
 
         $this->redirectRoute('payment.page', $order, navigate: true);
     }
@@ -63,6 +84,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
         abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
 
         $this->quote->update(['status' => QuoteStatus::DECLINED]);
+        $this->quote->recordStatusChange(QuoteStatus::AWAITING_APPROVAL, QuoteStatus::DECLINED, 'Declined by customer.', auth()->id());
         $this->quote->refresh();
 
         Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
@@ -146,12 +168,18 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
             @elseif ($quote->status === QuoteStatus::DECLINED)
                 <flux:callout icon="x-circle" color="red">
                     <flux:callout.heading>You declined this quotation</flux:callout.heading>
-                    <flux:callout.text>Contact us if you'd like to request a new quotation.</flux:callout.text>
+                    <flux:callout.text>
+                        Changed your mind?
+                        <flux:callout.link :href="route('quote.request')" wire:navigate>Request a new quote</flux:callout.link>
+                    </flux:callout.text>
                 </flux:callout>
-            @elseif ($quote->status === QuoteStatus::EXPIRED)
+            @elseif ($this->hasExpired)
                 <flux:callout icon="clock" color="zinc">
                     <flux:callout.heading>This quotation has expired</flux:callout.heading>
-                    <flux:callout.text>The validity period ended. Please contact us to request a fresh quotation.</flux:callout.text>
+                    <flux:callout.text>
+                        The validity period ended.
+                        <flux:callout.link :href="route('quote.request')" wire:navigate>Request a fresh quote</flux:callout.link>
+                    </flux:callout.text>
                 </flux:callout>
             @elseif ($quote->status === QuoteStatus::DRAFT)
                 <flux:callout icon="clock" color="amber">
@@ -272,20 +300,20 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
             {{-- ── Approve / Decline action bar ── --}}
             @if ($this->isAwaitingApproval)
-                <div class="flex flex-wrap items-center justify-between gap-4 rounded border border-brand-200 bg-brand-50 px-5 py-4">
+                <div class="flex flex-col gap-3 rounded border border-brand-200 bg-brand-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-[14px] font-semibold text-brand-700">Ready to proceed?</p>
                         <p class="mt-0.5 text-[13px] text-brand-600">Approve to confirm your order and proceed to payment.</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <flux:button variant="ghost" size="sm" wire:click="decline">Decline</flux:button>
-                        <flux:button variant="customer-primary" size="customer" icon="check" wire:click="approve">
+                    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+                        <flux:button variant="ghost" size="sm" wire:click="decline" class="w-full sm:w-auto">Decline</flux:button>
+                        <flux:button variant="customer-primary" size="customer" icon="check" wire:click="approve" class="w-full sm:w-auto">
                             Approve quote
                         </flux:button>
                     </div>
                 </div>
             @elseif ($quote->status === QuoteStatus::APPROVED && $quote->order_id && ! $this->isPaid)
-                <div class="flex flex-wrap items-center justify-between gap-4 rounded border border-emerald-200 bg-emerald-50 px-5 py-4">
+                <div class="flex flex-col gap-3 rounded border border-emerald-200 bg-emerald-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-[14px] font-semibold text-emerald-800">Quote approved — payment pending</p>
                         <p class="mt-0.5 text-[13px] text-emerald-600">Your order has been created. Complete payment to confirm it.</p>
@@ -296,6 +324,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                         icon="credit-card"
                         :href="route('payment.page', $quote->order_id)"
                         wire:navigate
+                        class="w-full shrink-0 sm:w-auto"
                     >
                         Complete payment
                     </flux:button>
@@ -339,7 +368,7 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                     ];
 
                     $isDeclined = $quote->status === QuoteStatus::DECLINED;
-                    $isExpired  = $quote->status === QuoteStatus::EXPIRED;
+                    $isExpired  = $quote->hasExpired();
                     $isTerminal = $isDeclined || $isExpired;
 
                     $histories = $quote->statusHistories->keyBy('to_status');

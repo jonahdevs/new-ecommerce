@@ -85,16 +85,16 @@ it('deletes an unused custom role', function () {
     expect(Role::find($role->id))->toBeNull();
 });
 
-it('adds a user and assigns a role from the roles page', function () {
-    Livewire::test('pages::admin.roles.index')
-        ->call('openCreateUser')
-        ->set('userName', 'Grace Mwangi')
-        ->set('userEmail', 'grace@sheffield.test')
-        ->set('userPassword', 'secret-password')
-        ->set('userRole', 'staff')
-        ->call('saveUser')
+it('creates a staff member with a role from the add-staff page', function () {
+    Livewire::test('pages::admin.staff.create')
+        ->set('name', 'Grace Mwangi')
+        ->set('email', 'grace@sheffield.test')
+        ->set('password', 'secret-password')
+        ->set('password_confirmation', 'secret-password')
+        ->set('role', 'staff')
+        ->call('create')
         ->assertHasNoErrors()
-        ->assertSet('showUserModal', false);
+        ->assertRedirect(route('admin.staff.index'));
 
     $user = User::firstWhere('email', 'grace@sheffield.test');
 

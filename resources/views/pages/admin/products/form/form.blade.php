@@ -52,7 +52,7 @@
                     <div x-show="open" x-collapse x-cloak>
                         <div class="space-y-4 p-6">
                             <flux:input wire:model.live.debounce.400ms="name" label="Product name" placeholder="e.g. Commercial Wok Range 4-Burner" required />
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <flux:input wire:model.blur="slug" label="Slug" placeholder="auto-generated-from-name" />
                                 <flux:input wire:model="model_number" label="Model number" placeholder="e.g. WR-4B-900" />
                             </div>
@@ -114,10 +114,10 @@
                     </div>
 
                     <div x-show="open" x-collapse x-cloak>
-                    <div class="flex min-h-72">
+                    <div class="flex min-h-72 flex-col md:flex-row">
 
-                        {{-- Vertical subnav --}}
-                        <nav class="w-44 shrink-0 border-r border-zinc-200 py-2 dark:border-zinc-700">
+                        {{-- Subnav: full-width stacked above content on mobile, vertical rail on md+ --}}
+                        <nav class="w-full shrink-0 border-b border-zinc-200 py-2 md:w-44 md:border-b-0 md:border-r dark:border-zinc-700">
                             <button type="button" :class="tab === 'general' ? '{{ $tabActive }}' : '{{ $tabInactive }}'" class="{{ $tabBtn }}" x-on:click="tab = 'general'">
                                 <flux:icon.adjustments-horizontal variant="micro" class="size-4 shrink-0" />General
                             </button>
@@ -149,7 +149,7 @@
 
                             {{-- General --}}
                             <div x-show="tab === 'general'" class="space-y-4 p-6">
-                                <div x-show="$wire.type !== 'grouped'" class="grid grid-cols-2 gap-4">
+                                <div x-show="$wire.type !== 'grouped'" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <flux:input wire:model="price" label="Regular price (KES)" type="number" min="0" step="0.01" placeholder="0.00" />
                                     <flux:input wire:model="sale_price" label="Sale price (KES)" type="number" min="0" step="0.01" placeholder="0.00" />
                                 </div>
@@ -177,7 +177,7 @@
                                         <flux:select.option :value="$s->value">{{ $s->label() }}</flux:select.option>
                                     @endforeach
                                 </flux:select>
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <flux:input wire:model="stock_quantity" label="Stock quantity" type="number" min="0" placeholder="Leave blank if untracked" />
                                     <flux:input wire:model="low_stock_threshold" label="Low stock alert" type="number" min="0" placeholder="e.g. 5" />
                                 </div>
@@ -191,7 +191,7 @@
                             {{-- Shipping --}}
                             <div x-show="tab === 'shipping'" class="space-y-4 p-6">
                                 <flux:input wire:model="weight" :label="'Weight (' . $weight_unit . ')'" type="number" min="0" step="0.001" placeholder="0.000" />
-                                <div class="grid grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <flux:input wire:model="length" :label="'Length (' . $dimension_unit . ')'" type="number" min="0" step="0.01" placeholder="0.00" />
                                     <flux:input wire:model="width" :label="'Width (' . $dimension_unit . ')'" type="number" min="0" step="0.01" placeholder="0.00" />
                                     <flux:input wire:model="height" :label="'Height (' . $dimension_unit . ')'" type="number" min="0" step="0.01" placeholder="0.00" />
@@ -250,7 +250,7 @@
 
                                                 @if (! $attr['collapsed'])
                                                     <div class="space-y-4 p-4">
-                                                        <div class="grid grid-cols-2 gap-4">
+                                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                             <flux:input
                                                                 wire:model="selectedAttributes.{{ $index }}.name"
                                                                 label="Name"
@@ -501,7 +501,7 @@
                                                                 </div>
 
                                                                 {{-- Prices --}}
-                                                                <div class="grid grid-cols-3 gap-4">
+                                                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                                                     <flux:input wire:model="variants.{{ $i }}.price" label="Price (Ksh)" type="number" min="0" step="0.01" placeholder="0.00" />
                                                                     <flux:input wire:model="variants.{{ $i }}.compare_at_price" label="Sale Price (Ksh)" type="number" min="0" step="0.01" placeholder="0.00" />
                                                                     <flux:input wire:model="variants.{{ $i }}.cost_price" label="Cost Price (Ksh)" type="number" min="0" step="0.01" placeholder="0.00" />
@@ -519,7 +519,7 @@
                                                                 @endif
 
                                                                 {{-- Weight + Dimensions --}}
-                                                                <div class="grid grid-cols-2 gap-4">
+                                                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                                     <flux:input wire:model="variants.{{ $i }}.weight" :label="'Weight (' . $weight_unit . ')'" type="number" min="0" step="0.001" placeholder="0.000" />
                                                                     <div>
                                                                         <flux:label>Dimensions — L × W × H ({{ $dimension_unit }})</flux:label>
@@ -641,7 +641,7 @@
                                                 @if (! $file['collapsed'])
                                                     <div class="space-y-4 p-4">
                                                         <flux:input wire:model="downloadableFiles.{{ $index }}.name" label="File name" placeholder="e.g. User Manual v2" />
-                                                        <div class="grid grid-cols-3 gap-3">
+                                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                                             <flux:input wire:model="downloadableFiles.{{ $index }}.download_limit" label="Download limit" type="number" min="1" placeholder="Unlimited" />
                                                             <flux:input wire:model="downloadableFiles.{{ $index }}.download_expiry_days" label="Expiry (days)" type="number" min="1" placeholder="Never" />
                                                             <flux:input wire:model="downloadableFiles.{{ $index }}.version" label="Version" placeholder="e.g. 1.0.0" />

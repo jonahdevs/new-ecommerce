@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CategoryStatus;
+use App\Enums\ProductStatus;
 use App\Enums\ProductVisibility;
 use App\Enums\QuoteStatus;
 use App\Enums\StockStatus;
@@ -30,6 +31,7 @@ beforeEach(function () {
         'name' => 'Wok Range', 'slug' => 'wok-range', 'sku' => 'WK-1',
         'brand_id' => $brand->id, 'primary_category_id' => $cat->id,
         'type' => 'simple', 'price' => 150000,
+        'status' => ProductStatus::PUBLISHED->value,
         'stock_status' => StockStatus::IN_STOCK->value,
         'visibility' => ProductVisibility::VISIBLE->value,
     ]);

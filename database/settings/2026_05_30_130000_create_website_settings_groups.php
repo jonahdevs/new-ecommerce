@@ -24,7 +24,8 @@ return new class extends SettingsMigration
         $this->migrator->add('social.x_url', '');
         $this->migrator->add('social.linkedin_url', '');
         $this->migrator->add('social.youtube_url', '');
-        $this->migrator->add('social.whatsapp_number', '');
+        $this->migrator->add('social.whatsapp_number', '+254114838130');
+        $this->migrator->add('social.whatsapp_order_enabled', false);
 
         // ==================================================
         // ANALYTICS

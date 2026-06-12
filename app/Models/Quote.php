@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Console\Commands\ExpireQuotes;
 use App\Enums\QuoteStatus;
 use App\Models\Concerns\HasStatusHistory;
 use App\Settings\QuotationSettings;
+use App\Support\NumberSequence;
 use Database\Factories\QuoteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -74,6 +76,32 @@ class Quote extends Model
     }
 
     /**
+     * Whether the quote's validity window has lapsed. Pricing on a lapsed quote
+     * is stale and must not be approved, even if a stale browser tab or an old
+     * email link still surfaces the approve action. EXPIRED quotes (flipped by
+     * the {@see ExpireQuotes} command) always count.
+     */
+    public function hasExpired(): bool
+    {
+        if ($this->status === QuoteStatus::EXPIRED) {
+            return true;
+        }
+
+        return in_array($this->status, [QuoteStatus::SENT, QuoteStatus::AWAITING_APPROVAL], true)
+            && $this->expires_at !== null
+            && $this->expires_at->isPast();
+    }
+
+    /**
+     * Whether the customer can still approve this quote — it is awaiting their
+     * decision and its validity window has not lapsed.
+     */
+    public function isApprovable(): bool
+    {
+        return $this->status === QuoteStatus::AWAITING_APPROVAL && ! $this->hasExpired();
+    }
+
+    /**
      * Send a customer-facing notification to whoever owns the quote: the
      * registered user when present, otherwise the guest contact email.
      */
@@ -97,8 +125,9 @@ class Quote extends Model
     public static function generateNumber(): string
     {
         $prefix = app(QuotationSettings::class)->quote_prefix;
-        $sequence = static::whereYear('created_at', now()->year)->count() + 1;
+        $year = now()->year;
+        $sequence = NumberSequence::next("quote:{$year}");
 
-        return $prefix.now()->year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
+        return $prefix.$year.'-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
     }
 }

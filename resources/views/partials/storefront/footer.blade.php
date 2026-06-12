@@ -38,8 +38,8 @@
 
 <footer class="mt-20 bg-brand-blue-500 pt-16 pb-8 text-[#e6ddc8]">
     <div class="shell">
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-12">
-            <div class="md:col-span-4">
+        <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-12">
+            <div class="col-span-2 sm:col-span-3 md:col-span-4">
                 <a href="{{ route('home') }}" class="inline-flex items-center" wire:navigate
                     aria-label="{{ $storeName }} — Home">
                     <img src="/logo-inverse.png" alt="{{ $storeName }}" class="h-9 w-auto" />

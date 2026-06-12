@@ -7,6 +7,7 @@ use App\Services\QuoteConversionService;
 use App\Support\StaffRecipients;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -27,19 +28,35 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
 
     public function approve(): void
     {
-        abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
+        abort_unless($this->quote->isApprovable(), 403);
 
         // Already authenticated — link the quote and go straight to payment.
         if (auth()->check()) {
-            $this->quote->update([
-                'user_id' => auth()->id(),
-                'status' => QuoteStatus::APPROVED,
-            ]);
+            // Lock and re-check inside the transaction so a double-submit or
+            // concurrent accept can't spawn a second order for the same quote.
+            $order = DB::transaction(function () {
+                $quote = Quote::lockForUpdate()->findOrFail($this->quote->getKey());
+
+                if ($quote->order_id) {
+                    return $quote->order()->firstOrFail();
+                }
+
+                abort_unless($quote->isApprovable(), 403);
+
+                $quote->update([
+                    'user_id' => auth()->id(),
+                    'status' => QuoteStatus::APPROVED,
+                ]);
+                $quote->recordStatusChange(QuoteStatus::AWAITING_APPROVAL, QuoteStatus::APPROVED, 'Approved by customer.', auth()->id());
+
+                $order = app(QuoteConversionService::class)->convert($quote);
+
+                Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($quote->refresh()));
+
+                return $order;
+            });
+
             $this->quote->refresh();
-
-            $order = app(QuoteConversionService::class)->convert($this->quote);
-
-            Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
 
             $this->redirectRoute('payment.page', $order, navigate: true);
 
@@ -57,6 +74,7 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
         abort_unless($this->quote->status === QuoteStatus::AWAITING_APPROVAL, 403);
 
         $this->quote->update(['status' => QuoteStatus::DECLINED]);
+        $this->quote->recordStatusChange(QuoteStatus::AWAITING_APPROVAL, QuoteStatus::DECLINED, 'Declined by customer.', auth()->id());
         $this->quote->refresh();
 
         Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($this->quote));
@@ -96,7 +114,7 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
     </div>
 
     {{-- Approve / Decline action bar --}}
-    @if ($quote->status === QuoteStatus::AWAITING_APPROVAL)
+    @if ($quote->isApprovable())
         <div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-md border border-brand-200 bg-brand-50 px-5 py-4">
             <div>
                 <p class="text-[14px] font-semibold text-brand-800">Your quotation is ready for review</p>
@@ -118,14 +136,24 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
             <p class="mt-0.5 text-[13px] text-emerald-600">Our team will be in touch shortly to arrange payment and next steps.</p>
         </div>
     @elseif ($quote->status === QuoteStatus::DECLINED)
-        <div class="mb-6 rounded-md border border-zinc-200 bg-zinc-50 px-5 py-4">
-            <p class="text-[14px] font-semibold text-ink">Quote declined</p>
-            <p class="mt-0.5 text-[13px] text-ink-3">Contact us if you'd like to discuss a revised quote.</p>
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-5 py-4">
+            <div>
+                <p class="text-[14px] font-semibold text-ink">Quote declined</p>
+                <p class="mt-0.5 text-[13px] text-ink-3">Changed your mind? You can start a fresh request any time.</p>
+            </div>
+            <flux:button variant="customer-outline" size="customer" icon="arrow-path" :href="route('quote.request')" wire:navigate>
+                Request a new quote
+            </flux:button>
         </div>
-    @elseif ($quote->status === QuoteStatus::EXPIRED || ($quote->expires_at && $quote->expires_at->isPast()))
-        <div class="mb-6 rounded-md border border-red-200 bg-red-50 px-5 py-4">
-            <p class="text-[14px] font-semibold text-red-800">This quote has expired</p>
-            <p class="mt-0.5 text-[13px] text-red-600">Please contact us to request an updated quotation.</p>
+    @elseif ($quote->hasExpired())
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-5 py-4">
+            <div>
+                <p class="text-[14px] font-semibold text-red-800">This quote has expired</p>
+                <p class="mt-0.5 text-[13px] text-red-600">Its validity period has ended — request an updated quotation to proceed.</p>
+            </div>
+            <flux:button variant="customer-primary" size="customer" icon="arrow-path" :href="route('quote.request')" wire:navigate>
+                Request a fresh quote
+            </flux:button>
         </div>
     @endif
 
@@ -144,8 +172,8 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
                     <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
                         <flux:table.columns class="bg-zinc-50">
                             <flux:table.column>Product</flux:table.column>
-                            <flux:table.column class="w-32">SKU</flux:table.column>
-                            <flux:table.column class="w-36" align="end">Unit price</flux:table.column>
+                            <flux:table.column class="hidden w-32 sm:table-cell">SKU</flux:table.column>
+                            <flux:table.column class="hidden w-36 sm:table-cell" align="end">Unit price</flux:table.column>
                             <flux:table.column class="w-16" align="end">Qty</flux:table.column>
                             <flux:table.column class="w-36" align="end">Total</flux:table.column>
                         </flux:table.columns>
@@ -155,10 +183,10 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
                                     <flux:table.cell>
                                         <span class="text-[13.5px] font-semibold leading-snug text-ink">{{ $item->product_name }}</span>
                                     </flux:table.cell>
-                                    <flux:table.cell>
+                                    <flux:table.cell class="hidden sm:table-cell">
                                         <span class="font-mono text-xs text-ink-4">{{ $item->product_sku ?: '—' }}</span>
                                     </flux:table.cell>
-                                    <flux:table.cell align="end">
+                                    <flux:table.cell class="hidden sm:table-cell" align="end">
                                         <span class="tabular-nums text-sm text-ink-2">{!! money($item->unit_price_cents) !!}</span>
                                     </flux:table.cell>
                                     <flux:table.cell align="end">

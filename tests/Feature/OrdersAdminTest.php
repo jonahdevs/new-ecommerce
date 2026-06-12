@@ -3,6 +3,7 @@
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -45,4 +46,19 @@ it('updates an order status from the show page', function () {
         ->assertHasNoErrors();
 
     expect($order->fresh()->status)->toBe(OrderStatus::COMPLETED);
+});
+
+it('forbids a view-only user from mutating an order', function () {
+    $viewer = User::factory()->create();
+    $viewer->givePermissionTo('orders.view');
+    $this->actingAs($viewer);
+
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
+
+    Livewire::test('pages::admin.orders.show', ['order' => $order])
+        ->set('status', OrderStatus::COMPLETED->value)
+        ->call('updateStatus')
+        ->assertForbidden();
+
+    expect($order->fresh()->status)->toBe(OrderStatus::PENDING);
 });

@@ -23,6 +23,7 @@ use App\Support\StorefrontSession;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Stripe\Exception\SignatureVerificationException;
+use Stripe\PaymentIntent;
 
 beforeEach(function () {
     config()->set('services.stripe', [
@@ -195,6 +196,83 @@ it('confirms payment through the stripe webhook endpoint', function () {
         ->assertJson(['received' => true]);
 
     expect($payment->fresh()->status)->toBe(PaymentStatus::SUCCESS)
+        ->and($order->fresh()->status)->toBe(OrderStatus::PROCESSING);
+});
+
+it('rejects a stripe payment whose amount does not match the order', function () {
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
+    $payment = Payment::factory()->stripe()->create([
+        'order_id' => $order->id,
+        'status' => PaymentStatus::PENDING,
+        'amount_cents' => 174000,
+        'currency' => 'KES',
+        'stripe_payment_intent_id' => 'pi_amount_mismatch',
+    ]);
+
+    $intent = PaymentIntent::constructFrom([
+        'id' => 'pi_amount_mismatch',
+        'amount' => 100, // tampered down to KES 1
+        'currency' => 'kes',
+        'status' => 'succeeded',
+        'latest_charge' => null,
+    ]);
+
+    $service = app(StripePaymentService::class);
+    (new ReflectionMethod($service, 'finalize'))->invoke($service, $payment, $intent);
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::FAILED)
+        ->and($payment->fresh()->paid_at)->toBeNull()
+        ->and($order->fresh()->status)->toBe(OrderStatus::PENDING);
+});
+
+it('rejects a stripe payment in the wrong currency', function () {
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
+    $payment = Payment::factory()->stripe()->create([
+        'order_id' => $order->id,
+        'status' => PaymentStatus::PENDING,
+        'amount_cents' => 174000,
+        'currency' => 'KES',
+        'stripe_payment_intent_id' => 'pi_currency_mismatch',
+    ]);
+
+    $intent = PaymentIntent::constructFrom([
+        'id' => 'pi_currency_mismatch',
+        'amount' => 174000,
+        'currency' => 'usd', // wrong currency
+        'status' => 'succeeded',
+        'latest_charge' => null,
+    ]);
+
+    $service = app(StripePaymentService::class);
+    (new ReflectionMethod($service, 'finalize'))->invoke($service, $payment, $intent);
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::FAILED)
+        ->and($order->fresh()->status)->toBe(OrderStatus::PENDING);
+});
+
+it('confirms a stripe payment when amount and currency match', function () {
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
+    $payment = Payment::factory()->stripe()->create([
+        'order_id' => $order->id,
+        'status' => PaymentStatus::PENDING,
+        'amount_cents' => 174000,
+        'currency' => 'KES',
+        'stripe_payment_intent_id' => 'pi_match',
+    ]);
+
+    $intent = PaymentIntent::constructFrom([
+        'id' => 'pi_match',
+        'amount' => 174000,
+        'currency' => 'kes',
+        'status' => 'succeeded',
+        'latest_charge' => null,
+    ]);
+
+    $service = app(StripePaymentService::class);
+    (new ReflectionMethod($service, 'finalize'))->invoke($service, $payment, $intent);
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::SUCCESS)
+        ->and($payment->fresh()->paid_at)->not->toBeNull()
         ->and($order->fresh()->status)->toBe(OrderStatus::PROCESSING);
 });
 

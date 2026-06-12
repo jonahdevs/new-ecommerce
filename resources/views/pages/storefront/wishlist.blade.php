@@ -88,7 +88,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
 
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-semibold tracking-tight">Wishlist</h1>
+                <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Wishlist</h1>
                 <p class="mt-2 text-[14.5px] text-ink-3">
                     @if ($this->products->isEmpty())
                         Nothing saved yet — tap the heart on any product.
@@ -134,37 +134,40 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                         $inStock = $product->stock_status === StockStatus::IN_STOCK;
                     @endphp
                     <article wire:key="wish-{{ $product->slug }}"
-                        class="grid grid-cols-[120px_1fr_auto_auto] items-center gap-5 rounded-md border border-zinc-200 bg-white p-4">
-                        <a href="#" wire:navigate
-                            class="block size-30 overflow-hidden rounded bg-surface-sunken p-2"
-                            style="width: 120px; height: 120px">
-                            @if ($product->cover_url)
-                                <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
-                            @endif
-                        </a>
-                        <div>
-                            @if ($product->brand)
-                                <div class="text-[11.5px] font-bold tracking-[0.06em] text-brand-blue-600 uppercase">{{ $product->brand->name }}</div>
-                            @endif
-                            <a href="#" wire:navigate class="mt-1 block text-base leading-snug font-medium hover:text-brand-500">{{ $product->name }}</a>
-                            @if ($product->short_description)
-                                <div class="mt-1 line-clamp-2 max-w-xl text-[13px] text-ink-3">{{ $product->short_description }}</div>
-                            @endif
-                            <div class="mt-2 flex items-center gap-2 text-[12px] text-ink-2">
-                                <span>SKU: {{ $product->sku }}</span>
-                                <span class="text-ink-4">·</span>
-                                <span class="{{ $inStock ? 'text-emerald-700' : 'text-ink-3' }}">
-                                    {{ $inStock ? '● In stock' : '● Made to order' }}
-                                </span>
+                        class="flex flex-col gap-4 rounded-md border border-zinc-200 bg-white p-4 sm:grid sm:grid-cols-[120px_1fr_auto_auto] sm:items-center sm:gap-5">
+                        {{-- Image + details share a flex row on mobile; sm:contents lets them drop into
+                             the parent grid as direct cells on larger screens. --}}
+                        <div class="flex gap-4 sm:contents">
+                            <a href="#" wire:navigate
+                                class="block size-24 shrink-0 overflow-hidden rounded bg-surface-sunken p-2 sm:size-30">
+                                @if ($product->cover_url)
+                                    <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
+                                @endif
+                            </a>
+                            <div class="min-w-0">
+                                @if ($product->brand)
+                                    <div class="text-[11.5px] font-bold tracking-[0.06em] text-brand-blue-600 uppercase">{{ $product->brand->name }}</div>
+                                @endif
+                                <a href="#" wire:navigate class="mt-1 block text-base leading-snug font-medium hover:text-brand-500">{{ $product->name }}</a>
+                                @if ($product->short_description)
+                                    <div class="mt-1 line-clamp-2 max-w-xl text-[13px] text-ink-3">{{ $product->short_description }}</div>
+                                @endif
+                                <div class="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-ink-2">
+                                    <span>SKU: {{ $product->sku }}</span>
+                                    <span class="text-ink-4">·</span>
+                                    <span class="{{ $inStock ? 'text-emerald-700' : 'text-ink-3' }}">
+                                        {{ $inStock ? '● In stock' : '● Made to order' }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <div class="min-w-32 text-right">
+                        <div class="text-left sm:min-w-32 sm:text-right">
                             @if ($compareAt)
                                 <div class="text-[12px] text-ink-4 line-through whitespace-nowrap">{!! money($compareAt) !!}</div>
                             @endif
                             <div class="font-serif text-xl tabular-nums whitespace-nowrap">{!! $price ? money($price) : 'Request quote' !!}</div>
                         </div>
-                        <div class="flex min-w-36 flex-col gap-1.5">
+                        <div class="flex flex-col gap-1.5 sm:min-w-36">
                             <flux:button variant="primary" size="sm" wire:click="addToCart('{{ $product->slug }}')" icon="shopping-cart">Add to cart</flux:button>
                             <flux:button size="sm">Compare</flux:button>
                             <button type="button" wire:click="remove('{{ $product->slug }}')"

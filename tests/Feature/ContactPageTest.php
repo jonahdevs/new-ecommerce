@@ -15,7 +15,7 @@ beforeEach(function () {
 it('renders the contact page with its sections', function () {
     $this->get(route('contact'))
         ->assertOk()
-        ->assertSee('Talk to an')
+        ->assertSee('Talk to a')
         ->assertSee('Send us a message')
         ->assertSee('Visit a Sheffield showroom');
 });

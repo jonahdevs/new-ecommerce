@@ -155,12 +155,12 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
     @endpush
 
     {{-- Header --}}
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <flux:heading size="xl">Addresses</flux:heading>
             <flux:text class="mt-1">Manage your saved delivery addresses.</flux:text>
         </div>
-        <flux:button variant="customer-primary" size="customer" wire:click="openCreate" icon="plus">
+        <flux:button variant="customer-primary" size="customer" wire:click="openCreate" icon="plus" class="w-full sm:w-auto">
             Add address
         </flux:button>
     </div>

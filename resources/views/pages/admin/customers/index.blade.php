@@ -85,7 +85,7 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
 }; ?>
 
 <div>
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             @push('breadcrumbs')
 <flux:breadcrumbs>

@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\PaymentStatus;
 use App\Models\Payment;
+use App\Services\RefundService;
+use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
@@ -10,9 +13,62 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
     #[Locked]
     public Payment $payment;
 
+    public string $refundAmount = '';
+
+    public string $refundReason = '';
+
+    public bool $showRefundModal = false;
+
     public function mount(Payment $payment): void
     {
         $this->payment = $payment->load('order.user');
+        $this->refundAmount = number_format($this->remainingRefundableCents() / 100, 2, '.', '');
+    }
+
+    /** Cents still available to refund on this payment. */
+    public function remainingRefundableCents(): int
+    {
+        return max(0, (int) $this->payment->amount_cents - (int) $this->payment->refund_cents);
+    }
+
+    /** Whether a refund can be issued against this payment right now. */
+    public function canRefund(): bool
+    {
+        return $this->payment->status === PaymentStatus::SUCCESS
+            && $this->remainingRefundableCents() > 0
+            && (bool) auth()->user()?->can('orders.manage');
+    }
+
+    public function refund(): void
+    {
+        abort_unless(auth()->user()?->can('orders.manage'), 403);
+
+        $this->validate([
+            'refundAmount' => ['required', 'numeric', 'min:0.01'],
+            'refundReason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $cents = (int) round(((float) $this->refundAmount) * 100);
+
+        try {
+            app(RefundService::class)->refund($this->payment, $cents, $this->refundReason ?: null, auth()->id());
+        } catch (\InvalidArgumentException $e) {
+            $this->addError('refundAmount', $e->getMessage());
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->addError('refundAmount', 'The refund could not be completed at the payment gateway. Check the gateway dashboard and try again.');
+
+            return;
+        }
+
+        $this->payment->refresh()->load('order.user');
+        $this->reset('refundReason');
+        $this->refundAmount = number_format($this->remainingRefundableCents() / 100, 2, '.', '');
+        $this->showRefundModal = false;
+
+        Flux::toast(heading: 'Refund processed', text: 'The customer has been notified.', variant: 'success');
     }
 
     /** @return array<int, array{label: string, value: ?string}> */
@@ -70,6 +126,42 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
                 </div>
             </flux:card>
 
+            {{-- Refund --}}
+            @if ($payment->refund_cents > 0 || $this->canRefund())
+                <flux:card class="p-0 overflow-hidden">
+                    <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                        <flux:heading size="sm">Refund</flux:heading>
+                        @if ($payment->refund_cents > 0)
+                            <flux:badge size="sm" color="purple">
+                                {{ money($payment->refund_cents) }} refunded
+                            </flux:badge>
+                        @endif
+                    </div>
+                    <div class="space-y-4 p-6">
+                        @if ($payment->refund_cents > 0)
+                            <div class="grid grid-cols-[1fr_1.4fr] gap-4 text-sm">
+                                <span class="text-zinc-500">Refunded on</span>
+                                <span class="font-medium dark:text-white">{{ $payment->refunded_at?->format('d F Y, g:i A') }}</span>
+                            </div>
+                        @endif
+
+                        @if ($this->canRefund())
+                            <p class="text-sm text-zinc-500">
+                                {!! money($this->remainingRefundableCents()) !!} is available to refund.
+                                @if ($payment->provider === 'mpesa')
+                                    <span class="text-amber-600 dark:text-amber-400">M-Pesa reversals are processed manually via Safaricom — this records the refund and notifies the customer.</span>
+                                @endif
+                            </p>
+                            <flux:button variant="danger" icon="receipt-refund" wire:click="$set('showRefundModal', true)">
+                                Issue refund
+                            </flux:button>
+                        @elseif ($payment->refund_cents >= $payment->amount_cents)
+                            <p class="text-sm text-zinc-500">This payment has been fully refunded.</p>
+                        @endif
+                    </div>
+                </flux:card>
+            @endif
+
             {{-- Raw payload --}}
             @if ($payment->payload)
                 <flux:card class="p-0 overflow-hidden">
@@ -124,4 +216,39 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
             </flux:card>
         </aside>
     </div>
+
+    {{-- Refund modal --}}
+    <flux:modal wire:model.self="showRefundModal" class="md:w-[440px]">
+        <form wire:submit="refund" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Issue a refund</flux:heading>
+                <flux:subheading>
+                    Refunding payment for order
+                    <span class="font-mono">{{ $payment->order?->order_number }}</span>.
+                    @if ($payment->provider === 'stripe')
+                        This reverses the charge through Stripe immediately.
+                    @else
+                        This records the refund and notifies the customer — reverse the M-Pesa transaction manually via Safaricom.
+                    @endif
+                </flux:subheading>
+            </div>
+
+            <flux:input
+                wire:model="refundAmount"
+                type="number" step="0.01" min="0.01"
+                label="Amount (KES)"
+                description="Up to {{ money($this->remainingRefundableCents()) }} available." />
+
+            <flux:textarea wire:model="refundReason" label="Reason (optional)" rows="3"
+                placeholder="Shown to the customer in the refund email." />
+
+            <div class="flex justify-end gap-3">
+                <flux:button type="button" variant="ghost" wire:click="$set('showRefundModal', false)">Cancel</flux:button>
+                <flux:button type="submit" variant="danger" icon="receipt-refund"
+                    wire:loading.attr="disabled" wire:target="refund">
+                    Refund {{ $refundAmount !== '' ? 'KES '.number_format((float) $refundAmount, 2) : '' }}
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

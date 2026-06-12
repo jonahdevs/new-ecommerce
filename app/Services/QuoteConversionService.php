@@ -17,10 +17,20 @@ class QuoteConversionService
      * Convert a quote into a pending order, link the order back to the quote,
      * and return the new order. Does not change the quote's status — callers
      * are responsible for that.
+     *
+     * Idempotent: the quote row is locked and re-read inside the transaction,
+     * so concurrent or repeated accepts can never produce a second order — once
+     * `order_id` is set the existing order is returned instead.
      */
     public function convert(Quote $quote): Order
     {
         return DB::transaction(function () use ($quote) {
+            $quote = Quote::lockForUpdate()->findOrFail($quote->getKey());
+
+            if ($quote->order_id) {
+                return $quote->order()->firstOrFail();
+            }
+
             $lines = $quote->items()
                 ->with(['product.taxClass', 'product.images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
                 ->get();

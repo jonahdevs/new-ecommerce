@@ -18,10 +18,8 @@ it('creates an address with a pinned location and marks the first one default', 
     Livewire::test('pages::account.addresses.index')
         ->call('openCreate')
         ->assertSet('showModal', true)
-        ->set('first_name', 'Anita')
-        ->set('last_name', 'Wanjiru')
+        ->set('name', 'Anita Wanjiru')
         ->set('line1', '12 Riverside Drive')
-        ->set('city', 'Nairobi')
         ->set('latitude', -1.2921)
         ->set('longitude', 36.8219)
         ->call('save')
@@ -32,20 +30,21 @@ it('creates an address with a pinned location and marks the first one default', 
 
     expect($address)->not->toBeNull()
         ->and($address->is_default)->toBeTrue()
+        ->and($address->name)->toBe('Anita Wanjiru')
         ->and($address->latitude)->toEqual(-1.2921)
         ->and($address->longitude)->toEqual(36.8219);
 });
 
 it('loads an existing address into the form for editing', function () {
-    $address = Address::factory()->create(['user_id' => $this->user->id, 'city' => 'Nairobi']);
+    $address = Address::factory()->create(['user_id' => $this->user->id, 'label' => 'Home', 'line1' => '5 Old Lane']);
 
     Livewire::test('pages::account.addresses.index')
         ->call('openEdit', $address->id)
         ->assertSet('editingId', $address->id)
-        ->assertSet('city', 'Nairobi')
-        ->set('city', 'Mombasa')
+        ->assertSet('line1', '5 Old Lane')
+        ->set('line1', '7 New Avenue')
         ->call('save')
         ->assertHasNoErrors();
 
-    expect($address->fresh()->city)->toBe('Mombasa');
+    expect($address->fresh()->line1)->toBe('7 New Avenue');
 });

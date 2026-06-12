@@ -78,11 +78,11 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
 
                 {{-- Channel headers --}}
                 <div class="flex items-center justify-end border-b border-zinc-200 bg-zinc-50 px-5 py-2.5 dark:border-zinc-600 dark:bg-zinc-800/40">
-                    <span class="w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest text-zinc-500">Email</span>
+                    <span class="w-14 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest text-zinc-500 sm:w-16">Email</span>
                     <span @class([
-                        'w-16 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest',
+                        'w-14 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest sm:w-16',
                         'text-zinc-500' => $this->whatsappEnabled,
-                        'text-zinc-300 dark:text-zinc-600' => ! $this->whatsappEnabled,
+                        'hidden text-zinc-300 sm:inline-block dark:text-zinc-600' => ! $this->whatsappEnabled,
                     ])>WhatsApp</span>
                 </div>
 
@@ -132,10 +132,14 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
                                 <div class="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">{{ $row['desc'] }}</div>
                             </div>
                             <div class="flex shrink-0 items-center">
-                                <div class="flex w-16 justify-center">
+                                <div class="flex w-14 justify-center sm:w-16">
                                     <flux:switch wire:model="{{ $modelPath }}" />
                                 </div>
-                                <div @class(['flex w-16 justify-center', 'opacity-40' => ! $this->whatsappEnabled])>
+                                <div @class([
+                                    'w-14 justify-center sm:w-16',
+                                    'flex' => $this->whatsappEnabled,
+                                    'hidden opacity-40 sm:flex' => ! $this->whatsappEnabled,
+                                ])>
                                     <flux:switch :disabled="true" />
                                 </div>
                             </div>

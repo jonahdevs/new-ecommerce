@@ -24,11 +24,12 @@ class LoginResponse implements LoginResponseContract
         if ($pendingId = session()->pull('quote_approval_pending')) {
             $quote = Quote::find($pendingId);
 
-            if ($quote && ($quote->user_id === $user->id || $quote->user_id === null) && $quote->status === QuoteStatus::AWAITING_APPROVAL) {
+            if ($quote && ($quote->user_id === $user->id || $quote->user_id === null) && $quote->isApprovable()) {
                 $quote->update([
                     'user_id' => $user->id,
                     'status' => QuoteStatus::APPROVED,
                 ]);
+                $quote->recordStatusChange(QuoteStatus::AWAITING_APPROVAL, QuoteStatus::APPROVED, 'Approved by customer.', $user->id);
                 $quote->refresh();
 
                 $order = app(QuoteConversionService::class)->convert($quote);

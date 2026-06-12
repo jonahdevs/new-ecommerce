@@ -112,7 +112,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
 
         {{-- Page header --}}
         <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-semibold tracking-tight">Cart</h1>
+            <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Cart</h1>
             @if ($this->lines->isNotEmpty())
                 <flux:button variant="customer-danger" size="customer" wire:click="clear" wire:confirm="Remove all items from your cart?">
                     Clear cart
@@ -142,14 +142,14 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                 {{-- ITEMS TABLE --}}
                 {{-- ================================================== --}}
                 <div class="flex-1 min-w-0">
-                    <div class="overflow-hidden rounded-md border border-zinc-200">
-                    <table class="w-full bg-white">
+                    <div class="overflow-x-auto rounded-md border border-zinc-200">
+                    <table class="w-full min-w-[600px] bg-white lg:min-w-0">
                         <thead>
                             <tr class="bg-zinc-50 text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">
-                                <th class="px-6 py-3 text-left border-b border-zinc-200">Product</th>
-                                <th class="px-6 py-3 text-center border-b border-zinc-200">Price</th>
-                                <th class="px-6 py-3 text-center border-b border-zinc-200">Quantity</th>
-                                <th class="px-6 py-3 text-right border-b border-zinc-200">Subtotal</th>
+                                <th class="px-4 py-3 xl:px-6 text-left border-b border-zinc-200">Product</th>
+                                <th class="px-4 py-3 xl:px-6 text-center border-b border-zinc-200">Price</th>
+                                <th class="px-4 py-3 xl:px-6 text-center border-b border-zinc-200">Quantity</th>
+                                <th class="px-4 py-3 xl:px-6 text-right border-b border-zinc-200">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -164,7 +164,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                             <tr wire:key="line-{{ $line['key'] }}" class="{{ ! $loop->last ? 'border-b border-zinc-100' : '' }}">
 
                                 {{-- Product --}}
-                                <td class="px-6 py-5">
+                                <td class="px-4 py-5 xl:px-6">
                                     <div class="flex items-center gap-4 min-w-0">
                                         <a href="{{ route('product.show', $product) }}" wire:navigate
                                            class="size-20 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1.5">
@@ -201,12 +201,12 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                                 </td>
 
                                 {{-- Unit price --}}
-                                <td class="px-6 py-5 text-center text-[14px] font-medium text-ink tabular-nums whitespace-nowrap">
+                                <td class="px-4 py-5 xl:px-6 text-center text-[14px] font-medium text-ink tabular-nums whitespace-nowrap">
                                     {!! money($unitPrice) !!}
                                 </td>
 
                                 {{-- Qty stepper --}}
-                                <td class="px-6 py-5 text-center">
+                                <td class="px-4 py-5 xl:px-6 text-center">
                                     <div class="inline-flex items-center rounded border border-zinc-200">
                                         <button type="button" wire:click="decrement('{{ $line['key'] }}')"
                                                 class="flex size-9 cursor-pointer items-center justify-center text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
@@ -221,7 +221,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                                 </td>
 
                                 {{-- Line total --}}
-                                <td class="px-6 py-5 text-right text-[14px] font-semibold text-ink tabular-nums whitespace-nowrap">
+                                <td class="px-4 py-5 xl:px-6 text-right text-[14px] font-semibold text-ink tabular-nums whitespace-nowrap">
                                     {!! money($lineTotal) !!}
                                 </td>
                             </tr>
@@ -241,7 +241,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                 {{-- ================================================== --}}
                 {{-- CART SUMMARY SIDEBAR --}}
                 {{-- ================================================== --}}
-                <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
+                <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-80 xl:w-96">
                     <div class="rounded-md border border-zinc-200 bg-white">
                         <div class="border-b border-zinc-200 px-6 py-4">
                             <flux:heading size="sm" class="uppercase tracking-wide">Cart summary</flux:heading>

@@ -24,8 +24,9 @@ class RegisterResponse implements RegisterResponseContract
         if ($pendingId = session()->pull('quote_approval_pending')) {
             $quote = Quote::find($pendingId);
 
-            if ($quote && $quote->user_id === $user->id && $quote->status === QuoteStatus::AWAITING_APPROVAL) {
+            if ($quote && $quote->user_id === $user->id && $quote->isApprovable()) {
                 $quote->update(['status' => QuoteStatus::APPROVED]);
+                $quote->recordStatusChange(QuoteStatus::AWAITING_APPROVAL, QuoteStatus::APPROVED, 'Approved by customer.', $user->id);
                 $quote->refresh();
 
                 $order = app(QuoteConversionService::class)->convert($quote);

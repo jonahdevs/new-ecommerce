@@ -132,15 +132,15 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
     <flux:card class="mt-6 p-0 overflow-hidden">
 
         {{-- Toolbar --}}
-        <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+        <div class="flex flex-col gap-3 border-b border-zinc-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-zinc-700">
             <flux:input
                 wire:model.live.debounce.300ms="search"
                 placeholder="Search receipt, phone or order #…"
                 icon="magnifying-glass"
                 clearable
-                class="max-w-xs" />
+                class="sm:max-w-xs" />
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <flux:select wire:model.live="filterProvider" class="w-36">
                     <flux:select.option value="">All providers</flux:select.option>
                     @foreach ($this->providers as $provider)

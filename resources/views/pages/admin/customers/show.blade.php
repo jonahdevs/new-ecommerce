@@ -85,10 +85,10 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
         <flux:subheading>Account information, addresses and order history.</flux:subheading>
     </div>
 
-    <div class="mt-6 grid grid-cols-4 items-start gap-5">
+    <div class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-4 lg:items-start">
 
         {{-- Left: profile --}}
-        <div class="col-span-1">
+        <div class="lg:col-span-1">
 
             @php $default = $customer->addresses->firstWhere('is_default', true) ?? $customer->addresses->first(); @endphp
 
@@ -204,10 +204,10 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
         </div>
 
         {{-- Right: KPIs + orders --}}
-        <div class="col-span-3 space-y-5">
+        <div class="space-y-5 lg:col-span-3">
 
             {{-- KPIs --}}
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <flux:card class="flex items-center gap-4">
                     <flux:icon.shopping-bag class="size-8 shrink-0 text-zinc-400" />
                     <div>

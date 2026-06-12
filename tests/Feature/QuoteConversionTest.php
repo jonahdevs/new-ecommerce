@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Quote;
 use App\Models\TaxClass;
 use App\Models\User;
+use App\Services\QuoteConversionService;
 use App\Settings\TaxSettings;
 use Livewire\Livewire;
 
@@ -44,7 +45,7 @@ function quoteWithLine(int $lineCents, ?Product $product): Quote
     return $quote->load('items');
 }
 
-beforeEach(fn () => $this->actingAs(User::factory()->create()));
+beforeEach(fn () => actingAsAdmin());
 
 it('extracts VAT from the quote total when prices include tax', function () {
     applyTaxSettings(['tax_enabled' => true, 'prices_include_tax' => true]);
@@ -92,6 +93,20 @@ it('records zero VAT when tax is disabled', function () {
 
     expect($order->vat_cents)->toBe(0)
         ->and($order->total_cents)->toBe(100000);
+});
+
+it('never creates a second order for an already-converted quote', function () {
+    $product = Product::factory()->create();
+    $quote = quoteWithLine(100000, $product);
+
+    $service = app(QuoteConversionService::class);
+
+    $first = $service->convert($quote);
+    $second = $service->convert($quote->fresh());
+
+    expect($second->id)->toBe($first->id)
+        ->and(Order::count())->toBe(1)
+        ->and($quote->fresh()->order_id)->toBe($first->id);
 });
 
 it('falls back to the default tax rate for a manual line with no product', function () {

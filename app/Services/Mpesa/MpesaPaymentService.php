@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\PaymentCredentials;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Orchestrates M-Pesa STK Push payments for orders: initiating the prompt,
@@ -138,25 +139,59 @@ class MpesaPaymentService
         $metadata = collect(Arr::get($callback, 'CallbackMetadata.Item', []))
             ->keyBy('Name');
 
+        $paidAmount = Arr::get($metadata, 'Amount.Value');
+
         $this->finalize(
             payment: $payment,
             resultCode: (int) Arr::get($callback, 'ResultCode'),
             resultDesc: (string) Arr::get($callback, 'ResultDesc', ''),
             receipt: Arr::get($metadata, 'MpesaReceiptNumber.Value'),
             payload: $payload,
+            paidAmount: $paidAmount !== null ? (int) round((float) $paidAmount) : null,
         );
     }
 
     /**
+     * Persist the outcome of a payment and advance the order when it succeeds.
+     *
      * @param  array<string, mixed>  $payload
+     * @param  int|null  $paidAmount  Whole shillings Safaricom reports collecting (callback only;
+     *                                the STK query response carries no amount, so it is null there).
      */
-    private function finalize(Payment $payment, int $resultCode, string $resultDesc, ?string $receipt, array $payload): void
+    private function finalize(Payment $payment, int $resultCode, string $resultDesc, ?string $receipt, array $payload, ?int $paidAmount = null): void
     {
         $status = match (true) {
             $resultCode === 0 => PaymentStatus::SUCCESS,
             $resultCode === 1032 => PaymentStatus::CANCELLED,
             default => PaymentStatus::FAILED,
         };
+
+        // The callback endpoint is public and unauthenticated, so never trust a
+        // "success" whose amount doesn't match what we billed. Reject the payment
+        // and leave the order unpaid rather than advancing it on a wrong amount.
+        if ($status === PaymentStatus::SUCCESS && $paidAmount !== null) {
+            $expectedAmount = (int) round($payment->amount_cents / 100);
+
+            if ($paidAmount !== $expectedAmount) {
+                Log::critical('M-Pesa callback amount mismatch — payment rejected.', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
+                    'expected_kes' => $expectedAmount,
+                    'paid_kes' => $paidAmount,
+                ]);
+
+                $payment->update([
+                    'status' => PaymentStatus::FAILED,
+                    'result_code' => $resultCode,
+                    'result_desc' => "Amount mismatch: expected KES {$expectedAmount}, received KES {$paidAmount}.",
+                    'mpesa_receipt' => $receipt ?? $payment->mpesa_receipt,
+                    'payload' => $payload,
+                    'paid_at' => null,
+                ]);
+
+                return;
+            }
+        }
 
         $payment->update([
             'status' => $status,

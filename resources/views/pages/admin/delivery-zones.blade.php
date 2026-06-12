@@ -332,7 +332,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
 
             {{-- Step 1: Map --}}
             <div x-show="currentStep === 1" class="space-y-3">
-                <div id="zone-map-container" class="h-[480px] w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-700"></div>
+                <div id="zone-map-container" class="h-72 w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 sm:h-96 md:h-[480px] dark:border-zinc-700"></div>
 
                 <div class="flex items-center justify-between">
                     <flux:text size="sm" class="text-zinc-500">
@@ -357,7 +357,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
 
             {{-- Step 2: Details --}}
             <div x-show="currentStep === 2" x-cloak class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:field>
                         <flux:label>Name</flux:label>
                         <flux:input wire:model="name" placeholder="Nairobi & Surroundings" />
@@ -370,7 +370,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
                     </flux:field>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:field>
                         <flux:label>Priority</flux:label>
                         <flux:input type="number" wire:model="priority" min="0" />

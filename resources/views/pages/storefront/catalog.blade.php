@@ -356,7 +356,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
             </aside>
 
             {{-- Results --}}
-            <div class="@container">
+            <div class="@container min-w-0">
                 {{-- Toolbar --}}
                 <div class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-3">

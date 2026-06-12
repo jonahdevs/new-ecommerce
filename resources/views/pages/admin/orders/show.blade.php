@@ -69,12 +69,23 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
         $this->shipmentStatus = $order->shipment?->status->value ?? ShipmentStatus::PENDING->value;
     }
 
+    /**
+     * Guard every order mutation. The route only enforces `orders.view`, so
+     * read-only staff can open this page; any write requires `orders.manage`.
+     */
+    protected function authorizeManage(): void
+    {
+        abort_unless(auth()->user()?->can('orders.manage'), 403);
+    }
+
     // ==================================================
     // STATUS
     // ==================================================
 
     public function updateStatus(): void
     {
+        $this->authorizeManage();
+
         if (in_array($this->order->status, [OrderStatus::COMPLETED, OrderStatus::CANCELLED])) {
             Flux::toast(heading: 'Cannot update', text: 'Order is already '.$this->order->status->label().'.', variant: 'danger');
 
@@ -152,6 +163,8 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
     public function saveStaffNotes(): void
     {
+        $this->authorizeManage();
+
         $this->validate(['staffNotes' => ['nullable', 'string', 'max:5000']]);
 
         $this->order->update(['staff_notes' => $this->staffNotes ?: null]);
@@ -165,6 +178,8 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
     public function createShipment(): void
     {
+        $this->authorizeManage();
+
         if (! in_array($this->order->status, [OrderStatus::PROCESSING, OrderStatus::OUT_FOR_DELIVERY])) {
             Flux::toast(heading: 'Cannot create shipment', text: 'A shipment can only be created for orders that are processing or out for delivery.', variant: 'danger');
 
@@ -211,6 +226,8 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
     public function updateShipmentStatus(): void
     {
+        $this->authorizeManage();
+
         $this->validate(['shipmentStatus' => ['required', Rule::enum(ShipmentStatus::class)]]);
 
         $newStatus = ShipmentStatus::from($this->shipmentStatus);
@@ -275,6 +292,8 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
     public function resyncSap(): void
     {
+        $this->authorizeManage();
+
         $this->order->update([
             'sap_sync_status' => SapSyncStatus::PENDING,
             'sap_sync_attempts' => 0,
@@ -362,7 +381,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             <flux:subheading>Placed {{ $order->created_at->format('d F Y, g:i A') }}</flux:subheading>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             {{-- Update status --}}
             @if (! in_array($order->status, [OrderStatus::COMPLETED, OrderStatus::CANCELLED]))
                 <flux:button wire:click="$set('showStatusModal', true)" variant="primary" size="sm" icon="pencil-square">

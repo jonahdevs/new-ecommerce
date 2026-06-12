@@ -304,10 +304,8 @@ it('adds a new address from checkout and selects it as default', function () {
     Livewire::test('pages::storefront.checkout')
         ->call('openAddressModal', 'create')
         ->assertSet('addressModalMode', 'create')
-        ->set('first_name', 'Anita')
-        ->set('last_name', 'Wanjiru')
+        ->set('name', 'Anita Wanjiru')
         ->set('line1', '12 Riverside Drive')
-        ->set('city', 'Nairobi')
         ->set('latitude', -1.2921)
         ->set('longitude', 36.8219)
         ->call('saveAddress')
@@ -318,7 +316,7 @@ it('adds a new address from checkout and selects it as default', function () {
 
     expect($address)->not->toBeNull()
         ->and($address->is_default)->toBeTrue()
-        ->and($address->first_name)->toBe('Anita')
+        ->and($address->name)->toBe('Anita Wanjiru')
         ->and($address->latitude)->toEqual(-1.2921)
         ->and($address->longitude)->toEqual(36.8219);
 });

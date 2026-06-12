@@ -28,6 +28,8 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public int $perPage = 24;
 
+    public bool $showFilters = false;
+
     /** @var array<int, int> */
     #[Url(as: 'brand', history: true)]
     public array $selectedBrands = [];
@@ -197,7 +199,7 @@ new #[Layout('layouts::storefront')] class extends Component
     </div>
 
     {{-- Category hero --}}
-    <div class="relative overflow-hidden border-b border-zinc-200 py-10
+    <div class="relative overflow-hidden border-b border-zinc-200 py-6 sm:py-10
         {{ $category->image ? '' : 'bg-surface-sunken' }}"
         @if ($category->image)
             style="background-image: url('{{ $category->image_url }}'); background-size: cover; background-position: center;"
@@ -208,7 +210,7 @@ new #[Layout('layouts::storefront')] class extends Component
         @endif
 
         <div class="shell relative z-10">
-            <h1 class="text-2xl font-semibold tracking-tight {{ $category->image ? 'text-white' : 'text-ink' }}">
+            <h1 class="text-xl font-semibold tracking-tight sm:text-2xl {{ $category->image ? 'text-white' : 'text-ink' }}">
                 {{ $category->name }}
             </h1>
             @if ($category->description)
@@ -220,9 +222,95 @@ new #[Layout('layouts::storefront')] class extends Component
     </div>
 
     <div class="shell pt-4 pb-20">
+        {{-- Mobile filter drawer (teleported to body) --}}
+        <template x-teleport="body">
+            <div x-show="$wire.showFilters" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 flex lg:hidden"
+                @keydown.escape.window="$wire.showFilters = false" x-cloak>
+
+                {{-- Backdrop --}}
+                <div class="absolute inset-0 bg-black/40" @click="$wire.showFilters = false"></div>
+
+                {{-- Drawer panel --}}
+                <div x-show="$wire.showFilters" x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+                    x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
+                    x-transition:leave-end="-translate-x-full"
+                    class="relative flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto bg-white shadow-xl"
+                    x-data="{ openBrands: false }">
+
+                    {{-- Drawer header --}}
+                    <div class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-5 py-3.5">
+                        <span class="text-[13px] font-bold uppercase tracking-[0.08em] text-ink">Filters</span>
+                        <div class="flex items-center gap-3">
+                            @if ($this->hasActiveFilters())
+                                <button type="button" wire:click="clearFilters"
+                                    class="cursor-pointer text-[12px] font-medium text-brand-500 hover:underline">
+                                    Clear all
+                                </button>
+                            @endif
+                            <button type="button" wire:click="$set('showFilters', false)"
+                                class="cursor-pointer text-ink-3 transition hover:text-ink">
+                                <flux:icon.x-mark variant="micro" class="size-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Filter sections (no category filter — already scoped) --}}
+                    <div class="flex-1 divide-y divide-zinc-200 text-sm">
+
+                        @include('partials.storefront.price-filter')
+
+                        @include('partials.storefront.rating-filter')
+
+                        @if ($this->brandsList->isNotEmpty())
+                            <div class="px-5 py-4">
+                                <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Brand</div>
+                                <div class="scrollbar-thin flex flex-col gap-2"
+                                    :class="openBrands ? 'max-h-64 overflow-y-auto pr-1' : ''">
+                                    @foreach ($this->brandsList as $i => $brand)
+                                        <div @if ($i >= 6) x-show="openBrands" x-cloak @endif>
+                                            <flux:checkbox wire:model.live="selectedBrands" value="{{ $brand->id }}"
+                                                :label="$brand->name" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @if ($this->brandsList->count() > 6)
+                                    <button type="button" @click="openBrands = !openBrands"
+                                        class="mt-2 cursor-pointer text-[12.5px] text-brand-500 hover:underline">
+                                        <span x-show="!openBrands" class="inline-flex items-center gap-1">
+                                            Show all {{ $this->brandsList->count() }} brands
+                                            <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                                        </span>
+                                        <span x-show="openBrands" x-cloak>Show fewer</span>
+                                    </button>
+                                @endif
+                            </div>
+                        @endif
+
+                        <div class="px-5 py-4">
+                            <div class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Availability</div>
+                            <flux:checkbox wire:model.live="inStockOnly" label="In stock — ships now" />
+                        </div>
+
+                    </div>
+
+                    {{-- Drawer footer --}}
+                    <div class="sticky bottom-0 border-t border-zinc-200 bg-white px-5 py-3.5">
+                        <flux:button variant="customer-primary" size="customer" wire:click="$set('showFilters', false)"
+                            class="w-full!">
+                            View {{ $this->products->total() }} results
+                        </flux:button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         <div class="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
-            {{-- Filters sidebar (no category filter — already scoped) --}}
-            <aside class="scrollbar-thin lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto" x-data="{ openBrands: false }">
+            {{-- Filters sidebar (desktop only — no category filter, already scoped) --}}
+            <aside class="scrollbar-thin hidden lg:block lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto" x-data="{ openBrands: false }">
                 <div class="divide-y divide-zinc-200 rounded-md border border-zinc-200 bg-white text-sm">
 
                     {{-- Price --}}
@@ -263,18 +351,29 @@ new #[Layout('layouts::storefront')] class extends Component
             </aside>
 
             {{-- Results --}}
-            <div class="@container">
+            <div class="@container min-w-0">
                 <div
                     class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="text-[13.5px] text-ink-3">
-                        Showing <span class="font-semibold text-ink">{{ $this->products->total() }}</span>
-                        {{ \Illuminate\Support\Str::plural('product', $this->products->total()) }}
-                        @if ($this->hasActiveFilters())
-                            <button type="button" wire:click="clearFilters"
-                                class="ml-2.5 cursor-pointer text-[13px] text-brand-500 underline-offset-2 hover:underline">
-                                Clear filters
-                            </button>
-                        @endif
+                    <div class="flex items-center gap-3">
+                        {{-- Mobile: open filter drawer --}}
+                        <flux:button variant="ghost" size="sm" icon="funnel"
+                            wire:click="$set('showFilters', true)" class="lg:hidden">
+                            Filters
+                            @if ($this->hasActiveFilters())
+                                <span class="size-2 rounded-full bg-brand-500"></span>
+                            @endif
+                        </flux:button>
+
+                        <div class="text-[13.5px] text-ink-3">
+                            Showing <span class="font-semibold text-ink">{{ $this->products->total() }}</span>
+                            {{ \Illuminate\Support\Str::plural('product', $this->products->total()) }}
+                            @if ($this->hasActiveFilters())
+                                <button type="button" wire:click="clearFilters"
+                                    class="ml-2.5 cursor-pointer text-[13px] text-brand-500 underline-offset-2 hover:underline">
+                                    Clear filters
+                                </button>
+                            @endif
+                        </div>
                     </div>
                     <div class="flex items-center gap-2.5">
                         <select wire:model.live="sort"

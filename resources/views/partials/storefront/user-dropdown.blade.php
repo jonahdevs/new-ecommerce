@@ -13,7 +13,7 @@
         </button>
     @endauth
 
-    <div popover="manual" class="w-75 rounded-md border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
+    <div popover="manual" class="w-75 max-w-[calc(100vw-1rem)] rounded-md border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
         @auth
             <div class="flex items-center gap-3 border-b border-zinc-200 px-4 py-4">
                 <span

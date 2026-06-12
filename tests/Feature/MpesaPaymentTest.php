@@ -92,8 +92,8 @@ it('stays pending while the customer has not yet entered their PIN', function ()
 });
 
 it('confirms payment through the Safaricom callback endpoint', function () {
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
-    $payment = Payment::factory()->create(['order_id' => $order->id, 'checkout_request_id' => 'ws_CO_55', 'status' => PaymentStatus::PENDING]);
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 150000]);
+    $payment = Payment::factory()->create(['order_id' => $order->id, 'checkout_request_id' => 'ws_CO_55', 'status' => PaymentStatus::PENDING, 'amount_cents' => 150000]);
 
     $payload = ['Body' => ['stkCallback' => [
         'MerchantRequestID' => 'mr',
@@ -114,6 +114,34 @@ it('confirms payment through the Safaricom callback endpoint', function () {
     expect($payment->fresh()->status)->toBe(PaymentStatus::SUCCESS)
         ->and($payment->fresh()->mpesa_receipt)->toBe('QABC123XYZ')
         ->and($order->fresh()->status)->toBe(OrderStatus::PROCESSING);
+});
+
+it('rejects a callback whose amount does not match the order and leaves it unpaid', function () {
+    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 150000]);
+    $payment = Payment::factory()->create([
+        'order_id' => $order->id,
+        'checkout_request_id' => 'ws_CO_66',
+        'status' => PaymentStatus::PENDING,
+        'amount_cents' => 150000,
+    ]);
+
+    $payload = ['Body' => ['stkCallback' => [
+        'MerchantRequestID' => 'mr',
+        'CheckoutRequestID' => 'ws_CO_66',
+        'ResultCode' => 0,
+        'ResultDesc' => 'The service request is processed successfully.',
+        'CallbackMetadata' => ['Item' => [
+            ['Name' => 'Amount', 'Value' => 10], // tampered: KES 10 instead of 1500
+            ['Name' => 'MpesaReceiptNumber', 'Value' => 'QHACK000'],
+            ['Name' => 'PhoneNumber', 'Value' => 254712345678],
+        ]],
+    ]]];
+
+    $this->postJson(route('payments.mpesa.callback'), $payload)->assertOk();
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::FAILED)
+        ->and($payment->fresh()->paid_at)->toBeNull()
+        ->and($order->fresh()->status)->toBe(OrderStatus::PENDING);
 });
 
 it('drives the M-Pesa payment flow from STK push to confirmation on the payment page', function () {

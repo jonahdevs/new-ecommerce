@@ -42,7 +42,7 @@ new #[Layout('layouts::storefront')] class extends Component
     /** @var array<string, string> Selected variation option per attribute slug (variable products). */
     public array $selectedOptions = [];
 
-    public string $activeTab = 'specs';
+    public string $activeTab = 'overview';
 
     public int $galleryIdx = 0;
 
@@ -653,7 +653,7 @@ new #[Layout('layouts::storefront')] class extends Component
     $dimensionStr = $dimensionStr !== '' ? $dimensionStr.' '.($product->dimension_unit ?? 'cm') : null;
 @endphp
 
-<div class="shell page-fade pt-4 pb-20">
+<div class="shell page-fade pt-6 pb-24">
     <flux:breadcrumbs class="mb-6">
         <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
         <flux:breadcrumbs.item :href="route('catalog')" wire:navigate>Catalog</flux:breadcrumbs.item>
@@ -665,84 +665,36 @@ new #[Layout('layouts::storefront')] class extends Component
         <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
     </flux:breadcrumbs>
 
-    {{-- Main: gallery + info panel --}}
-    <div class="grid grid-cols-1 gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
+    {{-- Main: gallery + details + buy-box (3-column on lg+, stacked below) --}}
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(300px,340px)] lg:gap-10 xl:gap-12">
         {{-- Gallery --}}
         <div
             x-data="{
                 lens: null,
-                lbOpen: false,
                 lbIdx: {{ $galleryIdx }},
                 gallery: @js($gallery->values()->map(fn ($img) => ['url' => $img->url, 'alt' => $img->alt ?? $product->name, 'label' => $img->alt ?? ''])),
-                lbScale: 1, lbPan: { x:0, y:0 }, lbPanStart: null, lbPinchDist: 0,
-                openLb(i) { this.lbIdx = i; this.lbOpen = true; this.lbReset(); document.body.style.overflow = 'hidden'; },
-                closeLb() { this.lbOpen = false; document.body.style.overflow = ''; },
-                prevLb() { this.lbIdx = (this.lbIdx - 1 + this.gallery.length) % this.gallery.length; this.lbReset(); },
-                nextLb() { this.lbIdx = (this.lbIdx + 1) % this.gallery.length; this.lbReset(); },
-                lbReset() { this.lbScale = 1; this.lbPan = { x:0, y:0 }; },
-                lbClampPan(p, sc) {
-                    const s = this.$refs.lbStage;
-                    if (!s) return p;
-                    const r = s.getBoundingClientRect();
-                    const mx = (r.width  * (sc - 1)) / 2;
-                    const my = (r.height * (sc - 1)) / 2;
-                    return { x: Math.max(-mx, Math.min(mx, p.x)), y: Math.max(-my, Math.min(my, p.y)) };
-                },
-                lbZoomTo(next, cx, cy) {
-                    const sc = Math.max(1, Math.min(4.5, next));
-                    const s = this.$refs.lbStage;
-                    if (s && cx != null) {
-                        const r = s.getBoundingClientRect();
-                        const ox = cx - r.left - r.width  / 2;
-                        const oy = cy - r.top  - r.height / 2;
-                        const prev = this.lbScale;
-                        this.lbPan = this.lbClampPan({ x: this.lbPan.x - ox * (sc / prev - 1), y: this.lbPan.y - oy * (sc / prev - 1) }, sc);
-                    } else {
-                        this.lbPan = this.lbClampPan(this.lbPan, sc);
-                    }
-                    if (sc === 1) this.lbPan = { x:0, y:0 };
-                    this.lbScale = sc;
-                },
-                lbWheel(e) { e.preventDefault(); this.lbZoomTo(this.lbScale * (e.deltaY < 0 ? 1.18 : 0.85), e.clientX, e.clientY); },
-                lbDblClick(e) { this.lbScale > 1.02 ? this.lbReset() : this.lbZoomTo(2.6, e.clientX, e.clientY); },
-                lbPointerDown(e) { if (this.lbScale > 1) { this.lbPanStart = { x: e.clientX, y: e.clientY, px: this.lbPan.x, py: this.lbPan.y }; } },
-                lbPointerMove(e) { if (this.lbPanStart && this.lbScale > 1) { this.lbPan = this.lbClampPan({ x: this.lbPanStart.px + (e.clientX - this.lbPanStart.x), y: this.lbPanStart.py + (e.clientY - this.lbPanStart.y) }, this.lbScale); } },
-                lbPointerUp() { this.lbPanStart = null; },
-                lbTouchStart(e) { if (e.touches.length === 2) { this.lbPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } },
-                lbTouchMove(e) {
-                    if (e.touches.length === 2) {
-                        e.preventDefault();
-                        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                        if (this.lbPinchDist) this.lbZoomTo(this.lbScale * (d / this.lbPinchDist));
-                        this.lbPinchDist = d;
-                    }
-                },
+                prevLb() { this.lbIdx = (this.lbIdx - 1 + this.gallery.length) % this.gallery.length; },
+                nextLb() { this.lbIdx = (this.lbIdx + 1) % this.gallery.length; },
             }"
-            @keydown.escape.window="if (lbOpen) closeLb()"
-            @keydown.arrow-left.window="if (lbOpen) { prevLb(); }"
-            @keydown.arrow-right.window="if (lbOpen) { nextLb(); }"
-            @keydown.plus.window="if (lbOpen) lbZoomTo(lbScale * 1.3)"
-            @keydown.minus.window="if (lbOpen) lbZoomTo(lbScale / 1.3)"
         >
-            {{-- Gallery: vertical thumbs (left) + main image (right) --}}
-            <div class="flex gap-2.5">
+            {{-- Gallery: thumbnails scroll horizontally below the image on mobile,
+                 and sit as a vertical strip on the left at md+. --}}
+            <div class="flex flex-col-reverse gap-2.5 md:flex-row">
 
-                {{-- Vertical thumbnail strip --}}
+                {{-- Thumbnail strip --}}
                 @if ($gallery->count() > 0)
-                    <div class="flex flex-col gap-2 overflow-y-auto" style="height: 520px; scrollbar-width: none;">
+                    <div class="flex gap-2 overflow-x-auto md:max-h-[520px] md:flex-col md:overflow-x-visible md:overflow-y-auto" style="scrollbar-width: none;">
                         @foreach ($gallery as $i => $img)
                             <button type="button"
                                 wire:click="$set('galleryIdx', {{ $i }})"
                                 x-on:click="lbIdx = {{ $i }}"
                                 @class([
-                                    'w-[72px] cursor-pointer overflow-hidden rounded border bg-white p-1.5 transition',
-                                    'flex-1 min-h-[56px]' => $gallery->count() > 1,
-                                    'aspect-square' => $gallery->count() === 1,
-                                    'border-brand-500 ring-1 ring-brand-500' => $i === $galleryIdx,
-                                    'border-zinc-200 hover:border-zinc-400' => $i !== $galleryIdx,
+                                    'aspect-square size-16 shrink-0 cursor-pointer overflow-hidden rounded bg-white transition md:size-[72px]',
+                                    'border-2 border-brand-500' => $i === $galleryIdx,
+                                    'border border-zinc-200 hover:border-zinc-400' => $i !== $galleryIdx,
                                 ])>
                                 <img src="{{ $img->url }}" alt="{{ $img->alt ?? '' }}"
-                                    class="size-full object-contain" loading="lazy" />
+                                    class="size-full object-cover" loading="lazy" />
                             </button>
                         @endforeach
                     </div>
@@ -754,7 +706,7 @@ new #[Layout('layouts::storefront')] class extends Component
                     style="aspect-ratio: 1; max-height: 520px;"
                     @mousemove="const r = $el.getBoundingClientRect(); lens = { x: Math.max(0,Math.min(100,(($event.clientX-r.left)/r.width)*100)), y: Math.max(0,Math.min(100,(($event.clientY-r.top)/r.height)*100)) }"
                     @mouseleave="lens = null"
-                    @click="openLb(lbIdx)"
+                    @click="$flux.modal('product-gallery').show()"
                 >
                     @if ($isOnSale)
                         <span class="absolute top-4 left-4 z-10 text-[11px] font-bold tracking-[0.08em] text-brand-500 uppercase">● Sale</span>
@@ -789,7 +741,7 @@ new #[Layout('layouts::storefront')] class extends Component
                     @if ($shown)
                         <img src="{{ $shown->url }}"
                             alt="{{ $shown->alt ?? $product->name }}"
-                            class="size-full object-contain p-6 transition-transform duration-75 will-change-transform"
+                            class="size-full object-cover transition-transform duration-75 will-change-transform"
                             :style="lens ? `transform:scale(2.3);transform-origin:${lens.x}% ${lens.y}%` : ''"
                             draggable="false" />
                     @else
@@ -816,103 +768,48 @@ new #[Layout('layouts::storefront')] class extends Component
 
             </div>{{-- end gallery flex row --}}
 
-            {{-- Lightbox overlay — teleported to <body> so page-fade's animation stacking context can't clip it --}}
-            <template x-teleport="body">
-            <div
-                x-show="lbOpen"
-                x-cloak
-                x-transition:enter="transition-opacity duration-200"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="transition-opacity duration-150"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-[200] flex flex-col bg-zinc-900/40 backdrop-blur-xl"
-                @click.self="closeLb()"
-            >
-                {{-- Top bar --}}
-                <div class="flex shrink-0 items-center justify-between px-5 py-4">
-                    <span class="font-mono text-[12px] tracking-[0.03em] text-white/70">
-                        <span x-text="gallery[lbIdx]?.label || '{{ $product->name }}'"></span>
+            {{-- Image modal (Flux) — opened via $flux.modal('product-gallery').show() on the main image --}}
+            <flux:modal name="product-gallery" class="w-full max-w-xl">
+                <div class="flex flex-col gap-4">
+                    <flux:heading size="lg">Product Images</flux:heading>
+
+                    {{-- Square image stage --}}
+                    <div class="group relative mx-auto aspect-square w-full max-w-[min(100%,60vh)] overflow-hidden bg-white">
                         <template x-if="gallery.length > 1">
-                            <span x-text="' · ' + (lbIdx + 1) + '/' + gallery.length"></span>
+                            <button type="button" @click="prevLb()" aria-label="Previous image"
+                                class="absolute top-1/2 left-3 z-10 inline-flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white text-ink-2 opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-surface-sunken">
+                                <flux:icon.chevron-left variant="micro" class="size-4" />
+                            </button>
                         </template>
-                    </span>
-                    <div class="flex items-center gap-1.5">
-                        <span x-text="Math.round(lbScale * 100) + '%'" class="min-w-10 text-right font-mono text-[12.5px] text-white/70"></span>
-                        <button @click="lbZoomTo(lbScale / 1.4)" title="Zoom out"
-                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-white/25">
-                            <flux:icon.minus variant="micro" class="size-4" />
-                        </button>
-                        <button @click="lbZoomTo(lbScale * 1.4)" title="Zoom in"
-                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-white/25">
-                            <flux:icon.plus variant="micro" class="size-4" />
-                        </button>
-                        <button @click="lbReset()" title="Reset zoom"
-                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-white/25">
-                            <flux:icon.arrow-path variant="micro" class="size-4" />
-                        </button>
-                        <button @click="closeLb()" title="Close (Esc)"
-                            class="inline-flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:bg-brand-500 hover:border-brand-500">
-                            <flux:icon.x-mark variant="micro" class="size-4" />
-                        </button>
+
+                        <img :src="gallery[lbIdx]?.url" :alt="gallery[lbIdx]?.alt"
+                            class="size-full select-none object-contain" draggable="false" />
+
+                        <template x-if="gallery.length > 1">
+                            <button type="button" @click="nextLb()" aria-label="Next image"
+                                class="absolute top-1/2 right-3 z-10 inline-flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white text-ink-2 opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-surface-sunken">
+                                <flux:icon.chevron-right variant="micro" class="size-4" />
+                            </button>
+                        </template>
                     </div>
-                </div>
 
-                {{-- Image area with zoom / pan / pinch --}}
-                <div
-                    x-ref="lbStage"
-                    class="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden touch-none"
-                    :style="lbScale > 1 ? (lbPanStart ? 'cursor:grabbing' : 'cursor:grab') : 'cursor:zoom-in'"
-                    x-init="$nextTick(() => { $el.addEventListener('wheel', e => lbWheel(e), { passive: false }); })"
-                    @dblclick="lbDblClick($event)"
-                    @pointerdown="lbPointerDown($event)"
-                    @pointermove="lbPointerMove($event)"
-                    @pointerup="lbPointerUp()"
-                    @pointercancel="lbPointerUp()"
-                    @touchstart.prevent="lbTouchStart($event)"
-                    @touchmove.prevent="lbTouchMove($event)"
-                >
+                    {{-- Thumbnail strip --}}
                     <template x-if="gallery.length > 1">
-                        <button @click.stop="prevLb()"
-                            class="absolute left-4 z-10 inline-flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/25">
-                            <flux:icon.chevron-left class="size-5" />
-                        </button>
-                    </template>
-
-                    <img :src="gallery[lbIdx]?.url" :alt="gallery[lbIdx]?.alt"
-                        :style="`transform: translate(${lbPan.x}px, ${lbPan.y}px) scale(${lbScale}); transition: transform 0.08s ease`"
-                        class="max-h-full max-w-[88%] select-none object-contain"
-                        draggable="false" />
-
-                    <template x-if="gallery.length > 1">
-                        <button @click.stop="nextLb()"
-                            class="absolute right-4 z-10 inline-flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/25">
-                            <flux:icon.chevron-right class="size-5" />
-                        </button>
+                        <div class="flex flex-wrap justify-center gap-2.5">
+                            <template x-for="(img, i) in gallery" :key="i">
+                                <button type="button" @click="lbIdx = i"
+                                    class="size-14 cursor-pointer overflow-hidden rounded border-2 bg-white transition"
+                                    :class="i === lbIdx ? 'border-brand-500' : 'border-zinc-200 hover:border-zinc-400'">
+                                    <img :src="img.url" :alt="img.alt" class="size-full object-cover" />
+                                </button>
+                            </template>
+                        </div>
                     </template>
                 </div>
-
-                {{-- Hint --}}
-                <div class="shrink-0 py-1 text-center font-mono text-[10.5px] tracking-[0.03em] text-white/50">
-                    Scroll or pinch to zoom · drag to pan · double-click to toggle · ← → navigate · Esc close
-                </div>
-
-                {{-- Thumbnail strip --}}
-                <div class="flex shrink-0 flex-wrap justify-center gap-2.5 px-4 pb-5">
-                    <template x-for="(img, i) in gallery" :key="i">
-                        <button @click="lbIdx = i"
-                            class="size-[60px] overflow-hidden rounded-lg border-2 opacity-55 transition"
-                            :class="i === lbIdx ? 'opacity-100 border-white' : 'border-transparent hover:opacity-85'">
-                            <img :src="img.url" :alt="img.alt" class="size-full object-cover" />
-                        </button>
-                    </template>
-                </div>
-            </div>
-            </template>{{-- end x-teleport --}}
+            </flux:modal>
         </div>
 
-        {{-- Info panel --}}
+        {{-- Center column — product details --}}
         <div>
             @if ($product->brand)
                 <div class="text-[11.5px] font-bold tracking-[0.12em] text-brand-blue-500 uppercase">
@@ -920,6 +817,21 @@ new #[Layout('layouts::storefront')] class extends Component
                 </div>
             @endif
             <h1 class="mt-2 font-serif text-3xl leading-tight font-normal lg:text-4xl">{{ $product->name }}</h1>
+
+            {{-- Rating summary — scrolls to the Reviews tab --}}
+            @if ($this->reviewsEnabled && $this->approvedReviews->isNotEmpty())
+                <button type="button" wire:click="$set('activeTab', 'reviews')"
+                    onclick="document.getElementById('product-tabs')?.scrollIntoView({ behavior: 'smooth' })"
+                    class="mt-3 inline-flex cursor-pointer items-center gap-2 text-[13px] text-ink-3 transition hover:text-ink">
+                    <span class="flex items-center gap-0.5">
+                        @for ($s = 1; $s <= 5; $s++)
+                            <flux:icon.star :variant="$s <= round($this->averageRating) ? 'solid' : 'outline'" class="size-4 text-amber-500" />
+                        @endfor
+                    </span>
+                    <span class="font-semibold text-ink">{{ number_format($this->averageRating, 1) }}</span>
+                    <span class="underline-offset-2 hover:underline">{{ $this->approvedReviews->count() }} {{ \Illuminate\Support\Str::plural('review', $this->approvedReviews->count()) }}</span>
+                </button>
+            @endif
             @if ($product->short_description)
                 <div class="pdp-rich-text mt-3 text-[15px] leading-relaxed text-ink-2">{!! $product->short_description !!}</div>
             @endif
@@ -934,8 +846,28 @@ new #[Layout('layouts::storefront')] class extends Component
                 @endif
             </div>
 
+            {{-- Key specifications --}}
+            @php
+                $keySpecs = $product->productAttributes
+                    ->where('is_variation_attribute', false)
+                    ->filter(fn ($pa) => filled($pa->values))
+                    ->take(6);
+            @endphp
+            @if ($keySpecs->isNotEmpty())
+                <div class="mt-6 border-t border-zinc-200 pt-5">
+                    <div class="mb-3 text-[12px] font-bold tracking-[0.08em] text-ink-2 uppercase">Key specifications</div>
+                    <ul class="space-y-2 text-[13.5px] text-ink-2">
+                        @foreach ($keySpecs as $pa)
+                            <li class="flex gap-2">
+                                <flux:icon.check variant="micro" class="mt-0.5 size-3.5 shrink-0 text-brand-500" />
+                                <span><span class="text-ink-3">{{ $pa->attribute?->name }}:</span> {{ collect($pa->values)->implode(', ') }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             {{-- Price block --}}
-            <div class="mt-6 border-y border-zinc-200 py-5">
+            <div class="mt-4 border-y border-zinc-200 py-4">
                 <div class="flex flex-wrap items-baseline gap-3.5">
                     @if ($displayCompareAt)
                         <span class="text-lg text-ink-4 line-through tabular-nums whitespace-nowrap">{{ money($displayCompareAt) }}</span>
@@ -984,13 +916,6 @@ new #[Layout('layouts::storefront')] class extends Component
                         $discPct  = (int) round((1 - $displayPrice / $displayCompareAt) * 100);
                         $saved    = $displayCompareAt - $displayPrice;
                         $chips->push(['tone' => 'sale', 'icon' => 'tag', 'label' => 'Save '.$discPct.'% · '.money($saved)]);
-                    }
-                    if ($inStock) {
-                        $chips->push(['tone' => 'good', 'icon' => 'check-circle', 'label' => 'In stock']);
-                    } elseif ($isBackorder) {
-                        $chips->push(['tone' => 'warn', 'icon' => 'clock', 'label' => 'Available on backorder']);
-                    } elseif ($isOutOfStock) {
-                        $chips->push(['tone' => 'bad', 'icon' => 'x-circle', 'label' => 'Out of stock']);
                     }
                     if ($product->is_virtual) {
                         $chips->push(['tone' => 'info', 'icon' => 'bolt', 'label' => 'Digital — no shipping']);
@@ -1107,68 +1032,89 @@ new #[Layout('layouts::storefront')] class extends Component
                 $ctaBackorder  = $isBackorder && ! $isGrouped && ! $product->requires_quotation;
                 $addToCartLabel = $isGrouped
                     ? 'Choose your items'
-                    : ($ctaBackorder
-                        ? 'Pre-order'
-                        : 'Add to cart'.($displayPrice && ! $isGrouped && ! $isVariable ? ' · '.money($displayPrice * $qty) : ''));
+                    : ($ctaBackorder ? 'Pre-order' : 'Add to cart');
+                $socialSettings = app(\App\Settings\SocialSettings::class);
+                $whatsappNumber = preg_replace('/\D+/', '', (string) $socialSettings->whatsapp_number);
+                $whatsappOrderEnabled = $socialSettings->whatsapp_order_enabled && filled($whatsappNumber);
             @endphp
 
+            <div x-data="{
+                share() {
+                    if (navigator.share) {
+                        navigator.share({ title: @js($product->name), text: @js(\Illuminate\Support\Str::limit(strip_tags((string) $product->short_description), 100)), url: window.location.href });
+                    } else {
+                        navigator.clipboard.writeText(window.location.href).then(() => $flux.toast({ text: 'Link copied!', variant: 'success' }));
+                    }
+                }
+            }">
             @if ($product->requires_quotation)
                 <div class="mt-6 flex flex-wrap items-center gap-3">
                     @if ($this->quotesEnabled)
-                        <flux:button variant="primary" icon="document-text" class="h-12! flex-1! px-6!"
+                        <flux:button variant="customer-primary" size="customer-lg"
                             :href="route('quote.request', ['product' => $product->slug])" wire:navigate>
                             Request a quote
                         </flux:button>
                     @else
-                        <flux:button variant="primary" icon="chat-bubble-left-right" class="h-12! flex-1! px-6!"
+                        <flux:button variant="customer-primary" size="customer-lg"
                             :href="route('contact')" wire:navigate>
                             Contact for pricing
                         </flux:button>
                     @endif
-                    <flux:button class="h-12! px-5!" :href="route('contact')" wire:navigate>
+                    <flux:button variant="customer-outline" size="customer-lg" :href="route('contact')" wire:navigate>
                         Talk to sales
                     </flux:button>
+                    <flux:tooltip content="Share">
+                        <flux:button icon="share" square variant="customer-outline" size="customer-lg" aria-label="Share" @click="share()" />
+                    </flux:tooltip>
                 </div>
 
             @elseif ($ctaOutOfStock)
                 {{-- Out of stock — no stepper, two action buttons --}}
                 <div class="mt-6 flex flex-wrap items-center gap-3">
-                    <flux:button variant="primary" disabled class="h-12! flex-1! px-6!" icon="shopping-cart">
+                    <flux:button variant="customer-primary" size="customer-lg" disabled>
                         Out of stock
                     </flux:button>
-                    <flux:button class="h-12! px-5!" :href="route('contact')" wire:navigate icon="bell">
+                    <flux:button variant="customer-outline" size="customer-lg" :href="route('contact')" wire:navigate icon="bell">
                         Notify me
                     </flux:button>
+                    <flux:tooltip content="Share">
+                        <flux:button icon="share" square variant="customer-outline" size="customer-lg" aria-label="Share" @click="share()" />
+                    </flux:tooltip>
                 </div>
 
             @else
-                <div class="mt-6 flex flex-wrap items-center gap-3">
-                    @unless ($isGrouped || $isVariable)
-                        <div class="inline-flex h-12 items-stretch overflow-hidden rounded border border-zinc-200">
+                {{-- Quantity counter --}}
+                @unless ($isGrouped || $isVariable)
+                    <div class="mt-6">
+                        <p class="mb-2 text-[13px] font-semibold text-ink-2">Quantity</p>
+                        <div class="flex items-center gap-1.5">
                             <button type="button" wire:click="decQty" aria-label="Decrease quantity"
-                                class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
-                                <flux:icon.minus variant="micro" class="size-4" />
+                                class="flex size-9 cursor-pointer items-center justify-center rounded border border-zinc-300 text-ink-2 transition hover:bg-surface-sunken">
+                                <flux:icon.minus class="size-3.5" />
                             </button>
-                            <div class="grid w-12 place-items-center border-x border-zinc-200 text-[14px] font-semibold tabular-nums">
-                                {{ $qty }}
-                            </div>
+                            <span class="w-10 text-center text-[14px] font-semibold tabular-nums text-ink">{{ $qty }}</span>
                             <button type="button" wire:click="incQty" aria-label="Increase quantity"
-                                class="grid w-11 cursor-pointer place-items-center text-ink-2 transition hover:bg-surface-sunken">
-                                <flux:icon.plus variant="micro" class="size-4" />
+                                class="flex size-9 cursor-pointer items-center justify-center rounded border border-zinc-300 text-ink-2 transition hover:bg-surface-sunken">
+                                <flux:icon.plus class="size-3.5" />
                             </button>
                         </div>
-                    @endunless
+                    </div>
+                @endunless
 
-                    <flux:button variant="primary" wire:click="addThisToCart" class="h-12! flex-1! px-6!"
-                        icon="{{ $isGrouped ? 'squares-2x2' : 'shopping-cart' }}">
+                {{-- Primary actions --}}
+                <div class="mt-5 flex flex-wrap items-center gap-3">
+                    <flux:button variant="customer-primary" size="customer-lg" wire:click="addThisToCart">
                         {{ $addToCartLabel }}
                     </flux:button>
 
                     @if ($this->quotesEnabled && ! $isGrouped)
-                        <flux:button class="h-12! px-5!" :href="route('quote.request', ['product' => $product->slug])" wire:navigate>
+                        <flux:button variant="customer-outline" size="customer-lg" :href="route('quote.request', ['product' => $product->slug])" wire:navigate>
                             Request a quote
                         </flux:button>
                     @endif
+                    <flux:tooltip content="Share">
+                        <flux:button icon="share" square variant="customer-outline" size="customer-lg" aria-label="Share" @click="share()" />
+                    </flux:tooltip>
                 </div>
 
                 {{-- Min order quantity note --}}
@@ -1179,8 +1125,34 @@ new #[Layout('layouts::storefront')] class extends Component
                     </div>
                 @endif
             @endif
+            </div>{{-- end CTA / share wrapper --}}
 
-            {{-- Trust grid — real signals only --}}
+            {{-- Order via WhatsApp --}}
+            @if ($whatsappOrderEnabled)
+                @php
+                    $waPrice = $displayPrice
+                        ? strip_tags(money($displayPrice))
+                        : ($groupedFromCents ? 'From '.strip_tags(money($groupedFromCents)) : 'Quote on request');
+                    $waText = "Hello, I want to buy\n\n*{$product->name}*\n*Price:* {$waPrice}\n*URL:* ".url()->current();
+                    $waUrl  = 'https://wa.me/'.$whatsappNumber.'?text='.rawurlencode($waText);
+                @endphp
+                <div class="mt-4">
+                    <a href="{{ $waUrl }}" target="_blank" rel="noopener"
+                        class="inline-flex items-center gap-2 bg-[#25D366] px-6 py-2.5 font-serif text-[13px] font-extrabold uppercase tracking-wider text-white transition hover:bg-[#20bd5a]">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                        </svg>
+                        Order on WhatsApp
+                    </a>
+                </div>
+            @endif
+        </div>{{-- end product details column --}}
+
+        {{-- Side panel — policies, delivery & seller (no price, no cart) --}}
+        <div class="lg:sticky lg:top-24 lg:self-start">
+            <flux:card>
+
+            {{-- Trust signals --}}
             @php
                 $trust = collect();
                 if ($product->brand) {
@@ -1200,20 +1172,76 @@ new #[Layout('layouts::storefront')] class extends Component
                     $trust->push(['document-text', 'Spec sheets & manuals', $product->downloadableFiles->count().' '.\Illuminate\Support\Str::plural('document', $product->downloadableFiles->count())]);
                 }
             @endphp
-            @if ($trust->count() >= 2)
-                <div class="mt-7 grid grid-cols-2 gap-3 border-t border-zinc-200 pt-5 text-[12.5px]">
-                    @foreach ($trust as [$icon, $title, $sub])
-                        <div class="flex items-start gap-2.5">
-                            <flux:icon :name="$icon" variant="outline" class="size-4 shrink-0 text-brand-500" />
-                            <div>
-                                <div class="font-semibold text-ink">{{ $title }}</div>
-                                <div class="text-ink-3">{{ $sub }}</div>
-                            </div>
-                        </div>
-                    @endforeach
+            {{-- Delivery / seller facts --}}
+            @php
+                $storeName = app(\App\Settings\BrandingSettings::class)->store_name ?: config('app.name', 'Sheffield');
+            @endphp
+            <div class="flex flex-col gap-3 text-[12.5px]">
+                <div class="flex items-start gap-2.5">
+                    <flux:icon.building-storefront variant="outline" class="size-4 shrink-0 text-brand-500" />
+                    <div>
+                        <div class="font-semibold text-ink">Sold by {{ $storeName }}</div>
+                        @if ($product->brand)
+                            <div class="text-ink-3">Authorised {{ $product->brand->name }} distributor</div>
+                        @endif
+                    </div>
                 </div>
-            @endif
-        </div>
+                @foreach ($trust as [$icon, $title, $sub])
+                    @continue($icon === 'check-badge')
+                    <div class="flex items-start gap-2.5">
+                        <flux:icon :name="$icon" variant="outline" class="size-4 shrink-0 text-brand-500" />
+                        <div>
+                            <div class="font-semibold text-ink">{{ $title }}</div>
+                            <div class="text-ink-3">{{ $sub }}</div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Policy quick-links --}}
+            <div class="mt-4 flex flex-col divide-y divide-zinc-100 border-t border-zinc-200 pt-4 text-[13.5px]">
+                <a href="{{ route('page.show', 'returns-policy') }}" wire:navigate class="group flex items-center justify-between gap-3 py-2.5">
+                    <span class="flex items-center gap-2.5 text-ink-2">
+                        <flux:icon.arrow-uturn-left variant="outline" class="size-4 shrink-0 text-brand-500" />
+                        Return &amp; refund policy
+                    </span>
+                    <flux:icon.chevron-right variant="micro" class="size-4 shrink-0 text-ink-4 transition group-hover:text-ink-2" />
+                </a>
+                <a href="{{ route('page.show', 'shipping-policy') }}" wire:navigate class="group flex items-center justify-between gap-3 py-2.5">
+                    <span class="flex items-center gap-2.5 text-ink-2">
+                        <flux:icon.truck variant="outline" class="size-4 shrink-0 text-brand-500" />
+                        Shipping &amp; delivery
+                    </span>
+                    <flux:icon.chevron-right variant="micro" class="size-4 shrink-0 text-ink-4 transition group-hover:text-ink-2" />
+                </a>
+            </div>
+
+            {{-- Secure payments --}}
+            <div class="mt-4 border-t border-zinc-200 pt-4">
+                <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                    <span class="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+                        <flux:icon.shield-check variant="micro" class="size-4 text-emerald-600" />
+                        Secure payments
+                    </span>
+                    <div class="flex items-center gap-1">
+                        @foreach (['Visa', 'Mastercard', 'M-Pesa'] as $method)
+                            <span class="rounded border border-zinc-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-ink-3">{{ $method }}</span>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="mt-2 text-[12px] leading-relaxed text-ink-3">
+                    Every payment is protected with SSL encryption and trusted M-Pesa &amp; card processing.
+                </p>
+            </div>
+
+            {{-- Talk to sales --}}
+            <a href="{{ route('contact') }}" wire:navigate
+                class="mt-4 flex items-center gap-1.5 border-t border-zinc-200 pt-4 text-[12.5px] font-semibold text-brand-500 underline-offset-2 hover:underline">
+                <flux:icon.chat-bubble-left-right variant="micro" class="size-4" />
+                Questions? Talk to sales
+            </a>
+            </flux:card>{{-- end side panel --}}
+        </div>{{-- end side panel column --}}
     </div>
 
     {{-- Accessories / spare parts add-on carousel --}}
@@ -1371,10 +1399,10 @@ new #[Layout('layouts::storefront')] class extends Component
     @endscript
 
     {{-- Tabs --}}
-    <div class="mt-20">
+    <div class="mt-16" id="product-tabs">
         @php
-            $productTabs = [['id' => 'specs',    'label' => 'Specifications', 'count' => null]];
-            $productTabs[] =  ['id' => 'overview', 'label' => 'Overview',        'count' => null];
+            $productTabs = [['id' => 'overview', 'label' => 'Description',    'count' => null]];
+            $productTabs[] =  ['id' => 'specs',    'label' => 'Specifications', 'count' => null];
             if ($product->downloadableFiles->isNotEmpty()) {
                 $productTabs[] = [
                     'id'    => $product->is_downloadable ? 'downloads' : 'documents',
@@ -1388,7 +1416,7 @@ new #[Layout('layouts::storefront')] class extends Component
             // Guard activeTab against tabs that no longer exist
             $validTabIds = array_column($productTabs, 'id');
             if (! in_array($activeTab, $validTabIds, true)) {
-                $activeTab = 'specs';
+                $activeTab = 'overview';
             }
         @endphp
         <div class="flex border-b border-zinc-200">
@@ -1531,7 +1559,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     {{-- You May Also Like (same category) --}}
     @if ($this->related->isNotEmpty())
-        <div class="mt-20">
+        <div class="mt-16">
             <div class="mb-4 flex items-baseline justify-between">
                 <h2 class="text-[22px] font-semibold tracking-tight">You May Also Like</h2>
                 @if ($product->primaryCategory)
@@ -1551,7 +1579,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     {{-- More from [Brand] --}}
     @if ($this->brandProducts->isNotEmpty())
-        <div class="mt-20">
+        <div class="mt-16">
             <div class="mb-4 flex items-baseline justify-between">
                 <h2 class="text-[22px] font-semibold tracking-tight">More from {{ $product->brand->name }}</h2>
                 @if ($product->brand)
@@ -1571,7 +1599,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     {{-- Customers who viewed this also viewed --}}
     @if ($this->alsoViewed->isNotEmpty())
-        <div class="mt-20">
+        <div class="mt-16">
             <div class="mb-4">
                 <h2 class="text-[22px] font-semibold tracking-tight">Customers who viewed this also viewed</h2>
             </div>
@@ -1586,7 +1614,7 @@ new #[Layout('layouts::storefront')] class extends Component
     {{-- Recently Viewed (auth users only) --}}
     @auth
         @if ($this->recentlyViewedProducts->isNotEmpty())
-            <div class="mt-20">
+            <div class="mt-16">
                 <div class="mb-4 flex items-baseline justify-between">
                     <h2 class="text-[22px] font-semibold tracking-tight">Recently Viewed</h2>
                     <a href="{{ route('account.recently-viewed') }}" wire:navigate

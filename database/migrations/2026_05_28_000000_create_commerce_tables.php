@@ -8,6 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Atomic per-key counters backing human-facing reference numbers
+        // (orders, quotes). generateNumber() locks and increments the row for
+        // "{type}:{year}" so concurrent creates can never collide on a sequence
+        // the way a count()+1 scan could.
+        Schema::create('number_sequences', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->unsignedBigInteger('value')->default(0);
+        });
+
         // Delivery zones are precise polygon geofences drawn by admin on a map.
         // The polygon JSON stores an ordered array of {lat, lng} coordinate pairs.
         // Serviceability is determined by a ray-casting point-in-polygon check.
@@ -161,8 +170,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             // FK to the order created when a quote is accepted, so conversion rate
-            // and the quote↔order chain can be traced.
-            $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
+            // and the quote↔order chain can be traced. Unique so a quote can never
+            // be converted into more than one order (nullable allows many unconverted).
+            $table->foreignId('order_id')->nullable()->unique()->constrained()->nullOnDelete();
             $table->string('contact_name')->nullable();
             $table->string('contact_email')->nullable();
             $table->string('contact_phone')->nullable();
@@ -229,5 +239,6 @@ return new class extends Migration
         Schema::dropIfExists('addresses');
         Schema::dropIfExists('delivery_promotions');
         Schema::dropIfExists('delivery_zones');
+        Schema::dropIfExists('number_sequences');
     }
 };

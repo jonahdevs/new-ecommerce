@@ -50,7 +50,7 @@ new #[Layout('layouts::account')] #[Title('Order Tracking')] class extends Compo
             {{-- Order meta --}}
             <div class="mb-5">
                 <p class="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-ink-3">Order Reference</p>
-                <h2 class="font-serif text-2xl font-black leading-tight text-ink">
+                <h2 class="font-serif text-2xl font-black leading-tight text-ink break-words">
                     #{{ $order->order_number }}
                 </h2>
                 <p class="mt-1 text-[13px] text-ink-3">

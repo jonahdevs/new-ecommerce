@@ -203,10 +203,10 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
     <flux:heading size="xl">Edit Customer</flux:heading>
     <flux:subheading>{{ $customer->name }} &mdash; {{ $customer->email }}</flux:subheading>
 
-    <form wire:submit="save" class="mt-6 grid grid-cols-4 items-start gap-5">
+    <form wire:submit="save" class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-4 lg:items-start">
 
         {{-- Left panel --}}
-        <div class="col-span-1">
+        <div class="lg:col-span-1">
             <flux:card class="overflow-hidden p-0">
 
                 {{-- Body --}}
@@ -327,14 +327,14 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
         </div>
 
         {{-- Right panel --}}
-        <div class="col-span-3 space-y-5">
+        <div class="space-y-5 lg:col-span-3">
 
             {{-- Personal information --}}
             <flux:card class="p-0">
                 <div class="border-b px-4 py-3 dark:border-zinc-700">
                     <flux:subheading class="font-medium">Personal information</flux:subheading>
                 </div>
-                <div class="grid grid-cols-2 gap-x-5 gap-y-4 p-5">
+                <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-5 sm:grid-cols-2">
                     <flux:input wire:model="name" label="Full name" placeholder="e.g. Jane Doe" required />
                     <flux:input wire:model="email" type="email" label="Email address"
                         placeholder="e.g. jane@example.com" required />
@@ -347,17 +347,17 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
                 <div class="border-b px-4 py-3 dark:border-zinc-700">
                     <flux:subheading class="font-medium">Default address</flux:subheading>
                 </div>
-                <div class="grid grid-cols-2 gap-x-5 gap-y-4 p-5">
+                <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-5 sm:grid-cols-2">
                     <flux:input wire:model="addressName" label="Recipient name" placeholder="e.g. Jane Doe" />
                     <flux:input wire:model="addressLabel" label="Label" placeholder="e.g. Home, Office" />
                     <flux:input wire:model="addressPhone" label="Phone" placeholder="e.g. 0700 000 000" />
                     <flux:input wire:model="addressAlternativePhone" label="Alternative phone"
                         placeholder="e.g. 0711 000 000" />
-                    <div class="col-span-2">
+                    <div class="sm:col-span-2">
                         <flux:input wire:model="addressLine1" label="Address"
                             placeholder="e.g. 4th Floor, TRG Plaza, Westlands" />
                     </div>
-                    <div class="col-span-2">
+                    <div class="sm:col-span-2">
                         <flux:textarea wire:model="addressDeliveryInstructions"
                             label="Delivery instructions (optional)"
                             placeholder="Landmark, gate code, preferred drop-off point…" rows="2" />
@@ -368,7 +368,7 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
         </div>
 
         {{-- Bottom action bar --}}
-        <div class="col-span-4">
+        <div class="lg:col-span-4">
             <flux:card class="flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-900">
                 <flux:button variant="ghost" :href="route('admin.customers.show', $customer)"
                     wire:navigate>Cancel</flux:button>

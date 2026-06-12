@@ -13,3 +13,6 @@ Schedule::command('products:publish-scheduled')->everyFiveMinutes();
 
 // Regenerate the static sitemap.xml daily.
 Schedule::command('sitemap:generate')->daily();
+
+// Flip sent quotes whose validity window has lapsed to expired.
+Schedule::command('quotes:expire')->daily();

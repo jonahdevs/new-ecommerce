@@ -56,22 +56,22 @@ new #[Layout('layouts::settings')] #[Title('Privacy & Data')] class extends Comp
                     <flux:heading size="sm" class="uppercase tracking-wide">Data Management</flux:heading>
                 </div>
 
-                <div class="flex items-center justify-between gap-4 border-b border-zinc-100 p-4">
-                    <div>
+                <div class="flex flex-col gap-3 border-b border-zinc-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
                         <p class="text-sm font-medium text-ink">Download Your Data</p>
                         <p class="mt-0.5 text-xs text-ink-3">Download a JSON export of your personal data, orders, addresses, reviews and preferences.</p>
                     </div>
-                    <flux:button size="sm" icon="arrow-down-tray" :href="route('account.data.export')" wire:navigate.except class="shrink-0">
+                    <flux:button size="sm" icon="arrow-down-tray" :href="route('account.data.export')" wire:navigate.except class="w-full shrink-0 sm:w-auto">
                         Download
                     </flux:button>
                 </div>
 
-                <div class="flex items-center justify-between gap-4 p-4">
-                    <div>
+                <div class="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
                         <p class="text-sm font-medium text-ink">Data Retention</p>
                         <p class="mt-0.5 text-xs text-ink-3">Your data is retained for 7 years after account closure as required by KRA regulations.</p>
                     </div>
-                    <span class="shrink-0 rounded border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-600">7 Years</span>
+                    <span class="shrink-0 self-start rounded border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-600 sm:self-auto">7 Years</span>
                 </div>
             </flux:card>
 

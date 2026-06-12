@@ -275,7 +275,7 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
         <flux:subheading>A branch location with its address and contact numbers.</flux:subheading>
 
         <form wire:submit="save" class="mt-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>City</flux:label>
                     <flux:input wire:model="city" placeholder="Nairobi" />
@@ -313,7 +313,7 @@ new #[Layout('layouts::app')] #[Title('Showrooms — Admin')] class extends Comp
                 <flux:error name="email" />
             </flux:field>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>Sort order</flux:label>
                     <flux:input type="number" wire:model="sort_order" min="0" />

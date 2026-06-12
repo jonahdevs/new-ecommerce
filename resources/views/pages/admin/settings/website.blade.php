@@ -92,6 +92,8 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public string $whatsapp_number = '';
 
+    public bool $whatsapp_order_enabled = false;
+
     // ==================================================
     // ANALYTICS
     // ==================================================
@@ -145,6 +147,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         $this->linkedin_url = $social->linkedin_url;
         $this->youtube_url = $social->youtube_url;
         $this->whatsapp_number = $social->whatsapp_number;
+        $this->whatsapp_order_enabled = $social->whatsapp_order_enabled;
 
         $this->ga4_id = $analytics->ga4_id;
         $this->gtm_id = $analytics->gtm_id;
@@ -266,6 +269,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'linkedin_url' => ['nullable', 'url', 'max:255'],
             'youtube_url' => ['nullable', 'url', 'max:255'],
             'whatsapp_number' => ['nullable', 'string', 'max:30'],
+            'whatsapp_order_enabled' => ['boolean'],
             'pendingOgImage' => ['nullable', 'image', 'max:2048'],
         ]);
 
@@ -286,6 +290,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'linkedin_url' => $this->linkedin_url,
             'youtube_url' => $this->youtube_url,
             'whatsapp_number' => $this->whatsapp_number,
+            'whatsapp_order_enabled' => $this->whatsapp_order_enabled,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Social links updated.', variant: 'success');
@@ -526,6 +531,14 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                     <flux:input wire:model="linkedin_url" label="LinkedIn" icon="link" placeholder="https://linkedin.com/…" />
                     <flux:input wire:model="youtube_url" label="YouTube" icon="link" placeholder="https://youtube.com/…" />
                     <flux:input wire:model="whatsapp_number" label="WhatsApp number" placeholder="+254 700 000 000" />
+                </div>
+
+                <div class="flex items-start justify-between gap-4 rounded-md border border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                    <div class="min-w-0">
+                        <flux:text class="font-medium">Order via WhatsApp</flux:text>
+                        <flux:text size="sm" class="text-zinc-500">Show an “Order on WhatsApp” button on product pages that opens a pre-filled chat. Requires a WhatsApp number above.</flux:text>
+                    </div>
+                    <flux:switch wire:model="whatsapp_order_enabled" />
                 </div>
 
                 <div class="flex justify-end pt-2">

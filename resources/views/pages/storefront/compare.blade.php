@@ -104,7 +104,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
 
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-semibold tracking-tight">Side by side.</h1>
+            <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Side by side.</h1>
             <p class="mt-2 text-ink-3">
                 Comparing <span class="font-medium text-ink">{{ $this->products->count() }}</span> of 4 max
             </p>
@@ -131,11 +131,11 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
     @else
         {{-- Comparison table --}}
         <div class="scrollbar-thin mt-7 overflow-x-auto rounded-md border border-zinc-200 bg-white">
-            <table class="w-full table-fixed border-collapse text-left">
+            <table class="w-full min-w-[600px] table-auto border-collapse text-left lg:min-w-0 lg:table-fixed">
                 <thead>
                     <tr>
                         {{-- Sticky header corner --}}
-                        <th class="sticky left-0 z-10 w-50 border-b border-zinc-200 bg-zinc-50 px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase">
+                        <th class="sticky left-0 z-10 w-36 border-b border-zinc-200 bg-zinc-50 px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase lg:w-50">
                             Product
                         </th>
 
@@ -152,7 +152,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
 
                                 {{-- Product image --}}
                                 <a href="{{ route('product.show', $product) }}" wire:navigate
-                                    class="mx-auto block h-44 w-44">
+                                    class="mx-auto block h-32 w-32 lg:h-44 lg:w-44">
                                     @if ($product->cover_url)
                                         <img src="{{ $product->cover_url }}"
                                             alt="{{ $product->name }}"
@@ -183,7 +183,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                         @endforeach
 
                         @for ($i = 0; $i < $emptySlots; $i++)
-                            <th class="border-b border-zinc-200 bg-white p-4 align-top">
+                            <th class="hidden border-b border-zinc-200 bg-white p-4 align-top lg:table-cell">
                                 <a href="{{ route('catalog') }}" wire:navigate
                                     class="mx-auto flex h-44 w-44 flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-zinc-300 text-ink-3 transition hover:border-ink-3 hover:text-ink">
                                     <flux:icon.plus variant="micro" class="size-5" />

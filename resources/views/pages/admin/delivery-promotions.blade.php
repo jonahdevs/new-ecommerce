@@ -275,10 +275,10 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
     <flux:card class="mt-6 p-0 overflow-hidden">
 
         {{-- Toolbar --}}
-        <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+        <div class="flex flex-col gap-3 border-b border-zinc-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-zinc-700">
             <flux:input wire:model.live.debounce.300ms="search" placeholder="Search promotions…"
-                icon="magnifying-glass" clearable class="max-w-xs" />
-            <div class="flex items-center gap-2">
+                icon="magnifying-glass" clearable class="sm:max-w-xs" />
+            <div class="flex flex-wrap items-center gap-2">
                 <flux:select wire:model.live="filterScope" class="w-36">
                     <flux:select.option value="">All scopes</flux:select.option>
                     <flux:select.option value="global">Global</flux:select.option>
@@ -394,7 +394,7 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
                 <flux:error name="pName" />
             </flux:field>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>Applies to</flux:label>
                     <flux:select wire:model.live="pScope">
@@ -436,7 +436,7 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
                 <flux:error name="pPercent" />
             </flux:field>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>Min order (KES)</flux:label>
                     <flux:input type="number" wire:model="pMinSubtotal" min="0" step="1" />
@@ -449,7 +449,7 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
                 </flux:field>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>Starts at</flux:label>
                     <flux:input type="datetime-local" wire:model="pStartsAt" />

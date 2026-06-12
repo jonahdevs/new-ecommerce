@@ -76,6 +76,7 @@ it('acknowledges a registered customer on their account', function () {
 });
 
 it('emails the customer when staff send the quote for approval', function () {
+    $this->actingAs($this->staff);
     $customer = User::factory()->create();
     $quote = pricedDraft(['user_id' => $customer->id]);
 
@@ -88,6 +89,7 @@ it('emails the customer when staff send the quote for approval', function () {
 });
 
 it('routes the ready-for-review email to a guest contact', function () {
+    $this->actingAs($this->staff);
     $quote = pricedDraft(['user_id' => null, 'contact_email' => 'guest@example.com']);
 
     Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
@@ -111,6 +113,7 @@ it('alerts staff when a customer approves a quote', function () {
 });
 
 it('shows a confirmation when staff try to send an unpriced quote', function () {
+    $this->actingAs($this->staff);
     $customer = User::factory()->create();
     $quote = pricedDraft(['user_id' => $customer->id, 'total_cents' => 0]);
 
@@ -123,6 +126,7 @@ it('shows a confirmation when staff try to send an unpriced quote', function () 
 });
 
 it('sends the quote after staff confirm on incomplete quote', function () {
+    $this->actingAs($this->staff);
     $customer = User::factory()->create();
     $quote = pricedDraft(['user_id' => $customer->id, 'total_cents' => 0]);
 

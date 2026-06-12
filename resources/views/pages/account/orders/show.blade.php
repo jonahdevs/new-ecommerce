@@ -176,7 +176,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                 </div>
 
                 {{-- Summary + Delivery + Payment 2-col grid --}}
-                <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
 
                     {{-- Order totals --}}
                     <div class="overflow-hidden rounded border border-zinc-200 bg-zinc-50">

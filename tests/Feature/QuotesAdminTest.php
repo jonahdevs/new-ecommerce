@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Quote;
 use App\Models\QuoteItem;
+use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Livewire\Livewire;
 
@@ -100,4 +101,18 @@ it('adds a catalog product as a line item', function () {
         ->assertCount('lineItems', 1)
         ->assertSet('lineItems.0.product_name', 'Wok Range')
         ->assertSet('lineItems.0.unit_price', 1500.0);
+});
+
+it('forbids a view-only user from approving a quote', function () {
+    $viewer = User::factory()->create();
+    $viewer->givePermissionTo('quotes.view');
+    $this->actingAs($viewer);
+
+    $quote = Quote::factory()->create(['status' => QuoteStatus::AWAITING_APPROVAL]);
+
+    Livewire::test('pages::admin.quotes.show', ['quote' => $quote])
+        ->call('approve')
+        ->assertForbidden();
+
+    expect($quote->fresh()->status)->toBe(QuoteStatus::AWAITING_APPROVAL);
 });

@@ -69,6 +69,7 @@ it('does not re-notify when confirming an order that is no longer pending', func
 });
 
 it('emails the customer when the admin marks an order out for delivery', function () {
+    $this->actingAs($this->staff);
     $customer = User::factory()->create();
     $order = Order::factory()->create(['user_id' => $customer->id, 'status' => OrderStatus::PROCESSING]);
 
@@ -80,6 +81,7 @@ it('emails the customer when the admin marks an order out for delivery', functio
 });
 
 it('does not notify when the status is saved unchanged', function () {
+    $this->actingAs($this->staff);
     $customer = User::factory()->create();
     $order = Order::factory()->create(['user_id' => $customer->id, 'status' => OrderStatus::COMPLETED]);
 

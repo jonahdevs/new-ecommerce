@@ -20,7 +20,7 @@ class AddressFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'label' => fake()->randomElement(['Home', 'Office', 'Warehouse', 'Site']),
+            'label' => fake()->randomElement(['Home', 'Work', 'Other']),
             'name' => fake()->name(),
             'phone' => '+254'.fake()->numerify('7########'),
             'alternative_phone' => fake()->optional()->phoneNumber(),
