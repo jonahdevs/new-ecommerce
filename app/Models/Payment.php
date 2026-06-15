@@ -28,6 +28,9 @@ use Spatie\Activitylog\Support\LogOptions;
     'stripe_charge_id',
     'card_brand',
     'card_last4',
+    'paystack_reference',
+    'channel',
+    'authorization_code',
     'refund_cents',
     'refunded_at',
     'payload',
@@ -46,6 +49,13 @@ class Payment extends Model
     protected ?string $transientClientSecret = null;
 
     /**
+     * Short-lived Paystack access code returned by Initialize Transaction. Like
+     * the Stripe client secret it is request-scoped and never persisted — it is
+     * only used to resume the inline popup on the current page load.
+     */
+    protected ?string $transientAccessCode = null;
+
+    /**
      * Attach the (non-persisted) Stripe client secret for this request.
      */
     public function withStripeClientSecret(?string $secret): static
@@ -58,6 +68,21 @@ class Payment extends Model
     public function getStripeClientSecretAttribute(): ?string
     {
         return $this->transientClientSecret;
+    }
+
+    /**
+     * Attach the (non-persisted) Paystack access code for this request.
+     */
+    public function withPaystackAccessCode(?string $accessCode): static
+    {
+        $this->transientAccessCode = $accessCode;
+
+        return $this;
+    }
+
+    public function getPaystackAccessCodeAttribute(): ?string
+    {
+        return $this->transientAccessCode;
     }
 
     public function getActivitylogOptions(): LogOptions

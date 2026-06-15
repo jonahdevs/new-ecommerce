@@ -43,11 +43,11 @@ new class extends Component
                 @foreach ($lines as $line)
                     @php $product = $line['product']; @endphp
                     <div wire:key="dd-{{ $line['slug'] }}" class="flex items-center gap-3 px-4 py-3.5">
-                        <div class="size-12 shrink-0 overflow-hidden rounded-md border border-zinc-100 bg-surface-sunken p-1">
-                            @if ($product->cover_url)
-                                <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
-                            @endif
-                        </div>
+                        @if ($product->cover_url)
+                            <img src="{{ $product->cover_url }}" alt="" class="size-12 shrink-0 rounded-md object-contain" loading="lazy" />
+                        @else
+                            <div class="size-12 shrink-0 overflow-hidden rounded-md border border-zinc-100 bg-surface-sunken p-1"></div>
+                        @endif
                         <div class="min-w-0 flex-1">
                             <a href="{{ route('product.show', $product) }}" wire:navigate
                                class="line-clamp-2 text-[13px] font-semibold leading-snug text-ink hover:text-brand-500">

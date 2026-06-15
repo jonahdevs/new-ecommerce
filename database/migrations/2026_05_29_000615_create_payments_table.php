@@ -37,6 +37,13 @@ return new class extends Migration
             $table->string('card_brand')->nullable();
             $table->char('card_last4', 4)->nullable();
 
+            // Paystack fields
+            // Unique: the reference is our idempotency key for verify + webhook.
+            $table->string('paystack_reference')->nullable()->unique();
+            // The channel Paystack settled through (card, mobile_money, bank_transfer…).
+            $table->string('channel')->nullable();
+            $table->string('authorization_code')->nullable();
+
             // Refund tracking
             $table->bigInteger('refund_cents')->nullable();
             $table->timestamp('refunded_at')->nullable();

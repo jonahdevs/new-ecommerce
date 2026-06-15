@@ -1,4 +1,4 @@
-@props(['product'])
+@props(['product', 'badge' => null])
 
 @php
     $brandName = $product->brand?->name;
@@ -44,6 +44,17 @@
             <span
                 class="absolute top-2.5 left-0 z-10 inline-flex h-5 items-center rounded-r bg-brand-500 px-2 text-[10.5px] font-bold tracking-wider text-white">
                 −{{ $discount }}%
+            </span>
+        @endif
+
+        {{-- Optional caller badge (e.g. required-accessory quantity) — sits below the discount badge if both show --}}
+        @if ($badge)
+            <span @class([
+                'absolute left-0 z-10 inline-flex h-5 items-center rounded-r bg-ink px-2 text-[10.5px] font-bold tracking-wide text-white',
+                'top-9' => $discount,
+                'top-2.5' => !$discount,
+            ])>
+                {{ $badge }}
             </span>
         @endif
 

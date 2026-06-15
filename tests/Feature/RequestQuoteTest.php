@@ -56,6 +56,24 @@ it('seeds a product passed via the query string', function () {
         ->assertSee('Wok Range');
 });
 
+it('seeds multiple products passed via the products query string', function () {
+    $this->actingAs($this->user);
+
+    Product::create([
+        'name' => 'Pasta Cooker', 'slug' => 'pasta-cooker', 'sku' => 'PC-1',
+        'brand_id' => $this->brand->id, 'primary_category_id' => $this->cat->id,
+        'type' => 'simple', 'price' => 90000, 'stock_status' => StockStatus::IN_STOCK->value,
+        'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
+    ]);
+
+    Livewire::withQueryParams(['products' => 'wok-range,pasta-cooker,unknown-slug'])
+        ->test('pages::storefront.request-quote')
+        ->assertSet('items', ['wok-range' => 1, 'pasta-cooker' => 1])
+        ->assertSee('Wok Range')
+        ->assertSee('Pasta Cooker');
+});
+
 it('lets a guest submit a quote request', function () {
     StorefrontSession::addToCart('wok-range', 2);
 

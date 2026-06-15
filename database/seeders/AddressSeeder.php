@@ -10,7 +10,7 @@ class AddressSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'customer@sheffield.test')->firstOrFail();
+        $user = User::where('email', 'customer@sheffieldafrica.com')->firstOrFail();
 
         Address::factory()->default()->create([
             'user_id' => $user->id,

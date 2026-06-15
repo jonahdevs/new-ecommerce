@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Notifications\Orders\RefundProcessed;
+use App\Services\Paystack\PaystackPaymentService;
 use App\Services\Stripe\StripePaymentService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,10 +16,11 @@ use InvalidArgumentException;
  * Refunds a settled payment: reverses it at the gateway where supported, records
  * the refund (full or partial), advances the order, and notifies the customer.
  *
- * Stripe refunds are issued live through the API. M-Pesa has no automated
- * reversal in this integration — the refund is recorded and the customer is
- * notified, while finance reverses the transaction through the Safaricom portal
- * out of band.
+ * Paystack and Stripe refunds are issued live through the gateway API — Paystack
+ * reverses every channel (cards, M-Pesa, Airtel Money, bank transfer) for us.
+ * Direct M-Pesa (Daraja) has no automated reversal in this integration — the
+ * refund is recorded and the customer is notified, while finance reverses the
+ * transaction through the Safaricom portal out of band.
  */
 class RefundService
 {
@@ -39,9 +41,11 @@ class RefundService
         }
 
         // Reverse at the gateway first — a rejected gateway refund must not leave
-        // a recorded refund that never actually happened. M-Pesa reversals are
-        // processed manually, so there is no gateway call for them.
-        if ($payment->provider === 'stripe') {
+        // a recorded refund that never actually happened. Direct M-Pesa reversals
+        // are processed manually, so there is no gateway call for them.
+        if ($payment->provider === 'paystack') {
+            app(PaystackPaymentService::class)->refund($payment, $amountCents);
+        } elseif ($payment->provider === 'stripe') {
             app(StripePaymentService::class)->refund($payment, $amountCents);
         }
 

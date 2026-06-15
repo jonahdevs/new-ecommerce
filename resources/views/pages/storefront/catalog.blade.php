@@ -473,4 +473,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
             </div>
         </div>
     </div>
+
+    @include('partials.storefront.accessory-modal')
 </div>

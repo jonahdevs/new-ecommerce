@@ -10,8 +10,12 @@ return new class extends SettingsMigration
         $this->migrator->add('payments.mpesa_enabled', true);
         $this->migrator->add('payments.mpesa_shortcode', '');
         $this->migrator->add('payments.mpesa_type', 'paybill');
+        $this->migrator->add('payments.airtel_money_enabled', false);
         $this->migrator->add('payments.card_enabled', true);
-        $this->migrator->add('payments.card_provider', 'stripe');
+        // Paystack is the active gateway — it fronts cards, M-Pesa, Airtel Money,
+        // and bank transfers through a single integration.
+        $this->migrator->add('payments.card_provider', 'paystack');
+        $this->migrator->add('payments.paystack_enabled', true);
         $this->migrator->add('payments.bank_transfer_enabled', false);
         $this->migrator->addEncrypted('payments.bank_details', '');
         $this->migrator->add('payments.cash_on_delivery_enabled', false);

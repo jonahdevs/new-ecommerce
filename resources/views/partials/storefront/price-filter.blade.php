@@ -8,7 +8,7 @@
     $step = 50000;
     $symbol = app(\App\Settings\CurrencySettings::class)->symbol;
 @endphp
-<div class="px-5 py-4" x-data="{
+<div class="px-5 py-4" wire:ignore x-data="{
     absMin: {{ $absMin }},
     absMax: {{ $absMax }},
     step: {{ $step }},
@@ -33,7 +33,13 @@
         this.max = this.absMax;
         this.commit();
     },
-}">
+}" x-init="
+    {{-- wire:ignore isolates this Alpine widget from Livewire DOM morphs (so the
+         active-range fill stops sticking on stale values after a commit); these
+         watchers keep it in sync when filters are reset from outside the slider. --}}
+    $wire.$watch('priceMin', value => { min = Number(value); });
+    $wire.$watch('priceMax', value => { max = Number(value); });
+">
     <div class="mb-3 flex items-center justify-between">
         <div class="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">Price</div>
         <button type="button" x-show="dirty" x-cloak @click="reset()"

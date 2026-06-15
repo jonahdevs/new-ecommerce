@@ -7,13 +7,15 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['product_id', 'linked_product_id', 'type', 'sort_order'])]
+#[Fillable(['product_id', 'linked_product_id', 'type', 'is_required', 'default_quantity', 'sort_order'])]
 class ProductLink extends Model
 {
     protected function casts(): array
     {
         return [
             'type' => ProductLinkType::class,
+            'is_required' => 'boolean',
+            'default_quantity' => 'integer',
             'sort_order' => 'integer',
         ];
     }

@@ -20,7 +20,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
     ->group(function () {
 
         // ── Dashboard — all staff ────────────────────────────────────────────
-        Route::view('/', 'pages.admin.dashboard')->name('dashboard');
+        Route::livewire('/', 'pages::admin.dashboard')->name('dashboard');
 
         // ── Products ─────────────────────────────────────────────────────────
         Route::middleware('permission:products.view')->group(function () {

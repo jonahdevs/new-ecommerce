@@ -25,9 +25,13 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public string $mpesa_type = 'paybill';
 
+    public bool $airtel_money_enabled = false;
+
     public bool $card_enabled = true;
 
-    public string $card_provider = 'stripe';
+    public string $card_provider = 'paystack';
+
+    public bool $paystack_enabled = true;
 
     public bool $bank_transfer_enabled = false;
 
@@ -56,6 +60,10 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public ?string $stripe_webhook_secret = null;
 
+    public ?string $paystack_public_key = null;
+
+    public ?string $paystack_secret_key = null;
+
     // Tax
     public bool $tax_enabled = true;
 
@@ -81,7 +89,9 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         $this->mpesa_enabled = $payments->mpesa_enabled;
         $this->mpesa_shortcode = $payments->mpesa_shortcode;
         $this->mpesa_type = $payments->mpesa_type;
+        $this->airtel_money_enabled = $payments->airtel_money_enabled;
         $this->card_enabled = $payments->card_enabled;
+        $this->paystack_enabled = $payments->paystack_enabled;
         $this->card_provider = $payments->card_provider;
         $this->bank_transfer_enabled = $payments->bank_transfer_enabled;
         $this->bank_details = $payments->bank_details;
@@ -95,6 +105,8 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         $this->stripe_key = $api->stripe_key;
         $this->stripe_secret = $api->stripe_secret;
         $this->stripe_webhook_secret = $api->stripe_webhook_secret;
+        $this->paystack_public_key = $api->paystack_public_key;
+        $this->paystack_secret_key = $api->paystack_secret_key;
 
         $this->tax_enabled = $tax->tax_enabled;
         $this->default_tax_class_id = $tax->default_tax_class_id;
@@ -119,6 +131,8 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
             'stripe_key'           => ['nullable', 'string', 'max:500'],
             'stripe_secret'        => ['nullable', 'string', 'max:500'],
             'stripe_webhook_secret' => ['nullable', 'string', 'max:500'],
+            'paystack_public_key'  => ['nullable', 'string', 'max:500'],
+            'paystack_secret_key'  => ['nullable', 'string', 'max:500'],
             'mpesa_consumer_key'   => ['nullable', 'string', 'max:500'],
             'mpesa_consumer_secret' => ['nullable', 'string', 'max:500'],
             'mpesa_passkey'        => ['nullable', 'string', 'max:500'],
@@ -128,8 +142,10 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
             'mpesa_enabled'            => $this->mpesa_enabled,
             'mpesa_shortcode'          => $this->mpesa_shortcode,
             'mpesa_type'               => $this->mpesa_type,
+            'airtel_money_enabled'     => $this->airtel_money_enabled,
             'card_enabled'             => $this->card_enabled,
             'card_provider'            => $this->card_provider,
+            'paystack_enabled'         => $this->paystack_enabled,
             'bank_transfer_enabled'    => $this->bank_transfer_enabled,
             'bank_details'             => $this->bank_details,
             'cash_on_delivery_enabled' => $this->cash_on_delivery_enabled,
@@ -144,6 +160,8 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
             'stripe_key'            => $this->stripe_key ?: null,
             'stripe_secret'         => $this->stripe_secret ?: null,
             'stripe_webhook_secret' => $this->stripe_webhook_secret ?: null,
+            'paystack_public_key'   => $this->paystack_public_key ?: null,
+            'paystack_secret_key'   => $this->paystack_secret_key ?: null,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Payment settings updated.', variant: 'success');
@@ -152,12 +170,10 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
     public function updated(string $name): void
     {
-        $toggles = ['mpesa_enabled', 'card_enabled', 'bank_transfer_enabled', 'cash_on_delivery_enabled'];
+        $toggles = ['paystack_enabled', 'cash_on_delivery_enabled'];
         if (in_array($name, $toggles)) {
             app(PaymentSettings::class)->fill([
-                'mpesa_enabled'          => $this->mpesa_enabled,
-                'card_enabled'           => $this->card_enabled,
-                'bank_transfer_enabled'  => $this->bank_transfer_enabled,
+                'paystack_enabled'         => $this->paystack_enabled,
                 'cash_on_delivery_enabled' => $this->cash_on_delivery_enabled,
             ])->save();
         }
@@ -259,33 +275,16 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
 
             @php
                 $creds = app(\App\Services\PaymentCredentials::class);
+                $paystackConnected = (bool) $creds->paystackSecretKey();
                 $gateways = [
                     [
-                        'key'          => 'mpesa',
-                        'name'         => 'M-Pesa',
-                        'logo'         => 'mpesa',
-                        'description'  => 'Accept mobile money payments from M-Pesa customers via STK push.',
-                        'enabled'      => $mpesa_enabled,
+                        'key'          => 'paystack',
+                        'name'         => 'Paystack',
+                        'logo'         => 'paystack',
+                        'description'  => 'Your payment gateway. Customers can pay with whatever channels you have enabled in your Paystack dashboard — cards, M-Pesa, Airtel Money, bank transfer and more.',
+                        'enabled'      => $paystack_enabled,
                         'configurable' => true,
-                        'connected'    => (bool) ($creds->mpesaConsumerKey() && $creds->mpesaConsumerSecret() && $creds->mpesaPasskey()),
-                    ],
-                    [
-                        'key'          => 'card',
-                        'name'         => 'Stripe',
-                        'logo'         => 'stripe',
-                        'description'  => 'Accept card payments online. Supports Visa, Mastercard, and more.',
-                        'enabled'      => $card_enabled,
-                        'configurable' => true,
-                        'connected'    => (bool) ($creds->stripeKey() && $creds->stripeSecret()),
-                    ],
-                    [
-                        'key'          => 'bank_transfer',
-                        'name'         => 'Bank Transfer',
-                        'logo'         => 'bank',
-                        'description'  => 'Allow customers to pay directly into your bank account.',
-                        'enabled'      => $bank_transfer_enabled,
-                        'configurable' => true,
-                        'connected'    => (bool) $bank_details,
+                        'connected'    => $paystackConnected,
                     ],
                     [
                         'key'          => 'cash_on_delivery',
@@ -306,12 +305,8 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
                             {{-- Top: logo + toggle --}}
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-2.5">
-                                    @if ($gateway['logo'] === 'mpesa')
-                                        <img src="{{ asset('images/payment/mpesa logo.png') }}" alt="M-Pesa" class="h-7 w-auto object-contain" />
-                                    @elseif ($gateway['logo'] === 'stripe')
-                                        <img src="{{ asset('images/payment/stripe logo.png') }}" alt="Stripe" class="h-7 w-auto object-contain" />
-                                    @elseif ($gateway['logo'] === 'bank')
-                                        <flux:icon.building-library class="size-6 text-zinc-500" />
+                                    @if ($gateway['logo'] === 'paystack')
+                                        <flux:icon.credit-card class="size-6 text-zinc-500" />
                                         <span class="text-sm font-semibold dark:text-white">{{ $gateway['name'] }}</span>
                                     @else
                                         <flux:icon.banknotes class="size-6 text-zinc-500" />
@@ -346,47 +341,15 @@ new #[Layout('layouts::app')] #[Title('Financial settings — Admin')] class ext
         {{-- Settings modal --}}
         <flux:modal wire:model.self="showPaymentModal" class="w-full max-w-lg" :dismissible="true">
             <form wire:submit="savePayments" class="space-y-5">
-                @if ($configuringPayment === 'mpesa')
+                @if ($configuringPayment === 'paystack')
                     <div>
-                        <flux:heading size="lg">M-Pesa Settings</flux:heading>
-                        <flux:subheading>Configure your M-Pesa integration.</flux:subheading>
+                        <flux:heading size="lg">Paystack Settings</flux:heading>
+                        <flux:subheading>Enter your Paystack API keys. Which methods customers can pay with (cards, M-Pesa, Airtel Money, bank transfer…) is controlled by the channels you enable in your Paystack dashboard.</flux:subheading>
                     </div>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <flux:input wire:model="mpesa_shortcode" label="Shortcode" placeholder="e.g. 174379" />
-                        <flux:select wire:model="mpesa_type" label="Type">
-                            <flux:select.option value="paybill">Paybill</flux:select.option>
-                            <flux:select.option value="till">Till (Buy Goods)</flux:select.option>
-                        </flux:select>
-                    </div>
-                    <flux:select wire:model="mpesa_env" label="Environment">
-                        <flux:select.option value="">Use .env ({{ config('services.mpesa.env', 'sandbox') }})</flux:select.option>
-                        <flux:select.option value="sandbox">Sandbox</flux:select.option>
-                        <flux:select.option value="production">Production</flux:select.option>
-                    </flux:select>
-
-                    <flux:separator text="API Credentials" />
-                    <flux:input wire:model="mpesa_consumer_key" label="Consumer Key" />
-                    <flux:input wire:model="mpesa_consumer_secret" label="Consumer Secret" type="password" viewable />
-                    <flux:input wire:model="mpesa_passkey" label="Passkey" type="password" viewable />
-                    <flux:input wire:model="mpesa_callback_url" label="Callback URL" type="url" />
-
-                @elseif ($configuringPayment === 'card')
-                    <div>
-                        <flux:heading size="lg">Stripe Settings</flux:heading>
-                        <flux:subheading>Configure your Stripe integration.</flux:subheading>
-                    </div>
-                    <flux:input wire:model="stripe_key" label="Publishable Key" />
-                    <flux:input wire:model="stripe_secret" label="Secret Key" type="password" viewable />
-                    <flux:input wire:model="stripe_webhook_secret" label="Webhook Secret" type="password" viewable />
-
-                @elseif ($configuringPayment === 'bank_transfer')
-                    <div>
-                        <flux:heading size="lg">Bank Transfer Settings</flux:heading>
-                        <flux:subheading>Customers will see these details on the checkout page.</flux:subheading>
-                    </div>
-                    <flux:textarea wire:model="bank_details" label="Bank details" rows="4"
-                        placeholder="Account name, bank, account number, branch…" />
-
+                    <flux:input wire:model="paystack_public_key" label="Public Key" placeholder="pk_live_…" />
+                    <flux:input wire:model="paystack_secret_key" label="Secret Key" type="password" viewable placeholder="sk_live_…" />
+                    <p class="text-xs text-zinc-500">In the Paystack dashboard, set your webhook URL to
+                        <span class="font-mono break-all">{{ route('payments.paystack.webhook') }}</span>.</p>
                 @endif
 
                 <div class="flex gap-2 pt-1">

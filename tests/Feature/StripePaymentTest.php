@@ -20,7 +20,6 @@ use App\Models\User;
 use App\Services\Stripe\StripePaymentService;
 use App\Settings\PaymentSettings;
 use App\Support\StorefrontSession;
-use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
@@ -63,6 +62,9 @@ it('checkout creates the order and redirects to the payment page', function () {
 
     StorefrontSession::addToCart('wok-range', 1);
 
+    // With Paystack off, checkout falls back to redirecting to the payment page.
+    app(PaymentSettings::class)->fill(['paystack_enabled' => false])->save();
+
     $component = Livewire::test('pages::storefront.checkout')
         ->call('placeOrder')
         ->assertHasNoErrors();
@@ -78,102 +80,10 @@ it('checkout creates the order and redirects to the payment page', function () {
     expect(StorefrontSession::cart())->not->toBeEmpty();
 });
 
-it('payment page creates a stripe payment intent on mount', function () {
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
-
-    $this->mock(StripePaymentService::class)
-        ->shouldReceive('createPaymentIntent')
-        ->once()
-        ->andReturnUsing(function (Order $o) {
-            return Payment::factory()->stripe()->create([
-                'order_id' => $o->id,
-                'status' => PaymentStatus::PENDING,
-            ])->withStripeClientSecret('pi_test_abc_secret_xyz');
-        });
-
-    $component = Livewire::actingAs($order->user)
-        ->test('pages::storefront.payment', ['order' => $order]);
-
-    expect($component->get('stripeClientSecret'))->toBe('pi_test_abc_secret_xyz');
-});
-
-it('hides card payments and skips the stripe intent when card is disabled', function () {
-    app(PaymentSettings::class)->fill([
-        'card_enabled' => false,
-        'mpesa_enabled' => true,
-    ])->save();
-
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
-
-    $component = Livewire::actingAs($order->user)
-        ->test('pages::storefront.payment', ['order' => $order]);
-
-    expect($component->get('stripeClientSecret'))->toBeNull();
-
-    $component->assertSet('selectedMethod', 'mpesa')
-        ->assertDontSee('Card Payment')
-        ->assertSee('M-Pesa');
-});
-
-it('confirms card payment and advances order when stripe reports success', function () {
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
-    $payment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id,
-        'status' => PaymentStatus::PENDING,
-        'stripe_payment_intent_id' => 'pi_test_111',
-    ]);
-
-    $this->mock(StripePaymentService::class)
-        ->shouldReceive('createPaymentIntent')->andReturn($payment)
-        ->shouldReceive('confirmPaymentIntent')
-        ->with('pi_test_111')
-        ->andReturnUsing(function () use ($payment, $order) {
-            $payment->update(['status' => PaymentStatus::SUCCESS, 'paid_at' => now()]);
-            $order->update(['status' => OrderStatus::PROCESSING]);
-
-            return $payment->fresh();
-        });
-
-    Livewire::actingAs($order->user)
-        ->test('pages::storefront.payment', ['order' => $order])
-        ->dispatch('stripe-payment-confirmed', paymentIntentId: 'pi_test_111')
-        ->assertRedirect(route('account.orders.show', $order->id));
-
-    expect($payment->fresh()->status)->toBe(PaymentStatus::SUCCESS)
-        ->and($order->fresh()->payment_method)->toBe('card')
-        ->and($order->fresh()->status)->toBe(OrderStatus::PROCESSING);
-});
-
-it('initiates mpesa stk push from the payment page', function () {
-    config()->set('services.mpesa', [
-        'env' => 'sandbox', 'consumer_key' => 'key', 'consumer_secret' => 'secret',
-        'passkey' => 'passkey', 'shortcode' => '174379', 'callback_url' => null,
-    ]);
-
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
-    $stripePayment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id, 'status' => PaymentStatus::PENDING,
-    ]);
-
-    Http::fake([
-        '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok']),
-        '*/stkpush/*' => Http::response(['MerchantRequestID' => 'mr', 'CheckoutRequestID' => 'ws_CO_99', 'ResponseCode' => '0']),
-    ]);
-
-    $this->mock(StripePaymentService::class)
-        ->shouldReceive('createPaymentIntent')->andReturn($stripePayment);
-
-    Livewire::actingAs($order->user)
-        ->test('pages::storefront.payment', ['order' => $order])
-        ->set('selectedMethod', 'mpesa')
-        ->set('mpesaPhone', '0712345678')
-        ->call('payWithMpesa')
-        ->assertHasNoErrors()
-        ->assertSet('awaitingPayment', true);
-
-    expect(Payment::where('provider', 'mpesa')->first())->not->toBeNull()
-        ->and($order->fresh()->payment_method)->toBe('mpesa');
-});
+// The storefront payment page now runs on Paystack — its page-level flow
+// (method choice → initialize → verify → redirect) is covered by
+// PaystackPaymentTest. The Stripe service remains a dormant fallback, so its
+// server-side finalize and webhook behaviour is still exercised directly below.
 
 it('confirms payment through the stripe webhook endpoint', function () {
     $order = Order::factory()->create(['status' => OrderStatus::PENDING]);

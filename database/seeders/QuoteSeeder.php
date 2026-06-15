@@ -13,7 +13,7 @@ class QuoteSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'customer@sheffield.test')->firstOrFail();
+        $user = User::where('email', 'customer@sheffieldafrica.com')->firstOrFail();
         $products = Product::inRandomOrder()->take(10)->get();
 
         if ($products->isEmpty()) {

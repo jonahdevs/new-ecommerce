@@ -33,8 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Payment provider webhooks are server-to-server and carry no CSRF token.
         $middleware->validateCsrfTokens(except: [
-            'payments/mpesa/callback',
-            'payments/stripe/webhook',
+            'api/webhooks/mpesa',
+            'api/webhooks/stripe',
+            'api/webhooks/paystack',
         ]);
 
         // Apply store-wide SEO defaults before controllers/Livewire run.

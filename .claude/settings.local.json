@@ -8,7 +8,14 @@
       "PowerShell(php artisan test --compact --filter='HomePage|home page' 2>&1 | Select-Object -Last 25)",
       "PowerShell(vendor\\\\bin\\\\pint --dirty --format agent)",
       "Bash(npm install *)",
-      "Bash(vendor/bin/pint *)"
+      "Bash(vendor/bin/pint *)",
+      "WebFetch(domain:maizzle.com)",
+      "WebFetch(domain:baymard.com)",
+      "WebFetch(domain:shopify.dev)",
+      "WebSearch",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:woocommerce.com)",
+      "WebFetch(domain:paystack.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

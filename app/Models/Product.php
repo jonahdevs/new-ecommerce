@@ -185,7 +185,7 @@ class Product extends Model
     {
         return $this->belongsToMany(Product::class, 'product_links', 'product_id', 'linked_product_id')
             ->wherePivot('type', $type->value)
-            ->withPivot('type', 'sort_order')
+            ->withPivot('type', 'is_required', 'default_quantity', 'sort_order')
             ->orderByPivot('sort_order');
     }
 

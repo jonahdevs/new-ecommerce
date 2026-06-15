@@ -22,6 +22,7 @@ use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Spatie\Tags\Tag;
 
 class ProductSeeder extends Seeder
 {
@@ -69,6 +70,27 @@ class ProductSeeder extends Seeder
         foreach ($data as $item) {
             $this->linkRelationships($item);
         }
+
+        $this->tagFeaturedProducts();
+    }
+
+    /**
+     * Flag a handful of published, in-stock, priced products as "Featured" so the
+     * home page Featured equipment grid has curated data out of the box.
+     */
+    private function tagFeaturedProducts(): void
+    {
+        $featured = Tag::findOrCreate('Featured', 'feature');
+
+        Product::query()
+            ->where('status', ProductStatus::PUBLISHED)
+            ->where('stock_status', StockStatus::IN_STOCK)
+            ->whereNotNull('price')
+            ->where('price', '>', 0)
+            ->inRandomOrder()
+            ->take(8)
+            ->get()
+            ->each(fn (Product $product) => $product->attachTag($featured));
     }
 
     private function primeLookups(): void

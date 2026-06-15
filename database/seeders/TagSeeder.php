@@ -11,6 +11,7 @@ class TagSeeder extends Seeder
     {
         $tags = [
             // Product feature tags
+            ['name' => 'Featured', 'type' => 'feature'],
             ['name' => 'New Arrival', 'type' => 'feature'],
             ['name' => 'Best Seller', 'type' => 'feature'],
             ['name' => 'On Sale', 'type' => 'feature'],

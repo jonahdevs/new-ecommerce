@@ -145,7 +145,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                     <div class="overflow-x-auto rounded-md border border-zinc-200">
                     <table class="w-full min-w-[600px] bg-white lg:min-w-0">
                         <thead>
-                            <tr class="bg-zinc-50 text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">
+                            <tr class="bg-zinc-50 text-[11px] font-bold tracking-widest text-ink-3 uppercase">
                                 <th class="px-4 py-3 xl:px-6 text-left border-b border-zinc-200">Product</th>
                                 <th class="px-4 py-3 xl:px-6 text-center border-b border-zinc-200">Price</th>
                                 <th class="px-4 py-3 xl:px-6 text-center border-b border-zinc-200">Quantity</th>
@@ -167,7 +167,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                                 <td class="px-4 py-5 xl:px-6">
                                     <div class="flex items-center gap-4 min-w-0">
                                         <a href="{{ route('product.show', $product) }}" wire:navigate
-                                           class="size-20 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1.5">
+                                           class="size-20 shrink-0 overflow-hidden">
                                             @if ($product->cover_url)
                                                 <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
                                             @endif
@@ -285,7 +285,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
 
                         {{-- Payment methods --}}
                         <div class="mt-5">
-                            <div class="mb-2 text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">We accept</div>
+                            <div class="mb-2 text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">We accept</div>
                             <div class="flex flex-wrap gap-1.5">
                                 @foreach (['Visa', 'M-Pesa', 'Mastercard', 'Bank transfer'] as $method)
                                     <span class="rounded border border-zinc-200 px-2.5 py-1 text-[10.5px] font-semibold text-ink-3 uppercase tracking-wide">
@@ -327,4 +327,6 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
 
         @endif
     </div>
+
+    @include('partials.storefront.accessory-modal')
 </div>

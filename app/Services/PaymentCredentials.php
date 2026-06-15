@@ -37,6 +37,20 @@ class PaymentCredentials
     }
 
     // -------------------------------------------------------------------------
+    // Paystack
+    // -------------------------------------------------------------------------
+
+    public function paystackPublicKey(): string
+    {
+        return $this->apiSettings->paystack_public_key ?: (string) config('services.paystack.public_key', '');
+    }
+
+    public function paystackSecretKey(): string
+    {
+        return $this->apiSettings->paystack_secret_key ?: (string) config('services.paystack.secret_key', '');
+    }
+
+    // -------------------------------------------------------------------------
     // M-Pesa
     // -------------------------------------------------------------------------
 

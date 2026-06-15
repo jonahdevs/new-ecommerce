@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Product;
 use App\Support\StorefrontSession;
@@ -126,56 +125,9 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                 </div>
             </div>
         @else
-            <div class="mt-8 flex flex-col gap-3">
+            <div class="mt-8 grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
                 @foreach ($this->products as $product)
-                    @php
-                        $price = $product->sale_price ?? $product->price ?? 0;
-                        $compareAt = $product->sale_price ? $product->price : null;
-                        $inStock = $product->stock_status === StockStatus::IN_STOCK;
-                    @endphp
-                    <article wire:key="wish-{{ $product->slug }}"
-                        class="flex flex-col gap-4 rounded-md border border-zinc-200 bg-white p-4 sm:grid sm:grid-cols-[120px_1fr_auto_auto] sm:items-center sm:gap-5">
-                        {{-- Image + details share a flex row on mobile; sm:contents lets them drop into
-                             the parent grid as direct cells on larger screens. --}}
-                        <div class="flex gap-4 sm:contents">
-                            <a href="#" wire:navigate
-                                class="block size-24 shrink-0 overflow-hidden rounded bg-surface-sunken p-2 sm:size-30">
-                                @if ($product->cover_url)
-                                    <img src="{{ $product->cover_url }}" alt="" class="size-full object-contain" loading="lazy" />
-                                @endif
-                            </a>
-                            <div class="min-w-0">
-                                @if ($product->brand)
-                                    <div class="text-[11.5px] font-bold tracking-[0.06em] text-brand-blue-600 uppercase">{{ $product->brand->name }}</div>
-                                @endif
-                                <a href="#" wire:navigate class="mt-1 block text-base leading-snug font-medium hover:text-brand-500">{{ $product->name }}</a>
-                                @if ($product->short_description)
-                                    <div class="mt-1 line-clamp-2 max-w-xl text-[13px] text-ink-3">{{ $product->short_description }}</div>
-                                @endif
-                                <div class="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-ink-2">
-                                    <span>SKU: {{ $product->sku }}</span>
-                                    <span class="text-ink-4">·</span>
-                                    <span class="{{ $inStock ? 'text-emerald-700' : 'text-ink-3' }}">
-                                        {{ $inStock ? '● In stock' : '● Made to order' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-left sm:min-w-32 sm:text-right">
-                            @if ($compareAt)
-                                <div class="text-[12px] text-ink-4 line-through whitespace-nowrap">{!! money($compareAt) !!}</div>
-                            @endif
-                            <div class="font-serif text-xl tabular-nums whitespace-nowrap">{!! $price ? money($price) : 'Request quote' !!}</div>
-                        </div>
-                        <div class="flex flex-col gap-1.5 sm:min-w-36">
-                            <flux:button variant="primary" size="sm" wire:click="addToCart('{{ $product->slug }}')" icon="shopping-cart">Add to cart</flux:button>
-                            <flux:button size="sm">Compare</flux:button>
-                            <button type="button" wire:click="remove('{{ $product->slug }}')"
-                                class="cursor-pointer text-[12px] text-ink-3 underline underline-offset-2 hover:text-brand-500">
-                                Remove
-                            </button>
-                        </div>
-                    </article>
+                    <x-storefront.product-card :product="$product" wire:key="wish-{{ $product->slug }}" />
                 @endforeach
             </div>
 
@@ -187,7 +139,10 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                         Convert your wishlist to a costed quotation with delivery, installation and lead times. Response in 24 business hours.
                     </div>
                 </div>
-                <flux:button variant="primary" icon-trailing="arrow-right">Convert to quote</flux:button>
+                <flux:button variant="primary" icon-trailing="arrow-right"
+                    :href="route('quote.request', ['products' => $this->products->pluck('slug')->implode(',')])" wire:navigate>
+                    Convert to quote
+                </flux:button>
             </div>
         @endif
 
@@ -244,4 +199,6 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
             </section>
         @endif
     </div>
+
+    @include('partials.storefront.accessory-modal')
 </div>

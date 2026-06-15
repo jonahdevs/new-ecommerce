@@ -17,7 +17,7 @@ class ReviewSeeder extends Seeder
             return;
         }
 
-        $customer = User::where('email', 'customer@sheffield.test')->first();
+        $customer = User::where('email', 'customer@sheffieldafrica.com')->first();
 
         $products->each(function (Product $product) use ($customer) {
             Review::factory()

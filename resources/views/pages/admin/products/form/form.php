@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProductLinkType;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductVisibility;
@@ -203,7 +204,7 @@ new #[Layout('layouts::app')] class extends Component
     // PRODUCT LINKS: UPSELLS / CROSS-SELLS / ACCESSORIES / SPARE PARTS
     // ==================================================
     /**
-     * @var array<string, array<int, array{product_id: int, name: string, sku: ?string}>>
+     * @var array<string, array<int, array{product_id: int, name: string, sku: ?string, is_required: bool, default_quantity: int}>>
      */
     public array $productLinks = [
         'upsell' => [],
@@ -424,6 +425,8 @@ new #[Layout('layouts::app')] class extends Component
                 'product_id' => $link->linked_product_id,
                 'name' => $link->linkedProduct->name,
                 'sku' => $link->linkedProduct->sku,
+                'is_required' => (bool) $link->is_required,
+                'default_quantity' => max(1, (int) $link->default_quantity),
             ];
         }
 
@@ -926,6 +929,8 @@ new #[Layout('layouts::app')] class extends Component
             'product_id' => $productId,
             'name' => $product->name,
             'sku' => $product->sku,
+            'is_required' => false,
+            'default_quantity' => 1,
         ];
     }
 
@@ -1234,11 +1239,15 @@ new #[Layout('layouts::app')] class extends Component
         // ==================================================
         $product->links()->delete();
         foreach ($this->productLinks as $type => $items) {
+            $isAccessory = $type === ProductLinkType::ACCESSORY->value;
             foreach ($items as $i => $item) {
                 ProductLink::create([
                     'product_id' => $product->id,
                     'linked_product_id' => $item['product_id'],
                     'type' => $type,
+                    // Required/default-quantity semantics only apply to accessories.
+                    'is_required' => $isAccessory ? (bool) ($item['is_required'] ?? false) : false,
+                    'default_quantity' => $isAccessory ? max(1, (int) ($item['default_quantity'] ?? 1)) : 1,
                     'sort_order' => $i,
                 ]);
             }

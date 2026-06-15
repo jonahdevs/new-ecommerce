@@ -9,6 +9,7 @@ use App\Notifications\Orders\RefundProcessed;
 use App\Services\RefundService;
 use App\Services\Stripe\StripePaymentService;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
@@ -24,6 +25,7 @@ function settledPayment(string $provider, int $amountCents, OrderStatus $orderSt
 
     return Payment::factory()
         ->when($provider === 'stripe', fn ($f) => $f->stripe())
+        ->when($provider === 'paystack', fn ($f) => $f->paystack())
         ->successful()
         ->create([
             'order_id' => $order->id,
@@ -31,6 +33,34 @@ function settledPayment(string $provider, int $amountCents, OrderStatus $orderSt
             'amount_cents' => $amountCents,
         ]);
 }
+
+it('fully refunds a paystack payment through the gateway and notifies the customer', function () {
+    Notification::fake();
+    Http::fake(['https://api.paystack.co/refund' => Http::response(['status' => true, 'message' => 'Refund has been queued'])]);
+
+    $payment = settledPayment('paystack', 500000);
+
+    app(RefundService::class)->refund($payment, 500000, 'Customer returned the unit');
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::REFUNDED)
+        ->and($payment->fresh()->refund_cents)->toBe(500000)
+        ->and($payment->order->fresh()->status)->toBe(OrderStatus::REFUNDED);
+
+    Notification::assertSentTo($payment->order->user, RefundProcessed::class);
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/refund') && $request['amount'] === 500000);
+});
+
+it('does not record a paystack refund when the gateway rejects it', function () {
+    Http::fake(['https://api.paystack.co/refund' => Http::response(['status' => false, 'message' => 'Transaction not refundable'], 400)]);
+
+    $payment = settledPayment('paystack', 500000);
+
+    expect(fn () => app(RefundService::class)->refund($payment, 500000))
+        ->toThrow(RuntimeException::class);
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::SUCCESS)
+        ->and((int) $payment->fresh()->refund_cents)->toBe(0);
+});
 
 it('fully refunds a stripe payment, marks the order refunded, and notifies the customer', function () {
     Notification::fake();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Order;
 use App\Models\User;
 
 it('redirects staff away from the customer account area to the admin dashboard', function () {
@@ -22,4 +23,20 @@ it('lets a customer use their own account area', function () {
     $this->actingAs($customer)
         ->get(route('account.dashboard'))
         ->assertOk();
+});
+
+it('redirects staff away from checkout so admins cannot place orders', function () {
+    actingAsAdmin();
+
+    $this->get(route('checkout'))
+        ->assertRedirect(route('admin.dashboard'));
+});
+
+it('redirects staff away from the payment page', function () {
+    actingAsAdmin();
+
+    $order = Order::factory()->create();
+
+    $this->get(route('payment.page', $order))
+        ->assertRedirect(route('admin.dashboard'));
 });

@@ -21,8 +21,8 @@ class ShowroomSeeder extends Seeder
                 'whatsapp' => '+254 711 234 567',
                 'hours' => 'Mon–Fri · 8:00 – 17:30 · Sat · 9:00 – 14:00',
                 'services' => ['Showroom', 'Warehouse', 'Service & Spares', 'Trade Counter'],
-                'latitude' => -1.319400,
-                'longitude' => 36.884200,
+                'latitude' => -1.284100,
+                'longitude' => 36.815500,
             ],
             [
                 'city' => 'Mombasa',

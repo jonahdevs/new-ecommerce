@@ -5,10 +5,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Mpesa\MpesaPaymentService;
-use App\Services\Stripe\StripePaymentService;
-use App\Support\StorefrontSession;
 use Illuminate\Support\Facades\Http;
-use Livewire\Livewire;
 
 beforeEach(function () {
     config()->set('services.mpesa', [
@@ -144,62 +141,7 @@ it('rejects a callback whose amount does not match the order and leaves it unpai
         ->and($order->fresh()->status)->toBe(OrderStatus::PENDING);
 });
 
-it('drives the M-Pesa payment flow from STK push to confirmation on the payment page', function () {
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING, 'total_cents' => 174000]);
-
-    Http::fake([
-        '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok']),
-        '*/stkpush/*' => Http::response(['MerchantRequestID' => 'mr', 'CheckoutRequestID' => 'ws_CO_77', 'ResponseCode' => '0']),
-        '*/stkpushquery/*' => Http::response(['ResponseCode' => '0', 'ResultCode' => '0', 'ResultDesc' => 'ok']),
-    ]);
-
-    $stripePayment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id, 'status' => PaymentStatus::PENDING,
-    ]);
-
-    $this->mock(StripePaymentService::class)
-        ->shouldReceive('createPaymentIntent')->andReturn($stripePayment);
-
-    StorefrontSession::addToCart('wok-range', 1);
-
-    $component = Livewire::actingAs($order->user)
-        ->test('pages::storefront.payment', ['order' => $order])
-        ->set('selectedMethod', 'mpesa')
-        ->set('mpesaPhone', '0712345678')
-        ->call('payWithMpesa')
-        ->assertHasNoErrors()
-        ->assertSet('awaitingPayment', true);
-
-    $payment = Payment::where('provider', 'mpesa')->first();
-    expect($payment->checkout_request_id)->toBe('ws_CO_77')
-        ->and($payment->status)->toBe(PaymentStatus::PENDING);
-
-    // Cart stays until payment confirms.
-    expect(StorefrontSession::cart())->not->toBeEmpty();
-
-    $component->call('pollPayment')
-        ->assertRedirect(route('account.orders.show', $payment->order_id));
-
-    expect($payment->fresh()->status)->toBe(PaymentStatus::SUCCESS)
-        ->and(StorefrontSession::cart())->toBeEmpty();
-});
-
-it('rejects an invalid M-Pesa number on the payment page', function () {
-    $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
-    $stripePayment = Payment::factory()->stripe()->create([
-        'order_id' => $order->id, 'status' => PaymentStatus::PENDING,
-    ]);
-
-    $this->mock(StripePaymentService::class)
-        ->shouldReceive('createPaymentIntent')->andReturn($stripePayment);
-
-    Livewire::actingAs($order->user)
-        ->test('pages::storefront.payment', ['order' => $order])
-        ->set('selectedMethod', 'mpesa')
-        ->set('mpesaPhone', '123')
-        ->call('payWithMpesa')
-        ->assertHasErrors('mpesaPhone');
-
-    // No new M-Pesa payment created.
-    expect(Payment::where('provider', 'mpesa')->count())->toBe(0);
-});
+// The storefront payment page now runs on Paystack, so M-Pesa is collected
+// through the Paystack popup rather than this direct-Daraja STK flow. The
+// page-level coverage lives in PaystackPaymentTest; the Daraja service above
+// remains a dormant fallback and keeps its own server-side coverage.

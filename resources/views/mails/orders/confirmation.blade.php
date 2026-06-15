@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
-
-<head>
+<html lang="en" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+  <head>
     <meta charset="utf-8">
     <meta name="x-apple-disable-message-reformatting">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,283 +8,309 @@
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
     <!--[if mso]>
-    <noscript>
-        <xml>
-            <o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-    </noscript>
-    <style>
+      <style>
         td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
-    </style>
+      </style>
     <![endif]-->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="screen">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="screen">
     <style>
-        /* ── Reset ─────────────────────────────────────── */
-        * { box-sizing: border-box; }
-
-        /* ── Mobile overrides ───────────────────────────── */
-        @media (max-width: 600px) {
-            .outer-pad    { padding-left: 12px !important; padding-right: 12px !important; }
-            .card         { padding: 20px 16px !important; }
-            .logo         { width: 90px !important; }
-
-            /* Stepper */
-            .step-icon-on  { height: 28px !important; width: 28px !important; line-height: 28px !important; padding: 5px !important; }
-            .step-icon-off { height: 28px !important; width: 28px !important; padding: 5px !important; }
-            .step-label    { font-size: 8px !important; letter-spacing: 0 !important; }
-
-            /* Intro */
-            .intro         { font-size: 13px !important; line-height: 20px !important; }
-
-            /* Items table */
-            .col-item      { width: 55% !important; }
-            .col-qty       { width: 15% !important; }
-            .col-price     { width: 30% !important; }
-            .item-img      { width: 44px !important; height: 44px !important; }
-            .item-img-wrap { width: 44px !important; }
-            .item-name     { font-size: 12px !important; }
-            .item-sku      { font-size: 10px !important; }
-            .item-pad      { padding: 8px !important; }
-            .item-qty      { font-size: 12px !important; padding: 8px !important; }
-            .item-price    { font-size: 12px !important; padding: 8px !important; }
-
-            /* Totals */
-            .tot-label     { font-size: 12px !important; }
-            .tot-val       { font-size: 12px !important; }
-            .tot-row-first { padding-top: 10px !important; padding-bottom: 4px !important; }
-            .tot-row       { padding-bottom: 4px !important; }
-            .grand-label   { font-size: 13px !important; padding-top: 8px !important; }
-            .grand-val     { font-size: 14px !important; padding-top: 8px !important; }
-
-            /* Footer */
-            .closing       { font-size: 12px !important; line-height: 20px !important; }
-            .footer-pad    { padding: 16px !important; }
-            .footer-text   { font-size: 11px !important; }
+      @supports (color: color-mix(in lab, red, red)) {
+        .border-white-40 {
+          border-color: lab(99.9791% -.130266 .478733 / .4) !important;
         }
+      }
+      @supports (color: color-mix(in lab, red, red)) {
+        .bg-white-10 {
+          background-color: lab(99.9791% -.130266 .478733 / .1) !important;
+        }
+      }
+      @supports (color: color-mix(in lab, red, red)) {
+        .bg-white-15 {
+          background-color: lab(99.9792% -.130266 .478745 / .15) !important;
+        }
+      }
+      @supports (color: color-mix(in lab, red, red)) {
+        .bg-white-20 {
+          background-color: lab(99.9791% -.130266 .478733 / .2) !important;
+        }
+      }
+      @supports (color: color-mix(in lab, red, red)) {
+        .text-white-60 {
+          color: lab(99.9792% -.130266 .478745 / .6) !important;
+        }
+      }
+      @supports (color: color-mix(in lab, red, red)) {
+        .text-white-70 {
+          color: lab(99.9791% -.130266 .478733 / .7) !important;
+        }
+      }
+      @supports (color: color-mix(in lab, red, red)) {
+        .text-white-80 {
+          color: lab(99.9791% -.130266 .478733 / .8) !important;
+        }
+      }
     </style>
-</head>
-
-<body style="margin: 0; width: 100%; background-color: #f1f5f9; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word;">
-
-    {{-- Preview text --}}
-    <div style="display: none; max-height: 0; overflow: hidden;">
-        Thank you! We've received your order {{ $order->order_number }} and are getting it ready for you.
-        &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
-        &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
-        &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
-        &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
+  </head>
+  <body xml:lang="en" style="margin: 0; width: 100%; height: 100%; background-color: #eef1f6; padding: 0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; word-break: break-word;">
+    <div style="display:none;">
+      Your order is confirmed — thank you for your purchase. ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏
+       ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  ﻿͏  
     </div>
-
-    <div role="article" aria-roledescription="email" aria-label lang="en">
-        <div class="outer-pad" style="background-color: #f1f5f9; font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding-left: 16px; padding-right: 16px;">
-
-            <table align="center" style="margin: 0 auto; width: 100%; max-width: 560px;" cellpadding="0" cellspacing="0" role="none">
-                <tr>
-                    <td style="padding: 24px 0;">
-
-                        {{-- ── Card ────────────────────────────────── --}}
-                        <table style="width: 100%;" cellpadding="0" cellspacing="0" role="none">
-                            <tr>
-                                <td class="card" style="border-radius: 8px; background-color: #ffffff; padding: 28px 32px; border: 1px solid #c02434;">
-
-                                    {{-- Logo --}}
-                                    <div style="text-align: center; margin-bottom: 20px;">
-                                        <a href="{{ config('app.url') }}">
-                                            <img class="logo" src="{{ asset('images/mails/logo.png') }}" width="110" height="auto" alt="{{ config('app.name') }}" style="max-width: 100%; vertical-align: middle;">
-                                        </a>
-                                    </div>
-
-                                    {{-- Divider --}}
-                                    <div style="height: 1px; background-color: #c02434; margin-bottom: 20px;"></div>
-
-                                    {{-- Greeting --}}
-                                    <p class="intro" style="margin: 0 0 6px; font-size: 13px; line-height: 20px; color: #475569;">Hi {{ $customerName }},</p>
-                                    <p class="intro" style="margin: 0 0 4px; font-size: 15px; line-height: 22px; font-weight: 700; color: #1e293b;">
-                                        Thank you for your order!
-                                    </p>
-                                    <p class="intro" style="margin: 0 0 20px; font-size: 13px; line-height: 20px; color: #475569;">
-                                        We've received your order <strong style="color: #1e293b;">{{ $order->order_number }}</strong> and our team is now reviewing it. We'll send you another update as soon as it's on its way.
-                                    </p>
-
-                                    {{-- ── Stepper ──────────────────────────────── --}}
-                                    <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; margin-bottom: 20px;">
-                                        <tr>
-                                            {{-- Received (active) --}}
-                                            <td style="width: 32px; text-align: center;">
-                                                <div class="step-icon-on" style="line-height: 32px; margin: 0 auto; height: 32px; width: 32px; border-radius: 50%; background-color: #c02434; padding: 6px; text-align: center; color: #fff;">
-                                                    <svg fill="currentColor" viewBox="0 0 100 125" style="width:100%;height:100%;">
-                                                        <path d="M68.31,88.13H28.58a8.85,8.85,0,0,1-8.71-7.52L13.78,54.28H12.32a6.06,6.06,0,0,1,0-12.11h7.4a3.12,3.12,0,0,1,.15-.39,8.41,8.41,0,0,1,6.07-5l9-22a4.7,4.7,0,1,1,8.69,3.58l-9,22a8.56,8.56,0,0,1,.92,1.84h25a16.43,16.43,0,0,1,.8-4L53.21,18.36a4.7,4.7,0,1,1,8.69,3.58L68,29.55a16.35,16.35,0,0,1,9.14-2.76A16.6,16.6,0,0,1,82,59.27L77,80.69A8.84,8.84,0,0,1,68.31,88.13Z"/>
-                                                    </svg>
-                                                </div>
-                                            </td>
-                                            <td style="vertical-align: middle;"><div style="height: 3px; background-color: #e2e8f0;"></div></td>
-                                            {{-- Processing (inactive) --}}
-                                            <td style="width: 32px; text-align: center;">
-                                                <div class="step-icon-off" style="margin: 0 auto; display: flex; height: 32px; width: 32px; align-items: center; justify-content: center; border-radius: 50%; background-color: #f1f5f9; padding: 6px; border: 1px solid #e2e8f0;">
-                                                    <svg fill="currentColor" viewBox="0 0 100 125" style="width:100%;height:100%;color:#94a3b8;">
-                                                        <path d="M50,61.9c-6.6,0-11.9-5.3-11.9-11.9S43.4,38.1,50,38.1S61.9,43.4,61.9,50S56.6,61.9,50,61.9z M50,42.1 c-4.4,0-7.9,3.5-7.9,7.9s3.5,7.9,7.9,7.9s7.9-3.5,7.9-7.9S54.4,42.1,50,42.1z"/>
-                                                        <path d="M56.5,87.5h-13l-1.7-7.8c-2.1-0.7-4.1-1.6-5.9-2.8l-7.3,3.3l-9.2-9.2l3.3-7.3c-1.2-1.8-2.1-3.8-2.8-5.9l-7.8-1.7v-13 l7.8-1.7c0.7-2.1,1.6-4.1,2.8-5.9l-3.3-7.3l9.2-9.2l7.3,3.3c1.8-1.2,3.8-2.1,5.9-2.8l1.7-7.8h13l1.7,7.8 c2.1,0.7,4.1,1.6,5.9,2.8l7.3-3.3l9.2,9.2l-3.3,7.3c1.2,1.8,2.1,3.8,2.8,5.9l7.8,1.7v13l-7.8,1.7c-0.7,2.1-1.6,4.1-2.8,5.9 l3.3,7.3l-9.2,9.2l-7.3-3.3c-1.8,1.2-3.8,2.1-5.9,2.8L56.5,87.5z"/>
-                                                    </svg>
-                                                </div>
-                                            </td>
-                                            <td style="vertical-align: middle;"><div style="height: 3px; background-color: #e2e8f0;"></div></td>
-                                            {{-- Out for Delivery (inactive) --}}
-                                            <td style="width: 32px; text-align: center;">
-                                                <div class="step-icon-off" style="margin: 0 auto; display: flex; height: 32px; width: 32px; align-items: center; justify-content: center; border-radius: 50%; background-color: #f1f5f9; padding: 6px; border: 1px solid #e2e8f0;">
-                                                    <svg fill="currentColor" viewBox="0 0 100 125" style="width:100%;height:100%;color:#94a3b8;">
-                                                        <path d="M41.3,78.9c0.1,0.5,0.5,0.8,1.1,0.8H45c0-0.1,0-0.3,0-0.5c0-3.2,2.5-5.7,5.7-5.7c3.2,0,5.7,2.5,5.7,5.7c0,0.2,0,0.3,0,0.5h18c0-0.1,0-0.3,0-0.5c0-3.2,2.5-5.7,5.7-5.7c3.2,0,5.7,2.5,5.7,5.7c0,0.2,0,0.3,0,0.5h3.2c0.9,0,1.7-0.8,1.5-1.7l-0.6-4.2c-0.1-0.3-0.1-0.6-0.3-0.9c-1.1-1.9-2.8-3.4-4.9-4.3l-5.3-2.3c-0.2-0.1-0.5-0.2-0.7-0.4l-7.3-5.2c-0.8-0.6-1.9-0.9-2.9-0.9h-17c-0.1,0-0.1,0-0.1,0h-5.4c-0.6,0-1.1,0.6-0.8,1.1l0.5,1.5c-0.6,0.6-1.1,1.5-1.3,2.3l-2.9,7.6C40.9,74.2,40.9,76.5,41.3,78.9z"/>
-                                                        <path d="M92.6,83.6H81.1c1.9-0.5,3.3-2.3,3.3-4.3c0-2.5-2-4.5-4.5-4.5s-4.5,2-4.5,4.5c0,2.1,1.4,3.8,3.3,4.3H52c1.9-0.5,3.3-2.3,3.3-4.3c0-2.5-2-4.5-4.5-4.5s-4.5,2-4.5,4.5c0,2.1,1.4,3.8,3.3,4.3H8.1v3h84.5V83.6z"/>
-                                                        <polygon points="66.2,26.4 66.2,13.4 35.4,13.4 35.4,47.8 6.6,47.8 6.6,77.3 9.6,77.3 9.6,50.8 35.4,50.8 35.4,76.1 38.4,76.1 38.4,16.4 63.2,16.4 63.2,56.3 66.2,56.3 66.2,29.4 90.4,29.3 90.4,65.7 93.4,65.7 93.4,26.3"/>
-                                                    </svg>
-                                                </div>
-                                            </td>
-                                            <td style="vertical-align: middle;"><div style="height: 3px; background-color: #e2e8f0;"></div></td>
-                                            {{-- Completed (inactive) --}}
-                                            <td style="width: 32px; text-align: center;">
-                                                <div class="step-icon-off" style="margin: 0 auto; display: flex; height: 32px; width: 32px; align-items: center; justify-content: center; border-radius: 50%; background-color: #f1f5f9; padding: 6px; border: 1px solid #e2e8f0;">
-                                                    <svg fill="currentColor" viewBox="-5.0 -10.0 110.0 135.0" style="width:100%;height:100%;color:#94a3b8;">
-                                                        <path d="m74.34 65.082c-2.5039 0.90234-5.0078 1.8047-7.5117 2.707-1.6758 0.60156-3.3477 1.207-5.0195 1.8086 0.039062-0.26953 0.058594-0.53906 0.058594-0.81641 0-3.0586-2.4922-5.5508-5.5547-5.5508h-8.5273c-0.62891 0-1.1484-0.11328-1.7266-0.37891-10.355-4.7461-14.098-4.6602-22.289-4.4727-0.32422 0.007813-0.65625 0.015625-0.99609 0.023438v-2.5859c0-0.60547-0.48828-1.0938-1.0938-1.0938h-10.582c-0.60547 0-1.0938 0.48828-1.0938 1.0938v28.652c0 0.60547 0.48828 1.0938 1.0938 1.0938h10.582c0.60547 0 1.0938-0.48828 1.0938-1.0938v-3.1055c4.6914 0.078125 5.5664 0.52344 10.84 3.1953 0.73828 0.375 1.5625 0.79297 2.4883 1.2539 2.6328 1.4062 5.3711 2.1094 8.2695 2.1094 2.3281 0 4.7578-0.45312 7.3125-1.3594l26.656-10.344c3.0586-1.1094 4.6484-4.5039 3.5469-7.5703-1.1055-3.0664-4.5039-4.6641-7.5742-3.5586z"/>
-                                                    </svg>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding-top: 6px; text-align: center;">
-                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #c02434;">Received</p>
-                                            </td>
-                                            <td></td>
-                                            <td style="padding-top: 6px; text-align: center;">
-                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8;">Processing</p>
-                                            </td>
-                                            <td></td>
-                                            <td style="padding-top: 6px; text-align: center;">
-                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8;">Out for Delivery</p>
-                                            </td>
-                                            <td></td>
-                                            <td style="padding-top: 6px; text-align: center;">
-                                                <p class="step-label" style="margin: 0; white-space: nowrap; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8;">Completed</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    {{-- ── Items table ──────────────────────────── --}}
-                                    <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; margin-bottom: 0; border-radius: 4px; overflow: hidden;">
-                                        <thead>
-                                            <tr style="background-color: #c02434;">
-                                                <th class="col-item item-pad" style="width: 60%; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff;">Item</th>
-                                                <th class="col-qty" style="width: 12%; padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; white-space: nowrap;">Qty</th>
-                                                <th class="col-price" style="width: 28%; padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; white-space: nowrap;">Price</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($order->items as $item)
-                                                @php
-                                                    $imagePath   = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null);
-                                                    $imageUrl    = $imagePath ? asset('storage/' . $imagePath) : null;
-                                                    $productName = $item->product_name ?? 'Product';
-                                                    $productSku  = $item->product_sku ?? '';
-                                                    $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null);
-                                                    $productUrl  = $productSlug ? route('product.show', $productSlug) : null;
-                                                @endphp
-                                                <tr>
-                                                    <td class="col-item item-pad" style="width: 60%; padding: 10px; border-bottom: 1px solid #f1f5f9;">
-                                                        <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
-                                                            <tr>
-                                                                <td class="item-img-wrap" style="width: 52px; vertical-align: top;">
-                                                                    @if ($imageUrl)
-                                                                        <img class="item-img" src="{{ $imageUrl }}" alt="{{ $productName }}" width="52" height="52"
-                                                                            style="width: 52px; height: 52px; object-fit: cover; border-radius: 4px; display: block; vertical-align: middle;">
-                                                                    @else
-                                                                        <div class="item-img" style="width: 52px; height: 52px; background-color: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                                                            <span style="color: #94a3b8; font-size: 9px; text-align: center;">No image</span>
-                                                                        </div>
-                                                                    @endif
-                                                                </td>
-                                                                <td style="padding-left: 10px; vertical-align: top;">
-                                                                    <p class="item-name" style="margin: 0 0 3px; font-size: 12px; font-weight: 600; line-height: 1.4; color: #1e293b;">
-                                                                        @if ($productUrl)
-                                                                            <a href="{{ $productUrl }}" style="color: #1e293b; text-decoration: none;">{{ $productName }}</a>
-                                                                        @else
-                                                                            {{ $productName }}
-                                                                        @endif
-                                                                    </p>
-                                                                    @if ($productSku)
-                                                                        <p class="item-sku" style="margin: 0; font-size: 11px; color: #94a3b8;">{{ $productSku }}</p>
-                                                                    @endif
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                    </td>
-                                                    <td class="item-qty" style="width: 12%; padding: 10px 6px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 13px; color: #475569; vertical-align: top; white-space: nowrap;">
-                                                        {{ $item->quantity }}
-                                                    </td>
-                                                    <td class="item-price" style="width: 28%; padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: right; font-size: 13px; font-weight: 600; color: #1e293b; vertical-align: top; white-space: nowrap;">
-                                                        {{ money($item->unit_price_cents) }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-
-                                    {{-- ── Totals ───────────────────────────────── --}}
-                                    <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; margin-top: 4px; margin-bottom: 24px; border-top: 1px solid #e2e8f0;">
-                                        <tr>
-                                            <td class="tot-label tot-row-first" style="padding-top: 10px; padding-bottom: 5px; font-size: 12px; color: #64748b;">Subtotal</td>
-                                            <td class="tot-val tot-row-first" style="padding-top: 10px; padding-bottom: 5px; text-align: right; font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap;">{{ money($order->subtotal_cents) }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="tot-label tot-row" style="padding-bottom: 5px; font-size: 12px; color: #64748b;">Delivery Fee</td>
-                                            <td class="tot-val tot-row" style="padding-bottom: 5px; text-align: right; font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap;">{{ money($order->delivery_cents) }}</td>
-                                        </tr>
-                                        @if ($order->vat_cents > 0)
-                                        <tr>
-                                            <td class="tot-label tot-row" style="padding-bottom: 5px; font-size: 12px; color: #64748b;">VAT</td>
-                                            <td class="tot-val tot-row" style="padding-bottom: 5px; text-align: right; font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap;">{{ money($order->vat_cents) }}</td>
-                                        </tr>
-                                        @endif
-                                        <tr>
-                                            <td class="grand-label" style="border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 13px; font-weight: 700; color: #1e293b;">
-                                                Total <span style="font-size: 10px; font-weight: 400; color: #94a3b8; margin-left: 4px;">via {{ $paymentLabel }}</span>
-                                            </td>
-                                            <td class="grand-val" style="border-top: 1px solid #e2e8f0; padding-top: 10px; text-align: right; font-size: 15px; font-weight: 700; color: #c02434; white-space: nowrap;">{{ money($order->total_cents) }}</td>
-                                        </tr>
-                                    </table>
-
-                                    {{-- ── Closing ──────────────────────────────── --}}
-                                    <p class="closing" style="margin: 0 0 10px; font-size: 13px; line-height: 20px; color: #64748b;">
-                                        You can track your order at any time from your
-                                        <a href="{{ $orderUrl }}" style="color: #c02434; text-decoration: none; font-weight: 600;">account</a>.
-                                        Questions? Our support team is always happy to help.
-                                    </p>
-                                    <p class="closing" style="margin: 0; font-size: 13px; line-height: 20px; color: #475569;">
-                                        Thank you for your order.<br>
-                                        <strong style="color: #1e293b;">{{ config('app.name') }} Team</strong>
-                                    </p>
-
-                                </td>
-                            </tr>
-                        </table>
-
-                        {{-- ── Footer ───────────────────────────────── --}}
-                        <table style="width: 100%;" cellpadding="0" cellspacing="0" role="none">
-                            <tr>
-                                <td class="footer-pad" style="padding: 16px 8px;">
-                                    <p class="footer-text" style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">
-                                        &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-
-                    </td>
-                </tr>
+    <span style="display:none;">
+      <!--[if mso]>
+        <xml>
+          <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+          </o:OfficeDocumentSettings>
+          <w:WordDocument>
+            <w:DontUseAdvancedTypographyReadingMail />
+          </w:WordDocument>
+        </xml>
+      <![endif]-->
+    </span>
+    <div role="article" aria-roledescription="email" lang="en" dir="ltr" style="font-size: medium; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; font-size: max(16px, 1rem);">
+      <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 600px" align="center"><tr><td style="padding: 28px 12px"><![endif]-->
+      <div style="margin: 0 auto; width: 100%; max-width: 600px; padding: 28px 12px;">
+        <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe"><![endif]-->
+        <div style="overflow: hidden; background-color: #fffffe;">
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #2f4196; padding: 24px 36px 32px"><![endif]-->
+          <div style="background-color: #2f4196; padding: 24px 36px 32px;">
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="vertical-align: middle;">
+                  @if (! empty($emailLogoInverseUrl))
+                  <img src="{{ $emailLogoInverseUrl }}" width="150" alt="Sheffield" style="vertical-align: middle; max-width: 100%; display: block;">
+                  @endif@if (empty($emailLogoInverseUrl))
+                  <span style="display: inline-block; border-radius: 6px; background-color: #fffffe; padding: 8px 12px;"><img src="{{ $emailLogoUrl }}" width="104" alt="Sheffield" style="vertical-align: middle; max-width: 100%; display: block;"></span>
+                  @endif
+                </td>
+                <td style="text-align: right; vertical-align: middle;"><a href="{{ route('catalog') }}" class="text-white-80" style="font-size: 13px; font-weight: 600; color: rgba(255, 255, 254, .8); text-decoration: none;">Shop ›</a></td>
+              </tr>
             </table>
+            <div class="bg-white-20" style="margin-top: 18px; margin-bottom: 18px; height: 1px; background-color: rgba(255, 255, 254, .2);"></div>
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="padding-top: 8px; text-align: center;">
+                  <div class="border-white-40" style="margin-left: auto; margin-right: auto; margin-bottom: 16px; height: 64px; width: 64px; border-radius: 9999px; border: 2px solid rgba(255, 255, 254, .4); text-align: center; line-height: 60px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" style="display: inline-block; height: 28px; width: 28px; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"></path></svg>
+                  </div>
+                  <h1 style="margin: 0; text-align: center; font-size: 25px; line-height: 1.25; font-weight: 800; color: #fffffe;">Thanks for your purchase!</h1>
+                </td>
+              </tr>
+            </table>
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="padding-top: 24px; vertical-align: middle;">
+                  <p style="margin: 0; font-size: 15px; font-weight: 700; color: #fffffe;">Hi {{ $customerName }},</p>
+                  <p class="text-white-70" style="margin: 4px 0 0; font-size: 13px; color: rgba(255, 255, 254, .7);">Your order is confirmed.</p>
+                </td>
+                <td style="padding-top: 24px; text-align: right; vertical-align: middle;">
+                  <div class="bg-white-15" style="display: inline-block; height: 44px; width: 44px; border-radius: 9999px; background-color: rgba(255, 255, 254, .15); text-align: center; line-height: 44px;">
+                    <svg viewBox="0 0 24 24" fill="#ffffff" style="display: inline-block; height: 24px; width: 24px; vertical-align: middle;"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2.5c-3.34 0-10 1.67-10 5V21h20v-1.5c0-3.33-6.66-5-10-5Z"></path></svg>
+                  </div>
+                </td>
+              </tr>
+            </table>
+            <div class="bg-white-20" style="margin-top: 18px; margin-bottom: 18px; height: 1px; background-color: rgba(255, 255, 254, .2);"></div>
+            <p class="text-white-80" style="margin: 0; font-size: 13.5px; line-height: 21px; color: rgba(255, 255, 254, .8);">Thank you for shopping with us — we've received your order and it's being prepared. Below are the details of your purchase.</p>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 24px 36px 4px"><![endif]-->
+          <div style="background-color: #fffffe; padding: 24px 36px 4px;">
+            <p style="margin: 0; font-size: 12px; line-height: 16px; color: #64748b;">
+              Order No:
+              <span style="color: #c02434; font-weight: 700;">#{{ $order->order_number }}</span>
+            </p>
+            <p style="margin: 10px 0 0; font-size: 13px; font-weight: 800; color: #0f172a;">Order placed</p>
+            <p style="margin: 2px 0 0; font-size: 13px; color: #64748b;">{{ $order->created_at->format('d M Y') }}</p>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 16px 36px 0"><![endif]-->
+          <div style="background-color: #fffffe; padding: 16px 36px 0;">
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Item</td>
+                <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Qty</td>
+                <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; text-align: right; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Price</td>
+              </tr>
+              @foreach ($order->items as $item) @php $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null); $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null; $productName = $item->product_name ?? 'Product'; $productSku = $item->product_sku ?? '';
+              $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null); $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
+              <tr>
+                <td style="border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 12px; padding-bottom: 12px; padding-right: 12px; vertical-align: middle;">
+                  <table cellpadding="0" cellspacing="0" role="presentation">
+                    <tr>
+                      <td style="width: 48px; padding-right: 12px; vertical-align: middle;">
+                        @if ($imageUrl) @if ($productUrl)
+                        <a href="{{ $productUrl }}"><img src="{{ $imageUrl }}" width="48" height="48" alt="{{ $productName }}" style="vertical-align: middle; max-width: 100%; display: block; height: 48px; width: 48px; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: cover;"></a>
+                        @else
+                        <img src="{{ $imageUrl }}" width="48" height="48" alt="{{ $productName }}" style="vertical-align: middle; max-width: 100%; display: block; height: 48px; width: 48px; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: cover;">
+                        @endif @else
+                        <div style="height: 48px; width: 48px; border-radius: 6px; border: 1px solid #e2e8f0; background-color: #f1f5f9;"></div>
+                        @endif
+                      </td>
+                      <td style="vertical-align: middle;">
+                        @if ($productUrl)
+                        <a href="{{ $productUrl }}" style="margin: 0; font-size: 14px; line-height: 20px; line-height: 1.375; font-weight: 700; color: #1e293b; text-decoration: none;">{{ $productName }}</a>
+                        @else
+                        <p style="margin: 0; font-size: 14px; line-height: 20px; line-height: 1.375; font-weight: 700; color: #1e293b;">{{ $productName }}</p>
+                        @endif @if ($productSku)
+                        <p style="margin: 4px 0 0; font-size: 12px; line-height: 16px; color: #94a3b8;">SKU {{ $productSku }}</p>
+                        @endif
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 12px; padding-bottom: 12px; text-align: center; vertical-align: middle; font-size: 13px; color: #475569;">{{ $item->quantity }}</td>
+                <td style="border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 12px; padding-bottom: 12px; padding-left: 12px; text-align: right; vertical-align: middle; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; color: #0f172a;">{{ money($item->line_total_cents) }}</td>
+              </tr>
+              @endforeach
+            </table>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 20px 36px 0"><![endif]-->
+          <div style="background-color: #fffffe; padding: 20px 36px 0;">
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td></td>
+                <td style="width: 240px; vertical-align: top;">
+                  <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+                    <tr>
+                      <td style="padding-top: 4px; padding-bottom: 4px; font-size: 13px; color: #64748b;">Subtotal</td>
+                      <td style="padding-top: 4px; padding-bottom: 4px; text-align: right; font-size: 13px; font-weight: 600; white-space: nowrap; color: #334155;">{{ money($order->subtotal_cents) }}</td>
+                    </tr>
+                    @if ($order->delivery_cents > 0)
+                    <tr>
+                      <td style="padding-top: 4px; padding-bottom: 4px; font-size: 13px; color: #64748b;">Delivery</td>
+                      <td style="padding-top: 4px; padding-bottom: 4px; text-align: right; font-size: 13px; font-weight: 600; white-space: nowrap; color: #334155;">{{ money($order->delivery_cents) }}</td>
+                    </tr>
+                    @endif @if ($order->vat_cents > 0)
+                    <tr>
+                      <td style="padding-top: 4px; padding-bottom: 4px; font-size: 13px; color: #64748b;">VAT</td>
+                      <td style="padding-top: 4px; padding-bottom: 4px; text-align: right; font-size: 13px; font-weight: 600; white-space: nowrap; color: #334155;">{{ money($order->vat_cents) }}</td>
+                    </tr>
+                    @endif
+                    <tr>
+                      <td style="border-top: 2px solid; border-color: #e2e8f0; padding-top: 10px; font-size: 15px; font-weight: 800; color: #0f172a;">Total</td>
+                      <td style="color: #c02434; border-top: 2px solid; border-color: #e2e8f0; padding-top: 10px; text-align: right; font-size: 15px; font-weight: 800; white-space: nowrap;">{{ money($order->total_cents) }}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 24px 36px 28px"><![endif]-->
+          <div style="background-color: #fffffe; padding: 24px 36px 28px;">
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="width: 50%; vertical-align: top;">
+                  <p style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 800; color: #0f172a;">Payment method</p>
+                  <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">{{ $paymentLabel }}</p>
+                </td>
+                <td style="width: 50%; vertical-align: top;">
+                  <p style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 800; color: #0f172a;">Shipping details</p>
+                  @if ($order->address)
+                  <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">{{ $order->address->name }}</p>
+                  <p style="margin: 2px 0 0; font-size: 13px; color: #64748b;">{{ $order->address->line1 }}</p>
+                  @if ($order->address->phone)
+                  <p style="margin: 2px 0 0; font-size: 13px; color: #64748b;">{{ $order->address->phone }}</p>
+                  @endif @else
+                  <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">In-store collection</p>
+                  @endif
+                </td>
+              </tr>
+            </table>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 28px 36px 4px"><![endif]-->
+          <div style="background-color: #fffffe; padding: 28px 36px 4px; text-align: center;">
+            <div>
+              <a style="background-color: #c02434; display: inline-block; border-radius: 6px; padding: 12px 32px; font-size: 14px; line-height: 20px; font-weight: 700; color: #fffffe; text-decoration: none;" href="{{ $orderUrl }}">
+                <!--[if mso]><i style="mso-font-width: 150%; mso-text-raise: 31px;" hidden>&emsp;</i><![endif]-->
+                <span style="mso-text-raise: 16px;">Track your order</span>
+                <!--[if mso]><i style="mso-font-width: 150%;" hidden>&emsp;&#8203;</i><![endif]-->
+              </a>
+            </div>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 24px 36px 40px"><![endif]-->
+          <div style="background-color: #fffffe; padding: 24px 36px 40px;">
+            <p style="margin: 0; font-size: 13px; line-height: 20px; color: #64748b;">If you have any questions, just reply to this email or contact our team.</p>
+            <p style="margin: 14px 0 0; font-size: 13px; color: #475569;">
+              Best regards,
+              <br>
+              <span style="font-weight: 700; color: #0f172a;">{{ config('app.name') }}</span>
+            </p>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #243270; padding: 24px 36px"><![endif]-->
+          <div style="background-color: #243270; padding: 24px 36px;">
+            @php $social = app(\App\Settings\SocialSettings::class); $business = app(\App\Settings\BusinessSettings::class); $siteUrl = preg_replace('#^https?://#', '', rtrim(config('app.url'), '/')); $socials = array_filter([ 'facebook' => $social->facebook_url, 'instagram' => $social->instagram_url, 'x'
+            => $social->x_url, 'linkedin' => $social->linkedin_url, 'youtube' => $social->youtube_url, ]); @endphp @if (! empty($socials))
+            <table cellpadding="0" cellspacing="0" role="presentation" style="margin-left: auto; margin-right: auto; margin-bottom: 16px;">
+              <tr>
+                @if ($social->facebook_url)
+                <td style="padding-left: 5px; padding-right: 5px;">
+                  <a href="{{ $social->facebook_url }}" class="bg-white-10" style="display: inline-block; height: 32px; width: 32px; border-radius: 9999px; background-color: rgba(255, 255, 254, .1); text-align: center; line-height: 32px;">
+                    <svg viewBox="0 0 24 24" style="display: inline-block; height: 16px; width: 16px; vertical-align: middle;"><path fill="#ffffff" d="M13.5 21v-7h2.3l.4-2.7h-2.7V9.6c0-.8.3-1.3 1.4-1.3h1.4V5.9c-.7-.1-1.4-.1-2-.1-2 0-3.5 1.2-3.5 3.5v1.9H8.5V14h2.3v7h2.7z"></path></svg>
+                  </a>
+                </td>
+                @endif @if ($social->instagram_url)
+                <td style="padding-left: 5px; padding-right: 5px;">
+                  <a href="{{ $social->instagram_url }}" class="bg-white-10" style="display: inline-block; height: 32px; width: 32px; border-radius: 9999px; background-color: rgba(255, 255, 254, .1); text-align: center; line-height: 32px;">
+                    <svg viewBox="0 0 24 24" style="display: inline-block; height: 16px; width: 16px; vertical-align: middle;">
+                      <path
+                        fill="#ffffff"
+                        d="M12 8.1A3.9 3.9 0 1 0 12 15.9 3.9 3.9 0 0 0 12 8.1zm0 6.4a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm4-6.6a.9.9 0 1 1-1.8 0 .9.9 0 0 1 1.8 0zM17.7 9c-.1-1-.3-2-1.1-2.7-.7-.8-1.7-1-2.7-1.1-1.1-.1-4.3-.1-5.4 0-1 .1-2 .3-2.7 1.1-.8.7-1 1.7-1.1 2.7-.1 1.1-.1 4.3 0 5.4.1 1 .3 2 1.1 2.7.7.8 1.7 1 2.7 1.1 1.1.1 4.3.1 5.4 0 1-.1 2-.3 2.7-1.1.8-.7 1-1.7 1.1-2.7.1-1.1.1-4.3 0-5.4zm-1.5 6.5c-.2.6-.7 1-1.3 1.3-.9.4-3 .3-4 .3s-3.1.1-4-.3c-.6-.2-1-.7-1.3-1.3-.4-.9-.3-3-.3-4s-.1-3.1.3-4c.2-.6.7-1 1.3-1.3.9-.4 3-.3 4-.3s3.1-.1 4 .3c.6.2 1 .7 1.3 1.3.4.9.3 3 .3 4s.1 3.1-.3 4z"
+                      ></path>
+                    </svg>
+                  </a>
+                </td>
+                @endif @if ($social->x_url)
+                <td style="padding-left: 5px; padding-right: 5px;">
+                  <a href="{{ $social->x_url }}" class="bg-white-10" style="display: inline-block; height: 32px; width: 32px; border-radius: 9999px; background-color: rgba(255, 255, 254, .1); text-align: center; line-height: 32px;">
+                    <svg viewBox="0 0 24 24" style="display: inline-block; height: 14px; width: 14px; vertical-align: middle;"><path fill="#ffffff" d="M17.5 5h-2l-3.1 4L9.6 5H5.5l4.6 6.3L5.7 19h2l3.4-4.4L14.4 19h4.1l-4.8-6.6L17.5 5zm-2.6 12.5L7.9 6.4h1.2l7 11.1h-1.2z"></path></svg>
+                  </a>
+                </td>
+                @endif @if ($social->linkedin_url)
+                <td style="padding-left: 5px; padding-right: 5px;">
+                  <a href="{{ $social->linkedin_url }}" class="bg-white-10" style="display: inline-block; height: 32px; width: 32px; border-radius: 9999px; background-color: rgba(255, 255, 254, .1); text-align: center; line-height: 32px;">
+                    <svg viewBox="0 0 24 24" style="display: inline-block; height: 16px; width: 16px; vertical-align: middle;">
+                      <path fill="#ffffff" d="M8 9.6H5.7V18H8V9.6zM6.85 8.5a1.35 1.35 0 1 0 0-2.7 1.35 1.35 0 0 0 0 2.7zM18.3 18H16v-4.2c0-1-.4-1.7-1.3-1.7-.7 0-1.1.5-1.3 1-.1.2-.1.4-.1.6V18H11s.03-7.4 0-8.4h2.3v1.2c.3-.5.85-1.2 2.1-1.2 1.5 0 2.7 1 2.7 3.1V18z"></path>
+                    </svg>
+                  </a>
+                </td>
+                @endif @if ($social->youtube_url)
+                <td style="padding-left: 5px; padding-right: 5px;">
+                  <a href="{{ $social->youtube_url }}" class="bg-white-10" style="display: inline-block; height: 32px; width: 32px; border-radius: 9999px; background-color: rgba(255, 255, 254, .1); text-align: center; line-height: 32px;">
+                    <svg viewBox="0 0 24 24" style="display: inline-block; height: 16px; width: 16px; vertical-align: middle;">
+                      <path fill="#ffffff" d="M20 8.6c-.2-.9-.8-1.5-1.6-1.7C16.9 6.5 12 6.5 12 6.5s-4.9 0-6.4.4c-.8.2-1.4.8-1.6 1.7C3.6 10.1 3.6 12 3.6 12s0 1.9.4 3.4c.2.9.8 1.5 1.6 1.7 1.5.4 6.4.4 6.4.4s4.9 0 6.4-.4c.8-.2 1.4-.8 1.6-1.7.4-1.5.4-3.4.4-3.4s0-1.9-.4-3.4zM10.5 14.5v-5l4.3 2.5-4.3 2.5z"></path>
+                    </svg>
+                  </a>
+                </td>
+                @endif
+              </tr>
+            </table>
+            @endif
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td class="text-white-60" style="vertical-align: middle; font-size: 11px; color: rgba(255, 255, 254, .6);">© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</td>
+                <td class="text-white-70" style="text-align: right; vertical-align: middle; font-size: 11px; color: rgba(255, 255, 254, .7);">
+                  @if ($business->contact_email)
+                  <a href="mailto:{{ $business->contact_email }}" class="text-white-80" style="color: rgba(255, 255, 254, .8); text-decoration: none;">{{ $business->contact_email }}</a>
+                   ·  @endif
+                  <a href="{{ config('app.url') }}" class="text-white-80" style="color: rgba(255, 255, 254, .8); text-decoration: none;">{{ $siteUrl }}</a>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
         </div>
+        <!--[if mso]></td></tr></table><![endif]-->
+      </div>
+      <!--[if mso]></td></tr></table><![endif]-->
     </div>
-</body>
-
+  </body>
 </html>

@@ -220,20 +220,18 @@ new #[Layout('layouts::app')] #[Title('Reviews — Admin')] class extends Compon
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
-                                <flux:tooltip content="Activity log">
-                                    <flux:button size="xs" variant="ghost" icon="clock"
-                                        :href="route('admin.activity.item', ['review', $review->id])"
-                                        wire:navigate />
-                                </flux:tooltip>
+                                <flux:button size="xs" variant="ghost" icon="clock" tooltip="Activity log"
+                                    :href="route('admin.activity.item', ['review', $review->id])"
+                                    wire:navigate />
                                 @if ($review->status !== \App\Enums\ReviewStatus::APPROVED)
-                                    <flux:button size="xs" variant="ghost" icon="check" wire:click="approve({{ $review->id }})"
+                                    <flux:button size="xs" variant="ghost" icon="check" tooltip="Approve" wire:click="approve({{ $review->id }})"
                                         class="text-emerald-600! hover:text-emerald-700!" />
                                 @endif
                                 @if ($review->status !== \App\Enums\ReviewStatus::REJECTED)
-                                    <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="reject({{ $review->id }})"
+                                    <flux:button size="xs" variant="ghost" icon="x-mark" tooltip="Reject" wire:click="reject({{ $review->id }})"
                                         class="text-amber-600! hover:text-amber-700!" />
                                 @endif
-                                <flux:button size="xs" variant="ghost" icon="trash-2" wire:click="delete({{ $review->id }})"
+                                <flux:button size="xs" variant="ghost" icon="trash-2" tooltip="Delete" wire:click="delete({{ $review->id }})"
                                     wire:confirm="Delete this review permanently?" class="text-red-500! hover:text-red-600!" />
                             </div>
                         </flux:table.cell>

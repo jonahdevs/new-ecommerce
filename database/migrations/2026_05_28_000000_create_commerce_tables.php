@@ -63,6 +63,8 @@ return new class extends Migration
             $table->boolean('is_default')->default(false);
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
+            // Kenyan county, reverse-geocoded from the pin (see ResolveAddressCounty job).
+            $table->string('county')->nullable()->index();
             $table->timestamps();
         });
 

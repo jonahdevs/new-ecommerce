@@ -112,6 +112,56 @@ it('paginates the picker and loads more on demand', function () {
         ->and($component->get('linkPickerResults')->hasMorePages())->toBeFalse();
 });
 
+it('persists the required flag and default quantity for accessories', function () {
+    $product = Product::factory()->create(['status' => ProductStatus::DRAFT]);
+    $accessory = Product::factory()->create();
+
+    Livewire::test('pages::admin.products.form', ['product' => $product])
+        ->call('addProductLink', 'accessory', $accessory->id)
+        ->set('productLinks.accessory.0.is_required', true)
+        ->set('productLinks.accessory.0.default_quantity', 12)
+        ->call('save');
+
+    $link = ProductLink::where('product_id', $product->id)->first();
+
+    expect($link->is_required)->toBeTrue()
+        ->and($link->default_quantity)->toBe(12);
+});
+
+it('hydrates the required flag and default quantity when editing', function () {
+    $product = Product::factory()->create(['status' => ProductStatus::DRAFT]);
+    $accessory = Product::factory()->create();
+
+    ProductLink::create([
+        'product_id' => $product->id,
+        'linked_product_id' => $accessory->id,
+        'type' => ProductLinkType::ACCESSORY,
+        'is_required' => true,
+        'default_quantity' => 6,
+        'sort_order' => 0,
+    ]);
+
+    Livewire::test('pages::admin.products.form', ['product' => $product])
+        ->assertSet('productLinks.accessory.0.is_required', true)
+        ->assertSet('productLinks.accessory.0.default_quantity', 6);
+});
+
+it('does not apply required semantics to non-accessory links', function () {
+    $product = Product::factory()->create(['status' => ProductStatus::DRAFT]);
+    $upsell = Product::factory()->create();
+
+    Livewire::test('pages::admin.products.form', ['product' => $product])
+        ->call('addProductLink', 'upsell', $upsell->id)
+        ->set('productLinks.upsell.0.is_required', true)
+        ->set('productLinks.upsell.0.default_quantity', 9)
+        ->call('save');
+
+    $link = ProductLink::where('product_id', $product->id)->first();
+
+    expect($link->is_required)->toBeFalse()
+        ->and($link->default_quantity)->toBe(1);
+});
+
 it('removes a product link', function () {
     $product = Product::factory()->create(['status' => ProductStatus::DRAFT]);
     $accessory = Product::factory()->create();

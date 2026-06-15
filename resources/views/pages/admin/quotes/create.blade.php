@@ -56,6 +56,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
         $term = '%'.$this->customerSearch.'%';
 
         return User::query()
+            ->whereDoesntHave('roles')
             ->where(fn ($q) => $q->where('name', 'like', $term)->orWhere('email', 'like', $term))
             ->limit(6)
             ->get();
@@ -77,7 +78,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
 
     public function selectCustomer(int $userId): void
     {
-        $user = User::findOrFail($userId);
+        $user = User::whereDoesntHave('roles')->findOrFail($userId);
         $this->selectedUserId = $userId;
         $this->contact_name = $user->name;
         $this->contact_email = $user->email;

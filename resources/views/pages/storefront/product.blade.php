@@ -1295,53 +1295,11 @@ new #[Layout('layouts::storefront')] class extends Component
                 <div class="swiper overflow-hidden">
                     <div class="swiper-wrapper items-stretch">
                         @foreach ($addonItems as $addon)
-                            @php
-                                $addonPrice   = $addon->sale_price ?? $addon->price;
-                                $addonTax     = app(\App\Support\TaxCalculator::class);
-                                $addonDisplay = $addonPrice ? $addonTax->displayPriceCents($addon, (int) $addonPrice) : null;
-                                $addonInStock = $addon->stock_status === \App\Enums\StockStatus::IN_STOCK;
-                                $addonCover   = $addon->images->first()?->url ?? $addon->cover_url;
-                            @endphp
-                            <div class="swiper-slide !h-auto overflow-hidden rounded-lg border border-zinc-200 bg-white transition hover:shadow-md"
-                                 wire:key="addon-{{ $addon->id }}">
-                                <a href="{{ route('product.show', $addon) }}" wire:navigate class="block">
-                                    <div class="relative h-[132px] overflow-hidden bg-surface-sunken">
-                                        @if ($addonCover)
-                                            <img src="{{ $addonCover }}" alt="{{ $addon->name }}"
-                                                class="absolute inset-0 size-full object-cover" loading="lazy" />
-                                        @else
-                                            <div class="grid size-full place-items-center text-ink-4">
-                                                <flux:icon.photo class="size-8" />
-                                            </div>
-                                        @endif
-                                    </div>
-                                </a>
-                                <div class="flex flex-col border-t border-zinc-200 p-3">
-                                    <a href="{{ route('product.show', $addon) }}" wire:navigate
-                                        class="min-h-[34px] text-[13px] font-medium leading-snug text-ink line-clamp-2">
-                                        {{ $addon->name }}
-                                    </a>
-                                    @if ($addon->sku)
-                                        <div class="mt-1 font-mono text-[10.5px] text-ink-4">{{ $addon->sku }}</div>
-                                    @endif
-                                    <div class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] {{ $addonInStock ? 'text-emerald-600' : 'text-ink-3' }}">
-                                        <span class="size-1.5 rounded-full {{ $addonInStock ? 'bg-emerald-500' : 'bg-zinc-300' }}"></span>
-                                        {{ $addonInStock ? 'In stock' : 'Made to order' }}
-                                    </div>
-                                    <div class="mt-3 flex items-center justify-between gap-2">
-                                        <span class="text-[14px] font-bold tabular-nums text-ink">
-                                            {!! $addonDisplay ? money($addonDisplay) : 'POA' !!}
-                                        </span>
-                                        @if ($addonInStock)
-                                            <button type="button" wire:click="addToCart('{{ $addon->slug }}')"
-                                                class="inline-flex h-[34px] items-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 text-[12.5px] font-semibold text-ink transition hover:bg-brand-500 hover:border-brand-500 hover:text-white">
-                                                <flux:icon.plus variant="micro" class="size-3.5" />
-                                                Add
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+                            <x-storefront.product-card
+                                :product="$addon"
+                                :badge="$addonTab === 'accessories' && $addon->pivot->is_required ? 'Needs '.$addon->pivot->default_quantity : null"
+                                class="swiper-slide !h-auto"
+                                wire:key="addon-{{ $addon->id }}" />
                         @endforeach
                     </div>
                 </div>
@@ -1630,6 +1588,8 @@ new #[Layout('layouts::storefront')] class extends Component
             </div>
         @endif
     @endauth
+
+    @include('partials.storefront.accessory-modal')
 
     {{-- Bundle / grouped add-to-cart modal --}}
     @if (in_array($product->type, [\App\Enums\ProductType::BUNDLE, \App\Enums\ProductType::GROUPED], true))

@@ -69,7 +69,7 @@
 
             @foreach ($showrooms->chunk(2) as $group)
                 <div class="md:col-span-2">
-                    <h3 class="mb-4 text-xs font-bold tracking-[0.1em] text-[#d8c79d] uppercase">Showrooms</h3>
+                    <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Showrooms</h3>
                     <div class="flex flex-col gap-5">
                         @foreach ($group as $loc)
                             <div>
@@ -108,7 +108,7 @@
             @endforeach
 
             <div class="md:col-span-2">
-                <h3 class="mb-4 text-xs font-bold tracking-[0.1em] text-[#d8c79d] uppercase">Business</h3>
+                <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Business</h3>
                 <ul class="space-y-2.5 text-[13.5px] text-[#c9bea4]">
                     <li><a href="{{ route('quote.request') }}" class="hover:text-white" wire:navigate>Request a quote</a></li>
                     <li><a href="{{ route('page.show', 'trade-accounts') }}" class="hover:text-white" wire:navigate>Trade accounts</a></li>
@@ -118,7 +118,7 @@
             </div>
 
             <div class="md:col-span-2">
-                <h3 class="mb-4 text-xs font-bold tracking-[0.1em] text-[#d8c79d] uppercase">Shop</h3>
+                <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Shop</h3>
                 <ul class="space-y-2.5 text-[13.5px] text-[#c9bea4]">
                     @foreach ($footerCategories as $category)
                         <li><a href="{{ route('category.show', $category) }}" class="hover:text-white" wire:navigate>{{ $category->name }}</a></li>

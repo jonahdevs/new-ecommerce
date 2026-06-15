@@ -255,4 +255,6 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
             </table>
         </div>
     @endif
+
+    @include('partials.storefront.accessory-modal')
 </div>

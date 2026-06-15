@@ -1,11 +1,15 @@
 <?php
 
 use App\Enums\OrderStatus;
+use App\Jobs\ResolveAddressCounty;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\DeliveryQuoteResult;
 use App\Services\DeliveryResolver;
+use App\Services\Paystack\PaystackPaymentService;
+use App\Services\PaymentCredentials;
+use App\Settings\PaymentSettings;
 use App\Support\StorefrontSession;
 use App\Support\TaxCalculator;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -21,6 +25,9 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     public ?int $selectedAddressId = null;
 
     public string $deliveryMethod = 'delivery';
+
+    /** The order placed in this checkout session, awaiting Paystack payment. */
+    public ?int $payOrderId = null;
 
     // ==================================================
     // ADDRESS FORM MODALS
@@ -184,6 +191,11 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
         $address = auth()->user()->addresses()->create($data);
 
+        // Resolve the county from the pin (off-request) for the sales-by-county report.
+        if ($address->latitude !== null) {
+            ResolveAddressCounty::dispatch($address->id);
+        }
+
         $this->selectedAddressId = $address->id;
         $this->showAddressModal = false;
         unset($this->addresses, $this->selectedAddress, $this->deliveryQuote);
@@ -208,6 +220,21 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
     public function placeOrder(): void
     {
+        // If the order was already placed in this session and is still awaiting
+        // payment, just re-open the Paystack popup for it — don't create a
+        // duplicate. This is what a re-click after dismissing the popup hits.
+        if ($this->payOrderId) {
+            $existing = Order::find($this->payOrderId);
+
+            if ($existing && ! $existing->isPaid()) {
+                if (! $this->openPaystack($existing)) {
+                    $this->addError('payment', 'We could not start the payment. Please try again.');
+                }
+
+                return;
+            }
+        }
+
         $lines = $this->lines;
 
         if ($lines->isEmpty()) {
@@ -295,9 +322,71 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
             return $order;
         });
 
-        $this->redirectRoute('payment.page', $order, navigate: true);
+        // With Paystack active, open its popup right here. Otherwise fall back to
+        // the payment page (which also serves cash-on-delivery and other flows).
+        if (! $this->openPaystack($order)) {
+            $this->redirectRoute('payment.page', $order, navigate: true);
+        }
+    }
+
+    /**
+     * Initialize a Paystack transaction for the order and tell the browser to
+     * open the inline popup. Returns false when Paystack isn't available, so the
+     * caller can fall back to the payment page.
+     */
+    private function openPaystack(Order $order): bool
+    {
+        if (! $this->paystackReady()) {
+            return false;
+        }
+
+        try {
+            $payment = app(PaystackPaymentService::class)->initialize($order);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
+
+        $order->update(['payment_method' => 'paystack']);
+        $this->payOrderId = $order->id;
+        $this->dispatch('paystack-open', accessCode: $payment->paystack_access_code);
+
+        return true;
+    }
+
+    private function paystackReady(): bool
+    {
+        return app(PaymentSettings::class)->paystack_enabled
+            && app(PaymentCredentials::class)->paystackSecretKey() !== '';
+    }
+
+    /**
+     * Called from JS once the Paystack popup reports success. Verifies the
+     * transaction server-side before advancing to the order.
+     */
+    public function verifyPayment(string $reference): void
+    {
+        $payment = app(PaystackPaymentService::class)->verify($reference);
+
+        if (! $payment) {
+            $this->addError('payment', 'Payment could not be confirmed. If you were charged, please contact support.');
+
+            return;
+        }
+
+        StorefrontSession::clearCart();
+        $this->dispatch('cart-updated');
+
+        Flux::toast(heading: 'Payment confirmed', text: 'Order ' . $payment->account_reference . ' is being processed.', variant: 'success');
+
+        $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
     }
 }; ?>
+
+@assets
+    <script src="https://js.paystack.co/v2/inline.js"></script>
+@endassets
 
 @php
 
@@ -323,6 +412,10 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
 <div class="page-fade" x-data="addressMap()"
     x-effect="($wire.showAddressModal && $wire.addressModalMode === 'create') ? open() : close()">
+
+    {{-- Opens the Paystack popup when the order is placed (or re-clicked). --}}
+    <div x-data="paystackCheckout" @paystack-open.window="open($event.detail.accessCode)"></div>
+
     <div class="shell pt-4 pb-20">
 
         <flux:breadcrumbs class="mb-4">
@@ -366,7 +459,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                             @php $address = $this->selectedAddress; @endphp
                             <div class="flex items-center gap-2">
                                 <span
-                                    class="text-[10.5px] font-bold tracking-[0.1em] text-ink-3 uppercase">{{ $address->label }}</span>
+                                    class="text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{{ $address->label }}</span>
                                 @if ($address->is_default)
                                     <flux:badge color="lime" size="sm">Default</flux:badge>
                                 @endif
@@ -449,13 +542,14 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                         <div class="space-y-3">
                             @foreach ($this->lines as $line)
                                 <div wire:key="sum-{{ $line['key'] }}" class="flex items-center gap-3">
-                                    <div
-                                        class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken p-1">
-                                        @if ($line['product']->cover_url)
-                                            <img src="{{ $line['product']->cover_url }}" alt=""
-                                                class="size-full object-contain" loading="lazy" />
-                                        @endif
-                                    </div>
+                                    @if ($line['product']->cover_url)
+                                        <img src="{{ $line['product']->cover_url }}" alt=""
+                                            class="size-12 shrink-0 rounded object-contain" loading="lazy" />
+                                    @else
+                                        <div
+                                            class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken">
+                                        </div>
+                                    @endif
                                     <div class="min-w-0 flex-1">
                                         <div class="truncate text-[12.5px] font-semibold text-ink">
                                             {{ $line['product']->name }}</div>
@@ -538,7 +632,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                         class="block w-full rounded-md border p-4 text-left transition {{ $this->selectedAddressId === $address->id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200 hover:border-zinc-300' }}">
                         <div class="flex items-center justify-between">
                             <span
-                                class="text-[10.5px] font-bold tracking-[0.1em] text-ink-3 uppercase">{{ $address->label }}</span>
+                                class="text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{{ $address->label }}</span>
                             @if ($address->is_default)
                                 <span
                                     class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>
@@ -621,3 +715,34 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         </div>
     </flux:modal>
 </div>
+
+@script
+    <script>
+        Alpine.data('paystackCheckout', () => ({
+            processing: false,
+
+            open(accessCode) {
+                if (!accessCode || typeof PaystackPop === 'undefined') {
+                    return;
+                }
+
+                const popup = new PaystackPop();
+
+                popup.resumeTransaction(accessCode, {
+                    onSuccess: (transaction) => {
+                        this.processing = true;
+                        this.$wire.verifyPayment(transaction.reference);
+                    },
+                    // Dismissed: stay on checkout — the customer can click the
+                    // button again to reopen the popup for the same order.
+                    onCancel: () => {
+                        this.processing = false;
+                    },
+                    onError: () => {
+                        this.processing = false;
+                    },
+                });
+            },
+        }));
+    </script>
+@endscript

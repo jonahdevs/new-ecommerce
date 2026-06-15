@@ -13,7 +13,7 @@ use Livewire\Component;
 
 new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class extends Component {
     /** @var list<string> */
-    public array $inquiryTypes = ['Sales enquiry', 'Request a quote', 'Service & spares', 'Installation', 'Trade account', 'Project consultation'];
+    public array $inquiryTypes = ['Sales enquiry', 'Service & spares', 'Installation', 'Project consultation'];
 
     public string $inquiry = 'Sales enquiry';
 
@@ -163,7 +163,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
 
     {{-- ───────── Masthead ───────── --}}
     <section class="border-b border-line bg-surface-sunken">
-        <div class="shell pt-5 pb-12 lg:pt-7 lg:pb-16">
+        <div class="shell pt-4 pb-12 lg:pb-16">
             <div class="max-w-3xl">
                 <flux:breadcrumbs class="mb-4">
                     <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
@@ -347,7 +347,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
             {{-- Sidebar --}}
             <div class="flex flex-col gap-4.5">
                 <flux:card class="rounded-lg p-6">
-                    <div class="text-[11.5px] font-bold uppercase tracking-[0.1em] text-ink-3">What happens next</div>
+                    <div class="text-[11.5px] font-bold uppercase tracking-widest text-ink-3">What happens next</div>
                     <div class="mt-4 flex flex-col gap-4">
                         @foreach ($steps as $i => $step)
                             <div class="flex gap-3.5">
@@ -364,7 +364,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                 </flux:card>
 
                 <div class="rounded-lg bg-brand-blue-700 p-6 text-[#e6ddc8]">
-                    <div class="text-[11.5px] font-bold uppercase tracking-[0.1em] text-[#d8c79d]">Head office hours
+                    <div class="text-[11.5px] font-bold uppercase tracking-widest text-[#d8c79d]">Head office hours
                     </div>
                     <div class="mt-3.5 flex flex-col gap-2.5 text-[13.5px]">
                         @foreach ([['Mon – Fri', '8:00 – 17:00'], ['Saturday', '8:00 – 13:00'], ['Sunday', 'Closed']] as [$day, $time])

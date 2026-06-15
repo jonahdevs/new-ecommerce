@@ -38,22 +38,37 @@ class PaymentFactory extends Factory
         ]);
     }
 
+    public function paystack(): static
+    {
+        return $this->state([
+            'provider' => 'paystack',
+            'phone' => null,
+            'merchant_request_id' => null,
+            'checkout_request_id' => null,
+            'channel' => 'card',
+            'paystack_reference' => 'SHF-'.now()->year.'-'.fake()->numerify('#####').'-'.strtoupper(fake()->lexify('????????')),
+        ]);
+    }
+
     public function successful(): static
     {
         return $this->state(function (array $attributes) {
-            $isStripe = ($attributes['provider'] ?? 'mpesa') === 'stripe';
+            $provider = $attributes['provider'] ?? 'mpesa';
 
             return array_filter([
                 'status' => PaymentStatus::SUCCESS,
                 'paid_at' => now(),
                 // M-Pesa success fields
-                'mpesa_receipt' => $isStripe ? null : strtoupper(fake()->bothify('???#####??')),
-                'result_code' => $isStripe ? null : 0,
-                'result_desc' => $isStripe ? null : 'The service request is processed successfully.',
+                'mpesa_receipt' => $provider === 'mpesa' ? strtoupper(fake()->bothify('???#####??')) : null,
+                'result_code' => $provider === 'mpesa' ? 0 : null,
+                'result_desc' => $provider === 'mpesa' ? 'The service request is processed successfully.' : null,
                 // Stripe success fields
-                'stripe_charge_id' => $isStripe ? 'ch_test_'.fake()->bothify('??????????') : null,
-                'card_brand' => $isStripe ? 'visa' : null,
-                'card_last4' => $isStripe ? '4242' : null,
+                'stripe_charge_id' => $provider === 'stripe' ? 'ch_test_'.fake()->bothify('??????????') : null,
+                // Paystack success fields
+                'authorization_code' => $provider === 'paystack' ? 'AUTH_'.fake()->bothify('??????????') : null,
+                // Card details apply to both card processors
+                'card_brand' => in_array($provider, ['stripe', 'paystack'], true) ? 'visa' : null,
+                'card_last4' => in_array($provider, ['stripe', 'paystack'], true) ? '4242' : null,
             ], fn ($v) => $v !== null);
         });
     }

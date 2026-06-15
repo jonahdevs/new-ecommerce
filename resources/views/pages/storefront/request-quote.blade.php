@@ -85,11 +85,19 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
         $this->items = StorefrontSession::cart();
 
-        // Allow deep-linking a single product into the request, e.g. from the product page.
-        if ($slug = (string) request()->query('product')) {
-            $exists = Product::where('slug', $slug)->published()->visibleInCatalog()->exists();
-            if ($exists && !isset($this->items[$slug])) {
-                $this->items[$slug] = 1;
+        // Allow deep-linking products into the request: a single product (e.g. from
+        // the product page) or a comma-separated list (e.g. from the wishlist).
+        $slugs = collect(explode(',', (string) request()->query('product').','.(string) request()->query('products')))
+            ->map(fn ($slug) => trim($slug))
+            ->filter()
+            ->unique();
+
+        if ($slugs->isNotEmpty()) {
+            $valid = Product::whereIn('slug', $slugs->all())->published()->visibleInCatalog()->pluck('slug');
+            foreach ($slugs as $slug) {
+                if ($valid->contains($slug) && !isset($this->items[$slug])) {
+                    $this->items[$slug] = 1;
+                }
             }
         }
 
@@ -490,7 +498,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         </div>
                         {{-- Delivery --}}
                         <div class="space-y-2">
-                            <div class="text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Delivery</div>
+                            <div class="text-[11px] font-bold tracking-widest text-ink-3 uppercase">Delivery</div>
                             <div class="grid gap-2 sm:grid-cols-2">
                                 <button type="button" wire:click="$set('needs_delivery', false)"
                                     class="flex items-start gap-3 rounded-md border p-4 text-left transition {{ !$needs_delivery ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200 hover:border-zinc-300' }}">
@@ -527,7 +535,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                 <div class="rounded-md border border-zinc-200 bg-white">
                                     <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-3.5">
                                         <span
-                                            class="text-[11px] font-bold tracking-[0.1em] text-ink-3 uppercase">Delivery
+                                            class="text-[11px] font-bold tracking-widest text-ink-3 uppercase">Delivery
                                             address</span>
                                         @auth
                                             @if ($this->addresses->isNotEmpty())
@@ -546,7 +554,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                                 @php $addr = $this->selectedAddress; @endphp
                                                 <div class="flex items-center gap-2">
                                                     <span
-                                                        class="text-[10.5px] font-bold tracking-[0.1em] text-ink-3 uppercase">{{ $addr->label }}</span>
+                                                        class="text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{{ $addr->label }}</span>
                                                     @if ($addr->is_default)
                                                         <span
                                                             class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>
@@ -785,7 +793,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                 class="block w-full rounded-md border p-4 text-left transition {{ $this->selectedAddressId === $address->id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200 hover:border-zinc-300' }}">
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="text-[10.5px] font-bold tracking-[0.1em] text-ink-3 uppercase">{{ $address->label }}</span>
+                                        class="text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{{ $address->label }}</span>
                                     @if ($address->is_default)
                                         <span
                                             class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>

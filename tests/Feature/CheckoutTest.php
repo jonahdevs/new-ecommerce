@@ -20,6 +20,7 @@ use App\Models\ShippingCarrier;
 use App\Models\ShippingMethod;
 use App\Models\TaxClass;
 use App\Models\User;
+use App\Settings\PaymentSettings;
 use App\Settings\TaxSettings;
 use App\Support\StorefrontSession;
 use Livewire\Livewire;
@@ -71,6 +72,10 @@ beforeEach(function () {
     $settings = app(TaxSettings::class);
     $settings->default_tax_class_id = $standard->id;
     $settings->save();
+
+    // These tests cover order creation, not payment. Disable Paystack so
+    // placeOrder takes the payment-page fallback instead of calling the gateway.
+    app(PaymentSettings::class)->fill(['paystack_enabled' => false])->save();
 });
 
 it('redirects guests to the login page', function () {

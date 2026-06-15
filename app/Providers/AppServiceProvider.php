@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Middleware\ValidateRecaptcha;
 use App\Services\Mpesa\DarajaClient;
 use App\Services\PaymentCredentials;
+use App\Settings\BrandingSettings;
 use App\Settings\EmailApiSettings;
 use App\Settings\EmailSettings;
 use App\Settings\SecuritySettings;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Activitylog\Models\Activity;
@@ -43,6 +46,36 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRecaptcha();
         $this->configureActivitySource();
         $this->configureMail();
+        $this->shareEmailBranding();
+    }
+
+    /**
+     * Share the admin-configured brand logo and favicon with every email view
+     * so the mailer mirrors the storefront. Both resolve to absolute URLs
+     * (required for email clients) and fall back to the bundled assets when no
+     * custom upload exists. Runs at render time, so settings are safe to read.
+     */
+    protected function shareEmailBranding(): void
+    {
+        View::composer(['mails.*', 'emails.*'], function ($view): void {
+            $branding = app(BrandingSettings::class);
+
+            $view->with('emailLogoUrl', $branding->logo_path
+                ? Storage::disk('public')->url($branding->logo_path)
+                : asset('logo.png'));
+
+            // Reversed (white) logo for the navy header band. Only the bundled
+            // Sheffield logo ships a reversed variant; a custom uploaded logo
+            // has none, so this resolves to null and the header falls back to
+            // the colour logo on a white pill.
+            $view->with('emailLogoInverseUrl', $branding->logo_path
+                ? null
+                : asset('logo-email-inverse.png'));
+
+            $view->with('emailFaviconUrl', $branding->favicon_path
+                ? Storage::disk('public')->url($branding->favicon_path)
+                : asset('favicon.png'));
+        });
     }
 
     /**

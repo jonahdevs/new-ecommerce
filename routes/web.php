@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\Payments\MpesaCallbackController;
+use App\Http\Controllers\Payments\PaystackWebhookController;
 use App\Http\Controllers\Payments\StripeWebhookController;
 use App\Http\Controllers\SocialAuthController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 // ---------------------------------------------------------------------------
 Route::post('/api/webhooks/mpesa', MpesaCallbackController::class)->name('payments.mpesa.callback');
 Route::post('/api/webhooks/stripe', StripeWebhookController::class)->name('payments.stripe.webhook');
+Route::post('/api/webhooks/paystack', PaystackWebhookController::class)->name('payments.paystack.webhook');
 
 // ---------------------------------------------------------------------------
 // Storefront (guests + logged-in browsing)
@@ -24,8 +27,8 @@ Route::livewire('/compare', 'pages::storefront.compare')->name('compare');
 Route::livewire('/contact', 'pages::storefront.contact')->name('contact');
 Route::livewire('/request-quote', 'pages::storefront.request-quote')->name('quote.request');
 Route::livewire('/quotes/{quote}/review', 'pages::storefront.quote-review')->name('quotes.guest-review')->middleware('signed');
-Route::livewire('/checkout', 'pages::storefront.checkout')->name('checkout')->middleware('auth');
-Route::livewire('/pay/{order}', 'pages::storefront.payment')->name('payment.page')->middleware('auth');
+Route::livewire('/checkout', 'pages::storefront.checkout')->name('checkout')->middleware(['auth', 'customer']);
+Route::livewire('/pay/{order}', 'pages::storefront.payment')->name('payment.page')->middleware(['auth', 'customer']);
 Route::livewire('/product/{product:slug}', 'pages::storefront.product')->name('product.show');
 
 // ---------------------------------------------------------------------------
@@ -59,6 +62,16 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 
 require __DIR__.'/account.php';
 require __DIR__.'/admin.php';
+
+// ---------------------------------------------------------------------------
+// Local-only email template previews — render the mail Blade views with sample
+// data so the real, data-filled result is visible in the browser (Maizzle's
+// preview can only show un-rendered Blade). Never registered outside local.
+// ---------------------------------------------------------------------------
+if (app()->environment('local')) {
+    Route::get('/dev/mail-preview', [MailPreviewController::class, 'index'])->name('dev.mail-preview');
+    Route::get('/dev/mail-preview/{template}', [MailPreviewController::class, 'show'])->name('dev.mail-preview.show');
+}
 
 // ---------------------------------------------------------------------------
 // CMS pages — registered LAST so every explicit route above wins. Single-segment

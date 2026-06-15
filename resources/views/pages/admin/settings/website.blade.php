@@ -363,11 +363,6 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                 <flux:textarea wire:model="address" label="Address" rows="3" placeholder="123 Main St, Nairobi, Kenya" />
                 <flux:input wire:model="business_hours" label="Business hours" placeholder="Mon–Fri 8am–5pm, Sat 9am–1pm" />
 
-                <flux:text size="sm" class="text-zinc-500">
-                    Branches in multiple cities?
-                    <flux:link :href="route('admin.showrooms.index')" wire:navigate>Manage showrooms →</flux:link>
-                </flux:text>
-
                 <flux:separator />
                 <flux:text size="sm" class="font-medium text-zinc-500">Branding</flux:text>
 

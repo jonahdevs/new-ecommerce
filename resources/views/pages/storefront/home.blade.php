@@ -21,6 +21,12 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
 {
     use InteractsWithStorefront;
 
+    /**
+     * A product counts as a "new arrival" if it was published within this many
+     * days. Products carrying the "New Arrival" tag are pinned regardless of age.
+     */
+    private const NEW_ARRIVAL_WINDOW_DAYS = 60;
+
     /** @var array<int, int> Locked so random order is fixed for the lifetime of the component. */
     public array $featuredProductIds = [];
 
@@ -63,6 +69,24 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     #[Computed]
     public function featuredProducts(): Collection
     {
+        // Curated: products staff have tagged "Featured", ordered by sort_order.
+        $featured = Product::query()
+            ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
+            ->visibleInCatalog()
+            ->published()
+            ->where('stock_status', StockStatus::IN_STOCK)
+            ->whereNotNull('price')
+            ->where('price', '>', 0)
+            ->whereHas('tags', fn ($t) => $t->where('name->'.config('app.locale', 'en'), 'Featured'))
+            ->orderBy('sort_order')
+            ->take(6)
+            ->get();
+
+        if ($featured->isNotEmpty()) {
+            return $featured;
+        }
+
+        // Fallback: nothing curated yet — show the locked random pool from mount().
         return Product::query()
             ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->whereIn('id', $this->featuredProductIds)
@@ -74,16 +98,28 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     #[Computed]
     public function newArrivals(): Collection
     {
-        return Product::query()
+        $base = Product::query()
             ->with(['brand', 'taxClass', 'images' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->visibleInCatalog()
             ->published()
             ->where('stock_status', StockStatus::IN_STOCK)
             ->whereNotNull('price')
-            ->where('price', '>', 0)
-            ->latest('id')
+            ->where('price', '>', 0);
+
+        // Engine: published within the window, OR manually pinned with the
+        // "New Arrival" tag (overrides the age cut-off).
+        $arrivals = (clone $base)
+            ->where(fn ($q) => $q
+                ->where('published_at', '>=', now()->subDays(self::NEW_ARRIVAL_WINDOW_DAYS))
+                ->orWhereHas('tags', fn ($t) => $t->where('name->'.config('app.locale', 'en'), 'New Arrival')))
+            ->latest('published_at')
             ->take(12)
             ->get();
+
+        // Fallback: nothing qualifies (new or slow catalog) — show the latest anyway.
+        return $arrivals->isNotEmpty()
+            ? $arrivals
+            : (clone $base)->latest('published_at')->take(12)->get();
     }
 
     #[Computed]
@@ -399,4 +435,5 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
         </div>
     </section> --}}
 
+    @include('partials.storefront.accessory-modal')
 </div>

@@ -44,7 +44,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="base">Basic information</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">Basic information</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -88,7 +88,7 @@
                          :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                             <button type="button" x-on:click="open = !open">
-                                <flux:heading size="base">Product data</flux:heading>
+                                <flux:heading size="base" class="uppercase tracking-wide">Product data</flux:heading>
                             </button>
                             <flux:select wire:model.live="type" size="sm" class="w-auto">
                                 @foreach (ProductType::cases() as $t)
@@ -724,6 +724,16 @@
                                                                     <div class="font-mono text-xs text-zinc-400">{{ $linked['sku'] }}</div>
                                                                 @endif
                                                             </div>
+                                                            @if ($tKey === 'accessory')
+                                                                <div class="flex items-center gap-2">
+                                                                    <flux:tooltip content="Pre-checked on the customer's 'Complete your purchase' prompt">
+                                                                        <flux:switch wire:model.live="productLinks.accessory.{{ $index }}.is_required" label="Required" />
+                                                                    </flux:tooltip>
+                                                                </div>
+                                                                <flux:input type="number" min="1" class="w-24"
+                                                                    wire:model="productLinks.accessory.{{ $index }}.default_quantity"
+                                                                    label="Default qty" size="sm" />
+                                                            @endif
                                                             <flux:button size="xs" variant="ghost" icon="trash-2" type="button"
                                                                 wire:click="removeProductLink('{{ $tKey }}', {{ $index }})"
                                                                 class="text-red-500! hover:text-red-600!" />
@@ -846,7 +856,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="base">Description</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">Description</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -882,7 +892,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="base">SEO</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">SEO</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -908,7 +918,7 @@
                          :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
                         <div class="flex items-center gap-3">
                             <button type="button" x-on:click="open = !open">
-                                <flux:heading size="sm">Status & visibility</flux:heading>
+                                <flux:heading size="sm" class="uppercase tracking-wide">Status & visibility</flux:heading>
                             </button>
                             <flux:badge size="sm" :color="ProductStatus::from($status)->badgeColor()">
                                 {{ ProductStatus::from($status)->label() }}
@@ -950,7 +960,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Product image</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Product image</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -993,7 +1003,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Product gallery</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Product gallery</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -1038,7 +1048,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Brand</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Brand</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -1060,7 +1070,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Category</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Category</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>
@@ -1085,7 +1095,7 @@
                     <button type="button" x-on:click="open = !open"
                             class="flex w-full items-center justify-between px-6 py-4"
                             :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Tags</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Tags</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                         <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                     </span>

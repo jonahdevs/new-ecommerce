@@ -44,8 +44,8 @@ class OrderSeeder extends Seeder
 
     public function run(): void
     {
-        $this->customer = User::where('email', 'customer@sheffield.test')->firstOrFail();
-        $this->admin = User::where('email', 'admin@sheffield.test')->firstOrFail();
+        $this->customer = User::where('email', 'customer@sheffieldafrica.com')->firstOrFail();
+        $this->admin = User::where('email', 'admin@sheffieldafrica.com')->firstOrFail();
         $this->address = Address::where('user_id', $this->customer->id)
             ->orderByDesc('is_default')
             ->firstOrFail();

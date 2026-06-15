@@ -13,9 +13,13 @@ class PaymentSettings extends Settings
 
     public string $mpesa_type;
 
+    public bool $airtel_money_enabled;
+
     public bool $card_enabled;
 
     public string $card_provider;
+
+    public bool $paystack_enabled;
 
     public bool $bank_transfer_enabled;
 

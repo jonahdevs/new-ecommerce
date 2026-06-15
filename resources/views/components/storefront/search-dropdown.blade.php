@@ -106,7 +106,7 @@ new class extends Component {
             {{-- Empty state: recent + trending --}}
             <div x-show="recent.length > 0">
                 <div class="flex items-center justify-between px-4 py-2.5">
-                    <span class="text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">Recent</span>
+                    <span class="text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">Recent</span>
                     <button type="button" @click="clearRecent()"
                         class="cursor-pointer text-[11px] text-ink-4 underline underline-offset-2 hover:text-ink">Clear</button>
                 </div>
@@ -120,7 +120,7 @@ new class extends Component {
             </div>
 
             <div class="border-t border-zinc-100 px-4 pb-4 pt-3">
-                <div class="mb-2.5 text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">Trending</div>
+                <div class="mb-2.5 text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">Trending</div>
                 <div class="flex flex-wrap gap-1.5">
                     @foreach ($trending as $term)
                         <button type="button" wire:click="$set('query', '{{ $term }}')"
@@ -145,7 +145,7 @@ new class extends Component {
                 {{-- Products --}}
                 @if ($this->products->isNotEmpty())
                     <div class="border-t border-zinc-100">
-                        <div class="px-4 py-2 text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">
+                        <div class="px-4 py-2 text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">
                             Products <span class="text-ink-5 ml-1">({{ $this->products->count() }})</span>
                         </div>
                         @foreach ($this->products as $product)
@@ -185,7 +185,7 @@ new class extends Component {
                 {{-- Categories --}}
                 @if ($this->categories->isNotEmpty())
                     <div class="border-t border-zinc-100">
-                        <div class="px-4 py-2 text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">Categories
+                        <div class="px-4 py-2 text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">Categories
                         </div>
                         @foreach ($this->categories as $category)
                             <a href="{{ route('category.show', $category) }}" wire:navigate
@@ -203,7 +203,7 @@ new class extends Component {
                 {{-- Brands --}}
                 @if ($this->brands->isNotEmpty())
                     <div class="border-t border-zinc-100">
-                        <div class="px-4 py-2 text-[10.5px] font-bold tracking-[0.1em] text-ink-4 uppercase">Brands
+                        <div class="px-4 py-2 text-[10.5px] font-bold tracking-widest text-ink-4 uppercase">Brands
                         </div>
                         @foreach ($this->brands as $brand)
                             <a href="{{ route('catalog') }}?brand={{ $brand->id }}" wire:navigate

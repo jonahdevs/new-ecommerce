@@ -1,0 +1,19 @@
+@import "@maizzle/tailwindcss";
+
+/**
+ * Brand theme — Sheffield. Two brand colours mirror the storefront so the
+ * mailer feels like an extension of the site: navy carries structure (header
+ * band, progress, references, links) while red is reserved for action (the CTA
+ * and the headline total) and urgency. Inter is the storefront face.
+ */
+@theme {
+  --color-brand: #c02434;
+  --color-brand-dark: #9c1c29;
+  --color-brand-tint: #fbeaec;
+
+  --color-navy: #2f4196;
+  --color-navy-dark: #243270;
+  --color-navy-tint: #eef1fb;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

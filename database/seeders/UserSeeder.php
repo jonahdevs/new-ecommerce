@@ -20,12 +20,12 @@ class UserSeeder extends Seeder
         // Named admins & staff
         // -------------------------------------------------------
         $admins = [
-            ['email' => 'jonah@sheffield.test',   'name' => 'Jonah Wakahiu',    'role' => 'super-admin'],
-            ['email' => 'admin@sheffield.test',   'name' => 'Sheffield Admin',  'role' => 'admin'],
-            ['email' => 'james.mwangi@sheffield.test', 'name' => 'James Mwangi',    'role' => 'admin'],
-            ['email' => 'grace.njeri@sheffield.test',  'name' => 'Grace Njeri',     'role' => 'admin'],
-            ['email' => 'brian.otieno@sheffield.test', 'name' => 'Brian Otieno',    'role' => 'staff'],
-            ['email' => 'linda.kamau@sheffield.test',  'name' => 'Linda Kamau',     'role' => 'staff'],
+            ['email' => 'jonah@sheffieldafrica.com',   'name' => 'Jonah Wakahiu',    'role' => 'super-admin'],
+            ['email' => 'admin@sheffieldafrica.com',   'name' => 'Sheffield Admin',  'role' => 'admin'],
+            ['email' => 'james.mwangi@sheffieldafrica.com', 'name' => 'James Mwangi',    'role' => 'admin'],
+            ['email' => 'grace.njeri@sheffieldafrica.com',  'name' => 'Grace Njeri',     'role' => 'admin'],
+            ['email' => 'brian.otieno@sheffieldafrica.com', 'name' => 'Brian Otieno',    'role' => 'staff'],
+            ['email' => 'linda.kamau@sheffieldafrica.com',  'name' => 'Linda Kamau',     'role' => 'staff'],
         ];
 
         foreach ($admins as $data) {
@@ -44,7 +44,7 @@ class UserSeeder extends Seeder
         // Named customers
         // -------------------------------------------------------
         $customers = [
-            ['email' => 'customer@sheffield.test',       'name' => 'Anita Wanjiru'],
+            ['email' => 'customer@sheffieldafrica.com',       'name' => 'Anita Wanjiru'],
             ['email' => 'peter.kimani@gmail.com',        'name' => 'Peter Kimani'],
             ['email' => 'fatuma.hassan@gmail.com',       'name' => 'Fatuma Hassan'],
             ['email' => 'david.ochieng@gmail.com',       'name' => 'David Ochieng'],

@@ -225,7 +225,9 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
                 <flux:subheading>
                     Refunding payment for order
                     <span class="font-mono">{{ $payment->order?->order_number }}</span>.
-                    @if ($payment->provider === 'stripe')
+                    @if ($payment->provider === 'paystack')
+                        This reverses the payment through Paystack immediately.
+                    @elseif ($payment->provider === 'stripe')
                         This reverses the charge through Stripe immediately.
                     @else
                         This records the refund and notifies the customer — reverse the M-Pesa transaction manually via Safaricom.

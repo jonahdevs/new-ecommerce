@@ -132,6 +132,11 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('linked_product_id')->constrained('products')->cascadeOnDelete();
             $table->string('type'); // ProductLinkType: upsell | cross_sell | accessory | spare_part
+            // Accessory-only semantics: required accessories are pre-checked on the
+            // "Complete your purchase" prompt; default_quantity seeds the prompt's qty
+            // (e.g. an oven needs 12 trays, another needs 6). Ignored for other types.
+            $table->boolean('is_required')->default(false);
+            $table->unsignedInteger('default_quantity')->default(1);
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
 

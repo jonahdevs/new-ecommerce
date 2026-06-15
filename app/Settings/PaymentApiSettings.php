@@ -28,6 +28,11 @@ class PaymentApiSettings extends Settings
     #[ShouldBeEncrypted]
     public ?string $stripe_webhook_secret;
 
+    public ?string $paystack_public_key;
+
+    #[ShouldBeEncrypted]
+    public ?string $paystack_secret_key;
+
     public static function group(): string
     {
         return 'payment_api';
