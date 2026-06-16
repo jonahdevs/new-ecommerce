@@ -40,7 +40,7 @@ new #[Layout('layouts::app')] #[Title('Permissions — Admin')] class extends Co
     public function permissions()
     {
         return Permission::query()
-            ->withCount('roles')
+            ->with('roles:id,name')
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->filterGroup, fn ($q) => $q->where('name', 'like', $this->filterGroup.'.%'))
             ->orderBy('name')
@@ -105,7 +105,7 @@ new #[Layout('layouts::app')] #[Title('Permissions — Admin')] class extends Co
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Permission</flux:table.column>
                 <flux:table.column>Group</flux:table.column>
-                <flux:table.column align="end">Assigned to roles</flux:table.column>
+                <flux:table.column>Assigned to</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -120,8 +120,23 @@ new #[Layout('layouts::app')] #[Title('Permissions — Admin')] class extends Co
                                 {{ Str::headline(Str::before($permission->name, '.')) }}
                             </flux:badge>
                         </flux:table.cell>
-                        <flux:table.cell align="end" class="tabular-nums text-zinc-500">
-                            {{ $permission->roles_count }}
+                        <flux:table.cell>
+                            @php
+                                $shown = $permission->roles->take(3);
+                                $remaining = $permission->roles->count() - $shown->count();
+                            @endphp
+                            @if ($permission->roles->isEmpty())
+                                <span class="text-xs text-zinc-400">—</span>
+                            @else
+                                <div class="flex flex-wrap items-center gap-1">
+                                    @foreach ($shown as $role)
+                                        <flux:badge size="sm" inset="top bottom" color="zinc">{{ Str::headline($role->name) }}</flux:badge>
+                                    @endforeach
+                                    @if ($remaining > 0)
+                                        <flux:badge size="sm" inset="top bottom" color="zinc">+{{ $remaining }}</flux:badge>
+                                    @endif
+                                </div>
+                            @endif
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

@@ -25,9 +25,14 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
         // ── Products ─────────────────────────────────────────────────────────
         Route::middleware('permission:products.view')->group(function () {
             Route::livewire('/products', 'pages::admin.products.index')->name('products.index');
-            Route::get('/products/export', [ProductExportController::class, 'download'])->name('products.export');
-            Route::get('/products/pdf', [ProductExportController::class, 'pdf'])->name('products.pdf');
-            Route::get('/products/import-template', [ProductExportController::class, 'template'])->name('products.import-template');
+            Route::controller(ProductExportController::class)
+                ->prefix('products')
+                ->name('products.')
+                ->group(function () {
+                    Route::get('export', 'download')->name('export');
+                    Route::get('pdf', 'pdf')->name('pdf');
+                    Route::get('import-template', 'template')->name('import-template');
+                });
             Route::livewire('/products/create', 'pages::admin.products.form')->middleware('permission:products.manage')->name('products.create');
             Route::livewire('/products/{product}/edit', 'pages::admin.products.form')->middleware('permission:products.manage')->name('products.edit');
         });
@@ -51,19 +56,35 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
         // ── Orders ───────────────────────────────────────────────────────────
         Route::middleware('permission:orders.view')->group(function () {
             Route::livewire('/orders', 'pages::admin.orders.index')->name('orders.index');
-            Route::get('/orders/export', [OrderExportController::class, 'download'])->name('orders.export');
-            Route::get('/orders/pdf', [OrderExportController::class, 'pdf'])->name('orders.pdf');
+            Route::controller(OrderExportController::class)
+                ->prefix('orders')
+                ->name('orders.')
+                ->group(function () {
+                    Route::get('export', 'download')->name('export');
+                    Route::get('pdf', 'pdf')->name('pdf');
+                });
+            Route::livewire('/sap-sync', 'pages::admin.sap-sync')->name('sap-sync');
             Route::livewire('/orders/{order}', 'pages::admin.orders.show')->name('orders.show');
-            Route::get('/orders/{order}/packing-list', [OrderDocumentController::class, 'packingList'])->name('orders.packing-list');
-            Route::get('/orders/{order}/delivery-note', [OrderDocumentController::class, 'deliveryNote'])->name('orders.delivery-note');
-            Route::get('/orders/{order}/kra-receipt', [OrderDocumentController::class, 'kraReceipt'])->name('orders.kra-receipt');
+            Route::controller(OrderDocumentController::class)
+                ->prefix('orders/{order}')
+                ->name('orders.')
+                ->group(function () {
+                    Route::get('packing-list', 'packingList')->name('packing-list');
+                    Route::get('delivery-note', 'deliveryNote')->name('delivery-note');
+                    Route::get('kra-receipt', 'kraReceipt')->name('kra-receipt');
+                });
         });
 
         // ── Quotes ───────────────────────────────────────────────────────────
         Route::middleware('permission:quotes.view')->group(function () {
             Route::livewire('/quotes', 'pages::admin.quotes.index')->name('quotes.index');
-            Route::get('/quotes/export', [QuoteExportController::class, 'download'])->name('quotes.export');
-            Route::get('/quotes/pdf', [QuoteExportController::class, 'pdf'])->name('quotes.pdf');
+            Route::controller(QuoteExportController::class)
+                ->prefix('quotes')
+                ->name('quotes.')
+                ->group(function () {
+                    Route::get('export', 'download')->name('export');
+                    Route::get('pdf', 'pdf')->name('pdf');
+                });
             Route::livewire('/quotes/create', 'pages::admin.quotes.create')->middleware('permission:quotes.manage')->name('quotes.create');
             Route::livewire('/quotes/{quote}', 'pages::admin.quotes.show')->name('quotes.show');
             Route::livewire('/quotes/{quote}/preview', 'pages::admin.quotes.preview')->name('quotes.preview');
@@ -78,8 +99,13 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
         // ── Customers ────────────────────────────────────────────────────────
         Route::middleware('permission:customers.view')->group(function () {
             Route::livewire('/customers', 'pages::admin.customers.index')->name('customers.index');
-            Route::get('/customers/export', [CustomerExportController::class, 'download'])->name('customers.export');
-            Route::get('/customers/pdf', [CustomerExportController::class, 'pdf'])->name('customers.pdf');
+            Route::controller(CustomerExportController::class)
+                ->prefix('customers')
+                ->name('customers.')
+                ->group(function () {
+                    Route::get('export', 'download')->name('export');
+                    Route::get('pdf', 'pdf')->name('pdf');
+                });
             Route::livewire('/customers/create', 'pages::admin.customers.create')->middleware('permission:customers.manage')->name('customers.create');
             Route::livewire('/customers/{customer}/edit', 'pages::admin.customers.edit')->middleware('permission:customers.manage')->name('customers.edit');
             Route::livewire('/customers/{customer}', 'pages::admin.customers.show')->name('customers.show');
@@ -105,7 +131,9 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
             Route::livewire('/shipping/warehouses', 'pages::admin.shipping.warehouses.index')->name('shipping.warehouses.index');
             Route::livewire('/shipping/warehouses/create', 'pages::admin.shipping.warehouses.create')->name('shipping.warehouses.create');
             Route::livewire('/shipping/warehouses/{warehouse}/edit', 'pages::admin.shipping.warehouses.edit')->name('shipping.warehouses.edit');
-            Route::livewire('/showrooms', 'pages::admin.showrooms')->name('showrooms.index');
+            Route::livewire('/showrooms', 'pages::admin.showrooms.index')->name('showrooms.index');
+            Route::livewire('/showrooms/create', 'pages::admin.showrooms.create')->name('showrooms.create');
+            Route::livewire('/showrooms/{showroom}/edit', 'pages::admin.showrooms.edit')->name('showrooms.edit');
         });
 
         // ── Content ──────────────────────────────────────────────────────────

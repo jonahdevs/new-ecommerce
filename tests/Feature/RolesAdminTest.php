@@ -57,6 +57,25 @@ it('rejects a duplicate role name', function () {
         ->assertHasErrors('name');
 });
 
+it('bans a user with a reason via the modal', function () {
+    $user = User::factory()->create();
+    $user->assignRole('staff');
+
+    Livewire::test('pages::admin.roles.index')
+        ->call('openBanModal', $user->id)
+        ->assertSet('showBanModal', true)
+        ->assertSet('banUserName', $user->name)
+        ->set('banReason', 'Repeated policy violations')
+        ->call('ban')
+        ->assertHasNoErrors()
+        ->assertSet('showBanModal', false);
+
+    $user->refresh();
+
+    expect($user->isBanned())->toBeTrue()
+        ->and($user->bans()->latest()->first()->comment)->toBe('Repeated policy violations');
+});
+
 it('refuses to delete a protected role', function () {
     $admin = Role::firstWhere('name', 'admin');
 

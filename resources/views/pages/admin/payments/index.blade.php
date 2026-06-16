@@ -51,16 +51,13 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
         return Payment::query()
             ->with('order.user')
             ->when($this->search, function ($query) {
-                $term = '%'.$this->search.'%';
+                $term = '%' . $this->search . '%';
                 $query->where(function ($q) use ($term) {
-                    $q->where('mpesa_receipt', 'like', $term)
-                        ->orWhere('phone', 'like', $term)
-                        ->orWhere('account_reference', 'like', $term)
-                        ->orWhereHas('order', fn ($o) => $o->where('order_number', 'like', $term));
+                    $q->where('mpesa_receipt', 'like', $term)->orWhere('phone', 'like', $term)->orWhere('account_reference', 'like', $term)->orWhereHas('order', fn($o) => $o->where('order_number', 'like', $term));
                 });
             })
-            ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterProvider !== '', fn ($q) => $q->where('provider', $this->filterProvider))
+            ->when($this->filterStatus !== '', fn($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterProvider !== '', fn($q) => $q->where('provider', $this->filterProvider))
             ->latest()
             ->paginate($this->perPage);
     }
@@ -73,6 +70,7 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
             'collected' => (int) Payment::where('status', PaymentStatus::SUCCESS)->sum('amount_cents'),
             'pending' => Payment::where('status', PaymentStatus::PENDING)->count(),
             'failed' => Payment::where('status', PaymentStatus::FAILED)->count(),
+            'refunded' => (int) Payment::sum('refund_cents'),
         ];
     }
 
@@ -94,18 +92,18 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
     <div class="flex items-center justify-between">
         <div>
             @push('breadcrumbs')
-<flux:breadcrumbs>
-                <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Payments</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
-@endpush
+                <flux:breadcrumbs>
+                    <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
+                    <flux:breadcrumbs.item>Payments</flux:breadcrumbs.item>
+                </flux:breadcrumbs>
+            @endpush
             <flux:heading size="xl">Payments</flux:heading>
             <flux:subheading>Every payment attempt across M-Pesa and card.</flux:subheading>
         </div>
     </div>
 
     {{-- Stat tiles --}}
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <flux:card class="flex items-center gap-4">
             <flux:icon.banknotes class="size-9 text-emerald-400" />
             <div>
@@ -127,18 +125,22 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                 <flux:text size="sm">Failed</flux:text>
             </div>
         </flux:card>
+        <flux:card class="flex items-center gap-4">
+            <flux:icon.arrow-uturn-left class="size-9 text-rose-400" />
+            <div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{!! money($this->stats['refunded']) !!}</div>
+                <flux:text size="sm">Refunded</flux:text>
+            </div>
+        </flux:card>
     </div>
 
     <flux:card class="mt-6 p-0 overflow-hidden">
 
         {{-- Toolbar --}}
-        <div class="flex flex-col gap-3 border-b border-zinc-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-zinc-700">
-            <flux:input
-                wire:model.live.debounce.300ms="search"
-                placeholder="Search receipt, phone or order #…"
-                icon="magnifying-glass"
-                clearable
-                class="sm:max-w-xs" />
+        <div
+            class="flex flex-col gap-3 border-b border-zinc-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-zinc-700">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search receipt, phone or order #…"
+                icon="magnifying-glass" clearable class="sm:max-w-xs" />
 
             <div class="flex flex-wrap items-center gap-2">
                 <flux:select wire:model.live="filterProvider" class="w-36">
@@ -171,10 +173,10 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                 <flux:table.column>Reference</flux:table.column>
                 <flux:table.column>Order</flux:table.column>
                 <flux:table.column>Provider</flux:table.column>
-                <flux:table.column align="end">Amount</flux:table.column>
+                <flux:table.column>Amount</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
-                <flux:table.column align="end">Date</flux:table.column>
-                <flux:table.column></flux:table.column>
+                <flux:table.column>Date</flux:table.column>
+                <flux:table.column align="end"></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -182,7 +184,7 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                     <flux:table.row :key="$payment->id">
                         <flux:table.cell variant="strong">
                             <span class="font-mono text-xs">
-                                {{ $payment->mpesa_receipt ?? $payment->stripe_payment_intent_id ?? $payment->checkout_request_id ?? '—' }}
+                                {{ $payment->mpesa_receipt ?? ($payment->paystack_reference ?? ($payment->stripe_payment_intent_id ?? ($payment->checkout_request_id ?? '—'))) }}
                             </span>
                             @if ($payment->phone)
                                 <span class="block text-xs font-normal text-zinc-400">{{ $payment->phone }}</span>
@@ -196,30 +198,36 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
                                 <span class="text-zinc-400">—</span>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell class="capitalize text-zinc-500">{{ str_replace('_', ' ', (string) $payment->provider) }}</flux:table.cell>
-                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($payment->amount_cents) !!}</flux:table.cell>
+                        <flux:table.cell class="text-zinc-500">
+                            {{ $payment->methodLabel() }}
+                            <span class="block text-xs capitalize text-zinc-400">via
+                                {{ str_replace('_', ' ', (string) $payment->provider) }}</span>
+                        </flux:table.cell>
+                        <flux:table.cell class="font-medium tabular-nums">{!! money($payment->amount_cents) !!}
+                        </flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" inset="top bottom" :color="$payment->status->badgeColor()">
                                 {{ $payment->status->label() }}
                             </flux:badge>
                         </flux:table.cell>
-                        <flux:table.cell align="end" class="text-sm text-zinc-500">
+                        <flux:table.cell class="text-sm text-zinc-500">
                             {{ ($payment->paid_at ?? $payment->created_at)->format('M j, Y g:i A') }}
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <div class="flex items-center justify-end gap-1">
                                 <flux:tooltip content="Activity log">
                                     <flux:button size="xs" variant="ghost" icon="clock"
-                                        :href="route('admin.activity.item', ['payment', $payment->id])"
-                                        wire:navigate />
+                                        :href="route('admin.activity.item', ['payment', $payment->id])" wire:navigate />
                                 </flux:tooltip>
-                                <flux:button size="xs" variant="ghost" icon="eye" tooltip="View payment" :href="route('admin.payments.show', $payment)" wire:navigate />
+                                <flux:button size="xs" variant="ghost" icon="eye" tooltip="View payment"
+                                    :href="route('admin.payments.show', $payment)" wire:navigate />
                             </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="7" class="py-12 text-center text-zinc-400">No payments found.</flux:table.cell>
+                        <flux:table.cell colspan="7" class="py-12 text-center text-zinc-400">No payments found.
+                        </flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>

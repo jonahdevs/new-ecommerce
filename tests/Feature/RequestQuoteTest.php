@@ -91,6 +91,18 @@ it('lets a guest submit a quote request', function () {
         ->and($quote->items)->toHaveCount(1);
 });
 
+it('keeps the prefilled contact details but clears the cart after submitting', function () {
+    $this->actingAs($this->user);
+    StorefrontSession::addToCart('wok-range', 1);
+
+    Livewire::test('pages::storefront.request-quote')
+        ->call('submit')
+        ->assertHasNoErrors()
+        ->assertSet('contact_name', $this->user->name)
+        ->assertSet('contact_email', $this->user->email)
+        ->assertSet('items', []);
+});
+
 it('submits a quote tied to the authenticated user', function () {
     $this->actingAs($this->user);
     StorefrontSession::addToCart('wok-range', 1);

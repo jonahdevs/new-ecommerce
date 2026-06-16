@@ -26,7 +26,7 @@
     $isExpired      = $quote->expires_at?->isPast();
 @endphp
 
-<div class="mx-auto max-w-3xl bg-white font-sans text-[13px] text-zinc-800 shadow-sm border border-zinc-200 rounded-lg overflow-hidden print:shadow-none print:border-0 print:rounded-none">
+<div class="mx-auto max-w-3xl bg-white font-sans text-[13px] text-zinc-800 shadow-sm border border-zinc-200 overflow-hidden print:shadow-none print:border-0">
 
     {{-- ================================================== --}}
     {{-- HEADER --}}
@@ -259,16 +259,13 @@
     {{-- ================================================== --}}
     {{-- FOOTER --}}
     {{-- ================================================== --}}
-    {{-- ================================================== --}}
-    {{-- FOOTER --}}
-    {{-- ================================================== --}}
     @php
         $showrooms = \App\Models\Showroom::orderByDesc('is_hq')->orderBy('sort_order')->limit(3)->get();
         $banking   = app(\App\Settings\PaymentSettings::class)->bank_details;
     @endphp
 
     <div id="quote-footer" class="mt-12 border-t border-zinc-300 bg-white">
-        <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4">
 
             {{-- One column per showroom --}}
             @foreach ($showrooms as $showroom)

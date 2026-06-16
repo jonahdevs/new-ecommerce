@@ -25,7 +25,9 @@ it('renders the dashboard for staff', function () {
     Livewire::test('pages::admin.dashboard')
         ->assertOk()
         ->assertSee('store overview')
-        ->assertSee('Quotes → orders')
+        // The funnel heading renders "Quotes <icon> orders" — assert the words
+        // either side of the arrow icon rather than a literal arrow glyph.
+        ->assertSeeInOrder(['Quotes', 'orders'])
         ->assertSee('Recent orders')
         ->assertSee('Low stock report');
 });

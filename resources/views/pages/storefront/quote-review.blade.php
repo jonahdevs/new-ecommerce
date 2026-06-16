@@ -3,6 +3,7 @@
 use App\Enums\QuoteStatus;
 use App\Models\Quote;
 use App\Notifications\Quotes\QuoteDecisionReceived;
+use App\Services\PaymentCredentials;
 use App\Services\QuoteConversionService;
 use App\Support\StaffRecipients;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -58,7 +59,13 @@ new #[Layout('layouts::storefront')] #[Title('Review Your Quote')] class extends
 
             $this->quote->refresh();
 
-            $this->redirectRoute('payment.page', $order, navigate: true);
+            // With Paystack active, the owned quote page runs the "Complete
+            // payment" popup in-context; otherwise go straight to payment.
+            if (app(PaymentCredentials::class)->paystackEnabled()) {
+                $this->redirectRoute('account.quotes.show', $this->quote, navigate: true);
+            } else {
+                $this->redirectRoute('payment.page', $order, navigate: true);
+            }
 
             return;
         }

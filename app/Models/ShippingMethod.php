@@ -35,16 +35,6 @@ class ShippingMethod extends Model
         ];
     }
 
-    public function isDelivery(): bool
-    {
-        return $this->type === ShippingMethodType::DELIVERY;
-    }
-
-    public function isPickup(): bool
-    {
-        return $this->type === ShippingMethodType::PICKUP;
-    }
-
     // ==================================================
     // RELATIONSHIPS
     // ==================================================
@@ -62,5 +52,19 @@ class ShippingMethod extends Model
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    public function isDelivery(): bool
+    {
+        return $this->type === ShippingMethodType::DELIVERY;
+    }
+
+    public function isPickup(): bool
+    {
+        return $this->type === ShippingMethodType::PICKUP;
     }
 }

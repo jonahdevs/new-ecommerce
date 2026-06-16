@@ -216,7 +216,7 @@ new #[Layout('layouts::app')] #[Title('Tags — Admin')] class extends Component
 
     {{-- Modal --}}
     <flux:modal wire:model.self="showModal" class="md:w-[440px]" :dismissible="false">
-        <flux:heading>{{ $editingId ? 'Edit tag' : 'New tag' }}</flux:heading>
+        <flux:heading class="uppercase tracking-wide">{{ $editingId ? 'Edit tag' : 'New tag' }}</flux:heading>
 
         <form wire:submit="save" class="mt-5 space-y-4">
             <flux:input wire:model="name" label="Name" placeholder="e.g. Energy efficient" required autofocus />

@@ -65,6 +65,27 @@ it('extracts VAT from the quote total when prices include tax', function () {
         ->and($order->items->first()->tax_cents)->toBe(16000);
 });
 
+it('carries the customer quote notes onto the order instead of a boilerplate string', function () {
+    $quote = quoteWithLine(100000, Product::factory()->create());
+    $quote->update(['notes' => 'Deliver to the rear loading bay.']);
+
+    app(QuoteConversionService::class)->convert($quote->fresh()->load('items'));
+
+    $order = Order::first();
+
+    expect($order->notes)->toBe('Deliver to the rear loading bay.')
+        ->and($order->notes)->not->toContain('Converted from quote');
+});
+
+it('leaves the order notes empty when the quote had none', function () {
+    $quote = quoteWithLine(100000, Product::factory()->create());
+    $quote->update(['notes' => null]);
+
+    app(QuoteConversionService::class)->convert($quote->fresh()->load('items'));
+
+    expect(Order::first()->notes)->toBeNull();
+});
+
 it('adds VAT on top of the quote total when prices exclude tax', function () {
     applyTaxSettings(['tax_enabled' => true, 'prices_include_tax' => false]);
     $class = TaxClass::create(['name' => 'Standard', 'slug' => 'std-16', 'rate' => 16, 'is_active' => true]);

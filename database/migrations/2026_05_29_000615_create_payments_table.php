@@ -48,8 +48,11 @@ return new class extends Migration
             $table->bigInteger('refund_cents')->nullable();
             $table->timestamp('refunded_at')->nullable();
 
-            // Raw webhook/callback body for audit and replay purposes.
-            $table->json('payload')->nullable();
+            // Raw webhook/callback body for audit and replay purposes. Encrypted
+            // at rest (it holds PII) so the type is longText, not json — the
+            // ciphertext is an opaque string, not queryable JSON. Pruned after
+            // the statutory retention window by `payments:prune-payloads`.
+            $table->longText('payload')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });

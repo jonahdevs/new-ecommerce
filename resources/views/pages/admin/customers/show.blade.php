@@ -113,7 +113,7 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                                 class="size-24 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-700"
                                 alt="{{ $customer->name }}" />
                         @else
-                            <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="xl" />
+                            <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="xl" circle />
                         @endif
                         <div class="text-center">
                             <div class="text-base font-semibold dark:text-white">{{ $customer->name }}</div>

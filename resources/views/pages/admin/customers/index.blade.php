@@ -45,11 +45,11 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
             ->withCount('orders')
             ->withSum('orders', 'total_cents')
             ->when($this->search, function ($query) {
-                $term = '%'.$this->search.'%';
-                $query->where(fn ($q) => $q->where('name', 'like', $term)->orWhere('email', 'like', $term));
+                $term = '%' . $this->search . '%';
+                $query->where(fn($q) => $q->where('name', 'like', $term)->orWhere('email', 'like', $term));
             })
-            ->when($this->filterStatus === 'active', fn ($q) => $q->whereNull('banned_at'))
-            ->when($this->filterStatus === 'banned', fn ($q) => $q->whereNotNull('banned_at'))
+            ->when($this->filterStatus === 'active', fn($q) => $q->whereNull('banned_at'))
+            ->when($this->filterStatus === 'banned', fn($q) => $q->whereNotNull('banned_at'))
             ->latest()
             ->paginate($this->perPage);
     }
@@ -61,9 +61,10 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
         $base = User::withBanned()->whereDoesntHave('roles');
 
         return [
-            'total'         => (clone $base)->count(),
+            'total' => (clone $base)->count(),
+            'active' => (clone $base)->whereNull('banned_at')->count(),
+            'banned' => (clone $base)->whereNotNull('banned_at')->count(),
             'new_this_month' => (clone $base)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
-            'banned'        => (clone $base)->whereNotNull('banned_at')->count(),
         ];
     }
 
@@ -72,7 +73,7 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
         $customer = User::findOrFail($id);
 
         if ($customer->orders()->exists()) {
-            Flux::toast(heading: 'Cannot delete', text: $customer->name.' has existing orders and cannot be deleted.', variant: 'danger');
+            Flux::toast(heading: 'Cannot delete', text: $customer->name . ' has existing orders and cannot be deleted.', variant: 'danger');
 
             return;
         }
@@ -80,7 +81,7 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
         $customer->delete();
         unset($this->customers);
 
-        Flux::toast(heading: 'Customer deleted', text: $customer->name.' has been removed.', variant: 'success');
+        Flux::toast(heading: 'Customer deleted', text: $customer->name . ' has been removed.', variant: 'success');
     }
 }; ?>
 
@@ -88,19 +89,20 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             @push('breadcrumbs')
-<flux:breadcrumbs>
-                <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
-                <flux:breadcrumbs.item>Customers</flux:breadcrumbs.item>
-            </flux:breadcrumbs>
-@endpush
+                <flux:breadcrumbs>
+                    <flux:breadcrumbs.item :href="route('dashboard')" wire:navigate>Dashboard</flux:breadcrumbs.item>
+                    <flux:breadcrumbs.item>Customers</flux:breadcrumbs.item>
+                </flux:breadcrumbs>
+            @endpush
             <flux:heading size="xl">Customers</flux:heading>
             <flux:subheading>Everyone who has registered a storefront account.</flux:subheading>
         </div>
-        <flux:button variant="primary" icon="user-plus" :href="route('admin.customers.create')" wire:navigate>New customer</flux:button>
+        <flux:button variant="primary" icon="user-plus" :href="route('admin.customers.create')" wire:navigate>New customer
+        </flux:button>
     </div>
 
     {{-- Stat tiles --}}
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <flux:card class="flex items-center gap-4">
             <flux:icon.users class="size-9 text-zinc-400" />
             <div>
@@ -109,10 +111,10 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
-            <flux:icon.user-plus class="size-9 text-emerald-400" />
+            <flux:icon.user-circle class="size-9 text-emerald-400" />
             <div>
-                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['new_this_month'] }}</div>
-                <flux:text size="sm">New this month</flux:text>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['active'] }}</div>
+                <flux:text size="sm">Active customers</flux:text>
             </div>
         </flux:card>
         <flux:card class="flex items-center gap-4">
@@ -122,12 +124,21 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                 <flux:text size="sm">Banned</flux:text>
             </div>
         </flux:card>
+        <flux:card class="flex items-center gap-4">
+            <flux:icon.user-plus class="size-9 text-blue-400" />
+            <div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['new_this_month'] }}
+                </div>
+                <flux:text size="sm">New this month</flux:text>
+            </div>
+        </flux:card>
     </div>
 
     <flux:card class="mt-6 p-0 overflow-hidden">
 
         {{-- Export --}}
-        <div class="flex flex-wrap items-center justify-end gap-2 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+        <div
+            class="flex flex-wrap items-center justify-end gap-2 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
             <flux:dropdown>
                 <flux:button size="sm" icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
                 <flux:menu>
@@ -150,12 +161,8 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
 
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
-            <flux:input
-                wire:model.live.debounce.300ms="search"
-                placeholder="Search by name or email…"
-                icon="magnifying-glass"
-                clearable
-                class="max-w-xs" />
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search by name or email…"
+                icon="magnifying-glass" clearable class="max-w-xs" />
 
             <div class="flex items-center gap-2">
                 <flux:select wire:model.live="filterStatus" class="w-32">
@@ -178,10 +185,10 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
                 <flux:table.column>Customer</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
-                <flux:table.column align="end">Orders</flux:table.column>
-                <flux:table.column align="end">Total spent</flux:table.column>
-                <flux:table.column align="end">Joined</flux:table.column>
-                <flux:table.column></flux:table.column>
+                <flux:table.column>Orders</flux:table.column>
+                <flux:table.column>Total spent</flux:table.column>
+                <flux:table.column>Joined</flux:table.column>
+                <flux:table.column align="end"></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -189,7 +196,8 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                     <flux:table.row :key="$customer->id">
                         <flux:table.cell>
                             <div class="flex items-center gap-3">
-                                <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="sm" />
+                                <flux:avatar :name="$customer->name" :initials="$customer->initials()" size="sm"
+                                    circle />
                                 <div>
                                     <div class="font-medium text-sm dark:text-white">{{ $customer->name }}</div>
                                     <div class="text-xs text-zinc-500">{{ $customer->email }}</div>
@@ -203,16 +211,24 @@ new #[Layout('layouts::app')] #[Title('Customers — Admin')] class extends Comp
                                 <flux:badge size="sm" inset="top bottom" color="green">Active</flux:badge>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell align="end" class="tabular-nums text-zinc-500">{{ $customer->orders_count }}</flux:table.cell>
-                        <flux:table.cell align="end" class="font-medium tabular-nums">{!! money($customer->orders_sum_total_cents) !!}</flux:table.cell>
-                        <flux:table.cell align="end" class="text-sm text-zinc-500">{{ $customer->created_at->format('M j, Y') }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums text-zinc-500">{{ $customer->orders_count }}
+                        </flux:table.cell>
+                        <flux:table.cell class="font-medium tabular-nums">{!! money($customer->orders_sum_total_cents) !!}</flux:table.cell>
+                        <flux:table.cell class="text-sm text-zinc-500">{{ $customer->created_at->format('M j, Y') }}
+                        </flux:table.cell>
                         <flux:table.cell align="end">
                             <flux:dropdown align="end">
                                 <flux:button size="sm" icon-trailing="chevron-down">Actions</flux:button>
                                 <flux:menu>
-                                    <flux:menu.item icon="eye" icon-variant="micro" :href="route('admin.customers.show', $customer)" wire:navigate>View</flux:menu.item>
-                                    <flux:menu.item icon="pencil-square" icon-variant="micro" :href="route('admin.customers.edit', $customer)" wire:navigate>Edit</flux:menu.item>
-                                    <flux:menu.item icon="clock" icon-variant="micro" :href="route('admin.activity.item', ['user', $customer->id])" wire:navigate>Activity log</flux:menu.item>
+                                    <flux:menu.item icon="eye" icon-variant="micro"
+                                        :href="route('admin.customers.show', $customer)" wire:navigate>View
+                                    </flux:menu.item>
+                                    <flux:menu.item icon="pencil-square" icon-variant="micro"
+                                        :href="route('admin.customers.edit', $customer)" wire:navigate>Edit
+                                    </flux:menu.item>
+                                    <flux:menu.item icon="clock" icon-variant="micro"
+                                        :href="route('admin.activity.item', ['user', $customer->id])" wire:navigate>
+                                        Activity log</flux:menu.item>
                                     <flux:menu.separator />
                                     <flux:menu.item icon="trash-2" icon-variant="micro" variant="danger"
                                         wire:click="delete({{ $customer->id }})"

@@ -262,7 +262,7 @@ new #[Layout('layouts::app')] #[Title('Brands — Admin')] class extends Compone
 
     {{-- Modal --}}
     <flux:modal wire:model.self="showModal" class="md:w-[520px]" :dismissible="false">
-        <flux:heading>{{ $editingId ? 'Edit brand' : 'New brand' }}</flux:heading>
+        <flux:heading class="uppercase tracking-wide">{{ $editingId ? 'Edit brand' : 'New brand' }}</flux:heading>
 
         <form wire:submit="save" class="mt-5 space-y-4">
             <flux:input wire:model.live.debounce.400ms="name" label="Name" placeholder="e.g. Rational" required />

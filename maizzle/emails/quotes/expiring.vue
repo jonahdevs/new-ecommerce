@@ -36,8 +36,7 @@
               </tr>
               @foreach ($quote->items as $item)
                 @php
-                    $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null);
-                    $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null;
+                    $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null;
                     $variantLabel = collect($item->product_snapshot['variant']['attributes'] ?? [])->map(fn ($v, $k) => "$k: $v")->join(', ');
                     $subtitle = $variantLabel ?: ($item->product_sku ? 'SKU '.$item->product_sku : null);
                     $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null);

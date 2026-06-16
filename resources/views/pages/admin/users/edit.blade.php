@@ -112,7 +112,7 @@ new #[Layout('layouts::app')] #[Title('Edit User — Admin')] class extends Comp
             <div class="space-y-6 lg:col-span-2">
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Account details</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Account details</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
                         <flux:input wire:model="name" label="Full name" required autofocus />
@@ -132,7 +132,7 @@ new #[Layout('layouts::app')] #[Title('Edit User — Admin')] class extends Comp
                 {{-- Password --}}
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Password</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Password</flux:heading>
                     </div>
                     <div class="p-6">
                         <flux:text size="sm" class="text-zinc-500">
@@ -149,7 +149,7 @@ new #[Layout('layouts::app')] #[Title('Edit User — Admin')] class extends Comp
                 @if ($user->id !== auth()->id())
                     <flux:card class="p-0 overflow-hidden">
                         <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                            <flux:heading size="sm">Access</flux:heading>
+                            <flux:heading size="sm" class="uppercase tracking-wide">Access</flux:heading>
                         </div>
 
                         @if ($user->isBanned())

@@ -83,7 +83,10 @@ class QuoteConversionService
                 'delivery_cents' => 0,
                 'installation_cents' => 0,
                 'total_cents' => $totalCents,
-                'notes' => 'Converted from quote '.$quote->quote_number,
+                // Provenance is captured by the quote relationship (and the
+                // "Created from a quotation" callout); carry the customer's own
+                // notes through rather than a boilerplate "converted from" string.
+                'notes' => $quote->notes,
             ]);
 
             foreach ($lines as $line) {

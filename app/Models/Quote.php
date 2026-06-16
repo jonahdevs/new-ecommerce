@@ -50,6 +50,10 @@ class Quote extends Model
         });
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -64,6 +68,10 @@ class Quote extends Model
     {
         return $this->hasMany(QuoteItem::class);
     }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
 
     /**
      * Whether this quote has a valid, customer-facing price. A fresh request is

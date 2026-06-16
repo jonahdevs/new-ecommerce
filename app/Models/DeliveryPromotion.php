@@ -42,10 +42,18 @@ class DeliveryPromotion extends Model
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     public function zone(): BelongsTo
     {
         return $this->belongsTo(DeliveryZone::class, 'zone_id');
     }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
 
     /**
      * Whether this promotion is enabled and within its active time window.

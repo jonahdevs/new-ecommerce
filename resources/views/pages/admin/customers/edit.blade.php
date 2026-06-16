@@ -228,7 +228,7 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
                                 <div
                                     class="relative flex size-32 items-center justify-center overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                                     @if ($this->getAvatarPreview())
-                                        <img src="{{ $this->getAvatarPreview() }}" class="h-full w-full object-cover"
+                                        <img src="{{ $this->getAvatarPreview() }}" class="h-full w-full rounded-full object-cover"
                                             alt="{{ $customer->name }}" />
                                         <div
                                             class="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -330,11 +330,11 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
         <div class="space-y-5 lg:col-span-3">
 
             {{-- Personal information --}}
-            <flux:card class="p-0">
-                <div class="border-b px-4 py-3 dark:border-zinc-700">
-                    <flux:subheading class="font-medium">Personal information</flux:subheading>
+            <flux:card class="overflow-hidden p-0">
+                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:heading size="sm" class="uppercase tracking-wide">Personal information</flux:heading>
                 </div>
-                <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-5 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-6 sm:grid-cols-2">
                     <flux:input wire:model="name" label="Full name" placeholder="e.g. Jane Doe" required />
                     <flux:input wire:model="email" type="email" label="Email address"
                         placeholder="e.g. jane@example.com" required />
@@ -343,11 +343,11 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
             </flux:card>
 
             {{-- Default address --}}
-            <flux:card class="p-0">
-                <div class="border-b px-4 py-3 dark:border-zinc-700">
-                    <flux:subheading class="font-medium">Default address</flux:subheading>
+            <flux:card class="overflow-hidden p-0">
+                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+                    <flux:heading size="sm" class="uppercase tracking-wide">Default address</flux:heading>
                 </div>
-                <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-5 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-6 sm:grid-cols-2">
                     <flux:input wire:model="addressName" label="Recipient name" placeholder="e.g. Jane Doe" />
                     <flux:input wire:model="addressLabel" label="Label" placeholder="e.g. Home, Office" />
                     <flux:input wire:model="addressPhone" label="Phone" placeholder="e.g. 0700 000 000" />

@@ -12,6 +12,7 @@ use App\Settings\InventorySettings;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -58,74 +59,6 @@ class Product extends Model
             'sort_order' => 'integer',
             'sap_last_synced_at' => 'datetime',
         ];
-    }
-
-    // ==================================================
-    // SCOPES
-    // ==================================================
-
-    /**
-     * Products that are live right now: explicitly published, or scheduled
-     * with a publish time that has already passed.
-     */
-    public function scopePublished(Builder $query): void
-    {
-        $query->where(function (Builder $q) {
-            $q->where('status', ProductStatus::PUBLISHED)
-                ->orWhere(fn (Builder $scheduled) => $scheduled
-                    ->where('status', ProductStatus::SCHEDULED)
-                    ->whereNotNull('published_at')
-                    ->where('published_at', '<=', now()));
-        });
-    }
-
-    /** Products that appear in catalog/category listings (VISIBLE or CATALOG). */
-    public function scopeVisibleInCatalog(Builder $query): void
-    {
-        $query->whereIn('visibility', [ProductVisibility::VISIBLE, ProductVisibility::CATALOG]);
-    }
-
-    /** Products that appear in search results (VISIBLE or SEARCH). */
-    public function scopeVisibleInSearch(Builder $query): void
-    {
-        $query->whereIn('visibility', [ProductVisibility::VISIBLE, ProductVisibility::SEARCH]);
-    }
-
-    /**
-     * Apply the store-wide out-of-stock display rule from {@see InventorySettings}.
-     * When set to "hide", out-of-stock products are excluded from storefront
-     * listings; in-stock and backorderable products are unaffected.
-     */
-    public function scopeHonorStockVisibility(Builder $query): void
-    {
-        if (app(InventorySettings::class)->out_of_stock_behavior === 'hide') {
-            $query->where('stock_status', '!=', StockStatus::OUT_OF_STOCK);
-        }
-    }
-
-    /** Whether this product is currently live to the public. */
-    public function isPublished(): bool
-    {
-        if ($this->status === ProductStatus::PUBLISHED) {
-            return true;
-        }
-
-        return $this->status === ProductStatus::SCHEDULED
-            && $this->published_at !== null
-            && $this->published_at->isPast();
-    }
-
-    // ==================================================
-    // ACCESSORS
-    // ==================================================
-
-    protected function coverUrl(): Attribute
-    {
-        return Attribute::get(function () {
-            $cover = $this->images->firstWhere('is_cover', true) ?? $this->images->first();
-
-            return $cover?->url;
-        });
     }
 
     // ==================================================
@@ -228,5 +161,81 @@ class Product extends Model
     {
         return $this->belongsToMany(Product::class, 'grouped_product_items', 'group_product_id', 'child_product_id')
             ->withPivot('sort_order');
+    }
+
+    // ==================================================
+    // SCOPES
+    // ==================================================
+
+    /**
+     * Products that are live right now: explicitly published, or scheduled
+     * with a publish time that has already passed.
+     */
+    #[Scope]
+    protected function published(Builder $query): void
+    {
+        $query->where(function (Builder $q) {
+            $q->where('status', ProductStatus::PUBLISHED)
+                ->orWhere(fn (Builder $scheduled) => $scheduled
+                    ->where('status', ProductStatus::SCHEDULED)
+                    ->whereNotNull('published_at')
+                    ->where('published_at', '<=', now()));
+        });
+    }
+
+    /** Products that appear in catalog/category listings (VISIBLE or CATALOG). */
+    #[Scope]
+    protected function visibleInCatalog(Builder $query): void
+    {
+        $query->whereIn('visibility', [ProductVisibility::VISIBLE, ProductVisibility::CATALOG]);
+    }
+
+    /** Products that appear in search results (VISIBLE or SEARCH). */
+    #[Scope]
+    protected function visibleInSearch(Builder $query): void
+    {
+        $query->whereIn('visibility', [ProductVisibility::VISIBLE, ProductVisibility::SEARCH]);
+    }
+
+    /**
+     * Apply the store-wide out-of-stock display rule from {@see InventorySettings}.
+     * When set to "hide", out-of-stock products are excluded from storefront
+     * listings; in-stock and backorderable products are unaffected.
+     */
+    #[Scope]
+    protected function honorStockVisibility(Builder $query): void
+    {
+        if (app(InventorySettings::class)->out_of_stock_behavior === 'hide') {
+            $query->where('stock_status', '!=', StockStatus::OUT_OF_STOCK);
+        }
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    protected function coverUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            $cover = $this->images->firstWhere('is_cover', true) ?? $this->images->first();
+
+            return $cover?->url;
+        });
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    /** Whether this product is currently live to the public. */
+    public function isPublished(): bool
+    {
+        if ($this->status === ProductStatus::PUBLISHED) {
+            return true;
+        }
+
+        return $this->status === ProductStatus::SCHEDULED
+            && $this->published_at !== null
+            && $this->published_at->isPast();
     }
 }

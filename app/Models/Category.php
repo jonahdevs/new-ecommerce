@@ -34,25 +34,6 @@ class Category extends Model
     }
 
     // ==================================================
-    // ACCESSORS
-    // ==================================================
-
-    protected function imageUrl(): Attribute
-    {
-        return Attribute::get(fn () => ProductImage::resolveUrl($this->image));
-    }
-
-    protected function thumbnailUrl(): Attribute
-    {
-        return Attribute::get(fn () => ProductImage::resolveUrl($this->thumbnail));
-    }
-
-    protected function iconUrl(): Attribute
-    {
-        return Attribute::get(fn () => ProductImage::resolveUrl($this->icon));
-    }
-
-    // ==================================================
     // RELATIONSHIPS
     // ==================================================
 
@@ -74,5 +55,24 @@ class Category extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)->withPivot('sort_order');
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->image));
+    }
+
+    protected function thumbnailUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->thumbnail));
+    }
+
+    protected function iconUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->icon));
     }
 }

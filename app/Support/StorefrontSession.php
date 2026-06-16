@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\Cart;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
@@ -145,6 +147,7 @@ final class StorefrontSession
         $cart = self::cart();
         $cart[$key] = ($cart[$key] ?? 0) + max(1, $qty);
         Session::put(self::CART_KEY, $cart);
+        self::persist();
     }
 
     public static function setCartQty(string $key, int $qty): void
@@ -156,6 +159,7 @@ final class StorefrontSession
             $cart[$key] = $qty;
         }
         Session::put(self::CART_KEY, $cart);
+        self::persist();
     }
 
     public static function removeFromCart(string $key): void
@@ -163,11 +167,126 @@ final class StorefrontSession
         $cart = self::cart();
         unset($cart[$key]);
         Session::put(self::CART_KEY, $cart);
+        self::persist();
     }
 
     public static function clearCart(): void
     {
         Session::forget(self::CART_KEY);
+        self::persist();
+    }
+
+    // ==================================================
+    // PERSISTENCE (authenticated users)
+    // ==================================================
+
+    /**
+     * Mirror the current session cart into the authenticated user's persisted
+     * cart so it survives across sessions and devices. No-op for guests, who
+     * have no identity to attach a durable cart to.
+     */
+    private static function persist(): void
+    {
+        $user = auth()->user();
+
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+
+        $keptIds = [];
+
+        foreach (self::cart() as $key => $qty) {
+            ['slug' => $slug, 'variantId' => $variantId] = self::splitKey($key);
+
+            $productId = Product::where('slug', $slug)->value('id');
+
+            if (! $productId) {
+                continue;
+            }
+
+            $item = $cart->items()->updateOrCreate(
+                ['product_id' => $productId, 'product_variant_id' => $variantId],
+                ['quantity' => (int) $qty],
+            );
+
+            $keptIds[] = $item->id;
+        }
+
+        // Drop any persisted line no longer present in the session cart.
+        $cart->items()->whereNotIn('id', $keptIds)->delete();
+        $cart->markActive();
+    }
+
+    /**
+     * Merge the guest's session cart into the authenticated user's persisted
+     * cart on login, then rehydrate the session from the merged result so the
+     * live cart reflects everything the user had on any device. Overlapping
+     * lines keep the larger quantity, which makes the merge idempotent — logging
+     * in repeatedly never inflates a line.
+     */
+    public static function mergeIntoUserCart(User $user): void
+    {
+        $sessionCart = self::cart();
+        $existing = Cart::where('user_id', $user->id)->first();
+
+        // Nothing to merge and nothing saved — don't create an empty cart row
+        // (e.g. a staff member logging in who never shops).
+        if ($sessionCart === [] && ! $existing) {
+            return;
+        }
+
+        $cart = $existing ?? Cart::create(['user_id' => $user->id]);
+
+        foreach ($sessionCart as $key => $qty) {
+            ['slug' => $slug, 'variantId' => $variantId] = self::splitKey($key);
+
+            $productId = Product::where('slug', $slug)->value('id');
+
+            if (! $productId) {
+                continue;
+            }
+
+            $item = $cart->items()->firstOrNew([
+                'product_id' => $productId,
+                'product_variant_id' => $variantId,
+            ]);
+            $item->quantity = max((int) $item->quantity, (int) $qty);
+            $item->save();
+        }
+
+        $cart->markActive();
+
+        self::hydrateFromUserCart($user);
+    }
+
+    /**
+     * Replace the session cart with the user's persisted cart contents, keyed by
+     * the session line key (slug, or "slug|variantId"). Lines whose product was
+     * since deleted are dropped, mirroring {@see cartLines()}.
+     */
+    public static function hydrateFromUserCart(User $user): void
+    {
+        $cart = Cart::with('items.product')->where('user_id', $user->id)->first();
+
+        if (! $cart) {
+            return;
+        }
+
+        $session = [];
+
+        foreach ($cart->items as $item) {
+            $slug = $item->product?->slug;
+
+            if (! $slug) {
+                continue;
+            }
+
+            $session[self::lineKey($slug, $item->product_variant_id)] = $item->quantity;
+        }
+
+        Session::put(self::CART_KEY, $session);
     }
 
     // ==================================================

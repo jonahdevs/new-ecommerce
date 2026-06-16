@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\ValidateRecaptcha;
+use App\Listeners\SyncCartOnLogin;
 use App\Services\Mpesa\DarajaClient;
 use App\Services\PaymentCredentials;
 use App\Settings\BrandingSettings;
@@ -12,8 +13,10 @@ use App\Settings\SecuritySettings;
 use App\Support\ActivitySource;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -47,6 +50,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureActivitySource();
         $this->configureMail();
         $this->shareEmailBranding();
+
+        // Merge the guest cart into the user's persisted cart on every login,
+        // registration, 2FA and passkey auth (all dispatch the Login event).
+        Event::listen(Login::class, SyncCartOnLogin::class);
     }
 
     /**

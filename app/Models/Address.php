@@ -24,10 +24,9 @@ class Address extends Model
         ];
     }
 
-    public function hasCoordinates(): bool
-    {
-        return $this->latitude !== null && $this->longitude !== null;
-    }
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
 
     public function user(): BelongsTo
     {
@@ -42,6 +41,15 @@ class Address extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
     }
 
     public function fullName(): string

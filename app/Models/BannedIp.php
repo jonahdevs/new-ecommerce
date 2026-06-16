@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\BannedIpFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,20 +23,33 @@ class BannedIp extends Model
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
-    public function isExpired(): bool
-    {
-        return $this->expires_at !== null && $this->expires_at->isPast();
-    }
+    // ==================================================
+    // SCOPES
+    // ==================================================
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where(function (Builder $q): void {
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
         });
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
     }
 }

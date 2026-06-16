@@ -13,16 +13,30 @@
           <template #title>Your quotation is ready</template>
           <template #greeting>
             <p class="m-0 text-[15px] font-bold text-white">Hi <Raw>{{ $customerName }}</Raw>,</p>
-            <p class="m-0 mt-1 text-[13px] text-white/70">Quote <Raw>{{ $quote->quote_number }}</Raw> — ready for review.</p>
+            <p class="m-0 mt-1 text-[13px] text-white/70">Your quotation is ready for review.</p>
           </template>
           <template #intro>
             <p class="m-0 text-[13.5px] leading-[21px] text-white/80">Thank you for your interest — here's a summary of your formal quotation for review and approval.</p>
           </template>
         </MailHeader>
 
-        <!-- STEPPER -->
-        <Section class="bg-white px-9 pt-7 pb-1">
-          <QuoteStepper />
+        <!-- REFERENCE + FULFILMENT -->
+        <Section class="bg-white px-9 pt-6 pb-0">
+          <Raw>
+            @php $isPickup = ! $quote->delivery_required; @endphp
+            <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+              <tr>
+                <td class="align-middle">
+                  <p class="m-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">Quote reference</p>
+                  <p class="m-0 mt-1 text-lg font-extrabold text-brand">{{ $quote->quote_number }}</p>
+                </td>
+                <td class="text-right align-middle">
+                  <p class="m-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">Fulfilment</p>
+                  @if ($isPickup)<p class="m-0 mt-1 text-[13px] font-semibold text-slate-700">&#127981; In-store pickup</p>@else<p class="m-0 mt-1 text-[13px] font-semibold text-slate-700">&#128230; Delivery requested</p>@endif
+                </td>
+              </tr>
+            </table>
+          </Raw>
         </Section>
 
         <!-- ITEMS TABLE -->
@@ -36,8 +50,7 @@
               </tr>
               @foreach ($quote->items as $item)
                 @php
-                    $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null);
-                    $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null;
+                    $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null;
                     $productSku = $item->product_sku ?? '';
                     $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null);
                     $productUrl = $productSlug ? route('product.show', $productSlug) : null;
@@ -92,6 +105,12 @@
                         <td class="whitespace-nowrap py-1 text-right text-[13px] font-semibold text-slate-700">{{ money($quote->shipping_cents) }}</td>
                       </tr>
                     @endif
+                    @if ($quote->vat_rate > 0 && $quote->vat_cents > 0)
+                      <tr>
+                        <td class="py-1 text-[13px] text-slate-500">{{ $quote->tax_inclusive ? 'VAT included ('.$quote->vat_rate.'%)' : 'VAT ('.$quote->vat_rate.'%)' }}</td>
+                        <td class="whitespace-nowrap py-1 text-right text-[13px] font-semibold text-slate-700">{{ money($quote->vat_cents) }}</td>
+                      </tr>
+                    @endif
                     <tr>
                       <td class="border-t-2 border-slate-200 pt-2.5 text-[15px] font-extrabold text-slate-900">Total{{ $quote->currency ? ' ('.$quote->currency.')' : '' }}</td>
                       <td class="whitespace-nowrap border-t-2 border-slate-200 pt-2.5 text-right text-[15px] font-extrabold text-brand">{{ money($quote->total_cents) }}</td>
@@ -100,8 +119,29 @@
                 </td>
               </tr>
             </table>
-            @if ($quote->expires_at)
-              <p class="m-0 mt-4 text-center text-[13px] text-slate-500"><span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Valid until</span> <span class="font-bold text-slate-700">{{ $quote->expires_at->format('d M Y') }}</span></p>
+          </Raw>
+        </Section>
+
+        <!-- TERMS & VALIDITY -->
+        <Section class="bg-white">
+          <Raw>
+            @if ($quote->terms)
+              <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td class="px-9 pt-6">
+                    <div class="whitespace-pre-line text-[12px] leading-relaxed text-slate-600">{{ $quote->terms }}</div>
+                  </td>
+                </tr>
+              </table>
+            @endif
+            @if ($quote->expires_at && ! $quote->expires_at->isPast())
+              <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td class="px-9 pt-4">
+                    <p class="m-0 text-[12px] leading-relaxed text-slate-500">This quotation is valid until <span class="font-bold text-slate-700">{{ $quote->expires_at->format('d F Y') }}</span>. Prices and availability are subject to change after this date.</p>
+                  </td>
+                </tr>
+              </table>
             @endif
           </Raw>
         </Section>

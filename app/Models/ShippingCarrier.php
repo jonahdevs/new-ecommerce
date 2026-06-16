@@ -23,25 +23,6 @@ class ShippingCarrier extends Model
         ];
     }
 
-    public function trackingUrlFor(string $trackingNumber): ?string
-    {
-        if (! $this->tracking_url_template) {
-            return null;
-        }
-
-        return str_replace('{number}', $trackingNumber, $this->tracking_url_template);
-    }
-
-    public function logisticsDriver(): LogisticsDriver
-    {
-        return app(LogisticsManager::class)->driverForCarrier($this);
-    }
-
-    public function isSelfManaged(): bool
-    {
-        return $this->driver === CarrierDriver::SELF_MANAGED;
-    }
-
     // ==================================================
     // RELATIONSHIPS
     // ==================================================
@@ -59,5 +40,28 @@ class ShippingCarrier extends Model
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class, 'carrier_id');
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    public function trackingUrlFor(string $trackingNumber): ?string
+    {
+        if (! $this->tracking_url_template) {
+            return null;
+        }
+
+        return str_replace('{number}', $trackingNumber, $this->tracking_url_template);
+    }
+
+    public function logisticsDriver(): LogisticsDriver
+    {
+        return app(LogisticsManager::class)->driverForCarrier($this);
+    }
+
+    public function isSelfManaged(): bool
+    {
+        return $this->driver === CarrierDriver::SELF_MANAGED;
     }
 }

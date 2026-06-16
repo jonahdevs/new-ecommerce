@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Order;
+use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -15,7 +16,8 @@ class OrdersExport implements FromQuery, WithColumnWidths, WithHeadings, WithMap
     public function __construct(
         private readonly string $search = '',
         private readonly string $filterStatus = '',
-        private readonly string $filterDate = '',
+        private readonly string $dateFrom = '',
+        private readonly string $dateTo = '',
     ) {}
 
     public function query()
@@ -31,9 +33,10 @@ class OrdersExport implements FromQuery, WithColumnWidths, WithHeadings, WithMap
                 });
             })
             ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterDate === 'today', fn ($q) => $q->whereDate('created_at', today()))
-            ->when($this->filterDate === 'week', fn ($q) => $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]))
-            ->when($this->filterDate === 'month', fn ($q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
+            ->when($this->dateFrom !== '' && $this->dateTo !== '', fn ($q) => $q->whereBetween('created_at', [
+                Carbon::parse($this->dateFrom)->startOfDay(),
+                Carbon::parse($this->dateTo)->endOfDay(),
+            ]))
             ->latest();
     }
 

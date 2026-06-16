@@ -375,7 +375,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
     <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
         <div>
             <div class="flex items-center gap-3">
-                <flux:heading size="xl" class="font-mono">{{ $order->order_number }}</flux:heading>
+                <flux:heading size="xl" class="font-mono uppercase">{{ $order->order_number }}</flux:heading>
                 <flux:badge size="lg" :color="$order->status->badgeColor()">{{ $order->status->label() }}</flux:badge>
             </div>
             <flux:subheading>Placed {{ $order->created_at->format('d F Y, g:i A') }}</flux:subheading>
@@ -401,15 +401,22 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             @endif
 
             @if (in_array($order->status, [OrderStatus::OUT_FOR_DELIVERY, OrderStatus::COMPLETED]))
-                <flux:button size="sm" variant="ghost" icon="clipboard-document-list" tooltip="Packing list"
-                    :href="route('admin.orders.packing-list', $order)" target="_blank" />
-                <flux:button size="sm" variant="ghost" icon="document-text" tooltip="Delivery note"
-                    :href="route('admin.orders.delivery-note', $order)" target="_blank" />
+                <flux:dropdown>
+                    <flux:button size="sm" icon="document-text" icon-trailing="chevron-down">
+                        Documents
+                    </flux:button>
+                    <flux:menu>
+                        <flux:menu.item icon="clipboard-document-list" target="_blank"
+                            :href="route('admin.orders.packing-list', $order)">
+                            Packing list
+                        </flux:menu.item>
+                        <flux:menu.item icon="document-text" target="_blank"
+                            :href="route('admin.orders.delivery-note', $order)">
+                            Delivery note
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
             @endif
-
-            <flux:button size="sm" variant="ghost" icon="clock" tooltip="Activity log"
-                :href="route('admin.activity.item', ['order', $order->id])"
-                wire:navigate />
         </div>
     </div>
 
@@ -426,7 +433,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             {{-- Items --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Items</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Items</flux:heading>
                 </div>
                 <flux:table container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
                     <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
@@ -491,7 +498,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             {{-- Notes --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Notes</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Notes</flux:heading>
                 </div>
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @if ($order->notes)
@@ -515,7 +522,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             {{-- Fulfilment timeline --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Status history</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Status history</flux:heading>
                 </div>
                 <div class="p-6">
                     @php
@@ -662,7 +669,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             @if ($hasAnyDocument)
                 <flux:card class="overflow-hidden p-0">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Documents</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Documents</flux:heading>
                     </div>
                     <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                         @if ($hasPackingList)
@@ -731,7 +738,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                         <button type="button"
                             class="flex w-full items-center justify-between border-b border-zinc-200 px-6 py-4 text-left dark:border-zinc-700"
                             @click="open = !open">
-                            <flux:heading size="sm">SAP Sync Logs</flux:heading>
+                            <flux:heading size="sm" class="uppercase tracking-wide">SAP Sync Logs</flux:heading>
                             <div class="flex items-center gap-2">
                                 @if ($order->sap_sync_status === SapSyncStatus::FAILED)
                                     <flux:button size="xs" variant="ghost" icon="arrow-path"
@@ -809,7 +816,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             {{-- Payments --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Payments</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Payments</flux:heading>
                 </div>
                 @if ($order->payments->isNotEmpty())
                     <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -851,7 +858,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             {{-- Shipment --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Shipment</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Shipment</flux:heading>
                 </div>
 
                 @if ($order->shipment)
@@ -934,7 +941,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             @if ($this->showSapCard)
                 <flux:card class="overflow-hidden p-0">
                     <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">SAP / KRA</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">SAP / KRA</flux:heading>
                         @if ($order->sap_sync_status !== SapSyncStatus::COMPLETED)
                             <flux:button size="xs" variant="ghost" icon="arrow-path"
                                 wire:click="resyncSap"
@@ -999,7 +1006,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
             {{-- Customer --}}
             <flux:card class="overflow-hidden p-0">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Customer</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Customer</flux:heading>
                 </div>
                 <div class="p-6">
                     @if ($order->user)
@@ -1019,7 +1026,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
 
                     @if ($order->address)
                         <flux:separator class="my-4" />
-                        <flux:heading size="sm" class="text-zinc-500">Delivery address</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide text-zinc-500">Delivery address</flux:heading>
                         <div class="mt-2 space-y-0.5 text-sm text-zinc-600 dark:text-zinc-300">
                             <div class="font-medium">{{ $order->address->fullName() }}</div>
                             <div>{{ $order->address->oneLiner() }}</div>

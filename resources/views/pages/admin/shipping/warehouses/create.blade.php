@@ -81,58 +81,85 @@ new #[Layout('layouts::app')] #[Title('New Warehouse — Admin')] class extends 
         </flux:breadcrumbs>
     @endpush
 
-    <div>
-        <flux:heading size="xl">New warehouse</flux:heading>
-        <flux:subheading>A physical stock location customers can collect orders from.</flux:subheading>
-    </div>
+    <form wire:submit="save">
+        {{-- Header --}}
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <flux:heading size="xl">New warehouse</flux:heading>
+                <flux:subheading>A physical stock location customers can collect orders from.</flux:subheading>
+            </div>
+            <div class="flex items-center gap-3">
+                <flux:button variant="ghost" :href="route('admin.shipping.warehouses.index')" wire:navigate>Cancel</flux:button>
+                <flux:button type="submit" variant="primary" icon="check">Create warehouse</flux:button>
+            </div>
+        </div>
 
-    <form wire:submit="save" class="mt-6">
-        <flux:card class="max-w-2xl space-y-4">
+        {{-- Two-column layout --}}
+        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <flux:input wire:model.live.debounce.400ms="name" label="Name"
-                    placeholder="e.g. Sheffield Africa Logistics" required autofocus class="sm:col-span-2" />
-                <flux:input wire:model.blur="slug" label="Slug" description="Auto-generated from name." class="sm:col-span-2" />
+            {{-- Main column --}}
+            <div class="space-y-6 lg:col-span-2">
+                {{-- Details --}}
+                <flux:card class="overflow-hidden p-0">
+                    <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                        <flux:heading size="base" class="uppercase tracking-wide">Warehouse details</flux:heading>
+                    </div>
+                    <div class="space-y-4 p-6">
+                        <flux:input wire:model.live.debounce.400ms="name" label="Name"
+                            placeholder="e.g. Sheffield Africa Logistics" required autofocus />
+                        <flux:input wire:model.blur="slug" label="Slug" description="Auto-generated from name. Used in URLs." />
+                        <flux:textarea wire:model="description" label="Description" rows="2"
+                            placeholder="Internal notes about this location…" />
+                    </div>
+                </flux:card>
+
+                {{-- Location --}}
+                <flux:card class="overflow-hidden p-0">
+                    <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                        <flux:heading size="base" class="uppercase tracking-wide">Location</flux:heading>
+                    </div>
+                    <div class="space-y-4 p-6">
+                        <flux:input wire:model="address" label="Address" placeholder="Off Old Mombasa Road, Industrial Area" required />
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <flux:input wire:model="city" label="City" placeholder="Nairobi" required />
+                            <flux:input wire:model="county" label="County" placeholder="Nairobi" required />
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <flux:input wire:model="latitude" label="Latitude" placeholder="-1.2921"
+                                description="Optional — for map display." />
+                            <flux:input wire:model="longitude" label="Longitude" placeholder="36.8219" />
+                        </div>
+                    </div>
+                </flux:card>
+
+                {{-- Contact --}}
+                <flux:card class="overflow-hidden p-0">
+                    <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                        <flux:heading size="base" class="uppercase tracking-wide">Contact</flux:heading>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
+                        <flux:input wire:model="phone" label="Phone" placeholder="+254 700 000 000" />
+                        <flux:input wire:model="email" label="Email" type="email" placeholder="warehouse@store.com" />
+                    </div>
+                </flux:card>
             </div>
 
-            <flux:textarea wire:model="description" label="Description" rows="2"
-                placeholder="Internal notes about this location…" />
-
-            <flux:separator text="Location" />
-
-            <flux:input wire:model="address" label="Address" placeholder="Off Old Mombasa Road, Industrial Area" required />
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="city" label="City" placeholder="Nairobi" required />
-                <flux:input wire:model="county" label="County" placeholder="Nairobi" required />
+            {{-- Sidebar --}}
+            <div class="space-y-6">
+                <flux:card class="overflow-hidden p-0">
+                    <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                        <flux:heading size="sm" class="uppercase tracking-wide">Settings</flux:heading>
+                    </div>
+                    <div class="space-y-4 p-6">
+                        <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
+                            <flux:label>Active</flux:label>
+                            <flux:switch wire:model="is_active" />
+                        </div>
+                        <flux:input wire:model="sort_order" label="Sort order" type="number" min="0"
+                            description="Lower = shown first at checkout." />
+                    </div>
+                </flux:card>
             </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="latitude" label="Latitude" placeholder="-1.2921"
-                    description="Optional — for map display." />
-                <flux:input wire:model="longitude" label="Longitude" placeholder="36.8219" />
-            </div>
-
-            <flux:separator text="Contact" />
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="phone" label="Phone" placeholder="+254 700 000 000" />
-                <flux:input wire:model="email" label="Email" type="email" placeholder="warehouse@store.com" />
-            </div>
-
-            <flux:separator text="Settings" />
-
-            <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="sort_order" label="Sort order" type="number" min="0"
-                    description="Lower = shown first at checkout." />
-                <div class="flex items-end pb-1">
-                    <flux:switch wire:model="is_active" label="Active" />
-                </div>
-            </div>
-
-            <div class="flex justify-end pt-2">
-                <flux:button type="submit" variant="primary">Create warehouse</flux:button>
-            </div>
-        </flux:card>
+        </div>
     </form>
 </div>

@@ -56,7 +56,10 @@ new #[Layout('layouts::app')] #[Title('General settings — Admin')] class exten
 
     {{-- Profile (personal account) --}}
     @if ($section === 'profile')
-        <livewire:pages::account.settings.profile :embedded="true" />
+        <div class="space-y-6">
+            <livewire:pages::account.settings.profile :embedded="true" />
+            <livewire:pages::admin.settings.delete-account />
+        </div>
     @endif
 
     {{-- Security (personal account) --}}

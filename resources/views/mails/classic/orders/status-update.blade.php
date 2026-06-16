@@ -66,7 +66,7 @@
                 ></path>
               </svg>
             </div>
-            <h1 style="margin: 0; font-size: 26px; line-height: 1.25; font-weight: 700; color: #fffffe;">Order update</h1>
+            <h1 style="margin: 0; font-size: 26px; line-height: 1.25; font-weight: 700; color: #fffffe;">Order {{ $newStatus->label() }}</h1>
             <div style="margin-top: 6px;"><p class="text-white-80" style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .18em; color: rgba(255, 255, 254, .8); text-transform: uppercase;">{{ $newStatus->label() }} · {{ $order->order_number }}</p></div>
           </div>
           <!--[if mso]></td></tr></table><![endif]-->
@@ -164,7 +164,7 @@
           <div style="padding: 28px 32px 0;">
             <p style="margin: 0 0 8px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Your order</p>
             <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
-              @foreach ($order->items as $item) @php $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null); $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null; $productName = $item->product_name ?? 'Product'; $productSku = $item->product_sku ?? '';
+              @foreach ($order->items as $item) @php $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null; $productName = $item->product_name ?? 'Product'; $productSku = $item->product_sku ?? '';
               $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null); $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
               <tr>
                 <td style="width: 64px; border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 16px; padding-bottom: 16px; padding-right: 12px; vertical-align: middle;">

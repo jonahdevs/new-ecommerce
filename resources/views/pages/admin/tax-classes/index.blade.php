@@ -239,7 +239,7 @@ new #[Layout('layouts::app')] #[Title('Tax classes — Admin')] class extends Co
 
     {{-- Modal --}}
     <flux:modal wire:model.self="showModal" class="md:w-[480px]" :dismissible="false">
-        <flux:heading>{{ $editingId ? 'Edit tax class' : 'New tax class' }}</flux:heading>
+        <flux:heading class="uppercase tracking-wide">{{ $editingId ? 'Edit tax class' : 'New tax class' }}</flux:heading>
 
         <form wire:submit="save" class="mt-5 space-y-4">
             <flux:input wire:model.live.debounce.400ms="name" label="Name" placeholder="e.g. Standard VAT" required />

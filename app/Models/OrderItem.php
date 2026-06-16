@@ -23,20 +23,9 @@ class OrderItem extends Model
         ];
     }
 
-    protected function productName(): Attribute
-    {
-        return Attribute::get(fn () => $this->product_snapshot['name'] ?? null);
-    }
-
-    protected function productSku(): Attribute
-    {
-        return Attribute::get(fn () => $this->product_snapshot['sku'] ?? null);
-    }
-
-    protected function productModelNumber(): Attribute
-    {
-        return Attribute::get(fn () => $this->product_snapshot['model_number'] ?? null);
-    }
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
 
     public function order(): BelongsTo
     {
@@ -51,5 +40,24 @@ class OrderItem extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    protected function productName(): Attribute
+    {
+        return Attribute::get(fn () => $this->product_snapshot['name'] ?? null);
+    }
+
+    protected function productSku(): Attribute
+    {
+        return Attribute::get(fn () => $this->product_snapshot['sku'] ?? null);
+    }
+
+    protected function productModelNumber(): Attribute
+    {
+        return Attribute::get(fn () => $this->product_snapshot['model_number'] ?? null);
     }
 }

@@ -45,3 +45,12 @@ it('shows a payment detail page', function () {
         ->assertOk()
         ->assertSee($payment->mpesa_receipt);
 });
+
+it('totals the refunded amount in the KPI tiles', function () {
+    Payment::factory()->successful()->create(['amount_cents' => 500000, 'refund_cents' => 0]);
+    Payment::factory()->successful()->create(['amount_cents' => 300000, 'refund_cents' => 120000]);
+
+    Livewire::test('pages::admin.payments.index')
+        ->assertSee('Refunded')
+        ->assertSeeHtml(money(120000));
+});

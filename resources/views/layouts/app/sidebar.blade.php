@@ -38,7 +38,7 @@
              on an error page has no user, so fall back to a sign-in link). --}}
         @auth
             <flux:dropdown position="bottom" align="end">
-                <flux:profile :initials="auth()->user()->initials()" icon-trailing="chevron-down" />
+                <flux:profile circle :initials="auth()->user()->initials()" icon-trailing="chevron-down" />
 
                 <flux:menu>
                     <div class="flex items-center gap-3 px-3 py-2">

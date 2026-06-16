@@ -16,3 +16,10 @@ Schedule::command('sitemap:generate')->daily();
 
 // Flip sent quotes whose validity window has lapsed to expired.
 Schedule::command('quotes:expire')->daily();
+
+// Email customers about carts they left idle (abandoned-cart reminders).
+Schedule::command('cart:remind-abandoned')->everyFifteenMinutes();
+
+// Erase raw gateway payloads (PII) past the 5-year retention window — DPA 2019
+// storage limitation; structured payment columns are retained for the record.
+Schedule::command('payments:prune-payloads')->weekly();

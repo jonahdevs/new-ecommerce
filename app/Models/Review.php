@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ReviewStatus;
 use Database\Factories\ReviewFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +38,10 @@ class Review extends Model
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
@@ -47,10 +52,15 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 
+    // ==================================================
+    // SCOPES
+    // ==================================================
+
     /**
      * @param  Builder<Review>  $query
      */
-    public function scopeApproved(Builder $query): void
+    #[Scope]
+    protected function approved(Builder $query): void
     {
         $query->where('status', ReviewStatus::APPROVED);
     }

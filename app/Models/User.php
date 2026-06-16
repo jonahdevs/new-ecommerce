@@ -3,12 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Cog\Contracts\Ban\Bannable as BannableContract;
 use Cog\Laravel\Ban\Traits\Bannable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -21,7 +23,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'phone', 'avatar', 'password', 'google_id', 'email_verified_at', 'notification_preferences', 'staff_preferences'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable implements BannableContract, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use Bannable, HasFactory, HasRoles, LogsActivity, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -51,6 +53,10 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     /**
      * Get the user's initials
      */
@@ -78,6 +84,15 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(RecentlyViewed::class)->orderByDesc('viewed_at');
     }
+
+    public function cart(): HasOne
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
 
     public function initials(): string
     {

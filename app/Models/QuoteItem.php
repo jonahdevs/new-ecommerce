@@ -25,6 +25,24 @@ class QuoteItem extends Model
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
+    public function quote(): BelongsTo
+    {
+        return $this->belongsTo(Quote::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
     protected function productName(): Attribute
     {
         return Attribute::get(fn () => $this->product_snapshot['name'] ?? null);
@@ -38,15 +56,5 @@ class QuoteItem extends Model
     protected function productModelNumber(): Attribute
     {
         return Attribute::get(fn () => $this->product_snapshot['model_number'] ?? null);
-    }
-
-    public function quote(): BelongsTo
-    {
-        return $this->belongsTo(Quote::class);
-    }
-
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class);
     }
 }

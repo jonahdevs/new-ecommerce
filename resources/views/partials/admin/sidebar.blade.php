@@ -37,15 +37,17 @@
                 :current="request()->routeIs('admin.attributes.*')" wire:navigate>
                 {{ __('Attributes') }}
             </flux:sidebar.item>
-            <flux:sidebar.item icon="receipt-percent" :href="route('admin.tax-classes.index')"
-                :current="request()->routeIs('admin.tax-classes.*')" wire:navigate>
-                {{ __('Tax classes') }}
-            </flux:sidebar.item>
             @endcan
             @can('tags.manage')
             <flux:sidebar.item icon="hashtag" :href="route('admin.tags.index')"
                 :current="request()->routeIs('admin.tags.*')" wire:navigate>
                 {{ __('Tags') }}
+            </flux:sidebar.item>
+            @endcan
+            @can('catalog.manage')
+            <flux:sidebar.item icon="receipt-percent" :href="route('admin.tax-classes.index')"
+                :current="request()->routeIs('admin.tax-classes.*')" wire:navigate>
+                {{ __('Tax classes') }}
             </flux:sidebar.item>
             @endcan
         </flux:sidebar.group>
@@ -63,6 +65,10 @@
             <flux:sidebar.item icon="shopping-cart" :href="route('admin.orders.index')" :current="request()->routeIs('admin.orders.*')"
                 wire:navigate>
                 {{ __('Orders') }}
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="arrow-path-rounded-square" :href="route('admin.sap-sync')" :current="request()->routeIs('admin.sap-sync')"
+                wire:navigate>
+                {{ __('SAP sync') }}
             </flux:sidebar.item>
             @endcan
             @can('payments.view')

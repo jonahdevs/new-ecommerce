@@ -255,7 +255,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                                     <div class="flex justify-between">
                                         <span class="font-medium text-ink-3">Method</span>
                                         <span class="font-bold uppercase tracking-tight text-ink">
-                                            {{ str_replace('_', ' ', $payment->provider) }}
+                                            {{ $payment->methodLabel() }}
                                         </span>
                                     </div>
                                     <div class="flex justify-between">

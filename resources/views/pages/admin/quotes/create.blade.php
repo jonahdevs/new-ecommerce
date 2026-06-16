@@ -21,7 +21,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
     public string $customerSearch = '';
     public ?int $selectedUserId = null;
 
-    /** @var array<int, array{product_name: string, product_sku: string, product_model_number: string, unit_price: float|string, quantity: int}> */
+    /** @var array<int, array{product_name: string, product_sku: string, product_model_number: string, product_slug?: string, product_cover_url?: string|null, unit_price: float|string, quantity: int}> */
     public array $lineItems = [];
 
     public function mount(): void
@@ -102,6 +102,8 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
             'product_name' => $product->name,
             'product_sku' => (string) $product->sku,
             'product_model_number' => (string) $product->model_number,
+            'product_slug' => $product->slug,
+            'product_cover_url' => $product->cover_url,
             'unit_price' => ($product->sale_price ?? $product->price ?? 0) / 100,
             'quantity' => 1,
         ];
@@ -119,6 +121,17 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
     {
         unset($this->lineItems[$index]);
         $this->lineItems = array_values($this->lineItems);
+    }
+
+    /**
+     * The unit-price inputs are comma-masked for display; strip the separators
+     * on sync so the stored value stays numeric for casts, validation and totals.
+     */
+    public function updated(string $name, mixed $value): void
+    {
+        if (preg_match('/^lineItems\.(\d+)\.unit_price$/', $name, $matches)) {
+            $this->lineItems[(int) $matches[1]]['unit_price'] = str_replace(',', '', (string) $value);
+        }
     }
 
     public function create(): void
@@ -158,6 +171,8 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                     'name' => $item['product_name'],
                     'sku' => $item['product_sku'] ?: null,
                     'model_number' => $item['product_model_number'] ?: null,
+                    'slug' => $item['product_slug'] ?? null,
+                    'cover_url' => $item['product_cover_url'] ?? null,
                 ],
                 'unit_price_cents' => $unitCents,
                 'quantity' => $quantity,
@@ -168,6 +183,11 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
         $this->redirectRoute('admin.quotes.show', $quote, navigate: true);
     }
 }; ?>
+
+@assets
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+@endassets
 
 <div>
     @push('breadcrumbs')
@@ -181,7 +201,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
     <form wire:submit="create">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <flux:heading size="xl">New quote</flux:heading>
+                <flux:heading size="xl" class="uppercase">New quote</flux:heading>
                 <flux:subheading>Create an admin-initiated quote for a customer.</flux:subheading>
             </div>
             <div class="flex items-center gap-3">
@@ -198,7 +218,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                 {{-- Details --}}
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Details</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Details</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
                         <flux:textarea wire:model="notes" label="Notes" rows="3" placeholder="Internal notes or terms shown to the customer." />
@@ -208,7 +228,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                 {{-- Line items --}}
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Line items</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Line items</flux:heading>
                     </div>
 
                     {{-- Product picker --}}
@@ -253,13 +273,23 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                                 @endphp
                                 <flux:table.row :key="'line-'.$index">
                                     <flux:table.cell>
-                                        <flux:input wire:model="lineItems.{{ $index }}.product_name" placeholder="Product name" />
+                                        <div class="flex items-center gap-3">
+                                            @if (!empty($item['product_cover_url']))
+                                                <img src="{{ $item['product_cover_url'] }}" alt="{{ $item['product_name'] }}"
+                                                    class="size-10 shrink-0 rounded-md border border-zinc-200 object-cover dark:border-zinc-700" />
+                                            @else
+                                                <div class="flex size-10 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
+                                                    <flux:icon.photo variant="micro" class="size-4 text-zinc-400" />
+                                                </div>
+                                            @endif
+                                            <flux:input wire:model="lineItems.{{ $index }}.product_name" placeholder="Product name" />
+                                        </div>
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         <flux:input wire:model="lineItems.{{ $index }}.product_sku" placeholder="—" />
                                     </flux:table.cell>
                                     <flux:table.cell>
-                                        <flux:input wire:model.live.debounce.500ms="lineItems.{{ $index }}.unit_price" type="number" min="0" step="0.01" class="text-right" />
+                                        <flux:input wire:model.live.debounce.500ms="lineItems.{{ $index }}.unit_price" mask:dynamic="$money($input, '.', ',', 2)" inputmode="decimal" class="text-right" />
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         <flux:input wire:model.live.debounce.500ms="lineItems.{{ $index }}.quantity" type="number" min="1" class="text-right" />
@@ -296,7 +326,7 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                 {{-- Customer --}}
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Customer</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Customer</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
                     @if ($this->selectedUser)
@@ -345,10 +375,18 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
                 {{-- Quote settings --}}
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Settings</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Settings</flux:heading>
                     </div>
                     <div class="p-6">
-                        <flux:input wire:model="expires_at" type="date" label="Expires on" />
+                        <flux:field>
+                            <flux:label>Expires on</flux:label>
+                            <div class="relative" wire:ignore x-data="datePicker(@js($expires_at), 'expires_at')">
+                                <flux:icon.calendar-days class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-zinc-400" />
+                                <input x-ref="input" type="text" readonly placeholder="Select a date"
+                                    class="w-full cursor-pointer rounded-lg border border-zinc-200 bg-white py-2 pr-3 pl-8 text-sm text-zinc-700 shadow-sm transition-colors hover:border-zinc-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" />
+                            </div>
+                            <flux:error name="expires_at" />
+                        </flux:field>
                     </div>
                 </flux:card>
 
@@ -356,3 +394,25 @@ new #[Layout('layouts::app')] #[Title('New Quote — Admin')] class extends Comp
         </div>
     </form>
 </div>
+
+@script
+    <script>
+        Alpine.data('datePicker', (initial, prop) => ({
+            fp: null,
+
+            init() {
+                if (typeof flatpickr === 'undefined') {
+                    return;
+                }
+
+                this.fp = flatpickr(this.$refs.input, {
+                    dateFormat: 'M j, Y',
+                    defaultDate: initial || null,
+                    onChange: (dates) => {
+                        this.$wire.set(prop, dates.length ? this.fp.formatDate(dates[0], 'Y-m-d') : '');
+                    },
+                });
+            },
+        }));
+    </script>
+@endscript

@@ -50,8 +50,7 @@
               </tr>
               @foreach ($quote->items as $item)
                 @php
-                    $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null);
-                    $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null;
+                    $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null;
                     $productSku = $item->product_sku ?? '';
                     $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null);
                     $productUrl = $productSlug ? route('product.show', $productSlug) : null;
@@ -74,7 +73,7 @@
                       </tr>
                     </table>
                   </td>
-                  <td class="whitespace-nowrap border-b border-slate-100 py-3 pl-3 text-right align-middle text-[13px] font-semibold text-slate-600">Qty {{ $item->quantity }}</td>
+                  <td class="whitespace-nowrap border-b border-slate-100 py-3 pl-3 text-right align-middle text-[13px] font-semibold text-slate-600">{{ $item->quantity }}</td>
                 </tr>
               @endforeach
             </table>

@@ -15,6 +15,15 @@ it('loads the customers admin index', function () {
     $this->get(route('admin.customers.index'))->assertOk();
 });
 
+it('loads the customer edit page with its section cards', function () {
+    $customer = User::factory()->create();
+
+    Livewire::test('pages::admin.customers.edit', ['customer' => $customer])
+        ->assertOk()
+        ->assertSee('Personal information')
+        ->assertSee('Default address');
+});
+
 it('lists customers but excludes staff and admins', function () {
     User::factory()->create(['name' => 'Jane Customer']);
 
@@ -24,6 +33,16 @@ it('lists customers but excludes staff and admins', function () {
     Livewire::test('pages::admin.customers.index')
         ->assertSee('Jane Customer')
         ->assertDontSee('Bob Staff');
+});
+
+it('splits customers into active and banned counts', function () {
+    User::factory()->count(2)->create();
+    User::factory()->create(['banned_at' => now()]);
+
+    Livewire::test('pages::admin.customers.index')
+        ->assertSet('stats.total', 3)
+        ->assertSet('stats.active', 2)
+        ->assertSet('stats.banned', 1);
 });
 
 it('shows aggregated order totals on the customer detail page', function () {

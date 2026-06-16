@@ -229,10 +229,6 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                 <flux:subheading>Edit category details, images, and SEO.</flux:subheading>
             </div>
             <div class="flex items-center gap-3">
-                <flux:button variant="ghost" :href="route('admin.activity.item', ['category', $category->id])"
-                    icon="clock" wire:navigate>
-                    Activity log
-                </flux:button>
                 <flux:button variant="ghost" :href="route('admin.categories.index')" wire:navigate>Cancel</flux:button>
                 <flux:button type="submit" variant="primary" icon="check">Save changes</flux:button>
             </div>
@@ -250,7 +246,7 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                     <button type="button" x-on:click="open = !open"
                         class="flex w-full items-center justify-between px-6 py-4"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="base">Basic information</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">Basic information</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                             <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </span>
@@ -272,7 +268,7 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                     <button type="button" x-on:click="open = !open"
                         class="flex w-full items-center justify-between px-6 py-4"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="base">SEO</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">SEO</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                             <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </span>
@@ -300,7 +296,7 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                         class="flex w-full items-center justify-between px-6 py-4"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
                         <div class="flex items-center gap-3">
-                            <flux:heading size="sm">Status & hierarchy</flux:heading>
+                            <flux:heading size="sm" class="uppercase tracking-wide">Status & hierarchy</flux:heading>
                             <flux:badge size="sm" :color="$category->status->color()">
                                 {{ $category->status->label() }}
                             </flux:badge>
@@ -333,7 +329,7 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                     <button type="button" x-on:click="open = !open"
                         class="flex w-full items-center justify-between px-6 py-4"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Banner image</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Banner image</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                             <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </span>
@@ -376,7 +372,7 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                     <button type="button" x-on:click="open = !open"
                         class="flex w-full items-center justify-between px-6 py-4"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Thumbnail</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Thumbnail</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                             <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </span>
@@ -420,7 +416,7 @@ new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends 
                     <button type="button" x-on:click="open = !open"
                         class="flex w-full items-center justify-between px-6 py-4"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm">Icon</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Icon</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                             <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </span>

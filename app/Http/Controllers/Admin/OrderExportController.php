@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Excel as ExcelFormat;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\LaravelPdf\Facades\Pdf;
@@ -19,7 +20,8 @@ class OrderExportController extends Controller
         $export = new OrdersExport(
             search: $request->string('q')->value(),
             filterStatus: $request->string('status')->value(),
-            filterDate: $request->string('date')->value(),
+            dateFrom: $request->string('from')->value(),
+            dateTo: $request->string('to')->value(),
         );
 
         if ($request->input('format') === 'csv') {
@@ -42,9 +44,10 @@ class OrderExportController extends Controller
                 });
             })
             ->when($request->string('status')->value(), fn ($q, $status) => $q->where('status', $status))
-            ->when($request->string('date')->value() === 'today', fn ($q) => $q->whereDate('created_at', today()))
-            ->when($request->string('date')->value() === 'week', fn ($q) => $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]))
-            ->when($request->string('date')->value() === 'month', fn ($q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
+            ->when($request->filled('from') && $request->filled('to'), fn ($q) => $q->whereBetween('created_at', [
+                Carbon::parse($request->string('from')->value())->startOfDay(),
+                Carbon::parse($request->string('to')->value())->endOfDay(),
+            ]))
             ->latest()
             ->get();
 

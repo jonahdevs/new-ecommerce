@@ -24,10 +24,23 @@ class ProductImage extends Model
     // RELATIONSHIPS
     // ==================================================
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
     protected function url(): Attribute
     {
         return Attribute::get(fn () => self::resolveUrl($this->path));
     }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
 
     public static function resolveUrl(?string $path): ?string
     {
@@ -39,11 +52,6 @@ class ProductImage extends Model
             return $path;
         }
 
-        return Storage::url($path);
-    }
-
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class);
+        return Storage::disk('public')->url($path);
     }
 }

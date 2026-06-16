@@ -30,6 +30,34 @@ class Shipment extends Model
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
+    public function carrier(): BelongsTo
+    {
+        return $this->belongsTo(ShippingCarrier::class, 'carrier_id');
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
     public function transitionTo(ShipmentStatus $status): void
     {
         $timestamps = match ($status) {
@@ -65,29 +93,5 @@ class Shipment extends Model
         }
 
         return $result;
-    }
-
-    // ==================================================
-    // RELATIONSHIPS
-    // ==================================================
-
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo(Order::class);
-    }
-
-    public function shippingMethod(): BelongsTo
-    {
-        return $this->belongsTo(ShippingMethod::class);
-    }
-
-    public function carrier(): BelongsTo
-    {
-        return $this->belongsTo(ShippingCarrier::class, 'carrier_id');
-    }
-
-    public function warehouse(): BelongsTo
-    {
-        return $this->belongsTo(Warehouse::class);
     }
 }

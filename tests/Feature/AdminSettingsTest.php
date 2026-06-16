@@ -4,6 +4,7 @@ use App\Models\TaxClass;
 use App\Models\User;
 use App\Settings\BrandingSettings;
 use App\Settings\BusinessSettings;
+use App\Settings\CartReminderSettings;
 use App\Settings\CheckoutSettings;
 use App\Settings\IntegrationSettings;
 use App\Settings\InventorySettings;
@@ -314,6 +315,27 @@ test('admin can save personal notification preferences', function () {
 
     expect($prefs['notifications']['new_order']['email'])->toBeFalse()
         ->and($prefs['notifications']['low_stock']['inapp'])->toBeFalse();
+});
+
+test('admin can save abandoned cart reminder settings', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test('pages::admin.settings.app', ['section' => 'cart-reminders'])
+        ->set('cart_reminders_enabled', true)
+        ->set('cart_first_delay_hours', 6)
+        ->set('cart_second_delay_hours', 48)
+        ->set('cart_min_subtotal', 5000)
+        ->set('cart_stop_after_days', 10)
+        ->call('saveCartReminders')
+        ->assertHasNoErrors();
+
+    $settings = app(CartReminderSettings::class);
+
+    expect($settings->enabled)->toBeTrue()
+        ->and($settings->first_delay_hours)->toBe(6)
+        ->and($settings->second_delay_hours)->toBe(48)
+        ->and($settings->min_subtotal_cents)->toBe(500000)
+        ->and($settings->stop_after_hours)->toBe(240);
 });
 
 // ==================================================

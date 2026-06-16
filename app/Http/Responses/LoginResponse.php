@@ -5,6 +5,7 @@ namespace App\Http\Responses;
 use App\Enums\QuoteStatus;
 use App\Models\Quote;
 use App\Notifications\Quotes\QuoteDecisionReceived;
+use App\Services\PaymentCredentials;
 use App\Services\QuoteConversionService;
 use App\Support\StaffRecipients;
 use Illuminate\Support\Facades\Notification;
@@ -36,7 +37,12 @@ class LoginResponse implements LoginResponseContract
 
                 Notification::send(StaffRecipients::for('quotes.manage'), new QuoteDecisionReceived($quote));
 
-                return redirect()->route('payment.page', $order);
+                // With Paystack active, land on the quote page where the
+                // "Complete payment" popup runs in-context; otherwise send the
+                // customer straight to the payment page.
+                return app(PaymentCredentials::class)->paystackEnabled()
+                    ? redirect()->route('account.quotes.show', $quote)
+                    : redirect()->route('payment.page', $order);
             }
         }
 

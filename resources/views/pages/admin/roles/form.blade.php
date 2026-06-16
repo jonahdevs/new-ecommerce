@@ -113,7 +113,7 @@ new #[Layout('layouts::app')] #[Title('Role — Admin')] class extends Component
         {{-- Permissions table --}}
         <flux:card class="mt-6 p-0 overflow-hidden">
             <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                <flux:heading size="sm">Permissions</flux:heading>
+                <flux:heading size="sm" class="uppercase tracking-wide">Permissions</flux:heading>
             </div>
 
             <div class="divide-y divide-zinc-100 dark:divide-zinc-800">

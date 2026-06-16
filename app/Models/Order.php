@@ -56,6 +56,17 @@ class Order extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (Order $order): void {
+            $order->recordStatusChange(null, OrderStatus::PENDING);
+        });
+    }
+
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -101,13 +112,6 @@ class Order extends Model
         return $this->hasMany(SapSyncLog::class);
     }
 
-    protected static function booted(): void
-    {
-        static::created(function (Order $order): void {
-            $order->recordStatusChange(null, OrderStatus::PENDING);
-        });
-    }
-
     public function latestPayment(): HasOne
     {
         return $this->hasOne(Payment::class)->latestOfMany();
@@ -117,6 +121,10 @@ class Order extends Model
     {
         return $this->hasOne(Quote::class, 'order_id');
     }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
 
     public function isPaid(): bool
     {

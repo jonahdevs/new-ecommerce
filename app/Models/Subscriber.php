@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\SubscriberFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,24 +32,31 @@ class Subscriber extends Model
         });
     }
 
-    // Scopes
+    // ==================================================
+    // SCOPES
+    // ==================================================
 
-    public function scopeConfirmed(Builder $query): void
+    #[Scope]
+    protected function confirmed(Builder $query): void
     {
         $query->whereNotNull('subscribed_at')->whereNull('unsubscribed_at');
     }
 
-    public function scopePending(Builder $query): void
+    #[Scope]
+    protected function pending(Builder $query): void
     {
         $query->whereNull('subscribed_at')->whereNull('unsubscribed_at');
     }
 
-    public function scopeUnsubscribed(Builder $query): void
+    #[Scope]
+    protected function unsubscribed(Builder $query): void
     {
         $query->whereNotNull('unsubscribed_at');
     }
 
-    // Helpers
+    // ==================================================
+    // HELPERS
+    // ==================================================
 
     public function isConfirmed(): bool
     {

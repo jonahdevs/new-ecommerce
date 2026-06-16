@@ -12,10 +12,13 @@ use Spatie\Permission\Models\Role;
 /**
  * Resolves the staff who should receive an operational alert.
  *
- * When staff_email_routing is 'central' and a central email is configured,
- * all notifications are directed to that single inbox instead of individual
- * staff members. Otherwise every user holding the given permission (plus
- * super-admins) receives their own copy.
+ * When staff_email_routing is 'central' and a central email is configured, the
+ * email copy is redirected to that single shared inbox — but individual staff
+ * are still returned so they continue to receive their in-app (database)
+ * notifications. Their notification's via() suppresses the mail channel in
+ * central mode to avoid emailing them on top of the central inbox. Otherwise
+ * every user holding the given permission (plus super-admins) gets their own
+ * email and in-app copy.
  *
  * Defensive by design — a missing permission/role must never break the flow
  * (e.g. payment confirmation) that triggers the notification.
@@ -29,12 +32,24 @@ class StaffRecipients
     {
         $settings = app(NotificationSettings::class);
 
+        $staff = self::staffHolding($permission);
+
         if ($settings->staff_email_routing === 'central' && filled($settings->staff_central_email)) {
-            return collect([
+            return $staff->prepend(
                 (new AnonymousNotifiable)->route('mail', $settings->staff_central_email),
-            ]);
+            );
         }
 
+        return $staff;
+    }
+
+    /**
+     * Every user holding the permission, plus super-admins.
+     *
+     * @return Collection<int, User>
+     */
+    private static function staffHolding(string $permission): Collection
+    {
         $ids = collect();
 
         if (Permission::where('name', $permission)->exists()) {

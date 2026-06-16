@@ -39,9 +39,29 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
             && (bool) auth()->user()?->can('orders.manage');
     }
 
+    /**
+     * Strip the display-only thousand separators and normalise the decimal
+     * separator to a dot so the masked input (which follows the store currency
+     * format) casts to a float correctly — regardless of the configured format.
+     */
+    private function normalizeMoneyInput(string $value): string
+    {
+        // The input mask groups thousands with commas — strip them so the value
+        // casts to a float correctly.
+        return str_replace(',', '', trim($value));
+    }
+
+    /** The entered refund amount in cents, normalised from the masked input. */
+    public function refundCents(): int
+    {
+        return (int) round(((float) $this->normalizeMoneyInput($this->refundAmount)) * 100);
+    }
+
     public function refund(): void
     {
         abort_unless(auth()->user()?->can('orders.manage'), 403);
+
+        $this->refundAmount = $this->normalizeMoneyInput($this->refundAmount);
 
         $this->validate([
             'refundAmount' => ['required', 'numeric', 'min:0.01'],
@@ -77,12 +97,17 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
         $p = $this->payment;
 
         return array_values(array_filter([
-            ['label' => 'Provider', 'value' => ucfirst(str_replace('_', ' ', (string) $p->provider))],
+            ['label' => 'Method', 'value' => $p->methodLabel()],
+            ['label' => 'Gateway', 'value' => ucfirst(str_replace('_', ' ', (string) $p->provider))],
+            ['label' => 'Refunded', 'value' => $p->refund_cents > 0 ? money($p->refund_cents) : null],
+            ['label' => 'Refunded on', 'value' => $p->refunded_at?->format('d F Y, g:i A')],
             ['label' => 'Account reference', 'value' => $p->account_reference],
             ['label' => 'Phone', 'value' => $p->phone],
             ['label' => 'M-Pesa receipt', 'value' => $p->mpesa_receipt],
             ['label' => 'Merchant request', 'value' => $p->merchant_request_id],
             ['label' => 'Checkout request', 'value' => $p->checkout_request_id],
+            ['label' => 'Paystack reference', 'value' => $p->paystack_reference],
+            ['label' => 'Authorization code', 'value' => $p->authorization_code],
             ['label' => 'Stripe session', 'value' => $p->stripe_session_id],
             ['label' => 'Stripe payment intent', 'value' => $p->stripe_payment_intent_id],
             ['label' => 'Result code', 'value' => $p->result_code !== null ? (string) $p->result_code : null],
@@ -100,21 +125,28 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
     </flux:breadcrumbs>
 @endpush
 
-    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
         <div>
-            <flux:heading size="xl" class="tabular-nums">{!! money($payment->amount_cents) !!}</flux:heading>
+            <div class="flex items-center gap-3">
+                <flux:heading size="xl" class="tabular-nums">{!! money($payment->amount_cents) !!}</flux:heading>
+                <flux:badge size="lg" :color="$payment->status->badgeColor()">{{ $payment->status->label() }}</flux:badge>
+            </div>
             <flux:subheading>{{ ($payment->paid_at ?? $payment->created_at)->format('d F Y, g:i A') }}</flux:subheading>
         </div>
-        <flux:badge size="lg" :color="$payment->status->badgeColor()">{{ $payment->status->label() }}</flux:badge>
+        @if ($this->canRefund())
+            <flux:button variant="danger" icon="receipt-refund" wire:click="$set('showRefundModal', true)">
+                Issue refund
+            </flux:button>
+        @endif
     </div>
 
-    <div class="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-        <div class="min-w-0 flex-1 space-y-6">
+        <div class="space-y-6 lg:col-span-2">
             {{-- Details --}}
             <flux:card class="p-0 overflow-hidden">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Transaction details</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Transaction details</flux:heading>
                 </div>
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach ($this->details() as $row)
@@ -126,58 +158,29 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
                 </div>
             </flux:card>
 
-            {{-- Refund --}}
-            @if ($payment->refund_cents > 0 || $this->canRefund())
-                <flux:card class="p-0 overflow-hidden">
-                    <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Refund</flux:heading>
-                        @if ($payment->refund_cents > 0)
-                            <flux:badge size="sm" color="purple">
-                                {{ money($payment->refund_cents) }} refunded
-                            </flux:badge>
-                        @endif
-                    </div>
-                    <div class="space-y-4 p-6">
-                        @if ($payment->refund_cents > 0)
-                            <div class="grid grid-cols-[1fr_1.4fr] gap-4 text-sm">
-                                <span class="text-zinc-500">Refunded on</span>
-                                <span class="font-medium dark:text-white">{{ $payment->refunded_at?->format('d F Y, g:i A') }}</span>
-                            </div>
-                        @endif
-
-                        @if ($this->canRefund())
-                            <p class="text-sm text-zinc-500">
-                                {!! money($this->remainingRefundableCents()) !!} is available to refund.
-                                @if ($payment->provider === 'mpesa')
-                                    <span class="text-amber-600 dark:text-amber-400">M-Pesa reversals are processed manually via Safaricom — this records the refund and notifies the customer.</span>
-                                @endif
-                            </p>
-                            <flux:button variant="danger" icon="receipt-refund" wire:click="$set('showRefundModal', true)">
-                                Issue refund
-                            </flux:button>
-                        @elseif ($payment->refund_cents >= $payment->amount_cents)
-                            <p class="text-sm text-zinc-500">This payment has been fully refunded.</p>
-                        @endif
-                    </div>
-                </flux:card>
-            @endif
-
             {{-- Raw payload --}}
             @if ($payment->payload)
-                <flux:card class="p-0 overflow-hidden">
-                    <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Gateway payload</flux:heading>
+                <flux:card class="p-0 overflow-hidden" x-data="{ open: false }">
+                    <button type="button" x-on:click="open = !open"
+                            class="flex w-full items-center justify-between px-6 py-4"
+                            :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
+                        <flux:heading size="sm" class="uppercase tracking-wide">Gateway payload</flux:heading>
+                        <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                            <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
+                        </span>
+                    </button>
+                    <div x-show="open" x-collapse x-cloak>
+                        <pre class="overflow-x-auto px-6 py-4 text-xs text-zinc-600 dark:text-zinc-300">{{ json_encode($payment->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
                     </div>
-                    <pre class="overflow-x-auto px-6 py-4 text-xs text-zinc-600 dark:text-zinc-300">{{ json_encode($payment->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
                 </flux:card>
             @endif
         </div>
 
         {{-- Order sidebar --}}
-        <aside class="w-full shrink-0 lg:w-80">
+        <aside class="space-y-6">
             <flux:card class="p-0 overflow-hidden">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="sm">Order</flux:heading>
+                    <flux:heading size="sm" class="uppercase tracking-wide">Order</flux:heading>
                 </div>
                 <div class="p-6">
                 @if ($payment->order)
@@ -197,7 +200,7 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
 
                     @if ($payment->order->user)
                         <flux:separator class="my-4" />
-                        <flux:heading size="sm" class="text-zinc-500">Customer</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide text-zinc-500">Customer</flux:heading>
                         <div class="mt-2 flex items-center gap-3">
                             <flux:avatar :name="$payment->order->user->name" :initials="$payment->order->user->initials()" size="sm" />
                             <div class="min-w-0">
@@ -221,7 +224,7 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
     <flux:modal wire:model.self="showRefundModal" class="md:w-[440px]">
         <form wire:submit="refund" class="space-y-5">
             <div>
-                <flux:heading size="lg">Issue a refund</flux:heading>
+                <flux:heading size="lg" class="uppercase tracking-wide">Issue a refund</flux:heading>
                 <flux:subheading>
                     Refunding payment for order
                     <span class="font-mono">{{ $payment->order?->order_number }}</span>.
@@ -237,7 +240,8 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
 
             <flux:input
                 wire:model="refundAmount"
-                type="number" step="0.01" min="0.01"
+                mask:dynamic="$money($input, '.', ',', 2)"
+                inputmode="decimal"
                 label="Amount (KES)"
                 description="Up to {{ money($this->remainingRefundableCents()) }} available." />
 
@@ -248,7 +252,7 @@ new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Compon
                 <flux:button type="button" variant="ghost" wire:click="$set('showRefundModal', false)">Cancel</flux:button>
                 <flux:button type="submit" variant="danger" icon="receipt-refund"
                     wire:loading.attr="disabled" wire:target="refund">
-                    Refund {{ $refundAmount !== '' ? 'KES '.number_format((float) $refundAmount, 2) : '' }}
+                    Refund {{ $refundAmount !== '' ? money($this->refundCents()) : '' }}
                 </flux:button>
             </div>
         </form>

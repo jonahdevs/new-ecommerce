@@ -31,13 +31,21 @@ class Brand extends Model
         ];
     }
 
-    protected function logoUrl(): Attribute
-    {
-        return Attribute::get(fn () => ProductImage::resolveUrl($this->logo));
-    }
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
 
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    protected function logoUrl(): Attribute
+    {
+        return Attribute::get(fn () => ProductImage::resolveUrl($this->logo));
     }
 }

@@ -196,8 +196,8 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
         {{-- Values (main column) --}}
         <div class="lg:col-span-2">
             <flux:card class="p-0 overflow-hidden">
-                <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="base">Values</flux:heading>
+                <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                    <flux:heading size="base" class="uppercase tracking-wide">Values</flux:heading>
                     <flux:button size="sm" icon="plus" wire:click="$set('showAddValueModal', true)">New value</flux:button>
                 </div>
 
@@ -269,8 +269,8 @@ new #[Layout('layouts::app')] #[Title('Edit Attribute — Admin')] class extends
         {{-- Attribute details (sidebar) --}}
         <div>
             <flux:card class="p-0 overflow-hidden">
-                <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="base">Attribute details</flux:heading>
+                <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                    <flux:heading size="base" class="uppercase tracking-wide">Attribute details</flux:heading>
                 </div>
 
                 <form wire:submit="save" class="space-y-4 p-6">

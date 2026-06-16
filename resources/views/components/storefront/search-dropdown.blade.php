@@ -169,7 +169,6 @@ new class extends Component {
                                             {{ $product->brand->name }}</div>
                                     @endif
                                     <div class="truncate text-[13.5px] text-ink">{{ $product->name }}</div>
-                                    <div class="text-[11px] text-ink-4 tabular-nums">{{ $product->sku }}</div>
                                 </div>
                                 @if ($price)
                                     <div

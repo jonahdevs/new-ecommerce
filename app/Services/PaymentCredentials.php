@@ -50,6 +50,17 @@ class PaymentCredentials
         return $this->apiSettings->paystack_secret_key ?: (string) config('services.paystack.secret_key', '');
     }
 
+    /**
+     * Whether the Paystack inline popup can run: the gateway is enabled and a
+     * secret key is configured. Single source of truth for both the Livewire
+     * popup flow and the post-login redirect.
+     */
+    public function paystackEnabled(): bool
+    {
+        return $this->paymentSettings->paystack_enabled
+            && $this->paystackSecretKey() !== '';
+    }
+
     // -------------------------------------------------------------------------
     // M-Pesa
     // -------------------------------------------------------------------------

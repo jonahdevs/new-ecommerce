@@ -6,6 +6,8 @@ use App\Http\Controllers\Payments\MpesaCallbackController;
 use App\Http\Controllers\Payments\PaystackWebhookController;
 use App\Http\Controllers\Payments\StripeWebhookController;
 use App\Http\Controllers\SocialAuthController;
+use App\Models\Cart;
+use App\Support\StorefrontSession;
 use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------------------------------
@@ -22,6 +24,16 @@ Route::livewire('/', 'pages::storefront.home')->name('home');
 Route::livewire('/shop', 'pages::storefront.catalog')->name('catalog');
 Route::livewire('/shop/{category:slug}', 'pages::storefront.category')->name('category.show');
 Route::livewire('/cart', 'pages::storefront.cart')->name('cart');
+// Signed "restore my cart" link from an abandoned-cart reminder email: rehydrate
+// the saved cart into the session and bounce to the cart page.
+Route::get('/cart/restore/{cart}', function (Cart $cart) {
+    if ($cart->user) {
+        StorefrontSession::hydrateFromUserCart($cart->user);
+        $cart->markActive();
+    }
+
+    return redirect()->route('cart');
+})->name('cart.restore')->middleware('signed');
 Route::livewire('/wishlist', 'pages::storefront.wishlist')->name('wishlist');
 Route::livewire('/compare', 'pages::storefront.compare')->name('compare');
 Route::livewire('/contact', 'pages::storefront.contact')->name('contact');
@@ -34,16 +46,25 @@ Route::livewire('/product/{product:slug}', 'pages::storefront.product')->name('p
 // ---------------------------------------------------------------------------
 // Newsletter — confirm & unsubscribe (public, no auth)
 // ---------------------------------------------------------------------------
-Route::get('/newsletter/confirm/{token}', [NewsletterController::class, 'confirm'])->name('newsletter.confirm');
-Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+Route::controller(NewsletterController::class)
+    ->prefix('newsletter')
+    ->name('newsletter.')
+    ->group(function () {
+        Route::get('confirm/{token}', 'confirm')->name('confirm');
+        Route::get('unsubscribe/{token}', 'unsubscribe')->name('unsubscribe');
+    });
 
 // ---------------------------------------------------------------------------
 // Social auth — Google
 // ---------------------------------------------------------------------------
-Route::middleware('guest')->group(function () {
-    Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
-    Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
-});
+Route::middleware('guest')
+    ->controller(SocialAuthController::class)
+    ->prefix('auth/google')
+    ->name('auth.google.')
+    ->group(function () {
+        Route::get('redirect', 'redirectToGoogle')->name('redirect');
+        Route::get('callback', 'handleGoogleCallback')->name('callback');
+    });
 
 // ---------------------------------------------------------------------------
 // Post-login landing — branches by role.
@@ -69,8 +90,12 @@ require __DIR__.'/admin.php';
 // preview can only show un-rendered Blade). Never registered outside local.
 // ---------------------------------------------------------------------------
 if (app()->environment('local')) {
-    Route::get('/dev/mail-preview', [MailPreviewController::class, 'index'])->name('dev.mail-preview');
-    Route::get('/dev/mail-preview/{template}', [MailPreviewController::class, 'show'])->name('dev.mail-preview.show');
+    Route::controller(MailPreviewController::class)
+        ->prefix('dev/mail-preview')
+        ->group(function () {
+            Route::get('/', 'index')->name('dev.mail-preview');
+            Route::get('{template}', 'show')->name('dev.mail-preview.show');
+        });
 }
 
 // ---------------------------------------------------------------------------

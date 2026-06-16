@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\PageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,7 +36,8 @@ class Page extends Model
     /**
      * @param  Builder<Page>  $query
      */
-    public function scopePublished(Builder $query): void
+    #[Scope]
+    protected function published(Builder $query): void
     {
         $query->where('is_published', true);
     }

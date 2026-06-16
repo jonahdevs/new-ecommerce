@@ -2,14 +2,12 @@
 
 use App\Enums\OrderStatus;
 use App\Jobs\ResolveAddressCounty;
+use App\Livewire\Concerns\InteractsWithPaystack;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\DeliveryQuoteResult;
 use App\Services\DeliveryResolver;
-use App\Services\Paystack\PaystackPaymentService;
-use App\Services\PaymentCredentials;
-use App\Settings\PaymentSettings;
 use App\Support\StorefrontSession;
 use App\Support\TaxCalculator;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -22,6 +20,8 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Component {
+    use InteractsWithPaystack;
+
     public ?int $selectedAddressId = null;
 
     public string $deliveryMethod = 'delivery';
@@ -324,63 +324,11 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
         // With Paystack active, open its popup right here. Otherwise fall back to
         // the payment page (which also serves cash-on-delivery and other flows).
-        if (! $this->openPaystack($order)) {
+        if ($this->openPaystack($order)) {
+            $this->payOrderId = $order->id;
+        } else {
             $this->redirectRoute('payment.page', $order, navigate: true);
         }
-    }
-
-    /**
-     * Initialize a Paystack transaction for the order and tell the browser to
-     * open the inline popup. Returns false when Paystack isn't available, so the
-     * caller can fall back to the payment page.
-     */
-    private function openPaystack(Order $order): bool
-    {
-        if (! $this->paystackReady()) {
-            return false;
-        }
-
-        try {
-            $payment = app(PaystackPaymentService::class)->initialize($order);
-        } catch (\Throwable $e) {
-            report($e);
-
-            return false;
-        }
-
-        $order->update(['payment_method' => 'paystack']);
-        $this->payOrderId = $order->id;
-        $this->dispatch('paystack-open', accessCode: $payment->paystack_access_code);
-
-        return true;
-    }
-
-    private function paystackReady(): bool
-    {
-        return app(PaymentSettings::class)->paystack_enabled
-            && app(PaymentCredentials::class)->paystackSecretKey() !== '';
-    }
-
-    /**
-     * Called from JS once the Paystack popup reports success. Verifies the
-     * transaction server-side before advancing to the order.
-     */
-    public function verifyPayment(string $reference): void
-    {
-        $payment = app(PaystackPaymentService::class)->verify($reference);
-
-        if (! $payment) {
-            $this->addError('payment', 'Payment could not be confirmed. If you were charged, please contact support.');
-
-            return;
-        }
-
-        StorefrontSession::clearCart();
-        $this->dispatch('cart-updated');
-
-        Flux::toast(heading: 'Payment confirmed', text: 'Order ' . $payment->account_reference . ' is being processed.', variant: 'success');
-
-        $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
     }
 }; ?>
 

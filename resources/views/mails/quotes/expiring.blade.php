@@ -149,8 +149,8 @@
                 <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Qty</td>
                 <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; text-align: right; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Price</td>
               </tr>
-              @foreach ($quote->items as $item) @php $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null); $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null; $variantLabel = collect($item->product_snapshot['variant']['attributes'] ?? [])->map(fn ($v,
-              $k) => "$k: $v")->join(', '); $subtitle = $variantLabel ?: ($item->product_sku ? 'SKU '.$item->product_sku : null); $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null); $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
+              @foreach ($quote->items as $item) @php $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null; $variantLabel = collect($item->product_snapshot['variant']['attributes'] ?? [])->map(fn ($v, $k) => "$k: $v")->join(', ');
+              $subtitle = $variantLabel ?: ($item->product_sku ? 'SKU '.$item->product_sku : null); $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null); $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
               <tr>
                 <td style="border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 12px; padding-bottom: 12px; padding-right: 12px; vertical-align: middle;">
                   <table cellpadding="0" cellspacing="0" role="presentation">

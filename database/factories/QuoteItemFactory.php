@@ -47,6 +47,8 @@ class QuoteItemFactory extends Factory
                 'name' => $product->name,
                 'sku' => $product->sku,
                 'model_number' => $product->model_number,
+                'slug' => $product->slug,
+                'cover_url' => $product->cover_url,
             ],
         ]);
     }

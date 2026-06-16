@@ -227,10 +227,38 @@ return new class extends Migration
             $table->unique(['user_id', 'product_id']);
             $table->index(['user_id', 'viewed_at']);
         });
+
+        // Persisted shopping cart. One cart per user (and optionally per guest,
+        // keyed by a cookie token). Mirrors the session cart so items survive
+        // across sessions/devices and power abandoned-cart reminders.
+        Schema::create('carts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->unique()->constrained()->cascadeOnDelete();
+            $table->string('token')->nullable()->unique();
+            $table->timestamp('last_activity_at')->nullable();
+            // Abandoned-cart reminder state machine.
+            $table->unsignedTinyInteger('reminders_sent')->default(0);
+            $table->timestamp('last_reminded_at')->nullable();
+            $table->timestamp('recovered_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('cart_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_variant_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->unsignedInteger('quantity')->default(1);
+            $table->timestamps();
+            // One line per product/variant pair within a cart.
+            $table->unique(['cart_id', 'product_id', 'product_variant_id']);
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('cart_items');
+        Schema::dropIfExists('carts');
         Schema::dropIfExists('recently_viewed');
         Schema::dropIfExists('sap_sync_logs');
         Schema::dropIfExists('status_histories');

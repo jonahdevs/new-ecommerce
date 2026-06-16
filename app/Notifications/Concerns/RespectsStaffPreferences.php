@@ -28,8 +28,14 @@ trait RespectsStaffPreferences
             ? ($notifiable->staff_preferences['notifications'][$prefKey] ?? [])
             : [];
 
-        // Mail channel — global gate then personal gate.
-        if ($baseKey === null || ($settings->{$baseKey.'_email'} ?? true)) {
+        // Under central routing the email copy goes to the shared inbox (an
+        // AnonymousNotifiable), so individual staff Users get the in-app copy
+        // only — never an email on top of the central inbox.
+        $centralRouting = $settings->staff_email_routing === 'central' && filled($settings->staff_central_email);
+        $mailGoesToThisNotifiable = ! ($centralRouting && $notifiable instanceof User);
+
+        // Mail channel — routing gate, then global gate, then personal gate.
+        if ($mailGoesToThisNotifiable && ($baseKey === null || ($settings->{$baseKey.'_email'} ?? true))) {
             if (($prefs['email'] ?? true) !== false) {
                 $channels[] = 'mail';
             }

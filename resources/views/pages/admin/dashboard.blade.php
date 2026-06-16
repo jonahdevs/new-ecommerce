@@ -20,11 +20,7 @@ use Spatie\Activitylog\Models\Activity;
 
 new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Component {
     /** Order statuses that represent a confirmed (paid) sale. */
-    private const PAID_STATUSES = [
-        OrderStatus::PROCESSING->value,
-        OrderStatus::OUT_FOR_DELIVERY->value,
-        OrderStatus::COMPLETED->value,
-    ];
+    private const PAID_STATUSES = [OrderStatus::PROCESSING->value, OrderStatus::OUT_FOR_DELIVERY->value, OrderStatus::COMPLETED->value];
 
     public string $preset = '30d';
 
@@ -84,19 +80,14 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
     /** @return array{0: CarbonInterface, 1: CarbonInterface} */
     private function dateRange(): array
     {
-        return [
-            \Illuminate\Support\Carbon::parse($this->dateFrom)->startOfDay(),
-            \Illuminate\Support\Carbon::parse($this->dateTo)->endOfDay(),
-        ];
+        return [\Illuminate\Support\Carbon::parse($this->dateFrom)->startOfDay(), \Illuminate\Support\Carbon::parse($this->dateTo)->endOfDay()];
     }
 
     public function periodLabel(): string
     {
         [$from, $to] = $this->dateRange();
 
-        return $from->isSameDay($to)
-            ? $from->format('M j, Y')
-            : $from->format('M j').' – '.$to->format('M j, Y');
+        return $from->isSameDay($to) ? $from->format('M j, Y') : $from->format('M j') . ' – ' . $to->format('M j, Y');
     }
 
     /** Time-of-day greeting for the dashboard header. */
@@ -123,20 +114,29 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             $prevFrom = $from->copy()->subDays($lengthDays)->startOfDay();
 
             $revenue = (int) Order::whereIn('status', self::PAID_STATUSES)
-                ->whereBetween('created_at', [$from, $to])->sum('total_cents');
+                ->whereBetween('created_at', [$from, $to])
+                ->sum('total_cents');
             $prevRevenue = (int) Order::whereIn('status', self::PAID_STATUSES)
-                ->whereBetween('created_at', [$prevFrom, $prevTo])->sum('total_cents');
+                ->whereBetween('created_at', [$prevFrom, $prevTo])
+                ->sum('total_cents');
 
             $orders = Order::whereBetween('created_at', [$from, $to])
-                ->where('status', '!=', OrderStatus::CANCELLED->value)->count();
+                ->where('status', '!=', OrderStatus::CANCELLED->value)
+                ->count();
             $prevOrders = Order::whereBetween('created_at', [$prevFrom, $prevTo])
-                ->where('status', '!=', OrderStatus::CANCELLED->value)->count();
+                ->where('status', '!=', OrderStatus::CANCELLED->value)
+                ->count();
 
             $paidOrders = Order::whereIn('status', self::PAID_STATUSES)
-                ->whereBetween('created_at', [$from, $to])->count();
+                ->whereBetween('created_at', [$from, $to])
+                ->count();
 
-            $newCustomers = User::doesntHave('roles')->whereBetween('created_at', [$from, $to])->count();
-            $prevNew = User::doesntHave('roles')->whereBetween('created_at', [$prevFrom, $prevTo])->count();
+            $newCustomers = User::doesntHave('roles')
+                ->whereBetween('created_at', [$from, $to])
+                ->count();
+            $prevNew = User::doesntHave('roles')
+                ->whereBetween('created_at', [$prevFrom, $prevTo])
+                ->count();
 
             return [
                 'revenue_cents' => $revenue,
@@ -150,8 +150,7 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 'customers_trend' => $this->trend($newCustomers, $prevNew),
                 'customers_returning' => User::doesntHave('roles')->has('orders', '>=', 2)->count(),
                 'products_active' => Product::where('visibility', ProductVisibility::VISIBLE->value)->count(),
-                'low_stock' => Product::whereNotNull('stock_quantity')->whereNotNull('low_stock_threshold')
-                    ->where('stock_quantity', '>', 0)->whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
+                'low_stock' => Product::whereNotNull('stock_quantity')->whereNotNull('low_stock_threshold')->where('stock_quantity', '>', 0)->whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
                 'out_of_stock' => Product::whereNotNull('stock_quantity')->where('stock_quantity', 0)->count(),
                 'pending_orders' => Order::where('status', OrderStatus::PENDING->value)->count(),
                 'quotes_awaiting' => Quote::where('status', QuoteStatus::AWAITING_APPROVAL->value)->count(),
@@ -167,28 +166,35 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
 
             $revenue = $this->revenueSeries($from, $to);
 
-            $channels = Payment::where('status', PaymentStatus::SUCCESS->value)->where('paid_at', '>=', $from)
-                ->where('paid_at', '<=', $to)
-                ->selectRaw('channel, COALESCE(SUM(amount_cents), 0) as amt')->groupBy('channel')->get();
+            $channels = Payment::where('status', PaymentStatus::SUCCESS->value)->where('paid_at', '>=', $from)->where('paid_at', '<=', $to)->selectRaw('channel, COALESCE(SUM(amount_cents), 0) as amt')->groupBy('channel')->get();
 
             $statuses = Order::whereBetween('created_at', [$from, $to])
-                ->selectRaw('status, COUNT(*) as c')->groupBy('status')->get();
+                ->selectRaw('status, COUNT(*) as c')
+                ->groupBy('status')
+                ->get();
 
             $cats = DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
                 ->join('categories', 'products.primary_category_id', '=', 'categories.id')
-                ->whereIn('orders.status', self::PAID_STATUSES)->whereBetween('orders.created_at', [$from, $to])
+                ->whereIn('orders.status', self::PAID_STATUSES)
+                ->whereBetween('orders.created_at', [$from, $to])
                 ->selectRaw('categories.name as name, SUM(order_items.quantity) as units')
-                ->groupBy('categories.name')->orderByDesc('units')->limit(5)->get();
+                ->groupBy('categories.name')
+                ->orderByDesc('units')
+                ->limit(5)
+                ->get();
 
             // Sales by county — geo-resolved from each order's address pin.
             $countyRows = DB::table('orders')
                 ->join('addresses', 'orders.address_id', '=', 'addresses.id')
-                ->whereIn('orders.status', self::PAID_STATUSES)->whereBetween('orders.created_at', [$from, $to])
+                ->whereIn('orders.status', self::PAID_STATUSES)
+                ->whereBetween('orders.created_at', [$from, $to])
                 ->whereNotNull('addresses.county')
                 ->selectRaw('addresses.county as c, COALESCE(SUM(orders.total_cents), 0) as rev')
-                ->groupBy('addresses.county')->orderByDesc('rev')->get();
+                ->groupBy('addresses.county')
+                ->orderByDesc('rev')
+                ->get();
 
             $q = Quote::whereBetween('created_at', [$from, $to]);
 
@@ -203,29 +209,22 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             return [
                 'revenue' => $revenue,
                 'channel' => [
-                    'labels' => $channels->map(fn ($r) => $this->channelLabel($r->channel))->all(),
-                    'data' => $channels->map(fn ($r) => (int) round(((int) $r->amt) / 100))->all(),
+                    'labels' => $channels->map(fn($r) => $this->channelLabel($r->channel))->all(),
+                    'data' => $channels->map(fn($r) => (int) round(((int) $r->amt) / 100))->all(),
                 ],
                 'status' => [
-                    'labels' => $statuses->map(fn ($r) => $r->status->label())->all(),
-                    'data' => $statuses->map(fn ($r) => (int) $r->c)->all(),
+                    'labels' => $statuses->map(fn($r) => $r->status->label())->all(),
+                    'data' => $statuses->map(fn($r) => (int) $r->c)->all(),
                 ],
                 'categories' => [
-                    'labels' => $cats->map(fn ($r) => $r->name)->all(),
-                    'data' => $cats->map(fn ($r) => (int) $r->units)->all(),
+                    'labels' => $cats->map(fn($r) => $r->name)->all(),
+                    'data' => $cats->map(fn($r) => (int) $r->units)->all(),
                 ],
                 // County → KES map for the choropleth (all counties with sales).
-                'countyMap' => $countyRows->mapWithKeys(fn ($r) => [$r->c => (int) round(((int) $r->rev) / 100)])->all(),
+                'countyMap' => $countyRows->mapWithKeys(fn($r) => [$r->c => (int) round(((int) $r->rev) / 100)])->all(),
                 'funnel' => [
                     'labels' => ['Requested', 'Sent', 'Approved', 'Ordered', 'Paid'],
-                    'data' => [
-                        (clone $q)->count(),
-                        (clone $q)->where('status', '!=', QuoteStatus::DRAFT->value)->count(),
-                        (clone $q)->where('status', QuoteStatus::APPROVED->value)->count(),
-                        (clone $q)->whereNotNull('order_id')->count(),
-                        (clone $q)->whereNotNull('order_id')
-                            ->whereHas('order', fn ($o) => $o->whereHas('payments', fn ($p) => $p->where('status', PaymentStatus::SUCCESS->value)))->count(),
-                    ],
+                    'data' => [(clone $q)->count(), (clone $q)->where('status', '!=', QuoteStatus::DRAFT->value)->count(), (clone $q)->where('status', QuoteStatus::APPROVED->value)->count(), (clone $q)->whereNotNull('order_id')->count(), (clone $q)->whereNotNull('order_id')->whereHas('order', fn($o) => $o->whereHas('payments', fn($p) => $p->where('status', PaymentStatus::SUCCESS->value)))->count()],
                 ],
                 'satisfaction' => [
                     'total' => $reviewTotal,
@@ -252,10 +251,16 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             return $this->hourlyRevenueSeries($from, $to);
         }
 
-        $revRows = Order::whereIn('status', self::PAID_STATUSES)->whereBetween('created_at', [$from, $to])
-            ->selectRaw('DATE(created_at) as d, COALESCE(SUM(total_cents), 0) as rev')->groupBy('d')->pluck('rev', 'd');
-        $ordRows = Order::whereBetween('created_at', [$from, $to])->where('status', '!=', OrderStatus::CANCELLED->value)
-            ->selectRaw('DATE(created_at) as d, COUNT(*) as c')->groupBy('d')->pluck('c', 'd');
+        $revRows = Order::whereIn('status', self::PAID_STATUSES)
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw('DATE(created_at) as d, COALESCE(SUM(total_cents), 0) as rev')
+            ->groupBy('d')
+            ->pluck('rev', 'd');
+        $ordRows = Order::whereBetween('created_at', [$from, $to])
+            ->where('status', '!=', OrderStatus::CANCELLED->value)
+            ->selectRaw('DATE(created_at) as d, COUNT(*) as c')
+            ->groupBy('d')
+            ->pluck('c', 'd');
 
         $granularity = $days <= 31 ? 'day' : ($days <= 92 ? 'week' : 'month');
 
@@ -289,9 +294,9 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
         $rows = array_values($buckets);
 
         return [
-            'labels' => array_map(fn ($b) => $b['label'], $rows),
-            'revenue' => array_map(fn ($b) => (int) round($b['rev'] / 100), $rows),
-            'orders' => array_map(fn ($b) => $b['ord'], $rows),
+            'labels' => array_map(fn($b) => $b['label'], $rows),
+            'revenue' => array_map(fn($b) => (int) round($b['rev'] / 100), $rows),
+            'orders' => array_map(fn($b) => $b['ord'], $rows),
         ];
     }
 
@@ -303,13 +308,15 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
         $rev = array_fill(0, 24, 0);
         $ord = array_fill(0, 24, 0);
 
-        Order::whereIn('status', self::PAID_STATUSES)->whereBetween('created_at', [$from, $to])
+        Order::whereIn('status', self::PAID_STATUSES)
+            ->whereBetween('created_at', [$from, $to])
             ->get(['total_cents', 'created_at'])
             ->each(function ($o) use (&$rev): void {
                 $rev[(int) $o->created_at->format('G')] += (int) $o->total_cents;
             });
 
-        Order::whereBetween('created_at', [$from, $to])->where('status', '!=', OrderStatus::CANCELLED->value)
+        Order::whereBetween('created_at', [$from, $to])
+            ->where('status', '!=', OrderStatus::CANCELLED->value)
             ->get(['created_at'])
             ->each(function ($o) use (&$ord): void {
                 $ord[(int) $o->created_at->format('G')] += 1;
@@ -322,7 +329,7 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
 
         return [
             'labels' => $labels,
-            'revenue' => array_map(fn ($c) => (int) round($c / 100), array_values($rev)),
+            'revenue' => array_map(fn($c) => (int) round($c / 100), array_values($rev)),
             'orders' => array_values($ord),
         ];
     }
@@ -336,15 +343,21 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
     #[Computed]
     public function recentActivity()
     {
-        return Activity::with(['causer', 'subject'])->latest()->limit(6)->get();
+        return Activity::with(['causer', 'subject'])
+            ->latest()
+            ->limit(6)
+            ->get();
     }
 
     #[Computed]
     public function stockReport()
     {
-        return Product::whereNotNull('stock_quantity')->whereNotNull('low_stock_threshold')
+        return Product::whereNotNull('stock_quantity')
+            ->whereNotNull('low_stock_threshold')
             ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
-            ->orderBy('stock_quantity')->limit(6)->get(['id', 'name', 'sku', 'stock_quantity']);
+            ->orderBy('stock_quantity')
+            ->limit(6)
+            ->get(['id', 'name', 'sku', 'stock_quantity']);
     }
 
     #[Computed]
@@ -355,17 +368,25 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
         $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->whereIn('orders.status', self::PAID_STATUSES)->whereBetween('orders.created_at', [$from, $to])
+            ->whereIn('orders.status', self::PAID_STATUSES)
+            ->whereBetween('orders.created_at', [$from, $to])
             ->selectRaw('products.name as name, SUM(order_items.quantity) as units')
-            ->groupBy('products.id', 'products.name')->orderByDesc('units')->limit(6)->get();
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('units')
+            ->limit(6)
+            ->get();
 
         $max = (int) ($rows->first()->units ?? 1);
 
-        return $rows->map(fn ($r) => [
-            'name' => $r->name ?? '—',
-            'units' => (int) $r->units,
-            'pct' => $max > 0 ? (int) round(($r->units / $max) * 100) : 0,
-        ])->all();
+        return $rows
+            ->map(
+                fn($r) => [
+                    'name' => $r->name ?? '—',
+                    'units' => (int) $r->units,
+                    'pct' => $max > 0 ? (int) round(($r->units / $max) * 100) : 0,
+                ],
+            )
+            ->all();
     }
 
     private function channelLabel(?string $channel): string
@@ -449,7 +470,7 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 default => 'Review updated',
             },
             'user' => $created ? 'Customer registered' : 'Customer updated',
-            default => ucfirst($a->log_name).' '.$a->description,
+            default => ucfirst($a->log_name) . ' ' . $a->description,
         };
     }
 
@@ -474,14 +495,17 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
         $subject = $a->subject;
 
         $ref = match ($a->subject_type) {
-            Order::class => $subject?->order_number ? 'Order '.$subject->order_number : null,
-            Quote::class => $subject?->quote_number ? 'Quote '.$subject->quote_number : null,
-            Payment::class => $subject?->account_reference ? 'Order '.$subject->account_reference : null,
+            Order::class => $subject?->order_number ? 'Order ' . $subject->order_number : null,
+            Quote::class => $subject?->quote_number ? 'Quote ' . $subject->quote_number : null,
+            Payment::class => $subject?->account_reference ? 'Order ' . $subject->account_reference : null,
             User::class => $subject?->email,
             default => null,
         };
 
-        return collect([$ref, $a->causer?->name])->filter()->implode(' · ') ?: null;
+        return collect([$ref, $a->causer?->name])
+            ->filter()
+            ->implode(' · ') ?:
+            null;
     }
 }; ?>
 
@@ -491,23 +515,29 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>.leaflet-container { background: transparent; font: inherit; }</style>
+    <style>
+        .leaflet-container {
+            background: transparent;
+            font: inherit;
+        }
+    </style>
 @endassets
 
 @php $m = $this->metrics(); @endphp
 
-<div class="flex flex-col gap-4" x-data="dashboardCharts(@js($this->chartData()))"
-    @dashboard-updated.window="update($event.detail.charts)">
+<div class="flex flex-col gap-4" x-data="dashboardCharts(@js($this->chartData()))" @dashboard-updated.window="update($event.detail.charts)">
 
     {{-- Header + date range --}}
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-            <flux:heading size="xl">{{ $this->greeting() }}, {{ str(auth()->user()->name)->before(' ') }} 👋</flux:heading>
+            <flux:heading size="xl">{{ $this->greeting() }}, {{ str(auth()->user()->name)->before(' ') }} 👋
+            </flux:heading>
             <flux:subheading>Here's your store overview · {{ $this->periodLabel() }}</flux:subheading>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <div class="relative" wire:ignore x-data="rangePicker(@js($dateFrom), @js($dateTo))">
-                <flux:icon.calendar-days class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-zinc-400" />
+                <flux:icon.calendar-days
+                    class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-zinc-400" />
                 <input x-ref="input" type="text" readonly placeholder="Custom range"
                     class="w-56 cursor-pointer rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-8 text-sm text-zinc-700 transition-colors hover:border-zinc-400 focus:ring-2 focus:ring-zinc-300 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" />
             </div>
@@ -516,15 +546,13 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
 
     {{-- KPI cards --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <x-admin.dashboard.stat label="Revenue" :value="money($m['revenue_cents'])" icon="banknotes" tone="emerald"
-            :trend="$m['revenue_trend']" />
-        <x-admin.dashboard.stat label="Orders" :value="number_format($m['orders'])" icon="shopping-bag" tone="blue"
-            :trend="$m['orders_trend']" hint="{{ $m['paid_orders'] }} paid · AOV {{ money($m['aov_cents']) }}" />
-        <x-admin.dashboard.stat label="Customers" :value="number_format($m['customers_total'])" icon="users" tone="violet"
-            :trend="$m['customers_trend']" hint="{{ $m['customers_new'] }} new · {{ $m['customers_returning'] }} returning" />
-        <x-admin.dashboard.stat label="Active products" :value="number_format($m['products_active'])" icon="cube"
-            :tone="$m['low_stock'] + $m['out_of_stock'] > 0 ? 'amber' : 'teal'"
-            hint="{{ $m['low_stock'] + $m['out_of_stock'] > 0 ? ($m['low_stock'] + $m['out_of_stock']).' need attention' : 'all stocked' }}" />
+        <x-admin.dashboard.stat label="Revenue" :value="money($m['revenue_cents'])" icon="banknotes" tone="emerald" :trend="$m['revenue_trend']" />
+        <x-admin.dashboard.stat label="Orders" :value="number_format($m['orders'])" icon="shopping-bag" tone="blue" :trend="$m['orders_trend']"
+            hint="{{ $m['paid_orders'] }} paid · AOV {{ money($m['aov_cents']) }}" />
+        <x-admin.dashboard.stat label="Customers" :value="number_format($m['customers_total'])" icon="users" tone="violet" :trend="$m['customers_trend']"
+            hint="{{ $m['customers_new'] }} new · {{ $m['customers_returning'] }} returning" />
+        <x-admin.dashboard.stat label="Active products" :value="number_format($m['products_active'])" icon="cube" :tone="$m['low_stock'] + $m['out_of_stock'] > 0 ? 'amber' : 'teal'"
+            hint="{{ $m['low_stock'] + $m['out_of_stock'] > 0 ? $m['low_stock'] + $m['out_of_stock'] . ' need attention' : 'all stocked' }}" />
     </div>
 
     {{-- Attention strip --}}
@@ -534,24 +562,30 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 <a href="{{ route('admin.orders.index') }}" wire:navigate
                     class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
                     <flux:icon.clock class="size-5 text-amber-600" />
-                    <div class="text-sm"><span class="font-semibold text-amber-800 dark:text-amber-300">{{ $m['pending_orders'] }}</span>
-                        <span class="text-amber-700 dark:text-amber-400"> pending order(s)</span></div>
+                    <div class="text-sm"><span
+                            class="font-semibold text-amber-800 dark:text-amber-300">{{ $m['pending_orders'] }}</span>
+                        <span class="text-amber-700 dark:text-amber-400"> pending order(s)</span>
+                    </div>
                 </a>
             @endif
             @if ($m['quotes_awaiting'] > 0)
                 <a href="{{ route('admin.quotes.index') }}" wire:navigate
                     class="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
                     <flux:icon.document-text class="size-5 text-blue-600" />
-                    <div class="text-sm"><span class="font-semibold text-blue-800 dark:text-blue-300">{{ $m['quotes_awaiting'] }}</span>
-                        <span class="text-blue-700 dark:text-blue-400"> quote(s) awaiting approval</span></div>
+                    <div class="text-sm"><span
+                            class="font-semibold text-blue-800 dark:text-blue-300">{{ $m['quotes_awaiting'] }}</span>
+                        <span class="text-blue-700 dark:text-blue-400"> quote(s) awaiting approval</span>
+                    </div>
                 </a>
             @endif
             @if ($m['sap_failed'] > 0)
-                <a href="{{ route('admin.orders.index') }}" wire:navigate
+                <a href="{{ route('admin.sap-sync') }}" wire:navigate
                     class="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
                     <flux:icon.exclamation-triangle class="size-5 text-red-600" />
-                    <div class="text-sm"><span class="font-semibold text-red-800 dark:text-red-300">{{ $m['sap_failed'] }}</span>
-                        <span class="text-red-700 dark:text-red-400"> SAP sync failure(s)</span></div>
+                    <div class="text-sm"><span
+                            class="font-semibold text-red-800 dark:text-red-300">{{ $m['sap_failed'] }}</span>
+                        <span class="text-red-700 dark:text-red-400"> SAP sync failure(s)</span>
+                    </div>
                 </a>
             @endif
         </div>
@@ -562,23 +596,31 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
         <flux:card class="p-0 overflow-hidden lg:col-span-2">
             <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
                 <flux:heading size="sm" class="uppercase tracking-wide">Revenue & orders</flux:heading>
-                <div class="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800" x-data="{ t: 'area' }">
+                <div class="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800"
+                    x-data="{ t: 'area' }">
                     <button type="button" @click="t = 'area'; toggleRevenue('area')" title="Area"
                         :class="t === 'area' ? 'bg-white shadow-sm dark:bg-zinc-700' : 'text-zinc-400'"
-                        class="rounded-md p-1.5 transition-colors"><flux:icon.presentation-chart-line class="size-4" /></button>
+                        class="rounded-md p-1.5 transition-colors"><flux:icon.presentation-chart-line
+                            class="size-4" /></button>
                     <button type="button" @click="t = 'bar'; toggleRevenue('bar')" title="Bar"
                         :class="t === 'bar' ? 'bg-white shadow-sm dark:bg-zinc-700' : 'text-zinc-400'"
                         class="rounded-md p-1.5 transition-colors"><flux:icon.chart-bar class="size-4" /></button>
                 </div>
             </div>
-            <div class="p-4"><div wire:ignore x-ref="revenue"></div></div>
+            <div class="p-4">
+                <div wire:ignore x-ref="revenue"></div>
+            </div>
         </flux:card>
 
         <flux:card class="p-0 overflow-hidden">
             <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
-                <flux:heading size="sm" class="uppercase tracking-wide">Quotes → orders</flux:heading>
+                <flux:heading size="sm" class="flex items-center gap-1.5 uppercase tracking-wide">
+                    Quotes <flux:icon.arrow-right variant="micro" class="size-3.5 text-zinc-400" /> orders
+                </flux:heading>
             </div>
-            <div class="p-4"><div wire:ignore x-ref="funnel"></div></div>
+            <div class="p-4">
+                <div wire:ignore x-ref="funnel"></div>
+            </div>
         </flux:card>
     </div>
 
@@ -601,16 +643,20 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             <div class="flex flex-col gap-4 p-5">
                 @forelse ($this->recentActivity as $a)
                     <div class="flex gap-3">
-                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full {{ $activityTones[$this->activityTone($a)] ?? $activityTones['zinc'] }}">
+                        <div
+                            class="flex size-7 shrink-0 items-center justify-center rounded-full {{ $activityTones[$this->activityTone($a)] ?? $activityTones['zinc'] }}">
                             <flux:icon :name="$this->activityIcon($a->log_name)" class="size-3.5" />
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-start justify-between gap-2">
-                                <p class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{{ $this->activityLabel($a) }}</p>
-                                <time class="shrink-0 text-[10px] text-zinc-400">{{ $a->created_at->diffForHumans() }}</time>
+                                <p class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                                    {{ $this->activityLabel($a) }}</p>
+                                <time
+                                    class="shrink-0 text-[10px] text-zinc-400">{{ $a->created_at->diffForHumans() }}</time>
                             </div>
                             @if ($this->activityTarget($a))
-                                <p class="mt-0.5 truncate text-[11px] text-zinc-400">{{ $this->activityTarget($a) }}</p>
+                                <p class="mt-0.5 truncate text-[11px] text-zinc-400">{{ $this->activityTarget($a) }}
+                                </p>
                             @endif
                         </div>
                     </div>
@@ -633,16 +679,23 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                                 <td class="px-6 py-3">
                                     <a href="{{ route('admin.orders.show', $order) }}" wire:navigate
                                         class="font-medium text-blue-600 hover:underline dark:text-blue-400">{{ $order->order_number }}</a>
-                                    <div class="text-[11px] text-zinc-400">{{ $order->created_at->diffForHumans() }}</div>
+                                    <div class="text-[11px] text-zinc-400">{{ $order->created_at->diffForHumans() }}
+                                    </div>
                                 </td>
-                                <td class="px-3 py-3 text-zinc-700 dark:text-zinc-300">{{ $order->user?->name ?? '—' }}</td>
-                                <td class="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">{!! money($order->total_cents) !!}</td>
+                                <td class="px-3 py-3 text-zinc-700 dark:text-zinc-300">
+                                    {{ $order->user?->name ?? '—' }}</td>
+                                <td
+                                    class="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                                    {!! money($order->total_cents) !!}</td>
                                 <td class="px-6 py-3 text-right">
-                                    <flux:badge size="sm" :color="$order->status->badgeColor()">{{ $order->status->label() }}</flux:badge>
+                                    <flux:badge size="sm" :color="$order->status->badgeColor()">
+                                        {{ $order->status->label() }}</flux:badge>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td class="px-6 py-10 text-center text-zinc-400">No orders yet</td></tr>
+                            <tr>
+                                <td class="px-6 py-10 text-center text-zinc-400">No orders yet</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -662,16 +715,22 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                         @forelse ($this->stockReport as $product)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                                <td class="px-6 py-3 text-zinc-800 dark:text-zinc-200">{{ Str::limit($product->name, 45) }}</td>
+                                <td class="px-6 py-3 text-zinc-800 dark:text-zinc-200">
+                                    {{ Str::limit($product->name, 45) }}</td>
                                 <td class="px-3 py-3 font-mono text-xs text-zinc-400">{{ $product->sku ?? '—' }}</td>
                                 <td class="px-3 py-3">
-                                    <flux:badge size="sm" :color="$product->stock_quantity === 0 ? 'red' : 'amber'">
+                                    <flux:badge size="sm"
+                                        :color="$product->stock_quantity === 0 ? 'red' : 'amber'">
                                         {{ $product->stock_quantity === 0 ? 'Out of stock' : 'Low' }}</flux:badge>
                                 </td>
-                                <td class="px-6 py-3 text-right font-semibold tabular-nums">{{ $product->stock_quantity }}</td>
+                                <td class="px-6 py-3 text-right font-semibold tabular-nums">
+                                    {{ $product->stock_quantity }}</td>
                             </tr>
                         @empty
-                            <tr><td class="px-6 py-10 text-center text-zinc-400">All stock above the low-stock threshold.</td></tr>
+                            <tr>
+                                <td class="px-6 py-10 text-center text-zinc-400">All stock above the low-stock
+                                    threshold.</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -686,8 +745,10 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 @forelse ($this->topProducts as $i => $item)
                     <div class="flex flex-col gap-1">
                         <div class="flex items-center justify-between gap-2 text-xs">
-                            <span class="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">{{ Str::limit($item['name'], 24) }}</span>
-                            <span class="shrink-0 font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{{ $item['units'] }}</span>
+                            <span
+                                class="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">{{ Str::limit($item['name'], 24) }}</span>
+                            <span
+                                class="shrink-0 font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{{ $item['units'] }}</span>
                         </div>
                         <div class="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                             <div class="h-full rounded-full bg-brand-500" style="width: {{ $item['pct'] }}%"></div>
@@ -707,14 +768,18 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
                     <flux:heading size="sm" class="uppercase tracking-wide">{{ $title }}</flux:heading>
                 </div>
-                <div class="p-4"><div wire:ignore x-ref="{{ $ref }}"></div></div>
+                <div class="p-4">
+                    <div wire:ignore x-ref="{{ $ref }}"></div>
+                </div>
             </flux:card>
         @endforeach
         <flux:card class="p-0 overflow-hidden">
             <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
                 <flux:heading size="sm" class="uppercase tracking-wide">Sales by county</flux:heading>
             </div>
-            <div class="p-4"><div wire:ignore x-ref="countyMap" class="h-[300px] w-full rounded-md"></div></div>
+            <div class="p-4">
+                <div wire:ignore x-ref="countyMap" class="h-[300px] w-full rounded-md"></div>
+            </div>
         </flux:card>
     </div>
 
@@ -729,8 +794,10 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                     <div wire:ignore x-ref="satisfaction" class="w-full"></div>
                     <div class="pointer-events-none absolute flex flex-col items-center">
                         @if ($this->chartData()['satisfaction']['average'])
-                            <span class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $this->chartData()['satisfaction']['average'] }}</span>
-                            <span class="text-[10px] text-zinc-400">of 5 · {{ $this->chartData()['satisfaction']['total'] }} reviews</span>
+                            <span
+                                class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $this->chartData()['satisfaction']['average'] }}</span>
+                            <span class="text-[10px] text-zinc-400">of 5 ·
+                                {{ $this->chartData()['satisfaction']['total'] }} reviews</span>
                         @else
                             <span class="text-xs text-zinc-400">No reviews</span>
                         @endif
@@ -741,9 +808,12 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
 
         <flux:card class="p-0 overflow-hidden lg:col-span-2">
             <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
-                <flux:heading size="sm" class="uppercase tracking-wide">Top categories (units sold)</flux:heading>
+                <flux:heading size="sm" class="uppercase tracking-wide">Top categories (units sold)
+                </flux:heading>
             </div>
-            <div class="p-4"><div wire:ignore x-ref="categories"></div></div>
+            <div class="p-4">
+                <div wire:ignore x-ref="categories"></div>
+            </div>
         </flux:card>
     </div>
 </div>
@@ -800,67 +870,164 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             palette: ['#0d9488', '#2563eb', '#f59e0b', '#7c3aed', '#64748b', '#dc2626'],
 
             revenueSeries(d) {
-                return [
-                    { name: 'Revenue', type: this._revType || 'area', data: d.revenue.revenue },
-                    { name: 'Orders', type: 'area', data: d.revenue.orders },
+                return [{
+                        name: 'Revenue',
+                        type: this._revType || 'area',
+                        data: d.revenue.revenue
+                    },
+                    {
+                        name: 'Orders',
+                        type: 'area',
+                        data: d.revenue.orders
+                    },
                 ];
             },
 
             revenueFill() {
                 // Solid fill for bars; soft gradient for the area view.
-                return this._revType === 'bar'
-                    ? { type: 'solid', opacity: [0.9, 0.2] }
-                    : { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } };
+                return this._revType === 'bar' ?
+                    {
+                        type: 'solid',
+                        opacity: [0.9, 0.2]
+                    } :
+                    {
+                        type: 'gradient',
+                        gradient: {
+                            opacityFrom: 0.35,
+                            opacityTo: 0.05
+                        }
+                    };
             },
 
             revenueStroke() {
                 // No outline on bars; a 2px line keeps the area/line readable.
-                return { curve: 'smooth', width: this._revType === 'bar' ? [0, 2] : 2 };
+                return {
+                    curve: 'smooth',
+                    width: this._revType === 'bar' ? [0, 2] : 2
+                };
             },
 
             revenueOptions(d) {
                 return {
-                    chart: { type: 'area', height: 320, fontFamily: 'inherit', toolbar: { show: false } },
+                    chart: {
+                        type: 'area',
+                        height: 320,
+                        fontFamily: 'inherit',
+                        toolbar: {
+                            show: false
+                        }
+                    },
                     series: this.revenueSeries(d),
                     colors: ['#0d9488', '#7c3aed'],
-                    plotOptions: { bar: { columnWidth: '55%', borderRadius: 3 } },
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '55%',
+                            borderRadius: 3
+                        }
+                    },
                     stroke: this.revenueStroke(),
                     fill: this.revenueFill(),
-                    dataLabels: { enabled: false },
-                    xaxis: { categories: d.revenue.labels, tickAmount: 8, labels: { rotate: 0, hideOverlappingLabels: true } },
-                    yaxis: [
-                        { seriesName: 'Revenue', labels: { formatter: (v) => this.money(Math.round(v)) } },
-                        { seriesName: 'Orders', opposite: true, labels: { formatter: (v) => Math.round(v) } },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    xaxis: {
+                        categories: d.revenue.labels,
+                        tickAmount: 8,
+                        labels: {
+                            rotate: 0,
+                            hideOverlappingLabels: true
+                        }
+                    },
+                    yaxis: [{
+                            seriesName: 'Revenue',
+                            labels: {
+                                formatter: (v) => this.money(Math.round(v))
+                            }
+                        },
+                        {
+                            seriesName: 'Orders',
+                            opposite: true,
+                            labels: {
+                                formatter: (v) => Math.round(v)
+                            }
+                        },
                     ],
-                    tooltip: { y: { formatter: (v, o) => o.seriesIndex === 0 ? this.money(v) : v } },
-                    legend: { position: 'top', horizontalAlign: 'right' },
+                    tooltip: {
+                        y: {
+                            formatter: (v, o) => o.seriesIndex === 0 ? this.money(v) : v
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'right'
+                    },
                 };
             },
 
             donut(refName, d, money = false) {
                 this.charts[refName] = new ApexCharts(this.$refs[refName], {
-                    chart: { type: 'donut', height: 300, fontFamily: 'inherit' },
+                    chart: {
+                        type: 'donut',
+                        height: 300,
+                        fontFamily: 'inherit'
+                    },
                     series: d.data,
                     labels: d.labels,
                     colors: this.palette,
-                    legend: { position: 'bottom' },
-                    dataLabels: { enabled: true },
-                    tooltip: money ? { y: { formatter: (v) => this.money(v) } } : {},
-                    noData: { text: 'No data in this period' },
+                    legend: {
+                        position: 'bottom'
+                    },
+                    dataLabels: {
+                        enabled: true
+                    },
+                    tooltip: money ? {
+                        y: {
+                            formatter: (v) => this.money(v)
+                        }
+                    } : {},
+                    noData: {
+                        text: 'No data in this period'
+                    },
                 });
                 this.charts[refName].render();
             },
 
             bar(refName, d, money = false) {
                 this.charts[refName] = new ApexCharts(this.$refs[refName], {
-                    chart: { type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false } },
-                    series: [{ name: money ? 'Revenue' : 'Units', data: d.data }],
-                    plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%' } },
+                    chart: {
+                        type: 'bar',
+                        height: 300,
+                        fontFamily: 'inherit',
+                        toolbar: {
+                            show: false
+                        }
+                    },
+                    series: [{
+                        name: money ? 'Revenue' : 'Units',
+                        data: d.data
+                    }],
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            borderRadius: 4,
+                            barHeight: '60%'
+                        }
+                    },
                     colors: ['#2563eb'],
-                    xaxis: { categories: d.labels },
-                    dataLabels: { enabled: false },
-                    tooltip: money ? { y: { formatter: (v) => this.money(v) } } : {},
-                    noData: { text: 'No data in this period' },
+                    xaxis: {
+                        categories: d.labels
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    tooltip: money ? {
+                        y: {
+                            formatter: (v) => this.money(v)
+                        }
+                    } : {},
+                    noData: {
+                        text: 'No data in this period'
+                    },
                 });
                 this.charts[refName].render();
             },
@@ -873,13 +1040,37 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 this.charts.revenue.render();
 
                 this.charts.funnel = new ApexCharts(this.$refs.funnel, {
-                    chart: { type: 'bar', height: 320, fontFamily: 'inherit', toolbar: { show: false } },
-                    series: [{ name: 'Count', data: d.funnel.data }],
-                    plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '70%', isFunnel: true } },
+                    chart: {
+                        type: 'bar',
+                        height: 320,
+                        fontFamily: 'inherit',
+                        toolbar: {
+                            show: false
+                        }
+                    },
+                    series: [{
+                        name: 'Count',
+                        data: d.funnel.data
+                    }],
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            distributed: true,
+                            barHeight: '70%',
+                            isFunnel: true
+                        }
+                    },
                     colors: this.palette,
-                    xaxis: { categories: d.funnel.labels },
-                    legend: { show: false },
-                    dataLabels: { enabled: true, formatter: (val, o) => o.w.globals.labels[o.dataPointIndex] + ': ' + val },
+                    xaxis: {
+                        categories: d.funnel.labels
+                    },
+                    legend: {
+                        show: false
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: (val, o) => o.w.globals.labels[o.dataPointIndex] + ': ' + val
+                    },
                 });
                 this.charts.funnel.render();
 
@@ -889,14 +1080,32 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                 this.initCountyMap(d);
 
                 this.charts.satisfaction = new ApexCharts(this.$refs.satisfaction, {
-                    chart: { type: 'donut', height: 220, fontFamily: 'inherit' },
+                    chart: {
+                        type: 'donut',
+                        height: 220,
+                        fontFamily: 'inherit'
+                    },
                     series: d.satisfaction.total > 0 ? d.satisfaction.distribution : [1],
                     labels: ['5★', '4★', '3★', '2★', '1★'],
-                    colors: d.satisfaction.total > 0 ? ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#f43f5e'] : ['#e4e4e7'],
-                    plotOptions: { pie: { donut: { size: '72%' } } },
-                    legend: { position: 'bottom' },
-                    dataLabels: { enabled: false },
-                    tooltip: { enabled: d.satisfaction.total > 0 },
+                    colors: d.satisfaction.total > 0 ? ['#10b981', '#3b82f6', '#f59e0b', '#f97316',
+                        '#f43f5e'
+                    ] : ['#e4e4e7'],
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '72%'
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    tooltip: {
+                        enabled: d.satisfaction.total > 0
+                    },
                 });
                 this.charts.satisfaction.render();
             },
@@ -917,7 +1126,7 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             countyMax: 1,
 
             async initCountyMap(d) {
-                if (typeof L === 'undefined' || ! this.$refs.countyMap) {
+                if (typeof L === 'undefined' || !this.$refs.countyMap) {
                     return;
                 }
 
@@ -935,16 +1144,23 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
                     this.geoLayer = L.geoJSON(geo, {
                         style: (f) => this.countyStyle(f),
                         onEachFeature: (f, layer) => {
-                            layer.bindTooltip(this.countyTooltip(f.properties.shapeName), { sticky: true });
+                            layer.bindTooltip(this.countyTooltip(f.properties.shapeName), {
+                                sticky: true
+                            });
                             layer.on({
-                                mouseover: (e) => e.target.setStyle({ weight: 2, fillOpacity: 1 }),
+                                mouseover: (e) => e.target.setStyle({
+                                    weight: 2,
+                                    fillOpacity: 1
+                                }),
                                 mouseout: (e) => this.geoLayer.resetStyle(e.target),
                             });
                         },
                     }).addTo(this.lmap);
 
                     const bounds = this.geoLayer.getBounds();
-                    this.lmap.fitBounds(bounds, { padding: [8, 8] });
+                    this.lmap.fitBounds(bounds, {
+                        padding: [8, 8]
+                    });
                     // Keep panning/zooming anchored around Kenya.
                     this.lmap.setMaxBounds(bounds.pad(0.3));
                     this.lmap.setMinZoom(this.lmap.getZoom() - 1);
@@ -954,7 +1170,7 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             },
 
             countyColor(v) {
-                if (! v) return '#eef2f6';
+                if (!v) return '#eef2f6';
                 const t = v / this.countyMax;
                 if (t > 0.66) return '#0f766e';
                 if (t > 0.33) return '#14b8a6';
@@ -964,7 +1180,9 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             countyStyle(f) {
                 return {
                     fillColor: this.countyColor(this.countyData[f.properties.shapeName] || 0),
-                    weight: 1, color: '#ffffff', fillOpacity: 0.85,
+                    weight: 1,
+                    color: '#ffffff',
+                    fillOpacity: 0.85,
                 };
             },
 
@@ -973,23 +1191,48 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
             },
 
             updateMap(d) {
-                if (! this.geoLayer) return;
+                if (!this.geoLayer) return;
                 this.countyData = d.countyMap || {};
                 this.countyMax = Math.max(1, ...Object.values(this.countyData));
                 this.geoLayer.setStyle((f) => this.countyStyle(f));
-                this.geoLayer.eachLayer((l) => l.setTooltipContent(this.countyTooltip(l.feature.properties.shapeName)));
+                this.geoLayer.eachLayer((l) => l.setTooltipContent(this.countyTooltip(l.feature.properties
+                    .shapeName)));
             },
 
             update(d) {
                 this.revData = d;
                 this.charts.revenue?.updateOptions({
                     series: this.revenueSeries(d),
-                    xaxis: { categories: d.revenue.labels },
+                    xaxis: {
+                        categories: d.revenue.labels
+                    },
                 });
-                this.charts.funnel?.updateOptions({ series: [{ name: 'Count', data: d.funnel.data }], xaxis: { categories: d.funnel.labels } });
-                this.charts.channel?.updateOptions({ series: d.channel.data, labels: d.channel.labels });
-                this.charts.status?.updateOptions({ series: d.status.data, labels: d.status.labels });
-                this.charts.categories?.updateOptions({ series: [{ name: 'Units', data: d.categories.data }], xaxis: { categories: d.categories.labels } });
+                this.charts.funnel?.updateOptions({
+                    series: [{
+                        name: 'Count',
+                        data: d.funnel.data
+                    }],
+                    xaxis: {
+                        categories: d.funnel.labels
+                    }
+                });
+                this.charts.channel?.updateOptions({
+                    series: d.channel.data,
+                    labels: d.channel.labels
+                });
+                this.charts.status?.updateOptions({
+                    series: d.status.data,
+                    labels: d.status.labels
+                });
+                this.charts.categories?.updateOptions({
+                    series: [{
+                        name: 'Units',
+                        data: d.categories.data
+                    }],
+                    xaxis: {
+                        categories: d.categories.labels
+                    }
+                });
                 this.updateMap(d);
             },
         }));

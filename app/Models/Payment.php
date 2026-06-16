@@ -55,36 +55,6 @@ class Payment extends Model
      */
     protected ?string $transientAccessCode = null;
 
-    /**
-     * Attach the (non-persisted) Stripe client secret for this request.
-     */
-    public function withStripeClientSecret(?string $secret): static
-    {
-        $this->transientClientSecret = $secret;
-
-        return $this;
-    }
-
-    public function getStripeClientSecretAttribute(): ?string
-    {
-        return $this->transientClientSecret;
-    }
-
-    /**
-     * Attach the (non-persisted) Paystack access code for this request.
-     */
-    public function withPaystackAccessCode(?string $accessCode): static
-    {
-        $this->transientAccessCode = $accessCode;
-
-        return $this;
-    }
-
-    public function getPaystackAccessCodeAttribute(): ?string
-    {
-        return $this->transientAccessCode;
-    }
-
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -101,14 +71,83 @@ class Payment extends Model
             'amount_cents' => 'integer',
             'refund_cents' => 'integer',
             'result_code' => 'integer',
-            'payload' => 'array',
+            // Encrypted at rest: the raw gateway payload holds PII (name, email,
+            // phone, IP, masked card) governed by Kenya's DPA 2019 (s.41).
+            'payload' => 'encrypted:array',
             'paid_at' => 'datetime',
             'refunded_at' => 'datetime',
         ];
     }
 
+    // ==================================================
+    // RELATIONSHIPS
+    // ==================================================
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    // ==================================================
+    // ACCESSORS
+    // ==================================================
+
+    public function getStripeClientSecretAttribute(): ?string
+    {
+        return $this->transientClientSecret;
+    }
+
+    public function getPaystackAccessCodeAttribute(): ?string
+    {
+        return $this->transientAccessCode;
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    /**
+     * Attach the (non-persisted) Stripe client secret for this request.
+     */
+    public function withStripeClientSecret(?string $secret): static
+    {
+        $this->transientClientSecret = $secret;
+
+        return $this;
+    }
+
+    /**
+     * Attach the (non-persisted) Paystack access code for this request.
+     */
+    public function withPaystackAccessCode(?string $accessCode): static
+    {
+        $this->transientAccessCode = $accessCode;
+
+        return $this;
+    }
+
+    /**
+     * Human-friendly payment method actually used. Paystack and Stripe are only
+     * gateways, so the meaningful method is the settlement channel the customer
+     * paid through — card, M-Pesa / mobile money, bank transfer… — captured on
+     * the verified transaction. Falls back to the provider when no channel was
+     * recorded (e.g. a direct Daraja M-Pesa payment).
+     */
+    public function methodLabel(): string
+    {
+        return match ($this->channel) {
+            'card' => 'Card',
+            'mobile_money', 'mpesa' => 'M-Pesa / Mobile money',
+            'airtel' => 'Airtel Money',
+            'bank', 'bank_transfer' => 'Bank transfer',
+            'ussd' => 'USSD',
+            'qr' => 'QR',
+            default => match ($this->provider) {
+                'mpesa' => 'M-Pesa',
+                'stripe' => 'Card',
+                'paystack' => 'Paystack',
+                default => ucwords(str_replace('_', ' ', (string) $this->provider)),
+            },
+        };
     }
 }

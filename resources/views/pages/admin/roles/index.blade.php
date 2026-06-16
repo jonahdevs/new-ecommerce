@@ -27,6 +27,15 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
     #[Url]
     public string $filterStatus = '';
 
+    // --- Ban user modal ---
+    public bool $showBanModal = false;
+
+    public ?int $banUserId = null;
+
+    public string $banUserName = '';
+
+    public string $banReason = '';
+
     public function updatedUserSearch(): void
     {
         $this->resetPage();
@@ -120,11 +129,25 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
         Flux::toast(heading: 'Access revoked', text: $user->name."'s access has been revoked.", variant: 'success');
     }
 
-    public function ban(int $id): void
+    public function openBanModal(int $id): void
     {
         $user = User::withBanned()->findOrFail($id);
-        $user->ban();
+        $this->banUserId = $user->id;
+        $this->banUserName = $user->name;
+        $this->banReason = '';
+        $this->showBanModal = true;
+    }
 
+    public function ban(): void
+    {
+        $this->validate([
+            'banReason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $user = User::withBanned()->findOrFail($this->banUserId);
+        $user->ban($this->banReason !== '' ? ['comment' => $this->banReason] : []);
+
+        $this->showBanModal = false;
         unset($this->users);
         Flux::toast(heading: 'User banned', text: $user->name.' has been banned.', variant: 'warning');
     }
@@ -202,7 +225,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
 
     {{-- Users --}}
     <flux:card class="mt-6 p-0 overflow-hidden">
-        <div class="flex items-center justify-between gap-4 px-6 py-4">
+        <div class="flex items-center justify-between gap-4 px-6 py-3">
             <flux:heading size="lg">Users</flux:heading>
             <flux:button size="sm" icon="user-plus" :href="route('admin.users.create')" wire:navigate>Add user</flux:button>
         </div>
@@ -251,7 +274,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                         <flux:table.cell class="text-zinc-400">#{{ $user->id }}</flux:table.cell>
                         <flux:table.cell>
                             <div class="flex items-center gap-3">
-                                <flux:avatar :name="$user->name" :initials="$user->initials()" size="sm" />
+                                <flux:avatar :name="$user->name" :initials="$user->initials()" size="sm" circle />
                                 <span class="font-medium dark:text-white">
                                     {{ $user->name }}
                                     @if ($user->id === auth()->id())
@@ -292,8 +315,7 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
                                                 wire:confirm="Lift the ban for '{{ addslashes($user->name) }}'?">Lift ban</flux:menu.item>
                                         @else
                                             <flux:menu.item icon="no-symbol" variant="danger"
-                                                wire:click="ban({{ $user->id }})"
-                                                wire:confirm="Ban '{{ addslashes($user->name) }}'? They will lose access immediately.">Ban</flux:menu.item>
+                                                wire:click="openBanModal({{ $user->id }})">Ban</flux:menu.item>
                                         @endif
                                         <flux:menu.separator />
                                         <flux:menu.item icon="user-minus" variant="danger"
@@ -320,5 +342,25 @@ new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Componen
             @endif
         </div>
     </flux:card>
+
+    {{-- Ban user modal --}}
+    <flux:modal wire:model.self="showBanModal" class="md:w-[440px]">
+        <form wire:submit="ban" class="space-y-5">
+            <div>
+                <flux:heading size="lg" class="uppercase tracking-wide">Ban user</flux:heading>
+                <flux:subheading>
+                    {{ $banUserName }} will lose access immediately. Add an optional reason for the record.
+                </flux:subheading>
+            </div>
+
+            <flux:textarea wire:model="banReason" label="Reason (optional)" rows="3"
+                placeholder="e.g. Repeated policy violations" />
+
+            <div class="flex justify-end gap-3">
+                <flux:button type="button" variant="ghost" wire:click="$set('showBanModal', false)">Cancel</flux:button>
+                <flux:button type="submit" variant="danger" icon="no-symbol">Ban user</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
 </div>

@@ -31,6 +31,7 @@ class AdminSettingsNav
                 'inventory' => ['label' => 'Inventory', 'icon' => 'archive-box'],
                 'reviews' => ['label' => 'Reviews', 'icon' => 'star'],
                 'checkout' => ['label' => 'Checkout & cart', 'icon' => 'shopping-cart'],
+                'cart-reminders' => ['label' => 'Cart reminders', 'icon' => 'bell-alert'],
                 'quotations' => ['label' => 'Quotations', 'icon' => 'document-text'],
                 'shipping' => ['label' => 'Shipping & delivery', 'icon' => 'truck'],
                 'notifications' => ['label' => 'Notifications', 'icon' => 'bell'],

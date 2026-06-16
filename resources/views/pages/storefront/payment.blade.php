@@ -1,13 +1,9 @@
 <?php
 
+use App\Livewire\Concerns\InteractsWithPaystack;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Services\Paystack\PaystackPaymentService;
-use App\Services\PaymentCredentials;
-use App\Settings\PaymentSettings;
-use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\SEOMeta;
-use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,6 +11,8 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component {
+    use InteractsWithPaystack;
+
     public Order $order;
 
     public bool $paystackReady = false;
@@ -34,10 +32,8 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
         $order->load(['items.product', 'items.product.images' => fn($q) => $q->where('is_cover', true)->limit(1)]);
         $this->order = $order;
 
-        // Paystack is ready when the gateway is enabled and its keys are set.
-        // The popup then offers whatever channels the account has activated.
-        $this->paystackReady = app(PaymentSettings::class)->paystack_enabled
-            && app(PaymentCredentials::class)->paystackSecretKey() !== '';
+        // The popup offers whatever channels the merchant has activated.
+        $this->paystackReady = $this->paystackEnabled();
     }
 
     /**
@@ -57,52 +53,20 @@ new #[Layout('layouts::storefront')] #[Title('Payment')] class extends Component
     }
 
     /**
-     * Initialize a Paystack transaction server-side, then hand the access code
-     * to the browser so the inline popup can resume it. The popup presents every
-     * channel the merchant has enabled on their Paystack account.
+     * Start the Paystack transaction and open the inline popup. Distinct
+     * messages tell the customer whether the gateway is off or the init failed.
      */
     public function pay(): void
     {
-        if (! $this->paystackReady) {
+        if (! $this->paystackEnabled()) {
             $this->addError('payment', 'Online payment is currently unavailable. Please contact us to complete your order.');
 
             return;
         }
 
-        try {
-            $payment = app(PaystackPaymentService::class)->initialize($this->order);
-        } catch (\Throwable $e) {
-            report($e);
+        if (! $this->openPaystack($this->order)) {
             $this->addError('payment', 'We could not start the payment. Please try again.');
-
-            return;
         }
-
-        $this->order->update(['payment_method' => 'paystack']);
-
-        $this->dispatch('paystack-open', accessCode: $payment->paystack_access_code);
-    }
-
-    /**
-     * Called from JS once the Paystack popup reports success. Verifies the
-     * transaction server-side (the authoritative check) before advancing.
-     */
-    public function verifyPayment(string $reference): void
-    {
-        $payment = app(PaystackPaymentService::class)->verify($reference);
-
-        if (! $payment) {
-            $this->addError('payment', 'Payment could not be confirmed. If you were charged, please contact support.');
-
-            return;
-        }
-
-        StorefrontSession::clearCart();
-        $this->dispatch('cart-updated');
-
-        Flux::toast(heading: 'Payment confirmed', text: 'Order ' . $payment->account_reference . ' is being processed.', variant: 'success');
-
-        $this->redirectRoute('account.orders.show', $payment->order_id, navigate: true);
     }
 }; ?>
 

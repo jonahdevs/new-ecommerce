@@ -1,7 +1,9 @@
 <?php
 
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seed(PermissionSeeder::class);
@@ -19,4 +21,13 @@ it('filters permissions by group', function () {
         ->set('filterGroup', 'orders')
         ->assertSee('orders.view')
         ->assertDontSee('roles.manage');
+});
+
+it('shows the roles each permission is assigned to', function () {
+    $role = Role::firstWhere('name', 'admin');
+    $permission = $role->permissions->first();
+
+    Livewire::test('pages::admin.permissions.index')
+        ->set('search', $permission->name)
+        ->assertSee(Str::headline($role->name));
 });

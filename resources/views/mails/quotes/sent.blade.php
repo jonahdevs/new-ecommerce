@@ -107,7 +107,7 @@
               <tr>
                 <td style="padding-top: 24px; vertical-align: middle;">
                   <p style="margin: 0; font-size: 15px; font-weight: 700; color: #fffffe;">Hi {{ $customerName }},</p>
-                  <p class="text-white-70" style="margin: 4px 0 0; font-size: 13px; color: rgba(255, 255, 254, .7);">Quote {{ $quote->quote_number }} — ready for review.</p>
+                  <p class="text-white-70" style="margin: 4px 0 0; font-size: 13px; color: rgba(255, 255, 254, .7);">Your quotation is ready for review.</p>
                 </td>
                 <td style="padding-top: 24px; text-align: right; vertical-align: middle;">
                   <div class="bg-white-15" style="display: inline-block; height: 44px; width: 44px; border-radius: 9999px; background-color: rgba(255, 255, 254, .15); text-align: center; line-height: 44px;">
@@ -120,26 +120,23 @@
             <p class="text-white-80" style="margin: 0; font-size: 13.5px; line-height: 21px; color: rgba(255, 255, 254, .8);">Thank you for your interest — here's a summary of your formal quotation for review and approval.</p>
           </div>
           <!--[if mso]></td></tr></table><![endif]-->
-          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 28px 36px 4px"><![endif]-->
-          <div style="background-color: #fffffe; padding: 28px 36px 4px;">
-            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; table-layout: fixed;">
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe; padding: 24px 36px 0"><![endif]-->
+          <div style="background-color: #fffffe; padding: 24px 36px 0;">
+            @php $isPickup = ! $quote->delivery_required; @endphp
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
               <tr>
-                <td style="width:10.67%;"></td>
-                <td style="width: 12%; vertical-align: middle;"><div style="background-color: #2f4196; margin-left: auto; margin-right: auto; height: 36px; width: 36px; border-radius: 9999px; text-align: center; font-size: 14px; line-height: 20px; line-height: 36px; font-weight: 700; color: #fffffe;">✓</div></td>
-                <td style="width: 21.33%; vertical-align: middle;"><div style="background-color: #2f4196; height: 3px; width: 100%;"></div></td>
-                <td style="width: 12%; vertical-align: middle;"><div style="background-color: #2f4196; margin-left: auto; margin-right: auto; height: 36px; width: 36px; border-radius: 9999px; text-align: center; font-size: 14px; line-height: 20px; line-height: 36px; font-weight: 700; color: #fffffe;">✓</div></td>
-                <td style="width: 21.33%; vertical-align: middle;"><div style="height: 3px; width: 100%; background-color: #e2e8f0;"></div></td>
-                <td style="width: 12%; vertical-align: middle;">
-                  <div style="margin-left: auto; margin-right: auto; height: 36px; width: 36px; border-radius: 9999px; border: 1px solid #e2e8f0; background-color: #f8fafc; text-align: center; font-size: 14px; line-height: 20px; line-height: 36px; font-weight: 700; color: #94a3b8;">3</div>
+                <td style="vertical-align: middle;">
+                  <p style="margin: 0; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Quote reference</p>
+                  <p style="color: #c02434; margin: 4px 0 0; font-size: 18px; line-height: 28px; font-weight: 800;">{{ $quote->quote_number }}</p>
                 </td>
-                <td style="width:10.67%;"></td>
-              </tr>
-            </table>
-            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; table-layout: fixed;">
-              <tr>
-                <td style="width:33.333%;"><p style="color: #2f4196; margin: 8px 0 0; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .025em; text-transform: uppercase;">Requested</p></td>
-                <td style="width:33.333%;"><p style="color: #2f4196; margin: 8px 0 0; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .025em; text-transform: uppercase;">Quoted</p></td>
-                <td style="width:33.333%;"><p style="margin: 8px 0 0; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .025em; color: #94a3b8; text-transform: uppercase;">Accepted</p></td>
+                <td style="text-align: right; vertical-align: middle;">
+                  <p style="margin: 0; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Fulfilment</p>
+                  @if ($isPickup)
+                  <p style="margin: 4px 0 0; font-size: 13px; font-weight: 600; color: #334155;">🏭 In-store pickup</p>
+                  @else
+                  <p style="margin: 4px 0 0; font-size: 13px; font-weight: 600; color: #334155;">📦 Delivery requested</p>
+                  @endif
+                </td>
               </tr>
             </table>
           </div>
@@ -152,8 +149,8 @@
                 <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Qty</td>
                 <td style="border-bottom: 2px solid; border-color: #e2e8f0; padding-bottom: 8px; text-align: right; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Price</td>
               </tr>
-              @foreach ($quote->items as $item) @php $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null); $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null; $productSku = $item->product_sku ?? ''; $productSlug = $item->product_snapshot['slug'] ??
-              ($item->product?->slug ?? null); $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
+              @foreach ($quote->items as $item) @php $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null; $productSku = $item->product_sku ?? ''; $productSlug = $item->product_snapshot['slug'] ?? ($item->product?->slug ?? null);
+              $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
               <tr>
                 <td style="border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 12px; padding-bottom: 12px; padding-right: 12px; vertical-align: middle;">
                   <table cellpadding="0" cellspacing="0" role="presentation">
@@ -211,6 +208,11 @@
                       <td style="padding-top: 4px; padding-bottom: 4px; font-size: 13px; color: #64748b;">Shipping</td>
                       <td style="padding-top: 4px; padding-bottom: 4px; text-align: right; font-size: 13px; font-weight: 600; white-space: nowrap; color: #334155;">{{ money($quote->shipping_cents) }}</td>
                     </tr>
+                    @endif @if ($quote->vat_rate > 0 && $quote->vat_cents > 0)
+                    <tr>
+                      <td style="padding-top: 4px; padding-bottom: 4px; font-size: 13px; color: #64748b;">{{ $quote->tax_inclusive ? 'VAT included ('.$quote->vat_rate.'%)' : 'VAT ('.$quote->vat_rate.'%)' }}</td>
+                      <td style="padding-top: 4px; padding-bottom: 4px; text-align: right; font-size: 13px; font-weight: 600; white-space: nowrap; color: #334155;">{{ money($quote->vat_cents) }}</td>
+                    </tr>
                     @endif
                     <tr>
                       <td style="border-top: 2px solid; border-color: #e2e8f0; padding-top: 10px; font-size: 15px; font-weight: 800; color: #0f172a;">Total{{ $quote->currency ? ' ('.$quote->currency.')' : '' }}</td>
@@ -220,11 +222,30 @@
                 </td>
               </tr>
             </table>
-            @if ($quote->expires_at)
-            <p style="margin: 16px 0 0; text-align: center; font-size: 13px; color: #64748b;">
-              <span style="font-size: 11px; font-weight: 700; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Valid until</span>
-              <span style="font-weight: 700; color: #334155;">{{ $quote->expires_at->format('d M Y') }}</span>
-            </p>
+          </div>
+          <!--[if mso]></td></tr></table><![endif]-->
+          <!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 100%"><tr><td style="background-color: #fffffe"><![endif]-->
+          <div style="background-color: #fffffe;">
+            @if ($quote->terms)
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="padding-left: 36px; padding-right: 36px; padding-top: 24px;">
+                  <div style="font-size: 12px; line-height: 1.625; white-space: pre-line; color: #475569;">{{ $quote->terms }}</div>
+                </td>
+              </tr>
+            </table>
+            @endif @if ($quote->expires_at && ! $quote->expires_at->isPast())
+            <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
+              <tr>
+                <td style="padding-left: 36px; padding-right: 36px; padding-top: 16px;">
+                  <p style="margin: 0; font-size: 12px; line-height: 1.625; color: #64748b;">
+                    This quotation is valid until
+                    <span style="font-weight: 700; color: #334155;">{{ $quote->expires_at->format('d F Y') }}</span>
+                    . Prices and availability are subject to change after this date.
+                  </p>
+                </td>
+              </tr>
+            </table>
             @endif
           </div>
           <!--[if mso]></td></tr></table><![endif]-->

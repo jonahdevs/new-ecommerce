@@ -44,7 +44,7 @@ it('also alerts a super-admin who has no explicit permissions', function () {
     Notification::assertSentTo($superAdmin, NewOrderReceived::class);
 });
 
-it('routes staff order alerts to the central inbox when configured', function () {
+it('routes the staff order email to the central inbox but keeps in-app per staff', function () {
     app(NotificationSettings::class)->fill([
         'staff_email_routing' => 'central',
         'staff_central_email' => 'ops@example.com',
@@ -53,11 +53,19 @@ it('routes staff order alerts to the central inbox when configured', function ()
     $order = Order::factory()->create(['status' => OrderStatus::PENDING]);
     $order->markConfirmed();
 
+    // The email copy goes to the shared inbox only.
     Notification::assertSentOnDemand(
         NewOrderReceived::class,
-        fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'ops@example.com',
+        fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'ops@example.com'
+            && $channels === ['mail'],
     );
-    Notification::assertNotSentTo($this->staff, NewOrderReceived::class);
+
+    // Individual staff still get the in-app (database) copy, but no email.
+    Notification::assertSentTo(
+        $this->staff,
+        NewOrderReceived::class,
+        fn ($notification, $channels) => $channels === ['database'],
+    );
 });
 
 it('does not re-notify when confirming an order that is no longer pending', function () {

@@ -73,7 +73,7 @@
                     </a>
                     <a href="{{ route('account.quotes.index') }}" wire:navigate
                         class="flex items-center gap-3 px-4 py-2 text-[13.5px] text-ink hover:bg-surface-sunken">
-                        <flux:icon.scale variant="micro" class="size-4 text-ink-3" />
+                        <flux:icon.clipboard-document-list variant="micro" class="size-4 text-ink-3" />
                         My quotes
                     </a>
                 </div>

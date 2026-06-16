@@ -153,6 +153,24 @@ it('lets an admin issue a refund from the payment page', function () {
         ->and($payment->order->fresh()->status)->toBe(OrderStatus::REFUNDED);
 });
 
+it('normalises a currency-formatted refund amount from the masked input', function () {
+    Notification::fake();
+    actingAsAdmin();
+    $this->mock(StripePaymentService::class)->shouldReceive('refund')->once();
+
+    $payment = settledPayment('stripe', 500000);
+
+    // The mask shows thousand separators; the value submitted must still resolve
+    // to the correct cents amount (5,000.00 → 500,000 cents).
+    Livewire::test('pages::admin.payments.show', ['payment' => $payment])
+        ->set('refundAmount', '5,000.00')
+        ->call('refund')
+        ->assertHasNoErrors();
+
+    expect($payment->fresh()->refund_cents)->toBe(500000)
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::REFUNDED);
+});
+
 it('forbids a view-only staff member from issuing a refund', function () {
     $this->seed(PermissionSeeder::class);
     $viewer = User::factory()->create();

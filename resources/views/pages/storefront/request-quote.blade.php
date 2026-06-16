@@ -407,6 +407,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         'name' => $line['product']->name . ($line['label'] ? ' — ' . $line['label'] : ''),
                         'sku' => $line['variant']?->sku ?? $line['product']->sku,
                         'model_number' => $line['product']->model_number,
+                        'slug' => $line['product']->slug,
+                        'cover_url' => $line['product']->cover_url,
                     ],
                     'unit_price_cents' => 0,
                     'quantity' => $line['qty'],
@@ -424,7 +426,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         Notification::send(StaffRecipients::for('quotes.manage'), new NewQuoteRequested($quote));
         QuoteRequestSubmitted::dispatch($quote);
 
-        $this->reset(['items', 'notes', 'needs_delivery', 'delivery_address', 'contact_name', 'contact_email', 'contact_phone', 'contact_company', 'selectedAddressId']);
+        // Clear only the cart-specific inputs; keep the prefilled contact and
+        // address details so a follow-up request doesn't force re-entry.
+        $this->reset(['items', 'notes', 'needs_delivery', 'delivery_address']);
         unset($this->lines);
 
         Flux::toast(heading: 'Quote request submitted', text: 'We\'ve received your request and will get back to you shortly.', variant: 'success');
@@ -674,7 +678,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         <div class="my-4 h-px bg-zinc-100"></div>
 
                         <flux:button type="submit" variant="customer-primary" size="customer-lg"
-                            icon:trailing="arrow-right" class="mt-5! w-full!" :disabled="$this->lines->isEmpty()">
+                            class="mt-5! w-full!" :disabled="$this->lines->isEmpty()">
                             Submit request
                         </flux:button>
 
@@ -696,7 +700,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
     {{-- Add-item modal (search only) --}}
     <flux:modal wire:model.self="showItemModal" class="md:w-180 lg:w-215 md:max-w-none">
-        <flux:heading>Add items to your quote</flux:heading>
+        <flux:heading class="uppercase">Add items to your quote</flux:heading>
         <flux:subheading>Search the catalog and add as many products as you need.</flux:subheading>
 
         <div class="@container mt-5">
@@ -742,7 +746,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                                         </button>
                                     </flux:tooltip>
                                 </div>
-                                <div class="flex flex-1 flex-col border-t border-zinc-100 px-3 py-2.5">
+                                <div class="flex flex-1 flex-col px-3 py-2.5">
                                     @if ($product->brand)
                                         <div
                                             class="truncate text-[9.5px] font-bold tracking-[0.08em] text-brand-blue-600 uppercase">

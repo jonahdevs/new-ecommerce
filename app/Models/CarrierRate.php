@@ -26,22 +26,6 @@ class CarrierRate extends Model
         ];
     }
 
-    /**
-     * The fee in cents for a given cart subtotal.
-     */
-    public function calculateFee(int $subtotalCents): int
-    {
-        if ($this->rate_type === CarrierRateType::FREE) {
-            return 0;
-        }
-
-        if ($this->free_over_cents !== null && $subtotalCents >= $this->free_over_cents) {
-            return 0;
-        }
-
-        return $this->base_rate_cents;
-    }
-
     // ==================================================
     // RELATIONSHIPS
     // ==================================================
@@ -59,5 +43,25 @@ class CarrierRate extends Model
     public function shippingMethod(): BelongsTo
     {
         return $this->belongsTo(ShippingMethod::class);
+    }
+
+    // ==================================================
+    // HELPERS
+    // ==================================================
+
+    /**
+     * The fee in cents for a given cart subtotal.
+     */
+    public function calculateFee(int $subtotalCents): int
+    {
+        if ($this->rate_type === CarrierRateType::FREE) {
+            return 0;
+        }
+
+        if ($this->free_over_cents !== null && $subtotalCents >= $this->free_over_cents) {
+            return 0;
+        }
+
+        return $this->base_rate_cents;
     }
 }

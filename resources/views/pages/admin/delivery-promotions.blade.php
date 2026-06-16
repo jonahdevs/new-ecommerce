@@ -384,7 +384,7 @@ new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class ex
     {{-- PROMOTION MODAL --}}
     {{-- ================================================== --}}
     <flux:modal wire:model.self="showPromoModal" class="md:w-[560px]" :dismissible="false">
-        <flux:heading>{{ $editingPromoId ? 'Edit promotion' : 'New promotion' }}</flux:heading>
+        <flux:heading class="uppercase tracking-wide">{{ $editingPromoId ? 'Edit promotion' : 'New promotion' }}</flux:heading>
         <flux:subheading>Layer a discount or free delivery on top of zone fees.</flux:subheading>
 
         <form wire:submit="savePromo" class="mt-6 space-y-4">

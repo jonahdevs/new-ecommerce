@@ -22,7 +22,10 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
     public string $filterStatus = '';
 
     #[Url]
-    public string $filterDate = '';
+    public string $dateFrom = '';
+
+    #[Url]
+    public string $dateTo = '';
 
     #[Url]
     public int $perPage = 25;
@@ -37,8 +40,14 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
         $this->resetPage();
     }
 
-    public function updatedFilterDate(): void
+    /** Called from the range picker once both ends are chosen. */
+    public function applyDateRange(): void
     {
+        $this->validate([
+            'dateFrom' => ['nullable', 'date'],
+            'dateTo' => ['nullable', 'date', 'after_or_equal:dateFrom'],
+        ]);
+
         $this->resetPage();
     }
 
@@ -50,7 +59,8 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
     public function clearFilters(): void
     {
         $this->filterStatus = '';
-        $this->filterDate = '';
+        $this->dateFrom = '';
+        $this->dateTo = '';
         $this->search = '';
         $this->resetPage();
     }
@@ -69,9 +79,10 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                 });
             })
             ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterDate === 'today', fn ($q) => $q->whereDate('created_at', today()))
-            ->when($this->filterDate === 'week', fn ($q) => $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]))
-            ->when($this->filterDate === 'month', fn ($q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
+            ->when($this->dateFrom !== '' && $this->dateTo !== '', fn ($q) => $q->whereBetween('created_at', [
+                \Illuminate\Support\Carbon::parse($this->dateFrom)->startOfDay(),
+                \Illuminate\Support\Carbon::parse($this->dateTo)->endOfDay(),
+            ]))
             ->latest()
             ->paginate($this->perPage);
     }
@@ -94,6 +105,11 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
         return OrderStatus::cases();
     }
 }; ?>
+
+@assets
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+@endassets
 
 <div>
     <div class="flex items-center justify-between">
@@ -118,36 +134,27 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                 <flux:text size="sm">Total revenue</flux:text>
             </div>
         </flux:card>
-        <button type="button" wire:click="$set('filterStatus', '{{ OrderStatus::PENDING->value }}')"
-            class="text-left transition-shadow hover:shadow-md focus:outline-none">
-            <flux:card class="flex items-center gap-4 h-full">
-                <flux:icon.clock class="size-9 text-amber-400 shrink-0" />
-                <div>
-                    <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['pending'] }}</div>
-                    <flux:text size="sm">Pending</flux:text>
-                </div>
-            </flux:card>
-        </button>
-        <button type="button" wire:click="$set('filterStatus', '{{ OrderStatus::PROCESSING->value }}')"
-            class="text-left transition-shadow hover:shadow-md focus:outline-none">
-            <flux:card class="flex items-center gap-4 h-full">
-                <flux:icon.arrow-path class="size-9 text-blue-400 shrink-0" />
-                <div>
-                    <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['processing'] }}</div>
-                    <flux:text size="sm">Processing</flux:text>
-                </div>
-            </flux:card>
-        </button>
-        <button type="button" wire:click="$set('filterStatus', '{{ OrderStatus::OUT_FOR_DELIVERY->value }}')"
-            class="text-left transition-shadow hover:shadow-md focus:outline-none">
-            <flux:card class="flex items-center gap-4 h-full">
-                <flux:icon.truck class="size-9 text-orange-400 shrink-0" />
-                <div>
-                    <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['out_for_delivery'] }}</div>
-                    <flux:text size="sm">Out for delivery</flux:text>
-                </div>
-            </flux:card>
-        </button>
+        <flux:card class="flex items-center gap-4">
+            <flux:icon.clock class="size-9 text-amber-400 shrink-0" />
+            <div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['pending'] }}</div>
+                <flux:text size="sm">Pending</flux:text>
+            </div>
+        </flux:card>
+        <flux:card class="flex items-center gap-4">
+            <flux:icon.arrow-path class="size-9 text-blue-400 shrink-0" />
+            <div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['processing'] }}</div>
+                <flux:text size="sm">Processing</flux:text>
+            </div>
+        </flux:card>
+        <flux:card class="flex items-center gap-4">
+            <flux:icon.truck class="size-9 text-orange-400 shrink-0" />
+            <div>
+                <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->stats['out_for_delivery'] }}</div>
+                <flux:text size="sm">Out for delivery</flux:text>
+            </div>
+        </flux:card>
     </div>
 
     <flux:card class="mt-6 overflow-hidden p-0">
@@ -158,16 +165,16 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                 <flux:button size="sm" icon="arrow-down-tray" icon-trailing="chevron-down">Export</flux:button>
                 <flux:menu>
                     <flux:menu.item icon="table-cells"
-                        href="{{ route('admin.orders.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus, 'date' => $filterDate])) }}">
+                        href="{{ route('admin.orders.export', array_filter(['format' => 'xlsx', 'q' => $search, 'status' => $filterStatus, 'from' => $dateFrom, 'to' => $dateTo])) }}">
                         Excel (.xlsx)
                     </flux:menu.item>
                     <flux:menu.item icon="document-text"
-                        href="{{ route('admin.orders.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus, 'date' => $filterDate])) }}">
+                        href="{{ route('admin.orders.export', array_filter(['format' => 'csv', 'q' => $search, 'status' => $filterStatus, 'from' => $dateFrom, 'to' => $dateTo])) }}">
                         CSV (.csv)
                     </flux:menu.item>
                     <flux:menu.separator />
                     <flux:menu.item icon="document-chart-bar"
-                        href="{{ route('admin.orders.pdf', array_filter(['q' => $search, 'status' => $filterStatus, 'date' => $filterDate])) }}">
+                        href="{{ route('admin.orders.pdf', array_filter(['q' => $search, 'status' => $filterStatus, 'from' => $dateFrom, 'to' => $dateTo])) }}">
                         PDF report
                     </flux:menu.item>
                 </flux:menu>
@@ -185,18 +192,11 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
 
             <div class="flex flex-wrap items-center gap-2">
 
-                {{-- Date filter --}}
-                <div class="flex rounded-lg border border-zinc-200 text-sm dark:border-zinc-700 overflow-hidden">
-                    @foreach ([''=>'All', 'today'=>'Today', 'week'=>'This week', 'month'=>'This month'] as $val => $label)
-                        <button type="button" wire:click="$set('filterDate', '{{ $val }}')"
-                            @class([
-                                'px-3 py-1.5 font-medium transition-colors',
-                                'bg-brand-500 text-white' => $filterDate === $val,
-                                'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800' => $filterDate !== $val,
-                            ])>
-                            {{ $label }}
-                        </button>
-                    @endforeach
+                {{-- Date range filter (same flatpickr range picker as the dashboard) --}}
+                <div class="relative" wire:ignore x-data="rangePicker(@js($dateFrom), @js($dateTo))">
+                    <flux:icon.calendar-days class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-zinc-400" />
+                    <input x-ref="input" type="text" readonly placeholder="Date range"
+                        class="w-52 cursor-pointer rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-8 text-sm text-zinc-700 transition-colors hover:border-zinc-400 focus:ring-2 focus:ring-zinc-300 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" />
                 </div>
 
                 <flux:select wire:model.live="filterStatus" class="w-44">
@@ -206,7 +206,7 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
                     @endforeach
                 </flux:select>
 
-                @if ($filterStatus || $filterDate || $search)
+                @if ($filterStatus || $dateFrom || $dateTo || $search)
                     <flux:button size="sm" variant="ghost" icon="x-mark" wire:click="clearFilters">
                         Clear
                     </flux:button>
@@ -290,3 +290,43 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
         @endif
     </flux:card>
 </div>
+
+@script
+    <script>
+        Alpine.data('rangePicker', (from, to) => ({
+            fp: null,
+
+            init() {
+                if (typeof flatpickr === 'undefined') {
+                    return;
+                }
+
+                this.fp = flatpickr(this.$refs.input, {
+                    mode: 'range',
+                    dateFormat: 'M j, Y',
+                    defaultDate: from && to ? [from, to] : null,
+                    maxDate: 'today',
+                    onClose: (dates) => {
+                        if (dates.length === 2) {
+                            this.$wire.set('dateFrom', this.fp.formatDate(dates[0], 'Y-m-d'));
+                            this.$wire.set('dateTo', this.fp.formatDate(dates[1], 'Y-m-d'));
+                            this.$wire.applyDateRange();
+                        }
+                    },
+                });
+
+                // Keep the picker in sync when "Clear" empties the range.
+                this.$wire.$watch('dateTo', () => {
+                    if (! this.$wire.dateFrom || ! this.$wire.dateTo) {
+                        this.fp.clear();
+                        return;
+                    }
+                    this.fp.setDate([
+                        new Date(this.$wire.dateFrom + 'T00:00:00'),
+                        new Date(this.$wire.dateTo + 'T00:00:00'),
+                    ], false);
+                });
+            },
+        }));
+    </script>
+@endscript

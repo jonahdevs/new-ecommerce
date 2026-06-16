@@ -110,7 +110,7 @@
             @php $itemCount = $quote->items->count(); @endphp
             <p style="margin: 0 0 8px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .05em; color: #94a3b8; text-transform: uppercase;">Items in your request ({{ $itemCount }} {{ Str::plural('item', $itemCount) }})</p>
             <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%;">
-              @foreach ($quote->items as $item) @php $imagePath = $item->product_snapshot['image_path'] ?? ($item->product?->image_path ?? null); $imageUrl = $imagePath ? asset('storage/'.$imagePath) : null; $productSku = $item->product_sku ?? ''; $productSlug = $item->product_snapshot['slug'] ??
+              @foreach ($quote->items as $item) @php $imageUrl = ($coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url) ? url($coverUrl) : null; $productSku = $item->product_sku ?? ''; $productSlug = $item->product_snapshot['slug'] ??
               ($item->product?->slug ?? null); $productUrl = $productSlug ? route('product.show', $productSlug) : null; @endphp
               <tr>
                 <td style="width: 64px; border-bottom: 1px solid; border-color: #f1f5f9; padding-top: 16px; padding-bottom: 16px; padding-right: 12px; vertical-align: middle;">

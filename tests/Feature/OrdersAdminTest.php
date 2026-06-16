@@ -26,6 +26,29 @@ it('lists orders and filters by status', function () {
         ->assertDontSee('SHF-BBB');
 });
 
+it('filters orders by a custom date range', function () {
+    $recent = Order::factory()->create(['order_number' => 'SHF-RECENT', 'created_at' => now()->subDays(2)]);
+    $old = Order::factory()->create(['order_number' => 'SHF-OLD', 'created_at' => now()->subDays(40)]);
+
+    Livewire::test('pages::admin.orders.index')
+        ->assertSee('SHF-RECENT')
+        ->assertSee('SHF-OLD')
+        ->set('dateFrom', now()->subDays(7)->toDateString())
+        ->set('dateTo', now()->toDateString())
+        ->call('applyDateRange')
+        ->assertHasNoErrors()
+        ->assertSee('SHF-RECENT')
+        ->assertDontSee('SHF-OLD');
+});
+
+it('rejects a date range whose end precedes its start', function () {
+    Livewire::test('pages::admin.orders.index')
+        ->set('dateFrom', now()->toDateString())
+        ->set('dateTo', now()->subDays(5)->toDateString())
+        ->call('applyDateRange')
+        ->assertHasErrors('dateTo');
+});
+
 it('searches orders by order number', function () {
     Order::factory()->create(['order_number' => 'SHF-FINDME']);
     Order::factory()->create(['order_number' => 'SHF-OTHER']);

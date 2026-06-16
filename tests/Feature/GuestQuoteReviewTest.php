@@ -4,6 +4,7 @@ use App\Enums\QuoteStatus;
 use App\Models\Order;
 use App\Models\Quote;
 use App\Models\User;
+use App\Settings\PaymentSettings;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 
@@ -90,8 +91,10 @@ it('guest approve stores session and redirects to register', function () {
 });
 
 it('links quote to user and creates order after registration', function () {
+    config()->set('services.paystack.secret_key', 'sk_test_fake');
     $quote = guestQuote(QuoteStatus::AWAITING_APPROVAL, 5000000);
 
+    // Paystack active → land on the quote page where the popup runs in-context.
     $this->withSession(['quote_approval_pending' => $quote->id])
         ->post('/register', [
             'name' => 'Jane Doe',
@@ -100,7 +103,7 @@ it('links quote to user and creates order after registration', function () {
             'password_confirmation' => 'password',
             'terms' => 'on',
         ])
-        ->assertRedirect(route('payment.page', Order::first()));
+        ->assertRedirect(route('account.quotes.show', $quote));
 
     $quote->refresh();
 
@@ -129,12 +132,13 @@ it('links all guest quotes sharing the email when registering', function () {
 });
 
 it('links quote to user and creates order after login', function () {
+    config()->set('services.paystack.secret_key', 'sk_test_fake');
     $user = User::factory()->create();
     $quote = guestQuote(QuoteStatus::AWAITING_APPROVAL, 5000000);
 
     $this->withSession(['quote_approval_pending' => $quote->id])
         ->post('/login', ['email' => $user->email, 'password' => 'password'])
-        ->assertRedirect(route('payment.page', Order::first()));
+        ->assertRedirect(route('account.quotes.show', $quote));
 
     $quote->refresh();
 
@@ -147,7 +151,23 @@ it('links quote to user and creates order after login', function () {
 // ALREADY-AUTHENTICATED APPROVE
 // ==================================================
 
-it('authenticated user approving a guest quote goes straight to payment', function () {
+it('authenticated user approving a guest quote lands on the quote page to pay with Paystack', function () {
+    config()->set('services.paystack.secret_key', 'sk_test_fake');
+    $user = User::factory()->create();
+    $quote = guestQuote(QuoteStatus::AWAITING_APPROVAL, 5000000);
+
+    Livewire::actingAs($user)
+        ->test('pages::storefront.quote-review', ['quote' => $quote])
+        ->call('approve')
+        ->assertRedirect(route('account.quotes.show', $quote));
+
+    expect($quote->refresh()->status)->toBe(QuoteStatus::APPROVED)
+        ->and($quote->refresh()->user_id)->toBe($user->id)
+        ->and(Order::count())->toBe(1);
+});
+
+it('authenticated approve falls back to the payment page when Paystack is disabled', function () {
+    app(PaymentSettings::class)->fill(['paystack_enabled' => false])->save();
     $user = User::factory()->create();
     $quote = guestQuote(QuoteStatus::AWAITING_APPROVAL, 5000000);
 
@@ -156,8 +176,7 @@ it('authenticated user approving a guest quote goes straight to payment', functi
         ->call('approve')
         ->assertRedirect(route('payment.page', Order::first()));
 
-    expect($quote->refresh()->status)->toBe(QuoteStatus::APPROVED)
-        ->and($quote->refresh()->user_id)->toBe($user->id);
+    expect($quote->refresh()->status)->toBe(QuoteStatus::APPROVED);
 });
 
 // ==================================================

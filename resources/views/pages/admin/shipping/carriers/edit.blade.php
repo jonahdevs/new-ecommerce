@@ -310,7 +310,7 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
             <flux:card class="p-0 overflow-hidden">
                 <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
                     <div>
-                        <flux:heading size="base">Zone coverage & rates</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">Zone coverage & rates</flux:heading>
                         <flux:text size="sm" class="mt-0.5 text-zinc-500">
                             Which geographic zones this carrier serves and what it charges per method.
                         </flux:text>
@@ -442,7 +442,7 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
             {{-- Details form --}}
             <flux:card class="p-0 overflow-hidden">
                 <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                    <flux:heading size="base">Carrier details</flux:heading>
+                    <flux:heading size="base" class="uppercase tracking-wide">Carrier details</flux:heading>
                 </div>
 
                 <form wire:submit="saveDetails" class="space-y-4 p-6">
@@ -478,7 +478,7 @@ new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class exte
             @if ($driver !== 'self_managed')
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="base">API credentials</flux:heading>
+                        <flux:heading size="base" class="uppercase tracking-wide">API credentials</flux:heading>
                         <flux:text size="sm" class="mt-0.5 text-zinc-500">Stored encrypted. Never exposed in responses.</flux:text>
                     </div>
                     <div class="space-y-4 p-6">

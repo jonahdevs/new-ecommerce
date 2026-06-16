@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\QuoteStatus;
+use App\Livewire\Concerns\InteractsWithPaystack;
 use App\Models\Quote;
 use App\Notifications\Quotes\QuoteDecisionReceived;
 use App\Services\QuoteConversionService;
@@ -15,21 +16,18 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
-{
+new #[Layout('layouts::account')] #[Title('Quote')] class extends Component {
+    use InteractsWithPaystack;
+
     #[Locked]
     public Quote $quote;
 
     public function mount(Quote $quote): void
     {
         abort_unless($quote->user_id === auth()->id(), 403);
-        SEOMeta::setTitle('Quote '.$quote->quote_number);
+        SEOMeta::setTitle('Quote ' . $quote->quote_number);
         SEOMeta::setRobots('noindex,follow');
-        $this->quote = $quote->load([
-            'items.product.images',
-            'statusHistories',
-            'order',
-        ]);
+        $this->quote = $quote->load(['items.product.images', 'statusHistories', 'order']);
     }
 
     #[Computed]
@@ -76,7 +74,11 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
         $this->quote->refresh();
 
-        $this->redirectRoute('payment.page', $order, navigate: true);
+        // Paystack's inline popup keeps the customer on this page; fall back to
+        // the payment page only when the gateway is unavailable.
+        if (!$this->openPaystack($order)) {
+            $this->redirectRoute('payment.page', $order, navigate: true);
+        }
     }
 
     public function decline(): void
@@ -91,9 +93,28 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
         Flux::toast(heading: 'Quote declined', text: 'You can request a new quote any time.', variant: 'warning');
     }
+
+    /**
+     * Re-open payment for an approved quote whose order is still unpaid — the
+     * Paystack popup keeps the customer here, falling back to the payment page.
+     */
+    public function completePayment(): void
+    {
+        $order = $this->quote->order;
+
+        abort_unless($order && !$order->isPaid(), 403);
+
+        if (!$this->openPaystack($order)) {
+            $this->redirectRoute('payment.page', $order, navigate: true);
+        }
+    }
 }; ?>
 
-<div class="page-fade space-y-5">
+@assets
+    <script src="https://js.paystack.co/v2/inline.js"></script>
+@endassets
+
+<div class="page-fade space-y-5" x-data="paystackCheckout" @paystack-open.window="open($event.detail.accessCode)">
 
     @push('breadcrumbs')
         <flux:breadcrumbs>
@@ -135,7 +156,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                         </p>
                     @endif
                 @else
-                    <p class="text-[13px] font-medium text-amber-600">Pricing pending — our team is preparing your quotation.</p>
+                    <p class="text-[13px] font-medium text-amber-600">Pricing pending — our team is preparing your
+                        quotation.</p>
                 @endif
             </div>
 
@@ -145,13 +167,20 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                     <flux:callout.heading>Your quotation is ready for review</flux:callout.heading>
                     <flux:callout.text>
                         Review the details below, then approve to proceed to payment
-                        @if ($quote->expires_at) before <strong>{{ $quote->expires_at->format('M j, Y') }}</strong>@endif.
+                        @if ($quote->expires_at)
+                            before <strong>{{ $quote->expires_at->format('M j, Y') }}</strong>
+                        @endif.
                     </flux:callout.text>
                 </flux:callout>
-            @elseif ($quote->status === QuoteStatus::APPROVED && $quote->order_id && ! $this->isPaid)
-                <flux:callout icon="credit-card" color="amber">
+            @elseif ($quote->status === QuoteStatus::APPROVED && $quote->order_id && !$this->isPaid)
+                <flux:callout icon="credit-card" color="amber" inline>
                     <flux:callout.heading>Payment required to confirm your order</flux:callout.heading>
                     <flux:callout.text>Your order has been created. Complete payment to confirm it.</flux:callout.text>
+                    <x-slot name="actions">
+                        <flux:button variant="primary" size="sm" icon="credit-card" wire:click="completePayment">
+                            Complete payment
+                        </flux:button>
+                    </x-slot>
                 </flux:callout>
             @elseif ($quote->status === QuoteStatus::APPROVED && $this->isPaid)
                 <flux:callout icon="check-circle" color="green">
@@ -170,7 +199,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                     <flux:callout.heading>You declined this quotation</flux:callout.heading>
                     <flux:callout.text>
                         Changed your mind?
-                        <flux:callout.link :href="route('quote.request')" wire:navigate>Request a new quote</flux:callout.link>
+                        <flux:callout.link :href="route('quote.request')" wire:navigate>Request a new quote
+                        </flux:callout.link>
                     </flux:callout.text>
                 </flux:callout>
             @elseif ($this->hasExpired)
@@ -178,13 +208,15 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                     <flux:callout.heading>This quotation has expired</flux:callout.heading>
                     <flux:callout.text>
                         The validity period ended.
-                        <flux:callout.link :href="route('quote.request')" wire:navigate>Request a fresh quote</flux:callout.link>
+                        <flux:callout.link :href="route('quote.request')" wire:navigate>Request a fresh quote
+                        </flux:callout.link>
                     </flux:callout.text>
                 </flux:callout>
             @elseif ($quote->status === QuoteStatus::DRAFT)
                 <flux:callout icon="clock" color="amber">
                     <flux:callout.heading>Quotation request under review</flux:callout.heading>
-                    <flux:callout.text>Our team is preparing your pricing. You'll be notified once your quotation is ready.</flux:callout.text>
+                    <flux:callout.text>Our team is preparing your pricing. You'll be notified once your quotation is
+                        ready.</flux:callout.text>
                 </flux:callout>
             @endif
 
@@ -196,16 +228,15 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
                 <div class="flex flex-col divide-y divide-zinc-100 rounded border border-zinc-200">
                     @foreach ($quote->items as $item)
+                        @php $coverUrl = $item->product_snapshot['cover_url'] ?? $item->product?->cover_url; @endphp
                         <div class="flex items-center gap-3.5 p-3.5" wire:key="item-{{ $item->id }}">
 
                             {{-- Thumbnail --}}
-                            <div class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-100 bg-zinc-50">
-                                @if ($item->product?->cover_url)
-                                    <img
-                                        src="{{ $item->product->cover_url }}"
-                                        alt="{{ $item->product_name }}"
-                                        class="size-full object-contain p-1"
-                                    />
+                            <div
+                                class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-100 bg-zinc-50">
+                                @if ($coverUrl)
+                                    <img src="{{ $coverUrl }}" alt="{{ $item->product_name }}"
+                                        class="size-full object-contain p-1" />
                                 @else
                                     <flux:icon.photo variant="outline" class="size-7 text-zinc-200" />
                                 @endif
@@ -214,17 +245,19 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                             {{-- Details --}}
                             <div class="min-w-0 flex-1">
                                 <p class="mb-0.5 text-[9px] font-bold uppercase tracking-widest text-ink-3">
-                                    @if ($item->product_sku)SKU: {{ $item->product_sku }}@endif
-                                    @if ($item->product_model_number) · {{ $item->product_model_number }}@endif
+                                    @if ($item->product_sku)
+                                        SKU: {{ $item->product_sku }}
+                                    @endif
+                                    @if ($item->product_model_number)
+                                        · {{ $item->product_model_number }}
+                                    @endif
                                 </p>
                                 @if ($item->product)
-                                    <a
-                                        href="{{ route('product.show', $item->product) }}"
-                                        wire:navigate
-                                        class="truncate text-[13px] font-semibold text-ink transition-colors hover:text-brand-500"
-                                    >{{ $item->product_name }}</a>
+                                    <a href="{{ route('product.show', $item->product) }}" wire:navigate
+                                        class="truncate text-[13px] font-semibold text-ink transition-colors hover:text-brand-500">{{ $item->product_name }}</a>
                                 @else
-                                    <p class="truncate text-[13px] font-semibold text-ink">{{ $item->product_name }}</p>
+                                    <p class="truncate text-[13px] font-semibold text-ink">{{ $item->product_name }}
+                                    </p>
                                 @endif
                                 <p class="mt-0.5 text-[11px] text-ink-3">Qty: {{ $item->quantity }}</p>
                             </div>
@@ -250,7 +283,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
                         <div class="overflow-hidden rounded border border-zinc-200 bg-zinc-50">
                             <div class="border-b border-zinc-200 bg-white px-5 py-3">
-                                <flux:heading size="sm" class="uppercase tracking-wide">Quote Summary</flux:heading>
+                                <flux:heading size="sm" class="uppercase tracking-wide">Quote Summary
+                                </flux:heading>
                             </div>
                             <div class="space-y-2.5 p-5">
                                 <div class="flex justify-between text-[13px]">
@@ -260,7 +294,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                                 @if ($quote->discount_cents > 0)
                                     <div class="flex justify-between text-[13px]">
                                         <span class="font-medium text-emerald-600">Discount</span>
-                                        <span class="font-bold tabular-nums text-emerald-600">−{!! money($quote->discount_cents) !!}</span>
+                                        <span
+                                            class="font-bold tabular-nums text-emerald-600">−{!! money($quote->discount_cents) !!}</span>
                                     </div>
                                 @endif
                                 @if ($quote->shipping_cents > 0)
@@ -271,13 +306,15 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                                 @endif
                                 @if ($quote->vat_cents > 0)
                                     <div class="flex justify-between text-[13px]">
-                                        <span class="font-medium text-ink-3">VAT ({{ rtrim(rtrim(number_format($quote->vat_rate, 2), '0'), '.') }}%)</span>
+                                        <span class="font-medium text-ink-3">VAT
+                                            ({{ rtrim(rtrim(number_format($quote->vat_rate, 2), '0'), '.') }}%)</span>
                                         <span class="font-bold tabular-nums text-ink">{!! money($quote->vat_cents) !!}</span>
                                     </div>
                                 @endif
                                 <div class="flex items-baseline justify-between border-t border-zinc-200 pt-3">
                                     <span class="text-sm font-bold uppercase tracking-widest text-ink">Total</span>
-                                    <span class="font-serif text-2xl font-black leading-none text-brand-500 tabular-nums">
+                                    <span
+                                        class="font-serif text-2xl font-black leading-none text-brand-500 tabular-nums">
                                         {!! money($quote->total_cents) !!}
                                     </span>
                                 </div>
@@ -287,10 +324,12 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                         @if ($quote->terms)
                             <div class="overflow-hidden rounded border border-zinc-200 bg-white">
                                 <div class="border-b border-zinc-200 px-5 py-3">
-                                    <flux:heading size="sm" class="uppercase tracking-wide">Terms & Conditions</flux:heading>
+                                    <flux:heading size="sm" class="uppercase tracking-wide">Terms & Conditions
+                                    </flux:heading>
                                 </div>
                                 <div class="p-5">
-                                    <p class="whitespace-pre-line text-[13px] leading-relaxed text-ink-3">{{ $quote->terms }}</p>
+                                    <p class="whitespace-pre-line text-[13px] leading-relaxed text-ink-3">
+                                        {{ $quote->terms }}</p>
                                 </div>
                             </div>
                         @endif
@@ -300,41 +339,28 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
 
             {{-- ── Approve / Decline action bar ── --}}
             @if ($this->isAwaitingApproval)
-                <div class="flex flex-col gap-3 rounded border border-brand-200 bg-brand-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                    class="flex flex-col gap-3 rounded border border-brand-200 bg-brand-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-[14px] font-semibold text-brand-700">Ready to proceed?</p>
-                        <p class="mt-0.5 text-[13px] text-brand-600">Approve to confirm your order and proceed to payment.</p>
+                        <p class="mt-0.5 text-[13px] text-brand-600">Approve to confirm your order and proceed to
+                            payment.</p>
                     </div>
                     <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-                        <flux:button variant="ghost" size="sm" wire:click="decline" class="w-full sm:w-auto">Decline</flux:button>
-                        <flux:button variant="customer-primary" size="customer" icon="check" wire:click="approve" class="w-full sm:w-auto">
+                        <flux:button variant="ghost" size="sm" wire:click="decline" class="w-full sm:w-auto">
+                            Decline</flux:button>
+                        <flux:button variant="customer-primary" size="customer" icon="check" wire:click="approve"
+                            class="w-full sm:w-auto">
                             Approve quote
                         </flux:button>
                     </div>
-                </div>
-            @elseif ($quote->status === QuoteStatus::APPROVED && $quote->order_id && ! $this->isPaid)
-                <div class="flex flex-col gap-3 rounded border border-emerald-200 bg-emerald-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-[14px] font-semibold text-emerald-800">Quote approved — payment pending</p>
-                        <p class="mt-0.5 text-[13px] text-emerald-600">Your order has been created. Complete payment to confirm it.</p>
-                    </div>
-                    <flux:button
-                        variant="customer-primary"
-                        size="customer"
-                        icon="credit-card"
-                        :href="route('payment.page', $quote->order_id)"
-                        wire:navigate
-                        class="w-full shrink-0 sm:w-auto"
-                    >
-                        Complete payment
-                    </flux:button>
                 </div>
             @endif
 
             {{-- ── Order notes ── --}}
             @if ($quote->notes)
                 <div class="rounded border border-zinc-200 bg-zinc-50 px-5 py-4">
-                    <p class="mb-1 text-[11px] font-bold uppercase tracking-widest text-ink-3">Notes</p>
+                    <p class="mb-1 text-[11px] font-bold uppercase tracking-widest text-ink-3">Your notes</p>
                     <p class="text-sm leading-relaxed text-ink-2">{{ $quote->notes }}</p>
                 </div>
             @endif
@@ -350,36 +376,36 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                         [
                             'value' => 'draft',
                             'label' => 'Request Submitted',
-                            'icon'  => 'document-text',
-                            'desc'  => 'Your quotation request has been received.',
+                            'icon' => 'document-text',
+                            'desc' => 'Your quotation request has been received.',
                         ],
                         [
                             'value' => 'awaiting_approval',
                             'label' => 'Quotation Ready',
-                            'icon'  => 'clipboard-document-check',
-                            'desc'  => 'Your quotation has been priced and is ready for your review.',
+                            'icon' => 'clipboard-document-check',
+                            'desc' => 'Your quotation has been priced and is ready for your review.',
                         ],
                         [
                             'value' => 'approved',
                             'label' => 'Quote Accepted',
-                            'icon'  => 'check-badge',
-                            'desc'  => 'You accepted this quotation and your order was created.',
+                            'icon' => 'check-badge',
+                            'desc' => 'You accepted this quotation and your order was created.',
                         ],
                     ];
 
                     $isDeclined = $quote->status === QuoteStatus::DECLINED;
-                    $isExpired  = $quote->hasExpired();
+                    $isExpired = $quote->hasExpired();
                     $isTerminal = $isDeclined || $isExpired;
 
                     $histories = $quote->statusHistories->keyBy('to_status');
 
                     // Draft is always implicit — the quote exists so it was submitted
-                    if (! $histories->has('draft')) {
+                    if (!$histories->has('draft')) {
                         $histories->put('draft', (object) ['created_at' => $quote->created_at, 'note' => null]);
                     }
 
                     // If admin moved to SENT before AWAITING_APPROVAL, alias it for the "Quotation Ready" step
-                    if (! $histories->has('awaiting_approval') && $histories->has('sent')) {
+                    if (!$histories->has('awaiting_approval') && $histories->has('sent')) {
                         $histories->put('awaiting_approval', $histories->get('sent'));
                     }
 
@@ -394,22 +420,22 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                 <div class="relative px-1">
                     @foreach ($mainPath as $index => $step)
                         @php
-                            $history        = $histories->get($step['value']);
-                            $reached        = $index <= $maxReachedIndex;
-                            $isCurrent      = ! $isTerminal && $index === $maxReachedIndex;
-                            $isLast         = $index === count($mainPath) - 1;
+                            $history = $histories->get($step['value']);
+                            $reached = $index <= $maxReachedIndex;
+                            $isCurrent = !$isTerminal && $index === $maxReachedIndex;
+                            $isLast = $index === count($mainPath) - 1;
                             $injectTerminal = $isTerminal && $index === $maxReachedIndex;
                         @endphp
 
-                        <div class="relative flex gap-6 {{ $isLast && ! $injectTerminal ? 'pb-0' : 'pb-10' }}">
+                        <div class="relative flex gap-6 {{ $isLast && !$injectTerminal ? 'pb-0' : 'pb-10' }}">
 
                             {{-- Connector line --}}
-                            @if (! $isLast || $injectTerminal)
+                            @if (!$isLast || $injectTerminal)
                                 @php $nextReached = ($index + 1) <= $maxReachedIndex; @endphp
                                 <div @class([
                                     'absolute left-[17px] top-9 bottom-0 w-0.5 z-0',
                                     'bg-brand-500' => $nextReached || $injectTerminal,
-                                    'bg-zinc-100'  => ! $nextReached && ! $injectTerminal,
+                                    'bg-zinc-100' => !$nextReached && !$injectTerminal,
                                 ])></div>
                             @endif
 
@@ -417,8 +443,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                             <div @class([
                                 'relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full transition-all',
                                 'bg-brand-500 text-white ring-4 ring-brand-500/20' => $isCurrent,
-                                'bg-brand-500 text-white'                          => $reached && ! $isCurrent,
-                                'bg-zinc-50 border border-zinc-100 text-zinc-300'  => ! $reached,
+                                'bg-brand-500 text-white' => $reached && !$isCurrent,
+                                'bg-zinc-50 border border-zinc-100 text-zinc-300' => !$reached,
                             ])>
                                 <flux:icon :name="$step['icon']" variant="mini" class="size-4.5" />
                             </div>
@@ -430,15 +456,18 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                                         <div class="flex flex-wrap items-center gap-2">
                                             <p @class([
                                                 'text-[14px] font-bold',
-                                                'text-ink'   => $reached,
-                                                'text-ink-4' => ! $reached,
+                                                'text-ink' => $reached,
+                                                'text-ink-4' => !$reached,
                                             ])>{{ $step['label'] }}</p>
 
                                             @if ($isCurrent)
-                                                <span class="inline-flex items-center gap-1.5 rounded-sm border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-brand-500">
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 rounded-sm border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-brand-500">
                                                     <span class="relative flex size-1.5">
-                                                        <span class="absolute inline-flex size-full animate-ping rounded-full bg-brand-500 opacity-75"></span>
-                                                        <span class="relative inline-flex size-1.5 rounded-full bg-brand-500"></span>
+                                                        <span
+                                                            class="absolute inline-flex size-full animate-ping rounded-full bg-brand-500 opacity-75"></span>
+                                                        <span
+                                                            class="relative inline-flex size-1.5 rounded-full bg-brand-500"></span>
                                                     </span>
                                                     Current
                                                 </span>
@@ -447,14 +476,16 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                                         <p @class([
                                             'mt-1 text-[12px] leading-relaxed',
                                             'font-medium text-ink-2' => $reached,
-                                            'text-zinc-300'          => ! $reached,
+                                            'text-zinc-300' => !$reached,
                                         ])>{{ $reached ? $step['desc'] : 'Pending…' }}</p>
                                     </div>
 
                                     @if ($history)
                                         <div class="shrink-0 sm:text-right">
-                                            <p class="text-[12px] font-bold text-ink">{{ $history->created_at->format('M j, Y') }}</p>
-                                            <p class="mt-0.5 text-[11px] font-medium text-ink-3">{{ $history->created_at->format('g:i A') }}</p>
+                                            <p class="text-[12px] font-bold text-ink">
+                                                {{ $history->created_at->format('M j, Y') }}</p>
+                                            <p class="mt-0.5 text-[11px] font-medium text-ink-3">
+                                                {{ $history->created_at->format('g:i A') }}</p>
                                         </div>
                                     @endif
                                 </div>
@@ -466,39 +497,49 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
                             @php $terminalHistory = $histories->get($isDeclined ? 'declined' : 'expired'); @endphp
                             <div class="relative flex gap-6 pb-0">
                                 @if ($isDeclined)
-                                    <div class="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 ring-4 ring-red-50/50">
+                                    <div
+                                        class="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 ring-4 ring-red-50/50">
                                         <flux:icon.x-circle variant="mini" class="size-4.5" />
                                     </div>
                                     <div class="flex-1 pt-0.5">
-                                        <div class="flex flex-col justify-between gap-1 sm:flex-row sm:items-start sm:gap-4">
+                                        <div
+                                            class="flex flex-col justify-between gap-1 sm:flex-row sm:items-start sm:gap-4">
                                             <div>
                                                 <div class="flex flex-wrap items-center gap-2">
                                                     <p class="text-[14px] font-bold text-red-500">Quote Declined</p>
-                                                    <span class="inline-flex items-center gap-1.5 rounded-sm border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-red-500">
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 rounded-sm border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-red-500">
                                                         <span class="relative flex size-1.5">
-                                                            <span class="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75"></span>
-                                                            <span class="relative inline-flex size-1.5 rounded-full bg-red-500"></span>
+                                                            <span
+                                                                class="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                                                            <span
+                                                                class="relative inline-flex size-1.5 rounded-full bg-red-500"></span>
                                                         </span>
                                                         Current
                                                     </span>
                                                 </div>
-                                                <p class="mt-1 text-[12px] font-medium leading-relaxed text-ink-2">You declined this quotation.</p>
+                                                <p class="mt-1 text-[12px] font-medium leading-relaxed text-ink-2">You
+                                                    declined this quotation.</p>
                                             </div>
                                             @if ($terminalHistory)
                                                 <div class="shrink-0 sm:text-right">
-                                                    <p class="text-[12px] font-bold text-ink">{{ $terminalHistory->created_at->format('M j, Y') }}</p>
-                                                    <p class="mt-0.5 text-[11px] font-medium text-ink-3">{{ $terminalHistory->created_at->format('g:i A') }}</p>
+                                                    <p class="text-[12px] font-bold text-ink">
+                                                        {{ $terminalHistory->created_at->format('M j, Y') }}</p>
+                                                    <p class="mt-0.5 text-[11px] font-medium text-ink-3">
+                                                        {{ $terminalHistory->created_at->format('g:i A') }}</p>
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
                                 @else
-                                    <div class="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-400">
+                                    <div
+                                        class="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-400">
                                         <flux:icon.clock variant="mini" class="size-4.5" />
                                     </div>
                                     <div class="flex-1 pt-0.5">
                                         <p class="text-[14px] font-bold text-ink-3">Quote Expired</p>
-                                        <p class="mt-1 text-[12px] font-medium leading-relaxed text-ink-3">The validity period ended without a response.</p>
+                                        <p class="mt-1 text-[12px] font-medium leading-relaxed text-ink-3">The validity
+                                            period ended without a response.</p>
                                     </div>
                                 @endif
                             </div>
@@ -511,13 +552,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
             {{-- ── Actions ── --}}
             @if ($quote->document_path)
                 <div class="flex flex-wrap gap-2">
-                    <flux:button
-                        size="customer"
-                        variant="customer-outline"
-                        icon="arrow-down-tray"
-                        tag="a"
-                        :href="route('account.quotes.download', $quote)"
-                    >
+                    <flux:button size="customer" variant="customer-outline" icon="arrow-down-tray" tag="a"
+                        :href="route('account.quotes.download', $quote)">
                         Download PDF
                     </flux:button>
                 </div>
@@ -527,10 +563,8 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
             <div class="border-t border-zinc-100 pt-2 text-center">
                 <p class="text-[13px] text-ink-3">
                     Need help with this quotation?
-                    <a
-                        class="font-bold text-brand-500 transition-colors hover:underline"
-                        href="mailto:orders@sheffieldsteelsystems.com?subject=Quote%20{{ urlencode($quote->quote_number) }}%20enquiry"
-                    >
+                    <a class="font-bold text-brand-500 transition-colors hover:underline"
+                        href="mailto:orders@sheffieldsteelsystems.com?subject=Quote%20{{ urlencode($quote->quote_number) }}%20enquiry">
                         Contact support
                     </a>
                 </p>
@@ -540,3 +574,32 @@ new #[Layout('layouts::account')] #[Title('Quote')] class extends Component
     </div>
 
 </div>
+
+@script
+    <script>
+        Alpine.data('paystackCheckout', () => ({
+            processing: false,
+
+            open(accessCode) {
+                if (!accessCode || typeof PaystackPop === 'undefined') {
+                    return;
+                }
+
+                const popup = new PaystackPop();
+
+                popup.resumeTransaction(accessCode, {
+                    onSuccess: (transaction) => {
+                        this.processing = true;
+                        this.$wire.verifyPayment(transaction.reference);
+                    },
+                    onCancel: () => {
+                        this.processing = false;
+                    },
+                    onError: () => {
+                        this.processing = false;
+                    },
+                });
+            },
+        }));
+    </script>
+@endscript

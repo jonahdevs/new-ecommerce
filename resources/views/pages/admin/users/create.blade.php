@@ -73,7 +73,7 @@ new #[Layout('layouts::app')] #[Title('Add User — Admin')] class extends Compo
             <div class="space-y-6 lg:col-span-2">
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Account details</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Account details</flux:heading>
                     </div>
                     <div class="space-y-4 p-6">
                         <flux:input wire:model="name" label="Full name" placeholder="Jane Doe" required autofocus />
@@ -91,7 +91,7 @@ new #[Layout('layouts::app')] #[Title('Add User — Admin')] class extends Compo
             <aside class="space-y-6">
                 <flux:card class="p-0 overflow-hidden">
                     <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-                        <flux:heading size="sm">Password</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Password</flux:heading>
                     </div>
                     <div class="p-6">
                         <flux:input wire:model="password" type="password" label="Password" placeholder="Min. 8 characters" required />
