@@ -4,6 +4,7 @@ namespace App\Notifications\Orders;
 
 use App\Models\Order;
 use App\Notifications\Concerns\RespectsPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -37,6 +38,23 @@ class OrderConfirmed extends Notification implements ShouldQueue
                 'paymentLabel' => $this->resolvePaymentLabel($order->payment_method),
                 'orderUrl' => route('account.orders.show', $order),
             ]);
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type' => 'order_confirmed',
+            'order_id' => $this->order->id,
+            'order_number' => $this->order->order_number,
+            'total_cents' => $this->order->total_cents,
+            'currency' => $this->order->currency,
+        ];
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        return WhatsAppMessage::template('hello_world');
     }
 
     /**

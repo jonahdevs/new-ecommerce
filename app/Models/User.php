@@ -54,6 +54,15 @@ class User extends Authenticatable implements BannableContract, PasskeyUser
     }
 
     // ==================================================
+    // NOTIFICATION ROUTING
+    // ==================================================
+
+    public function routeNotificationForWhatsapp(): ?string
+    {
+        return filled($this->phone) ? $this->phone : null;
+    }
+
+    // ==================================================
     // RELATIONSHIPS
     // ==================================================
 

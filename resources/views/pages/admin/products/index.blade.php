@@ -355,6 +355,10 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                             href="{{ route('admin.products.pdf', array_filter(['q' => $search, 'status' => $filterStatus, 'visibility' => $filterVisibility, 'stock' => $filterStock])) }}">
                             PDF catalog
                         </flux:menu.item>
+                        <flux:menu.separator />
+                        <flux:menu.item icon="photo" href="{{ route('admin.products.export.missing-images') }}">
+                            Missing images (.xlsx)
+                        </flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
             </div>

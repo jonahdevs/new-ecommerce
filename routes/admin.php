@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
                 ->name('products.')
                 ->group(function () {
                     Route::get('export', 'download')->name('export');
+                    Route::get('export/missing-images', 'missingImages')->name('export.missing-images');
                     Route::get('pdf', 'pdf')->name('pdf');
                     Route::get('import-template', 'template')->name('import-template');
                 });

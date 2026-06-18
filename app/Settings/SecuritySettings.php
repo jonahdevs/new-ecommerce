@@ -12,6 +12,8 @@ class SecuritySettings extends Settings
 
     public int $session_lifetime;
 
+    public int $max_concurrent_sessions;
+
     public static function group(): string
     {
         return 'security';

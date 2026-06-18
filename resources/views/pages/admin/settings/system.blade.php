@@ -108,6 +108,8 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
     public int $session_lifetime = 120;
 
+    public int $max_concurrent_sessions = 1;
+
     // ==================================================
     // MAINTENANCE
     // ==================================================
@@ -154,6 +156,7 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         $this->min_password_length = $security->min_password_length;
         $this->require_two_factor = $security->require_two_factor;
         $this->session_lifetime = $security->session_lifetime;
+        $this->max_concurrent_sessions = $security->max_concurrent_sessions;
 
         $this->maintenance_mode = $maintenance->maintenance_mode;
         $this->maintenance_message = $maintenance->maintenance_message;
@@ -301,6 +304,7 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         $this->validate([
             'min_password_length' => ['required', 'integer', 'min:6', 'max:64'],
             'session_lifetime' => ['required', 'integer', 'min:5', 'max:43200'],
+            'max_concurrent_sessions' => ['required', 'integer', 'min:0', 'max:10'],
         ]);
 
         $settings
@@ -308,6 +312,7 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                 'min_password_length' => (int) $this->min_password_length,
                 'require_two_factor' => $this->require_two_factor,
                 'session_lifetime' => (int) $this->session_lifetime,
+                'max_concurrent_sessions' => (int) $this->max_concurrent_sessions,
             ])
             ->save();
 
@@ -731,6 +736,20 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                 </div>
                 <flux:input wire:model="session_lifetime" type="number" min="5" max="43200"
                     label="Session lifetime (minutes)" />
+
+                <flux:field>
+                    <flux:label>Max concurrent sessions</flux:label>
+                    <flux:description>Maximum number of devices a user may be signed in on simultaneously. Set to 0 for unlimited.</flux:description>
+                    <flux:select wire:model="max_concurrent_sessions">
+                        <flux:select.option value="0">Unlimited</flux:select.option>
+                        <flux:select.option value="1">1 device</flux:select.option>
+                        <flux:select.option value="2">2 devices</flux:select.option>
+                        <flux:select.option value="3">3 devices</flux:select.option>
+                        <flux:select.option value="5">5 devices</flux:select.option>
+                        <flux:select.option value="10">10 devices</flux:select.option>
+                    </flux:select>
+                    <flux:error name="max_concurrent_sessions" />
+                </flux:field>
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>

@@ -614,9 +614,8 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                         <div class="flex items-center gap-2">
                             <flux:icon.chat-bubble-left-ellipsis variant="micro" class="size-4 shrink-0 text-zinc-400" />
                             <p class="text-sm font-medium dark:text-white">WhatsApp</p>
-                            <flux:badge size="sm" color="yellow">Soon</flux:badge>
                         </div>
-                        <flux:switch wire:model="whatsapp_channel_enabled" disabled />
+                        <flux:switch wire:model="whatsapp_channel_enabled" />
                     </div>
                     <p class="border-b border-zinc-100 px-4 pb-3 text-xs text-zinc-400 dark:border-zinc-700">
                         Sends messages via WhatsApp Business API. Requires API credentials to activate.
@@ -717,7 +716,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                             <div class="flex shrink-0 items-center">
                                 <div class="flex w-16 justify-center"><flux:switch wire:model="{{ $row['key'] }}_email" /></div>
                                 <div class="flex w-16 justify-center"><flux:switch wire:model="{{ $row['key'] }}_inapp" /></div>
-                                <div class="flex w-16 justify-center opacity-40"><flux:switch wire:model="{{ $row['key'] }}_whatsapp" disabled /></div>
+                                <div class="flex w-16 justify-center" :class="! whatsapp_channel_enabled && 'opacity-40'"><flux:switch wire:model="{{ $row['key'] }}_whatsapp" :disabled="! $whatsapp_channel_enabled" /></div>
                             </div>
                         </div>
                     @endforeach
@@ -783,7 +782,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                     <div class="flex shrink-0 items-center">
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_new_order_email" /></div>
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_new_order_inapp" /></div>
-                        <div class="flex w-16 justify-center opacity-40"><flux:switch wire:model="staff_new_order_whatsapp" disabled /></div>
+                        <div class="flex w-16 justify-center" :class="! whatsapp_channel_enabled && 'opacity-40'"><flux:switch wire:model="staff_new_order_whatsapp" :disabled="! $whatsapp_channel_enabled" /></div>
                     </div>
                 </div>
 
@@ -800,7 +799,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                     <div class="flex shrink-0 items-center">
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_new_review_email" /></div>
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_new_review_inapp" /></div>
-                        <div class="flex w-16 justify-center opacity-40"><flux:switch wire:model="staff_new_review_whatsapp" disabled /></div>
+                        <div class="flex w-16 justify-center" :class="! whatsapp_channel_enabled && 'opacity-40'"><flux:switch wire:model="staff_new_review_whatsapp" :disabled="! $whatsapp_channel_enabled" /></div>
                     </div>
                 </div>
 
@@ -817,7 +816,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                     <div class="flex shrink-0 items-center">
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_low_stock_email" /></div>
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_low_stock_inapp" /></div>
-                        <div class="flex w-16 justify-center opacity-40"><flux:switch wire:model="staff_low_stock_whatsapp" disabled /></div>
+                        <div class="flex w-16 justify-center" :class="! whatsapp_channel_enabled && 'opacity-40'"><flux:switch wire:model="staff_low_stock_whatsapp" :disabled="! $whatsapp_channel_enabled" /></div>
                     </div>
                 </div>
 
@@ -834,7 +833,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                     <div class="flex shrink-0 items-center">
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_new_quote_email" /></div>
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_new_quote_inapp" /></div>
-                        <div class="flex w-16 justify-center opacity-40"><flux:switch wire:model="staff_new_quote_whatsapp" disabled /></div>
+                        <div class="flex w-16 justify-center" :class="! whatsapp_channel_enabled && 'opacity-40'"><flux:switch wire:model="staff_new_quote_whatsapp" :disabled="! $whatsapp_channel_enabled" /></div>
                     </div>
                 </div>
                 <div class="flex items-center justify-between gap-4 px-5 py-3.5">
@@ -845,7 +844,7 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                     <div class="flex shrink-0 items-center">
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_quote_decision_email" /></div>
                         <div class="flex w-16 justify-center"><flux:switch wire:model="staff_quote_decision_inapp" /></div>
-                        <div class="flex w-16 justify-center opacity-40"><flux:switch wire:model="staff_quote_decision_whatsapp" disabled /></div>
+                        <div class="flex w-16 justify-center" :class="! whatsapp_channel_enabled && 'opacity-40'"><flux:switch wire:model="staff_quote_decision_whatsapp" :disabled="! $whatsapp_channel_enabled" /></div>
                     </div>
                 </div>
 

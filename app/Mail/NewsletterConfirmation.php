@@ -26,7 +26,7 @@ class NewsletterConfirmation extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.newsletter.confirmation',
+            view: 'mails.newsletter.confirmation',
         );
     }
 }

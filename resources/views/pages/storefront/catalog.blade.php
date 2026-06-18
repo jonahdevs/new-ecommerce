@@ -149,7 +149,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     #[Computed]
     public function categoriesList(): Collection
     {
-        return Category::query()->withCount('products')->orderBy('sort_order')->orderBy('name')->get();
+        return Category::query()->withCount('products')->orderBy('name')->get();
     }
 
     #[Computed]

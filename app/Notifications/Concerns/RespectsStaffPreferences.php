@@ -3,6 +3,7 @@
 namespace App\Notifications\Concerns;
 
 use App\Models\User;
+use App\Notifications\Channels\WhatsAppChannel;
 use App\Settings\NotificationSettings;
 
 /**
@@ -46,6 +47,19 @@ trait RespectsStaffPreferences
         if ($notifiable instanceof User && $this->supportsInApp() && ($baseKey === null || ($settings->{$baseKey.'_inapp'} ?? true))) {
             if (($prefs['inapp'] ?? true) !== false) {
                 $channels[] = 'database';
+            }
+        }
+
+        // WhatsApp channel — staff member must have a phone number and implement toWhatsapp().
+        if (
+            $notifiable instanceof User
+            && $settings->whatsapp_channel_enabled
+            && method_exists($this, 'toWhatsapp')
+            && ($baseKey === null || ($settings->{$baseKey.'_whatsapp'} ?? false))
+            && filled($notifiable->phone)
+        ) {
+            if (($prefs['whatsapp'] ?? true) !== false) {
+                $channels[] = WhatsAppChannel::class;
             }
         }
 

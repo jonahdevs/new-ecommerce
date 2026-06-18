@@ -14,7 +14,7 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
     /** @var array<string, array<string, bool>> */
     public array $prefs = [];
 
-    /** @return array<string, array<string, bool>> */
+    /** @return array<string, mixed> */
     public static function defaults(): array
     {
         return [
@@ -28,6 +28,30 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
             ],
             'marketing' => false,
             'account'   => true,
+            'inapp' => [
+                'orders' => [
+                    'confirmation' => true,
+                    'updates'      => true,
+                ],
+                'quotes' => [
+                    'received' => true,
+                    'updates'  => true,
+                ],
+                'marketing' => false,
+                'account'   => true,
+            ],
+            'whatsapp'  => [
+                'orders' => [
+                    'confirmation' => true,
+                    'updates'      => true,
+                ],
+                'quotes' => [
+                    'received' => true,
+                    'updates'  => true,
+                ],
+                'marketing' => false,
+                'account'   => true,
+            ],
         ];
     }
 
@@ -37,6 +61,12 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
 
         $stored = Auth::user()->notification_preferences ?? [];
         $this->prefs = array_replace_recursive(static::defaults(), $stored);
+    }
+
+    #[Computed]
+    public function inappEnabled(): bool
+    {
+        return app(NotificationSettings::class)->inapp_channel_enabled;
     }
 
     #[Computed]
@@ -81,8 +111,13 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
                     <span class="w-14 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest text-zinc-500 sm:w-16">Email</span>
                     <span @class([
                         'w-14 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest sm:w-16',
+                        'text-zinc-500' => $this->inappEnabled,
+                        'text-zinc-300 dark:text-zinc-600' => ! $this->inappEnabled,
+                    ])>In-app</span>
+                    <span @class([
+                        'w-14 shrink-0 whitespace-nowrap text-center text-[9px] font-extrabold uppercase tracking-widest sm:w-16',
                         'text-zinc-500' => $this->whatsappEnabled,
-                        'hidden text-zinc-300 sm:inline-block dark:text-zinc-600' => ! $this->whatsappEnabled,
+                        'text-zinc-300 dark:text-zinc-600' => ! $this->whatsappEnabled,
                     ])>WhatsApp</span>
                 </div>
 
@@ -136,11 +171,20 @@ new #[Layout('layouts::settings')] #[Title('Notifications')] class extends Compo
                                     <flux:switch wire:model="{{ $modelPath }}" />
                                 </div>
                                 <div @class([
-                                    'w-14 justify-center sm:w-16',
-                                    'flex' => $this->whatsappEnabled,
-                                    'hidden opacity-40 sm:flex' => ! $this->whatsappEnabled,
+                                    'flex w-14 justify-center sm:w-16',
+                                    'opacity-40' => ! $this->inappEnabled,
                                 ])>
-                                    <flux:switch :disabled="true" />
+                                    <flux:switch
+                                        wire:model="prefs.inapp.{{ $row['key'] }}"
+                                        :disabled="! $this->inappEnabled" />
+                                </div>
+                                <div @class([
+                                    'flex w-14 justify-center sm:w-16',
+                                    'opacity-40' => ! $this->whatsappEnabled,
+                                ])>
+                                    <flux:switch
+                                        wire:model="prefs.whatsapp.{{ $row['key'] }}"
+                                        :disabled="! $this->whatsappEnabled" />
                                 </div>
                             </div>
                         </div>

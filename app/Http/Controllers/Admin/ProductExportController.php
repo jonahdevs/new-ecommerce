@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exports\ProductsExport;
+use App\Exports\ProductsMissingImagesExport;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -75,6 +76,11 @@ class ProductExportController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="products-import-template.csv"',
         ]);
+    }
+
+    public function missingImages(): BinaryFileResponse
+    {
+        return Excel::download(new ProductsMissingImagesExport, 'products-missing-images.xlsx');
     }
 
     private function buildExport(Request $request): ProductsExport

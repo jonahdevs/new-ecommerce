@@ -184,13 +184,13 @@ class Order extends Model
         foreach ($this->items as $item) {
             // Prefer variant-level stock tracking when a variant exists.
             if ($item->variant && $item->variant->stock_quantity !== null) {
-                $item->variant->decrement('stock_quantity', $item->quantity);
+                $item->variant->decrement('stock_quantity', min($item->quantity, $item->variant->stock_quantity));
 
                 continue;
             }
 
             if ($item->product && $item->product->stock_quantity !== null) {
-                $item->product->decrement('stock_quantity', $item->quantity);
+                $item->product->decrement('stock_quantity', min($item->quantity, $item->product->stock_quantity));
             }
         }
     }

@@ -74,6 +74,10 @@
 
     {{ $slot }}
 
+    @auth
+        <livewire:concurrent-session-guard />
+    @endauth
+
     @persist('toast')
         <flux:toast.group>
             <flux:toast />

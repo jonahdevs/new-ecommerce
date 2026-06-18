@@ -3,6 +3,7 @@
 namespace App\Notifications\Concerns;
 
 use App\Models\User;
+use App\Notifications\Channels\WhatsAppChannel;
 use App\Settings\NotificationSettings;
 
 /**
@@ -27,14 +28,7 @@ trait RespectsPreferences
             return [];
         }
 
-        // 1. Global gate — store owner master switch
-        $globalKey = $this->resolveGlobalKey($key);
-
-        if ($globalKey !== null && ! app(NotificationSettings::class)->{$globalKey}) {
-            return [];
-        }
-
-        // 2. Personal gate — registered user's own preference
+        // Personal gate — user opted out of this notification category entirely.
         if ($notifiable instanceof User) {
             [$group, $field] = $key;
             $prefs = $notifiable->notification_preferences ?? [];
@@ -44,7 +38,65 @@ trait RespectsPreferences
             }
         }
 
-        return ['mail'];
+        $settings = app(NotificationSettings::class);
+        $channels = [];
+
+        // Email channel
+        if ($settings->email_channel_enabled) {
+            $emailKey = $this->resolveGlobalKey($key, 'email');
+
+            if ($emailKey === null || $settings->{$emailKey}) {
+                $channels[] = 'mail';
+            }
+        }
+
+        // In-app (database) channel
+        if ($settings->inapp_channel_enabled) {
+            $inappKey = $this->resolveGlobalKey($key, 'inapp');
+
+            if ($inappKey === null || $settings->{$inappKey}) {
+                [$group, $field] = $key;
+                $inappPrefs = ($notifiable instanceof User)
+                    ? ($notifiable->notification_preferences['inapp'] ?? [])
+                    : [];
+
+                $inappMuted = in_array($group, ['marketing', 'account'])
+                    ? ($inappPrefs[$group] ?? true) === false
+                    : ($inappPrefs[$group][$field] ?? true) === false;
+
+                if (! $inappMuted) {
+                    $channels[] = 'database';
+                }
+            }
+        }
+
+        // WhatsApp channel — globally enabled, notification implements toWhatsapp(),
+        // notifiable has a phone, and the user hasn't muted this type on WhatsApp.
+        if ($settings->whatsapp_channel_enabled && method_exists($this, 'toWhatsapp')) {
+            $whatsappKey = $this->resolveGlobalKey($key, 'whatsapp');
+
+            if ($whatsappKey === null || $settings->{$whatsappKey}) {
+                $phone = $notifiable instanceof User ? $notifiable->phone : null;
+
+                if ($phone) {
+                    [$group, $field] = $key;
+                    $waPrefs = ($notifiable instanceof User)
+                        ? ($notifiable->notification_preferences['whatsapp'] ?? [])
+                        : [];
+
+                    // marketing and account are stored as plain booleans; others as nested arrays.
+                    $waMuted = in_array($group, ['marketing', 'account'])
+                        ? ($waPrefs[$group] ?? true) === false
+                        : ($waPrefs[$group][$field] ?? true) === false;
+
+                    if (! $waMuted) {
+                        $channels[] = WhatsAppChannel::class;
+                    }
+                }
+            }
+        }
+
+        return $channels;
     }
 
     /**
@@ -56,14 +108,13 @@ trait RespectsPreferences
     abstract protected function preferenceKey(): ?array;
 
     /**
-     * Derive the NotificationSettings property name from the preference key.
-     * Per-channel properties are named {base}_email / _inapp / _whatsapp, so
-     * we check the _email variant (the only channel currently implemented).
+     * Derive the NotificationSettings property name for a given channel.
+     * Per-channel properties are named {base}_email / _whatsapp.
      * Returns null when there is no corresponding global toggle.
      *
      * @param  array{0: string, 1: string}  $key
      */
-    private function resolveGlobalKey(array $key): ?string
+    private function resolveGlobalKey(array $key, string $channel): ?string
     {
         [$group, $field] = $key;
 
@@ -75,6 +126,6 @@ trait RespectsPreferences
             default => null,
         };
 
-        return $base !== null ? "{$base}_email" : null;
+        return $base !== null ? "{$base}_{$channel}" : null;
     }
 }
