@@ -73,6 +73,15 @@
     backdrop-filter: blur(4px);
 }
 
+/* Spin the modal close (x) icon on hover. */
+[data-flux-modal-close] svg {
+    transition: transform 0.2s ease;
+}
+
+[data-flux-modal-close]:hover svg {
+    transform: rotate(90deg);
+}
+
 @layer base {
     *,
     ::after,

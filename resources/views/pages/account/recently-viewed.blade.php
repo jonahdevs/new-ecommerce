@@ -52,7 +52,7 @@ new #[Layout('layouts::account')] #[Title('Recently Viewed')] class extends Comp
             <flux:button :href="route('catalog')" variant="primary" class="mt-5" wire:navigate>Browse products</flux:button>
         </div>
     @else
-        <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
             @foreach ($this->products as $product)
                 <x-storefront.product-card :product="$product" wire:key="rv-{{ $product->id }}" />
             @endforeach

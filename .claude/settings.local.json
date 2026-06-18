@@ -15,7 +15,8 @@
       "WebSearch",
       "WebFetch(domain:arxiv.org)",
       "WebFetch(domain:woocommerce.com)",
-      "WebFetch(domain:paystack.com)"
+      "WebFetch(domain:paystack.com)",
+      "WebFetch(domain:spatie.be)"
     ]
   },
   "enableAllProjectMcpServers": true,

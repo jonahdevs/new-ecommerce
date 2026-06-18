@@ -110,6 +110,30 @@ it('sends order status emails only for fulfilment milestones', function () {
     expect((new OrderStatusChanged($order))->via(new User))->toBe(['mail']);
 });
 
+it('builds the order_confirmed WhatsApp template with body parameters', function () {
+    $customer = User::factory()->create(['name' => 'Jonah']);
+    $order = Order::factory()->create([
+        'user_id' => $customer->id,
+        'payment_method' => 'mpesa',
+    ]);
+
+    $message = (new OrderConfirmed($order))->toWhatsapp($customer);
+
+    expect($message->template)->toBe('order_confirmed')
+        ->and($message->language)->toBe('en_US')
+        ->and($message->components)->toHaveCount(1);
+
+    $params = array_map(fn ($p) => $p['text'], $message->components[0]['parameters']);
+
+    expect($params)->toBe([
+        'Jonah',
+        $order->order_number,
+        money($order->total_cents),
+        'M-Pesa',
+        route('account.orders.show', $order),
+    ]);
+});
+
 it('respects a muted order preference', function () {
     $user = User::factory()->create(['notification_preferences' => ['orders' => ['updates' => false]]]);
     $order = Order::factory()->make(['user_id' => $user->id, 'status' => OrderStatus::COMPLETED]);

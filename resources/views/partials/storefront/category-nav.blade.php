@@ -26,8 +26,8 @@
                         <span class="grid size-5 shrink-0 place-items-center [&>svg]:size-full">
                             {!! $category->icon_svg !!}
                         </span>
-                    @elseif ($category->icon)
-                        <img src="{{ $category->icon_url }}" alt=""
+                    @elseif ($category->icon_image_url)
+                        <img src="{{ $category->icon_image_url }}" alt=""
                             class="size-5 shrink-0 object-contain brightness-0 invert" loading="lazy" />
                     @endif
                     <span class="truncate">{{ $category->name }}</span>
@@ -79,8 +79,8 @@
                                     <span class="grid size-5 shrink-0 place-items-center text-ink-3 [&>svg]:size-full">
                                         {!! $category->icon_svg !!}
                                     </span>
-                                @elseif ($category->icon)
-                                    <img src="{{ $category->icon_url }}" alt=""
+                                @elseif ($category->icon_image_url)
+                                    <img src="{{ $category->icon_image_url }}" alt=""
                                         class="size-5 shrink-0 object-contain opacity-60" loading="lazy" />
                                 @endif
                                 <span class="truncate">{{ $category->name }}</span>

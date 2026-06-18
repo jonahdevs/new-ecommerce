@@ -338,7 +338,11 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
                     <flux:input wire:model="name" label="Full name" placeholder="e.g. Jane Doe" required />
                     <flux:input wire:model="email" type="email" label="Email address"
                         placeholder="e.g. jane@example.com" required />
-                    <flux:input wire:model="phone" label="Phone number" placeholder="e.g. 0700 000 000" />
+                    <flux:field>
+                        <flux:label>Phone number</flux:label>
+                        <x-phone-input wire:model="phone" placeholder="700 000 000" />
+                        <flux:error name="phone" />
+                    </flux:field>
                 </div>
             </flux:card>
 
@@ -350,9 +354,16 @@ new #[Layout('layouts::app')] #[Title('Edit Customer — Admin')] class extends 
                 <div class="grid grid-cols-1 gap-x-5 gap-y-4 p-6 sm:grid-cols-2">
                     <flux:input wire:model="addressName" label="Recipient name" placeholder="e.g. Jane Doe" />
                     <flux:input wire:model="addressLabel" label="Label" placeholder="e.g. Home, Office" />
-                    <flux:input wire:model="addressPhone" label="Phone" placeholder="e.g. 0700 000 000" />
-                    <flux:input wire:model="addressAlternativePhone" label="Alternative phone"
-                        placeholder="e.g. 0711 000 000" />
+                    <flux:field>
+                        <flux:label>Phone</flux:label>
+                        <x-phone-input wire:model="addressPhone" placeholder="700 000 000" />
+                        <flux:error name="addressPhone" />
+                    </flux:field>
+                    <flux:field>
+                        <flux:label>Alternative phone</flux:label>
+                        <x-phone-input wire:model="addressAlternativePhone" placeholder="711 000 000" />
+                        <flux:error name="addressAlternativePhone" />
+                    </flux:field>
                     <div class="sm:col-span-2">
                         <flux:input wire:model="addressLine1" label="Address"
                             placeholder="e.g. 4th Floor, TRG Plaza, Westlands" />

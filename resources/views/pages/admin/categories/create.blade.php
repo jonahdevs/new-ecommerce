@@ -84,17 +84,33 @@ new #[Layout('layouts::app')] #[Title('New Category — Admin')] class extends C
             'description' => $this->description ?: null,
             'status' => $this->status,
             'sort_order' => $this->sort_order,
-            'image' => $this->pendingImage?->store('categories', 'public'),
-            'thumbnail' => $this->pendingThumbnail?->store('categories', 'public'),
-            'icon' => $this->pendingIcon?->store('categories', 'public'),
             'icon_svg' => $this->icon_svg ?: null,
             'meta_title' => $this->meta_title ?: null,
             'meta_description' => $this->meta_description ?: null,
             'canonical_url' => $this->canonical_url ?: null,
         ]);
 
+        $this->attachMedia($category, 'pendingImage', 'banner');
+        $this->attachMedia($category, 'pendingThumbnail', 'square');
+        $this->attachMedia($category, 'pendingIcon', 'icon');
+
         Flux::toast(heading: 'Category created', text: $this->name.' has been added.', variant: 'success');
         $this->redirectRoute('admin.categories.edit', $category, navigate: true);
+    }
+
+    /**
+     * Move a freshly uploaded temporary file into its single-file media collection.
+     */
+    private function attachMedia(Category $category, string $pendingProperty, string $collection): void
+    {
+        if (! $this->{$pendingProperty}) {
+            return;
+        }
+
+        $category
+            ->addMedia($this->{$pendingProperty}->getRealPath())
+            ->usingFileName($this->{$pendingProperty}->getClientOriginalName())
+            ->toMediaCollection($collection);
     }
 }; ?>
 
@@ -142,13 +158,47 @@ new #[Layout('layouts::app')] #[Title('New Category — Admin')] class extends C
                         <div class="space-y-4 p-6">
                             <flux:input wire:model.live.debounce.400ms="name" label="Name"
                                 placeholder="e.g. Cooking Ranges" required autofocus />
-                            <flux:input wire:model.blur="slug" label="Slug"
-                                description="Auto-generated from name. Used in URLs." />
+                            <flux:input wire:model.blur="slug" label="Slug" />
                             <flux:textarea wire:model="description" label="Description" rows="3"
                                 placeholder="Brief description shown on the category page…" />
                         </div>
                     </div>
                 </div>
+
+                {{-- Banner image --}}
+                <flux:card x-data="{ open: true }" class="overflow-hidden p-0">
+                    <button type="button" x-on:click="open = !open"
+                        class="flex w-full items-center justify-between px-6 py-3"
+                        :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
+                        <flux:heading size="base" class="uppercase tracking-wide">Banner image</flux:heading>
+                        <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                            <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
+                        </span>
+                    </button>
+                    <div x-show="open" x-collapse x-cloak>
+                        <div class="p-6">
+                            @if ($pendingImage)
+                                <div class="group relative overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
+                                    <img src="{{ $pendingImage->temporaryUrl() }}" alt="Preview"
+                                        class="h-44 w-full object-cover" />
+                                    <button type="button" wire:click="$set('pendingImage', null)"
+                                        class="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-white dark:bg-zinc-900/90">
+                                        <flux:icon.x-mark variant="micro" class="size-4 text-zinc-600" />
+                                    </button>
+                                </div>
+                            @else
+                                <label
+                                    class="flex h-44 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-zinc-300 transition hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600">
+                                    <flux:icon.arrow-up-tray class="size-6 text-zinc-400" />
+                                    <flux:text size="sm" class="text-zinc-400">Click to upload banner</flux:text>
+                                    <input type="file" wire:model="pendingImage" accept="image/*" class="sr-only" />
+                                </label>
+                            @endif
+                            <div wire:loading wire:target="pendingImage" class="mt-2 text-xs text-zinc-400">Uploading…</div>
+                            @error('pendingImage') <flux:error class="mt-1">{{ $message }}</flux:error> @enderror
+                        </div>
+                    </div>
+                </flux:card>
 
                 {{-- SEO --}}
                 <div x-data="{ open: false }"
@@ -201,53 +251,17 @@ new #[Layout('layouts::app')] #[Title('New Category — Admin')] class extends C
                                     <flux:select.option :value="$opt->id">{{ $opt->name }}</flux:select.option>
                                 @endforeach
                             </flux:select>
-                            <flux:input wire:model="sort_order" label="Sort order" type="number" min="0"
-                                description="Lower number = displayed first." />
+                            <flux:input wire:model="sort_order" label="Sort order" type="number" min="0" />
                         </div>
                     </div>
                 </flux:card>
 
-                {{-- Banner image --}}
+                {{-- Image (primary square image — grid tiles & menus) --}}
                 <flux:card x-data="{ open: true }" class="overflow-hidden p-0">
                     <button type="button" x-on:click="open = !open"
                         class="flex w-full items-center justify-between px-6 py-3"
                         :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm" class="uppercase tracking-wide">Banner image</flux:heading>
-                        <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
-                            <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
-                        </span>
-                    </button>
-                    <div x-show="open" x-collapse x-cloak>
-                        <div class="p-6">
-                            @if ($pendingImage)
-                                <div class="group relative overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
-                                    <img src="{{ $pendingImage->temporaryUrl() }}" alt="Preview"
-                                        class="h-36 w-full object-cover" />
-                                    <button type="button" wire:click="$set('pendingImage', null)"
-                                        class="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-white dark:bg-zinc-900/90">
-                                        <flux:icon.x-mark variant="micro" class="size-4 text-zinc-600" />
-                                    </button>
-                                </div>
-                            @else
-                                <label
-                                    class="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-zinc-300 transition hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600">
-                                    <flux:icon.arrow-up-tray class="size-6 text-zinc-400" />
-                                    <flux:text size="sm" class="text-zinc-400">Click to upload banner</flux:text>
-                                    <input type="file" wire:model="pendingImage" accept="image/*" class="sr-only" />
-                                </label>
-                            @endif
-                            <div wire:loading wire:target="pendingImage" class="mt-2 text-xs text-zinc-400">Uploading…</div>
-                            @error('pendingImage') <flux:error class="mt-1">{{ $message }}</flux:error> @enderror
-                        </div>
-                    </div>
-                </flux:card>
-
-                {{-- Thumbnail --}}
-                <flux:card x-data="{ open: true }" class="overflow-hidden p-0">
-                    <button type="button" x-on:click="open = !open"
-                        class="flex w-full items-center justify-between px-6 py-3"
-                        :class="open ? 'border-b border-zinc-200 dark:border-zinc-700' : ''">
-                        <flux:heading size="sm" class="uppercase tracking-wide">Thumbnail</flux:heading>
+                        <flux:heading size="sm" class="uppercase tracking-wide">Image</flux:heading>
                         <span class="inline-flex transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                             <flux:icon.chevron-down variant="micro" class="size-4 text-zinc-400" />
                         </span>
@@ -273,7 +287,7 @@ new #[Layout('layouts::app')] #[Title('New Category — Admin')] class extends C
                             @endif
                             <div wire:loading wire:target="pendingThumbnail" class="mt-2 text-xs text-zinc-400">Uploading…</div>
                             @error('pendingThumbnail') <flux:error class="mt-1">{{ $message }}</flux:error> @enderror
-                            <flux:text size="sm" class="mt-3 text-zinc-500">Small square image for listings and menus.</flux:text>
+                            <flux:text size="sm" class="mt-3 text-zinc-500">Primary square image shown in listings and menus.</flux:text>
                         </div>
                     </div>
                 </flux:card>

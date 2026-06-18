@@ -13,7 +13,6 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -61,10 +60,9 @@ new #[Layout('layouts::storefront')] class extends Component
         OpenGraph::setTitle($title)->setDescription($description)->setType('website');
         TwitterCard::setTitle($title)->setDescription($description);
 
-        if ($category->image) {
-            $url = Storage::url($category->image);
-            OpenGraph::addImage($url);
-            TwitterCard::setImage($url);
+        if ($banner = $category->banner_url) {
+            OpenGraph::addImage($banner);
+            TwitterCard::setImage($banner);
         }
 
         if ($category->canonical_url) {
@@ -199,22 +197,28 @@ new #[Layout('layouts::storefront')] class extends Component
     </div>
 
     {{-- Category hero --}}
+    @php $banner = $category->banner_url; $bannerPlaceholder = $category->banner_placeholder; @endphp
     <div class="relative overflow-hidden border-b border-zinc-200 py-6 sm:py-10
-        {{ $category->image ? '' : 'bg-surface-sunken' }}"
-        @if ($category->image)
-            style="background-image: url('{{ $category->image_url }}'); background-size: cover; background-position: center;"
-        @endif>
+        {{ $banner ? '' : 'bg-surface-sunken' }}">
 
-        @if ($category->image)
+        @if ($banner)
+            @if ($bannerPlaceholder)
+                <img src="{{ $bannerPlaceholder }}" alt="" aria-hidden="true"
+                    class="absolute inset-0 size-full scale-110 object-cover blur-xl" />
+            @endif
+            <img src="{{ $banner }}" alt="" aria-hidden="true"
+                x-data="{ loaded: false }" x-init="loaded = $el.complete" x-on:load="loaded = true"
+                x-bind:class="loaded ? 'opacity-100' : 'opacity-0'"
+                class="absolute inset-0 size-full object-cover transition-opacity duration-700" />
             <div class="absolute inset-0 bg-zinc-900/60"></div>
         @endif
 
         <div class="shell relative z-10">
-            <h1 class="text-xl font-semibold tracking-tight sm:text-2xl {{ $category->image ? 'text-white' : 'text-ink' }}">
+            <h1 class="text-xl font-semibold tracking-tight sm:text-2xl {{ $banner ? 'text-white' : 'text-ink' }}">
                 {{ $category->name }}
             </h1>
             @if ($category->description)
-                <p class="mt-2 max-w-xl text-[14px] {{ $category->image ? 'text-white/75' : 'text-ink-3' }}">
+                <p class="mt-2 max-w-xl text-[14px] {{ $banner ? 'text-white/75' : 'text-ink-3' }}">
                     {{ $category->description }}
                 </p>
             @endif

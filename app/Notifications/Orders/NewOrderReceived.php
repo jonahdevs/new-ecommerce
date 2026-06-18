@@ -4,6 +4,7 @@ namespace App\Notifications\Orders;
 
 use App\Models\Order;
 use App\Notifications\Concerns\RespectsStaffPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,6 +42,16 @@ class NewOrderReceived extends Notification implements ShouldQueue
             ->line($customer.' placed order '.$this->order->order_number.'.')
             ->line('Total: '.money($this->order->total_cents))
             ->action('Open in admin', route('admin.orders.show', $this->order));
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        return WhatsAppMessage::template('staff_new_order')
+            ->body(
+                $this->order->user?->name ?? 'A customer',
+                $this->order->order_number,
+                money($this->order->total_cents),
+            );
     }
 
     /** @return array<string, mixed> */

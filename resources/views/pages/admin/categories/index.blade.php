@@ -42,7 +42,7 @@ new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Com
     #[Computed]
     public function categories()
     {
-        return Category::with('parent')
+        return Category::with(['parent', 'media'])
             ->withCount('products')
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))
@@ -139,7 +139,7 @@ new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Com
         <flux:table
             container:class="[&_th:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6">
             <flux:table.columns class="bg-zinc-50 dark:bg-zinc-800/60">
-                <flux:table.column>Name</flux:table.column>
+                <flux:table.column>Category</flux:table.column>
                 <flux:table.column>Slug</flux:table.column>
                 <flux:table.column>Parent</flux:table.column>
                 <flux:table.column>Products</flux:table.column>
@@ -150,7 +150,19 @@ new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Com
             <flux:table.rows>
                 @forelse ($this->categories as $category)
                     <flux:table.row :key="$category->id">
-                        <flux:table.cell variant="strong">{{ $category->name }}</flux:table.cell>
+                        <flux:table.cell variant="strong">
+                            <div class="flex items-center gap-3">
+                                @if ($category->image_thumb_url)
+                                    <img src="{{ $category->image_thumb_url }}" alt=""
+                                        class="size-10 shrink-0 rounded-md object-cover" />
+                                @else
+                                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
+                                        <flux:icon.photo variant="micro" class="size-4 text-zinc-400" />
+                                    </div>
+                                @endif
+                                <span>{{ $category->name }}</span>
+                            </div>
+                        </flux:table.cell>
                         <flux:table.cell class="font-mono text-xs text-zinc-400">{{ $category->slug }}</flux:table.cell>
                         <flux:table.cell class="text-zinc-500">
                             {{ $category->parent?->name ?? '—' }}

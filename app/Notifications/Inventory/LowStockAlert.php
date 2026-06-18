@@ -4,6 +4,7 @@ namespace App\Notifications\Inventory;
 
 use App\Models\Product;
 use App\Notifications\Concerns\RespectsStaffPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,6 +42,15 @@ class LowStockAlert extends Notification implements ShouldQueue
             ->greeting('Low stock alert')
             ->line('"'.$this->product->name.'" has '.$this->currentQuantity.' unit(s) remaining, at or below its low stock threshold.')
             ->action('View product', route('admin.products.edit', $this->product));
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        return WhatsAppMessage::template('staff_low_stock')
+            ->body(
+                $this->product->name,
+                (string) $this->currentQuantity,
+            );
     }
 
     /** @return array<string, mixed> */

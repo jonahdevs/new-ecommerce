@@ -28,6 +28,22 @@ test('profile information can be updated', function () {
     expect($user->email_verified_at)->toBeNull();
 });
 
+test('phone number is stored in E.164 from the country code combobox and local number', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::account.settings.profile')
+        ->set('name', 'Test User')
+        ->set('email', $user->email)
+        ->set('phone_country_code', '+256')
+        ->set('phone_local', '0712345678')
+        ->call('updateProfileInformation')
+        ->assertHasNoErrors();
+
+    expect($user->refresh()->phone)->toEqual('+256712345678');
+});
+
 test('email verification status is unchanged when email address is unchanged', function () {
     $user = User::factory()->create();
 

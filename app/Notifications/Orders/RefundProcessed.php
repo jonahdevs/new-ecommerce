@@ -4,6 +4,7 @@ namespace App\Notifications\Orders;
 
 use App\Models\Order;
 use App\Notifications\Concerns\RespectsPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -46,5 +47,17 @@ class RefundProcessed extends Notification implements ShouldQueue
                 'refundReason' => $this->refundReason,
                 'orderUrl' => route('account.orders.show', $order),
             ]);
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        $order = $this->order;
+
+        return WhatsAppMessage::template('refund_processed')
+            ->body(
+                $order->user?->name ?? 'there',
+                $order->order_number,
+                money($this->refundAmountCents),
+            );
     }
 }

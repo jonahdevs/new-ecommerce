@@ -785,9 +785,9 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     @auth
         <div x-data="addressMap()"
             x-effect="($wire.showAddressModal && $wire.addressModalMode === 'create') ? open() : close()">
-            <flux:modal wire:model.self="showAddressModal" class="md:w-[560px]" :dismissible="false">
+            <flux:modal wire:model.self="showAddressModal" class="md:w-[640px] md:max-w-none" :dismissible="false">
                 @if ($addressModalMode === 'select')
-                    <flux:heading>Choose a delivery address</flux:heading>
+                    <flux:heading class="uppercase tracking-wide">Choose a delivery address</flux:heading>
                     <flux:subheading>Select where you'd like this order delivered.</flux:subheading>
 
                     <div class="mt-5 space-y-3">
@@ -817,7 +817,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                             wire:click="startAddressCreate">Add new address</flux:button>
                     </div>
                 @else
-                    <flux:heading>New address</flux:heading>
+                    <flux:heading class="uppercase tracking-wide">New address</flux:heading>
                     <flux:subheading>
                         <span x-show="step === 1">Pin where you'd like this order delivered.</span>
                         <span x-show="step === 2" x-cloak>Now fill in the delivery address details.</span>
@@ -828,7 +828,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                             @include('partials.storefront.address-map-pin')
                             <div class="flex justify-end gap-3 pt-2">
                                 @if ($this->addresses->isNotEmpty())
-                                    <flux:button type="button" variant="ghost" icon="arrow-left"
+                                    <flux:button type="button" icon="arrow-left"
                                         wire:click="$set('addressModalMode', 'select')">Back</flux:button>
                                 @else
                                     <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">
@@ -842,7 +842,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         <div x-show="step === 2" x-cloak class="space-y-4">
                             @include('partials.storefront.address-fields')
                             <div class="flex justify-between gap-3 pt-2">
-                                <flux:button type="button" variant="ghost" icon="arrow-left"
+                                <flux:button type="button" icon="arrow-left"
                                     x-on:click="showLocation()">Back</flux:button>
                                 <flux:button type="submit" variant="customer-primary" size="customer">Add address
                                 </flux:button>

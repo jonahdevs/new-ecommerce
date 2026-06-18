@@ -15,6 +15,30 @@ it('loads the customers admin index', function () {
     $this->get(route('admin.customers.index'))->assertOk();
 });
 
+it('creates a customer with a phone number', function () {
+    Livewire::test('pages::admin.customers.create')
+        ->set('name', 'Jane Doe')
+        ->set('email', 'jane@example.com')
+        ->set('phone', '+254712345678')
+        ->set('password', 'secret-password')
+        ->set('password_confirmation', 'secret-password')
+        ->call('create')
+        ->assertHasNoErrors();
+
+    expect(User::firstWhere('email', 'jane@example.com')?->phone)->toBe('+254712345678');
+});
+
+it('updates a customer phone number from the edit page', function () {
+    $customer = User::factory()->create();
+
+    Livewire::test('pages::admin.customers.edit', ['customer' => $customer])
+        ->set('phone', '+256712345678')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($customer->refresh()->phone)->toBe('+256712345678');
+});
+
 it('loads the customer edit page with its section cards', function () {
     $customer = User::factory()->create();
 

@@ -54,7 +54,16 @@ class OrderConfirmed extends Notification implements ShouldQueue
 
     public function toWhatsapp(object $notifiable): WhatsAppMessage
     {
-        return WhatsAppMessage::template('hello_world');
+        $order = $this->order;
+
+        return WhatsAppMessage::template('order_confirmed')
+            ->body(
+                $order->user?->name ?? 'there',
+                $order->order_number,
+                money($order->total_cents),
+                $this->resolvePaymentLabel($order->payment_method),
+                route('account.orders.show', $order),
+            );
     }
 
     /**

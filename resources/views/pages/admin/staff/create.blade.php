@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Role;
 new #[Layout('layouts::app')] #[Title('Add Staff — Admin')] class extends Component {
     public string $name = '';
     public string $email = '';
+    public string $phone = '';
     public string $password = '';
     public string $password_confirmation = '';
     public string $role = '';
@@ -33,6 +34,7 @@ new #[Layout('layouts::app')] #[Title('Add Staff — Admin')] class extends Comp
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::exists('roles', 'name')],
         ]);
@@ -40,6 +42,7 @@ new #[Layout('layouts::app')] #[Title('Add Staff — Admin')] class extends Comp
         $user = User::create([
             'name' => $this->name,
             'email' => $this->email,
+            'phone' => $this->phone ?: null,
             'password' => $this->password,
             'email_verified_at' => now(),
         ]);
@@ -83,6 +86,12 @@ new #[Layout('layouts::app')] #[Title('Add Staff — Admin')] class extends Comp
                 <div class="space-y-4 p-6">
                     <flux:input wire:model="name" label="Full name" placeholder="Jane Doe" required autofocus />
                     <flux:input wire:model="email" type="email" label="Email address" placeholder="jane@example.com" required />
+                    <flux:field>
+                        <flux:label>Phone number</flux:label>
+                        <x-phone-input wire:model="phone" placeholder="700 000 000" />
+                        <flux:description>Used for WhatsApp staff notifications.</flux:description>
+                        <flux:error name="phone" />
+                    </flux:field>
                     <flux:select wire:model="role" label="Role">
                         @foreach ($this->roles as $r)
                             <flux:select.option value="{{ $r->name }}">{{ str($r->name)->headline() }}</flux:select.option>

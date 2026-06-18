@@ -222,22 +222,15 @@ new #[Layout('layouts::settings')] #[Title('Profile')] class extends Component {
                         </div>
 
                         <flux:field>
-                            <flux:label>WhatsApp / Phone number</flux:label>
+                            <flux:label>Phone number</flux:label>
                             <flux:input.group>
-                                <flux:select wire:model="phone_country_code" class="w-40 shrink-0">
-                                    @foreach(\App\Support\CountryCodes::all() as $country)
-                                        <flux:select.option value="{{ $country['dial'] }}">
-                                            {{ $country['flag'] }} {{ $country['name'] }} ({{ $country['dial'] }})
-                                        </flux:select.option>
-                                    @endforeach
-                                </flux:select>
+                                <x-country-code-combobox wire:model="phone_country_code" />
                                 <flux:input
                                     wire:model="phone_local"
                                     type="tel"
                                     placeholder="712 345 678"
                                     autocomplete="tel" />
                             </flux:input.group>
-                            <flux:description>Used for WhatsApp order notifications.</flux:description>
                             <flux:error name="phone_local" />
                         </flux:field>
                     </div>

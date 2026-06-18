@@ -280,10 +280,15 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
             @foreach ($this->featuredCategories as $category)
                 <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
                     <div class="relative aspect-square overflow-hidden bg-surface-sunken">
-                        @if ($category->image)
-                            <img src="{{ $category->image_url }}" alt=""
-                                loading="lazy"
-                                class="block size-full object-cover transition duration-300 group-hover:scale-[1.04]" />
+                        @if ($category->square_url)
+                            @if ($placeholder = $category->image_placeholder)
+                                <img src="{{ $placeholder }}" alt="" aria-hidden="true"
+                                    class="absolute inset-0 size-full scale-110 object-cover blur-xl" />
+                            @endif
+                            <img src="{{ $category->square_url }}" alt="" loading="lazy"
+                                x-data="{ loaded: false }" x-init="loaded = $el.complete" x-on:load="loaded = true"
+                                x-bind:class="loaded ? 'opacity-100' : 'opacity-0'"
+                                class="relative block size-full object-cover transition duration-500 group-hover:scale-[1.04]" />
                         @endif
                     </div>
                     <div class="flex items-baseline justify-between gap-2 pt-2.5">

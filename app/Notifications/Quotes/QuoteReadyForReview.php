@@ -4,6 +4,7 @@ namespace App\Notifications\Quotes;
 
 use App\Models\Quote;
 use App\Notifications\Concerns\RespectsPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use App\Services\QuotePdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -53,5 +54,16 @@ class QuoteReadyForReview extends Notification implements ShouldQueue
         }
 
         return $mail;
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        $quote = $this->quote;
+
+        return WhatsAppMessage::template('quote_ready')
+            ->body(
+                $quote->user?->name ?? $quote->contact_name ?? 'there',
+                $quote->quote_number,
+            );
     }
 }

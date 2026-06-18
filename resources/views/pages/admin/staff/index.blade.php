@@ -22,6 +22,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
 
     public string $name = '';
     public string $email = '';
+    public string $phone = '';
     public string $password = '';
     public string $role = 'staff';
 
@@ -51,7 +52,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'name', 'email', 'password']);
+        $this->reset(['editingId', 'name', 'email', 'phone', 'password']);
         $this->role = 'staff';
         $this->resetValidation();
         $this->showModal = true;
@@ -63,6 +64,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
         $this->editingId = $id;
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->phone = (string) $user->phone;
         $this->password = '';
         $this->role = $user->roles->first()?->name ?? 'staff';
         $this->resetValidation();
@@ -74,6 +76,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingId)],
+            'phone' => ['nullable', 'string', 'max:50'],
             'role' => ['required', Rule::exists('roles', 'name')],
         ];
 
@@ -89,6 +92,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
             $user = User::findOrFail($this->editingId);
             $user->name = $this->name;
             $user->email = $this->email;
+            $user->phone = $this->phone ?: null;
             if ($this->password !== '') {
                 $user->password = $this->password;
             }
@@ -100,6 +104,7 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
             $user = User::create([
                 'name' => $this->name,
                 'email' => $this->email,
+                'phone' => $this->phone ?: null,
                 'password' => $this->password,
                 'email_verified_at' => now(),
             ]);
@@ -239,6 +244,13 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
         <form wire:submit="save" class="mt-5 space-y-4">
             <flux:input wire:model="name" label="Name" placeholder="Jane Doe" required autofocus />
             <flux:input wire:model="email" label="Email" type="email" placeholder="jane@example.com" required />
+
+            <flux:field>
+                <flux:label>Phone number</flux:label>
+                <x-phone-input wire:model="phone" placeholder="700 000 000" />
+                <flux:description>Used for WhatsApp staff notifications.</flux:description>
+                <flux:error name="phone" />
+            </flux:field>
 
             <flux:field>
                 <flux:label>Role</flux:label>

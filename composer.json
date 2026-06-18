@@ -28,6 +28,7 @@
         "spatie/browsershot": "^5.4",
         "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-backup": "^10.2",
+        "spatie/laravel-medialibrary": "^11.23",
         "spatie/laravel-pdf": "^2.11",
         "spatie/laravel-permission": "^7.4",
         "spatie/laravel-settings": "^3.9",

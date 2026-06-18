@@ -8,12 +8,12 @@
 <div class="grid grid-cols-2 gap-4">
     <flux:field>
         <flux:label>Phone</flux:label>
-        <flux:input wire:model="phone" type="tel" placeholder="+254 712 345 678" />
+        <x-phone-input wire:model="phone" placeholder="712 345 678" />
         <flux:error name="phone" />
     </flux:field>
     <flux:field>
         <flux:label>Alternative phone</flux:label>
-        <flux:input wire:model="alternative_phone" type="tel" placeholder="+254 722 345 678" />
+        <x-phone-input wire:model="alternative_phone" placeholder="722 345 678" />
         <flux:error name="alternative_phone" />
     </flux:field>
 </div>

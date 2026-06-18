@@ -13,11 +13,12 @@ it('loads the staff admin index', function () {
     $this->get(route('admin.staff.index'))->assertOk();
 });
 
-it('invites a staff member and assigns a role', function () {
+it('invites a staff member with a phone number and assigns a role', function () {
     Livewire::test('pages::admin.staff.index')
         ->call('openCreate')
         ->set('name', 'Grace Mwangi')
         ->set('email', 'grace@sheffield.test')
+        ->set('phone', '+254712345678')
         ->set('password', 'secret-password')
         ->set('role', 'staff')
         ->call('save')
@@ -27,6 +28,7 @@ it('invites a staff member and assigns a role', function () {
     $user = User::firstWhere('email', 'grace@sheffield.test');
 
     expect($user)->not->toBeNull()
+        ->and($user->phone)->toBe('+254712345678')
         ->and($user->hasRole('staff'))->toBeTrue();
 });
 

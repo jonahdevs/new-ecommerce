@@ -144,10 +144,46 @@ new #[Layout('layouts::app')] #[Title('Edit Warehouse — Admin')] class extends
                             <flux:input wire:model="city" label="City" required />
                             <flux:input wire:model="county" label="County" required />
                         </div>
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <flux:input wire:model="latitude" label="Latitude" placeholder="-1.2921"
-                                description="Optional — for map display." />
-                            <flux:input wire:model="longitude" label="Longitude" placeholder="36.8219" />
+                        <div
+                            x-data="{
+                                locating: false,
+                                geoError: '',
+                                locate() {
+                                    this.geoError = '';
+                                    if (! navigator.geolocation) {
+                                        this.geoError = 'Your browser cannot share a location. Enter the coordinates manually.';
+                                        return;
+                                    }
+                                    this.locating = true;
+                                    navigator.geolocation.getCurrentPosition(
+                                        (pos) => {
+                                            this.locating = false;
+                                            $wire.set('latitude', pos.coords.latitude.toFixed(6));
+                                            $wire.set('longitude', pos.coords.longitude.toFixed(6));
+                                        },
+                                        () => {
+                                            this.locating = false;
+                                            this.geoError = 'Could not get your location. Allow location access or enter the coordinates manually.';
+                                        },
+                                        { enableHighAccuracy: true, timeout: 10000 },
+                                    );
+                                },
+                            }"
+                            class="space-y-3"
+                        >
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <flux:input wire:model="latitude" label="Latitude" placeholder="-1.2921"
+                                    description="Optional — for map display." />
+                                <flux:input wire:model="longitude" label="Longitude" placeholder="36.8219" />
+                            </div>
+
+                            <flux:button type="button" size="sm" variant="filled" icon="map-pin"
+                                x-on:click="locate()" x-bind:disabled="locating">
+                                <span x-show="! locating">Use my current location</span>
+                                <span x-show="locating" x-cloak>Locating…</span>
+                            </flux:button>
+
+                            <flux:text size="sm" x-show="geoError" x-cloak x-text="geoError" class="text-red-500!" />
                         </div>
                     </div>
                 </flux:card>

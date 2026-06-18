@@ -5,6 +5,7 @@ namespace App\Notifications\Orders;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Notifications\Concerns\RespectsPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -50,5 +51,30 @@ class OrderStatusChanged extends Notification implements ShouldQueue
                 'customerName' => $order->user?->name ?? 'there',
                 'newStatus' => $order->status,
             ]);
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        $order = $this->order;
+
+        return WhatsAppMessage::template('order_status_update')
+            ->body(
+                $order->user?->name ?? 'there',
+                $order->order_number,
+                $this->resolveStatusLabel($order->status),
+            );
+    }
+
+    /**
+     * Human-friendly label for the fulfilment milestone the customer is told about.
+     */
+    private function resolveStatusLabel(OrderStatus $status): string
+    {
+        return match ($status) {
+            OrderStatus::OUT_FOR_DELIVERY => 'Out for delivery',
+            OrderStatus::COMPLETED => 'Completed',
+            OrderStatus::CANCELLED => 'Cancelled',
+            default => 'Updated',
+        };
     }
 }

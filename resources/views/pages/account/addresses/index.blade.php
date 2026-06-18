@@ -228,8 +228,8 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
     </div>
 
     {{-- Create / Edit modal --}}
-    <flux:modal wire:model.self="showModal" class="md:w-[560px]" :dismissible="false">
-        <flux:heading>{{ $editingId ? 'Edit address' : 'New address' }}</flux:heading>
+    <flux:modal wire:model.self="showModal" class="md:w-[640px] md:max-w-none" :dismissible="false">
+        <flux:heading class="uppercase tracking-wide">{{ $editingId ? 'Edit address' : 'New address' }}</flux:heading>
         <flux:subheading>
             <span x-show="step === 1">{{ $editingId ? 'Update where this address is located.' : 'Pin where you’d like your deliveries to arrive.' }}</span>
             <span x-show="step === 2" x-cloak>{{ $editingId ? 'Update your delivery address details.' : 'Now fill in the delivery address details.' }}</span>
@@ -252,7 +252,7 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
                 @include('partials.storefront.address-fields')
 
                 <div class="flex justify-between gap-3 pt-2">
-                    <flux:button type="button" variant="ghost" icon="arrow-left" x-on:click="showLocation()">Back</flux:button>
+                    <flux:button type="button" icon="arrow-left" x-on:click="showLocation()">Back</flux:button>
                     <flux:button type="submit" variant="customer-primary" size="customer">
                         {{ $editingId ? 'Save changes' : 'Add address' }}
                     </flux:button>

@@ -9,6 +9,7 @@ use Livewire\Component;
 new #[Layout('layouts::app')] #[Title('New Customer — Admin')] class extends Component {
     public string $name = '';
     public string $email = '';
+    public string $phone = '';
     public string $password = '';
     public string $password_confirmation = '';
 
@@ -17,12 +18,14 @@ new #[Layout('layouts::app')] #[Title('New Customer — Admin')] class extends C
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $customer = User::create([
             'name' => $this->name,
             'email' => $this->email,
+            'phone' => $this->phone ?: null,
             'password' => $this->password,
             'email_verified_at' => now(),
         ]);
@@ -63,6 +66,11 @@ new #[Layout('layouts::app')] #[Title('New Customer — Admin')] class extends C
                     <div class="space-y-4 p-6">
                         <flux:input wire:model="name" label="Full name" placeholder="Jane Doe" required autofocus />
                         <flux:input wire:model="email" type="email" label="Email address" placeholder="jane@example.com" required />
+                        <flux:field>
+                            <flux:label>Phone number</flux:label>
+                            <x-phone-input wire:model="phone" placeholder="700 000 000" />
+                            <flux:error name="phone" />
+                        </flux:field>
                     </div>
                 </flux:card>
             </div>

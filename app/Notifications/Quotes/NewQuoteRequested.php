@@ -4,6 +4,7 @@ namespace App\Notifications\Quotes;
 
 use App\Models\Quote;
 use App\Notifications\Concerns\RespectsStaffPreferences;
+use App\Notifications\Messages\WhatsAppMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -37,15 +38,28 @@ class NewQuoteRequested extends Notification implements ShouldQueue
         $who = $quote->contact_name ?: ($quote->user?->name ?? 'A customer');
 
         return (new MailMessage)
-            ->subject('New quote request — ' . $quote->quote_number)
+            ->subject('New quote request — '.$quote->quote_number)
             ->greeting('New quote request')
-            ->line($who . ' submitted quote request ' . $quote->quote_number . '.')
-            ->line($quote->contact_email . ($quote->contact_phone ? ' · ' . $quote->contact_phone : ''))
-            ->when($quote->contact_company, fn($m) => $m->line('Company: ' . $quote->contact_company))
-            ->line($quote->items->count() . ' item(s) to price.')
-            ->when($quote->delivery_required, fn($m) => $m->line('Delivery required to: ' . $quote->delivery_address))
-            ->when($quote->notes, fn($m) => $m->line('Notes: ' . $quote->notes))
+            ->line($who.' submitted quote request '.$quote->quote_number.'.')
+            ->line($quote->contact_email.($quote->contact_phone ? ' · '.$quote->contact_phone : ''))
+            ->when($quote->contact_company, fn ($m) => $m->line('Company: '.$quote->contact_company))
+            ->line($quote->items->count().' item(s) to price.')
+            ->when($quote->delivery_required, fn ($m) => $m->line('Delivery required to: '.$quote->delivery_address))
+            ->when($quote->notes, fn ($m) => $m->line('Notes: '.$quote->notes))
             ->action('Prepare quote', route('admin.quotes.show', $quote));
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsAppMessage
+    {
+        $quote = $this->quote->loadCount('items');
+        $who = $quote->contact_name ?: ($quote->user?->name ?? 'A customer');
+
+        return WhatsAppMessage::template('staff_new_quote')
+            ->body(
+                $who,
+                $quote->quote_number,
+                (string) $quote->items_count,
+            );
     }
 
     /** @return array<string, mixed> */

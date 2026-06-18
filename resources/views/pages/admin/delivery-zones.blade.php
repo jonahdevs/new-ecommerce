@@ -321,7 +321,7 @@ new #[Layout('layouts::app')] #[Title('Delivery zones — Admin')] class extends
     {{-- ================================================== --}}
     {{-- ZONE MODAL --}}
     {{-- ================================================== --}}
-    <flux:modal wire:model.self="showZoneModal" class="md:w-[900px]" :dismissible="false">
+    <flux:modal wire:model.self="showZoneModal" class="md:w-[820px] lg:w-[920px] md:max-w-none" :dismissible="false">
         <div>
             <flux:heading class="uppercase tracking-wide">{{ $editingZoneId ? 'Edit zone' : 'New delivery zone' }}</flux:heading>
             <flux:subheading x-show="currentStep === 1">Click the map to draw the zone boundary. Drag a point to adjust it, double-click to remove it.</flux:subheading>
