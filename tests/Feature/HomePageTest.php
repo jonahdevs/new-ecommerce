@@ -24,6 +24,17 @@ it('renders the responsive header chrome', function () {
     $response->assertSee('Contact');
 });
 
+it('wires each hero slide to a working destination', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    $response->assertSee('href="'.route('catalog').'"', false);
+    $response->assertSee('href="'.route('category.show', 'coffee-machines').'"', false);
+    $response->assertSee('href="'.route('category.show', 'refrigeration').'"', false);
+    $response->assertSee('href="'.route('category.show', 'bakery-preparation').'"', false);
+    $response->assertSee('href="'.e(route('catalog', ['tag' => 'On Sale'])).'"', false);
+});
+
 it('serves the hero banner images from public/images/banners', function () {
     foreach (['topline', 'coffee-machines', 'refrigeration', 'bakery-prep', 'clearance-sale', 'thin-banner'] as $name) {
         expect(file_exists(public_path("images/banners/{$name}.webp")))

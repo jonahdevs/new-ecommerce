@@ -119,30 +119,35 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
             'alt' => 'Add to your topline — premium kitchen equipment',
             'cta' => 'Upgrade now',
             'align' => 'right',
+            'url' => route('catalog'),
         ],
         [
             'src' => '/images/banners/coffee-machines.webp',
             'alt' => 'Premium coffee machines',
             'cta' => 'Shop coffee machines',
             'align' => 'right',
+            'url' => route('category.show', 'coffee-machines'),
         ],
         [
             'src' => '/images/banners/refrigeration.webp',
             'alt' => 'Smart cooling — refrigeration solutions',
             'cta' => 'Shop refrigeration',
             'align' => 'right',
+            'url' => route('category.show', 'refrigeration'),
         ],
         [
             'src' => '/images/banners/bakery-prep.webp',
             'alt' => 'Bakery preparation equipment',
             'cta' => 'Shop bakery prep',
             'align' => 'center',
+            'url' => route('category.show', 'bakery-preparation'),
         ],
         [
             'src' => '/images/banners/clearance-sale.webp',
             'alt' => 'Limited time clearance sale',
             'cta' => 'Shop clearance',
             'align' => 'left',
+            'url' => route('catalog', ['tag' => 'On Sale']),
         ],
     ];
 
@@ -180,9 +185,9 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
         <div class="shell py-5">
             <div class="relative overflow-hidden rounded-md bg-zinc-900" style="aspect-ratio: 2181 / 624">
                 @foreach ($heroSlides as $i => $slide)
-                    <button type="button" aria-label="{{ $slide['alt'] }}" :aria-hidden="idx !== {{ $i }}"
-                        :tabindex="idx === {{ $i }} ? 0 : -1"
-                        class="absolute inset-0 cursor-pointer border-0 p-0 transition-opacity duration-700 {{ $i === 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' }}"
+                    <a href="{{ $slide['url'] }}" wire:navigate aria-label="{{ $slide['alt'] }}"
+                        :aria-hidden="idx !== {{ $i }}" :tabindex="idx === {{ $i }} ? 0 : -1"
+                        class="absolute inset-0 block cursor-pointer transition-opacity duration-700 {{ $i === 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' }}"
                         :class="idx === {{ $i }} ? 'opacity-100 pointer-events-auto' :
                             'opacity-0 pointer-events-none'">
                         <img src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}" class="block size-full object-cover"
@@ -195,7 +200,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                             {{ $slide['cta'] }}
                             <flux:icon.arrow-right variant="mini" class="size-3.5" />
                         </span>
-                    </button>
+                    </a>
                 @endforeach
 
                 {{-- Prev / Next --}}

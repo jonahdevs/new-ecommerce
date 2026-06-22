@@ -37,10 +37,11 @@ class MediaSeeder extends Seeder
         Config::set('media-library.queue_conversions_after_database_commit', false);
 
         try {
-            // Category images live in the media library but are not attached by any
-            // seeder, so backfill them here (idempotent — existing media is skipped).
-            $this->command->info('Syncing category media…');
-            Artisan::call('media:sync', ['--model' => 'categories'], $this->command->getOutput());
+            // Backfill the media library from legacy image sources for every model
+            // (categories + products). --fresh clears existing media first so a
+            // re-seed rebuilds conversions from a clean slate.
+            $this->command->info('Syncing media…');
+            Artisan::call('media:sync', ['--model' => 'all', '--fresh' => true], $this->command->getOutput());
 
             // Generate every conversion for all attached media (products + categories).
             $this->command->info('Generating image conversions (this can take a minute)…');
