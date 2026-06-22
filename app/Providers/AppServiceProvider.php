@@ -7,9 +7,15 @@ use App\Http\Middleware\ValidateRecaptcha;
 use App\Listeners\HandleLowStockAlert;
 use App\Listeners\SendBanNotification;
 use App\Listeners\SyncCartOnLogin;
+use App\Services\Ai\AiChatProvider;
+use App\Services\Ai\AiManager;
+use App\Services\Ai\ChatAssistant;
+use App\Services\Ai\Tools\OrderStatusTool;
+use App\Services\Ai\Tools\ProductSearchTool;
 use App\Services\Mpesa\DarajaClient;
 use App\Services\PaymentCredentials;
 use App\Settings\BrandingSettings;
+use App\Settings\ChatbotSettings;
 use App\Settings\EmailApiSettings;
 use App\Settings\EmailSettings;
 use App\Settings\SecuritySettings;
@@ -41,6 +47,33 @@ class AppServiceProvider extends ServiceProvider
             $app->make(PaymentCredentials::class)->mpesaConfig()
         ));
         $this->app->singleton(Money::class);
+
+        // Chatbot: resolve the AiChatProvider contract to whichever provider
+        // config/ai.php selects (Groq by default). Flip AI_PROVIDER to switch.
+        $this->app->singleton(AiManager::class);
+        $this->app->bind(AiChatProvider::class, fn ($app): AiChatProvider => $app->make(AiManager::class)->provider());
+
+        // The assistant wraps the provider with the tools it may call to read
+        // live store data. Each tool is gated by an admin toggle (ChatbotSettings).
+        $this->app->bind(ChatAssistant::class, function ($app): ChatAssistant {
+            $productSearch = true;
+            $orderLookup = true;
+
+            try {
+                $settings = $app->make(ChatbotSettings::class);
+                $productSearch = $settings->product_search_enabled;
+                $orderLookup = $settings->order_lookup_enabled;
+            } catch (\Throwable) {
+                // Settings unavailable — default both tools on.
+            }
+
+            $tools = array_filter([
+                $productSearch ? $app->make(ProductSearchTool::class) : null,
+                $orderLookup ? $app->make(OrderStatusTool::class) : null,
+            ]);
+
+            return new ChatAssistant($app->make(AiChatProvider::class), array_values($tools));
+        });
     }
 
     /**

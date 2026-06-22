@@ -1,6 +1,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+{{-- Warm the font connections early so the webfont CSS/files don't wait on a
+     cold TLS handshake. Loaded in parallel with app.css (not chained via @import). --}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
 {{-- Analytics (GA4 / GTM / Meta Pixel) — loaded as high in <head> as possible. --}}
 @include('partials.storefront.analytics')
 
@@ -61,6 +66,9 @@
 @endif
 
 @fonts
+
+<link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=Public+Sans:ital,wght@0,300..700;1,300..700&family=JetBrains+Mono:wght@400;500&display=swap">
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 

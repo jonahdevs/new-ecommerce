@@ -203,6 +203,8 @@
 
     @include('partials.storefront.footer')
 
+    <livewire:storefront.chat-widget lazy />
+
     @auth
         <livewire:concurrent-session-guard />
     @endauth

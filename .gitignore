@@ -24,3 +24,4 @@ yarn-error.log
 /.vscode
 /.zed
 storage/media-library/temp
+*.zip

@@ -138,3 +138,52 @@ it('routes /shop/{category} to the category page', function () {
     $response->assertOk();
     $response->assertSee('Ranges');
 });
+
+it('rolls up products from child categories on a parent category page', function () {
+    $parent = Category::create(['name' => 'Cold Room', 'slug' => 'cold-room', 'status' => CategoryStatus::ACTIVE, 'sort_order' => 1]);
+    $child = Category::create(['name' => 'Mini Cold Rooms', 'slug' => 'mini-cold-rooms', 'parent_id' => $parent->id, 'status' => CategoryStatus::ACTIVE, 'sort_order' => 1]);
+
+    Product::create([
+        'name' => 'Direct Chiller', 'slug' => 'direct-chiller', 'sku' => 'CR-DIRECT',
+        'primary_category_id' => $parent->id, 'type' => 'simple', 'price' => 100000,
+        'stock_status' => StockStatus::IN_STOCK->value, 'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
+    ]);
+    Product::create([
+        'name' => 'Child Chiller', 'slug' => 'child-chiller', 'sku' => 'CR-CHILD',
+        'primary_category_id' => $child->id, 'type' => 'simple', 'price' => 200000,
+        'stock_status' => StockStatus::IN_STOCK->value, 'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
+    ]);
+
+    Livewire::test('pages::storefront.category', ['category' => $parent])
+        ->assertSee('Direct Chiller')
+        ->assertSee('Child Chiller');
+});
+
+it('narrows the listing by a child-category filter', function () {
+    $parent = Category::create(['name' => 'Laundry', 'slug' => 'laundry', 'status' => CategoryStatus::ACTIVE, 'sort_order' => 1]);
+    $washers = Category::create(['name' => 'Washers', 'slug' => 'washers', 'parent_id' => $parent->id, 'status' => CategoryStatus::ACTIVE, 'sort_order' => 1]);
+    $dryers = Category::create(['name' => 'Dryers', 'slug' => 'dryers', 'parent_id' => $parent->id, 'status' => CategoryStatus::ACTIVE, 'sort_order' => 2]);
+
+    Product::create([
+        'name' => 'Test Washer', 'slug' => 'test-washer', 'sku' => 'LA-WASH',
+        'primary_category_id' => $washers->id, 'type' => 'simple', 'price' => 100000,
+        'stock_status' => StockStatus::IN_STOCK->value, 'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
+    ]);
+    Product::create([
+        'name' => 'Test Dryer', 'slug' => 'test-dryer', 'sku' => 'LA-DRY',
+        'primary_category_id' => $dryers->id, 'type' => 'simple', 'price' => 100000,
+        'stock_status' => StockStatus::IN_STOCK->value, 'visibility' => ProductVisibility::VISIBLE->value,
+        'status' => ProductStatus::PUBLISHED->value,
+    ]);
+
+    Livewire::test('pages::storefront.category', ['category' => $parent])
+        ->assertSee('Category')           // the child-category filter facet renders
+        ->assertSee('Test Washer')
+        ->assertSee('Test Dryer')
+        ->set('selectedCategories', [$washers->id])
+        ->assertSee('Test Washer')
+        ->assertDontSee('Test Dryer');
+});

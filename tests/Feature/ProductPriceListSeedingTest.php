@@ -26,8 +26,15 @@ it('seeds each product with the status stamped in products.json', function () {
             );
     });
 
-    // Every published product has a price; the catalog has both states.
-    expect(Product::where('status', ProductStatus::PUBLISHED)->whereNull('price')->count())->toBe(0)
+    // Every published priced product has a price; quote-only products (e.g. the
+    // imported cold-room/laundry/healthcare items) may legitimately be published
+    // with no price. The catalog has both published and draft states.
+    expect(
+        Product::where('status', ProductStatus::PUBLISHED)
+            ->where('requires_quotation', false)
+            ->whereNull('price')
+            ->count()
+    )->toBe(0)
         ->and(Product::where('status', ProductStatus::PUBLISHED)->count())->toBeGreaterThan(0)
         ->and(Product::where('status', ProductStatus::DRAFT)->count())->toBeGreaterThan(0);
 });

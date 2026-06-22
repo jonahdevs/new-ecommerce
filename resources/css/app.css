@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=Public+Sans:ital,wght@0,300..700;1,300..700&family=JetBrains+Mono:wght@400;500&display=swap");
+/* Google Fonts are loaded via <link> in partials/head.blade.php (with preconnect)
+   so the font CSS downloads in parallel with this stylesheet instead of being
+   chained behind it — a render-blocking @import here delays first paint. */
 @import "tailwindcss";
 @import "../../vendor/livewire/flux/dist/flux.css";
 @import "leaflet/dist/leaflet.css";

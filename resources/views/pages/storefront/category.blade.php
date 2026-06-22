@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\CategoryStatus;
 use App\Enums\ReviewStatus;
 use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
@@ -28,6 +29,10 @@ new #[Layout('layouts::storefront')] class extends Component
     public int $perPage = 24;
 
     public bool $showFilters = false;
+
+    /** @var array<int, int> Immediate child category ids the shopper has narrowed to. */
+    #[Url(as: 'cat', history: true)]
+    public array $selectedCategories = [];
 
     /** @var array<int, int> */
     #[Url(as: 'brand', history: true)]
@@ -105,7 +110,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public function clearFilters(): void
     {
-        $this->reset(['selectedBrands', 'inStockOnly', 'minRating']);
+        $this->reset(['selectedCategories', 'selectedBrands', 'inStockOnly', 'minRating']);
         $this->priceMin = 0;
         $this->priceMax = 6000000;
         $this->perPage = 24;
@@ -117,6 +122,92 @@ new #[Layout('layouts::storefront')] class extends Component
         $this->selectedBrands = array_values(array_filter($this->selectedBrands, fn ($b) => $b !== $id));
     }
 
+    /**
+     * All categories grouped by parent id — loaded once so the subtree walk
+     * stays a single query.
+     *
+     * @return Collection<int|string, Collection<int, Category>>
+     */
+    #[Computed]
+    public function categoriesByParent(): Collection
+    {
+        return Category::query()->get(['id', 'parent_id'])->groupBy('parent_id');
+    }
+
+    /**
+     * This category's id plus every descendant id, so listings roll up products
+     * from child (and grandchild) categories.
+     *
+     * @return array<int, int>
+     */
+    #[Computed]
+    public function fullSubtreeIds(): array
+    {
+        return $this->subtreeIds($this->category->id);
+    }
+
+    /**
+     * The ids to scope the listing to: the selected child subtrees when the
+     * shopper has filtered by category, otherwise the whole subtree.
+     *
+     * @return array<int, int>
+     */
+    #[Computed]
+    public function scopeCategoryIds(): array
+    {
+        if (! $this->selectedCategories) {
+            return $this->fullSubtreeIds;
+        }
+
+        $selected = collect($this->selectedCategories)
+            ->flatMap(fn ($id) => $this->subtreeIds((int) $id))
+            ->unique()
+            ->values()
+            ->all();
+
+        // Guard against ids outside this category (e.g. a tampered URL).
+        return array_values(array_intersect($selected, $this->fullSubtreeIds));
+    }
+
+    /**
+     * Immediate child categories, for the "Category" filter facet.
+     *
+     * @return Collection<int, Category>
+     */
+    #[Computed]
+    public function childCategories(): Collection
+    {
+        return Category::query()
+            ->where('parent_id', $this->category->id)
+            ->where('status', CategoryStatus::ACTIVE)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Walk the category tree from $id, returning $id and all descendant ids.
+     *
+     * @return array<int, int>
+     */
+    private function subtreeIds(int $id): array
+    {
+        $byParent = $this->categoriesByParent;
+        $ids = [];
+        $stack = [$id];
+
+        while ($stack !== []) {
+            $current = array_pop($stack);
+            $ids[] = $current;
+
+            foreach ($byParent->get($current, collect()) as $child) {
+                $stack[] = (int) $child->id;
+            }
+        }
+
+        return $ids;
+    }
+
     #[Computed]
     public function products(): LengthAwarePaginator
     {
@@ -126,7 +217,8 @@ new #[Layout('layouts::storefront')] class extends Component
             ->published()
             ->honorStockVisibility()
             ->where(function ($q) {
-                $q->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn ($q2) => $q2->where('categories.id', $this->category->id));
+                $ids = $this->scopeCategoryIds;
+                $q->whereIn('primary_category_id', $ids)->orWhereHas('categories', fn ($q2) => $q2->whereIn('categories.id', $ids));
             });
 
         if ($this->selectedBrands) {
@@ -172,7 +264,8 @@ new #[Layout('layouts::storefront')] class extends Component
             ->where('is_active', true)
             ->whereHas('products', function ($q) {
                 $q->where('visibility', 'visible')->where(function ($q2) {
-                    $q2->where('primary_category_id', $this->category->id)->orWhereHas('categories', fn ($q3) => $q3->where('categories.id', $this->category->id));
+                    $ids = $this->fullSubtreeIds;
+                    $q2->whereIn('primary_category_id', $ids)->orWhereHas('categories', fn ($q3) => $q3->whereIn('categories.id', $ids));
                 });
             })
             ->orderBy('name')
@@ -181,7 +274,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     public function hasActiveFilters(): bool
     {
-        return ! empty($this->selectedBrands) || $this->inStockOnly || $this->minRating > 0 || $this->priceMin > 0 || $this->priceMax < 6000000;
+        return ! empty($this->selectedCategories) || ! empty($this->selectedBrands) || $this->inStockOnly || $this->minRating > 0 || $this->priceMin > 0 || $this->priceMax < 6000000;
     }
 }; ?>
 
@@ -210,7 +303,7 @@ new #[Layout('layouts::storefront')] class extends Component
                 @if ($category->banner_webp_url)
                     <source srcset="{{ $category->banner_webp_url }}" type="image/webp" />
                 @endif
-                <img src="{{ $banner }}" alt="" aria-hidden="true"
+                <img src="{{ $banner }}" alt="" aria-hidden="true" fetchpriority="high" decoding="async"
                     x-data="{ loaded: false }" x-init="loaded = $el.complete" x-on:load="loaded = true"
                     x-bind:class="loaded ? 'opacity-100' : 'opacity-0'"
                     class="absolute inset-0 size-full object-cover transition-opacity duration-700" />
@@ -266,8 +359,43 @@ new #[Layout('layouts::storefront')] class extends Component
                         </div>
                     </div>
 
-                    {{-- Filter sections (no category filter — already scoped) --}}
+                    {{-- Filter sections --}}
                     <div class="flex-1 divide-y divide-zinc-200 text-sm">
+
+                        {{-- Category (child categories) --}}
+                        @if ($this->childCategories->isNotEmpty())
+                            <div class="px-5 py-4" x-data="{ open: true, openCats: false }">
+                                <button type="button" x-on:click="open = !open"
+                                    class="flex w-full cursor-pointer items-center justify-between text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
+                                    <span>Category</span>
+                                    <span class="flex transition-transform duration-200"
+                                        x-bind:class="open ? 'rotate-0' : '-rotate-90'">
+                                        <flux:icon.chevron-down variant="micro" class="size-3.5 text-zinc-400" />
+                                    </span>
+                                </button>
+                                <div x-show="open" class="mt-3">
+                                    <div class="scrollbar-hover flex flex-col gap-2"
+                                        x-bind:class="openCats ? 'max-h-64 overflow-y-auto pr-1' : ''">
+                                        @foreach ($this->childCategories as $i => $child)
+                                            <div @if ($i >= 8) x-show="openCats" x-cloak @endif>
+                                                <flux:checkbox wire:model.live="selectedCategories"
+                                                    value="{{ $child->id }}" :label="$child->name" />
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @if ($this->childCategories->count() > 8)
+                                        <button type="button" x-on:click="openCats = !openCats"
+                                            class="mt-2 cursor-pointer text-[12.5px] text-brand-500 hover:underline">
+                                            <span x-show="!openCats" class="inline-flex items-center gap-1">
+                                                Show all {{ $this->childCategories->count() }} categories
+                                                <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                                            </span>
+                                            <span x-show="openCats" x-cloak>Show fewer</span>
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
 
                         {{-- Price --}}
                         <div class="px-5 py-4" x-data="{ open: true }">
@@ -363,9 +491,44 @@ new #[Layout('layouts::storefront')] class extends Component
         </template>
 
         <div class="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
-            {{-- Filters sidebar (desktop only — no category filter, already scoped) --}}
+            {{-- Filters sidebar (desktop only) --}}
             <aside class="scrollbar-hover hidden lg:block lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto">
                 <div class="divide-y divide-zinc-200 rounded-md border border-zinc-200 bg-white text-sm">
+
+                    {{-- Category (child categories) --}}
+                    @if ($this->childCategories->isNotEmpty())
+                        <div class="px-5 py-4" x-data="{ open: true, openCats: false }">
+                            <button type="button" x-on:click="open = !open"
+                                class="flex w-full cursor-pointer items-center justify-between text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
+                                <span>Category</span>
+                                <span class="flex transition-transform duration-200"
+                                    x-bind:class="open ? 'rotate-0' : '-rotate-90'">
+                                    <flux:icon.chevron-down variant="micro" class="size-3.5 text-zinc-400" />
+                                </span>
+                            </button>
+                            <div x-show="open" class="mt-3">
+                                <div class="scrollbar-hover flex flex-col gap-2"
+                                    x-bind:class="openCats ? 'max-h-64 overflow-y-auto pr-1' : ''">
+                                    @foreach ($this->childCategories as $i => $child)
+                                        <div @if ($i >= 8) x-show="openCats" x-cloak @endif>
+                                            <flux:checkbox wire:model.live="selectedCategories"
+                                                value="{{ $child->id }}" :label="$child->name" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @if ($this->childCategories->count() > 8)
+                                    <button type="button" x-on:click="openCats = !openCats"
+                                        class="mt-2 cursor-pointer text-[12.5px] text-brand-500 hover:underline">
+                                        <span x-show="!openCats" class="inline-flex items-center gap-1">
+                                            Show all {{ $this->childCategories->count() }} categories
+                                            <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                                        </span>
+                                        <span x-show="openCats" x-cloak>Show fewer</span>
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
 
                     {{-- Price --}}
                     <div class="px-5 py-4" x-data="{ open: true }">

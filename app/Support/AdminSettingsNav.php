@@ -39,6 +39,7 @@ class AdminSettingsNav
             'system' => ['label' => 'System', 'icon' => 'server', 'sections' => [
                 'email' => ['label' => 'Email & SMS', 'icon' => 'envelope'],
                 'integrations' => ['label' => 'Integrations', 'icon' => 'puzzle-piece'],
+                'chatbot' => ['label' => 'Chatbot', 'icon' => 'chat-bubble-left-right'],
                 'security' => ['label' => 'Security', 'icon' => 'shield-check'],
                 'maintenance' => ['label' => 'Maintenance', 'icon' => 'wrench-screwdriver'],
             ]],

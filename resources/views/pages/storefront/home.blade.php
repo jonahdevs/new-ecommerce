@@ -5,6 +5,7 @@ use App\Enums\CategoryStatus;
 use App\Enums\StockStatus;
 use App\Livewire\Concerns\InteractsWithStorefront;
 use App\Models\Brand;
+use App\Models\Category;
 use App\Models\CategoryPlacement;
 use App\Models\Product;
 use Artesaos\SEOTools\Facades\JsonLdMulti;
@@ -39,6 +40,56 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
         JsonLdMulti::setDescription($description)->setType('Organization');
 
         $this->featuredProductIds = Product::query()->visibleInCatalog()->published()->where('stock_status', StockStatus::IN_STOCK)->whereNotNull('price')->where('price', '>', 0)->inRandomOrder()->take(6)->pluck('id')->toArray();
+    }
+
+    /**
+     * The four fixed Sheffield divisions, in display order. Locked to these
+     * slugs so the "Shop by department" band never picks up any other
+     * top-level category.
+     *
+     * @var array<int, string>
+     */
+    private const DIVISION_SLUGS = ['commercial-kitchen', 'cold-room', 'laundry', 'healthcare'];
+
+    /**
+     * The four divisions (Commercial Kitchen, Cold Room, Laundry, Healthcare).
+     * Children are eager-loaded so each card can render a 2×2 collage; staff
+     * re-parent product categories under a division and the collage fills in
+     * automatically.
+     */
+    #[Computed]
+    public function divisions(): Collection
+    {
+        return Category::query()
+            ->whereIn('slug', self::DIVISION_SLUGS)
+            ->where('status', CategoryStatus::ACTIVE)
+            ->with([
+                'media',
+                'children' => fn ($q) => $q->where('status', CategoryStatus::ACTIVE)->orderBy('sort_order')->with('media'),
+            ])
+            ->get()
+            ->sortBy(fn (Category $c) => array_search($c->slug, self::DIVISION_SLUGS))
+            ->values();
+    }
+
+    /**
+     * Up to four image-backed products drawn from a division — its own products
+     * plus everything in its subcategories — to fill the home card collage.
+     */
+    public function collageProducts(Category $division): Collection
+    {
+        $categoryIds = $division->children->pluck('id')->push($division->id)->all();
+
+        return Product::query()
+            ->visibleInCatalog()
+            ->published()
+            ->whereHas('media')
+            ->where(fn ($q) => $q
+                ->whereIn('primary_category_id', $categoryIds)
+                ->orWhereHas('categories', fn ($c) => $c->whereIn('categories.id', $categoryIds)))
+            ->with('media')
+            ->take(4)
+            ->get();
     }
 
     // TODO: cache these once they become hot. View composer would be cleaner.
@@ -167,7 +218,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
             <a href="#" wire:navigate aria-label="Up to 20% off mega sale"
                 class="block overflow-hidden rounded-md shadow-sm" style="aspect-ratio: 3117 / 400">
                 <img src="/images/banners/thin-banner.webp" alt="" class="size-full object-cover"
-                    draggable="false" />
+                    fetchpriority="high" decoding="async" draggable="false" />
             </a>
         </div>
     </section>
@@ -192,6 +243,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                             'opacity-0 pointer-events-none'">
                         <img src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}" class="block size-full object-cover"
                             style="object-position: {{ $slide['align'] === 'left' ? 'left center' : ($slide['align'] === 'right' ? 'right center' : 'center') }}"
+                            @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
                             draggable="false" />
                         <span aria-hidden
                             class="pointer-events-none absolute bottom-6 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2.5 text-[13px] font-semibold text-ink shadow-lg backdrop-blur-md transition duration-500"
@@ -249,6 +301,74 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
             @endforeach
         </div>
     </section>
+
+    {{-- Divisions — promotional cards, one per department. The collage is built
+         from real product images drawn from the division and its subcategories;
+         a division with no product imagery yet falls back to a placeholder. --}}
+    @if ($this->divisions->isNotEmpty())
+        <section class="shell pt-14">
+            <h2 class="mb-4 text-[22px] font-semibold tracking-tight">Shop by department</h2>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach ($this->divisions as $division)
+                    @php
+                        $tiles = $this->collageProducts($division);
+                        // First and last cards use a 3-image mosaic (one full-width
+                        // on top, two equal-width below); the middle two use a 2×2 grid.
+                        $cells = $loop->first || $loop->last
+                            ? [['span' => 'col-span-2', 'aspect' => 'aspect-[2/1]'], ['span' => '', 'aspect' => 'aspect-square'], ['span' => '', 'aspect' => 'aspect-square']]
+                            : array_fill(0, 4, ['span' => '', 'aspect' => 'aspect-square']);
+                    @endphp
+                    <div class="flex flex-col rounded-md border border-zinc-200 bg-white p-5">
+                        <h3 class="text-[15px] font-semibold tracking-tight text-ink">{{ $division->name }}</h3>
+
+                        @if ($tiles->isNotEmpty())
+                            {{-- Product-image collage (padded to keep the shape) --}}
+                            <div class="mt-4 grid grid-cols-2 gap-2.5">
+                                @foreach ($cells as $i => $cell)
+                                    @php $product = $tiles[$i] ?? null; @endphp
+                                    <a @if ($product) href="{{ route('product.show', $product) }}" wire:navigate @endif
+                                        @class(['group block', $cell['span'], 'pointer-events-none' => ! $product])>
+                                        <div class="relative {{ $cell['aspect'] }} overflow-hidden rounded bg-surface-sunken">
+                                            @if ($product?->cover_url)
+                                                <img src="{{ $product->cover_url }}" alt="{{ $product->name }}"
+                                                    loading="lazy"
+                                                    class="size-full object-cover transition duration-500 group-hover:scale-105" />
+                                            @else
+                                                <div class="flex size-full items-center justify-center">
+                                                    <flux:icon.photo variant="outline" class="size-6 text-zinc-300" />
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @if ($product)
+                                            <div class="mt-1.5 truncate text-[11px] text-ink-3">{{ $product->name }}</div>
+                                        @endif
+                                    </a>
+                                @endforeach
+                            </div>
+                        @else
+                            {{-- No product imagery yet — placeholder hero linking to the division --}}
+                            <a href="{{ route('category.show', $division) }}" wire:navigate
+                                class="group mt-4 block flex-1">
+                                <div class="relative h-full min-h-44 overflow-hidden rounded bg-surface-sunken">
+                                    <div class="flex size-full items-center justify-center">
+                                        <flux:icon.photo variant="outline" class="size-10 text-zinc-300" />
+                                    </div>
+                                </div>
+                            </a>
+                        @endif
+
+                        <a href="{{ route('category.show', $division) }}" wire:navigate
+                            class="group mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-blue-500 transition-colors hover:text-brand-blue-600">
+                            Shop {{ $division->name }}
+                            <flux:icon.arrow-right variant="micro"
+                                class="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     {{-- Categories — dense Workshop grid (12 chips, square aspect, ink underline) --}}
     <section class="shell pt-14">

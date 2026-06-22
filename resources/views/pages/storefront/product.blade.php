@@ -768,6 +768,7 @@ new #[Layout('layouts::storefront')] class extends Component
                         <img src="{{ $shown->getUrl('card') ?: $shown->getUrl() }}"
                             alt="{{ $shown->getCustomProperty('alt', '') ?: $product->name }}"
                             class="size-full object-cover transition-transform duration-75 will-change-transform"
+                            fetchpriority="high" decoding="async"
                             :style="lens ? `transform:scale(2.3);transform-origin:${lens.x}% ${lens.y}%` : ''"
                             draggable="false" />
                     @else

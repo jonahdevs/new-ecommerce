@@ -1,5 +1,6 @@
 <?php
 
+use App\Settings\ChatbotSettings;
 use App\Settings\EmailApiSettings;
 use App\Settings\EmailSettings;
 use App\Settings\IntegrationSettings;
@@ -119,13 +120,28 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public int $max_concurrent_sessions = 1;
 
     // ==================================================
+    // CHATBOT
+    // ==================================================
+    public bool $chatbot_enabled = true;
+
+    public string $chatbot_provider = 'groq';
+
+    public string $chatbot_system_prompt = '';
+
+    public string $chatbot_greeting = '';
+
+    public bool $chatbot_product_search_enabled = true;
+
+    public bool $chatbot_order_lookup_enabled = true;
+
+    // ==================================================
     // MAINTENANCE
     // ==================================================
     public bool $maintenance_mode = false;
 
     public string $maintenance_message = '';
 
-    public function mount(EmailSettings $email, EmailApiSettings $emailApi, IntegrationSettings $integrations, SecuritySettings $security, MaintenanceSettings $maintenance): void
+    public function mount(EmailSettings $email, EmailApiSettings $emailApi, IntegrationSettings $integrations, SecuritySettings $security, MaintenanceSettings $maintenance, ChatbotSettings $chatbot): void
     {
         $this->mail_driver = $email->mail_driver;
         $this->sms_provider = $email->sms_provider;
@@ -172,6 +188,33 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
         $this->maintenance_mode = $maintenance->maintenance_mode;
         $this->maintenance_message = $maintenance->maintenance_message;
+
+        $this->chatbot_enabled = $chatbot->enabled;
+        $this->chatbot_provider = $chatbot->provider;
+        $this->chatbot_system_prompt = $chatbot->system_prompt;
+        $this->chatbot_greeting = $chatbot->greeting;
+        $this->chatbot_product_search_enabled = $chatbot->product_search_enabled;
+        $this->chatbot_order_lookup_enabled = $chatbot->order_lookup_enabled;
+    }
+
+    public function saveChatbot(ChatbotSettings $settings): void
+    {
+        $this->validate([
+            'chatbot_provider' => ['required', 'in:'.implode(',', array_keys(config('ai.providers')))],
+            'chatbot_greeting' => ['required', 'string', 'max:300'],
+            'chatbot_system_prompt' => ['required', 'string', 'max:8000'],
+        ]);
+
+        $settings->fill([
+            'enabled' => $this->chatbot_enabled,
+            'provider' => $this->chatbot_provider,
+            'system_prompt' => $this->chatbot_system_prompt,
+            'greeting' => $this->chatbot_greeting,
+            'product_search_enabled' => $this->chatbot_product_search_enabled,
+            'order_lookup_enabled' => $this->chatbot_order_lookup_enabled,
+        ])->save();
+
+        Flux::toast(heading: 'Saved', text: 'Chatbot settings updated.', variant: 'success');
     }
 
     public function saveSms(EmailSettings $settings): void
@@ -773,6 +816,93 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
             </div>
         @endif
     </flux:modal>
+    @endif
+
+    {{-- Chatbot --}}
+    @if ($section === 'chatbot')
+        @php
+            $providerKey = $chatbot_provider;
+            $providerConfig = config("ai.providers.{$providerKey}", []);
+            $providerConnected = (bool) ($providerConfig['key'] ?? null);
+            $providerLabels = [
+                'groq' => 'Groq',
+                'openai' => 'OpenAI',
+                'gemini' => 'Google Gemini',
+                'openrouter' => 'OpenRouter',
+                'ollama' => 'Ollama (local)',
+            ];
+        @endphp
+        <flux:card class="overflow-hidden p-0">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Chatbot</flux:heading>
+                <flux:badge :color="$providerConnected ? 'green' : 'amber'" size="sm">
+                    {{ $providerConnected ? 'API key set' : 'No API key in .env' }}
+                </flux:badge>
+            </div>
+
+            <form wire:submit="saveChatbot" class="space-y-5 p-6">
+                {{-- Master switch --}}
+                <div class="flex items-center justify-between rounded-md border border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                    <div>
+                        <flux:label>Enable chat widget</flux:label>
+                        <flux:text size="sm" class="text-xs">Show the assistant on the storefront.</flux:text>
+                    </div>
+                    <flux:switch wire:model="chatbot_enabled" />
+                </div>
+
+                {{-- Provider --}}
+                <flux:field>
+                    <flux:label>AI provider</flux:label>
+                    <flux:description>The model powering replies. API keys are set in your .env file.</flux:description>
+                    <flux:select wire:model.live="chatbot_provider">
+                        @foreach ($providerLabels as $key => $label)
+                            <flux:select.option value="{{ $key }}">{{ $label }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="chatbot_provider" />
+                </flux:field>
+
+                @unless ($providerConnected)
+                    <flux:callout variant="warning" icon="key">
+                        <flux:callout.text>
+                            No API key found for {{ $providerLabels[$providerKey] ?? $providerKey }}. Add it to your
+                            .env (e.g. <code>{{ strtoupper($providerKey) }}_API_KEY</code>) for the bot to respond.
+                        </flux:callout.text>
+                    </flux:callout>
+                @endunless
+
+                {{-- Greeting --}}
+                <flux:input wire:model="chatbot_greeting" label="Greeting"
+                    placeholder="Hi! How can I help you today?" />
+
+                {{-- System prompt --}}
+                <flux:textarea wire:model="chatbot_system_prompt" label="System prompt / rules" rows="10"
+                    description="The standing instructions and rules sent with every conversation. This is how you 'train' the bot's tone and behaviour." />
+
+                {{-- Tools --}}
+                <flux:separator text="Abilities" />
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <flux:label>Product search</flux:label>
+                            <flux:text size="sm" class="text-xs text-zinc-500">Let the bot recommend live, published products with links.</flux:text>
+                        </div>
+                        <flux:switch wire:model="chatbot_product_search_enabled" />
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <flux:label>Order &amp; quote lookup</flux:label>
+                            <flux:text size="sm" class="text-xs text-zinc-500">Let signed-in customers ask about their own orders and quotes.</flux:text>
+                        </div>
+                        <flux:switch wire:model="chatbot_order_lookup_enabled" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <flux:button type="submit" variant="primary">Save changes</flux:button>
+                </div>
+            </form>
+        </flux:card>
     @endif
 
     {{-- Security --}}
