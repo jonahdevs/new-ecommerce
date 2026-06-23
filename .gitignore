@@ -7,6 +7,8 @@
 /storage/*.key
 /storage/pail
 /storage/media-library/temp
+# Generated media conversions (regenerate with `php artisan media-library:regenerate`)
+/public/media/*/conversions
 /vendor
 .env
 .env.backup
