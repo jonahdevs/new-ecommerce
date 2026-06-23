@@ -227,6 +227,19 @@ return new class extends Migration
             $table->index(['user_id', 'viewed_at']);
         });
 
+        // Lightweight per-view event log powering product analytics. One row per
+        // "session viewed product" event (throttled at record time so refreshes
+        // don't inflate counts). Guests are captured via their session id;
+        // signed-in users additionally carry their user_id.
+        Schema::create('product_views', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('session_id', 64)->nullable();
+            $table->timestamp('viewed_at')->index();
+            $table->index(['product_id', 'viewed_at']);
+        });
+
         // Persisted shopping cart. One cart per user (and optionally per guest,
         // keyed by a cookie token). Mirrors the session cart so items survive
         // across sessions/devices and power abandoned-cart reminders.
@@ -258,6 +271,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('cart_items');
         Schema::dropIfExists('carts');
+        Schema::dropIfExists('product_views');
         Schema::dropIfExists('recently_viewed');
         Schema::dropIfExists('sap_sync_logs');
         Schema::dropIfExists('status_histories');

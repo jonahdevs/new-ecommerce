@@ -531,6 +531,10 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
                                         :href="route('admin.products.edit', $product)" wire:navigate>
                                         Edit
                                     </flux:menu.item>
+                                    <flux:menu.item icon="chart-bar"
+                                        :href="route('admin.products.show', $product)" wire:navigate>
+                                        Analytics
+                                    </flux:menu.item>
                                     <flux:menu.item icon="arrow-top-right-on-square"
                                         :href="route('product.show', $product)" target="_blank">
                                         View on store

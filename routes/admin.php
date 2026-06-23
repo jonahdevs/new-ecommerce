@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
                 });
             Route::livewire('/products/create', 'pages::admin.products.form')->middleware('permission:products.manage')->name('products.create');
             Route::livewire('/products/{product}/edit', 'pages::admin.products.form')->middleware('permission:products.manage')->name('products.edit');
+            Route::livewire('/products/{product}', 'pages::admin.products.show')->name('products.show');
         });
 
         // ── Catalog ──────────────────────────────────────────────────────────

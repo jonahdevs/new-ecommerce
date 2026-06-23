@@ -185,6 +185,11 @@ class Product extends Model implements HasMedia
         return $this->hasMany(Review::class);
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(ProductView::class);
+    }
+
     public function approvedReviews(): HasMany
     {
         return $this->hasMany(Review::class)->approved()->latest();

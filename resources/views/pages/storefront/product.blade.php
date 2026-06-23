@@ -106,6 +106,31 @@ new #[Layout('layouts::storefront')] class extends Component
                 update: ['viewed_at'],
             );
         }
+
+        $this->recordView($product);
+    }
+
+    /**
+     * Log a product view for analytics — guests and signed-in users alike.
+     * Throttled per session+product for 30 minutes so refreshes and Livewire
+     * round-trips don't inflate the count.
+     */
+    private function recordView(Product $product): void
+    {
+        $sessionId = session()->getId();
+
+        $throttleKey = "product-view:{$sessionId}:{$product->id}";
+
+        if (! cache()->add($throttleKey, true, now()->addMinutes(30))) {
+            return;
+        }
+
+        \App\Models\ProductView::create([
+            'product_id' => $product->id,
+            'user_id' => auth()->id(),
+            'session_id' => $sessionId,
+            'viewed_at' => now(),
+        ]);
     }
 
     /**
