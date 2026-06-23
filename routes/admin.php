@@ -113,6 +113,12 @@ Route::middleware(['auth', 'verified', EnsureTwoFactorWhenRequired::class, 'staf
             Route::livewire('/customers/create', 'pages::admin.customers.create')->middleware('permission:customers.manage')->name('customers.create');
             Route::livewire('/customers/{customer}/edit', 'pages::admin.customers.edit')->middleware('permission:customers.manage')->name('customers.edit');
             Route::livewire('/customers/{customer}', 'pages::admin.customers.show')->name('customers.show');
+        });
+
+        // ── Marketing ────────────────────────────────────────────────────────
+        Route::middleware('permission:marketing.manage')->group(function () {
+            Route::livewire('/marketing/cart-recovery', 'pages::admin.marketing.cart-recovery')->name('marketing.cart-recovery');
+            Route::livewire('/marketing/coupons', 'pages::admin.marketing.coupons.index')->name('marketing.coupons.index');
             Route::livewire('/subscribers', 'pages::admin.subscribers.index')->name('subscribers.index');
             Route::get('/subscribers/export', SubscriberExportController::class)->name('subscribers.export');
         });

@@ -1,6 +1,5 @@
 <?php
 
-use App\Settings\CartReminderSettings;
 use App\Settings\CheckoutSettings;
 use App\Settings\InventorySettings;
 use App\Settings\NotificationSettings;
@@ -44,19 +43,6 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
     public int $min_order_value = 0;
 
     public string $order_prefix = 'SHF-';
-
-    // ==================================================
-    // CART REMINDERS
-    // ==================================================
-    public bool $cart_reminders_enabled = true;
-
-    public int $cart_first_delay_hours = 4;
-
-    public int $cart_second_delay_hours = 24;
-
-    public int $cart_min_subtotal = 0;
-
-    public int $cart_stop_after_days = 7;
 
     // ==================================================
     // QUOTATIONS
@@ -134,14 +120,8 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
     public bool $staff_quote_decision_inapp = true;
     public bool $staff_quote_decision_whatsapp = false;
 
-    public function mount(InventorySettings $inventory, ReviewSettings $reviews, CheckoutSettings $checkout, QuotationSettings $quotations, ShippingSettings $shipping, NotificationSettings $notifications, CartReminderSettings $cartReminders): void
+    public function mount(InventorySettings $inventory, ReviewSettings $reviews, CheckoutSettings $checkout, QuotationSettings $quotations, ShippingSettings $shipping, NotificationSettings $notifications): void
     {
-        $this->cart_reminders_enabled = $cartReminders->enabled;
-        $this->cart_first_delay_hours = $cartReminders->first_delay_hours;
-        $this->cart_second_delay_hours = $cartReminders->second_delay_hours;
-        $this->cart_min_subtotal = intdiv($cartReminders->min_subtotal_cents, 100);
-        $this->cart_stop_after_days = intdiv($cartReminders->stop_after_hours, 24);
-
         $this->track_stock_by_default = $inventory->track_stock_by_default;
         $this->low_stock_threshold = $inventory->low_stock_threshold;
         $this->out_of_stock_behavior = $inventory->out_of_stock_behavior;
@@ -350,27 +330,6 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
         Flux::toast(heading: 'Saved', text: 'Shipping settings updated.', variant: 'success');
     }
 
-    public function saveCartReminders(CartReminderSettings $settings): void
-    {
-        $this->validate([
-            'cart_first_delay_hours'  => ['required', 'integer', 'min:1', 'max:720'],
-            'cart_second_delay_hours' => ['required', 'integer', 'min:0', 'max:720'],
-            'cart_min_subtotal'       => ['required', 'integer', 'min:0'],
-            'cart_stop_after_days'    => ['required', 'integer', 'min:1', 'max:90'],
-        ]);
-
-        $settings
-            ->fill([
-                'enabled'            => $this->cart_reminders_enabled,
-                'first_delay_hours'  => $this->cart_first_delay_hours,
-                'second_delay_hours' => $this->cart_second_delay_hours,
-                'min_subtotal_cents' => $this->cart_min_subtotal * 100,
-                'stop_after_hours'   => $this->cart_stop_after_days * 24,
-            ])
-            ->save();
-
-        Flux::toast(heading: 'Saved', text: 'Cart reminder settings updated.', variant: 'success');
-    }
 }; ?>
 
 <x-admin.settings-shell tab="app" :section="$section">
@@ -456,48 +415,6 @@ new #[Layout('layouts::app')] #[Title('App settings — Admin')] class extends C
                 <flux:separator />
                 <flux:input wire:model="order_prefix" label="Order number prefix" placeholder="SHF-"
                     description="Order numbers are formatted {prefix}{year}-{sequence}." />
-
-                <div class="flex justify-end pt-2">
-                    <flux:button type="submit" variant="primary">Save changes</flux:button>
-                </div>
-            </form>
-        </flux:card>
-    @endif
-
-    {{-- Cart reminders --}}
-    @if ($section === 'cart-reminders')
-        <flux:card class="overflow-hidden p-0">
-            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
-                <flux:heading size="sm" class="uppercase tracking-wide">Abandoned cart reminders</flux:heading>
-            </div>
-
-            <form wire:submit="saveCartReminders" class="space-y-5 p-6">
-                <div class="flex items-center justify-between gap-4 rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
-                    <div>
-                        <flux:label>Enable cart reminders</flux:label>
-                        <flux:text size="sm" class="text-xs">Emails customers who left items in their cart. Only sent to customers who opted into marketing email.</flux:text>
-                    </div>
-                    <flux:switch wire:model.live="cart_reminders_enabled" />
-                </div>
-
-                @if ($cart_reminders_enabled)
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <flux:input wire:model="cart_first_delay_hours" type="number" min="1" max="720"
-                            label="First reminder after (hours)"
-                            description="Hours of inactivity before the first email." />
-                        <flux:input wire:model="cart_second_delay_hours" type="number" min="0" max="720"
-                            label="Second reminder after (hours)"
-                            description="0 disables the second email." />
-                    </div>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <flux:input wire:model="cart_min_subtotal" type="number" min="0"
-                            label="Minimum cart value (KES)"
-                            description="0 reminds any non-empty cart." />
-                        <flux:input wire:model="cart_stop_after_days" type="number" min="1" max="90"
-                            label="Stop reminding after (days)"
-                            description="Carts idle longer than this are left alone." />
-                    </div>
-                @endif
 
                 <div class="flex justify-end pt-2">
                     <flux:button type="submit" variant="primary">Save changes</flux:button>

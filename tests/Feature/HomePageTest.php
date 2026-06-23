@@ -60,7 +60,7 @@ it('shows a department card for each of the four divisions with a shop link', fu
     $response->assertDontSee('Shop Random Top Level');
     // With no product imagery, each division renders a placeholder hero linking to its page.
     $response->assertSee('href="'.route('category.show', 'cold-room').'"', false);
-});
+})->skip('Divisions "Shop by department" section is temporarily commented out on the homepage.');
 
 it('fills a division card with product images from that division and its subcategories', function () {
     Storage::fake('public');
@@ -83,7 +83,7 @@ it('fills a division card with product images from that division and its subcate
     // The collage tile links to the product and shows its name.
     $response->assertSee('href="'.route('product.show', $product).'"', false);
     $response->assertSee('Combi Oven 10 Grid');
-});
+})->skip('Divisions "Shop by department" section is temporarily commented out on the homepage.');
 
 it('prioritises the LCP hero image and lazy-loads off-screen ones', function () {
     $response = $this->get(route('home'));

@@ -120,16 +120,11 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
         }
 
         if ($this->selectedTag !== '') {
-            $query->whereHas('tags', fn ($t) => $t->where('name->'.config('app.locale', 'en'), $this->selectedTag));
+            $query->whereHas('tags', fn($t) => $t->where('name->' . config('app.locale', 'en'), $this->selectedTag));
         }
 
         if ($this->newArrivalsOnly) {
-            $query->where('stock_status', StockStatus::IN_STOCK)
-                ->whereNotNull('price')
-                ->where('price', '>', 0)
-                ->where(fn ($q) => $q
-                    ->where('published_at', '>=', now()->subDays(60))
-                    ->orWhereHas('tags', fn ($t) => $t->where('name->'.config('app.locale', 'en'), 'New Arrival')));
+            $query->where('stock_status', StockStatus::IN_STOCK)->whereNotNull('price')->where('price', '>', 0)->where(fn($q) => $q->where('published_at', '>=', now()->subDays(60))->orWhereHas('tags', fn($t) => $t->where('name->' . config('app.locale', 'en'), 'New Arrival')));
         }
 
         if ($this->inStockOnly) {
@@ -137,11 +132,14 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
         }
 
         if ($this->minRating > 0) {
-            $query->whereIn('id', Review::query()
-                ->select('product_id')
-                ->where('status', ReviewStatus::APPROVED->value)
-                ->groupBy('product_id')
-                ->havingRaw('AVG(rating) >= ?', [$this->minRating]));
+            $query->whereIn(
+                'id',
+                Review::query()
+                    ->select('product_id')
+                    ->where('status', ReviewStatus::APPROVED->value)
+                    ->groupBy('product_id')
+                    ->havingRaw('AVG(rating) >= ?', [$this->minRating]),
+            );
         }
 
         // priceMax/priceMin in KES → cents. Null prices count as "unpriced" and
@@ -169,7 +167,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     public function categoriesList(): Collection
     {
         return Category::query()
-            ->withCount(['products' => fn ($q) => $q->published()->visibleInCatalog()])
+            ->withCount(['products' => fn($q) => $q->published()->visibleInCatalog()])
             ->orderBy('name')
             ->get();
     }
@@ -200,7 +198,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                 <div class="flex items-center gap-3">
                     <h1 class="text-3xl font-semibold tracking-tight">Catalog</h1>
                     @if ($selectedTag !== '')
-                        <div class="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                        <div
+                            class="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                             {{ $selectedTag }}
                             <button wire:click="$set('selectedTag', '')" class="ml-0.5 text-zinc-400 hover:text-zinc-600">
                                 <flux:icon.x-mark variant="micro" class="size-3" />
@@ -208,9 +207,11 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                         </div>
                     @endif
                     @if ($newArrivalsOnly)
-                        <div class="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                        <div
+                            class="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                             New Arrivals
-                            <button wire:click="$set('newArrivalsOnly', false)" class="ml-0.5 text-zinc-400 hover:text-zinc-600">
+                            <button wire:click="$set('newArrivalsOnly', false)"
+                                class="ml-0.5 text-zinc-400 hover:text-zinc-600">
                                 <flux:icon.x-mark variant="micro" class="size-3" />
                             </button>
                         </div>
@@ -276,11 +277,13 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                                 class="scrollbar-hover mt-3 flex max-h-64 flex-col gap-2 overflow-y-auto pl-0.5 pr-1">
                                 @foreach ($this->categoriesList as $cat)
                                     <flux:field variant="inline">
-                                        <flux:checkbox wire:model.live="selectedCategories" value="{{ $cat->slug }}" />
+                                        <flux:checkbox wire:model.live="selectedCategories"
+                                            value="{{ $cat->slug }}" />
                                         <flux:label>
                                             {{ $cat->name }}
                                             <x-slot:trailing>
-                                                <span class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
+                                                <span
+                                                    class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
                                             </x-slot:trailing>
                                         </flux:label>
                                     </flux:field>
@@ -370,8 +373,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 
                     {{-- Drawer footer --}}
                     <div class="sticky bottom-0 border-t border-zinc-200 bg-white px-5 py-3.5">
-                        <flux:button variant="customer-primary" size="customer" wire:click="$set('showFilters', false)"
-                            class="w-full!">
+                        <flux:button variant="customer-primary" size="customer"
+                            wire:click="$set('showFilters', false)" class="w-full!">
                             View {{ $this->products->total() }} results
                         </flux:button>
                     </div>
@@ -403,7 +406,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                                     <flux:label>
                                         {{ $cat->name }}
                                         <x-slot:trailing>
-                                            <span class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
+                                            <span
+                                                class="text-xs text-ink-4 tabular-nums">{{ $cat->products_count }}</span>
                                         </x-slot:trailing>
                                     </flux:label>
                                 </flux:field>
@@ -498,8 +502,8 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                 <div class="mb-5 flex flex-col gap-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-3">
                         {{-- Mobile: open filter drawer --}}
-                        <flux:button size="sm" icon="funnel"
-                            wire:click="$set('showFilters', true)" class="lg:hidden">
+                        <flux:button size="sm" icon="funnel" wire:click="$set('showFilters', true)"
+                            class="lg:hidden">
                             Filters
                             @if ($this->hasActiveFilters())
                                 <span class="size-2 rounded-full bg-brand-500"></span>
@@ -560,8 +564,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                             </button>
                         @endif
                         @if ($priceMin > 0 || $priceMax < 6000000)
-                            <button type="button"
-                                wire:click="$set('priceMin', 0); $set('priceMax', 6000000)"
+                            <button type="button" wire:click="$set('priceMin', 0); $set('priceMax', 6000000)"
                                 class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
                                 @if ($priceMin > 0 && $priceMax < 6000000)
                                     {{ money($priceMin * 100) }} – {{ money($priceMax * 100) }}
@@ -576,7 +579,9 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                         @if ($minRating > 0)
                             <button type="button" wire:click="$set('minRating', 0)"
                                 class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
-                                <span class="inline-flex items-center gap-0.5">{{ $minRating }}<flux:icon.star variant="micro" class="size-3 text-amber-500" /> &amp; up</span>
+                                <span class="inline-flex items-center gap-0.5">{{ $minRating }}
+                                    <flux:icon.star variant="micro" class="size-3 text-amber-500" /> &amp; up
+                                </span>
                                 <flux:icon.x variant="micro" class="size-3 text-ink-3" />
                             </button>
                         @endif

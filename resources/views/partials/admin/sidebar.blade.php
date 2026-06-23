@@ -102,10 +102,6 @@
                 wire:navigate>
                 {{ __('All customers') }}
             </flux:sidebar.item>
-            <flux:sidebar.item icon="envelope" :href="route('admin.subscribers.index')" :current="request()->routeIs('admin.subscribers.*')"
-                wire:navigate>
-                {{ __('Subscribers') }}
-            </flux:sidebar.item>
             @endcan
             @can('reviews.manage')
             <flux:sidebar.item icon="star" :href="route('admin.reviews.index')" :current="request()->routeIs('admin.reviews.*')"
@@ -115,6 +111,23 @@
             @endcan
         </flux:sidebar.group>
         @endcanany
+
+        @can('marketing.manage')
+        <flux:sidebar.group :heading="__('Marketing')" class="grid">
+            <flux:sidebar.item icon="envelope" :href="route('admin.subscribers.index')" :current="request()->routeIs('admin.subscribers.*')"
+                wire:navigate>
+                {{ __('Subscribers') }}
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="shopping-cart" :href="route('admin.marketing.cart-recovery')" :current="request()->routeIs('admin.marketing.cart-recovery')"
+                wire:navigate>
+                {{ __('Cart recovery') }}
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="ticket" :href="route('admin.marketing.coupons.index')" :current="request()->routeIs('admin.marketing.coupons.*')"
+                wire:navigate>
+                {{ __('Coupons') }}
+            </flux:sidebar.item>
+        </flux:sidebar.group>
+        @endcan
 
         @can('roles.manage')
         <flux:sidebar.group :heading="__('Access')" class="grid">

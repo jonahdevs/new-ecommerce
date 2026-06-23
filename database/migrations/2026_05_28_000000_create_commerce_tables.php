@@ -50,6 +50,24 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Discount coupons. One row per coupon code; uses are tracked in coupon_uses.
+        // type: 'fixed' (cents off) | 'percent' (whole number 1–100, applied to subtotal).
+        Schema::create('coupons', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique(); // uppercase, e.g. "SAVE10"
+            $table->string('type'); // CouponType enum value
+            $table->unsignedBigInteger('value'); // cents for fixed; whole % for percent
+            $table->unsignedBigInteger('min_subtotal_cents')->default(0);
+            $table->unsignedInteger('max_uses')->nullable(); // null = unlimited
+            $table->unsignedTinyInteger('max_uses_per_user')->default(1);
+            $table->unsignedInteger('uses_count')->default(0); // denormalized counter
+            $table->boolean('is_active')->default(true);
+            $table->string('description')->nullable();
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -94,7 +112,10 @@ return new class extends Migration
             $table->bigInteger('vat_cents')->default(0);
             $table->bigInteger('delivery_cents')->default(0);
             $table->bigInteger('installation_cents')->default(0);
+            $table->bigInteger('discount_cents')->default(0);
             $table->bigInteger('total_cents')->default(0);
+            $table->foreignId('coupon_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('coupon_code')->nullable(); // snapshot so coupon deletion doesn't blank history
             $table->char('currency', 3)->default('KES');
             $table->string('payment_method')->nullable();
             $table->text('notes')->nullable();
@@ -165,6 +186,18 @@ return new class extends Migration
             $table->decimal('tax_rate', 5, 2)->default(0);
             $table->bigInteger('tax_cents')->default(0);
             $table->timestamps();
+        });
+
+        // One row per coupon redemption. Increment coupon.uses_count in the same
+        // transaction so it stays consistent without an expensive aggregate query.
+        Schema::create('coupon_uses', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('coupon_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->bigInteger('discount_cents');
+            $table->timestamp('used_at');
+            $table->index(['coupon_id', 'user_id']);
         });
 
         Schema::create('quotes', function (Blueprint $table) {
@@ -275,10 +308,12 @@ return new class extends Migration
         Schema::dropIfExists('recently_viewed');
         Schema::dropIfExists('sap_sync_logs');
         Schema::dropIfExists('status_histories');
+        Schema::dropIfExists('coupon_uses');
         Schema::dropIfExists('quote_items');
         Schema::dropIfExists('quotes');
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
+        Schema::dropIfExists('coupons');
         Schema::dropIfExists('addresses');
         Schema::dropIfExists('delivery_promotions');
         Schema::dropIfExists('delivery_zones');

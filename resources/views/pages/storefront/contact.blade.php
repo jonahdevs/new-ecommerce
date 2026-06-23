@@ -173,9 +173,6 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                     <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
                     <flux:breadcrumbs.item>Contact</flux:breadcrumbs.item>
                 </flux:breadcrumbs>
-
-                <span class="text-[11.5px] font-bold uppercase tracking-[0.12em] text-brand-500">We're here to
-                    help</span>
                 <h1 class="mt-3 font-serif text-4xl font-normal leading-[1.04] tracking-tight text-ink lg:text-5xl">
                     Talk to a
                     <span class="italic text-brand-500">specialist</span>.
@@ -183,7 +180,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                 <p class="mt-4 text-[16px] leading-relaxed text-ink-2">
                     From commercial kitchens and cold rooms to laundry and healthcare — sizing, power load,
                     ventilation or installation, get it right before you commit. Reach our team by phone, WhatsApp
-                    or the form below, or walk into any of our four showrooms.
+                    or fill form below.
                 </p>
 
                 <div class="mt-6 flex flex-wrap gap-7">
@@ -336,7 +333,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                         <flux:error name="consent" />
 
                         <div class="mt-6 flex flex-wrap items-center gap-3.5">
-                            <flux:button type="submit" variant="primary" icon-trailing="arrow-right" class="px-6!">
+                            <flux:button type="submit" variant="primary" icon-trailing="send" class="px-6!">
                                 <span wire:loading.remove wire:target="submit">Send message</span>
                                 <span wire:loading wire:target="submit">Sending…</span>
                             </flux:button>
@@ -410,55 +407,15 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
             <div>
                 <span class="text-[11.5px] font-bold uppercase tracking-[0.12em] text-brand-500">Walk in &amp; see it
                     working</span>
-                <h2 class="mt-2.5 font-serif text-3xl font-normal text-ink lg:text-4xl">Visit a Sheffield showroom</h2>
+                <h2 class="mt-2.5 font-serif text-3xl font-normal text-ink lg:text-4xl">Visit Our Showrooms</h2>
             </div>
         </div>
 
         <div
             class="grid grid-cols-1 overflow-hidden rounded-lg border border-line bg-surface lg:min-h-110 lg:grid-cols-[1fr_1.15fr]">
 
-            {{-- Map: real interactive map (Leaflet / Google per admin map_provider),
-                 with the stylised SVG region map as a graceful fallback until it loads. --}}
-            <div class="relative min-h-72 overflow-hidden bg-brand-blue-700 lg:min-h-110">
+            <div class="relative min-h-72 overflow-hidden lg:min-h-110">
                 <div x-ref="map" class="shf-map"></div>
-
-                <div class="absolute inset-0 z-10 p-7" x-show="! ready" x-transition.opacity.duration.400ms>
-                    <svg viewBox="0 0 360 420" class="block size-full">
-                        <defs>
-                            <pattern id="contact-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)"
-                                    stroke-width="0.5" />
-                            </pattern>
-                        </defs>
-                        <rect width="360" height="420" fill="url(#contact-grid)" />
-                        <g opacity="0.18" fill="#fff">
-                            <path d="M180 90 L 280 100 L 295 160 L 285 220 L 240 245 L 195 260 L 175 240 L 165 180 Z" />
-                            <path d="M120 130 L 175 130 L 180 200 L 130 215 L 105 195 L 100 165 Z" />
-                            <path d="M95 220 L 135 215 L 140 250 L 110 260 L 90 248 Z" />
-                            <path
-                                d="M135 250 L 200 248 L 260 270 L 285 320 L 240 365 L 180 360 L 130 320 L 120 290 Z" />
-                        </g>
-                        @foreach ($this->showrooms as $loc)
-                            @php
-                                $x = (($loc->longitude - 28) / (42 - 28)) * 360;
-                                $y = ((6 - $loc->latitude) / 12) * 420;
-                                $leftSide = in_array($loc->city, ['Kigali', 'Kampala'], true);
-                                $anchor = $leftSide ? 'end' : 'start';
-                                $tx = $x + ($leftSide ? -10 : 10);
-                            @endphp
-                            <g class="cursor-pointer" @click="active = {{ $loc->id }}">
-                                <circle cx="{{ $x }}" cy="{{ $y }}" r="14"
-                                    fill="hsl(354 68% 45% / 0.25)" x-show="active === {{ $loc->id }}" />
-                                <circle cx="{{ $x }}" cy="{{ $y }}"
-                                    :r="active === {{ $loc->id }} ? 6 : 4" fill="hsl(354 68% 45%)"
-                                    stroke="#fff" stroke-width="1.5" />
-                                <text x="{{ $tx }}" y="{{ $y + 4 }}"
-                                    text-anchor="{{ $anchor }}" font-size="11" fill="rgba(255,255,255,0.85)"
-                                    :font-weight="active === {{ $loc->id }} ? 700 : 500">{{ $loc->city }}{{ $loc->is_hq ? ' ★' : '' }}</text>
-                            </g>
-                        @endforeach
-                    </svg>
-                </div>
             </div>
 
             {{-- Detail --}}
@@ -532,7 +489,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                         <template x-if="active === {{ $loc->id }}">
                             <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($loc->address . ', ' . $loc->city . ', ' . $loc->country) }}"
                                 target="_blank" rel="noopener">
-                                <flux:button variant="primary" icon-trailing="arrow-right">Get directions
+                                <flux:button variant="primary" icon-trailing="move-up-right">Get directions
                                 </flux:button>
                             </a>
                         </template>

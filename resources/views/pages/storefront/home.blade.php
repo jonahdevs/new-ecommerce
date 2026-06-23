@@ -63,12 +63,9 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
         return Category::query()
             ->whereIn('slug', self::DIVISION_SLUGS)
             ->where('status', CategoryStatus::ACTIVE)
-            ->with([
-                'media',
-                'children' => fn ($q) => $q->where('status', CategoryStatus::ACTIVE)->orderBy('sort_order')->with('media'),
-            ])
+            ->with(['media', 'children' => fn($q) => $q->where('status', CategoryStatus::ACTIVE)->orderBy('sort_order')->with('media')])
             ->get()
-            ->sortBy(fn (Category $c) => array_search($c->slug, self::DIVISION_SLUGS))
+            ->sortBy(fn(Category $c) => array_search($c->slug, self::DIVISION_SLUGS))
             ->values();
     }
 
@@ -80,16 +77,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     {
         $categoryIds = $division->children->pluck('id')->push($division->id)->all();
 
-        return Product::query()
-            ->visibleInCatalog()
-            ->published()
-            ->whereHas('media')
-            ->where(fn ($q) => $q
-                ->whereIn('primary_category_id', $categoryIds)
-                ->orWhereHas('categories', fn ($c) => $c->whereIn('categories.id', $categoryIds)))
-            ->with('media')
-            ->take(4)
-            ->get();
+        return Product::query()->visibleInCatalog()->published()->whereHas('media')->where(fn($q) => $q->whereIn('primary_category_id', $categoryIds)->orWhereHas('categories', fn($c) => $c->whereIn('categories.id', $categoryIds)))->with('media')->take(4)->get();
     }
 
     // TODO: cache these once they become hot. View composer would be cleaner.
@@ -302,9 +290,10 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
         </div>
     </section>
 
-    {{-- Divisions — promotional cards, one per department. The collage is built
-         from real product images drawn from the division and its subcategories;
-         a division with no product imagery yet falls back to a placeholder. --}}
+    {{-- Divisions / "Shop by department" — temporarily disabled. The section and its
+         seeded Cold Room / Laundry / Healthcare products were removed; re-enable by
+         removing the Blade comment wrapper below once the verticals are ready. --}}
+    {{--
     @if ($this->divisions->isNotEmpty())
         <section class="shell pt-14">
             <h2 class="mb-4 text-[22px] font-semibold tracking-tight">Shop by department</h2>
@@ -323,7 +312,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                         <h3 class="text-[15px] font-semibold tracking-tight text-ink">{{ $division->name }}</h3>
 
                         @if ($tiles->isNotEmpty())
-                            {{-- Product-image collage (padded to keep the shape) --}}
+                            <!-- Product-image collage (padded to keep the shape) -->
                             <div class="mt-4 grid grid-cols-2 gap-2.5">
                                 @foreach ($cells as $i => $cell)
                                     @php $product = $tiles[$i] ?? null; @endphp
@@ -347,7 +336,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                                 @endforeach
                             </div>
                         @else
-                            {{-- No product imagery yet — placeholder hero linking to the division --}}
+                            <!-- No product imagery yet — placeholder hero linking to the division -->
                             <a href="{{ route('category.show', $division) }}" wire:navigate
                                 class="group mt-4 block flex-1">
                                 <div class="relative h-full min-h-44 overflow-hidden rounded bg-surface-sunken">
@@ -369,9 +358,10 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
             </div>
         </section>
     @endif
+    --}}
 
     {{-- Categories — dense Workshop grid (12 chips, square aspect, ink underline) --}}
-    <section class="shell pt-14">
+    <section class="shell pt-14 @container">
         <div class="mb-4 flex items-baseline justify-between">
             <h2 class="text-[22px] font-semibold tracking-tight">Shop by category</h2>
             <a href="{{ route('categories.index') }}" wire:navigate
@@ -382,7 +372,8 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
 
         {{-- All featured categories stay visible at every breakpoint; only the column
              count changes, so the same chips simply reflow. --}}
-        <div class="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7">
+        <div
+            class="grid gap-x-5 gap-y-7 grid-cols-1  @3xs:grid-cols-2 @md:grid-cols-3 @xl:grid-cols-4 @3xl:grid-cols-5 @6xl:grid-cols-6 @7xl:grid-cols-7 @8xl:grid-cols-8">
             @foreach ($this->featuredCategories as $category)
                 <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
                     <div class="relative aspect-square overflow-hidden bg-surface-sunken">
@@ -517,7 +508,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     </section>
 
     {{-- Featured products --}}
-    <section class="shell pt-14">
+    <section class="shell pt-14 @container">
         <div class="mb-4 flex items-baseline justify-between">
             <h2 class="text-[22px] font-semibold tracking-tight">Featured equipment</h2>
             <a href="{{ route('catalog') }}?tag=Featured" wire:navigate
@@ -525,7 +516,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                 View all <flux:icon.arrow-right variant="micro" class="size-3.5" />
             </a>
         </div>
-        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+        <div class="grid grid-cols-1 gap-3.5 @sm:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 @6xl:grid-cols-6">
             @foreach ($this->featuredProducts as $product)
                 <x-storefront.product-card :product="$product" />
             @endforeach

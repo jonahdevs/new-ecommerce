@@ -9,7 +9,7 @@
             <span class="hidden opacity-60 md:inline">·</span>
             <span class="hidden items-center gap-1.5 md:flex">
                 <flux:icon.shield-check variant="micro" class="size-3.5" />
-                Local parts &amp; service across East Africa
+                Spare parts &amp; services across East Africa
             </span>
             <span class="hidden opacity-60 lg:inline">·</span>
             <a href="tel:+254713777111" class="hidden items-center gap-1.5 hover:text-white lg:flex">

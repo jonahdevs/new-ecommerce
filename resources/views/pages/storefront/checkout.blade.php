@@ -4,6 +4,8 @@ use App\Enums\OrderStatus;
 use App\Jobs\ResolveAddressCounty;
 use App\Livewire\Concerns\InteractsWithPaystack;
 use App\Models\Address;
+use App\Models\Coupon;
+use App\Models\CouponUse;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\DeliveryQuoteResult;
@@ -28,6 +30,15 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
     /** The order placed in this checkout session, awaiting Paystack payment. */
     public ?int $payOrderId = null;
+
+    // ==================================================
+    // COUPON
+    // ==================================================
+
+    public string $couponInput = '';
+    public ?int $appliedCouponId = null;
+    public string $appliedCouponCode = '';
+    public int $discountCents = 0;
 
     // ==================================================
     // ADDRESS FORM MODALS
@@ -218,6 +229,48 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         $this->showDeliveryModal = false;
     }
 
+    public function applyCoupon(): void
+    {
+        $code = strtoupper(trim($this->couponInput));
+
+        if ($code === '') {
+            return;
+        }
+
+        $coupon = Coupon::where('code', $code)->first();
+
+        if (! $coupon) {
+            $this->addError('couponInput', 'Coupon code not found.');
+
+            return;
+        }
+
+        $subtotalCents = (int) $this->lines->sum('line_total_cents');
+        $error = $coupon->validateFor($subtotalCents, auth()->id());
+
+        if ($error) {
+            $this->addError('couponInput', $error);
+
+            return;
+        }
+
+        $this->appliedCouponId = $coupon->id;
+        $this->appliedCouponCode = $coupon->code;
+        $this->discountCents = $coupon->discountFor($subtotalCents);
+        $this->couponInput = '';
+        $this->resetErrorBag('couponInput');
+
+        Flux::toast(heading: 'Coupon applied', text: $coupon->valueLabel() . ' discount added.', variant: 'success');
+    }
+
+    public function removeCoupon(): void
+    {
+        $this->appliedCouponId = null;
+        $this->appliedCouponCode = '';
+        $this->discountCents = 0;
+        $this->couponInput = '';
+    }
+
     public function placeOrder(): void
     {
         // If the order was already placed in this session and is still awaiting
@@ -278,11 +331,29 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         $tax = app(TaxCalculator::class);
         $vatCents = $tax->taxForCart($lines);
         $deliveryCents = $quote->feeCents;
+
+        // Revalidate the coupon at placement time — it may have expired or hit
+        // its limit between when the customer applied it and now.
+        $coupon = null;
+        if ($this->appliedCouponId) {
+            $coupon = Coupon::find($this->appliedCouponId);
+            if (! $coupon || $coupon->validateFor($subtotalCents, auth()->id()) !== null) {
+                $this->removeCoupon();
+                Flux::toast(heading: 'Coupon removed', text: 'Your coupon is no longer valid and was removed.', variant: 'warning');
+
+                return;
+            }
+            $this->discountCents = $coupon->discountFor($subtotalCents);
+        }
+
+        $discountCents = $this->discountCents;
         // When prices already include tax the VAT is embedded in the subtotal,
         // so it must not be added again on top.
-        $totalCents = $tax->pricesIncludeTax() ? $subtotalCents + $deliveryCents : $subtotalCents + $vatCents + $deliveryCents;
+        $totalCents = $tax->pricesIncludeTax()
+            ? max(0, $subtotalCents - $discountCents) + $deliveryCents
+            : max(0, $subtotalCents - $discountCents) + $vatCents + $deliveryCents;
 
-        $order = DB::transaction(function () use ($tax, $lines, $address, $quote, $subtotalCents, $vatCents, $deliveryCents, $totalCents) {
+        $order = DB::transaction(function () use ($tax, $lines, $address, $quote, $subtotalCents, $vatCents, $deliveryCents, $discountCents, $totalCents, $coupon) {
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'address_id' => $address?->id,
@@ -293,7 +364,10 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                 'vat_cents' => $vatCents,
                 'delivery_cents' => $deliveryCents,
                 'installation_cents' => 0,
+                'discount_cents' => $discountCents,
                 'total_cents' => $totalCents,
+                'coupon_id' => $coupon?->id,
+                'coupon_code' => $coupon?->code,
                 'payment_method' => null,
                 'notes' => null,
             ]);
@@ -317,6 +391,17 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                     'tax_rate' => $rate,
                     'tax_cents' => $tax->taxForLine((int) $line['line_total_cents'], $rate),
                 ]);
+            }
+
+            if ($coupon && $discountCents > 0) {
+                CouponUse::create([
+                    'coupon_id' => $coupon->id,
+                    'order_id' => $order->id,
+                    'user_id' => auth()->id(),
+                    'discount_cents' => $discountCents,
+                    'used_at' => now(),
+                ]);
+                $coupon->increment('uses_count');
             }
 
             return $order;
@@ -344,7 +429,10 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     $vatCents = $tax->taxForCart($this->lines);
     $taxInclusive = $tax->pricesIncludeTax();
     $deliveryCents = $quote->feeCents;
-    $totalCents = $taxInclusive ? $subtotalCents + $deliveryCents : $subtotalCents + $vatCents + $deliveryCents;
+    $discountCents = $this->discountCents;
+    $totalCents = $taxInclusive
+        ? max(0, $subtotalCents - $discountCents) + $deliveryCents
+        : max(0, $subtotalCents - $discountCents) + $vatCents + $deliveryCents;
     $unserviceable = $this->deliveryMethod === 'delivery' && $this->selectedAddress && !$quote->serviceable;
 
     $addressFilled = $this->selectedAddress !== null;
@@ -514,11 +602,43 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
                         <div class="my-5 h-px bg-zinc-100"></div>
 
+                        {{-- Coupon code input --}}
+                        @if ($this->appliedCouponCode)
+                            <div class="mb-4 flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
+                                <div class="flex items-center gap-2">
+                                    <flux:icon.ticket variant="micro" class="size-4 text-emerald-600" />
+                                    <span class="font-mono text-[12px] font-semibold text-emerald-700">{{ $this->appliedCouponCode }}</span>
+                                </div>
+                                <button type="button" wire:click="removeCoupon"
+                                    class="text-[11px] text-emerald-600 hover:text-red-500">Remove</button>
+                            </div>
+                        @else
+                            <div class="mb-4">
+                                <div class="flex gap-2">
+                                    <flux:input wire:model="couponInput" placeholder="Coupon code"
+                                        class="flex-1 text-[13px]!" wire:keydown.enter.prevent="applyCoupon" />
+                                    <flux:button type="button" variant="customer-outline" size="customer"
+                                        wire:click="applyCoupon" wire:loading.attr="disabled" wire:target="applyCoupon">
+                                        Apply
+                                    </flux:button>
+                                </div>
+                                @error('couponInput')
+                                    <p class="mt-1 text-[11.5px] text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
+
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Subtotal</span>
                                 <span class="font-medium tabular-nums">{!! money($subtotalCents) !!}</span>
                             </div>
+                            @if ($discountCents > 0)
+                                <div class="flex items-center justify-between text-sm text-emerald-600">
+                                    <span>Discount ({{ $this->appliedCouponCode }})</span>
+                                    <span class="font-medium tabular-nums">−{!! money($discountCents) !!}</span>
+                                </div>
+                            @endif
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>{{ $this->deliveryMethod === 'pickup' ? 'Pickup' : 'Shipping' }}</span>
                                 @if ($unserviceable)

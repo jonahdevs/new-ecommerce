@@ -55,6 +55,9 @@ class PermissionSeeder extends Seeder
         // Logistics
         'delivery.manage',
 
+        // Marketing (subscribers, cart recovery, campaigns, coupons…)
+        'marketing.manage',
+
         // Staff
         'staff.manage',
 
@@ -85,6 +88,7 @@ class PermissionSeeder extends Seeder
         'catalog.manage',
         'tags.manage',
         'delivery.manage',
+        'marketing.manage',
         'staff.manage',
         'settings.manage',
     ];

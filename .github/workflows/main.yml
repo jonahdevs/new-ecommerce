@@ -1,0 +1,111 @@
+name: 🚀 Deploy to Demo Server
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout
+      - name: 🚚 Checkout code
+        uses: actions/checkout@v4
+
+      # PHP Setup
+      - name: 🐘 Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, tokenizer, xml, curl, zip
+          coverage: none
+
+      # Laravel CI Environment
+      - name: ⚙️ Prepare Laravel environment for CI
+        run: |
+          cp .env.example .env
+          mkdir -p bootstrap/cache
+          mkdir -p storage/framework/{sessions,views,cache}
+          mkdir -p storage/logs
+
+      # Composer
+      - name: 📦 Install Composer dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: 🔑 Generate app key
+        run: php artisan key:generate
+
+      # Node / Assets
+      - name: 🟢 Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: 📦 Install NPM dependencies
+        run: npm ci
+
+      - name: 🏗️ Build assets
+        run: npm run build
+
+      # Deploy via Rsync
+      - name: 📂 Sync files to server
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: >-
+            -avzr --delete
+            --exclude='.git*'
+            --exclude='.github'
+            --exclude='node_modules'
+            --exclude='.env'
+            --exclude='.env.*'
+            --exclude='public/hot'
+            --exclude='public/storage'
+            --exclude='storage/app/public'
+            --exclude='storage/app/private'
+            --exclude='storage/logs/*'
+            --exclude='storage/framework/cache/data/*'
+            --exclude='storage/framework/sessions/*'
+            --exclude='storage/framework/views/*'
+            --exclude='tests'
+            --exclude='phpunit.xml'
+          path: ./
+          remote_path: ${{ secrets.APP_ROOT_DIR }}
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          remote_key_pass: ${{ secrets.SSH_PASSPHRASE }}
+
+      # Post-Deploy Commands
+      - name: ⚙️ Run post-deployment commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            set -e
+            cd ${{ secrets.APP_ROOT_DIR }}
+
+            echo ">>> Clearing old caches..."
+            php artisan optimize:clear
+
+            echo ">>> Rebuilding caches for production..."
+            php artisan optimize
+
+            echo ">>> Running migrations..."
+            php artisan migrate --force
+
+            echo ">>> Linking storage..."
+            php artisan storage:link --force
+
+            echo ">>> Restarting queue workers..."
+            php artisan queue:restart
+
+            echo "✅ Deployment complete!"

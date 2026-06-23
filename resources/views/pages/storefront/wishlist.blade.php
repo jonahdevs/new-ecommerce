@@ -11,8 +11,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Component
-{
+new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Component {
     use InteractsWithStorefront;
 
     public function mount(): void
@@ -43,11 +42,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
             StorefrontSession::addToCart($product->slug);
         }
         $this->dispatch('cart-updated');
-        Flux::toast(
-            heading: 'Added to cart',
-            text: "{$count} " . str('item')->plural($count) . ' added to your cart.',
-            variant: 'success',
-        );
+        Flux::toast(heading: 'Added to cart', text: "{$count} " . str('item')->plural($count) . ' added to your cart.', variant: 'success');
     }
 
     #[Computed]
@@ -66,7 +61,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
             ->visibleInCatalog()
             ->published()
             ->honorStockVisibility()
-            ->when($wishlistSlugs, fn ($q) => $q->whereNotIn('slug', $wishlistSlugs))
+            ->when($wishlistSlugs, fn($q) => $q->whereNotIn('slug', $wishlistSlugs))
             ->inRandomOrder()
             ->take(6)
             ->get();
@@ -74,7 +69,7 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
 }; ?>
 
 @php
-    $totalCents = $this->products->sum(fn ($p) => $p->sale_price ?? $p->price ?? 0);
+    $totalCents = $this->products->sum(fn($p) => $p->sale_price ?? ($p->price ?? 0));
 @endphp
 
 <div class="page-fade">
@@ -92,7 +87,8 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                     @if ($this->products->isEmpty())
                         Nothing saved yet — tap the heart on any product.
                     @else
-                        {{ $this->products->count() }} {{ \Illuminate\Support\Str::plural('item', $this->products->count()) }} ·
+                        {{ $this->products->count() }}
+                        {{ \Illuminate\Support\Str::plural('item', $this->products->count()) }} ·
                         Estimated total {!! money($totalCents) !!}
                     @endif
                 </p>
@@ -100,8 +96,10 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
 
             @if ($this->products->isNotEmpty())
                 <div class="flex gap-2.5">
-                    <flux:button wire:click="clear" wire:confirm="Clear your entire wishlist?">Clear wishlist</flux:button>
-                    <flux:button variant="primary" wire:click="addAllToCart" icon="shopping-cart">Add all to cart</flux:button>
+                    <flux:button wire:click="clear" wire:confirm="Clear your entire wishlist?">Clear wishlist
+                    </flux:button>
+                    <flux:button variant="primary" wire:click="addAllToCart" icon="shopping-cart">Add all to cart
+                    </flux:button>
                 </div>
             @endif
         </div>
@@ -112,14 +110,15 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                     class="mx-auto h-72 w-72" />
                 <h2 class="mt-6 text-xl font-semibold sm:text-2xl">Your wishlist is empty.</h2>
                 <p class="mx-auto mt-2 max-w-md text-sm text-ink-3">
-                    Save your favourite products here to keep track of items you love. Start browsing and add products to your wishlist!
+                    Save your favourite products here to keep track of items you love.
                 </p>
                 <div class="mt-6 flex flex-col gap-3 sm:flex-row">
                     <flux:button variant="customer-primary" size="customer" :href="route('catalog')" wire:navigate>
                         <flux:icon.magnifying-glass variant="micro" class="size-3.5" />
                         Browse products
                     </flux:button>
-                    <flux:button variant="customer-outline" size="customer" :href="route('home')" wire:navigate>Back to Home</flux:button>
+                    <flux:button variant="customer-outline" size="customer" :href="route('home')" wire:navigate>Back to
+                        Home</flux:button>
                 </div>
             </div>
         @else
@@ -130,15 +129,18 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
             </div>
 
             {{-- Convert-to-quote band --}}
-            <div class="mt-8 grid grid-cols-1 items-center gap-6 rounded-md p-6 text-[#f3eadd] sm:grid-cols-[1fr_auto]" style="background:#0c1421">
+            <div class="mt-8 grid grid-cols-1 items-center gap-6 rounded-md p-6 text-[#f3eadd] sm:grid-cols-[1fr_auto]"
+                style="background:#0c1421">
                 <div>
                     <div class="font-serif text-xl">Need a formal quote for this list?</div>
                     <div class="mt-1 text-[13px] text-[#c9bea4]">
-                        Convert your wishlist to a costed quotation with delivery, installation and lead times. Response in 24 business hours.
+                        Convert your wishlist to a costed quotation with delivery, installation and lead times. Response
+                        in 24 business hours.
                     </div>
                 </div>
                 <flux:button variant="primary" icon-trailing="arrow-right"
-                    :href="route('quote.request', ['products' => $this->products->pluck('slug')->implode(',')])" wire:navigate>
+                    :href="route('quote.request', ['products' => $this->products->pluck('slug')->implode(',')])"
+                    wire:navigate>
                     Convert to quote
                 </flux:button>
             </div>
@@ -149,36 +151,37 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
             <section class="pt-20">
                 <div class="mb-4 flex items-baseline justify-between">
                     <h2 class="text-[22px] font-semibold tracking-tight">You might also want</h2>
-                    <a href="{{ route('catalog') }}" wire:navigate class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
+                    <a href="{{ route('catalog') }}" wire:navigate
+                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
                         Browse all <flux:icon.arrow-right variant="micro" class="size-3.5" />
                     </a>
                 </div>
 
-                <div class="relative"
-                    x-data="{
-                        swiper: null,
-                        init() {
-                            this.swiper = new Swiper($refs.carousel, {
-                                spaceBetween: 12,
-                                speed: 400,
-                                preventClicks: false,
-                                breakpoints: {
-                                    0:   { slidesPerView: 1.2 },
-                                    480: { slidesPerView: 2.2 },
-                                    768: { slidesPerView: 3.2 },
-                                    1024:{ slidesPerView: 4.2 },
-                                    1280:{ slidesPerView: 5.2 },
-                                    1536:{ slidesPerView: 6.5 },
-                                },
-                            });
-                        }
-                    }">
+                <div class="relative" x-data="{
+                    swiper: null,
+                    init() {
+                        this.swiper = new Swiper($refs.carousel, {
+                            spaceBetween: 12,
+                            speed: 400,
+                            preventClicks: false,
+                            breakpoints: {
+                                0: { slidesPerView: 1.2 },
+                                480: { slidesPerView: 2.2 },
+                                768: { slidesPerView: 3.2 },
+                                1024: { slidesPerView: 4.2 },
+                                1280: { slidesPerView: 5.2 },
+                                1536: { slidesPerView: 6.5 },
+                            },
+                        });
+                    }
+                }">
                     <div class="swiper overflow-hidden" x-ref="carousel">
                         <div class="swiper-wrapper pb-1">
                             @foreach ($this->recommendations as $product)
                                 <div class="swiper-slide h-auto!">
                                     <div class="h-full flex flex-col">
-                                        <x-storefront.product-card :product="$product" wire:key="reco-{{ $product->id }}" class="h-full" />
+                                        <x-storefront.product-card :product="$product" wire:key="reco-{{ $product->id }}"
+                                            class="h-full" />
                                     </div>
                                 </div>
                             @endforeach
