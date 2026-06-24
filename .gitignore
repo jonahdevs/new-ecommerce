@@ -4,6 +4,7 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/public/media
 /storage/*.key
 /storage/pail
 /storage/media-library/temp
@@ -20,6 +21,11 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+/.claude
+/.cursor
+/.gemini
+/.kiro
+/sheffield ecommerce-handoff
 /.fleet
 /.idea
 /.nova
@@ -27,3 +33,7 @@ yarn-error.log
 /.zed
 storage/media-library/temp
 *.zip
+
+**/caddy
+frankenphp
+frankenphp-worker.php

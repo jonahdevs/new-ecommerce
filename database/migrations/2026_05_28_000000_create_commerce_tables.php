@@ -110,6 +110,7 @@ return new class extends Migration
             // bigInteger avoids the 2,147,483,647-cent (~KES 21 M) ceiling on int.
             $table->bigInteger('subtotal_cents')->default(0);
             $table->bigInteger('vat_cents')->default(0);
+            $table->boolean('tax_inclusive')->default(true); // snapshot of prices_include_tax at order placement
             $table->bigInteger('delivery_cents')->default(0);
             $table->bigInteger('installation_cents')->default(0);
             $table->bigInteger('discount_cents')->default(0);
@@ -140,6 +141,9 @@ return new class extends Migration
             $table->string('delivery_note_path')->nullable();
             $table->index('sap_sync_status');
             $table->index('sap_doc_entry');
+            $table->index('status');
+            $table->index('created_at');
+            $table->index(['user_id', 'status'], 'orders_user_status_index');
             $table->timestamps();
         });
 
@@ -151,6 +155,7 @@ return new class extends Migration
             $table->text('note')->nullable();
             $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->index('created_at');
         });
 
         Schema::create('sap_sync_logs', function (Blueprint $table) {
@@ -233,6 +238,10 @@ return new class extends Migration
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
+
+            $table->index('status');
+            $table->index('expires_at');
+            $table->index(['user_id', 'status'], 'quotes_user_status_index');
         });
 
         Schema::create('quote_items', function (Blueprint $table) {
@@ -268,7 +277,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('session_id', 64)->nullable();
+            $table->string('session_id', 64)->nullable()->index();
             $table->timestamp('viewed_at')->index();
             $table->index(['product_id', 'viewed_at']);
         });
@@ -280,7 +289,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->unique()->constrained()->cascadeOnDelete();
             $table->string('token')->nullable()->unique();
-            $table->timestamp('last_activity_at')->nullable();
+            $table->timestamp('last_activity_at')->nullable()->index();
             // Abandoned-cart reminder state machine.
             $table->unsignedTinyInteger('reminders_sent')->default(0);
             $table->timestamp('last_reminded_at')->nullable();
@@ -298,10 +307,21 @@ return new class extends Migration
             // One line per product/variant pair within a cart.
             $table->unique(['cart_id', 'product_id', 'product_variant_id']);
         });
+
+        // Wire the order_downloads FKs now that both orders and users exist.
+        Schema::table('order_downloads', function (Blueprint $table) {
+            $table->foreign('order_id')->references('id')->on('orders')->cascadeOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('order_downloads', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
+            $table->dropForeign(['user_id']);
+        });
+
         Schema::dropIfExists('cart_items');
         Schema::dropIfExists('carts');
         Schema::dropIfExists('product_views');

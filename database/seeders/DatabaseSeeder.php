@@ -3,16 +3,18 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
+        // Clear generated documents from previous seed runs so they don't accumulate.
+        foreach (['packing-lists', 'delivery-notes', 'kra-receipts', 'quotations'] as $dir) {
+            Storage::disk('local')->deleteDirectory($dir);
+        }
+
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -33,7 +35,7 @@ class DatabaseSeeder extends Seeder
             LogisticsSeeder::class,
             AddressSeeder::class,
             OrderSeeder::class,
-            HistoricalOrderSeeder::class,
+            CouponSeeder::class,
             QuoteSeeder::class,
             ReviewSeeder::class,
             // BannedIpSeeder::class,

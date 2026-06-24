@@ -150,6 +150,11 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                                     <p class="truncate text-[13px] font-semibold text-ink">{{ $item->product_name }}</p>
                                 @endif
                                 <p class="mt-0.5 text-[11px] text-ink-3">Qty: {{ $item->quantity }}</p>
+                                @if ($order->hasMixedTaxRates() && (float) $item->tax_rate > 0)
+                                    <p class="text-[10px] text-ink-4">VAT {{ rtrim(rtrim(number_format((float) $item->tax_rate, 2), '0'), '.') }}%</p>
+                                @elseif ($order->hasMixedTaxRates())
+                                    <p class="text-[10px] text-ink-4">VAT exempt</p>
+                                @endif
                             </div>
 
                             {{-- Price + Buy Again --}}
@@ -188,6 +193,17 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                                 <span class="font-medium text-ink-3">Subtotal</span>
                                 <span class="font-bold tabular-nums text-ink">{!! money($order->subtotal_cents) !!}</span>
                             </div>
+                            @if ($order->discount_cents > 0)
+                                <div class="flex justify-between text-[13px]">
+                                    <span class="font-medium text-ink-3">
+                                        Discount
+                                        @if ($order->coupon_code)
+                                            <span class="ml-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-700">{{ $order->coupon_code }}</span>
+                                        @endif
+                                    </span>
+                                    <span class="font-bold tabular-nums text-emerald-600">− {!! money($order->discount_cents) !!}</span>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-[13px]">
                                 <span class="font-medium text-ink-3">Delivery</span>
                                 @if ($order->delivery_cents > 0)
@@ -203,7 +219,7 @@ new #[Layout('layouts::account')] #[Title('Order')] class extends Component
                                 </div>
                             @endif
                             <div class="flex justify-between text-[13px]">
-                                <span class="font-medium text-ink-3">{{ $order->vatLabel() }}</span>
+                                <span class="font-medium text-ink-3">{!! $order->vatLabel() !!}</span>
                                 <span class="font-bold tabular-nums text-ink">{!! money($order->vat_cents) !!}</span>
                             </div>
                             <div class="flex items-baseline justify-between border-t border-zinc-200 pt-3">

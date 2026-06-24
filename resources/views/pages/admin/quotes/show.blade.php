@@ -181,7 +181,10 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
         $term = '%' . $this->productSearch . '%';
 
-        return Product::query()->where(fn($q) => $q->where('name', 'like', $term)->orWhere('sku', 'like', $term))->limit(8)->get();
+        return Product::query()
+            ->where(fn($q) => $q->where('name', 'like', $term)->orWhere('sku', 'like', $term))
+            ->limit(8)
+            ->get(['id', 'name', 'sku', 'model_number', 'slug', 'sale_price', 'price']);
     }
 
     public function addProduct(int $productId): void
@@ -393,11 +396,13 @@ new #[Layout('layouts::app')] #[Title('Quote — Admin')] class extends Componen
 
         $from = $this->quote->status;
         $this->quote->update(['status' => QuoteStatus::APPROVED]);
-        $this->quote->recordStatusChange($from, QuoteStatus::APPROVED, 'Approved by staff.', auth()->id());
-        $this->quote->refresh()->load('items');
-        $this->syncFromQuote();
+        $this->quote->recordStatusChange($from, QuoteStatus::APPROVED, 'Approved by staff on behalf of customer.', auth()->id());
 
-        Flux::toast(heading: 'Quote approved', text: $this->quote->quote_number . ' has been approved.', variant: 'success');
+        $order = app(QuoteConversionService::class)->convert($this->quote);
+
+        $this->quote->notifyContact(new QuoteDecisionReceived($this->quote->refresh()));
+
+        $this->redirectRoute('admin.orders.show', $order, navigate: true);
     }
 
     public function decline(): void

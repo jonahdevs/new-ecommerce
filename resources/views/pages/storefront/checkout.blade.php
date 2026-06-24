@@ -239,7 +239,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
 
         $coupon = Coupon::where('code', $code)->first();
 
-        if (! $coupon) {
+        if (!$coupon) {
             $this->addError('couponInput', 'Coupon code not found.');
 
             return;
@@ -279,8 +279,8 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         if ($this->payOrderId) {
             $existing = Order::find($this->payOrderId);
 
-            if ($existing && ! $existing->isPaid()) {
-                if (! $this->openPaystack($existing)) {
+            if ($existing && !$existing->isPaid()) {
+                if (!$this->openPaystack($existing)) {
                     $this->addError('payment', 'We could not start the payment. Please try again.');
                 }
 
@@ -337,7 +337,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         $coupon = null;
         if ($this->appliedCouponId) {
             $coupon = Coupon::find($this->appliedCouponId);
-            if (! $coupon || $coupon->validateFor($subtotalCents, auth()->id()) !== null) {
+            if (!$coupon || $coupon->validateFor($subtotalCents, auth()->id()) !== null) {
                 $this->removeCoupon();
                 Flux::toast(heading: 'Coupon removed', text: 'Your coupon is no longer valid and was removed.', variant: 'warning');
 
@@ -349,9 +349,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         $discountCents = $this->discountCents;
         // When prices already include tax the VAT is embedded in the subtotal,
         // so it must not be added again on top.
-        $totalCents = $tax->pricesIncludeTax()
-            ? max(0, $subtotalCents - $discountCents) + $deliveryCents
-            : max(0, $subtotalCents - $discountCents) + $vatCents + $deliveryCents;
+        $totalCents = $tax->pricesIncludeTax() ? max(0, $subtotalCents - $discountCents) + $deliveryCents : max(0, $subtotalCents - $discountCents) + $vatCents + $deliveryCents;
 
         $order = DB::transaction(function () use ($tax, $lines, $address, $quote, $subtotalCents, $vatCents, $deliveryCents, $discountCents, $totalCents, $coupon) {
             $order = Order::create([
@@ -362,6 +360,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                 'status' => OrderStatus::PENDING,
                 'subtotal_cents' => $subtotalCents,
                 'vat_cents' => $vatCents,
+                'tax_inclusive' => $tax->pricesIncludeTax(),
                 'delivery_cents' => $deliveryCents,
                 'installation_cents' => 0,
                 'discount_cents' => $discountCents,
@@ -428,6 +427,12 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     $subtotalCents = $this->lines->sum('line_total_cents');
     $vatCents = $tax->taxForCart($this->lines);
     $taxInclusive = $tax->pricesIncludeTax();
+    $vatRates = $this->lines->map(fn($l) => (float) $tax->rateForProduct($l['product']))->filter()->unique();
+    $inclSpan = $taxInclusive ? ' <span class="text-xs opacity-60">(incl.)</span>' : '';
+    $vatRateLabel =
+        $vatRates->count() === 1
+            ? 'VAT ' . rtrim(rtrim(number_format($vatRates->first(), 2), '0'), '.') . '%' . $inclSpan
+            : 'VAT (mixed rates)' . $inclSpan;
     $deliveryCents = $quote->feeCents;
     $discountCents = $this->discountCents;
     $totalCents = $taxInclusive
@@ -607,21 +612,22 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                             <div class="mb-4 flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
                                 <div class="flex items-center gap-2">
                                     <flux:icon.ticket variant="micro" class="size-4 text-emerald-600" />
-                                    <span class="font-mono text-[12px] font-semibold text-emerald-700">{{ $this->appliedCouponCode }}</span>
+                                    <span
+                                        class="font-mono text-[12px] font-semibold text-emerald-700">{{ $this->appliedCouponCode }}</span>
                                 </div>
                                 <button type="button" wire:click="removeCoupon"
                                     class="text-[11px] text-emerald-600 hover:text-red-500">Remove</button>
                             </div>
                         @else
                             <div class="mb-4">
-                                <div class="flex gap-2">
-                                    <flux:input wire:model="couponInput" placeholder="Coupon code"
-                                        class="flex-1 text-[13px]!" wire:keydown.enter.prevent="applyCoupon" />
-                                    <flux:button type="button" variant="customer-outline" size="customer"
-                                        wire:click="applyCoupon" wire:loading.attr="disabled" wire:target="applyCoupon">
+                                <flux:input.group>
+                                    <flux:input wire:model="couponInput" placeholder="Coupon code" class="text-[13px]!"
+                                        wire:keydown.enter.prevent="applyCoupon" />
+                                    <flux:button type="button" variant="primary" wire:click="applyCoupon"
+                                        wire:loading.attr="disabled" wire:target="applyCoupon">
                                         Apply
                                     </flux:button>
-                                </div>
+                                </flux:input.group>
                                 @error('couponInput')
                                     <p class="mt-1 text-[11.5px] text-red-500">{{ $message }}</p>
                                 @enderror
@@ -652,7 +658,7 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                             </div>
                             @if ($tax->enabled() && $vatCents > 0)
                                 <div class="flex items-center justify-between text-sm text-ink-2">
-                                    <span>VAT{{ $taxInclusive ? ' (incl.)' : '' }}</span>
+                                    <span>{!! $vatRateLabel !!}</span>
                                     <span class="font-medium tabular-nums">{!! money($vatCents) !!}</span>
                                 </div>
                             @endif

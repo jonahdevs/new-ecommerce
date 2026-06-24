@@ -325,13 +325,13 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
     #[Computed]
     public function carriers(): Collection
     {
-        return ShippingCarrier::where('is_active', true)->orderBy('sort_order')->get();
+        return ShippingCarrier::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'sort_order']);
     }
 
     #[Computed]
     public function warehouses(): Collection
     {
-        return Warehouse::where('is_active', true)->orderBy('sort_order')->get();
+        return Warehouse::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'sort_order']);
     }
 
     #[Computed]
@@ -461,6 +461,11 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                                             @if ($item->product_model_number)
                                                 <span class="block font-mono text-xs font-normal text-zinc-400">Model: {{ $item->product_model_number }}</span>
                                             @endif
+                                            @if ($order->hasMixedTaxRates())
+                                                <span class="block text-xs text-zinc-400">
+                                                    {{ (float) $item->tax_rate > 0 ? 'VAT '.rtrim(rtrim(number_format((float) $item->tax_rate, 2), '0'), '.').'%' : 'VAT exempt' }}
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 </flux:table.cell>
@@ -481,6 +486,17 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                             <span class="text-zinc-500 dark:text-zinc-400">Subtotal</span>
                             <span class="font-medium tabular-nums dark:text-white">{!! money($order->subtotal_cents) !!}</span>
                         </div>
+                        @if ($order->discount_cents > 0)
+                            <div class="flex items-center justify-between">
+                                <span class="text-zinc-500 dark:text-zinc-400">
+                                    Discount
+                                    @if ($order->coupon_code)
+                                        <span class="ml-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">{{ $order->coupon_code }}</span>
+                                    @endif
+                                </span>
+                                <span class="font-medium tabular-nums text-emerald-600 dark:text-emerald-400">− {!! money($order->discount_cents) !!}</span>
+                            </div>
+                        @endif
                         <div class="flex items-center justify-between">
                             <span class="text-zinc-500 dark:text-zinc-400">Delivery</span>
                             @if ($order->delivery_cents > 0)
@@ -496,7 +512,7 @@ new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Componen
                             </div>
                         @endif
                         <div class="flex items-center justify-between">
-                            <span class="text-zinc-500 dark:text-zinc-400">{{ $order->vatLabel() }}</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">{!! $order->vatLabel() !!}</span>
                             <span class="font-medium tabular-nums dark:text-white">{!! money($order->vat_cents) !!}</span>
                         </div>
                         <div class="flex items-center justify-between border-t border-zinc-200 pt-2 dark:border-zinc-700">

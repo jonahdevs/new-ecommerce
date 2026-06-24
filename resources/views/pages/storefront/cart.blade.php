@@ -86,7 +86,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
         return Product::query()
             ->whereIn('id', $crossSellIds)
             ->where('visibility', 'visible')
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->get();
     }
 }; ?>
@@ -96,6 +96,10 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
     $subtotalCents = $this->lines->sum('line_total_cents');
     $vatCents      = $tax->taxForCart($this->lines);
     $taxInclusive  = $tax->pricesIncludeTax();
+    $vatRates      = $this->lines->map(fn ($l) => (float) $tax->rateForProduct($l['product']))->filter()->unique();
+    $vatRateLabel  = $vatRates->count() === 1
+        ? 'VAT '.rtrim(rtrim(number_format($vatRates->first(), 2), '0'), '.').'%'
+        : 'VAT (mixed rates)';
     $deliveryCents = $subtotalCents > 50000000 ? 0 : 1200000;
     $totalCents    = $taxInclusive
         ? $subtotalCents + $deliveryCents
@@ -261,7 +265,7 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
                             </div>
                             @if ($tax->enabled() && $vatCents > 0)
                                 <div class="flex items-center justify-between text-sm text-ink-2">
-                                    <span>VAT{{ $taxInclusive ? ' (incl.)' : '' }}</span>
+                                    <span>{{ $vatRateLabel }}@if ($taxInclusive) <span class="text-xs opacity-60">(incl.)</span>@endif</span>
                                     <span class="font-medium tabular-nums">{!! money($vatCents) !!}</span>
                                 </div>
                             @endif

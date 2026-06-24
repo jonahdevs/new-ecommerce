@@ -18,16 +18,20 @@ use App\Settings\BrandingSettings;
 use App\Settings\ChatbotSettings;
 use App\Settings\EmailApiSettings;
 use App\Settings\EmailSettings;
+use App\Settings\LocalizationSettings;
 use App\Settings\SecuritySettings;
 use App\Support\ActivitySource;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Cog\Laravel\Ban\Events\ModelWasBanned;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -82,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureDatabase();
         $this->configureSuperAdmin();
         $this->configureRecaptcha();
         $this->configureActivitySource();
@@ -173,6 +178,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->configureSessionLifetime();
+        $this->configureTimezone();
     }
 
     /**
@@ -190,11 +196,57 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
+    /**
+     * Tune per-session InnoDB settings for HTTP requests. Queue workers and
+     * Artisan commands keep the MySQL global default (50 s) since long-running
+     * jobs legitimately wait longer for locks.
+     */
+    protected function configureDatabase(): void
+    {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
+        try {
+            DB::statement('SET SESSION innodb_lock_wait_timeout = 5');
+        } catch (\Throwable) {
+            // DB unavailable during early boot (e.g. pre-migration).
+        }
+
+        // Log any query that takes longer than 500 ms to the dedicated db channel
+        // so slow queries surface without needing MySQL slow-query-log access.
+        DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event): void {
+            Log::channel('db')->warning('Slow query', [
+                'ms' => round($event->time, 2),
+                'sql' => $event->sql,
+                'bindings' => $event->bindings,
+            ]);
+        });
+    }
+
     protected function configureSessionLifetime(): void
     {
         try {
             if (Schema::hasTable('settings')) {
                 config(['session.lifetime' => app(SecuritySettings::class)->session_lifetime]);
+            }
+        } catch (\Throwable) {
+            // Settings unavailable (e.g. mid-migration) — keep the config default.
+        }
+    }
+
+    protected function configureTimezone(): void
+    {
+        try {
+            if (! Schema::hasTable('settings')) {
+                return;
+            }
+
+            $timezone = app(LocalizationSettings::class)->timezone;
+
+            if ($timezone && in_array($timezone, \DateTimeZone::listIdentifiers(), true)) {
+                config(['app.timezone' => $timezone]);
+                date_default_timezone_set($timezone);
             }
         } catch (\Throwable) {
             // Settings unavailable (e.g. mid-migration) — keep the config default.
