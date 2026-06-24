@@ -106,6 +106,14 @@ return new class extends Migration
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('status');
+            $table->index('visibility');
+            $table->index('stock_status');
+            $table->index('sort_order');
+            $table->index('published_at');
+            $table->index('deleted_at');
+            $table->index(['status', 'visibility'], 'products_status_visibility_index');
         });
 
         // ----------------------------------------------------------------
@@ -201,6 +209,8 @@ return new class extends Migration
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('deleted_at');
         });
 
         // ----------------------------------------------------------------
@@ -211,6 +221,7 @@ return new class extends Migration
             $table->foreignId('product_variant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('attribute_value_id')->constrained()->cascadeOnDelete();
             $table->primary(['product_variant_id', 'attribute_value_id']);
+            $table->index('attribute_value_id');
         });
 
         // ----------------------------------------------------------------
@@ -254,8 +265,8 @@ return new class extends Migration
         Schema::create('order_downloads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('downloadable_file_id')->constrained()->cascadeOnDelete();
-            $table->unsignedBigInteger('order_id');  // FK to orders (add ->constrained() once orders table exists)
-            $table->unsignedBigInteger('user_id');   // FK to users
+            $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('user_id');
 
             $table->string('token', 64)->unique();   // signed download URL token
             $table->unsignedInteger('downloads_remaining')->nullable();

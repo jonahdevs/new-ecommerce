@@ -8,6 +8,8 @@ use App\Models\Payment;
 use App\Notifications\Orders\RefundProcessed;
 use App\Services\Paystack\PaystackPaymentService;
 use App\Services\Stripe\StripePaymentService;
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -26,61 +28,80 @@ class RefundService
 {
     /**
      * @throws InvalidArgumentException when the amount is invalid for this payment
+     * @throws LockTimeoutException when a concurrent refund for the same payment is in progress
      */
     public function refund(Payment $payment, int $amountCents, ?string $reason = null, ?int $byUserId = null): Payment
     {
-        if ($payment->status !== PaymentStatus::SUCCESS) {
-            throw new InvalidArgumentException('Only a settled payment can be refunded.');
+        // One refund at a time per payment — prevents two concurrent admin clicks
+        // from both reading the same remaining balance and double-charging the gateway.
+        $lock = Cache::lock("refund:{$payment->id}", 30);
+
+        try {
+            $lock->block(5);
+        } catch (LockTimeoutException) {
+            throw new InvalidArgumentException('A refund for this payment is already in progress. Please try again shortly.');
         }
 
-        $alreadyRefunded = (int) $payment->refund_cents;
-        $remaining = (int) $payment->amount_cents - $alreadyRefunded;
+        try {
+            // Re-read after acquiring the lock in case a concurrent request already
+            // partially refunded while we were waiting.
+            $payment->refresh();
 
-        if ($amountCents <= 0 || $amountCents > $remaining) {
-            throw new InvalidArgumentException("Refund amount must be between 1 and {$remaining} cents.");
-        }
-
-        // Reverse at the gateway first — a rejected gateway refund must not leave
-        // a recorded refund that never actually happened. Direct M-Pesa reversals
-        // are processed manually, so there is no gateway call for them.
-        if ($payment->provider === 'paystack') {
-            app(PaystackPaymentService::class)->refund($payment, $amountCents);
-        } elseif ($payment->provider === 'stripe') {
-            app(StripePaymentService::class)->refund($payment, $amountCents);
-        }
-
-        return DB::transaction(function () use ($payment, $amountCents, $alreadyRefunded, $reason, $byUserId) {
-            $totalRefunded = $alreadyRefunded + $amountCents;
-            $fullyRefunded = $totalRefunded >= (int) $payment->amount_cents;
-
-            $payment->update([
-                'refund_cents' => $totalRefunded,
-                'refunded_at' => now(),
-                'status' => $fullyRefunded ? PaymentStatus::REFUNDED : PaymentStatus::SUCCESS,
-            ]);
-
-            $order = $payment->order;
-
-            if ($order && $fullyRefunded && $order->status !== OrderStatus::REFUNDED) {
-                $from = $order->status;
-                $order->update(['status' => OrderStatus::REFUNDED]);
-                $order->recordStatusChange($from, OrderStatus::REFUNDED, $reason ? "Refunded: {$reason}" : 'Refunded.', $byUserId);
+            if ($payment->status !== PaymentStatus::SUCCESS) {
+                throw new InvalidArgumentException('Only a settled payment can be refunded.');
             }
 
-            if ($order) {
-                $order->user?->notify(new RefundProcessed($order, $amountCents, $reason));
+            $alreadyRefunded = (int) $payment->refund_cents;
+            $remaining = (int) $payment->amount_cents - $alreadyRefunded;
 
-                if ($payment->provider === 'mpesa') {
-                    Log::warning('M-Pesa refund recorded — reverse the transaction manually via Safaricom.', [
-                        'payment_id' => $payment->id,
-                        'order_id' => $order->id,
-                        'amount_cents' => $amountCents,
-                        'mpesa_receipt' => $payment->mpesa_receipt,
-                    ]);
+            if ($amountCents <= 0 || $amountCents > $remaining) {
+                throw new InvalidArgumentException("Refund amount must be between 1 and {$remaining} cents.");
+            }
+
+            // Reverse at the gateway first — a rejected gateway refund must not leave
+            // a recorded refund that never actually happened. The lock is held during
+            // the network call (not a DB transaction) to keep connections free.
+            if ($payment->provider === 'paystack') {
+                app(PaystackPaymentService::class)->refund($payment, $amountCents);
+            } elseif ($payment->provider === 'stripe') {
+                app(StripePaymentService::class)->refund($payment, $amountCents);
+            }
+
+            return DB::transaction(function () use ($payment, $amountCents, $alreadyRefunded, $reason, $byUserId) {
+                $totalRefunded = $alreadyRefunded + $amountCents;
+                $fullyRefunded = $totalRefunded >= (int) $payment->amount_cents;
+
+                $payment->update([
+                    'refund_cents' => $totalRefunded,
+                    'refunded_at' => now(),
+                    'status' => $fullyRefunded ? PaymentStatus::REFUNDED : PaymentStatus::SUCCESS,
+                ]);
+
+                $order = $payment->order;
+
+                if ($order && $fullyRefunded && $order->status !== OrderStatus::REFUNDED) {
+                    $from = $order->status;
+                    $order->update(['status' => OrderStatus::REFUNDED]);
+                    $order->recordStatusChange($from, OrderStatus::REFUNDED, $reason ? "Refunded: {$reason}" : 'Refunded.', $byUserId);
                 }
-            }
 
-            return $payment->fresh();
-        });
+                if ($order) {
+                    $order->user?->notify(new RefundProcessed($order, $amountCents, $reason));
+
+                    if ($payment->provider === 'mpesa') {
+                        Log::warning('M-Pesa refund recorded — reverse the transaction manually via Safaricom.', [
+                            'payment_id' => $payment->id,
+                            'order_id' => $order->id,
+                            'amount_cents' => $amountCents,
+                            'mpesa_receipt' => $payment->mpesa_receipt,
+                        ]);
+                    }
+                }
+
+                return $payment->fresh();
+            }, 3);
+        } finally {
+            $lock->release();
+        }
     }
 }

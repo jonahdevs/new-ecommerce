@@ -185,8 +185,16 @@ new #[Layout('layouts::app')] #[Title('Product analytics — Admin')] class exte
     {
         $approved = $this->product->reviews()->where('status', 'approved');
 
-        $total = (clone $approved)->count();
-        $dist = (clone $approved)->selectRaw('rating, COUNT(*) as c')->groupBy('rating')->pluck('c', 'rating');
+        // Merge count + avg into one query; distribution as a second; pending as a third.
+        $agg = (clone $approved)
+            ->selectRaw('COUNT(*) as total, COALESCE(AVG(rating), 0) as avg_rating')
+            ->first();
+
+        $total = (int) ($agg->total ?? 0);
+        $dist = (clone $approved)
+            ->selectRaw('rating, COUNT(*) as c')
+            ->groupBy('rating')
+            ->pluck('c', 'rating');
 
         $distribution = [];
         for ($star = 5; $star >= 1; $star--) {
@@ -194,7 +202,7 @@ new #[Layout('layouts::app')] #[Title('Product analytics — Admin')] class exte
         }
 
         return [
-            'average' => $total > 0 ? round((float) (clone $approved)->avg('rating'), 1) : null,
+            'average' => $total > 0 ? round((float) $agg->avg_rating, 1) : null,
             'total' => $total,
             'pending' => $this->product->reviews()->where('status', 'pending')->count(),
             'distribution' => $distribution,
@@ -221,16 +229,18 @@ new #[Layout('layouts::app')] #[Title('Product analytics — Admin')] class exte
         $dailyRate = $unitsInPeriod / $lengthDays;
         $stock = $this->product->stock_quantity;
 
+        $lifetimeUnits = (int) OrderItem::query()
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.product_id', $this->product->id)
+            ->whereIn('orders.status', self::PAID_STATUSES)
+            ->sum('order_items.quantity');
+
         return [
             'stock_quantity' => $stock,
             'low_stock_threshold' => $this->product->low_stock_threshold,
             'daily_rate' => round($dailyRate, 1),
             'days_cover' => ($stock !== null && $dailyRate > 0) ? (int) floor($stock / $dailyRate) : null,
-            'lifetime_units' => (int) OrderItem::query()
-                ->join('orders', 'order_items.order_id', '=', 'orders.id')
-                ->where('order_items.product_id', $this->product->id)
-                ->whereIn('orders.status', self::PAID_STATUSES)
-                ->sum('order_items.quantity'),
+            'lifetime_units' => $lifetimeUnits,
         ];
     }
 
@@ -238,7 +248,7 @@ new #[Layout('layouts::app')] #[Title('Product analytics — Admin')] class exte
     public function orderItems()
     {
         return OrderItem::query()
-            ->with('order.user')
+            ->with(['order:id,order_number,user_id,status,created_at', 'order.user:id,name'])
             ->where('product_id', $this->product->id)
             ->whereHas('order', fn ($q) => $q->whereIn('status', self::PAID_STATUSES))
             ->latest()

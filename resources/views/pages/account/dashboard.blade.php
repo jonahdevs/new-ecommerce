@@ -2,6 +2,7 @@
 
 use App\Enums\OrderStatus;
 use App\Enums\QuoteStatus;
+use App\Models\OrderItem;
 use App\Support\StorefrontSession;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Livewire\Attributes\Computed;
@@ -43,16 +44,15 @@ new #[Layout('layouts::account')] #[Title('My Account')] class extends Component
     {
         $user = auth()->user();
 
-        $purchasedIds = $user->orders()
-            ->where('status', OrderStatus::COMPLETED->value)
-            ->with('items:id,order_id,product_id')
-            ->get()
-            ->flatMap(fn ($order) => $order->items->pluck('product_id'))
-            ->unique();
-
         $reviewedIds = $user->reviews()->pluck('product_id');
 
-        return $purchasedIds->diff($reviewedIds)->count();
+        return OrderItem::select('order_items.product_id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.user_id', $user->id)
+            ->where('orders.status', OrderStatus::COMPLETED->value)
+            ->whereNotIn('order_items.product_id', $reviewedIds)
+            ->distinct()
+            ->count();
     }
 
     #[Computed]

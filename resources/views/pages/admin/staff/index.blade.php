@@ -35,7 +35,8 @@ new #[Layout('layouts::app')] #[Title('Staff — Admin')] class extends Componen
     public function staffMembers()
     {
         return User::has('roles')
-            ->with('roles')
+            ->with('roles:id,name')
+            ->select(['id', 'name', 'email', 'phone', 'created_at', 'banned_at'])
             ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('email', 'like', '%' . $this->search . '%');

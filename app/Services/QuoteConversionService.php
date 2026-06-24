@@ -110,6 +110,6 @@ class QuoteConversionService
             $quote->update(['order_id' => $order->id]);
 
             return $order;
-        });
+        }, 3);
     }
 }

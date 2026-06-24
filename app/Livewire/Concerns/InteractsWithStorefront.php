@@ -67,10 +67,10 @@ trait InteractsWithStorefront
      */
     protected function openAccessoryPrompt(string $parentSlug): bool
     {
-        $parent = Product::query()
-            ->where('slug', $parentSlug)
-            ->where('visibility', 'visible')
-            ->first();
+        // Reuse already-loaded product when available (e.g. on the product page).
+        $parent = (isset($this->product) && $this->product instanceof Product && $this->product->slug === $parentSlug)
+            ? $this->product
+            : Product::query()->where('slug', $parentSlug)->where('visibility', 'visible')->first();
 
         if (! $parent) {
             return false;

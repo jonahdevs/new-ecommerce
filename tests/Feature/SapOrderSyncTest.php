@@ -49,9 +49,9 @@ it('stores the CU number and marks the order completed when the webhook fires', 
     $handler->handle($request);
 
     $order->refresh();
-    expect($order->kra_cu_number)->toBe('KRA-CU-12345')
+    expect($order->cu_number)->toBe('KRA-CU-12345')
         ->and($order->sap_sync_status)->toBe(SapSyncStatus::COMPLETED)
-        ->and($order->kra_validated_at)->not->toBeNull();
+        ->and($order->sap_synced_at)->not->toBeNull();
 });
 
 it('persists a sap_sync_log entry on CU webhook receipt', function () {
@@ -83,7 +83,7 @@ it('ignores a duplicate CU number webhook without overwriting', function () {
     $order = Order::factory()->create([
         'status' => OrderStatus::PROCESSING,
         'sap_sync_status' => SapSyncStatus::COMPLETED,
-        'kra_cu_number' => 'KRA-EXISTING',
+        'cu_number' => 'KRA-EXISTING',
     ]);
 
     $handler = app(SapWebhookHandler::class);
@@ -98,7 +98,7 @@ it('ignores a duplicate CU number webhook without overwriting', function () {
 
     $handler->handle($request);
 
-    expect($order->fresh()->kra_cu_number)->toBe('KRA-EXISTING');
+    expect($order->fresh()->cu_number)->toBe('KRA-EXISTING');
     expect(SapSyncLog::where('order_id', $order->id)->count())->toBe(0);
 });
 
@@ -119,7 +119,7 @@ it('handles the legacy flat payload shape (cu_number at root)', function () {
 
     $handler->handle($request);
 
-    expect($order->fresh()->kra_cu_number)->toBe('KRA-LEGACY-001');
+    expect($order->fresh()->cu_number)->toBe('KRA-LEGACY-001');
 });
 
 // ==================================================

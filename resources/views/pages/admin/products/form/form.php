@@ -1344,7 +1344,7 @@ new #[Layout('layouts::app')] class extends Component
     public function categories(): Collection
     {
         return Category::whereNull('parent_id')
-            ->with('children')
+            ->with(['children' => fn ($q) => $q->select(['id', 'name', 'parent_id'])])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get(['id', 'name', 'parent_id']);

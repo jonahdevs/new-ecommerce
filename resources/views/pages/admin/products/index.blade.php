@@ -126,7 +126,7 @@ new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Compo
     public function products()
     {
         return Product::query()
-            ->with(['brand', 'primaryCategory', 'media'])
+            ->with(['brand:id,name', 'primaryCategory:id,name', 'media'])
             ->when(
                 $this->search,
                 fn ($q) => $q->where(function ($q) {

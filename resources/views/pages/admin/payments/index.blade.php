@@ -75,7 +75,7 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
     public function payments()
     {
         return Payment::query()
-            ->with('order.user')
+            ->with(['order:id,order_number,user_id', 'order.user:id,name,email'])
             ->when($this->search, function ($query) {
                 $term = '%'.$this->search.'%';
                 $query->where(function ($q) use ($term) {
@@ -102,11 +102,21 @@ new #[Layout('layouts::app')] #[Title('Payments — Admin')] class extends Compo
 
         $base = fn () => Payment::query()->when($hasRange, fn ($q) => $q->whereBetween('paid_at', [$from, $to]));
 
+        // Single query for aggregates that share the same scope.
+        $agg = (clone $base())
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN status = ? THEN amount_cents ELSE 0 END), 0) as collected,
+                COALESCE(SUM(COALESCE(refund_cents, 0)), 0) as refunded,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed
+            ', [PaymentStatus::SUCCESS->value, PaymentStatus::PENDING->value, PaymentStatus::FAILED->value])
+            ->first();
+
         return [
-            'collected' => (int) $base()->where('status', PaymentStatus::SUCCESS)->sum('amount_cents'),
-            'pending'   => $base()->where('status', PaymentStatus::PENDING)->count(),
-            'failed'    => $base()->where('status', PaymentStatus::FAILED)->count(),
-            'refunded'  => (int) $base()->sum('refund_cents'),
+            'collected' => (int) ($agg->collected ?? 0),
+            'pending'   => (int) ($agg->pending ?? 0),
+            'failed'    => (int) ($agg->failed ?? 0),
+            'refunded'  => (int) ($agg->refunded ?? 0),
         ];
     }
 

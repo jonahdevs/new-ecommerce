@@ -126,7 +126,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         $keys = collect($this->items)->keys()->map(fn($key) => StorefrontSession::splitKey($key));
 
         $products = Product::query()
-            ->with(['brand', 'media'])
+            ->with(['brand:id,name', 'media'])
             ->whereIn('slug', $keys->pluck('slug')->unique()->all())
             ->published()
             ->visibleInCatalog()
@@ -175,7 +175,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     public function searchResults(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'media'])
+            ->with(['brand:id,name', 'media'])
             ->published()
             ->visibleInCatalog()
             ->whereNotIn('slug', array_keys($this->items));
@@ -639,10 +639,17 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                             <div class="divide-y divide-zinc-100">
                                 @foreach ($this->lines as $line)
                                     <div wire:key="item-{{ $line['key'] }}" class="flex gap-3 py-3.5">
-                                        <div class="size-12 shrink-0">
+                                        <div class="relative size-12 shrink-0 overflow-hidden bg-surface-sunken">
                                             @if ($line['product']->cover_url)
+                                                @if ($placeholder = $line['product']->cover_placeholder)
+                                                    <img src="{{ $placeholder }}" alt="" aria-hidden="true"
+                                                        class="absolute inset-0 size-full scale-110 object-contain blur-xl" />
+                                                @endif
                                                 <img src="{{ $line['product']->cover_url }}" alt=""
-                                                    class="size-full object-contain" loading="lazy" />
+                                                    loading="lazy"
+                                                    x-data="{ loaded: false }" x-init="loaded = $el.complete" x-on:load="loaded = true"
+                                                    x-bind:class="loaded ? 'opacity-100' : 'opacity-0'"
+                                                    class="relative size-full object-contain transition duration-500" />
                                             @endif
                                         </div>
                                         <div class="min-w-0 flex-1">
@@ -733,10 +740,17 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
                         @foreach ($this->searchResults as $product)
                             <div wire:key="res-{{ $product->slug }}"
                                 class="group flex flex-col overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:shadow-md">
-                                <div class="relative aspect-square overflow-hidden">
+                                <div class="relative aspect-square overflow-hidden bg-surface-sunken">
                                     @if ($product->cover_url)
+                                        @if ($placeholder = $product->cover_placeholder)
+                                            <img src="{{ $placeholder }}" alt="" aria-hidden="true"
+                                                class="absolute inset-0 size-full scale-110 object-contain blur-xl" />
+                                        @endif
                                         <img src="{{ $product->cover_url }}" alt="{{ $product->name }}"
-                                            class="size-full object-contain" loading="lazy" />
+                                            loading="lazy"
+                                            x-data="{ loaded: false }" x-init="loaded = $el.complete" x-on:load="loaded = true"
+                                            x-bind:class="loaded ? 'opacity-100' : 'opacity-0'"
+                                            class="relative size-full object-contain transition duration-500" />
                                     @else
                                         <div class="flex size-full items-center justify-center text-ink-4">
                                             <flux:icon.photo class="size-8" />

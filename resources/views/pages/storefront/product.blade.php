@@ -323,9 +323,12 @@ new #[Layout('layouts::storefront')] class extends Component
             ]);
         }
 
-        $reviewCount = $product->reviews()->where('status', ReviewStatus::APPROVED)->count();
+        $reviewStats = $product->reviews()->where('status', ReviewStatus::APPROVED)
+            ->selectRaw('COUNT(*) as count, AVG(rating) as avg')
+            ->first();
+        $reviewCount = (int) ($reviewStats->count ?? 0);
         if ($reviewCount > 0) {
-            $avgRating = $product->reviews()->where('status', ReviewStatus::APPROVED)->avg('rating');
+            $avgRating = (float) $reviewStats->avg;
             JsonLdMulti::addValue('aggregateRating', [
                 '@type' => 'AggregateRating',
                 'ratingValue' => round((float) $avgRating, 1),
@@ -444,7 +447,7 @@ new #[Layout('layouts::storefront')] class extends Component
         }
 
         return Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->whereIn('id', $this->relatedIds)
             ->get()
             ->sortBy(fn (Product $product) => array_search($product->id, $this->relatedIds, true))
@@ -459,7 +462,7 @@ new #[Layout('layouts::storefront')] class extends Component
         }
 
         return Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->whereIn('id', $this->brandProductIds)
             ->get()
             ->sortBy(fn (Product $p) => array_search($p->id, $this->brandProductIds, true))
@@ -474,7 +477,7 @@ new #[Layout('layouts::storefront')] class extends Component
         }
 
         return Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->whereIn('id', $this->alsoViewedIds)
             ->where('visibility', 'visible')
             ->get()
@@ -490,7 +493,7 @@ new #[Layout('layouts::storefront')] class extends Component
         }
 
         return Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->whereIn('id', $this->recentlyViewedIds)
             ->get()
             ->sortBy(fn (Product $p) => array_search($p->id, $this->recentlyViewedIds, true))
@@ -525,28 +528,22 @@ new #[Layout('layouts::storefront')] class extends Component
     #[Computed]
     public function filteredAccessories(): Collection
     {
-        return $this->product->accessories()
-            ->visibleInCatalog()->published()
-            ->with('media')
-            ->orderBy('sort_order')
-            ->get();
+        // Already constrained and eager-loaded in mount()
+        return $this->product->accessories;
     }
 
     #[Computed]
     public function filteredSpareParts(): Collection
     {
-        return $this->product->spareParts()
-            ->visibleInCatalog()->published()
-            ->with('media')
-            ->orderBy('sort_order')
-            ->get();
+        // Already constrained and eager-loaded in mount()
+        return $this->product->spareParts;
     }
 
     #[Computed]
     public function stockLocation(): ?string
     {
-        return Showroom::where('is_hq', true)->value('city')
-            ?? Showroom::orderBy('sort_order')->value('city');
+        return cache()->rememberForever('stock_location_city', fn () => Showroom::where('is_hq', true)->value('city')
+            ?? Showroom::orderBy('sort_order')->value('city'));
     }
 
     /** Active delivery zones, powering the real delivery coverage badge. */
@@ -592,22 +589,25 @@ new #[Layout('layouts::storefront')] class extends Component
             return collect();
         }
 
-        return $this->product->productAttributes
+        $pas = $this->product->productAttributes
             ->filter(fn ($pa) => $pa->is_variation_attribute && $pa->attribute)
-            ->sortBy('sort_order')
-            ->map(function ($pa) {
-                $slugs = is_array($pa->values) ? $pa->values : [];
+            ->sortBy('sort_order');
 
-                return [
-                    'slug' => $pa->attribute->slug,
-                    'name' => $pa->attribute->name,
-                    'values' => AttributeValue::where('attribute_id', $pa->attribute_id)
-                        ->whereIn('slug', $slugs)
-                        ->orderBy('sort_order')
-                        ->get(),
-                ];
-            })
-            ->values();
+        // Single query for all attribute values across all variation attributes.
+        $allAttributeIds = $pas->pluck('attribute_id')->unique()->all();
+        $allSlugs = $pas->flatMap(fn ($pa) => is_array($pa->values) ? $pa->values : [])->unique()->all();
+
+        $valuesByAttribute = AttributeValue::whereIn('attribute_id', $allAttributeIds)
+            ->whereIn('slug', $allSlugs)
+            ->orderBy('sort_order')
+            ->get()
+            ->groupBy('attribute_id');
+
+        return $pas->map(fn ($pa) => [
+            'slug' => $pa->attribute->slug,
+            'name' => $pa->attribute->name,
+            'values' => $valuesByAttribute->get($pa->attribute_id, collect()),
+        ])->values();
     }
 
     /** The variant matching the full current selection, if any. */

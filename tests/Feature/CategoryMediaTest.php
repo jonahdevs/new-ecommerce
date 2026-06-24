@@ -59,7 +59,7 @@ it('replaces the banner when a new one is uploaded on edit (single file collecti
     $category->refresh();
 
     expect($category->getMedia('banner'))->toHaveCount(1)
-        ->and($category->getFirstMedia('banner')->file_name)->toBe('new.jpg');
+        ->and($category->getFirstMedia('banner')->file_name)->toBe('sinks-banner.jpg');
 });
 
 it('exposes a square thumb url once a main image exists, and falls back otherwise', function () {

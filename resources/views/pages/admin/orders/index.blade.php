@@ -96,8 +96,6 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
         $to       = $hasRange ? \Illuminate\Support\Carbon::parse($this->dateTo)->endOfDay() : null;
 
         $paymentQ = Payment::where('status', PaymentStatus::SUCCESS);
-        $orderQ   = fn () => Order::query()->when($hasRange, fn ($q) => $q->whereBetween('created_at', [$from, $to]));
-
         if ($hasRange) {
             $paymentQ->whereBetween('paid_at', [$from, $to]);
         }
@@ -105,12 +103,20 @@ new #[Layout('layouts::app')] #[Title('Orders — Admin')] class extends Compone
         $paidCount = (clone $paymentQ)->count();
         $revenue   = (int) (clone $paymentQ)->sum('amount_cents');
 
+        // One GROUP BY query replaces three separate status counts.
+        $statusCounts = \Illuminate\Support\Facades\DB::table('orders')
+            ->when($hasRange, fn ($q) => $q->whereBetween('created_at', [$from, $to]))
+            ->whereIn('status', [OrderStatus::PENDING->value, OrderStatus::PROCESSING->value, OrderStatus::OUT_FOR_DELIVERY->value])
+            ->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status');
+
         return [
             'revenue'          => $revenue,
             'aov'              => $paidCount > 0 ? (int) round($revenue / $paidCount) : 0,
-            'pending'          => $orderQ()->where('status', OrderStatus::PENDING)->count(),
-            'processing'       => $orderQ()->where('status', OrderStatus::PROCESSING)->count(),
-            'out_for_delivery' => $orderQ()->where('status', OrderStatus::OUT_FOR_DELIVERY)->count(),
+            'pending'          => (int) ($statusCounts[OrderStatus::PENDING->value] ?? 0),
+            'processing'       => (int) ($statusCounts[OrderStatus::PROCESSING->value] ?? 0),
+            'out_for_delivery' => (int) ($statusCounts[OrderStatus::OUT_FOR_DELIVERY->value] ?? 0),
         ];
     }
 

@@ -23,7 +23,12 @@ new #[Layout('layouts::account')] #[Title('Pending Reviews')] class extends Comp
 
         $rows = $user->orders()
             ->where('status', OrderStatus::COMPLETED->value)
-            ->with(['items.product.media'])
+            ->select(['id', 'user_id', 'status', 'delivered_at', 'updated_at'])
+            ->with([
+                'items' => fn ($q) => $q->select(['id', 'order_id', 'product_id']),
+                'items.product' => fn ($q) => $q->select(['id', 'name', 'slug']),
+                'items.product.media',
+            ])
             ->get()
             ->flatMap(fn ($order) => $order->items->map(fn ($item) => [
                 'product'      => $item->product,

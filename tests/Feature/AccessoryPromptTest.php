@@ -26,7 +26,7 @@ it('badges the required quantity on the PDP accessory carousel', function () {
 
     Livewire::test('pages::storefront.product', ['product' => $oven])
         ->assertSee('Baking Tray GN 1/1')
-        ->assertSee('Needs 12');
+        ->assertSee('Required ×12');
 });
 
 it('does not badge optional accessories on the carousel', function () {

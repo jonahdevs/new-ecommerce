@@ -55,6 +55,10 @@ return new class extends Migration
             $table->longText('payload')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
+
+            $table->index('status');
+            $table->index('paid_at');
+            $table->index(['order_id', 'status'], 'payments_order_status_index');
         });
     }
 

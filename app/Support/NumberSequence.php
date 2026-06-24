@@ -38,6 +38,6 @@ class NumberSequence
                 ->update(['value' => $next]);
 
             return $next;
-        });
+        }, 3);
     }
 }

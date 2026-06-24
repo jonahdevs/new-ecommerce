@@ -68,14 +68,19 @@ new #[Layout('layouts::app')] #[Title('Cart recovery — Admin')] class extends 
     #[Computed]
     public function stats(): array
     {
-        $openCarts = (clone $this->abandonedQuery())
-            ->with(['items.product', 'items.variant'])
-            ->get();
-
-        $open = $openCarts->count();
-        $recoverable = $openCarts->sum(fn (Cart $cart) => $cart->subtotalCents());
+        $open = (clone $this->abandonedQuery())->count();
         $inFlight = (int) (clone $this->abandonedQuery())->where('reminders_sent', '>', 0)->count();
 
+        // Load only price columns needed for the subtotal calculation.
+        $openCarts = (clone $this->abandonedQuery())
+            ->with([
+                'items:id,cart_id,product_id,variant_id,quantity',
+                'items.product:id,price,sale_price',
+                'items.variant:id,price,compare_at_price',
+            ])
+            ->get(['id']);
+
+        $recoverable = $openCarts->sum(fn (Cart $cart) => $cart->subtotalCents());
         $recovered = Cart::whereNotNull('recovered_at')->count();
 
         // Recovery rate: recovered carts as a share of every cart that has ever

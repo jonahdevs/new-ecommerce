@@ -100,7 +100,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     {
         // Curated: products staff have tagged "Featured", ordered by sort_order.
         $featured = Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->visibleInCatalog()
             ->published()
             ->where('stock_status', StockStatus::IN_STOCK)
@@ -117,7 +117,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
 
         // Fallback: nothing curated yet — show the locked random pool from mount().
         return Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->whereIn('id', $this->featuredProductIds)
             ->get()
             ->sortBy(fn($p) => array_search($p->id, $this->featuredProductIds))
@@ -128,7 +128,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     public function newArrivals(): Collection
     {
         $base = Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->visibleInCatalog()
             ->published()
             ->where('stock_status', StockStatus::IN_STOCK)

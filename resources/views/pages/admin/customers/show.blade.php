@@ -35,7 +35,11 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
     #[Computed]
     public function orders()
     {
-        return $this->customer->orders()->withCount('items')->latest()->paginate($this->perPage);
+        return $this->customer->orders()
+            ->withCount('items')
+            ->select(['id', 'user_id', 'order_number', 'status', 'total_cents', 'created_at'])
+            ->latest()
+            ->paginate($this->perPage);
     }
 
     #[Computed]
@@ -221,7 +225,7 @@ new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Compo
                 <flux:card class="flex items-center gap-4">
                     <flux:icon.shopping-bag class="size-8 shrink-0 text-zinc-400" />
                     <div>
-                        <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->orders->count() }}
+                        <div class="text-2xl font-semibold tabular-nums dark:text-white">{{ $this->orders->total() }}
                         </div>
                         <flux:text size="sm">Total orders</flux:text>
                     </div>

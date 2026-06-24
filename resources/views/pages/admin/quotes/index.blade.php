@@ -107,13 +107,18 @@ new #[Layout('layouts::app')] #[Title('Quotes — Admin')] class extends Compone
         $from     = $hasRange ? \Illuminate\Support\Carbon::parse($this->dateFrom)->startOfDay() : null;
         $to       = $hasRange ? \Illuminate\Support\Carbon::parse($this->dateTo)->endOfDay() : null;
 
-        $base = fn () => Quote::query()->when($hasRange, fn ($q) => $q->whereBetween('created_at', [$from, $to]));
+        $counts = \Illuminate\Support\Facades\DB::table('quotes')
+            ->when($hasRange, fn ($q) => $q->whereBetween('created_at', [$from, $to]))
+            ->whereIn('status', [QuoteStatus::SENT->value, QuoteStatus::AWAITING_APPROVAL->value, QuoteStatus::APPROVED->value, QuoteStatus::DECLINED->value])
+            ->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status');
 
         return [
-            'sent'     => $base()->where('status', QuoteStatus::SENT)->count(),
-            'awaiting' => $base()->where('status', QuoteStatus::AWAITING_APPROVAL)->count(),
-            'approved' => $base()->where('status', QuoteStatus::APPROVED)->count(),
-            'declined' => $base()->where('status', QuoteStatus::DECLINED)->count(),
+            'sent'     => (int) ($counts[QuoteStatus::SENT->value] ?? 0),
+            'awaiting' => (int) ($counts[QuoteStatus::AWAITING_APPROVAL->value] ?? 0),
+            'approved' => (int) ($counts[QuoteStatus::APPROVED->value] ?? 0),
+            'declined' => (int) ($counts[QuoteStatus::DECLINED->value] ?? 0),
         ];
     }
 

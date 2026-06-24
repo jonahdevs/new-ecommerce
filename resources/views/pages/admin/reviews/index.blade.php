@@ -45,7 +45,7 @@ new #[Layout('layouts::app')] #[Title('Reviews — Admin')] class extends Compon
     public function reviews()
     {
         return Review::query()
-            ->with(['product', 'user'])
+            ->with(['product:id,name,slug', 'user:id,name,email'])
             ->when($this->search, function ($query) {
                 $term = '%'.$this->search.'%';
                 $query->where(function ($q) use ($term) {

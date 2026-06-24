@@ -6,10 +6,12 @@ use App\Http\Middleware\EnsureIsCustomer;
 use App\Http\Middleware\EnsureIsStaffMember;
 use App\Http\Middleware\EnsureStoreNotInMaintenance;
 use App\Http\Middleware\ForbidBannedUser;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -48,5 +50,19 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Log InnoDB lock wait timeouts (1205) and deadlocks (1213) that survive
+        // all DB::transaction() retries to the dedicated db channel so they appear
+        // in storage/logs/db-*.log alongside slow query entries.
+        $exceptions->report(function (QueryException $e): void {
+            $code = (int) $e->getCode();
+
+            if (in_array($code, [1205, 1213], true)) {
+                Log::channel('db')->error($code === 1205 ? 'Lock wait timeout' : 'Deadlock', [
+                    'code' => $code,
+                    'sql' => $e->getSql(),
+                    'url' => request()?->fullUrl(),
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        });
     })->create();

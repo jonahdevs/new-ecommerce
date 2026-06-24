@@ -487,7 +487,8 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                 <flux:heading size="sm" class="uppercase tracking-wide">Mail Drivers</flux:heading>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
+            {{-- x-data tracks the active driver locally so switches flip instantly without waiting for the server. --}}
+            <div x-data="{ active: @js($mail_driver) }" class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
                 @foreach ($mailDrivers as $driver)
                     <div class="flex flex-col rounded-lg border border-zinc-200 dark:border-zinc-700">
                         <div class="p-5">
@@ -496,13 +497,12 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                                 <div class="flex items-center gap-2.5">
                                     <flux:icon :name="$driver['icon']" class="size-5 text-zinc-500 dark:text-zinc-400" />
                                     <span class="text-sm font-semibold dark:text-white">{{ $driver['name'] }}</span>
-                                    @if ($driver['active'])
-                                        <flux:badge color="blue" size="sm">Active</flux:badge>
-                                    @endif
+                                    <flux:badge color="blue" size="sm" x-show="active === '{{ $driver['key'] }}'">Active</flux:badge>
                                 </div>
                                 <flux:switch
-                                    :checked="$driver['active']"
-                                    wire:click="setMailDriver('{{ $driver['key'] }}')" />
+                                    x-bind:checked="active === '{{ $driver['key'] }}'"
+                                    x-bind:disabled="active === '{{ $driver['key'] }}'"
+                                    @click="if (active !== '{{ $driver['key'] }}') { active = '{{ $driver['key'] }}'; $wire.setMailDriver('{{ $driver['key'] }}') }" />
                             </div>
 
                             {{-- Description --}}

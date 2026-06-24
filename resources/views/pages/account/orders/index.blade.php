@@ -24,7 +24,8 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
     public function orders()
     {
         return auth()->user()->orders()
-            ->with('items')
+            ->withCount('items')
+            ->select(['id', 'user_id', 'order_number', 'status', 'total_cents', 'created_at'])
             ->when($this->status === 'active', fn ($q) => $q->whereIn('status', ['pending', 'processing', 'out_for_delivery', 'completed']))
             ->when($this->status === 'cancelled', fn ($q) => $q->where('status', 'cancelled'))
             ->latest()
@@ -93,7 +94,7 @@ new #[Layout('layouts::account')] #[Title('Orders')] class extends Component
                             <flux:table.cell>
                                 <flux:text class="font-semibold text-ink">{{ $order->order_number }}</flux:text>
                                 <flux:text size="sm" class="mt-0.5 text-ink-4">
-                                    {{ $order->items->count() }} item{{ $order->items->count() === 1 ? '' : 's' }}
+                                    {{ $order->items_count }} item{{ $order->items_count === 1 ? '' : 's' }}
                                 </flux:text>
                             </flux:table.cell>
                             <flux:table.cell class="hidden sm:table-cell">

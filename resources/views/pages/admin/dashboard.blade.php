@@ -334,23 +334,29 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
 
         Order::whereIn('status', self::PAID_STATUSES)
             ->whereBetween('created_at', [$from, $to])
-            ->get(['total_cents', 'created_at'])
-            ->each(function ($o) use (&$rev): void {
-                $rev[(int) $o->created_at->format('G')] += (int) $o->total_cents;
+            ->selectRaw('HOUR(created_at) as h, COALESCE(SUM(total_cents), 0) as rev')
+            ->groupBy('h')
+            ->get()
+            ->each(function ($row) use (&$rev): void {
+                $rev[(int) $row->h] = (int) $row->rev;
             });
 
         Order::whereBetween('created_at', [$from, $to])
             ->where('status', '!=', OrderStatus::CANCELLED->value)
-            ->get(['created_at'])
-            ->each(function ($o) use (&$ord): void {
-                $ord[(int) $o->created_at->format('G')] += 1;
+            ->selectRaw('HOUR(created_at) as h, COUNT(*) as c')
+            ->groupBy('h')
+            ->get()
+            ->each(function ($row) use (&$ord): void {
+                $ord[(int) $row->h] = (int) $row->c;
             });
 
         User::doesntHave('roles')
             ->whereBetween('created_at', [$from, $to])
-            ->get(['created_at'])
-            ->each(function ($u) use (&$cust): void {
-                $cust[(int) $u->created_at->format('G')] += 1;
+            ->selectRaw('HOUR(created_at) as h, COUNT(*) as c')
+            ->groupBy('h')
+            ->get()
+            ->each(function ($row) use (&$cust): void {
+                $cust[(int) $row->h] = (int) $row->c;
             });
 
         $labels = [];
@@ -369,13 +375,16 @@ new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Comp
     #[Computed]
     public function recentOrders()
     {
-        return Order::with('user')->latest()->limit(5)->get();
+        return Order::with('user:id,name,email')
+            ->latest()
+            ->limit(5)
+            ->get(['id', 'order_number', 'user_id', 'status', 'total_cents', 'created_at']);
     }
 
     #[Computed]
     public function recentActivity()
     {
-        return Activity::with(['causer', 'subject'])
+        return Activity::with(['causer:id,name', 'subject'])
             ->latest()
             ->limit(6)
             ->get();

@@ -12,6 +12,8 @@ class LocalizationSettings extends Settings
 
     public string $dimension_unit;
 
+    public string $timezone;
+
     public static function group(): string
     {
         return 'localization';

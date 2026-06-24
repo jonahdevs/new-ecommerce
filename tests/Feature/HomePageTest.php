@@ -12,8 +12,7 @@ it('renders the storefront home page', function () {
     $response->assertSee('Shop by category');
     $response->assertSee('Featured equipment');
     $response->assertSee('Just In');
-    $response->assertSee('professionals trust');
-    $response->assertSee('The Sheffield Quarterly');
+    $response->assertSee('The brands');
 });
 
 it('renders the responsive header chrome', function () {

@@ -17,7 +17,7 @@ it('renders the contact page with its sections', function () {
         ->assertOk()
         ->assertSee('Talk to a')
         ->assertSee('Send us a message')
-        ->assertSee('Visit a Sheffield showroom');
+        ->assertSee('Visit Our Showrooms');
 });
 
 it('renders the showroom map and honours the configured provider', function () {

@@ -61,7 +61,7 @@ new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Com
     #[Computed]
     public function categories()
     {
-        return Category::with(['parent', 'media'])
+        return Category::with(['parent:id,name,slug', 'media'])
             ->withCount('products')
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))

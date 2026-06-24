@@ -103,7 +103,7 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     public function products(): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['brand', 'taxClass', 'media'])
+            ->with(['brand:id,name', 'taxClass:id,rate,is_inclusive', 'media'])
             ->visibleInCatalog()
             ->published()
             ->honorStockVisibility();
@@ -169,13 +169,13 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
         return Category::query()
             ->withCount(['products' => fn($q) => $q->published()->visibleInCatalog()])
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'slug']);
     }
 
     #[Computed]
     public function brandsList(): Collection
     {
-        return Brand::query()->where('is_active', true)->orderBy('name')->get();
+        return Brand::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
     }
 
     public function hasActiveFilters(): bool

@@ -25,6 +25,7 @@ new #[Layout('layouts::account')] #[Title('Quotes')] class extends Component {
     public function quotes()
     {
         return auth()->user()->quotes()
+            ->select(['id', 'user_id', 'quote_number', 'title', 'status', 'total_cents', 'expires_at', 'created_at'])
             ->when($this->status === 'active', fn ($q) => $q->whereIn('status', ['draft', 'sent', 'awaiting_approval', 'approved']))
             ->when($this->status === 'rejected', fn ($q) => $q->whereIn('status', ['declined', 'expired']))
             ->latest()

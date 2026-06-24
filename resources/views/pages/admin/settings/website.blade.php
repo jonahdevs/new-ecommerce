@@ -60,6 +60,8 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public string $dimension_unit = 'mm';
 
+    public string $timezone = 'Africa/Nairobi';
+
     // ==================================================
     // SEO
     // ==================================================
@@ -133,6 +135,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         $this->currency = $localization->currency;
         $this->weight_unit = $localization->weight_unit;
         $this->dimension_unit = $localization->dimension_unit;
+        $this->timezone = $localization->timezone;
 
         $this->meta_title_pattern = $seo->meta_title_pattern;
         $this->default_meta_description = $seo->default_meta_description;
@@ -225,12 +228,14 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'currency' => ['required', 'string', 'size:3'],
             'weight_unit' => ['required', 'string', 'in:kg,g,lb'],
             'dimension_unit' => ['required', 'string', 'in:cm,mm,in'],
+            'timezone' => ['required', 'string', 'timezone:all'],
         ]);
 
         $settings->fill([
             'currency' => strtoupper($this->currency),
             'weight_unit' => $this->weight_unit,
             'dimension_unit' => $this->dimension_unit,
+            'timezone' => $this->timezone,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Localization updated.', variant: 'success');
@@ -421,6 +426,33 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                     <flux:select.option value="TZS">TZS — Tanzanian Shilling</flux:select.option>
                     <flux:select.option value="ZAR">ZAR — South African Rand</flux:select.option>
                 </flux:select>
+
+                <flux:select wire:model="timezone" label="Timezone"
+                    description="Applied to all dates and times across the admin and emails.">
+                    <optgroup label="Africa">
+                        <flux:select.option value="Africa/Nairobi">Africa/Nairobi (EAT, UTC+3)</flux:select.option>
+                        <flux:select.option value="Africa/Johannesburg">Africa/Johannesburg (SAST, UTC+2)</flux:select.option>
+                        <flux:select.option value="Africa/Lagos">Africa/Lagos (WAT, UTC+1)</flux:select.option>
+                        <flux:select.option value="Africa/Cairo">Africa/Cairo (EET, UTC+2)</flux:select.option>
+                        <flux:select.option value="Africa/Casablanca">Africa/Casablanca (WET, UTC+1)</flux:select.option>
+                        <flux:select.option value="Africa/Accra">Africa/Accra (GMT, UTC+0)</flux:select.option>
+                    </optgroup>
+                    <optgroup label="Europe">
+                        <flux:select.option value="UTC">UTC</flux:select.option>
+                        <flux:select.option value="Europe/London">Europe/London (GMT/BST)</flux:select.option>
+                        <flux:select.option value="Europe/Paris">Europe/Paris (CET, UTC+1)</flux:select.option>
+                    </optgroup>
+                    <optgroup label="Middle East & Asia">
+                        <flux:select.option value="Asia/Dubai">Asia/Dubai (GST, UTC+4)</flux:select.option>
+                        <flux:select.option value="Asia/Kolkata">Asia/Kolkata (IST, UTC+5:30)</flux:select.option>
+                        <flux:select.option value="Asia/Singapore">Asia/Singapore (SGT, UTC+8)</flux:select.option>
+                    </optgroup>
+                    <optgroup label="Americas">
+                        <flux:select.option value="America/New_York">America/New_York (EST/EDT)</flux:select.option>
+                        <flux:select.option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</flux:select.option>
+                    </optgroup>
+                </flux:select>
+                <flux:error name="timezone" />
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:select wire:model="weight_unit" label="Weight unit">
