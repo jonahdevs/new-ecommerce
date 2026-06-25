@@ -309,148 +309,112 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     </section>
 
     {{-- Hero rotator --}}
-    <section class="border-b border-zinc-200 bg-surface-sunken" x-data="{
-        idx: 0,
-        paused: false,
-        total: {{ count($heroSlides) }},
-        timer: null,
-        start() { this.timer = setInterval(() => { if (!this.paused) this.idx = (this.idx + 1) % this.total }, 6500) },
-        stop() { clearInterval(this.timer) },
-    }" x-init="start()"
-        @mouseenter="paused = true" @mouseleave="paused = false">
+    <section class="border-b border-zinc-200 bg-surface-sunken">
         <div class="shell py-3 md:py-5">
-            {{-- ================================================================
-                 HERO SLIDES — three interchangeable designs. Exactly ONE is
-                 active; the other two are commented out for testing. To switch,
-                 comment the active block and uncomment another, then update the
-                 container's aspect ratio class to match (noted on each option).
+            {{-- Positioning wrapper — arrows sit just outside the image on desktop --}}
+            <div x-data="{
+                swiper: null,
+                current: 1,
+                paused: false,
+                init() {
+                    this.swiper = new Swiper($refs.swiperEl, {
+                        effect: 'fade',
+                        fadeEffect: { crossFade: true },
+                        loop: true,
+                        speed: 700,
+                        autoplay: {
+                            delay: 6500,
+                            pauseOnMouseEnter: true,
+                            disableOnInteraction: false,
+                        },
+                        on: {
+                            autoplayPause: () => { this.paused = true },
+                            autoplayResume: () => { this.paused = false },
+                            realIndexChange: (s) => { this.current = s.realIndex + 1 },
+                        },
+                    });
+                },
+            }">
+                {{-- ── DESIGNER SPECS ──────────────────────────────────────────────
+                     Desktop (≥768px):  2181 × 624 px  (~3.5:1) wide art
+                     Mobile plain bg:   background photo WITHOUT baked-in text.
+                         Desktop 2400 × 800 px (3:1), mobile 1080 × 1200 px (9:10).
+                         Place the product on one side; leave opposite ~45% calm for
+                         the overlaid headline. Export → /public/images/banners/plain/
+                     ──────────────────────────────────────────────────────────────── --}}
+                <div class="swiper relative overflow-hidden rounded-md bg-zinc-900 aspect-[4/3] md:aspect-[2181/624]"
+                    x-ref="swiperEl">
+                    <div class="swiper-wrapper">
+                        @foreach ($heroSlides as $i => $slide)
+                            <div class="swiper-slide">
+                                <a href="{{ $slide['url'] }}" wire:navigate aria-label="{{ $slide['alt'] }}"
+                                    class="absolute inset-0 block cursor-pointer">
 
-                 ── DESIGNER SPECS (export sizes per screen) ───────────────────
-                 Desktop (≥768px), all options:  2181 × 624 px  (~3.5:1) wide art
-                 Option C (mobile crop):  no new art. The wide banner is cropped
-                     to 4:3 on phones, so keep the logo/headline/products within
-                     the centre ~60% width — anything near the far edges is cut.
-                 Option B (mobile art):  1080 × 1350 px (4:5) portrait, text baked
-                     in, exported to /public/images/banners/mobile/<name>.webp
-                 Option A (live text):   background photo WITHOUT baked-in text.
-                     Desktop 2400 × 800 px (3:1), mobile 1080 × 1200 px (9:10).
-                     Place the product on one side and leave the opposite ~45%
-                     visually calm for the overlaid headline. Export to
-                     /public/images/banners/plain/<name>.webp
-                 ================================================================ --}}
+                                    {{-- Responsive image: taller portrait crop on mobile, wide plain art on desktop --}}
+                                    <picture class="contents">
+                                        <source media="(max-width: 767px)" srcset="{{ $slide['src_mobile'] }}" />
+                                        <img src="{{ $slide['src_plain'] }}" alt=""
+                                            class="block size-full object-cover"
+                                            @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
+                                            draggable="false" />
+                                    </picture>
 
-            {{-- Positioning wrapper (not clipped) so the nav arrows can sit just
-                 outside the image on desktop instead of over the content panel. --}}
-            <div class="relative">
+                                    {{-- Left gradient — fades out toward the right so the product stays visible --}}
+                                    <div
+                                        class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent">
+                                    </div>
 
-            {{-- OPTION C — reuse wide banner, taller 4:3 crop on mobile (no new art). Container: aspect-[4/3] md:aspect-[2181/624] --}}
-            <div class="relative overflow-hidden rounded-md bg-zinc-900 aspect-[4/3] md:aspect-[2181/624]">
-                {{-- @foreach ($heroSlides as $i => $slide)
-                    <a href="{{ $slide['url'] }}" wire:navigate aria-label="{{ $slide['alt'] }}"
-                        :aria-hidden="idx !== {{ $i }}" :tabindex="idx === {{ $i }} ? 0 : -1"
-                        class="absolute inset-0 block cursor-pointer transition-opacity duration-700 {{ $i === 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' }}"
-                        :class="idx === {{ $i }} ? 'opacity-100 pointer-events-auto' :
-                            'opacity-0 pointer-events-none'">
-                        <img src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}"
-                            class="block size-full object-cover object-center"
-                            @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
-                            draggable="false" />
-                        <span aria-hidden @class([
-                            'pointer-events-none absolute bottom-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-lg backdrop-blur-md transition duration-500 md:bottom-6 md:gap-2 md:px-4 md:py-2.5 md:text-[13px]',
-                            'right-3 md:right-6' => $slide['align'] === 'left',
-                            'left-3 md:left-6' => $slide['align'] !== 'left',
-                        ])
-                            :class="idx === {{ $i }} ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
-                            {{ $slide['cta'] }}
-                            <flux:icon.arrow-right variant="mini" class="size-3 md:size-3.5" />
-                        </span>
-                    </a>
-                @endforeach --}}
-                {{-- 
-                OPTION A — plain background photo + live HTML headline/CTA (no baked text). Container: aspect-[9/10] md:aspect-[3/1] --}}
-                @foreach ($heroSlides as $i => $slide)
-                    <a href="{{ $slide['url'] }}" wire:navigate aria-label="{{ $slide['alt'] }}"
-                        :aria-hidden="idx !== {{ $i }}" :tabindex="idx === {{ $i }} ? 0 : -1"
-                        class="absolute inset-0 block cursor-pointer transition-opacity duration-700 {{ $i === 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' }}"
-                        :class="idx === {{ $i }} ? 'opacity-100 pointer-events-auto' :
-                            'opacity-0 pointer-events-none'">
-                        <img src="{{ $slide['src'] }}" alt="" class="block size-full object-cover"
-                            @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
-                            draggable="false" />
-                        {{-- Content panel with a bookmark shape (notch on the right edge).
-                             clip-path lives on the PARENT of the blur layer — Chromium
-                             ignores clip-path on the same element as backdrop-filter, so
-                             clipping a parent is the reliable way to confine the blur.
-                             Content sits above and is padded to clear the notch. --}}
-                        <div
-                            class="absolute inset-x-4 bottom-4 md:inset-x-auto md:bottom-auto md:top-1/2 md:left-10 md:max-w-[46%] md:-translate-y-1/2">
-                            {{-- Shaped clip parent — clips the blurred background child below --}}
-                            <div aria-hidden style="clip-path: polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%)"
-                                class="absolute inset-0">
-                                <div class="size-full bg-black/40 backdrop-blur-sm"></div>
+                                    {{-- Live text — hidden on mobile since src_mobile has text baked in --}}
+                                    <div
+                                        class="absolute inset-y-0 left-0 hidden flex-col justify-center px-10 md:flex lg:px-14">
+                                        <h2
+                                            class="max-w-[14ch] font-serif text-[38px] font-semibold leading-tight text-white lg:text-[48px]">
+                                            {{ $slide['headline'] }}</h2>
+                                        <p class="mt-3 max-w-[32ch] text-sm text-white/80">{{ $slide['sub'] }}</p>
+                                        <span aria-hidden
+                                            class="mt-5 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-lg">
+                                            {{ $slide['cta'] }}
+                                            <flux:icon.arrow-right variant="mini" class="size-3.5" />
+                                        </span>
+                                    </div>
+
+                                    {{-- Glassmorphism card (commented out — kept for easy switch-back)
+                                    <div class="absolute inset-x-4 bottom-4 md:inset-x-auto md:bottom-auto md:top-1/2 md:left-10 md:max-w-sm md:-translate-y-1/2">
+                                        <div class="rounded-xl border border-white/20 bg-white/10 p-5 shadow-xl backdrop-blur-md md:p-7">
+                                            <h2 class="font-serif text-xl font-semibold leading-tight text-white md:text-[38px]">{{ $slide['headline'] }}</h2>
+                                            <p class="mt-2 max-w-[30ch] text-xs text-white/80 md:mt-3 md:text-sm">{{ $slide['sub'] }}</p>
+                                            <span aria-hidden class="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-ink shadow-lg md:mt-4 md:text-sm">
+                                                {{ $slide['cta'] }}
+                                                <flux:icon.arrow-right variant="mini" class="size-3 md:size-3.5" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    --}}
+                                </a>
                             </div>
-                            {{-- Content above the shape, padded to stay inside it --}}
-                            <div class="relative flex flex-col gap-1.5 py-4 pl-4 pr-16 md:gap-3 md:py-7 md:pl-7 md:pr-20">
-                                <h2 class="font-serif text-xl font-semibold leading-tight text-white md:text-[40px]">
-                                    {{ $slide['headline'] }}</h2>
-                                <p class="max-w-[34ch] text-xs text-white/80 md:text-base">{{ $slide['sub'] }}</p>
-                                <span aria-hidden
-                                    class="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-ink shadow-lg md:mt-2 md:text-sm">
-                                    {{ $slide['cta'] }}
-                                    <flux:icon.arrow-right variant="mini" class="size-3 md:size-3.5" />
-                                </span>
-                            </div>
-                        </div>
-                    </a>
-                @endforeach
+                        @endforeach
+                    </div>
 
+                    {{-- Dots — Alpine-driven so positioning and pill styles are fully ours --}}
+                    <div class="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/35 px-2 py-1 backdrop-blur-sm md:bottom-4 md:px-2.5 md:py-1.5">
+                        @for ($i = 0; $i < count($heroSlides); $i++)
+                            <button type="button" aria-label="Go to slide {{ $i + 1 }}"
+                                @click="swiper?.slideToLoop({{ $i }})"
+                                class="h-1.5 cursor-pointer rounded-full border-0 transition-all duration-200"
+                                :class="current === {{ $i + 1 }} ? 'w-5 bg-white' : 'w-1.5 bg-white/55'">
+                            </button>
+                        @endfor
+                    </div>
 
-                {{-- OPTION B — separate taller mobile artwork swapped via <picture>. Container: aspect-[4/5] md:aspect-[2181/624]
-                @foreach ($heroSlides as $i => $slide)
-                    <a href="{{ $slide['url'] }}" wire:navigate aria-label="{{ $slide['alt'] }}"
-                        :aria-hidden="idx !== {{ $i }}" :tabindex="idx === {{ $i }} ? 0 : -1"
-                        class="absolute inset-0 block cursor-pointer transition-opacity duration-700 {{ $i === 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' }}"
-                        :class="idx === {{ $i }} ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'">
-                        <picture class="contents">
-                            <source media="(max-width: 767px)" srcset="{{ $slide['src_mobile'] }}" />
-                            <img src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}" class="block size-full object-cover"
-                                @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
-                                draggable="false" />
-                        </picture>
-                    </a>
-                @endforeach
-                --}}
-
-                {{-- Dots --}}
-                <div
-                    class="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/35 px-2 py-1 backdrop-blur-sm md:bottom-4 md:px-2.5 md:py-1.5">
-                    @for ($i = 0; $i < count($heroSlides); $i++)
-                        <button type="button" aria-label="Go to slide {{ $i + 1 }}"
-                            @click="idx = {{ $i }}"
-                            class="h-1.5 cursor-pointer rounded-full border-0 transition-all duration-200"
-                            :class="idx === {{ $i }} ? 'w-5 bg-white' : 'w-1.5 bg-white/55'"></button>
-                    @endfor
+                    {{-- Slide counter --}}
+                    <div
+                        class="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-full bg-black/35 px-2 py-0.5 text-[10px] tracking-wider text-white tabular-nums backdrop-blur-sm md:top-3.5 md:right-3.5 md:gap-1.5 md:px-2.5 md:py-1 md:text-[11px]">
+                        <span class="font-semibold" x-text="String(current).padStart(2, '0')"></span>
+                        <span class="opacity-60">/ {{ str_pad(count($heroSlides), 2, '0', STR_PAD_LEFT) }}</span>
+                        <span class="opacity-70" x-show="paused" x-cloak>· paused</span>
+                    </div>
                 </div>
 
-                {{-- Slide counter --}}
-                <div
-                    class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/35 px-2 py-0.5 text-[10px] tracking-wider text-white tabular-nums backdrop-blur-sm md:top-3.5 md:right-3.5 md:gap-1.5 md:px-2.5 md:py-1 md:text-[11px]">
-                    <span class="font-semibold" x-text="String(idx + 1).padStart(2, '0')"></span>
-                    <span class="opacity-60">/ {{ str_pad(count($heroSlides), 2, '0', STR_PAD_LEFT) }}</span>
-                    <span class="opacity-70" x-show="paused" x-cloak>· paused</span>
-                </div>
-            </div>
-
-            {{-- Prev / Next — on the wrapper (not clipped) so they sit just outside
-                 the image on desktop, clear of the content panel. --}}
-            <button type="button" aria-label="Previous slide" @click="idx = (idx - 1 + total) % total"
-                class="absolute top-1/2 z-10 hidden size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/85 text-ink shadow-md backdrop-blur-md hover:bg-white md:-left-5 md:inline-flex">
-                <flux:icon.arrow-left variant="mini" class="size-4" />
-            </button>
-            <button type="button" aria-label="Next slide" @click="idx = (idx + 1) % total"
-                class="absolute top-1/2 z-10 hidden size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/85 text-ink shadow-md backdrop-blur-md hover:bg-white md:-right-5 md:inline-flex">
-                <flux:icon.arrow-right variant="mini" class="size-4" />
-            </button>
             </div>
         </div>
     </section>
@@ -561,7 +525,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
             class="grid gap-x-3 gap-y-4 grid-cols-1 @3xs:grid-cols-2 @3xs:gap-x-4 @3xs:gap-y-5 @md:grid-cols-3 @md:gap-x-5 @md:gap-y-7 @xl:grid-cols-4 @3xl:grid-cols-5 @6xl:grid-cols-6 @7xl:grid-cols-7 @8xl:grid-cols-8">
             @foreach ($this->featuredCategories as $category)
                 <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
-                    <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-surface-sunken @md:aspect-square">
+                    <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-surface-sunken">
                         @if ($category->image_url)
                             @if ($placeholder = $category->image_placeholder)
                                 <img src="{{ $placeholder }}" alt="" aria-hidden="true"
