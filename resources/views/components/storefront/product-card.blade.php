@@ -70,27 +70,34 @@
         @endif
 
         {{-- Wishlist + compare — top right, hover-reveal --}}
+        {{-- Alpine holds each button's state locally so the colour flips instantly,
+             even inside a wire:ignore carousel where Livewire can't re-render the card.
+             It seeds from the server value and re-syncs from the slug-tagged events. --}}
         <div class="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5">
             <flux:tooltip :content="$isWished ? 'Remove from wishlist' : 'Save to wishlist'" position="left">
                 <button type="button" wire:click="toggleWishlist('{{ $product->slug }}')"
-                    aria-label="{{ $isWished ? 'Remove from wishlist' : 'Save to wishlist' }}"
-                    @class([
-                        'inline-flex size-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition',
-                        'border-brand-500 bg-brand-500 text-white' => $isWished,
-                        'border-zinc-200 bg-white/95 text-ink opacity-0 hover:bg-white group-hover:opacity-100' => !$isWished,
-                    ])>
+                    x-data="{ wished: @js($isWished) }"
+                    @wishlist-updated.window="if ($event.detail?.slug === '{{ $product->slug }}') wished = $event.detail.wished"
+                    @click="wished = !wished"
+                    :aria-label="wished ? 'Remove from wishlist' : 'Save to wishlist'"
+                    class="inline-flex size-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition"
+                    :class="wished
+                        ? 'border-brand-500 bg-brand-500 text-white'
+                        : 'border-zinc-200 bg-white/95 text-ink opacity-0 hover:bg-white group-hover:opacity-100'">
                     <flux:icon.heart variant="micro" class="size-4" />
                 </button>
             </flux:tooltip>
 
             <flux:tooltip :content="$isCompared ? 'Remove from compare' : 'Add to compare'" position="left">
                 <button type="button" wire:click="toggleCompare('{{ $product->slug }}')"
-                    aria-label="{{ $isCompared ? 'Remove from compare' : 'Add to compare' }}"
-                    @class([
-                        'inline-flex size-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition',
-                        'border-brand-blue-500 bg-brand-blue-500 text-white' => $isCompared,
-                        'border-zinc-200 bg-white/95 text-ink opacity-0 hover:bg-white group-hover:opacity-100' => !$isCompared,
-                    ])>
+                    x-data="{ compared: @js($isCompared) }"
+                    @compare-updated.window="if ($event.detail?.slug === '{{ $product->slug }}') compared = $event.detail.compared"
+                    @click="compared = !compared"
+                    :aria-label="compared ? 'Remove from compare' : 'Add to compare'"
+                    class="inline-flex size-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition"
+                    :class="compared
+                        ? 'border-brand-blue-500 bg-brand-blue-500 text-white'
+                        : 'border-zinc-200 bg-white/95 text-ink opacity-0 hover:bg-white group-hover:opacity-100'">
                     <flux:icon.scale variant="micro" class="size-4" />
                 </button>
             </flux:tooltip>

@@ -618,7 +618,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                         });
                     }
                 }">
-                    <div class="swiper" x-ref="carousel">
+                    <div class="swiper" x-ref="carousel" wire:ignore>
                         <div class="swiper-wrapper pb-1">
                             @foreach ($this->newArrivals as $product)
                                 <div class="swiper-slide h-auto!">

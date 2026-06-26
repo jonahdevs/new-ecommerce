@@ -189,7 +189,7 @@ trait InteractsWithStorefront
     {
         $added = StorefrontSession::toggleWishlist($slug);
 
-        $this->dispatch('wishlist-updated');
+        $this->dispatch('wishlist-updated', slug: $slug, wished: $added);
         Flux::toast(
             heading: $added ? 'Saved to wishlist' : 'Removed from wishlist',
             text: $added ? 'You can view your saved items on the wishlist page.' : 'Item has been removed from your wishlist.',
@@ -201,7 +201,7 @@ trait InteractsWithStorefront
     {
         $added = StorefrontSession::toggleCompare($slug);
 
-        $this->dispatch('compare-updated');
+        $this->dispatch('compare-updated', slug: $slug, compared: $added);
         Flux::toast(
             heading: $added ? 'Added to compare' : 'Removed from compare',
             text: $added ? 'Head to the compare page to view products side by side.' : 'Item has been removed from your compare list.',
