@@ -301,7 +301,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     <section class="bg-surface-sunken pt-3 pb-2">
         <div class="shell">
             <a href="#" wire:navigate aria-label="Up to 20% off mega sale"
-                class="block overflow-hidden rounded-md shadow-sm" style="aspect-ratio: 3117 / 400">
+                class="block overflow-hidden rounded-md" style="aspect-ratio: 3117 / 400">
                 <img src="/images/banners/thin-banner.webp" alt="" class="size-full object-cover"
                     fetchpriority="high" decoding="async" draggable="false" />
             </a>
@@ -350,33 +350,12 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                                 <a href="{{ $slide['url'] }}" wire:navigate aria-label="{{ $slide['alt'] }}"
                                     class="absolute inset-0 block cursor-pointer">
 
-                                    {{-- Responsive image: taller portrait crop on mobile, wide plain art on desktop --}}
-                                    <picture class="contents">
-                                        <source media="(max-width: 767px)" srcset="{{ $slide['src_mobile'] }}" />
-                                        <img src="{{ $slide['src_plain'] }}" alt=""
-                                            class="block size-full object-cover"
-                                            @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
-                                            draggable="false" />
-                                    </picture>
-
-                                    {{-- Left gradient — fades out toward the right so the product stays visible --}}
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent">
-                                    </div>
-
-                                    {{-- Live text — hidden on mobile since src_mobile has text baked in --}}
-                                    <div
-                                        class="absolute inset-y-0 left-0 hidden flex-col justify-center px-10 md:flex lg:px-14">
-                                        <h2
-                                            class="max-w-[14ch] font-serif text-[38px] font-semibold leading-tight text-white lg:text-[48px]">
-                                            {{ $slide['headline'] }}</h2>
-                                        <p class="mt-3 max-w-[32ch] text-sm text-white/80">{{ $slide['sub'] }}</p>
-                                        <span aria-hidden
-                                            class="mt-5 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-lg">
-                                            {{ $slide['cta'] }}
-                                            <flux:icon.arrow-right variant="mini" class="size-3.5" />
-                                        </span>
-                                    </div>
+                                    {{-- Wide banner art with text baked in (src). Plain/mobile variants
+                                         not yet supplied, so we use the existing baked-in banners. --}}
+                                    <img src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}"
+                                        class="block size-full object-cover"
+                                        @if ($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
+                                        draggable="false" />
 
                                     {{-- Glassmorphism card (commented out — kept for easy switch-back)
                                     <div class="absolute inset-x-4 bottom-4 md:inset-x-auto md:bottom-auto md:top-1/2 md:left-10 md:max-w-sm md:-translate-y-1/2">

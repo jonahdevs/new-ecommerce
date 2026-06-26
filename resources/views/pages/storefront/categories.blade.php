@@ -60,7 +60,7 @@ new #[Layout('layouts::storefront')] #[Title('All Categories')] class extends Co
             <div class="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7">
                 @foreach ($this->categories as $category)
                     <a href="{{ route('category.show', $category) }}" wire:navigate class="group block transition">
-                        <div class="relative aspect-square overflow-hidden bg-surface-sunken">
+                        <div class="relative aspect-[4/3] overflow-hidden rounded-md bg-surface-sunken">
                             @if ($category->image_url)
                                 @if ($placeholder = $category->image_placeholder)
                                     <img src="{{ $placeholder }}" alt="" aria-hidden="true"

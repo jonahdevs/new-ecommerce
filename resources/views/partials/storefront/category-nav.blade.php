@@ -40,7 +40,6 @@
     <section x-data="{
         showLeft: false,
         showRight: true,
-        browseOpen: false,
         updateArrows() {
             const el = this.$refs.scroller;
             this.showLeft = el.scrollLeft > 10;
@@ -50,46 +49,8 @@
             this.$refs.scroller.scrollBy({ left: dir * 160, behavior: 'smooth' });
             setTimeout(() => this.updateArrows(), 300);
         },
-    }" x-init="updateArrows()" @resize.window="updateArrows()" @click.outside="browseOpen = false"
-        class="group relative shell hidden items-center lg:hidden">
-
-        {{-- Browse Categories button --}}
-        <div class="relative shrink-0">
-            <button type="button" @click="browseOpen = !browseOpen" :aria-expanded="browseOpen" aria-haspopup="true"
-                class="mr-1 flex items-center gap-1.5 border-r border-white/20 py-3 pr-3 text-xs font-medium whitespace-nowrap text-white sm:text-sm">
-                <flux:icon.bars-3 variant="outline" class="size-4 shrink-0" />
-                Browse
-                <flux:icon.chevron-down variant="micro" class="size-3 shrink-0 transition-transform duration-200"
-                    x-bind:class="browseOpen && 'rotate-180'" />
-            </button>
-
-            {{-- Dropdown panel — full, scrollable category list --}}
-            <div x-cloak x-show="browseOpen" @click="browseOpen = false"
-                x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1"
-                x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1"
-                class="absolute top-full left-0 z-50 w-72 overflow-hidden rounded-b-md border border-t-0 border-zinc-200 bg-white shadow-xl">
-                <ul class="scrollbar-thin max-h-[60vh] divide-y divide-zinc-100 overflow-y-auto" role="menu"
-                    aria-label="Browse categories">
-                    @foreach ($navCategories as $category)
-                        <li>
-                            <a href="{{ route('category.show', $category) }}" wire:navigate
-                                class="flex items-center gap-3 px-4 py-2.5 text-[13.5px] text-ink transition hover:bg-surface-sunken">
-                                @if ($category->icon_svg)
-                                    <span class="grid size-5 shrink-0 place-items-center text-ink-3 [&>svg]:size-full">
-                                        {!! $category->icon_svg !!}
-                                    </span>
-                                @elseif ($category->icon_image_url)
-                                    <img src="{{ $category->icon_image_url }}" alt=""
-                                        class="size-5 shrink-0 object-contain opacity-60" loading="lazy" />
-                                @endif
-                                <span class="truncate">{{ $category->name }}</span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
+    }" x-init="updateArrows()" @resize.window="updateArrows()"
+        class="group relative shell flex items-center lg:hidden">
 
         {{-- Left chevron (appears once scrolled) --}}
         <button type="button" x-cloak x-show="showLeft" x-transition.opacity @click="scrollByDir(-1)"

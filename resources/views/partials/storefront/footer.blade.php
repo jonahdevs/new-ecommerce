@@ -89,47 +89,45 @@
                 @endif
             </div>
 
-            @foreach ($showrooms->chunk(2) as $group)
-                <div class="md:col-span-2">
-                    <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Showrooms</h3>
-                    <div class="flex flex-col gap-5">
-                        @foreach ($group as $loc)
-                            <div>
-                                <div class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#f3eadd]">
-                                    {{ $loc->city }}
-                                    @if ($loc->is_hq)
-                                        <span
-                                            class="rounded-sm bg-brand-500 px-1.5 py-px text-[9px] tracking-wider text-white">HQ</span>
-                                    @endif
-                                </div>
-                                <div class="mt-1 text-[12px] leading-snug text-[#c9bea4]">
-                                    {{ $loc->address }}, {{ $loc->country }}
-                                    @if (!empty($loc->pobox))
-                                        <br>{{ $loc->pobox }}
-                                    @endif
-                                </div>
-                                <div class="mt-1.5 flex flex-col gap-0.5">
-                                    <div class="text-[12px] text-[#d8c79d]">
-                                        @foreach ($loc->phones as $i => $phone)
-                                            @if ($i > 0)
-                                                <span class="opacity-50">/</span>
-                                            @endif
-                                            <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
-                                                class="hover:text-white">{{ $phone }}</a>
-                                        @endforeach
-                                    </div>
-                                    @if ($loc->email)
-                                        <a href="mailto:{{ $loc->email }}"
-                                            class="text-[12px] text-[#d8c79d] hover:text-white">{{ $loc->email }}</a>
-                                    @endif
-                                </div>
+            <div class="col-span-2 sm:col-span-3 md:col-span-4">
+                <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Showrooms</h3>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-5 min-[420px]:grid-cols-2">
+                    @foreach ($showrooms as $loc)
+                        <div>
+                            <div class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#f3eadd]">
+                                {{ $loc->city }}
+                                @if ($loc->is_hq)
+                                    <span
+                                        class="rounded-sm bg-brand-500 px-1.5 py-px text-[9px] tracking-wider text-white">HQ</span>
+                                @endif
                             </div>
-                        @endforeach
-                    </div>
+                            <div class="mt-1 text-[12px] leading-snug text-[#c9bea4]">
+                                {{ $loc->address }}, {{ $loc->country }}
+                                @if (!empty($loc->pobox))
+                                    <br>{{ $loc->pobox }}
+                                @endif
+                            </div>
+                            <div class="mt-1.5 flex flex-col gap-0.5">
+                                <div class="text-[12px] text-[#d8c79d]">
+                                    @foreach ($loc->phones as $i => $phone)
+                                        @if ($i > 0)
+                                            <span class="opacity-50">/</span>
+                                        @endif
+                                        <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
+                                            class="hover:text-white">{{ $phone }}</a>
+                                    @endforeach
+                                </div>
+                                @if ($loc->email)
+                                    <a href="mailto:{{ $loc->email }}"
+                                        class="text-[12px] text-[#d8c79d] hover:text-white">{{ $loc->email }}</a>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-            @endforeach
+            </div>
 
-            <div class="md:col-span-2">
+            <div class="col-span-2 min-[420px]:col-span-1 md:col-span-2">
                 <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Business</h3>
                 <ul class="space-y-2.5 text-[13.5px] text-[#c9bea4]">
                     <li><a href="{{ route('categories.index') }}" class="hover:text-white" wire:navigate>All
@@ -139,7 +137,7 @@
                 </ul>
             </div>
 
-            <div class="md:col-span-2">
+            <div class="col-span-2 min-[420px]:col-span-1 md:col-span-2">
                 <h3 class="mb-4 text-xs font-bold tracking-widest text-[#d8c79d] uppercase">Shop</h3>
                 <ul class="space-y-2.5 text-[13.5px] text-[#c9bea4]">
                     @foreach ($footerCategories as $category)

@@ -12,7 +12,8 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extends Component
+{
     #[Url]
     public string $section = 'email';
 
@@ -20,6 +21,10 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     // EMAIL & SMS
     // ==================================================
     public string $mail_driver = 'smtp';
+
+    public string $from_address = '';
+
+    public string $from_name = '';
 
     public string $sms_provider = 'none';
 
@@ -106,8 +111,6 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
 
     public string $sap_webhook_secret = '';
 
-
-
     // ==================================================
     // SECURITY
     // ==================================================
@@ -144,6 +147,8 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public function mount(EmailSettings $email, EmailApiSettings $emailApi, IntegrationSettings $integrations, SecuritySettings $security, MaintenanceSettings $maintenance, ChatbotSettings $chatbot): void
     {
         $this->mail_driver = $email->mail_driver;
+        $this->from_address = $email->from_address;
+        $this->from_name = $email->from_name;
         $this->sms_provider = $email->sms_provider;
         $this->sms_sender_id = $email->sms_sender_id;
 
@@ -217,15 +222,30 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         Flux::toast(heading: 'Saved', text: 'Chatbot settings updated.', variant: 'success');
     }
 
+    public function saveSender(EmailSettings $settings): void
+    {
+        $this->validate([
+            'from_address' => ['required', 'email', 'max:254'],
+            'from_name' => ['required', 'string', 'max:100'],
+        ]);
+
+        $settings->fill([
+            'from_address' => $this->from_address,
+            'from_name' => $this->from_name,
+        ])->save();
+
+        Flux::toast(heading: 'Saved', text: 'Sender details updated.', variant: 'success');
+    }
+
     public function saveSms(EmailSettings $settings): void
     {
         $this->validate([
-            'sms_provider'  => ['required', 'in:none,africastalking,twilio'],
+            'sms_provider' => ['required', 'in:none,africastalking,twilio'],
             'sms_sender_id' => ['nullable', 'string', 'max:20'],
         ]);
 
         $settings->fill([
-            'sms_provider'  => $this->sms_provider,
+            'sms_provider' => $this->sms_provider,
             'sms_sender_id' => $this->sms_sender_id,
         ])->save();
 
@@ -248,27 +268,27 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public function saveMailDriverConfig(EmailApiSettings $api): void
     {
         $this->validate([
-            'smtp_host'       => ['nullable', 'string', 'max:255'],
-            'smtp_port'       => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'smtp_host' => ['nullable', 'string', 'max:255'],
+            'smtp_port' => ['nullable', 'integer', 'min:1', 'max:65535'],
             'smtp_encryption' => ['nullable', 'in:tls,ssl,none'],
-            'smtp_username'   => ['nullable', 'string', 'max:255'],
-            'mailgun_domain'  => ['nullable', 'string', 'max:255'],
-            'ses_region'      => ['nullable', 'string', 'max:50'],
+            'smtp_username' => ['nullable', 'string', 'max:255'],
+            'mailgun_domain' => ['nullable', 'string', 'max:255'],
+            'ses_region' => ['nullable', 'string', 'max:50'],
         ]);
 
         $api->fill([
-            'smtp_host'       => $this->smtp_host ?: null,
-            'smtp_port'       => $this->smtp_port ?: null,
+            'smtp_host' => $this->smtp_host ?: null,
+            'smtp_port' => $this->smtp_port ?: null,
             'smtp_encryption' => $this->smtp_encryption ?: null,
-            'smtp_username'   => $this->smtp_username ?: null,
-            'smtp_password'   => $this->smtp_password ?: null,
-            'mailgun_domain'  => $this->mailgun_domain ?: null,
-            'mailgun_secret'  => $this->mailgun_secret ?: null,
-            'ses_key'         => $this->ses_key ?: null,
-            'ses_secret'      => $this->ses_secret ?: null,
-            'ses_region'      => $this->ses_region ?: null,
-            'postmark_token'  => $this->postmark_token ?: null,
-            'resend_key'      => $this->resend_key ?: null,
+            'smtp_username' => $this->smtp_username ?: null,
+            'smtp_password' => $this->smtp_password ?: null,
+            'mailgun_domain' => $this->mailgun_domain ?: null,
+            'mailgun_secret' => $this->mailgun_secret ?: null,
+            'ses_key' => $this->ses_key ?: null,
+            'ses_secret' => $this->ses_secret ?: null,
+            'ses_region' => $this->ses_region ?: null,
+            'postmark_token' => $this->postmark_token ?: null,
+            'resend_key' => $this->resend_key ?: null,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Mail driver credentials updated.', variant: 'success');
@@ -283,15 +303,15 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public function saveGoogleLoginConfig(IntegrationSettings $settings): void
     {
         $this->validate([
-            'google_client_id'     => ['nullable', 'string', 'max:255'],
+            'google_client_id' => ['nullable', 'string', 'max:255'],
             'google_client_secret' => ['nullable', 'string', 'max:255'],
-            'google_redirect_url'  => ['nullable', 'url', 'max:255'],
+            'google_redirect_url' => ['nullable', 'url', 'max:255'],
         ]);
 
         $settings->fill([
-            'google_client_id'     => $this->google_client_id ?: null,
+            'google_client_id' => $this->google_client_id ?: null,
             'google_client_secret' => $this->google_client_secret ?: null,
-            'google_redirect_url'  => $this->google_redirect_url ?: null,
+            'google_redirect_url' => $this->google_redirect_url ?: null,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Google login settings updated.', variant: 'success');
@@ -306,15 +326,15 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public function saveFacebookLoginConfig(IntegrationSettings $settings): void
     {
         $this->validate([
-            'facebook_client_id'     => ['nullable', 'string', 'max:255'],
+            'facebook_client_id' => ['nullable', 'string', 'max:255'],
             'facebook_client_secret' => ['nullable', 'string', 'max:255'],
-            'facebook_redirect_url'  => ['nullable', 'url', 'max:255'],
+            'facebook_redirect_url' => ['nullable', 'url', 'max:255'],
         ]);
 
         $settings->fill([
-            'facebook_client_id'     => $this->facebook_client_id ?: null,
+            'facebook_client_id' => $this->facebook_client_id ?: null,
             'facebook_client_secret' => $this->facebook_client_secret ?: null,
-            'facebook_redirect_url'  => $this->facebook_redirect_url ?: null,
+            'facebook_redirect_url' => $this->facebook_redirect_url ?: null,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Facebook login settings updated.', variant: 'success');
@@ -336,14 +356,14 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     {
         $this->validate([
             'google_maps_api_key' => ['nullable', 'string', 'max:255'],
-            'map_provider'        => ['required', 'in:leaflet,google'],
-            'recaptcha_site_key'  => ['nullable', 'string', 'max:255'],
+            'map_provider' => ['required', 'in:leaflet,google'],
+            'recaptcha_site_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $settings->fill([
             'google_maps_api_key' => $this->google_maps_api_key ?: null,
-            'map_provider'        => $this->map_provider,
-            'recaptcha_site_key'  => $this->recaptcha_site_key ?: null,
+            'map_provider' => $this->map_provider,
+            'recaptcha_site_key' => $this->recaptcha_site_key ?: null,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'Integration settings updated.', variant: 'success');
@@ -358,19 +378,19 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public function saveSapConfig(IntegrationSettings $settings): void
     {
         $this->validate([
-            'sap_base_url'       => ['nullable', 'url', 'max:255'],
-            'sap_api_key'        => ['nullable', 'string', 'max:255'],
+            'sap_base_url' => ['nullable', 'url', 'max:255'],
+            'sap_api_key' => ['nullable', 'string', 'max:255'],
             'sap_webhook_secret' => ['nullable', 'string', 'max:255'],
         ]);
 
         $settings->fill([
-            'sap_enabled'          => $this->sap_enabled,
+            'sap_enabled' => $this->sap_enabled,
             'sap_auto_sync_orders' => $this->sap_auto_sync_orders,
-            'sap_sync_price'       => $this->sap_sync_price,
-            'sap_sync_quantity'    => $this->sap_sync_quantity,
-            'sap_base_url'         => $this->sap_base_url ?: null,
-            'sap_api_key'          => $this->sap_api_key ?: null,
-            'sap_webhook_secret'   => $this->sap_webhook_secret ?: null,
+            'sap_sync_price' => $this->sap_sync_price,
+            'sap_sync_quantity' => $this->sap_sync_quantity,
+            'sap_base_url' => $this->sap_base_url ?: null,
+            'sap_api_key' => $this->sap_api_key ?: null,
+            'sap_webhook_secret' => $this->sap_webhook_secret ?: null,
         ])->save();
 
         Flux::toast(heading: 'Saved', text: 'SAP settings updated.', variant: 'success');
@@ -525,6 +545,24 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
                     </div>
                 @endforeach
             </div>
+        </flux:card>
+
+        {{-- Sender --}}
+        <flux:card class="overflow-hidden p-0">
+            <div class="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+                <flux:heading size="sm" class="uppercase tracking-wide">Sender</flux:heading>
+            </div>
+            <form wire:submit="saveSender" class="space-y-4 p-6">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <flux:input wire:model="from_address" type="email" label="From address"
+                        placeholder="noreply@yourdomain.com"
+                        description="Must be on a domain verified with your active mail provider." />
+                    <flux:input wire:model="from_name" label="From name" placeholder="{{ config('app.name') }}" />
+                </div>
+                <div class="flex justify-end">
+                    <flux:button type="submit" variant="primary" size="sm">Save</flux:button>
+                </div>
+            </form>
         </flux:card>
 
         {{-- SMS --}}

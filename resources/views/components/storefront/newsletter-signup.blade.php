@@ -106,14 +106,15 @@ new class extends Component
                     </div>
                 @else
                     <form wire:submit="subscribe">
-                        <div class="flex gap-2">
+                        <div class="flex flex-col gap-2 sm:flex-row">
                             <div class="flex-1">
                                 <flux:input wire:model="email" type="email" placeholder="you@kitchen.co.ke" />
                                 @error('email')
                                     <p class="mt-1 text-[12px] text-[#d8c79d]">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <flux:button type="submit" variant="primary" class="shrink-0 self-start"
+                            <flux:button type="submit" variant="primary"
+                                class="w-full shrink-0 self-start sm:w-auto"
                                 wire:loading.attr="disabled" wire:target="subscribe">
                                 <span wire:loading.remove wire:target="subscribe">Subscribe</span>
                                 <span wire:loading wire:target="subscribe">Sending…</span>

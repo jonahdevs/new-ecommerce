@@ -23,3 +23,7 @@ Schedule::command('cart:remind-abandoned')->everyFifteenMinutes();
 // Erase raw gateway payloads (PII) past the 5-year retention window — DPA 2019
 // storage limitation; structured payment columns are retained for the record.
 Schedule::command('payments:prune-payloads')->weekly();
+
+Schedule::command('queue:work --stop-when-empty --queue=default,sap --tries=3 --max-time=55')
+    ->everyMinute()
+    ->withoutOverlapping();

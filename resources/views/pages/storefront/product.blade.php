@@ -1560,7 +1560,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     {{-- You May Also Like (same category) --}}
     @if ($this->related->isNotEmpty())
-        <div class="mt-16">
+        <div class="mt-16 @container">
             <div class="mb-4 flex items-baseline justify-between">
                 <h2 class="text-[22px] font-semibold tracking-tight">You May Also Like</h2>
                 @if ($product->primaryCategory)
@@ -1570,7 +1570,7 @@ new #[Layout('layouts::storefront')] class extends Component
                     </a>
                 @endif
             </div>
-            <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+            <div class="grid grid-cols-1 gap-3.5 @xs:grid-cols-2 @md:grid-cols-3 @2xl:grid-cols-4 4xl:grid-cols-5 @6xl:grid-cols-6">
                 @foreach ($this->related as $rel)
                     <x-storefront.product-card :product="$rel" wire:key="rel-{{ $rel->id }}" />
                 @endforeach
@@ -1580,7 +1580,7 @@ new #[Layout('layouts::storefront')] class extends Component
 
     {{-- More from [Brand] --}}
     @if ($this->brandProducts->isNotEmpty())
-        <div class="mt-16">
+        <div class="mt-16 @container">
             <div class="mb-4 flex items-baseline justify-between">
                 <h2 class="text-[22px] font-semibold tracking-tight">More from {{ $product->brand->name }}</h2>
                 @if ($product->brand)
@@ -1590,7 +1590,7 @@ new #[Layout('layouts::storefront')] class extends Component
                     </a>
                 @endif
             </div>
-            <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+            <div class="grid grid-cols-1 gap-3.5 @xs:grid-cols-2 @md:grid-cols-3 @2xl:grid-cols-4 4xl:grid-cols-5 @6xl:grid-cols-6">
                 @foreach ($this->brandProducts as $bp)
                     <x-storefront.product-card :product="$bp" wire:key="bp-{{ $bp->id }}" />
                 @endforeach
@@ -1600,11 +1600,11 @@ new #[Layout('layouts::storefront')] class extends Component
 
     {{-- Customers who viewed this also viewed --}}
     @if ($this->alsoViewed->isNotEmpty())
-        <div class="mt-16">
+        <div class="mt-16 @container">
             <div class="mb-4">
                 <h2 class="text-[22px] font-semibold tracking-tight">Customers who viewed this also viewed</h2>
             </div>
-            <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+            <div class="grid grid-cols-1 gap-3.5 @xs:grid-cols-2 @md:grid-cols-3 @2xl:grid-cols-4 4xl:grid-cols-5 @6xl:grid-cols-6">
                 @foreach ($this->alsoViewed as $av)
                     <x-storefront.product-card :product="$av" wire:key="av-{{ $av->id }}" />
                 @endforeach
@@ -1615,7 +1615,7 @@ new #[Layout('layouts::storefront')] class extends Component
     {{-- Recently Viewed (auth users only) --}}
     @auth
         @if ($this->recentlyViewedProducts->isNotEmpty())
-            <div class="mt-16">
+            <div class="mt-16 @container">
                 <div class="mb-4 flex items-baseline justify-between">
                     <h2 class="text-[22px] font-semibold tracking-tight">Recently Viewed</h2>
                     <a href="{{ route('account.recently-viewed') }}" wire:navigate
@@ -1623,7 +1623,7 @@ new #[Layout('layouts::storefront')] class extends Component
                         View all <flux:icon.arrow-right variant="micro" class="size-3.5" />
                     </a>
                 </div>
-                <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
+                <div class="grid grid-cols-1 gap-3.5 @xs:grid-cols-2 @md:grid-cols-3 @2xl:grid-cols-4 4xl:grid-cols-5 @6xl:grid-cols-6">
                     @foreach ($this->recentlyViewedProducts as $rv)
                         <x-storefront.product-card :product="$rv" wire:key="rv-{{ $rv->id }}" />
                     @endforeach
