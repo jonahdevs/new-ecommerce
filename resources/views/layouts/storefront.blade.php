@@ -249,7 +249,7 @@
 
     @include('partials.storefront.footer')
 
-    <livewire:storefront.chat-widget lazy />
+    <livewire:storefront.chat-widget defer />
 
     @auth
         <livewire:concurrent-session-guard />

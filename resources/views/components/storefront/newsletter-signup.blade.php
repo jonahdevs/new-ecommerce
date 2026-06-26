@@ -12,19 +12,10 @@ new class extends Component
     #[Validate('required|email|max:254')]
     public string $email = '';
 
-    /** @var array<int, string> */
-    public array $interests = ['new-products'];
+    /** @var array<int, string> Kept for admin segmentation/export; no longer chosen on the form. */
+    public array $interests = [];
 
     public bool $submitted = false;
-
-    public function toggleInterest(string $id): void
-    {
-        if (in_array($id, $this->interests, true)) {
-            $this->interests = array_values(array_filter($this->interests, fn ($i) => $i !== $id));
-        } else {
-            $this->interests[] = $id;
-        }
-    }
 
     public function subscribe(): void
     {
@@ -59,14 +50,6 @@ new class extends Component
     }
 }; ?>
 
-@php
-    $interestOptions = [
-        ['id' => 'new-products',      'label' => 'New products'],
-        ['id' => 'seasonal-catalogs', 'label' => 'Catalogs'],
-        ['id' => 'projects',          'label' => 'Projects'],
-    ];
-@endphp
-
 <section class="mt-12 pb-2">
     <div class="shell">
         <div class="grid grid-cols-1 gap-6 rounded-md bg-brand-blue-700 px-5 py-7 md:grid-cols-2 md:gap-12 md:px-14 md:py-12">
@@ -74,7 +57,7 @@ new class extends Component
             {{-- Left: copy --}}
             <div class="flex flex-col justify-center">
                 <h2 class="font-serif text-3xl font-normal leading-snug text-[#f6ecd9]">
-                    Catalog drops, project stories, trade-only offers — four times a year.
+                    Catalog drops and project stories.
                 </h2>
                 <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-[#c9bea4]">
                     <li class="flex items-center gap-1.5">
@@ -119,23 +102,6 @@ new class extends Component
                                 <span wire:loading.remove wire:target="subscribe">Subscribe</span>
                                 <span wire:loading wire:target="subscribe">Sending…</span>
                             </flux:button>
-                        </div>
-
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            @foreach ($interestOptions as $opt)
-                                @php $active = in_array($opt['id'], $interests, true); @endphp
-                                <button type="button" wire:click="toggleInterest('{{ $opt['id'] }}')"
-                                    @class([
-                                        'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[11.5px] font-medium transition',
-                                        'border-brand-500 bg-brand-500 text-white' => $active,
-                                        'border-white/15 bg-white/8 text-[#d8c79d] hover:border-white/30' => ! $active,
-                                    ])>
-                                    @if ($active)
-                                        <flux:icon.check variant="micro" class="size-3" />
-                                    @endif
-                                    {{ $opt['label'] }}
-                                </button>
-                            @endforeach
                         </div>
 
                         <p class="mt-4 text-[11px] text-[#9c927c]">

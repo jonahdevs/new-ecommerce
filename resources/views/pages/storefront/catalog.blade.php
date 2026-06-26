@@ -197,25 +197,6 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
             <div>
                 <div class="flex items-center gap-3">
                     <h1 class="text-3xl font-semibold tracking-tight">Catalog</h1>
-                    @if ($selectedTag !== '')
-                        <div
-                            class="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                            {{ $selectedTag }}
-                            <button wire:click="$set('selectedTag', '')" class="ml-0.5 text-zinc-400 hover:text-zinc-600">
-                                <flux:icon.x-mark variant="micro" class="size-3" />
-                            </button>
-                        </div>
-                    @endif
-                    @if ($newArrivalsOnly)
-                        <div
-                            class="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                            New Arrivals
-                            <button wire:click="$set('newArrivalsOnly', false)"
-                                class="ml-0.5 text-zinc-400 hover:text-zinc-600">
-                                <flux:icon.x-mark variant="micro" class="size-3" />
-                            </button>
-                        </div>
-                    @endif
                 </div>
                 <p class="mt-2 max-w-xl text-[14.5px] text-ink-3">
                     Commercial kitchen equipment across {{ $this->categoriesList->count() }} categories from
@@ -536,6 +517,20 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
                 {{-- Active filter chips --}}
                 @if ($this->hasActiveFilters())
                     <div class="mb-5 flex flex-wrap gap-2">
+                        @if ($selectedTag !== '')
+                            <button type="button" wire:click="$set('selectedTag', '')"
+                                class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                {{ $selectedTag }}
+                                <flux:icon.x variant="micro" class="size-3 text-ink-3" />
+                            </button>
+                        @endif
+                        @if ($newArrivalsOnly)
+                            <button type="button" wire:click="$set('newArrivalsOnly', false)"
+                                class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-medium text-ink-2 hover:bg-zinc-200">
+                                New Arrivals
+                                <flux:icon.x variant="micro" class="size-3 text-ink-3" />
+                            </button>
+                        @endif
                         @foreach ($selectedCategories as $slug)
                             @php $cat = $this->categoriesList->firstWhere('slug', $slug); @endphp
                             @if ($cat)

@@ -122,10 +122,13 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                 </div>
             </div>
         @else
-            <div class="mt-8 grid grid-cols-2 gap-3.5 lg:grid-cols-4 2xl:grid-cols-6">
-                @foreach ($this->products as $product)
-                    <x-storefront.product-card :product="$product" wire:key="wish-{{ $product->slug }}" />
-                @endforeach
+            <div class="mt-8 @container">
+                <div
+                    class="grid grid-cols-1 gap-3.5 @xs:grid-cols-2 @md:grid-cols-3 @2xl:grid-cols-4 4xl:grid-cols-5 @6xl:grid-cols-6">
+                    @foreach ($this->products as $product)
+                        <x-storefront.product-card :product="$product" wire:key="wish-{{ $product->slug }}" />
+                    @endforeach
+                </div>
             </div>
 
             {{-- Convert-to-quote band --}}

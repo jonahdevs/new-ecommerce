@@ -102,7 +102,7 @@
                                 @endif
                             </div>
                             <div class="mt-1 text-[12px] leading-snug text-[#c9bea4]">
-                                {{ $loc->address }}, {{ $loc->country }}
+                                {{ $loc->address }}@empty($loc->pobox), {{ $loc->country }}@endempty
                                 @if (!empty($loc->pobox))
                                     <br>{{ $loc->pobox }}
                                 @endif

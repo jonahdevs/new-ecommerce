@@ -342,7 +342,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                          Place the product on one side; leave opposite ~45% calm for
                          the overlaid headline. Export → /public/images/banners/plain/
                      ──────────────────────────────────────────────────────────────── --}}
-                <div class="swiper relative overflow-hidden rounded-md aspect-4/3 md:aspect-[2181/624]"
+                <div class="swiper group relative overflow-hidden rounded-md aspect-4/3 md:aspect-[2181/624]"
                     x-ref="swiperEl">
                     <div class="swiper-wrapper">
                         @foreach ($heroSlides as $i => $slide)
@@ -393,6 +393,16 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                         <span class="opacity-60">/ {{ str_pad(count($heroSlides), 2, '0', STR_PAD_LEFT) }}</span>
                         <span class="opacity-70" x-show="paused" x-cloak>· paused</span>
                     </div>
+
+                    {{-- Prev / next arrows — desktop only, revealed on hover --}}
+                    <button type="button" @click="swiper?.slidePrev()" aria-label="Previous slide"
+                        class="absolute top-1/2 left-3 z-10 hidden size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/35 text-white opacity-0 backdrop-blur-sm transition duration-200 hover:bg-black/55 group-hover:opacity-100 md:flex">
+                        <flux:icon.chevron-left class="size-5" />
+                    </button>
+                    <button type="button" @click="swiper?.slideNext()" aria-label="Next slide"
+                        class="absolute top-1/2 right-3 z-10 hidden size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/35 text-white opacity-0 backdrop-blur-sm transition duration-200 hover:bg-black/55 group-hover:opacity-100 md:flex">
+                        <flux:icon.chevron-right class="size-5" />
+                    </button>
                 </div>
 
             </div>
