@@ -189,6 +189,10 @@ trait InteractsWithStorefront
     {
         $added = StorefrontSession::toggleWishlist($slug);
 
+        // The button reflects its new state client-side via the dispatched
+        // event; skip the re-render so morphing can't tear down JS-initialised
+        // DOM elsewhere on the page (e.g. the hero Swiper slider).
+        $this->skipRender();
         $this->dispatch('wishlist-updated', slug: $slug, wished: $added);
         Flux::toast(
             heading: $added ? 'Saved to wishlist' : 'Removed from wishlist',
@@ -201,6 +205,7 @@ trait InteractsWithStorefront
     {
         $added = StorefrontSession::toggleCompare($slug);
 
+        $this->skipRender();
         $this->dispatch('compare-updated', slug: $slug, compared: $added);
         Flux::toast(
             heading: $added ? 'Added to compare' : 'Removed from compare',

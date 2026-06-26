@@ -312,7 +312,9 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
     <section class="border-b border-zinc-200 bg-surface-sunken">
         <div class="shell py-3 md:py-5">
             {{-- Positioning wrapper — arrows sit just outside the image on desktop --}}
-            <div x-data="{
+            {{-- wire:ignore keeps Livewire morphing from tearing down the
+                 Swiper-initialised DOM when the component re-renders. --}}
+            <div wire:ignore x-data="{
                 swiper: null,
                 current: 1,
                 paused: false,
@@ -591,7 +593,7 @@ new #[Layout('layouts::storefront')] #[Title('Commercial Kitchen, Cold Room, Lau
                 {{-- Left editorial panel --}}
                 <div
                     class="flex flex-col justify-center border-b border-white/10 px-6 pt-8 pb-4 lg:col-span-1 lg:border-b-0 lg:border-r lg:border-white/10 lg:py-8">
-                    <div class="font-serif text-4xl leading-none text-white">New</div>
+                    <div class="font-serif text-4xl leading-none text-white">New arrivals</div>
                     <div class="mt-3 text-[13px] leading-relaxed text-white/75">Discover what's just dropped</div>
                     <flux:button href="{{ route('catalog') }}?arrivals=1" wire:navigate class="mt-5 w-fit">
                         View All
