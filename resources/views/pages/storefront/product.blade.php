@@ -69,8 +69,6 @@ new #[Layout('layouts::storefront')] class extends Component
             'productAttributes' => fn ($q) => $q->where('is_visible', true)->orderBy('sort_order'),
             'productAttributes.attribute',
             'downloadableFiles',
-            'accessories' => fn ($q) => $q->visibleInCatalog()->published()->with('media')->orderBy('sort_order'),
-            'spareParts'  => fn ($q) => $q->visibleInCatalog()->published()->with('media')->orderBy('sort_order'),
         ]);
 
         if ($this->product->type === ProductType::BUNDLE) {
@@ -528,15 +526,24 @@ new #[Layout('layouts::storefront')] class extends Component
     #[Computed]
     public function filteredAccessories(): Collection
     {
-        // Already constrained and eager-loaded in mount()
-        return $this->product->accessories;
+        // Filter at access time, not via the mount() eager-load: Livewire re-fetches
+        // the model on every update and would otherwise lazy-load the unfiltered
+        // relationship, surfacing hidden/unpublished accessories after a tab click.
+        return $this->product->accessories()
+            ->visibleInCatalog()
+            ->published()
+            ->with('media')
+            ->get();
     }
 
     #[Computed]
     public function filteredSpareParts(): Collection
     {
-        // Already constrained and eager-loaded in mount()
-        return $this->product->spareParts;
+        return $this->product->spareParts()
+            ->visibleInCatalog()
+            ->published()
+            ->with('media')
+            ->get();
     }
 
     #[Computed]
@@ -698,18 +705,24 @@ new #[Layout('layouts::storefront')] class extends Component
     $dimensionStr = $dimensionStr !== '' ? $dimensionStr.' '.($product->dimension_unit ?? 'cm') : null;
 @endphp
 
-<div class="shell page-fade pt-6 pb-24">
-    <flux:breadcrumbs class="mb-6">
-        <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item :href="route('catalog')" wire:navigate>Catalog</flux:breadcrumbs.item>
-        @if ($product->primaryCategory)
-            <flux:breadcrumbs.item :href="route('category.show', $product->primaryCategory)" wire:navigate>
-                {{ $product->primaryCategory->name }}
-            </flux:breadcrumbs.item>
-        @endif
-        <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<div class="page-fade">
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item :href="route('catalog')" wire:navigate>Catalog</flux:breadcrumbs.item>
+                @if ($product->primaryCategory)
+                    <flux:breadcrumbs.item :href="route('category.show', $product->primaryCategory)" wire:navigate>
+                        {{ $product->primaryCategory->name }}
+                    </flux:breadcrumbs.item>
+                @endif
+                <flux:breadcrumbs.item>{{ $product->name }}</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
+    <div class="shell pt-6 pb-24">
     {{-- Main: gallery + details + buy-box (3-column on lg+, stacked below) --}}
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(300px,340px)] lg:gap-10 xl:gap-12">
         {{-- Gallery --}}
@@ -1565,8 +1578,8 @@ new #[Layout('layouts::storefront')] class extends Component
                 <h2 class="text-[22px] font-semibold tracking-tight">You May Also Like</h2>
                 @if ($product->primaryCategory)
                     <a href="{{ route('category.show', $product->primaryCategory) }}" wire:navigate
-                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
-                        More in {{ $product->primaryCategory->name }} <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                        class="text-[13px] font-medium text-brand-500 underline transition-colors hover:text-brand-600">
+                        View all
                     </a>
                 @endif
             </div>
@@ -1585,8 +1598,8 @@ new #[Layout('layouts::storefront')] class extends Component
                 <h2 class="text-[22px] font-semibold tracking-tight">More from {{ $product->brand->name }}</h2>
                 @if ($product->brand)
                     <a href="{{ route('catalog', ['brand' => [$product->brand->id]]) }}" wire:navigate
-                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
-                        View all {{ $product->brand->name }} <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                        class="text-[13px] font-medium text-brand-500 underline transition-colors hover:text-brand-600">
+                        View all
                     </a>
                 @endif
             </div>
@@ -1619,8 +1632,8 @@ new #[Layout('layouts::storefront')] class extends Component
                 <div class="mb-4 flex items-baseline justify-between">
                     <h2 class="text-[22px] font-semibold tracking-tight">Recently Viewed</h2>
                     <a href="{{ route('account.recently-viewed') }}" wire:navigate
-                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
-                        View all <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                        class="text-[13px] font-medium text-brand-500 underline transition-colors hover:text-brand-600">
+                        View all
                     </a>
                 </div>
                 <div class="grid grid-cols-1 gap-3.5 @xs:grid-cols-2 @md:grid-cols-3 @2xl:grid-cols-4 4xl:grid-cols-5 @6xl:grid-cols-6">
@@ -1723,4 +1736,5 @@ new #[Layout('layouts::storefront')] class extends Component
             @endif
         </flux:modal>
     @endif
+    </div>
 </div>

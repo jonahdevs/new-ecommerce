@@ -175,7 +175,10 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
     #[Computed]
     public function brandsList(): Collection
     {
-        return Brand::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        return Brand::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function hasActiveFilters(): bool
@@ -185,26 +188,17 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 }; ?>
 
 <div class="page-fade">
-    <div class="shell pt-4 pb-20">
-        {{-- Breadcrumb --}}
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>Shop</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
-
-        {{-- Header --}}
-        <div class="flex items-end justify-between">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-semibold tracking-tight">Catalog</h1>
-                </div>
-                <p class="mt-2 max-w-xl text-[14.5px] text-ink-3">
-                    Commercial kitchen equipment across {{ $this->categoriesList->count() }} categories from
-                    {{ $this->brandsList->count() }} authorised brands.
-                </p>
-            </div>
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Shop</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
+    </div>
 
+    <div class="shell pb-20">
         {{-- Mobile filter drawer (teleported to body) --}}
         <template x-teleport="body">
             <div x-show="$wire.showFilters" x-transition:enter="transition ease-out duration-300"
@@ -585,12 +579,14 @@ new #[Layout('layouts::storefront')] #[Title('Shop')] class extends Component {
 
                 {{-- Results body --}}
                 @if ($this->products->isEmpty())
-                    <div class="rounded-md bg-surface-sunken p-16 text-center">
+                    <div class="rounded-md p-16 text-center">
+                        <img src="{{ asset('images/empty-states/empty-list.svg') }}" alt=""
+                            class="mx-auto mb-6 h-40 w-auto" />
                         <div class="font-serif text-2xl text-ink">No products match these filters</div>
                         <p class="mt-2 text-ink-3">Try widening your price range, or removing brand/category
                             constraints.</p>
-                        <flux:button variant="primary" wire:click="clearFilters" class="mt-5">Clear all filters
-                        </flux:button>
+                        <flux:button variant="customer-primary" size="customer" wire:click="clearFilters" class="mt-5">
+                            Clear all filters</flux:button>
                     </div>
                 @else
                     <div

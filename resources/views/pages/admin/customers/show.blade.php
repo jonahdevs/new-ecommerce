@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::app')] #[Title('Customer — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Customer | Admin')] class extends Component {
     use WithPagination;
 
     #[Locked]

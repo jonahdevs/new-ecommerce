@@ -12,7 +12,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Manage Section — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Manage Section | Admin')] class extends Component
 {
     #[Locked]
     public CategorySection $section;

@@ -25,13 +25,17 @@ new #[Layout('layouts::storefront')] class extends Component
 }; ?>
 
 <div class="page-fade">
-    <div class="shell pt-4 pb-20">
-        {{-- Breadcrumb --}}
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>{{ $page->title }}</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>{{ $page->title }}</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
+    <div class="shell pt-3 pb-20">
         <h1 class="text-3xl font-semibold tracking-tight">{{ $page->title }}</h1>
 
         <div class="mt-6 max-w-3xl space-y-4 text-[14.5px] leading-relaxed text-ink-2

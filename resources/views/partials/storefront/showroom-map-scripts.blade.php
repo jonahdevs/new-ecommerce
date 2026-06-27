@@ -79,7 +79,17 @@ Alpine.data('showroomMap', (config) => {
             const el = this.$refs.map;
             if (! el) return;
 
-            this.map = L.map(el, { zoomControl: true, scrollWheelZoom: true, attributionControl: true });
+            this.map = L.map(el, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
+
+            // Only zoom on Ctrl/⌘ + wheel; a plain wheel scrolls the page past the
+            // map. Capture phase so the toggle lands before Leaflet's own handler.
+            el.addEventListener('wheel', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    this.map.scrollWheelZoom.enable();
+                } else {
+                    this.map.scrollWheelZoom.disable();
+                }
+            }, true);
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -110,6 +120,8 @@ Alpine.data('showroomMap', (config) => {
 
             this.map = new google.maps.Map(el, {
                 mapTypeControl: false, streetViewControl: false, fullscreenControl: false, zoomControl: true,
+                // Ctrl/⌘ + scroll to zoom; a plain scroll passes through to the page.
+                gestureHandling: 'cooperative',
             });
 
             const bounds = new google.maps.LatLngBounds();

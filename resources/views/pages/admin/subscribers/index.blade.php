@@ -10,7 +10,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
-new #[Layout('layouts::app')] #[Title('Subscribers — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Subscribers | Admin')] class extends Component {
     use WithPagination;
 
     #[Url(as: 'q')]

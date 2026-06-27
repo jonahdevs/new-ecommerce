@@ -2,6 +2,7 @@
 
 use App\Enums\OrderStatus;
 use App\Jobs\ResolveAddressCounty;
+use App\Livewire\Concerns\InteractsWithAddressBook;
 use App\Livewire\Concerns\InteractsWithPaystack;
 use App\Models\Address;
 use App\Models\Coupon;
@@ -22,9 +23,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Component {
-    use InteractsWithPaystack;
-
-    public ?int $selectedAddressId = null;
+    use InteractsWithAddressBook, InteractsWithPaystack;
 
     public string $deliveryMethod = 'delivery';
 
@@ -43,29 +42,8 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     // ==================================================
     // ADDRESS FORM MODALS
     // ==================================================
-    public bool $showAddressModal = false;
-
-    public string $addressModalMode = 'select';
-
+    // Address modal state + persistence lives in InteractsWithAddressBook.
     public bool $showDeliveryModal = false;
-
-    public string $label = 'Home';
-
-    public string $name = '';
-
-    public string $phone = '';
-
-    public string $alternative_phone = '';
-
-    public string $line1 = '';
-
-    public string $delivery_instructions = '';
-
-    public bool $is_default = false;
-
-    public ?float $latitude = null;
-
-    public ?float $longitude = null;
 
     public function mount(): void
     {
@@ -87,22 +65,6 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
         return StorefrontSession::cartLines();
     }
 
-    #[Computed]
-    public function addresses()
-    {
-        return auth()->user()->addresses()->orderByDesc('is_default')->orderBy('created_at')->get();
-    }
-
-    #[Computed]
-    public function selectedAddress(): ?Address
-    {
-        if (!$this->selectedAddressId) {
-            return null;
-        }
-
-        return $this->addresses->firstWhere('id', $this->selectedAddressId);
-    }
-
     /**
      * Serviceability + price for the current delivery choice. Pickup is always
      * free; delivery is resolved from the selected address pin through the
@@ -122,96 +84,24 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     }
 
     /**
-     * The zone the in-progress map pin falls into, for live feedback while
-     * adding an address.
+     * Recompute the delivery quote whenever the chosen address changes.
      */
-    #[Computed]
-    public function pinnedZone(): ?\App\Models\DeliveryZone
+    protected function afterAddressSelected(): void
     {
-        return app(DeliveryResolver::class)->resolveZone($this->latitude, $this->longitude);
+        unset($this->deliveryQuote);
     }
 
-    public function addressRules(): array
+    /**
+     * After saving a new address, refresh the delivery quote and resolve the
+     * county from the pin (off-request) for the sales-by-county report.
+     */
+    protected function afterAddressSaved(Address $address): void
     {
-        return [
-            'label' => ['required', 'string', 'max:50'],
-            'name' => ['required', 'string', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'alternative_phone' => ['nullable', 'string', 'max:30'],
-            'line1' => ['required', 'string', 'max:255'],
-            'delivery_instructions' => ['nullable', 'string', 'max:500'],
-            'is_default' => ['boolean'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-        ];
-    }
+        unset($this->deliveryQuote);
 
-    public function openAddressModal(string $mode = 'select'): void
-    {
-        $this->resetValidation();
-
-        if ($mode === 'create' || $this->addresses->isEmpty()) {
-            $this->prepareAddressForm();
-            $this->addressModalMode = 'create';
-        } else {
-            $this->addressModalMode = 'select';
-        }
-
-        $this->showAddressModal = true;
-    }
-
-    public function startAddressCreate(): void
-    {
-        $this->resetValidation();
-        $this->prepareAddressForm();
-        $this->addressModalMode = 'create';
-    }
-
-    private function prepareAddressForm(): void
-    {
-        $this->reset(['label', 'name', 'phone', 'alternative_phone', 'line1', 'delivery_instructions', 'is_default', 'latitude', 'longitude']);
-        $this->label = 'Home';
-    }
-
-    public function selectAddress(int $id): void
-    {
-        if ($this->addresses->contains('id', $id)) {
-            $this->selectedAddressId = $id;
-            unset($this->selectedAddress, $this->deliveryQuote);
-        }
-
-        $this->showAddressModal = false;
-    }
-
-    public function saveAddress(): void
-    {
-        $data = $this->validate($this->addressRules());
-
-        if ($data['is_default']) {
-            auth()
-                ->user()
-                ->addresses()
-                ->update(['is_default' => false]);
-        }
-
-        if (auth()->user()->addresses()->count() === 0) {
-            $data['is_default'] = true;
-        }
-
-        $data['delivery_zone_id'] = app(DeliveryResolver::class)->resolveZone($data['latitude'] ?? null, $data['longitude'] ?? null)?->id;
-
-        $address = auth()->user()->addresses()->create($data);
-
-        // Resolve the county from the pin (off-request) for the sales-by-county report.
         if ($address->latitude !== null) {
             ResolveAddressCounty::dispatch($address->id);
         }
-
-        $this->selectedAddressId = $address->id;
-        $this->showAddressModal = false;
-        unset($this->addresses, $this->selectedAddress, $this->deliveryQuote);
-
-        Flux::toast(heading: 'Address added', text: 'Your delivery address has been saved.', variant: 'success');
     }
 
     public function openDeliveryModal(): void
@@ -457,13 +347,18 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
     {{-- Opens the Paystack popup when the order is placed (or re-clicked). --}}
     <div x-data="paystackCheckout" @paystack-open.window="open($event.detail.accessCode)"></div>
 
-    <div class="shell pt-4 pb-20">
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item :href="route('cart')" wire:navigate>Cart</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Checkout</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item :href="route('cart')" wire:navigate>Cart</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>Checkout</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
+    <div class="shell pt-6 pb-20">
 
         {{-- Page header --}}
         <h1 class="text-3xl font-semibold tracking-tight">Checkout</h1>
@@ -572,68 +467,13 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
             {{-- ================================================== --}}
             {{-- RIGHT: ORDER SUMMARY --}}
             {{-- ================================================== --}}
-            <aside class="w-full shrink-0 lg:sticky lg:top-44 lg:w-96">
+            <aside class="w-full shrink-0 space-y-4 lg:sticky lg:top-44 lg:w-96">
                 <div class="rounded-md border border-zinc-200 bg-white">
                     <div class="border-b border-zinc-200 px-6 py-3">
                         <flux:heading size="sm" class="uppercase tracking-wide">Order summary</flux:heading>
                     </div>
 
                     <div class="p-6">
-                        {{-- Items --}}
-                        <div class="space-y-3">
-                            @foreach ($this->lines as $line)
-                                <div wire:key="sum-{{ $line['key'] }}" class="flex items-center gap-3">
-                                    @if ($line['product']->cover_url)
-                                        <img src="{{ $line['product']->cover_url }}" alt=""
-                                            class="size-12 shrink-0 rounded object-contain" loading="lazy" />
-                                    @else
-                                        <div
-                                            class="size-12 shrink-0 overflow-hidden rounded border border-zinc-100 bg-surface-sunken">
-                                        </div>
-                                    @endif
-                                    <div class="min-w-0 flex-1">
-                                        <div class="truncate text-[12.5px] font-semibold text-ink">
-                                            {{ $line['product']->name }}</div>
-                                        @if ($line['label'])
-                                            <div class="truncate text-[11px] text-ink-3">{{ $line['label'] }}</div>
-                                        @endif
-                                        <div class="text-[11.5px] text-ink-4">Qty {{ $line['qty'] }}</div>
-                                    </div>
-                                    <div class="text-[12.5px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                        {!! money($line['line_total_cents']) !!}</div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="my-5 h-px bg-zinc-100"></div>
-
-                        {{-- Coupon code input --}}
-                        @if ($this->appliedCouponCode)
-                            <div class="mb-4 flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
-                                <div class="flex items-center gap-2">
-                                    <flux:icon.ticket variant="micro" class="size-4 text-emerald-600" />
-                                    <span
-                                        class="font-mono text-[12px] font-semibold text-emerald-700">{{ $this->appliedCouponCode }}</span>
-                                </div>
-                                <button type="button" wire:click="removeCoupon"
-                                    class="text-[11px] text-emerald-600 hover:text-red-500">Remove</button>
-                            </div>
-                        @else
-                            <div class="mb-4">
-                                <flux:input.group>
-                                    <flux:input wire:model="couponInput" placeholder="Coupon code" class="text-[13px]!"
-                                        wire:keydown.enter.prevent="applyCoupon" />
-                                    <flux:button type="button" variant="primary" wire:click="applyCoupon"
-                                        wire:loading.attr="disabled" wire:target="applyCoupon">
-                                        Apply
-                                    </flux:button>
-                                </flux:input.group>
-                                @error('couponInput')
-                                    <p class="mt-1 text-[11.5px] text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        @endif
-
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between text-sm text-ink-2">
                                 <span>Subtotal</span>
@@ -689,87 +529,49 @@ new #[Layout('layouts::storefront')] #[Title('Checkout')] class extends Componen
                         </div>
                     </div>
                 </div>
+
+                {{-- Promo code --}}
+                <div class="rounded-md border border-zinc-200 bg-white">
+                    <div class="px-6 pt-4 text-center">
+                        <flux:heading size="sm">Have a promo code?</flux:heading>
+                    </div>
+
+                    <div class="px-6 pb-6 pt-4">
+                        @if ($this->appliedCouponCode)
+                            <div class="flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
+                                <div class="flex items-center gap-2">
+                                    <flux:icon.ticket variant="micro" class="size-4 text-emerald-600" />
+                                    <span
+                                        class="font-mono text-[12px] font-semibold text-emerald-700">{{ $this->appliedCouponCode }}</span>
+                                </div>
+                                <button type="button" wire:click="removeCoupon"
+                                    class="text-[11px] text-emerald-600 hover:text-red-500">Remove</button>
+                            </div>
+                        @else
+                            <flux:input.group>
+                                <flux:input wire:model="couponInput" placeholder="Coupon code" class="text-[13px]!"
+                                    wire:keydown.enter.prevent="applyCoupon" />
+                                <flux:button type="button" variant="primary" wire:click="applyCoupon"
+                                    wire:loading.attr="disabled" wire:target="applyCoupon">
+                                    Apply
+                                </flux:button>
+                            </flux:input.group>
+                            @error('couponInput')
+                                <p class="mt-1 text-[11.5px] text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
+                    </div>
+                </div>
             </aside>
         </div>
     </div>
 
     {{-- Address modal — select an existing address or add a new one --}}
-    <flux:modal wire:model.self="showAddressModal" class="md:w-[560px]" :dismissible="false">
-        @if ($addressModalMode === 'select')
-            <flux:heading>Choose a delivery address</flux:heading>
-            <flux:subheading>Select where you'd like this order delivered.</flux:subheading>
-
-            <div class="mt-5 space-y-3">
-                @foreach ($this->addresses as $address)
-                    <button type="button" wire:key="modal-addr-{{ $address->id }}"
-                        wire:click="selectAddress({{ $address->id }})"
-                        class="block w-full rounded-md border p-4 text-left transition {{ $this->selectedAddressId === $address->id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200 hover:border-zinc-300' }}">
-                        <div class="flex items-center justify-between">
-                            <span
-                                class="text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{{ $address->label }}</span>
-                            @if ($address->is_default)
-                                <span
-                                    class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>
-                            @endif
-                        </div>
-                        <div class="mt-1 text-[13.5px] font-semibold text-ink">{{ $address->fullName() }}</div>
-                        <div class="mt-1 text-[12.5px] leading-relaxed text-ink-2">{{ $address->oneLiner() }}</div>
-                        @if ($address->phone)
-                            <div class="mt-1 text-[12px] text-ink-3">{{ $address->phone }}</div>
-                        @endif
-                    </button>
-                @endforeach
-            </div>
-
-            <div class="mt-5 flex items-center justify-between gap-3">
-                <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
-                <flux:button type="button" variant="customer-outline" size="customer" icon="plus"
-                    wire:click="startAddressCreate">Add new address</flux:button>
-            </div>
-        @else
-            <flux:heading>New address</flux:heading>
-            <flux:subheading>
-                <span x-show="step === 1">Pin where you'd like this order delivered.</span>
-                <span x-show="step === 2" x-cloak>Now fill in the delivery address details.</span>
-            </flux:subheading>
-
-            <form wire:submit="saveAddress" class="mt-6">
-
-                {{-- Step 1 — pin the location on the map --}}
-                <div x-show="step === 1" class="space-y-3">
-                    @include('partials.storefront.address-map-pin')
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        @if ($this->addresses->isNotEmpty())
-                            <flux:button type="button" variant="ghost" icon="arrow-left"
-                                wire:click="$set('addressModalMode', 'select')">Back</flux:button>
-                        @else
-                            <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel
-                            </flux:button>
-                        @endif
-                        <flux:button type="button" variant="customer-primary" size="customer"
-                            icon:trailing="arrow-right" x-on:click="showDetails()">Next</flux:button>
-                    </div>
-                </div>
-
-                {{-- Step 2 — address details --}}
-                <div x-show="step === 2" x-cloak class="space-y-4">
-                    @include('partials.storefront.address-fields')
-
-                    <div class="flex justify-between gap-3 pt-2">
-                        <flux:button type="button" variant="ghost" icon="arrow-left" x-on:click="showLocation()">
-                            Back</flux:button>
-                        <flux:button type="submit" variant="customer-primary" size="customer">Add address
-                        </flux:button>
-                    </div>
-                </div>
-            </form>
-        @endif
-    </flux:modal>
+    @include('partials.storefront.address-modal')
 
     {{-- Delivery method modal --}}
     <flux:modal wire:model.self="showDeliveryModal" class="md:w-[520px]">
-        <flux:heading>Delivery method</flux:heading>
+        <flux:heading class="uppercase tracking-wide">Delivery method</flux:heading>
         <flux:subheading>How would you like to receive your order?</flux:subheading>
 
         <div class="mt-5 grid gap-3">

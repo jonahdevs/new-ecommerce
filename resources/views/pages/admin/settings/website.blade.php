@@ -7,6 +7,7 @@ use App\Settings\LegalSettings;
 use App\Settings\LocalizationSettings;
 use App\Settings\SeoSettings;
 use App\Settings\SocialSettings;
+use App\Support\CountryCodes;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -15,7 +16,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Website settings | Admin')] class extends Component
 {
     use WithFileUploads;
 
@@ -33,7 +34,9 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
 
     public string $contact_email = '';
 
-    public string $contact_phone = '';
+    public string $contact_phone_country_code = '+254';
+
+    public string $contact_phone_local = '';
 
     public string $address = '';
 
@@ -123,7 +126,7 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
         $this->registration_number = $business->registration_number;
         $this->tax_pin = $business->tax_pin;
         $this->contact_email = $business->contact_email;
-        $this->contact_phone = $business->contact_phone;
+        [$this->contact_phone_country_code, $this->contact_phone_local] = CountryCodes::parse($business->contact_phone);
         $this->address = $business->address;
         $this->business_hours = $business->business_hours;
 
@@ -166,7 +169,8 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'registration_number' => ['nullable', 'string', 'max:100'],
             'tax_pin' => ['nullable', 'string', 'max:100'],
             'contact_email' => ['nullable', 'email', 'max:255'],
-            'contact_phone' => ['nullable', 'string', 'max:50'],
+            'contact_phone_country_code' => ['required', 'string', 'max:10'],
+            'contact_phone_local' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'business_hours' => ['nullable', 'string', 'max:255'],
             'store_name' => ['required', 'string', 'max:255'],
@@ -196,7 +200,9 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
             'registration_number' => $this->registration_number,
             'tax_pin' => $this->tax_pin,
             'contact_email' => $this->contact_email,
-            'contact_phone' => $this->contact_phone,
+            'contact_phone' => filled($this->contact_phone_local)
+                ? $this->contact_phone_country_code.ltrim($this->contact_phone_local, '0')
+                : '',
             'address' => $this->address,
             'business_hours' => $this->business_hours,
         ])->save();
@@ -363,7 +369,15 @@ new #[Layout('layouts::app')] #[Title('Website settings — Admin')] class exten
                 </div>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <flux:input wire:model="contact_email" type="email" label="Contact email" placeholder="hello@store.com" />
-                    <flux:input wire:model="contact_phone" label="Contact phone" placeholder="+254 700 000 000" />
+                    <flux:field>
+                        <flux:label>Contact phone</flux:label>
+                        <flux:input.group>
+                            <x-country-code-combobox wire:model="contact_phone_country_code" />
+                            <flux:input wire:model="contact_phone_local" type="tel" placeholder="712 345 678"
+                                autocomplete="tel" />
+                        </flux:input.group>
+                        <flux:error name="contact_phone_local" />
+                    </flux:field>
                 </div>
                 <flux:textarea wire:model="address" label="Address" rows="3" placeholder="123 Main St, Nairobi, Kenya" />
                 <flux:input wire:model="business_hours" label="Business hours" placeholder="Mon–Fri 8am–5pm, Sat 9am–1pm" />

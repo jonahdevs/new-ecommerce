@@ -13,7 +13,7 @@ use Livewire\Component;
 use Spatie\Backup\BackupDestination\BackupDestination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-new #[Layout('layouts::app')] #[Title('Maintenance — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Maintenance | Admin')] class extends Component
 {
     #[Url]
     public string $section = 'banned-ips';

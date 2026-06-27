@@ -12,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Layout('layouts::app')] #[Title('Edit Category — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Edit Category | Admin')] class extends Component
 {
     use WithFileUploads;
 

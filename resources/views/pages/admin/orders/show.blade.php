@@ -21,7 +21,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Order — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Order | Admin')] class extends Component
 {
     #[Locked]
     public Order $order;

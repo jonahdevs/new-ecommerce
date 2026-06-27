@@ -6,8 +6,6 @@ use Spatie\LaravelSettings\Settings;
 
 class SecuritySettings extends Settings
 {
-    public int $min_password_length;
-
     public bool $require_two_factor;
 
     public int $session_lifetime;

@@ -96,18 +96,27 @@ new class extends Component {
     },
 }" x-on:keydown.escape.window="show = false"
     x-on:mousedown.outside="show = false"
+    x-effect="document.body.style.overflow = show ? 'hidden' : ''"
     x-on:open-mobile-search.window="$wire.openMobile()">
 
+    {{-- Backdrop: dims + locks the rest of the page while searching (modal-style).
+         Lives inside the search component's stacking context so it covers the whole
+         header too, leaving only the input (z-10) and dropdown (z-50) lifted above it. --}}
+    <div x-show="show" x-cloak x-transition.opacity.duration.200ms @click="show = false"
+        class="fixed inset-0 z-0 hidden bg-black/40 lg:block"></div>
+
     {{-- Desktop input --}}
-    <flux:input wire:model.live.debounce.200ms="query" @focus="show = true"
-        @keydown.enter.prevent="
-            if ($wire.query.trim()) {
-                saveRecent($wire.query.trim());
-                window.location = '{{ route('catalog') }}?q=' + encodeURIComponent($wire.query.trim());
-            }
-        "
-        autocomplete="off" spellcheck="false" icon="magnifying-glass" clearable kbd="⌘K"
-        placeholder="Search ovens, refrigeration, brands, SKU..." />
+    <div class="relative z-10">
+        <flux:input wire:model.live.debounce.200ms="query" @focus="show = true"
+            @keydown.enter.prevent="
+                if ($wire.query.trim()) {
+                    saveRecent($wire.query.trim());
+                    window.location = '{{ route('catalog') }}?q=' + encodeURIComponent($wire.query.trim());
+                }
+            "
+            autocomplete="off" spellcheck="false" icon="magnifying-glass" clearable kbd="⌘K"
+            placeholder="Search ovens, refrigeration, brands, SKU..." />
+    </div>
 
     {{-- Desktop dropdown panel --}}
     <div x-show="show" x-cloak x-transition:enter="transition duration-[140ms] ease-out"
@@ -160,30 +169,21 @@ new class extends Component {
                             Products <span class="text-ink-5 ml-1">({{ $this->products->count() }})</span>
                         </div>
                         @foreach ($this->products as $product)
-                            @php $price = $product->sale_price ?? $product->price; @endphp
                             <a href="{{ route('product.show', $product) }}" wire:navigate
                                 @click="saveRecent('{{ addslashes($product->name) }}')"
-                                class="grid cursor-pointer grid-cols-[44px_1fr_auto] items-center gap-3 px-4 py-2.5 hover:bg-surface-sunken">
+                                class="grid cursor-pointer grid-cols-[36px_1fr_auto] items-center gap-3 px-4 py-1.5 hover:bg-surface-sunken">
                                 @if ($product->cover_url)
                                     <img src="{{ $product->cover_url }}" alt=""
-                                        class="size-11 rounded object-contain" loading="lazy" />
+                                        class="size-9 rounded object-contain" loading="lazy" />
                                 @else
-                                    <div class="flex size-11 items-center justify-center rounded border border-zinc-100 bg-surface-sunken">
-                                        <flux:icon.photo class="size-5 text-ink-4" />
+                                    <div class="flex size-9 items-center justify-center rounded border border-zinc-100 bg-surface-sunken">
+                                        <flux:icon.photo class="size-4 text-ink-4" />
                                     </div>
                                 @endif
                                 <div class="min-w-0">
-                                    @if ($product->brand)
-                                        <div class="text-[10.5px] font-bold tracking-[0.08em] text-brand-blue-600 uppercase">
-                                            {{ $product->brand->name }}</div>
-                                    @endif
                                     <div class="truncate text-[13.5px] text-ink">{{ $product->name }}</div>
                                 </div>
-                                @if ($price)
-                                    <div class="text-right text-[13px] font-semibold text-ink tabular-nums whitespace-nowrap">
-                                        {{ money($price) }}
-                                    </div>
-                                @endif
+                                <flux:icon.chevron-right variant="micro" class="size-3.5 text-ink-4" />
                             </a>
                         @endforeach
                     </div>
@@ -326,29 +326,21 @@ new class extends Component {
                                     Products <span class="ml-1 text-ink-5">({{ $this->products->count() }})</span>
                                 </div>
                                 @foreach ($this->products as $product)
-                                    @php $price = $product->sale_price ?? $product->price; @endphp
                                     <a href="{{ route('product.show', $product) }}" wire:navigate
                                         @click="saveRecent('{{ addslashes($product->name) }}'); $wire.closeMobile()"
-                                        class="grid cursor-pointer grid-cols-[48px_1fr_auto] items-center gap-3 px-4 py-3 hover:bg-surface-sunken">
+                                        class="grid cursor-pointer grid-cols-[40px_1fr_auto] items-center gap-3 px-4 py-2 hover:bg-surface-sunken">
                                         @if ($product->cover_url)
                                             <img src="{{ $product->cover_url }}" alt=""
-                                                class="size-12 rounded object-contain" loading="lazy" />
+                                                class="size-10 rounded object-contain" loading="lazy" />
                                         @else
-                                            <div class="flex size-12 items-center justify-center rounded border border-zinc-100 bg-surface-sunken">
+                                            <div class="flex size-10 items-center justify-center rounded border border-zinc-100 bg-surface-sunken">
                                                 <flux:icon.photo class="size-5 text-ink-4" />
                                             </div>
                                         @endif
                                         <div class="min-w-0">
-                                            @if ($product->brand)
-                                                <div class="text-[10.5px] font-bold uppercase tracking-[0.08em] text-brand-blue-600">
-                                                    {{ $product->brand->name }}</div>
-                                            @endif
                                             <div class="truncate text-[14px] text-ink">{{ $product->name }}</div>
                                         </div>
-                                        @if ($price)
-                                            <div class="whitespace-nowrap text-right text-[13.5px] font-semibold tabular-nums text-ink">
-                                                {{ money($price) }}</div>
-                                        @endif
+                                        <flux:icon.chevron-right variant="micro" class="size-4 text-ink-4" />
                                     </a>
                                 @endforeach
                             </div>

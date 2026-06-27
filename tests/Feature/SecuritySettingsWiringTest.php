@@ -5,10 +5,8 @@ use App\Settings\SecuritySettings;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
-it('enforces the configured minimum password length', function () {
-    app(SecuritySettings::class)->fill(['min_password_length' => 12])->save();
-
-    expect(Validator::make(['password' => 'short123'], ['password' => Password::default()])->fails())->toBeTrue()
+it('enforces the global minimum password length', function () {
+    expect(Validator::make(['password' => 'short'], ['password' => Password::default()])->fails())->toBeTrue()
         ->and(Validator::make(['password' => 'longenoughpassword'], ['password' => Password::default()])->fails())->toBeFalse();
 });
 

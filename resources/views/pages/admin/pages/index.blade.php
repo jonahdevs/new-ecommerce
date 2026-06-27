@@ -9,7 +9,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::app')] #[Title('Pages — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Pages | Admin')] class extends Component {
     use WithPagination;
 
     #[Url(as: 'q')]

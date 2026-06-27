@@ -13,7 +13,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::app')] #[Title('Product analytics — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Product analytics | Admin')] class extends Component {
     use WithPagination;
 
     /** Order statuses that represent a confirmed (paid) sale. */

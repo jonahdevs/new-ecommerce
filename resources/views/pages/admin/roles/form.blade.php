@@ -11,7 +11,7 @@ use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-new #[Layout('layouts::app')] #[Title('Role — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Role | Admin')] class extends Component {
     /** Roles that cannot be renamed/deleted to avoid locking admins out. */
     private const PROTECTED_ROLES = ['admin', 'super-admin'];
 

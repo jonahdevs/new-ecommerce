@@ -4,6 +4,7 @@ use App\Models\Showroom;
 use App\Notifications\ContactEnquiryReceived;
 use App\Rules\Recaptcha;
 use App\Settings\BusinessSettings;
+use App\Support\CountryCodes;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
@@ -24,9 +25,9 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
 
     public string $email = '';
 
-    public string $phone = '';
+    public string $phone_country_code = '+254';
 
-    public ?int $location = null;
+    public string $phone_local = '';
 
     public string $message = '';
 
@@ -46,8 +47,6 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
         if (in_array($requested, $this->inquiryTypes, true)) {
             $this->inquiry = $requested;
         }
-
-        $this->location = $this->showrooms->firstWhere('is_hq', true)?->id ?? $this->showrooms->first()?->id;
     }
 
     /**
@@ -67,8 +66,8 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                 'name' => ['required', 'string', 'max:120'],
                 'business' => ['nullable', 'string', 'max:150'],
                 'email' => ['required', 'email', 'max:150'],
-                'phone' => ['nullable', 'string', 'max:40'],
-                'location' => ['nullable', 'integer', 'exists:showrooms,id'],
+                'phone_country_code' => ['required', 'string', 'max:10'],
+                'phone_local' => ['nullable', 'string', 'max:20'],
                 'message' => ['required', 'string', 'max:5000'],
                 'consent' => ['accepted'],
                 'recaptchaToken' => [new Recaptcha('contact')],
@@ -78,9 +77,11 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
             ],
         );
 
-        $this->reference = 'SHF-' . random_int(100000, 999999);
+        $phone = filled($this->phone_local)
+            ? $this->phone_country_code . ltrim($this->phone_local, '0')
+            : null;
 
-        $showroom = $validated['location'] ? Showroom::find($validated['location']) : null;
+        $this->reference = 'SHF-' . random_int(100000, 999999);
 
         $recipient = app(BusinessSettings::class)->contact_email ?: config('mail.from.address');
 
@@ -91,8 +92,7 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                 'name' => $validated['name'],
                 'business' => $validated['business'] ?: null,
                 'email' => $validated['email'],
-                'phone' => $validated['phone'] ?: null,
-                'location' => $showroom ? $showroom->city . ', ' . $showroom->country : null,
+                'phone' => $phone,
                 'message' => $validated['message'],
             ]),
         );
@@ -150,56 +150,43 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
         ],
     ];
 
-    $stats = [
-        ['icon' => 'chat-bubble-left-right', 'k' => 'Avg. first reply', 'v' => 'Under 2 hours'],
-        ['icon' => 'map-pin', 'k' => 'Showrooms', 'v' => '4 across East Africa'],
-        ['icon' => 'shield-check', 'k' => 'Service SLA', 'v' => '48-hour response'],
+    $features = [
+        ['icon' => 'truck', 'title' => 'Free Delivery', 'sub' => 'On qualifying orders'],
+        ['icon' => 'chat-bubble-left-right', 'title' => 'Expert Support', 'sub' => 'Talk to a specialist'],
+        ['icon' => 'wrench-screwdriver', 'title' => 'Installation', 'sub' => 'Professional setup'],
+        ['icon' => 'shield-check', 'title' => 'Warranty & Service', 'sub' => 'Genuine parts'],
+        ['icon' => 'lock-closed', 'title' => 'Secure Payment', 'sub' => '100% protected'],
     ];
 
-    $steps = [
-        ['t' => 'We read & route it', 'd' => 'Your enquiry reaches the right specialist — sales, service or projects.'],
-        ['t' => 'A specialist replies', 'd' => 'Usually within 2 working hours, by your preferred channel.'],
-        ['t' => 'We scope it together', 'd' => 'Sizing, quotes, a showroom visit or a site survey as needed.'],
-    ];
+    $mapLocations = $this->showrooms
+        ->map(
+            fn($s) => [
+                'id' => $s->id,
+                'lat' => $s->latitude,
+                'lng' => $s->longitude,
+                'city' => $s->city,
+                'isHq' => $s->is_hq,
+            ],
+        )
+        ->values();
+    $initialLocation = $this->showrooms->firstWhere('is_hq', true)?->id ?? $this->showrooms->first()?->id;
 @endphp
 
 <div class="page-fade">
 
-    {{-- ───────── Masthead ───────── --}}
-    <section class="border-b border-line bg-surface-sunken">
-        <div class="shell pt-4 pb-7 lg:pb-9">
-            <div class="max-w-3xl">
-                <flux:breadcrumbs class="mb-4">
-                    <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-                    <flux:breadcrumbs.item>Contact</flux:breadcrumbs.item>
-                </flux:breadcrumbs>
-                <h1 class="mt-3 font-serif text-4xl font-normal leading-[1.04] tracking-tight text-ink lg:text-5xl">
-                    Talk to a
-                    <span class="italic text-brand-500">specialist</span>.
-                </h1>
-                <p class="mt-4 text-[16px] leading-relaxed text-ink-2">
-                    From commercial kitchens and cold rooms to laundry and healthcare — sizing, power load,
-                    ventilation or installation, get it right before you commit. Reach our team by phone, WhatsApp
-                    or fill form below.
-                </p>
+    {{-- Leaflet/Google map styles + Alpine showroomMap component (used beside the
+         form and in the showrooms section below). --}}
+    @include('partials.storefront.showroom-map-scripts')
 
-                <div class="mt-6 flex flex-wrap gap-7">
-                    @foreach ($stats as $stat)
-                        <div class="flex items-center gap-3">
-                            <span
-                                class="flex size-9.5 shrink-0 items-center justify-center rounded-[10px] border border-line bg-surface text-brand-blue-600">
-                                <flux:icon :icon="$stat['icon']" variant="outline" class="size-4.5" />
-                            </span>
-                            <div>
-                                <div class="text-[11.5px] text-ink-3">{{ $stat['k'] }}</div>
-                                <div class="text-[14px] font-semibold text-ink">{{ $stat['v'] }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Contact</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
         </div>
-    </section>
+    </div>
 
     {{-- ───────── Channel cards (temporarily hidden) ───────── --}}
     {{--
@@ -229,11 +216,14 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
     --}}
 
     {{-- ───────── Form + sidebar ───────── --}}
-    <section class="shell pt-14 lg:pt-18">
-        <div class="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.5fr_0.85fr]">
+    <section class="shell pt-3 pb-12 lg:pb-14" x-data="showroomMap({ initial: {{ $initialLocation ?? 'null' }}, locations: {{ \Illuminate\Support\Js::from($mapLocations) }} })">
+        <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Contact us</h1>
+        <p class="mt-2 text-[14.5px] text-ink-3">Our team would love to hear from you!</p>
 
-            {{-- Form card --}}
-            <flux:card class="rounded-lg p-8">
+        <div class="mt-6 grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
+
+            {{-- Form --}}
+            <div>
                 @if ($sent)
                     <div class="py-5 text-center">
                         <div
@@ -260,11 +250,6 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                 @else
                     <x-recaptcha-livewire />
                     <form x-data @submit.prevent="__rcSubmit('contact', $wire)">
-                        <h2 class="font-serif text-[28px] text-ink">Send us a message</h2>
-                        <p class="mt-1.5 mb-6 text-[14px] text-ink-3">
-                            Tell us what you're working on. The more detail, the faster we can help.
-                        </p>
-
                         {{-- Inquiry type chips --}}
                         <div class="mb-5.5">
                             <span class="mb-2.5 block text-[13px] font-semibold text-ink-2">What's this about?</span>
@@ -295,18 +280,15 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                                     required />
                                 <flux:error name="email" />
                             </flux:field>
-                            <flux:input wire:model="phone" label="Phone" placeholder="+254 7…" />
-                        </div>
-
-                        <div class="mt-4.5">
-                            <flux:select wire:model="location" label="Nearest showroom">
-                                @foreach ($this->showrooms as $showroom)
-                                    <flux:select.option :value="$showroom->id">
-                                        {{ $showroom->city }},
-                                        {{ $showroom->country }}{{ $showroom->is_hq ? ' (HQ)' : '' }}
-                                    </flux:select.option>
-                                @endforeach
-                            </flux:select>
+                            <flux:field>
+                                <flux:label>Phone</flux:label>
+                                <flux:input.group>
+                                    <x-country-code-combobox wire:model="phone_country_code" />
+                                    <flux:input wire:model="phone_local" type="tel" placeholder="712 345 678"
+                                        autocomplete="tel" />
+                                </flux:input.group>
+                                <flux:error name="phone_local" />
+                            </flux:field>
                         </div>
 
                         <div class="mt-4.5">
@@ -333,170 +315,70 @@ new #[Layout('layouts::storefront')] #[Title('Contact & Showrooms')] class exten
                         <flux:error name="consent" />
 
                         <div class="mt-6 flex flex-wrap items-center gap-3.5">
-                            <flux:button type="submit" variant="primary" icon-trailing="send" class="px-6!">
+                            <flux:button type="submit" variant="customer-primary" size="customer-lg"
+                                icon-trailing="send" class="px-6!">
                                 <span wire:loading.remove wire:target="submit">Send message</span>
                                 <span wire:loading wire:target="submit">Sending…</span>
                             </flux:button>
-                            <span class="inline-flex items-center gap-1.5 text-[12.5px] text-ink-4">
-                                <flux:icon.shield-check variant="micro" class="size-3.5" /> We reply within 2 working
-                                hours
-                            </span>
                         </div>
                     </form>
                 @endif
-            </flux:card>
-
-            {{-- Sidebar --}}
-            <div class="flex flex-col gap-4.5">
-                <flux:card class="rounded-lg p-6">
-                    <div class="text-[11.5px] font-bold uppercase tracking-widest text-ink-3">What happens next</div>
-                    <div class="mt-4 flex flex-col gap-4">
-                        @foreach ($steps as $i => $step)
-                            <div class="flex gap-3.5">
-                                <span
-                                    class="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-surface-sunken font-serif text-[13px] font-bold text-brand-blue-600">{{ $i + 1 }}</span>
-                                <div>
-                                    <div class="text-[14px] font-semibold text-ink">{{ $step['t'] }}</div>
-                                    <div class="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">{{ $step['d'] }}
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </flux:card>
-
-                <div class="rounded-lg bg-brand-blue-700 p-6 text-[#e6ddc8]">
-                    <div class="text-[11.5px] font-bold uppercase tracking-widest text-[#d8c79d]">Head office hours
-                    </div>
-                    <div class="mt-3.5 flex flex-col gap-2.5 text-[13.5px]">
-                        @foreach ([['Mon – Fri', '8:00 – 17:00'], ['Saturday', '8:00 – 13:00'], ['Sunday', 'Closed']] as [$day, $time])
-                            <div class="flex justify-between text-[#c9bea4]">
-                                <span>{{ $day }}</span><span
-                                    class="font-medium text-[#f3eadd]">{{ $time }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div class="my-4 h-px bg-[#e6ddc8]/15"></div>
-                    <div class="text-[12.5px] leading-relaxed text-[#c9bea4]">
-                        All times East Africa (EAT, GMT+3). Emergency service line operates 24/7 for active contract
-                        holders.
-                    </div>
-                </div>
             </div>
+
+            {{-- Sidebar — showroom locations map, side by side with the form --}}
+            <flux:card class="overflow-hidden rounded-md p-0">
+                <div class="relative h-80 lg:h-full lg:min-h-110">
+                    <div x-ref="map" class="shf-map"></div>
+                </div>
+            </flux:card>
         </div>
     </section>
 
-    {{-- ───────── Showrooms ───────── --}}
-    @include('partials.storefront.showroom-map-scripts')
-    @php
-        $mapLocations = $this->showrooms
-            ->map(
-                fn($s) => [
-                    'id' => $s->id,
-                    'lat' => $s->latitude,
-                    'lng' => $s->longitude,
-                    'city' => $s->city,
-                    'isHq' => $s->is_hq,
-                ],
-            )
-            ->values();
-        $initialLocation = $this->showrooms->firstWhere('is_hq', true)?->id ?? $this->showrooms->first()?->id;
-    @endphp
-    <section class="shell pt-16 pb-20 lg:pt-22" x-data="showroomMap({ initial: {{ $initialLocation ?? 'null' }}, locations: {{ \Illuminate\Support\Js::from($mapLocations) }} })">
-        <div class="mb-6 flex flex-wrap items-end justify-between gap-5">
+    {{-- ───────── Showrooms directory ───────── --}}
+    <section class="shell pb-12 lg:pb-14">
+        <div class="grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-[0.85fr_2fr]">
+
+            {{-- Intro --}}
             <div>
-                <span class="text-[11.5px] font-bold uppercase tracking-[0.12em] text-brand-500">Walk in &amp; see it
-                    working</span>
-                <h2 class="mt-2.5 font-serif text-3xl font-normal text-ink lg:text-4xl">Visit Our Showrooms</h2>
-            </div>
-        </div>
-
-        <div
-            class="grid grid-cols-1 overflow-hidden rounded-lg border border-line bg-surface lg:min-h-110 lg:grid-cols-[1fr_1.15fr]">
-
-            <div class="relative min-h-72 overflow-hidden lg:min-h-110">
-                <div x-ref="map" class="shf-map"></div>
+                <h2 class="font-serif text-3xl font-normal text-ink lg:text-4xl">Visit Our Showrooms</h2>
+                <p class="mt-3 text-[15px] text-ink-3">Find us at these locations.</p>
             </div>
 
-            {{-- Detail --}}
-            <div class="flex flex-col p-8">
-                <div class="flex flex-wrap gap-1.5 border-b border-line pb-3.5">
-                    @foreach ($this->showrooms as $loc)
-                        <button type="button" @click="active = {{ $loc->id }}"
-                            class="inline-flex h-8.5 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] transition"
-                            :class="active === {{ $loc->id }} ? 'border-ink bg-ink text-white font-semibold' :
-                                'border-line bg-surface text-ink-2 font-medium hover:border-line-strong'">
+            {{-- Locations — two columns for the four showrooms --}}
+            <div class="grid grid-cols-1 gap-x-10 gap-y-9 sm:grid-cols-2">
+                @foreach ($this->showrooms as $loc)
+                    <div>
+                        <div class="flex items-center gap-2 text-[17px] font-bold text-ink">
                             {{ $loc->city }}
                             @if ($loc->is_hq)
-                                <span class="rounded-sm px-1.5 py-px text-[9px] tracking-[0.06em]"
-                                    :class="active === {{ $loc->id }} ? 'bg-brand-500 text-white' :
-                                        'bg-surface-sunken text-ink-3'">HQ</span>
+                                <span
+                                    class="rounded-sm bg-surface-sunken px-1.5 py-px text-[9px] font-bold tracking-[0.06em] text-brand-blue-600">HQ</span>
                             @endif
-                        </button>
-                    @endforeach
-                </div>
-
-                @foreach ($this->showrooms as $loc)
-                    <div class="mt-5 flex-1" x-show="active === {{ $loc->id }}" x-cloak>
-                        <div class="font-serif text-2xl text-ink">{{ $loc->address }}</div>
-                        <div class="mt-1.5 text-[13.5px] text-ink-3">
+                        </div>
+                        <div class="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
+                            {{ $loc->address }}<br>
                             {{ $loc->city }}, {{ $loc->country }}@if ($loc->pobox)
                                 · {{ $loc->pobox }}
                             @endif
                         </div>
-
-                        <div class="mt-5 grid grid-cols-1 gap-x-5 gap-y-3.5 sm:grid-cols-2">
-                            @php
-                                $rows = [
-                                    ['icon' => 'phone', 'label' => 'Phone', 'value' => $loc->phones[0] ?? null],
-                                    [
-                                        'icon' => 'chat-bubble-left-right',
-                                        'label' => 'WhatsApp',
-                                        'value' => $loc->whatsapp,
-                                    ],
-                                    ['icon' => 'envelope', 'label' => 'Email', 'value' => $loc->email],
-                                    ['icon' => 'clock', 'label' => 'Hours', 'value' => $loc->hours],
-                                ];
-                            @endphp
-                            @foreach ($rows as $row)
-                                @if ($row['value'])
-                                    <div class="flex items-start gap-3">
-                                        <span class="mt-0.5 text-brand-blue-600">
-                                            <flux:icon :icon="$row['icon']" variant="outline" class="size-4" />
-                                        </span>
-                                        <div>
-                                            <div class="text-[11.5px] text-ink-4">{{ $row['label'] }}</div>
-                                            <div class="text-[13.5px] font-medium text-ink">{{ $row['value'] }}</div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-
-                        @if ($loc->services)
-                            <div class="mt-5 flex flex-wrap gap-1.5">
-                                @foreach ($loc->services as $service)
-                                    <span
-                                        class="rounded-full bg-surface-sunken px-2.5 py-1 text-[11.5px] text-ink-2">{{ $service }}</span>
-                                @endforeach
-                            </div>
-                        @endif
                     </div>
                 @endforeach
-
-                <div class="mt-5.5 flex gap-2.5">
-                    @foreach ($this->showrooms as $loc)
-                        <template x-if="active === {{ $loc->id }}">
-                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($loc->address . ', ' . $loc->city . ', ' . $loc->country) }}"
-                                target="_blank" rel="noopener">
-                                <flux:button variant="primary" icon-trailing="move-up-right">Get directions
-                                </flux:button>
-                            </a>
-                        </template>
-                    @endforeach
-                    <flux:button :href="route('quote.request')" wire:navigate>Book a showroom visit</flux:button>
-                </div>
             </div>
+        </div>
+    </section>
+
+    {{-- ───────── Service highlights ───────── --}}
+    <section class="shell pb-12 lg:pb-14">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            @foreach ($features as $feature)
+                <div class="flex items-center gap-3.5 rounded-lg border border-line bg-surface px-5 py-5">
+                    <flux:icon :icon="$feature['icon']" variant="outline" class="size-8 shrink-0 text-brand-blue-600" />
+                    <div>
+                        <div class="text-[15px] font-bold text-ink">{{ $feature['title'] }}</div>
+                        <div class="mt-0.5 text-[12.5px] text-ink-3">{{ $feature['sub'] }}</div>
+                    </div>
+                </div>
+            @endforeach
         </div>
     </section>
 </div>

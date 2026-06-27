@@ -9,7 +9,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
-new #[Layout('layouts::app')] #[Title('Add Staff — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Add Staff | Admin')] class extends Component {
     public string $name = '';
     public string $email = '';
     public string $phone = '';

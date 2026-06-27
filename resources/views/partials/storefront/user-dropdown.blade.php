@@ -13,7 +13,10 @@
         </button>
     @endauth
 
-    <div popover="manual" class="w-75 max-w-[calc(100vw-1rem)] rounded-md border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
+    <div popover="manual" class="relative w-75 max-w-[calc(100vw-1rem)] rounded-md border border-zinc-200 bg-white shadow-lg focus:outline-hidden">
+        {{-- Pointer triangle linking the panel back to the account button it drops from. --}}
+        <div class="absolute -top-1.5 right-3.5 size-3 rotate-45 rounded-tl-[3px] border-t border-l border-zinc-200 bg-white"></div>
+
         @auth
             <div class="flex items-center gap-3 border-b border-zinc-200 px-4 py-4">
                 <span

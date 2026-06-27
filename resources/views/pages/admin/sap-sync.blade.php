@@ -15,7 +15,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::app')] #[Title('SAP Sync — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('SAP Sync | Admin')] class extends Component {
     use WithPagination;
 
     /** Orders stuck mid-sync longer than this are surfaced for attention. */

@@ -69,7 +69,7 @@ new #[Layout('layouts::app')] class extends Component {
 
     public function rendering($view): void
     {
-        $view->title($this->config()['label'].' Activity — Admin');
+        $view->title($this->config()['label'].' Activity | Admin');
     }
 }; ?>
 

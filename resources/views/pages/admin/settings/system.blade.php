@@ -12,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('System settings | Admin')] class extends Component
 {
     #[Url]
     public string $section = 'email';
@@ -114,7 +114,6 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     // ==================================================
     // SECURITY
     // ==================================================
-    public int $min_password_length = 8;
 
     public bool $require_two_factor = false;
 
@@ -186,7 +185,6 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
         $this->sap_api_key = $integrations->sap_api_key ?? '';
         $this->sap_webhook_secret = $integrations->sap_webhook_secret ?? '';
 
-        $this->min_password_length = $security->min_password_length;
         $this->require_two_factor = $security->require_two_factor;
         $this->session_lifetime = $security->session_lifetime;
         $this->max_concurrent_sessions = $security->max_concurrent_sessions;
@@ -400,14 +398,12 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
     public function saveSecurity(SecuritySettings $settings): void
     {
         $this->validate([
-            'min_password_length' => ['required', 'integer', 'min:6', 'max:64'],
             'session_lifetime' => ['required', 'integer', 'min:5', 'max:43200'],
             'max_concurrent_sessions' => ['required', 'integer', 'min:0', 'max:10'],
         ]);
 
         $settings
             ->fill([
-                'min_password_length' => (int) $this->min_password_length,
                 'require_two_factor' => $this->require_two_factor,
                 'session_lifetime' => (int) $this->session_lifetime,
                 'max_concurrent_sessions' => (int) $this->max_concurrent_sessions,
@@ -951,8 +947,6 @@ new #[Layout('layouts::app')] #[Title('System settings — Admin')] class extend
             </div>
 
             <form wire:submit="saveSecurity" class="space-y-5 p-6">
-                <flux:input wire:model="min_password_length" type="number" min="6" max="64"
-                    label="Minimum password length" />
                 <div class="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800">
                     <div>
                         <flux:label>Require two-factor authentication</flux:label>

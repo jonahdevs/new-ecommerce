@@ -6,7 +6,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('New Customer — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('New Customer | Admin')] class extends Component {
     public string $name = '';
     public string $email = '';
     public string $phone = '';

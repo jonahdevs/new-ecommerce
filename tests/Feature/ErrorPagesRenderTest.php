@@ -69,12 +69,16 @@ it('shows a custom 503 maintenance message when provided, otherwise a default', 
 
 it('wraps healthy-app errors in storefront chrome', function () {
     // Storefront context (default): the 404 keeps the navbar + footer so users
-    // can navigate away. "Request quote" is a storefront nav link.
+    // can navigate away. "Request quote" is a storefront nav link. The 500 page
+    // now adopts the same chrome so it renders in the layout the user is in
+    // (rather than a bare standalone page or a Livewire error modal).
     expect(renderError(404))->toContain('Request quote');
+    expect(renderError(500))->toContain('Request quote');
 });
 
-it('renders fatal errors standalone, without storefront chrome', function () {
-    expect(renderError(500))->not->toContain('Request quote');
+it('renders maintenance (503) standalone, without storefront chrome', function () {
+    // 503 stays standalone: during maintenance the DB-driven layouts may be down,
+    // so the error page must never touch them.
     expect(renderError(503))->not->toContain('Request quote');
 });
 

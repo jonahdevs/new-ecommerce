@@ -15,7 +15,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
-new #[Layout('layouts::app')] #[Title('Products — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Products | Admin')] class extends Component
 {
     use WithFileUploads, WithPagination;
 

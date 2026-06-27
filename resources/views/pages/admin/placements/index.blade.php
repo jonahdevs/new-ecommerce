@@ -9,7 +9,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Placements — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Placements | Admin')] class extends Component
 {
     /**
      * For each CategorySection case: total count + first 5 active category thumbnails.

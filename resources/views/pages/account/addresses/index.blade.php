@@ -243,7 +243,7 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
 
                 <div class="flex justify-end gap-3 pt-2">
                     <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel</flux:button>
-                    <flux:button type="button" variant="customer-primary" size="customer" icon:trailing="arrow-right" x-on:click="showDetails()">Next</flux:button>
+                    <flux:button type="button" variant="customer-primary" size="customer" icon:trailing="chevron-right" x-on:click="showDetails()">Next</flux:button>
                 </div>
             </div>
 
@@ -252,7 +252,7 @@ new #[Layout('layouts::account')] #[Title('Addresses')] class extends Component
                 @include('partials.storefront.address-fields')
 
                 <div class="flex justify-between gap-3 pt-2">
-                    <flux:button type="button" icon="arrow-left" x-on:click="showLocation()">Back</flux:button>
+                    <flux:button type="button" icon="chevron-left" x-on:click="showLocation()">Back</flux:button>
                     <flux:button type="submit" variant="customer-primary" size="customer">
                         {{ $editingId ? 'Save changes' : 'Add address' }}
                     </flux:button>

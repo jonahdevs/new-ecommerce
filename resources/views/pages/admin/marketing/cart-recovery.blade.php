@@ -9,7 +9,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::app')] #[Title('Cart recovery — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Cart recovery | Admin')] class extends Component {
     use WithPagination;
 
     public bool $enabled = true;

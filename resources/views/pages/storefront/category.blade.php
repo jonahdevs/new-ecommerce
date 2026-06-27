@@ -651,15 +651,18 @@ new #[Layout('layouts::storefront')] class extends Component
                 </div>
 
                 @if ($this->products->isEmpty())
-                    <div class="rounded-md bg-surface-sunken p-16 text-center">
+                    <div class="rounded-md p-16 text-center">
+                        <img src="{{ asset('images/empty-states/empty-list.svg') }}" alt=""
+                            class="mx-auto mb-6 h-40 w-auto" />
                         <div class="font-serif text-2xl text-ink">No products in this category yet</div>
                         <p class="mt-2 text-ink-3">Try removing filters, or browse the full catalog.</p>
                         <div class="mt-5 flex justify-center gap-2">
                             @if ($this->hasActiveFilters())
-                                <flux:button wire:click="clearFilters">Clear filters</flux:button>
+                                <flux:button variant="customer-outline" size="customer" wire:click="clearFilters">Clear
+                                    filters</flux:button>
                             @endif
-                            <flux:button variant="primary" href="{{ route('catalog') }}" wire:navigate>Browse all
-                                products</flux:button>
+                            <flux:button variant="customer-primary" size="customer" href="{{ route('catalog') }}"
+                                wire:navigate>Browse all products</flux:button>
                         </div>
                     </div>
                 @else

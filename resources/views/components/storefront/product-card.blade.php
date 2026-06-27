@@ -73,7 +73,7 @@
         {{-- Alpine holds each button's state locally so the colour flips instantly,
              even inside a wire:ignore carousel where Livewire can't re-render the card.
              It seeds from the server value and re-syncs from the slug-tagged events. --}}
-        <div class="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5">
+        <div class="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
             <flux:tooltip :content="$isWished ? 'Remove from wishlist' : 'Save to wishlist'" position="left">
                 <button type="button" wire:click="toggleWishlist('{{ $product->slug }}')"
                     x-data="{ wished: @js($isWished) }"
@@ -83,7 +83,7 @@
                     class="inline-flex size-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition"
                     :class="wished
                         ? 'border-brand-500 bg-brand-500 text-white'
-                        : 'border-zinc-200 bg-white/95 text-ink opacity-0 hover:bg-white group-hover:opacity-100'">
+                        : 'border-zinc-200 bg-white/95 text-ink hover:bg-white'">
                     <flux:icon.heart variant="micro" class="size-4" />
                 </button>
             </flux:tooltip>
@@ -97,7 +97,7 @@
                     class="inline-flex size-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition"
                     :class="compared
                         ? 'border-brand-blue-500 bg-brand-blue-500 text-white'
-                        : 'border-zinc-200 bg-white/95 text-ink opacity-0 hover:bg-white group-hover:opacity-100'">
+                        : 'border-zinc-200 bg-white/95 text-ink hover:bg-white'">
                     <flux:icon.scale variant="micro" class="size-4" />
                 </button>
             </flux:tooltip>

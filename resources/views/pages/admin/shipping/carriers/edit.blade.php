@@ -16,7 +16,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Configure Carrier — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Configure Carrier | Admin')] class extends Component {
     #[Locked]
     public ShippingCarrier $shippingCarrier;
 

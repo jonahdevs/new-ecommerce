@@ -167,10 +167,10 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        // Minimum password length is admin-configurable. The closure runs at
-        // validation time (not boot), so it reads the current setting safely.
+        // Global password policy. Minimum length is fixed here (not admin-configurable);
+        // production additionally enforces complexity and breach checks.
         Password::defaults(function (): Password {
-            $rule = Password::min(app(SecuritySettings::class)->min_password_length);
+            $rule = Password::min(8);
 
             return app()->isProduction()
                 ? $rule->mixedCase()->letters()->numbers()->symbols()->uncompromised()

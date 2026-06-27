@@ -8,7 +8,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Carriers — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Carriers | Admin')] class extends Component
 {
     #[Url(as: 'q')]
     public string $search = '';

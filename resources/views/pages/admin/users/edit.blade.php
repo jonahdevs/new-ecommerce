@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
-new #[Layout('layouts::app')] #[Title('Edit User — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Edit User | Admin')] class extends Component {
     public User $user;
 
     public string $name = '';

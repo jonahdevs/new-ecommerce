@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\CategoryStatus;
+use App\Enums\ProductLinkType;
+use App\Enums\ProductStatus;
 use App\Enums\ProductVisibility;
 use App\Enums\StockStatus;
 use App\Models\Attribute;
@@ -11,6 +13,7 @@ use App\Models\Category;
 use App\Models\GroupedProductItem;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\ProductLink;
 use App\Models\ProductVariant;
 use App\Settings\QuotationSettings;
 use App\Support\StorefrontSession;
@@ -61,6 +64,40 @@ it('opens a modal listing real bundle components and adds the bundle as one SKU'
         ->assertSet('showBundleModal', false);
 
     expect(StorefrontSession::cart())->toBe(['wok-bundle' => 1]);
+});
+
+it('only ever lists published, catalog-visible accessories — including after a Livewire update', function () {
+    $product = makeProduct(['slug' => 'oven-with-trays']);
+
+    $visibleAccessory = makeProduct([
+        'name' => 'Baking Tray', 'slug' => 'baking-tray', 'price' => 5000,
+        'status' => ProductStatus::PUBLISHED->value,
+    ]);
+    $hiddenAccessory = makeProduct([
+        'name' => 'Draft Tray', 'slug' => 'draft-tray', 'price' => 5000,
+        'status' => ProductStatus::DRAFT->value,
+    ]);
+
+    foreach ([$visibleAccessory, $hiddenAccessory] as $accessory) {
+        ProductLink::create([
+            'product_id' => $product->id,
+            'linked_product_id' => $accessory->id,
+            'type' => ProductLinkType::ACCESSORY,
+            'sort_order' => 0,
+        ]);
+    }
+
+    $component = Livewire::test('pages::storefront.product', ['product' => $product]);
+
+    $idsNow = fn () => $component->instance()->filteredAccessories->pluck('id')->all();
+
+    // Initial render: the draft accessory is filtered out.
+    expect($idsNow())->toBe([$visibleAccessory->id]);
+
+    // After a Livewire round-trip (e.g. clicking a tab) the model is re-fetched —
+    // the unpublished accessory must STILL be excluded, not surface unfiltered.
+    $component->set('activeTab', 'specs');
+    expect($idsNow())->toBe([$visibleAccessory->id]);
 });
 
 it('opens a modal for grouped products and adds the chosen children', function () {

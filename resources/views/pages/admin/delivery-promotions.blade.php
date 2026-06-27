@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Delivery promotions — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Delivery promotions | Admin')] class extends Component
 {
     // ==================================================
     // SEARCH & FILTER

@@ -107,13 +107,17 @@ new #[Layout('layouts::storefront')] #[Title('Cart')] class extends Component
 @endphp
 
 <div class="page-fade">
-    <div class="shell pt-4 pb-20">
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Cart</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>Cart</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
-
+    <div class="shell pt-3 pb-20">
         {{-- Page header --}}
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Cart</h1>

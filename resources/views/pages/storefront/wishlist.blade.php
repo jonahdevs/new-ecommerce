@@ -73,25 +73,20 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
 @endphp
 
 <div class="page-fade">
-    <div class="shell pt-4 pb-20">
-        {{-- Breadcrumb --}}
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>Wishlist</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Wishlist</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
+    <div class="shell pt-3 pb-20">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Wishlist</h1>
-                <p class="mt-2 text-[14.5px] text-ink-3">
-                    @if ($this->products->isEmpty())
-                        Nothing saved yet — tap the heart on any product.
-                    @else
-                        {{ $this->products->count() }}
-                        {{ \Illuminate\Support\Str::plural('item', $this->products->count()) }} ·
-                        Estimated total {!! money($totalCents) !!}
-                    @endif
-                </p>
             </div>
 
             @if ($this->products->isNotEmpty())
@@ -155,8 +150,8 @@ new #[Layout('layouts::storefront')] #[Title('Wishlist')] class extends Componen
                 <div class="mb-4 flex items-baseline justify-between">
                     <h2 class="text-[22px] font-semibold tracking-tight">You might also want</h2>
                     <a href="{{ route('catalog') }}" wire:navigate
-                        class="inline-flex items-center gap-1 text-[13px] text-zinc-600 hover:text-zinc-900">
-                        Browse all <flux:icon.arrow-right variant="micro" class="size-3.5" />
+                        class="text-[13px] font-medium text-brand-500 underline transition-colors hover:text-brand-600">
+                        View all
                     </a>
                 </div>
 

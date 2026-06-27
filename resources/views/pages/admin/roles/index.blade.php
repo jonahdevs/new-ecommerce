@@ -12,7 +12,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
-new #[Layout('layouts::app')] #[Title('Roles — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Roles | Admin')] class extends Component {
     use WithPagination;
 
     private const PROTECTED_ROLES = PermissionSeeder::PROTECTED_ROLES;

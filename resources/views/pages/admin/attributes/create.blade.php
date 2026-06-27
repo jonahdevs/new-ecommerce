@@ -9,7 +9,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('New Attribute — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('New Attribute | Admin')] class extends Component {
     public string $name = '';
     public string $slug = '';
     public string $type = 'select';

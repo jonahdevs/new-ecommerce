@@ -2,8 +2,7 @@
 
 use App\Enums\QuoteStatus;
 use App\Events\QuoteRequestSubmitted;
-use App\Models\Address;
-use App\Models\DeliveryZone;
+use App\Livewire\Concerns\InteractsWithAddressBook;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Quote;
@@ -28,6 +27,8 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends Component {
+    use InteractsWithAddressBook;
+
     /** @var array<string, int> */
     public array $items = [];
 
@@ -46,30 +47,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     // ==================================================
     // ADDRESS (AUTHENTICATED USERS, DELIVERY ONLY)
     // ==================================================
-    public ?int $selectedAddressId = null;
-
-    public bool $showAddressModal = false;
-
-    public string $addressModalMode = 'select';
-
-    public string $label = 'Home';
-
-    public string $name = '';
-
-    public string $phone = '';
-
-    public string $alternative_phone = '';
-
-    public string $line1 = '';
-
-    public string $delivery_instructions = '';
-
-    public bool $is_default = false;
-
-    public ?float $latitude = null;
-
-    public ?float $longitude = null;
-
+    // Address modal state lives in InteractsWithAddressBook.
     public string $contact_name = '';
 
     public string $contact_email = '';
@@ -249,109 +227,8 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
         }
     }
 
-    #[Computed]
-    public function addresses()
-    {
-        if (auth()->guest()) {
-            return collect();
-        }
-
-        return auth()->user()->addresses()->orderByDesc('is_default')->orderBy('created_at')->get();
-    }
-
-    #[Computed]
-    public function selectedAddress(): ?Address
-    {
-        if (!$this->selectedAddressId) {
-            return null;
-        }
-
-        return $this->addresses->firstWhere('id', $this->selectedAddressId);
-    }
-
-    #[Computed]
-    public function pinnedZone(): ?DeliveryZone
-    {
-        return app(DeliveryResolver::class)->resolveZone($this->latitude, $this->longitude);
-    }
-
-    public function addressRules(): array
-    {
-        return [
-            'label' => ['required', 'string', 'max:50'],
-            'name' => ['required', 'string', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'alternative_phone' => ['nullable', 'string', 'max:30'],
-            'line1' => ['required', 'string', 'max:255'],
-            'delivery_instructions' => ['nullable', 'string', 'max:500'],
-            'is_default' => ['boolean'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-        ];
-    }
-
-    public function openAddressModal(string $mode = 'select'): void
-    {
-        $this->resetValidation();
-
-        if ($mode === 'create' || $this->addresses->isEmpty()) {
-            $this->prepareAddressForm();
-            $this->addressModalMode = 'create';
-        } else {
-            $this->addressModalMode = 'select';
-        }
-
-        $this->showAddressModal = true;
-    }
-
-    public function startAddressCreate(): void
-    {
-        $this->resetValidation();
-        $this->prepareAddressForm();
-        $this->addressModalMode = 'create';
-    }
-
-    private function prepareAddressForm(): void
-    {
-        $this->reset(['label', 'name', 'phone', 'alternative_phone', 'line1', 'delivery_instructions', 'is_default', 'latitude', 'longitude']);
-        $this->label = 'Home';
-    }
-
-    public function selectAddress(int $id): void
-    {
-        if ($this->addresses->contains('id', $id)) {
-            $this->selectedAddressId = $id;
-            unset($this->selectedAddress);
-        }
-
-        $this->showAddressModal = false;
-    }
-
-    public function saveAddress(): void
-    {
-        $data = $this->validate($this->addressRules());
-
-        if ($data['is_default']) {
-            auth()
-                ->user()
-                ->addresses()
-                ->update(['is_default' => false]);
-        }
-
-        if (auth()->user()->addresses()->count() === 0) {
-            $data['is_default'] = true;
-        }
-
-        $data['delivery_zone_id'] = app(DeliveryResolver::class)->resolveZone($data['latitude'] ?? null, $data['longitude'] ?? null)?->id;
-
-        $address = auth()->user()->addresses()->create($data);
-
-        $this->selectedAddressId = $address->id;
-        $this->showAddressModal = false;
-        unset($this->addresses, $this->selectedAddress);
-
-        Flux::toast(heading: 'Address added', text: 'Your delivery address has been saved.', variant: 'success');
-    }
+    // Delivery-address modal: state, computeds, and persistence live in the
+    // InteractsWithAddressBook trait.
 
     public function submit(): void
     {
@@ -441,20 +318,20 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
 
 
 <div class="page-fade">
-    <div class="shell pt-4 pb-20">
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Request a quote</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
-        <flux:breadcrumbs class="mb-4">
-            <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>Request a quote</flux:breadcrumbs.item>
-        </flux:breadcrumbs>
-
+    <div class="shell pt-3 pb-20">
         {{-- Page header --}}
         <div class="max-w-2xl">
             <h1 class="text-3xl font-semibold tracking-tight">Request a quote</h1>
-            <p class="mt-2 text-ink-3">
-                Fitting out a commercial kitchen, cold room, laundry or healthcare facility? Tell us what you need and
-                our team will prepare a formal quotation. Add products on the right, or just describe your requirements.
-            </p>
         </div>
 
         <x-recaptcha-livewire />
@@ -803,72 +680,7 @@ new #[Layout('layouts::storefront')] #[Title('Request a quote')] class extends C
     @auth
         <div x-data="addressMap()"
             x-effect="($wire.showAddressModal && $wire.addressModalMode === 'create') ? open() : close()">
-            <flux:modal wire:model.self="showAddressModal" class="md:w-[640px] md:max-w-none" :dismissible="false">
-                @if ($addressModalMode === 'select')
-                    <flux:heading class="uppercase tracking-wide">Choose a delivery address</flux:heading>
-                    <flux:subheading>Select where you'd like this order delivered.</flux:subheading>
-
-                    <div class="mt-5 space-y-3">
-                        @foreach ($this->addresses as $address)
-                            <button type="button" wire:key="modal-addr-{{ $address->id }}"
-                                wire:click="selectAddress({{ $address->id }})"
-                                class="block w-full rounded-md border p-4 text-left transition {{ $this->selectedAddressId === $address->id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-zinc-200 hover:border-zinc-300' }}">
-                                <div class="flex items-center justify-between">
-                                    <span
-                                        class="text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{{ $address->label }}</span>
-                                    @if ($address->is_default)
-                                        <span
-                                            class="rounded-full bg-brand-500/10 px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-brand-500 uppercase">Default</span>
-                                    @endif
-                                </div>
-                                <div class="mt-1 text-[13.5px] font-semibold text-ink">{{ $address->fullName() }}</div>
-                                <div class="mt-1 text-[12.5px] leading-relaxed text-ink-2">{{ $address->oneLiner() }}
-                                </div>
-                            </button>
-                        @endforeach
-                    </div>
-
-                    <div class="mt-5 flex items-center justify-between gap-3">
-                        <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">Cancel
-                        </flux:button>
-                        <flux:button type="button" variant="customer-outline" size="customer" icon="plus"
-                            wire:click="startAddressCreate">Add new address</flux:button>
-                    </div>
-                @else
-                    <flux:heading class="uppercase tracking-wide">New address</flux:heading>
-                    <flux:subheading>
-                        <span x-show="step === 1">Pin where you'd like this order delivered.</span>
-                        <span x-show="step === 2" x-cloak>Now fill in the delivery address details.</span>
-                    </flux:subheading>
-
-                    <form wire:submit="saveAddress" class="mt-6">
-                        <div x-show="step === 1" class="space-y-3">
-                            @include('partials.storefront.address-map-pin')
-                            <div class="flex justify-end gap-3 pt-2">
-                                @if ($this->addresses->isNotEmpty())
-                                    <flux:button type="button" icon="arrow-left"
-                                        wire:click="$set('addressModalMode', 'select')">Back</flux:button>
-                                @else
-                                    <flux:button type="button" variant="ghost" x-on:click="$flux.modals().close()">
-                                        Cancel</flux:button>
-                                @endif
-                                <flux:button type="button" variant="customer-primary" size="customer"
-                                    icon:trailing="arrow-right" x-on:click="showDetails()">Next</flux:button>
-                            </div>
-                        </div>
-
-                        <div x-show="step === 2" x-cloak class="space-y-4">
-                            @include('partials.storefront.address-fields')
-                            <div class="flex justify-between gap-3 pt-2">
-                                <flux:button type="button" icon="arrow-left"
-                                    x-on:click="showLocation()">Back</flux:button>
-                                <flux:button type="submit" variant="customer-primary" size="customer">Add address
-                                </flux:button>
-                            </div>
-                        </div>
-                    </form>
-                @endif
-            </flux:modal>
+            @include('partials.storefront.address-modal')
         </div>
     @endauth
 </div>

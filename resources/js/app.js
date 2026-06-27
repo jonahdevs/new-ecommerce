@@ -5,6 +5,7 @@
  */
 
 import './echo';
+import './livewire-errors';
 import L from 'leaflet';
 window.L = L;
 

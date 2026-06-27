@@ -58,7 +58,7 @@
                 </button>
 
                 <a href="{{ route('home') }}" class="order-2 flex shrink-0 items-center lg:order-1" wire:navigate aria-label="{{ $storeName }} — Home">
-                    <img src="{{ $headerLogo }}" alt="{{ $storeName }}" class="h-9 w-auto sm:h-10" />
+                    <img src="{{ $headerLogo }}" alt="{{ $storeName }}" class="h-10 w-auto sm:h-12" />
                 </a>
 
                 {{-- Search — desktop only (inline flex-1); mobile opens a full-screen overlay
@@ -236,7 +236,7 @@
     <div class="sticky z-30 bg-[#f7d000] text-center" style="top: var(--sticky-header-h, 108px)">
         <div class="h-1" style="background-image: repeating-linear-gradient(-45deg, #1a1a1a 0, #1a1a1a 6px, #f7d000 6px, #f7d000 12px);"></div>
         <p class="px-4 py-2 text-[13px] font-bold leading-snug tracking-wide text-zinc-900">
-            This is a demo site — products, pricing and content are for demonstration purposes only.
+            This is a demo site - products, pricing and content are for demonstration purposes only.
         </p>
         <div class="h-1" style="background-image: repeating-linear-gradient(-45deg, #1a1a1a 0, #1a1a1a 6px, #f7d000 6px, #f7d000 12px);"></div>
     </div>

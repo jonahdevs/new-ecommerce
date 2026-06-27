@@ -11,9 +11,6 @@
 @if($phone)
 | **Phone** | {{ $phone }} |
 @endif
-@if($location)
-| **Nearest showroom** | {{ $location }} |
-@endif
 </x-mail::table>
 
 <x-mail::panel>

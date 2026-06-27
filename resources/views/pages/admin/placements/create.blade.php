@@ -12,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Add Placement — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Add Placement | Admin')] class extends Component
 {
     #[Url]
     public string $location = '';

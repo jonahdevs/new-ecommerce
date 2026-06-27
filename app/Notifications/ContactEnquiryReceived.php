@@ -17,7 +17,7 @@ class ContactEnquiryReceived extends Notification implements ShouldQueue
     use Queueable;
 
     /**
-     * @param  array{reference: string, inquiry: string, name: string, business: ?string, email: string, phone: ?string, location: ?string, message: string}  $enquiry
+     * @param  array{reference: string, inquiry: string, name: string, business: ?string, email: string, phone: ?string, message: string}  $enquiry
      */
     public function __construct(public array $enquiry) {}
 
@@ -43,7 +43,6 @@ class ContactEnquiryReceived extends Notification implements ShouldQueue
                 'business' => $enquiry['business'] ?? null,
                 'email' => $enquiry['email'],
                 'phone' => $enquiry['phone'] ?? null,
-                'location' => $enquiry['location'] ?? null,
                 'message' => $enquiry['message'],
             ]);
     }

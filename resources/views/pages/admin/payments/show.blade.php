@@ -9,7 +9,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Payment — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Payment | Admin')] class extends Component {
     #[Locked]
     public Payment $payment;
 

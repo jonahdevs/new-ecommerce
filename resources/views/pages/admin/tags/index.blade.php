@@ -10,7 +10,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Tags\Tag;
 
-new #[Layout('layouts::app')] #[Title('Tags — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Tags | Admin')] class extends Component {
     use WithPagination;
 
     #[Url(as: 'q')]

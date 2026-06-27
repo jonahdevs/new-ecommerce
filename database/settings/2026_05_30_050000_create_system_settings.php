@@ -42,7 +42,6 @@ return new class extends SettingsMigration
         // ==================================================
         // SECURITY
         // ==================================================
-        $this->migrator->add('security.min_password_length', 8);
         $this->migrator->add('security.require_two_factor', false);
         $this->migrator->add('security.session_lifetime', (int) config('session.lifetime', 120));
         $this->migrator->add('security.max_concurrent_sessions', 1);

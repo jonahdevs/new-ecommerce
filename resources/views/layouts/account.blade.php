@@ -1,7 +1,12 @@
 <x-layouts::storefront :title="$title ?? null">
-    <div class="shell pt-4 pb-10">
-        @stack('breadcrumbs')
-        <div class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            @stack('breadcrumbs')
+        </div>
+    </div>
+    <div class="shell pt-6 pb-10">
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
 
             {{-- Sidebar --}}
             <aside class="w-full shrink-0 lg:w-64">
@@ -19,7 +24,7 @@
                         <flux:navlist>
 
                             <flux:navlist.item icon="home" :href="route('account.dashboard')" :current="request()->routeIs('account.dashboard')" wire:navigate>
-                                Dashboard
+                                Account
                             </flux:navlist.item>
                             <flux:navlist.item icon="shopping-bag" :href="route('account.orders.index')" :current="request()->routeIs('account.orders.*')" wire:navigate>
                                 Orders

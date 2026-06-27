@@ -19,7 +19,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
 
-new #[Layout('layouts::app')] #[Title('Dashboard — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Dashboard | Admin')] class extends Component {
     /** Order statuses that represent a confirmed (paid) sale. */
     private const PAID_STATUSES = [OrderStatus::PROCESSING->value, OrderStatus::OUT_FOR_DELIVERY->value, OrderStatus::COMPLETED->value];
 

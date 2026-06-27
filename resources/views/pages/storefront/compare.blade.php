@@ -96,12 +96,18 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
     $emptySlots = max(0, 4 - $this->products->count());
 @endphp
 
-<div class="shell page-fade pt-4 pb-20">
-    <flux:breadcrumbs class="mb-4">
-        <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-        <flux:breadcrumbs.item>Compare</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+<div class="page-fade">
+    {{-- Breadcrumb --}}
+    <div class="bg-surface-sunken">
+        <div class="shell py-3">
+            <flux:breadcrumbs>
+                <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
+                <flux:breadcrumbs.item>Compare</flux:breadcrumbs.item>
+            </flux:breadcrumbs>
+        </div>
+    </div>
 
+    <div class="shell pt-3 pb-20">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Side by side.</h1>
@@ -135,21 +141,13 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                 <thead>
                     <tr>
                         {{-- Sticky header corner --}}
-                        <th class="sticky left-0 z-10 w-36 border-b border-zinc-200 bg-zinc-50 px-4 py-4 text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase lg:w-50">
+                        <th class="sticky left-0 z-10 w-36 border-b border-zinc-200 bg-white px-4 py-4 text-center text-[11.5px] font-bold tracking-[0.08em] text-ink-2 uppercase lg:w-50">
                             Product
                         </th>
 
                         @foreach ($this->products as $product)
-                            @php
-                                $price = $product->sale_price ?? $product->price;
-                            @endphp
                             <th wire:key="head-{{ $product->slug }}"
-                                class="relative border-b border-zinc-200 bg-white p-4 align-top">
-                                <button type="button" wire:click="remove('{{ $product->slug }}')" aria-label="Remove from compare"
-                                    class="absolute top-3 right-3 inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 transition hover:bg-surface-sunken hover:text-ink">
-                                    <flux:icon.x-mark variant="micro" class="size-4" />
-                                </button>
-
+                                class="border-b border-l border-zinc-200 bg-white p-4 align-top">
                                 {{-- Product image --}}
                                 <a href="{{ route('product.show', $product) }}" wire:navigate
                                     class="mx-auto block h-32 w-32 lg:h-44 lg:w-44">
@@ -162,28 +160,15 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                                     @endif
                                 </a>
 
-                                @if ($product->brand)
-                                    <div class="mt-3 text-[11.5px] font-semibold tracking-[0.06em] text-brand-blue-500 uppercase">
-                                        {{ $product->brand->name }}
-                                    </div>
-                                @endif
                                 <a href="{{ route('product.show', $product) }}" wire:navigate
-                                    class="mt-1 block font-serif text-lg leading-snug text-ink hover:underline">
+                                    class="mt-3 block text-center font-serif text-lg leading-snug text-ink hover:underline">
                                     {{ $product->name }}
                                 </a>
-                                <div class="mt-2 font-serif text-xl tabular-nums">
-                                    {!! $price ? money($price) : '<span class="text-ink-3 text-sm">Quote on request</span>' !!}
-                                </div>
-
-                                <flux:button variant="primary" size="sm" class="mt-3! w-full!"
-                                    wire:click="addToCart('{{ $product->slug }}')">
-                                    Add to cart
-                                </flux:button>
                             </th>
                         @endforeach
 
                         @for ($i = 0; $i < $emptySlots; $i++)
-                            <th class="hidden border-b border-zinc-200 bg-white p-4 align-top lg:table-cell">
+                            <th class="hidden border-b border-l border-zinc-200 bg-white p-4 align-top lg:table-cell">
                                 <a href="{{ route('catalog') }}" wire:navigate
                                     class="mx-auto flex h-44 w-44 flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-zinc-300 text-ink-3 transition hover:border-ink-3 hover:text-ink">
                                     <flux:icon.plus variant="micro" class="size-5" />
@@ -195,10 +180,15 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                 </thead>
 
                 <tbody class="[&_tr:last-child>td]:border-b-0">
-                    {{-- Section: Key facts --}}
-                    @include('partials.storefront.compare-section', [
-                        'title' => 'Key facts',
-                        'cols' => 5,
+                    @include('partials.storefront.compare-row', [
+                        'label' => 'Brand',
+                        'cells' => $this->products->map(fn ($p) => $p->brand?->name ?? '—'),
+                        'emptyCount' => $emptySlots,
+                    ])
+                    @include('partials.storefront.compare-row', [
+                        'label' => 'Price',
+                        'cells' => $this->products->map(fn ($p) => ($price = $p->sale_price ?? $p->price) ? money($price) : 'Quote on request'),
+                        'emptyCount' => $emptySlots,
                     ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'SKU',
@@ -221,11 +211,6 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                         'emptyCount' => $emptySlots,
                     ])
 
-                    {{-- Section: Dimensions & weight --}}
-                    @include('partials.storefront.compare-section', [
-                        'title' => 'Dimensions & weight',
-                        'cols' => 5,
-                    ])
                     @include('partials.storefront.compare-row', [
                         'label' => 'Weight',
                         'cells' => $this->products->map(fn ($p) => $p->weight ? rtrim(rtrim((string) $p->weight, '0'), '.').' '.($p->weight_unit ?? 'kg') : '—'),
@@ -237,12 +222,7 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                         'emptyCount' => $emptySlots,
                     ])
 
-                    {{-- Section: Detailed specs --}}
                     @if (count($this->specLabels) > 0)
-                        @include('partials.storefront.compare-section', [
-                            'title' => 'Detailed specs',
-                            'cols' => 5,
-                        ])
                         @foreach ($this->specLabels as $label)
                             @include('partials.storefront.compare-row', [
                                 'label' => $label,
@@ -251,10 +231,43 @@ new #[Layout('layouts::storefront')] #[Title('Compare')] class extends Component
                             ])
                         @endforeach
                     @endif
+
+                    {{-- Actions: add to cart, then remove --}}
+                    <tr>
+                        <td class="sticky left-0 z-10 w-36 border-b border-zinc-200 bg-white px-4 py-3 text-center align-top text-[13px] font-semibold text-ink-2 lg:w-50">
+                            Buy Now
+                        </td>
+                        @foreach ($this->products as $product)
+                            <td wire:key="cart-{{ $product->slug }}" class="border-b border-l border-zinc-200 px-4 py-3 text-center align-top">
+                                <flux:button variant="primary" size="sm"
+                                    wire:click="addToCart('{{ $product->slug }}')">
+                                    Add to cart
+                                </flux:button>
+                            </td>
+                        @endforeach
+                        @for ($i = 0; $i < $emptySlots; $i++)
+                            <td class="hidden border-b border-l border-zinc-200 px-4 py-3 lg:table-cell"></td>
+                        @endfor
+                    </tr>
+                    <tr>
+                        <td class="sticky left-0 z-10 w-36 bg-white px-4 py-3 text-center align-top text-[13px] font-semibold text-ink-2 lg:w-50">
+                            Remove
+                        </td>
+                        @foreach ($this->products as $product)
+                            <td wire:key="remove-{{ $product->slug }}" class="border-l border-zinc-200 px-4 py-3 text-center align-top">
+                                <flux:button variant="ghost" size="sm" icon="trash-2"
+                                    wire:click="remove('{{ $product->slug }}')" aria-label="Remove from compare" />
+                            </td>
+                        @endforeach
+                        @for ($i = 0; $i < $emptySlots; $i++)
+                            <td class="hidden border-l border-zinc-200 px-4 py-3 lg:table-cell"></td>
+                        @endfor
+                    </tr>
                 </tbody>
             </table>
         </div>
     @endif
 
     @include('partials.storefront.accessory-modal')
+    </div>
 </div>

@@ -15,8 +15,8 @@ beforeEach(function () {
 it('renders the contact page with its sections', function () {
     $this->get(route('contact'))
         ->assertOk()
-        ->assertSee('Talk to a')
-        ->assertSee('Send us a message')
+        ->assertSee('Contact us')
+        ->assertSee('Our team would love to hear from you!')
         ->assertSee('Visit Our Showrooms');
 });
 
@@ -36,13 +36,6 @@ it('renders the showroom map and honours the configured provider', function () {
     $this->get(route('contact'))
         ->assertOk()
         ->assertSee('showroomMap', false);
-});
-
-it('defaults the nearest-showroom selection to the HQ', function () {
-    $hq = Showroom::query()->where('is_hq', true)->first();
-
-    Livewire::test('pages::storefront.contact')
-        ->assertSet('location', $hq->id);
 });
 
 it('prefills the inquiry type from the query string', function () {
@@ -67,6 +60,24 @@ it('emails the contact inbox on a valid submission', function () {
         ContactEnquiryReceived::class,
         fn ($notification) => $notification->enquiry['name'] === 'Jane Mwangi'
             && $notification->enquiry['email'] === 'jane@example.com'
+    );
+});
+
+it('assembles the phone from the country code and local number', function () {
+    Livewire::test('pages::storefront.contact')
+        ->set('name', 'Jane Mwangi')
+        ->set('email', 'jane@example.com')
+        ->set('message', 'Need a combi oven quote.')
+        ->set('phone_country_code', '+254')
+        ->set('phone_local', '0712 345 678')
+        ->set('consent', true)
+        ->call('submit')
+        ->assertHasNoErrors()
+        ->assertSet('sent', true);
+
+    Notification::assertSentOnDemand(
+        ContactEnquiryReceived::class,
+        fn ($notification) => $notification->enquiry['phone'] === '+254712 345 678'
     );
 });
 

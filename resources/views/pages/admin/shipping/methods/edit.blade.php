@@ -10,7 +10,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::app')] #[Title('Edit Shipping Method — Admin')] class extends Component {
+new #[Layout('layouts::app')] #[Title('Edit Shipping Method | Admin')] class extends Component {
     #[Locked]
     public ShippingMethod $shippingMethod;
 

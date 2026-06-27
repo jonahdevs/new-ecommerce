@@ -62,36 +62,14 @@ new #[Layout('layouts::account')] #[Title('My Account')] class extends Component
     }
 }; ?>
 
-@php
-    $firstName  = str(auth()->user()->name)->before(' ');
-    $hour       = now()->hour;
-    $salutation = match(true) {
-        $hour < 12 => 'Good morning',
-        $hour < 17 => 'Good afternoon',
-        default    => 'Good evening',
-    };
-    $subtitle = match(true) {
-        $this->pendingQuotesCount > 0 => "You have {$this->pendingQuotesCount} " . str('quote')->plural($this->pendingQuotesCount) . " awaiting your approval.",
-        $this->openOrdersCount > 0    => "You have {$this->openOrdersCount} " . str('order')->plural($this->openOrdersCount) . " currently in progress.",
-        $this->pendingReviewsCount > 0 => "You have {$this->pendingReviewsCount} " . str('product')->plural($this->pendingReviewsCount) . " waiting for your review.",
-        default                        => 'Your account is all up to date.',
-    };
-@endphp
-
 <div class="page-fade space-y-8">
 
     @push('breadcrumbs')
         <flux:breadcrumbs>
             <flux:breadcrumbs.item :href="route('home')" wire:navigate>Home</flux:breadcrumbs.item>
-            <flux:breadcrumbs.item>Dashboard</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>Account</flux:breadcrumbs.item>
         </flux:breadcrumbs>
     @endpush
-
-    {{-- Header --}}
-    <div>
-        <flux:heading size="xl">{{ $salutation }}, {{ $firstName }}.</flux:heading>
-        <flux:text class="mt-1">{{ $subtitle }}</flux:text>
-    </div>
 
     {{-- KPIs --}}
     @php

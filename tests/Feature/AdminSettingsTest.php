@@ -54,12 +54,15 @@ test('admin can save business info including branding', function () {
     Livewire::test('pages::admin.settings.website')
         ->set('legal_name', 'Acme Trading Ltd')
         ->set('contact_email', 'test@example.com')
+        ->set('contact_phone_country_code', '+254')
+        ->set('contact_phone_local', '0712 345 678')
         ->set('store_name', 'Acme Store')
         ->call('saveBusiness')
         ->assertHasNoErrors();
 
     expect(app(BusinessSettings::class)->legal_name)->toBe('Acme Trading Ltd')
         ->and(app(BusinessSettings::class)->contact_email)->toBe('test@example.com')
+        ->and(app(BusinessSettings::class)->contact_phone)->toBe('+254712 345 678')
         ->and(app(BrandingSettings::class)->store_name)->toBe('Acme Store');
 });
 
@@ -274,13 +277,11 @@ test('admin can save security settings', function () {
     $this->actingAs($this->admin);
 
     Livewire::test('pages::admin.settings.system')
-        ->set('min_password_length', 12)
         ->set('require_two_factor', true)
         ->call('saveSecurity')
         ->assertHasNoErrors();
 
-    expect(app(SecuritySettings::class)->min_password_length)->toBe(12)
-        ->and(app(SecuritySettings::class)->require_two_factor)->toBeTrue();
+    expect(app(SecuritySettings::class)->require_two_factor)->toBeTrue();
 });
 
 test('admin can toggle maintenance mode', function () {
@@ -293,15 +294,6 @@ test('admin can toggle maintenance mode', function () {
         ->assertHasNoErrors();
 
     expect(app(MaintenanceSettings::class)->maintenance_mode)->toBeTrue();
-});
-
-test('security rejects too short a minimum password length', function () {
-    $this->actingAs($this->admin);
-
-    Livewire::test('pages::admin.settings.system')
-        ->set('min_password_length', 3)
-        ->call('saveSecurity')
-        ->assertHasErrors(['min_password_length']);
 });
 
 test('admin can toggle SAP sync and permissions', function () {

@@ -11,7 +11,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::app')] #[Title('Categories — Admin')] class extends Component
+new #[Layout('layouts::app')] #[Title('Categories | Admin')] class extends Component
 {
     use WithPagination;
 
